@@ -75,7 +75,7 @@ Net: GSAP + CSS scroll-driven animations do 90% of the work. Motion mini in the 
 | 15 | reel/DcrqbqZRVvC | "Does your site have any of these" (gated) | None |
 | 16 | reel/DcsokaUzbEw | Job applications | Off-topic |
 | 17 | reel/DcrVYL1xjEX | Five Claude Code design plugins: Taste Skill (76k stars), Web Design Guidelines (Vercel), full design-system skill, 21st Dev MCP (10k+ components), Playwright CLI | Core of the day-1 setup |
-| 18 | reel/DcjEohigobV | Claude Code built the frontend with a better setup + browser testing; mentions Three.js | Confirms the loop: setup, test across cases, feel it in the browser |
+| 18 | reel/DcjEohigobV | Pinned comment: Taste Skill, Impeccable, Awesome DESIGN.md (VoltAgent/awesome-design-md, 71k stars, brand design systems as plain-text files), Img2ThreeJS (img2threejs/img2threejs, Apache-2.0, rebuilds a photographed object as procedural Three.js code). Example site: launchfar.com (blocked from the sandbox, not reviewed) | img2threejs is the tool for the 3D upgrade path: one Dropbox render in, an editable recolourable case out. DESIGN.md is the format for the day-2 Skreed design-system file. |
 | 19 | reel/DZpySOnOCxI | github.com/affaan-m/ECC (Everything Claude Code: 28 agents, 119 skills, 60 commands) | Optional harness; heavy for a one-pager |
 | 20 | reel/DcG9fwESEuB | "Code like GenZ" | None |
 | 21 | reel/DcEtkSDsKw- | Netflix architecture, Open Connect CDN, bitrate ladder | Supports the video codec ladder in the stack report |

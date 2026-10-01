@@ -49,4 +49,6 @@ Astro 7 static on Cloudflare Workers + Static Assets. GSAP (ScrollTrigger, Split
 3. Design-system skill: the `ui-design` plugin from `/plugin marketplace add Owl-Listener/designer-skills` (`color-palette`, `type-system`) to turn `shades-240.json` and the Urbanist scale into tokens. Also install `visual-critique` and `designer-toolkit` from the same marketplace.
 4. 21st.dev MCP (`/ui` component search) for polished primitives; never paste a component without restyling it to the tokens (rule 11).
 5. Playwright MCP/CLI so Claude screenshots every section at 390 px and 1280 px and reviews its own output before reporting done.
-6. Also: `animate` skill, Context7 MCP, Matt Pocock's skills (`claude plugins install mattpocock-skills`) for the signup worker, a security skill (StackHawk or UnitOneAI SecuritySkills), PostHog MCP once live.
+6. Day 2 writes `DESIGN.md` at the repo root in the awesome-design-md format (tokens for the two neutrals, the 240 shades by family, the Urbanist scale, spacing, radius, motion durations). After that, every UI change reads `DESIGN.md` first.
+7. 3D upgrade path only (after the five spine sections ship): the `img2threejs` skill (github.com/img2threejs/img2threejs) to rebuild a case from one Dropbox render as procedural Three.js, loaded on tap and gated by GPU tier.
+8. Also: `animate` skill, Context7 MCP, Matt Pocock's skills (`claude plugins install mattpocock-skills`) for the signup worker, a security skill (StackHawk or UnitOneAI SecuritySkills), PostHog MCP once live.
