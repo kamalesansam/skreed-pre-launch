@@ -154,7 +154,7 @@ Target weights: hero image ≤ 120 KB AVIF, grid tile ≤ 25 KB, swatch ≤ 2 KB
 | 11 | Shade Twin referral, hidden 241st tile, Instagram and broadcast-channel links |
 | 12 | Diwali stories, manifesto, founders' note, copy pass |
 | 13 | Analytics events; camera flow behind a flag |
-| 14 | QA matrix: iPhone 13/15/17 Safari, Pixel and Samsung Chrome, Redmi-class Android, Instagram in-app browser, Jio 4G throttle, Lighthouse ≥ 90 mobile, reduced motion |
+| 14 | QA matrix: iPhone 13/15/17 Safari, Pixel and Samsung Chrome, Redmi-class Android, Instagram in-app browser, Jio 4G throttle, Lighthouse ≥ 90 mobile, reduced motion. Security pass: the 20-check list in `08-prelaunch-security-checklist.md`, ending with Claude attacking the deployed signup endpoint |
 | 15 | Cutover rehearsal, seed counters, legal pages, buffer |
 
 Parallel, not on the dev path: logo SVG (day 1–2), copy deck (days 3–8), hero photos (days 4–9), WhatsApp BSP account and templates (by Oct 25), nameserver move (Prem, day 1).
