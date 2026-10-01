@@ -2,7 +2,7 @@
 
 Prepared 2026-10-01. Live window: skreed.in forwards to this site until Nov 3, then to skreed.com on Nov 4 (two days before Dhanteras, four before Diwali on Nov 8).
 
-Detailed research behind every section lives in `docs/research/` (six reports) and the data files in `docs/data/`. This document is the synthesis: what we know, what we recommend, and what the team still has to decide.
+Detailed research behind every section lives in `docs/research/` (seven reports, including a digest of Sam's 149 saved Instagram posts) and the data files in `docs/data/`. This document is the synthesis: what we know, what we recommend, and what the team still has to decide.
 
 ---
 
@@ -76,6 +76,8 @@ A single page, phone-first, each section roughly one screen tall. Narrative: *Ba
 | Fonts | Self-hosted Poppins 700 + Inter variable (brand), Instrument Serif Italic for shade names, Clash Display for the hero | ~40 KB total; `font-display: swap`. |
 
 Full package list with versions and the repo tree are in `01-stack-and-hosting.md`.
+
+**Claude Code setup for the build (from Sam's saved posts, verified; details in `07-instagram-saved-collections.md`):** one taste layer (`impeccable` or `taste-skill`), Vercel's `web-design-guidelines` audit skill, the `animate` skill, Playwright MCP so Claude screenshots and grades its own output, 21st.dev MCP for polished primitives, Context7 MCP for current docs, Matt Pocock's skills for test-first work on the signup function, a security skill plus the vibe-coder checklist (no hard-coded keys, verify webhook signatures, reject non-JSON, rate limit, no public tables), and PostHog MCP once the campaign is live. Reference libraries for motion patterns: Skiper UI and Animaster Lib. endlesstools.io for quick 3D key visuals.
 
 ---
 
@@ -178,7 +180,7 @@ Parallel, not on the dev path: logo SVG (day 1–2), copy deck (days 3–8), her
 
 ## 9. Open items and gaps in this research
 
-- **Your Instagram saved collections ("claude", "web design", "dev") could not be read.** Instagram's API has no saved-collections endpoint, so Composio cannot reach them. Two ways to get them in: export via Instagram → Settings → Accounts Center → Your information and permissions → Download your information → Saved (gives `saved_collections.json` with every post link), or paste the post links into the chat. I will fold them into the reference list as soon as they arrive.
+- **Sam's Instagram saved collections** ("claude" 91, "devv" 44, "web design" 14) were read in full from the data export and digested in `07-instagram-saved-collections.md`. About a third are comment-gated with no content; the rest converge on the Claude Code setup above. The "skreed " (34) and "marketing" (5) collections in the same export were not requested and are worth a pass.
 - **Egress blocks**: skreed.com, instagram.com and most design galleries (Awwwards, Codrops, Spline, GSAP, Rive) were blocked from this sandbox, so a few facts in `03-references-competitors-playbooks.md` are marked as from search snippets or prior knowledge. Confirm GSAP's licence clause and Spline/Rive prices on their sites before budgeting.
 - **Logo**: only PNGs exist. Whoever designed the 2024 logo may have the vector.
 - **Royal vs Midnight** (Vivid Violets) share one hex in Shopify; the catalog shows two colours. Needs the true value.
