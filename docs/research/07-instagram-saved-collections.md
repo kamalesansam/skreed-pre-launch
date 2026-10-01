@@ -157,7 +157,7 @@ Net: GSAP + CSS scroll-driven animations do 90% of the work. Motion mini in the 
 | 92 | reel/DczvUteRsGJ | 21st.dev, Lighthouse, Context7 MCP, Graphify, never-get-hacked skill | All five are in the day-1 setup list |
 | 93 | reel/Dc8cNKASdV2 | Material 3 Expressive web UI builder → prompts for agents (lnkiai/m3e-canvas and forks) | Not our design language |
 | 94 | reel/Dctqa5ih5in | "Stop vibecoding fake sites" | None |
-| 95 | reel/DaDRFEezrOP | Top 3 UI libraries for premium animated sites | Same as 10 |
+| 95 | reel/DaDRFEezrOP | Vengeance UI, Skiper UI, Animaster Lib | Catalogued in full in `09-ui-libraries-vengeance-skiper-animaster.md`: Animaster ($8, plain JS) for patterns; Skiper free tier for three island components; Vengeance reference only |
 | 96 | reel/DcrcgmppKbY | Manus sponsored tools list | None |
 | 97 | reel/DccLLkoPCT1 | God's Eye View V1: open-source 3D globe with real plane/ship/satellite data, voice | Reference for a "City Shade" globe if that bench concept is picked |
 | 98 | reel/DcEtkSDsKw- | Netflix (duplicate of 21) | As above |
