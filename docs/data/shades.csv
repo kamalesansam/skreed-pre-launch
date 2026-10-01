@@ -1,0 +1,244 @@
+family,name,handle,hex
+Basic Brown,Brunette,brunette,#543733
+Basic Brown,Chestnut,chestnut,#5d2b24
+Basic Brown,Chocolate,chocolate,#7f5229
+Basic Brown,Cider,cider,#b37840
+Basic Brown,Cinnamon,cinnamon,#ba7237
+Basic Brown,Cocoa,cocoa,#81553a
+Basic Brown,Coffee,coffee,#7a583f
+Basic Brown,Dark Chocolate,dark,#4d301e
+Basic Brown,Desert,desert,#c6a884
+Basic Brown,Light Brown,light,#c3a082
+Basic Brown,Taupe,medium,#896950
+Basic Brown,Almond,pale,#e8d2bd
+Basic Brown,Peanut,peanut,#c88737
+Basic Brown,Peru,peru,#d08647
+Basic Brown,Brick,brick,#7c2b18
+Basic Brown,Rosy Brown,rosy,#c29995
+Basic Brown,Russet,russet,#74421f
+Basic Brown,Walnut,walnut,#59402c
+Basic Brown,Wenge,wenge,#5c4d4a
+Basic Brown,Wood,wood,#7d5d44
+Basic Brown,Sand,sand,#e1c39f
+Basic Brown,Umber,umber,#662917
+Blushing Coral,Tangerine,tangerine,#ea821a
+Blushing Coral,Ginger,ginger,#b04a18
+Blushing Coral,Marmalade,salamander,#e85728
+Blushing Coral,Melon,melon,#fb934b
+Blushing Coral,Bellini,pale-orange,#ffb98a
+Blushing Coral,Clay,clay,#c17956
+Blushing Coral,Apricot,apricot,#faab6f
+Blushing Coral,Amber,amber,#fcb627
+Blushing Coral,Fire,fire,#ff7c22
+Blushing Coral,Clementine,carrot,#f78628
+Blushing Coral,Pumpkin Spice,pumpkin,#f0652f
+Blushing Coral,Honey,honey,#e5811f
+Blushing Coral,Sunset,sunset,#ef9721
+Blushing Coral,Mango,mango,#ff9f40
+Blushing Coral,Orange Peel,orange-peel,#f1891f
+Blushing Coral,True Coral,coral,#ff815e
+Blushing Coral,Tangelo,tangelo,#f67622
+Blushing Coral,Saffron,saffron,#e67300
+Blushing Coral,Persian,persian,#d48c5b
+Blushing Coral,Autumn,seville,#e56228
+Blushing Coral,Maple,alloy,#bd5816
+Blushing Coral,Bright Coral,bright-coral,#ff961a
+Blushing Coral,Neon Orange,neon-orange,#ff7901
+Blushing Coral,Rust,rust,#af410b
+Blissful Blue,Cyan,cyan,#01ffff
+Blissful Blue,Navy Blue,navy-blue,#0e305b
+Blissful Blue,Turquoise,turquoise,#00e8d9
+Blissful Blue,Aqua,aqua-blue,#04dcf7
+Blissful Blue,Royal Blue,royal-blue,#0040c1
+Blissful Blue,Sapphire,sapphire,#002c84
+Blissful Blue,Classic Blue,classic-blue,#074882
+Blissful Blue,Baby Blue,baby-blue,#8be2fb
+Blissful Blue,Pigeon Blue,pigeon-blue,#5c6f92
+Blissful Blue,Egyptian Blue,egyptian-blue,#0036ac
+Blissful Blue,Teal Blue,teal,#00818e
+Blissful Blue,Ocean,ocean-blue,#1494e4
+Blissful Blue,Sky Blue,sky-blue,#08bcf4
+Blissful Blue,Indigo Blue,indigo-blue,#1919a4
+Blissful Blue,Powder Blue,powder-blue,#9adeee
+Blissful Blue,Midnight Blue,midnight-blue,#0e1442
+Blissful Blue,Aquamarine,aquamarine,#3ef9da
+Blissful Blue,Space Blue,space-blue,#15284f
+Blissful Blue,Cobalt,cobalt,#1040ca
+Blissful Blue,Azure,azure,#007dd3
+Blissful Blue,Prussian,prussian-blue,#2f3f5c
+Blissful Blue,Electric Blue,electric-blue,#76f2fc
+Blissful Blue,Stone Blue,stone-blue,#608592
+Blissful Blue,Blueberry,blueberry,#1d1968
+Blissful Blue,wave,wave,#006994
+Frosty White,Oatmeal,oatmeal,#e2d6c6
+Frosty White,Bone,bone,#edebde
+Frosty White,Vanilla,powder,#f7f7ef
+Frosty White,Pearl,pearl,#f7f7f7
+Frosty White,Ivory,ivory,#f7f6e4
+Frosty White,Cream,cream,#f3f2ed
+Frosty White,Eggshell,egg,#eae6da
+Frosty White,Seashell,shell,#f0e8db
+Frosty White,Cotton,cotton,#f8efea
+Frosty White,Linen,linen,#efe6d5
+Frosty White,Coconut,coconut,#eaeff3
+Frosty White,Porcelain,porcelain,#eff1f0
+Frosty White,Rice,rice,#f0f8ed
+Frosty White,Alabaster,alabaster,#efece5
+Frosty White,Snowflake,snow,#f0f4f5
+Frosty White,Chiffon,chiffon,#e1e5d7
+Frosty White,Mist,salt,#eae9e7
+Frosty White,Lace,lace,#f5f0ea
+Frosty White,Frost,frost,#f2f0e3
+Frosty White,Oyester,oyester,#efeae6
+Frosty White,Antique,antique,#e8e5d6
+Frosty White,Off-White,off-white,#eaeaea
+Frosty White,Daisy,daisy,#eff7f9
+Frosty White,Parchment,garlic,#edeee6
+Go Green,Khaki,khaki,#666046
+Go Green,Army Green,army-green,#434714
+Go Green,Forest Green,forest-green,#084f3d
+Go Green,Lime Green,lime-green,#6bbc3b
+Go Green,Basil Green,hunter-green,#476d3e
+Go Green,Hunter Green,dark-green,#063f1e
+Go Green,Neon Green,neon-green,#26ff00
+Go Green,Mint Green,mint-green,#6be5b4
+Go Green,Olive Green,olive-green,#83841e
+Go Green,Light Green,light-green,#e3f7ba
+Go Green,Pastel Green,pastel-green,#baeaa0
+Go Green,Emerald Green,emerald-green,#006d48
+Go Green,Jade Green,jade-green,#8ab269
+Go Green,Pine Green,pine-green,#004c16
+Go Green,Green Apple,green-apple,#91b521
+Go Green,Fern,jungle-green,#335a01
+Go Green,Green Tea,green-tea,#caed91
+Go Green,Persian Green,persian-green,#19a598
+Go Green,Teal,teal-green,#05877d
+Go Green,Lawn Green,lawn-green,#4aa325
+Go Green,Thyme,thyme-green,#717d67
+Go Green,Pear Green,pear-green,#c7dd4a
+Go Green,Pistachio,pistachio,#96cc76
+Go Green,Sage,basil-green,#96a880
+Go Green,Dark Green,dark-green-1,#2f492a
+Mellow Yellow,Mimosa,mimosa,#f2d031
+Mellow Yellow,Lemonade,light-yellow,#f4ef94
+Mellow Yellow,Dandelion,classic-yellow,#f5d71d
+Mellow Yellow,Bright Yellow,bright-yellow,#fef200
+Mellow Yellow,Neon Yellow,neon-yellow,#d6f430
+Mellow Yellow,Pastel Yellow,pastel-yellow,#f5eda5
+Mellow Yellow,Pale Yellow,pale-yellow,#fbf9c6
+Mellow Yellow,Lemon,lemon,#f4ef55
+Mellow Yellow,Golden,golden,#f7bc34
+Mellow Yellow,Banana,banana,#f0c529
+Mellow Yellow,Dijon,dijon,#cea146
+Mellow Yellow,Canary,canary-yellow,#f4e125
+Mellow Yellow,Limoncello,sunshine-yellow,#f4f420
+Mellow Yellow,Citrine,citrine-yellow,#dccc53
+Mellow Yellow,Custard,flax-yellow,#edd87b
+Mellow Yellow,Chamomile,sandy,#f0d979
+Mellow Yellow,Sunflower,sunflower,#f4d41d
+Mellow Yellow,Bumblebee,bumblebee,#ffc239
+Mellow Yellow,Buttercup,butter,#f4dc6e
+Mellow Yellow,Tuscany,tuscany,#f9c83d
+Mellow Yellow,Mustard,mustard-yellow,#eaa927
+Mellow Yellow,Sunshine,sunny-yellow,#fdce4c
+Mellow Yellow,Sunbeam,illuminate,#fff164
+Mellow Yellow,Daffodil,corn-yellow,#f5d914
+Playful Pink,Fuchsia,fuchsia,#e0028d
+Playful Pink,Watermelon,watermelon,#fa465f
+Playful Pink,Flamingo,flamingo,#fc92b6
+Playful Pink,Salmon Pink,salmon,#ff6a64
+Playful Pink,Rouge,rouge,#f2638f
+Playful Pink,Pastel Pink,pastel,#f2bdcd
+Playful Pink,Peony,hot-pink,#ea0eac
+Playful Pink,Light Pink,light-pink,#ffd2e9
+Playful Pink,Magenta,magenta,#ed008c
+Playful Pink,Baby Pink,baby-pink,#ffacd0
+Playful Pink,Bubblegum,bubblegum,#f086c6
+Playful Pink,Camellia,deep,#e02693
+Playful Pink,Rose,rose,#f5a2b4
+Playful Pink,Bright Pink,bright,#fe0094
+Playful Pink,Punch,punch,#ef4b7e
+Playful Pink,Blush,blush,#f4b6bb
+Playful Pink,Peachy,peachy,#ffbcac
+Playful Pink,Neon,neon,#ee27fe
+Playful Pink,Crepe,crepe,#cf91a8
+Playful Pink,Ballerina,ballerina,#efa3af
+Playful Pink,Gumball,electric,#ff5fff
+Playful Pink,Orchid,orchid,#e881b9
+Playful Pink,Doll,doll,#e64c95
+Playful Pink,Neon Pink,neon-pink,#ee27fe
+Playful Pink,Berry,berry,#ff6090
+Roaring Red,Ruby Red,ruby-red,#b31f2d
+Roaring Red,Classic Red,classic-red,#ef1123
+Roaring Red,Burgundy,burgundy-red,#82001e
+Roaring Red,Mahogany,mahagony-red,#470406
+Roaring Red,Raspberry,raspberry-red,#cd2550
+Roaring Red,Vermilion,vermillion-red,#dd4b3a
+Roaring Red,Paprika,cinober-red,#f3342e
+Roaring Red,Maroon,maroon-red,#730034
+Roaring Red,Claret,carmine-red,#9b021c
+Roaring Red,Chilli Red,chilli-red,#bb0f1c
+Roaring Red,Imperial Red,imperial-red,#e81638
+Roaring Red,Scarlet Red,scarlet-red,#c30117
+Roaring Red,Mars,mars-red,#b84533
+Roaring Red,Red Wine,red-wine,#4b0923
+Roaring Red,Cherry Red,cherry-red,#8f0125
+Roaring Red,Apple,apple,#ab091b
+Roaring Red,Red Currant,red-currant,#a23744
+Roaring Red,Blood Red,blood-red,#850312
+Roaring Red,Hibiscus,hibiscus,#a0183d
+Roaring Red,Pastel Red,pastel-red,#fe6c6b
+Roaring Red,Terracotta,terracotta-red,#9a3f3d
+Roaring Red,Rose Red,rose-red,#c70451
+Roaring Red,Crimson,red-passion,#d20000
+Roaring Red,Strawberry,strawberry,#f4315c
+Stormy Grey,Ash Grey,ash-grey,#848988
+Stormy Grey,Charcoal,charcoal,#393f44
+Stormy Grey,Cool Grey,coal-grey,#767b89
+Stormy Grey,Dark Grey,dark-grey,#444444
+Stormy Grey,Dolphin,dolphin,#9d9d9d
+Stormy Grey,Dove Grey,dove-grey,#9c9c9c
+Stormy Grey,Fog Grey,fog-grey,#797474
+Stormy Grey,Graphite,graphite,#424548
+Stormy Grey,Harbor Grey,harbor-grey,#a8a9a3
+Stormy Grey,Iron Grey,iron-grey,#43464c
+Stormy Grey,Koala Grey,koala-grey,#878685
+Stormy Grey,Lava Grey,lava-grey,#5e5d61
+Stormy Grey,Mouse Grey,mouse-grey,#696a6d
+Stormy Grey,Pale Grey,pale-grey,#bbbab8
+Stormy Grey,Pastel Grey,pastel-grey,#b8b8b1
+Stormy Grey,Pearl Grey,pearl-grey,#b3bab0
+Stormy Grey,Rhino Grey,rhino-grey,#788082
+Stormy Grey,Shadow,shadow,#686b6f
+Stormy Grey,Shark Grey,shark-grey,#5b6369
+Stormy Grey,Silver Grey,silver-grey,#acacac
+Stormy Grey,Smoke Grey,smoke-grey,#7d7d7d
+Stormy Grey,Steel Grey,steel-grey,#929292
+Stormy Grey,Stone Grey,stone-grey,#54524d
+Stormy Grey,Warm Grey,warm-grey,#7d787b
+Stormy Grey,Almost Black,shadow-1,#43464c
+Vivid Violet,Lavender,lavender,#986db5
+Vivid Violet,Classic Violet,violet,#9010bf
+Vivid Violet,Amethyst,amethyst,#8554d1
+Vivid Violet,Wildberry,wildberry,#a04d95
+Vivid Violet,Purple Orchid,wine,#911489
+Vivid Violet,Lilac,lilac,#c988c8
+Vivid Violet,Mauve,mauve,#dfa4f8
+Vivid Violet,Bright Violet,bright-violet,#b944ea
+Vivid Violet,Wine,wine-1,#572048
+Vivid Violet,Pale Violet,pale-violet,#ecd0f9
+Vivid Violet,Psychedelic,psychedelic,#ae00ff
+Vivid Violet,Plum,plum,#4e0973
+Vivid Violet,Fig,palatinate,#671e67
+Vivid Violet,Eggplant,eggplant,#4a154d
+Vivid Violet,Royal,royal,#492376
+Vivid Violet,Midnight,midnight,#492376
+Vivid Violet,Iris,iris,#6947d1
+Vivid Violet,Grape,grape,#5f114f
+Vivid Violet,Indigo,indigo,#39178f
+Vivid Violet,Ultra Violet,ultra-violet,#4a108b
+Vivid Violet,Mulberry,mulberry,#742665
+Vivid Violet,Elderberry,russian,#391265
+Vivid Violet,Pastel Purple,pastel-purple,#d7b9ed
+Vivid Violet,Light Purple,light-purple,#f5e3fb
+Vivid Violet,Purple,purple-1,#472b59

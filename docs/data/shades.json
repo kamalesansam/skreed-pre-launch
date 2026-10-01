@@ -1,0 +1,2296 @@
+{
+  "source": "Shopify metaobjects shopify--color-pattern, exported 2026-10-01",
+  "familyTaxonomy": {
+    "Basic Brown": "gid://shopify/TaxonomyValue/7",
+    "Blushing Coral": "gid://shopify/TaxonomyValue/10",
+    "Blissful Blue": "gid://shopify/TaxonomyValue/2",
+    "Frosty White": "gid://shopify/TaxonomyValue/3",
+    "Go Green": "gid://shopify/TaxonomyValue/9",
+    "Mellow Yellow": "gid://shopify/TaxonomyValue/14",
+    "Playful Pink": "gid://shopify/TaxonomyValue/11",
+    "Roaring Red": "gid://shopify/TaxonomyValue/13",
+    "Stormy Grey": "gid://shopify/TaxonomyValue/8",
+    "Vivid Violet": "gid://shopify/TaxonomyValue/12"
+  },
+  "families": {
+    "Basic Brown": [
+      {
+        "handle": "brunette",
+        "name": "Brunette",
+        "hex": "#543733"
+      },
+      {
+        "handle": "chestnut",
+        "name": "Chestnut",
+        "hex": "#5d2b24"
+      },
+      {
+        "handle": "chocolate",
+        "name": "Chocolate",
+        "hex": "#7f5229"
+      },
+      {
+        "handle": "cider",
+        "name": "Cider",
+        "hex": "#b37840"
+      },
+      {
+        "handle": "cinnamon",
+        "name": "Cinnamon",
+        "hex": "#ba7237"
+      },
+      {
+        "handle": "cocoa",
+        "name": "Cocoa",
+        "hex": "#81553a"
+      },
+      {
+        "handle": "coffee",
+        "name": "Coffee",
+        "hex": "#7a583f"
+      },
+      {
+        "handle": "dark",
+        "name": "Dark Chocolate",
+        "hex": "#4d301e"
+      },
+      {
+        "handle": "desert",
+        "name": "Desert",
+        "hex": "#c6a884"
+      },
+      {
+        "handle": "light",
+        "name": "Light Brown",
+        "hex": "#c3a082"
+      },
+      {
+        "handle": "medium",
+        "name": "Taupe",
+        "hex": "#896950"
+      },
+      {
+        "handle": "pale",
+        "name": "Almond",
+        "hex": "#e8d2bd"
+      },
+      {
+        "handle": "peanut",
+        "name": "Peanut",
+        "hex": "#c88737"
+      },
+      {
+        "handle": "peru",
+        "name": "Peru",
+        "hex": "#d08647"
+      },
+      {
+        "handle": "brick",
+        "name": "Brick",
+        "hex": "#7c2b18"
+      },
+      {
+        "handle": "rosy",
+        "name": "Rosy Brown",
+        "hex": "#c29995"
+      },
+      {
+        "handle": "russet",
+        "name": "Russet",
+        "hex": "#74421f"
+      },
+      {
+        "handle": "walnut",
+        "name": "Walnut",
+        "hex": "#59402c"
+      },
+      {
+        "handle": "wenge",
+        "name": "Wenge",
+        "hex": "#5c4d4a"
+      },
+      {
+        "handle": "wood",
+        "name": "Wood",
+        "hex": "#7d5d44"
+      },
+      {
+        "handle": "sand",
+        "name": "Sand",
+        "hex": "#e1c39f"
+      },
+      {
+        "handle": "umber",
+        "name": "Umber",
+        "hex": "#662917"
+      }
+    ],
+    "Blushing Coral": [
+      {
+        "handle": "tangerine",
+        "name": "Tangerine",
+        "hex": "#ea821a"
+      },
+      {
+        "handle": "ginger",
+        "name": "Ginger",
+        "hex": "#b04a18"
+      },
+      {
+        "handle": "salamander",
+        "name": "Marmalade",
+        "hex": "#e85728"
+      },
+      {
+        "handle": "melon",
+        "name": "Melon",
+        "hex": "#fb934b"
+      },
+      {
+        "handle": "pale-orange",
+        "name": "Bellini",
+        "hex": "#ffb98a"
+      },
+      {
+        "handle": "clay",
+        "name": "Clay",
+        "hex": "#c17956"
+      },
+      {
+        "handle": "apricot",
+        "name": "Apricot",
+        "hex": "#faab6f"
+      },
+      {
+        "handle": "amber",
+        "name": "Amber",
+        "hex": "#fcb627"
+      },
+      {
+        "handle": "fire",
+        "name": "Fire",
+        "hex": "#ff7c22"
+      },
+      {
+        "handle": "carrot",
+        "name": "Clementine",
+        "hex": "#f78628"
+      },
+      {
+        "handle": "pumpkin",
+        "name": "Pumpkin Spice",
+        "hex": "#f0652f"
+      },
+      {
+        "handle": "honey",
+        "name": "Honey",
+        "hex": "#e5811f"
+      },
+      {
+        "handle": "sunset",
+        "name": "Sunset",
+        "hex": "#ef9721"
+      },
+      {
+        "handle": "mango",
+        "name": "Mango",
+        "hex": "#ff9f40"
+      },
+      {
+        "handle": "orange-peel",
+        "name": "Orange Peel",
+        "hex": "#f1891f"
+      },
+      {
+        "handle": "coral",
+        "name": "True Coral",
+        "hex": "#ff815e"
+      },
+      {
+        "handle": "tangelo",
+        "name": "Tangelo",
+        "hex": "#f67622"
+      },
+      {
+        "handle": "saffron",
+        "name": "Saffron",
+        "hex": "#e67300"
+      },
+      {
+        "handle": "persian",
+        "name": "Persian",
+        "hex": "#d48c5b"
+      },
+      {
+        "handle": "seville",
+        "name": "Autumn",
+        "hex": "#e56228"
+      },
+      {
+        "handle": "alloy",
+        "name": "Maple",
+        "hex": "#bd5816"
+      },
+      {
+        "handle": "bright-coral",
+        "name": "Bright Coral",
+        "hex": "#ff961a"
+      },
+      {
+        "handle": "neon-orange",
+        "name": "Neon Orange",
+        "hex": "#ff7901"
+      },
+      {
+        "handle": "rust",
+        "name": "Rust",
+        "hex": "#af410b"
+      }
+    ],
+    "Blissful Blue": [
+      {
+        "handle": "cyan",
+        "name": "Cyan",
+        "hex": "#01ffff"
+      },
+      {
+        "handle": "navy-blue",
+        "name": "Navy Blue",
+        "hex": "#0e305b"
+      },
+      {
+        "handle": "turquoise",
+        "name": "Turquoise",
+        "hex": "#00e8d9"
+      },
+      {
+        "handle": "aqua-blue",
+        "name": "Aqua",
+        "hex": "#04dcf7"
+      },
+      {
+        "handle": "royal-blue",
+        "name": "Royal Blue",
+        "hex": "#0040c1"
+      },
+      {
+        "handle": "sapphire",
+        "name": "Sapphire",
+        "hex": "#002c84"
+      },
+      {
+        "handle": "classic-blue",
+        "name": "Classic Blue",
+        "hex": "#074882"
+      },
+      {
+        "handle": "baby-blue",
+        "name": "Baby Blue",
+        "hex": "#8be2fb"
+      },
+      {
+        "handle": "pigeon-blue",
+        "name": "Pigeon Blue",
+        "hex": "#5c6f92"
+      },
+      {
+        "handle": "egyptian-blue",
+        "name": "Egyptian Blue",
+        "hex": "#0036ac"
+      },
+      {
+        "handle": "teal",
+        "name": "Teal Blue",
+        "hex": "#00818e"
+      },
+      {
+        "handle": "ocean-blue",
+        "name": "Ocean",
+        "hex": "#1494e4"
+      },
+      {
+        "handle": "sky-blue",
+        "name": "Sky Blue",
+        "hex": "#08bcf4"
+      },
+      {
+        "handle": "indigo-blue",
+        "name": "Indigo Blue",
+        "hex": "#1919a4"
+      },
+      {
+        "handle": "powder-blue",
+        "name": "Powder Blue",
+        "hex": "#9adeee"
+      },
+      {
+        "handle": "midnight-blue",
+        "name": "Midnight Blue",
+        "hex": "#0e1442"
+      },
+      {
+        "handle": "aquamarine",
+        "name": "Aquamarine",
+        "hex": "#3ef9da"
+      },
+      {
+        "handle": "space-blue",
+        "name": "Space Blue",
+        "hex": "#15284f"
+      },
+      {
+        "handle": "cobalt",
+        "name": "Cobalt",
+        "hex": "#1040ca"
+      },
+      {
+        "handle": "azure",
+        "name": "Azure",
+        "hex": "#007dd3"
+      },
+      {
+        "handle": "prussian-blue",
+        "name": "Prussian",
+        "hex": "#2f3f5c"
+      },
+      {
+        "handle": "electric-blue",
+        "name": "Electric Blue",
+        "hex": "#76f2fc"
+      },
+      {
+        "handle": "stone-blue",
+        "name": "Stone Blue",
+        "hex": "#608592"
+      },
+      {
+        "handle": "blueberry",
+        "name": "Blueberry",
+        "hex": "#1d1968"
+      },
+      {
+        "handle": "wave",
+        "name": "wave",
+        "hex": "#006994"
+      }
+    ],
+    "Frosty White": [
+      {
+        "handle": "oatmeal",
+        "name": "Oatmeal",
+        "hex": "#e2d6c6"
+      },
+      {
+        "handle": "bone",
+        "name": "Bone",
+        "hex": "#edebde"
+      },
+      {
+        "handle": "powder",
+        "name": "Vanilla",
+        "hex": "#f7f7ef"
+      },
+      {
+        "handle": "pearl",
+        "name": "Pearl",
+        "hex": "#f7f7f7"
+      },
+      {
+        "handle": "ivory",
+        "name": "Ivory",
+        "hex": "#f7f6e4"
+      },
+      {
+        "handle": "cream",
+        "name": "Cream",
+        "hex": "#f3f2ed"
+      },
+      {
+        "handle": "egg",
+        "name": "Eggshell",
+        "hex": "#eae6da"
+      },
+      {
+        "handle": "shell",
+        "name": "Seashell",
+        "hex": "#f0e8db"
+      },
+      {
+        "handle": "cotton",
+        "name": "Cotton",
+        "hex": "#f8efea"
+      },
+      {
+        "handle": "linen",
+        "name": "Linen",
+        "hex": "#efe6d5"
+      },
+      {
+        "handle": "coconut",
+        "name": "Coconut",
+        "hex": "#eaeff3"
+      },
+      {
+        "handle": "porcelain",
+        "name": "Porcelain",
+        "hex": "#eff1f0"
+      },
+      {
+        "handle": "rice",
+        "name": "Rice",
+        "hex": "#f0f8ed"
+      },
+      {
+        "handle": "alabaster",
+        "name": "Alabaster",
+        "hex": "#efece5"
+      },
+      {
+        "handle": "snow",
+        "name": "Snowflake",
+        "hex": "#f0f4f5"
+      },
+      {
+        "handle": "chiffon",
+        "name": "Chiffon",
+        "hex": "#e1e5d7"
+      },
+      {
+        "handle": "salt",
+        "name": "Mist",
+        "hex": "#eae9e7"
+      },
+      {
+        "handle": "lace",
+        "name": "Lace",
+        "hex": "#f5f0ea"
+      },
+      {
+        "handle": "frost",
+        "name": "Frost",
+        "hex": "#f2f0e3"
+      },
+      {
+        "handle": "oyester",
+        "name": "Oyester",
+        "hex": "#efeae6"
+      },
+      {
+        "handle": "antique",
+        "name": "Antique",
+        "hex": "#e8e5d6"
+      },
+      {
+        "handle": "off-white",
+        "name": "Off-White",
+        "hex": "#eaeaea"
+      },
+      {
+        "handle": "daisy",
+        "name": "Daisy",
+        "hex": "#eff7f9"
+      },
+      {
+        "handle": "garlic",
+        "name": "Parchment",
+        "hex": "#edeee6"
+      }
+    ],
+    "Go Green": [
+      {
+        "handle": "khaki",
+        "name": "Khaki",
+        "hex": "#666046"
+      },
+      {
+        "handle": "army-green",
+        "name": "Army Green",
+        "hex": "#434714"
+      },
+      {
+        "handle": "forest-green",
+        "name": "Forest Green",
+        "hex": "#084f3d"
+      },
+      {
+        "handle": "lime-green",
+        "name": "Lime Green",
+        "hex": "#6bbc3b"
+      },
+      {
+        "handle": "hunter-green",
+        "name": "Basil Green",
+        "hex": "#476d3e"
+      },
+      {
+        "handle": "dark-green",
+        "name": "Hunter Green",
+        "hex": "#063f1e"
+      },
+      {
+        "handle": "neon-green",
+        "name": "Neon Green",
+        "hex": "#26ff00"
+      },
+      {
+        "handle": "mint-green",
+        "name": "Mint Green",
+        "hex": "#6be5b4"
+      },
+      {
+        "handle": "olive-green",
+        "name": "Olive Green",
+        "hex": "#83841e"
+      },
+      {
+        "handle": "light-green",
+        "name": "Light Green",
+        "hex": "#e3f7ba"
+      },
+      {
+        "handle": "pastel-green",
+        "name": "Pastel Green",
+        "hex": "#baeaa0"
+      },
+      {
+        "handle": "emerald-green",
+        "name": "Emerald Green",
+        "hex": "#006d48"
+      },
+      {
+        "handle": "jade-green",
+        "name": "Jade Green",
+        "hex": "#8ab269"
+      },
+      {
+        "handle": "pine-green",
+        "name": "Pine Green",
+        "hex": "#004c16"
+      },
+      {
+        "handle": "green-apple",
+        "name": "Green Apple",
+        "hex": "#91b521"
+      },
+      {
+        "handle": "jungle-green",
+        "name": "Fern",
+        "hex": "#335a01"
+      },
+      {
+        "handle": "green-tea",
+        "name": "Green Tea",
+        "hex": "#caed91"
+      },
+      {
+        "handle": "persian-green",
+        "name": "Persian Green",
+        "hex": "#19a598"
+      },
+      {
+        "handle": "teal-green",
+        "name": "Teal",
+        "hex": "#05877d"
+      },
+      {
+        "handle": "lawn-green",
+        "name": "Lawn Green",
+        "hex": "#4aa325"
+      },
+      {
+        "handle": "thyme-green",
+        "name": "Thyme",
+        "hex": "#717d67"
+      },
+      {
+        "handle": "pear-green",
+        "name": "Pear Green",
+        "hex": "#c7dd4a"
+      },
+      {
+        "handle": "pistachio",
+        "name": "Pistachio",
+        "hex": "#96cc76"
+      },
+      {
+        "handle": "basil-green",
+        "name": "Sage",
+        "hex": "#96a880"
+      },
+      {
+        "handle": "dark-green-1",
+        "name": "Dark Green",
+        "hex": "#2f492a"
+      }
+    ],
+    "Mellow Yellow": [
+      {
+        "handle": "mimosa",
+        "name": "Mimosa",
+        "hex": "#f2d031"
+      },
+      {
+        "handle": "light-yellow",
+        "name": "Lemonade",
+        "hex": "#f4ef94"
+      },
+      {
+        "handle": "classic-yellow",
+        "name": "Dandelion",
+        "hex": "#f5d71d"
+      },
+      {
+        "handle": "bright-yellow",
+        "name": "Bright Yellow",
+        "hex": "#fef200"
+      },
+      {
+        "handle": "neon-yellow",
+        "name": "Neon Yellow",
+        "hex": "#d6f430"
+      },
+      {
+        "handle": "pastel-yellow",
+        "name": "Pastel Yellow",
+        "hex": "#f5eda5"
+      },
+      {
+        "handle": "pale-yellow",
+        "name": "Pale Yellow",
+        "hex": "#fbf9c6"
+      },
+      {
+        "handle": "lemon",
+        "name": "Lemon",
+        "hex": "#f4ef55"
+      },
+      {
+        "handle": "golden",
+        "name": "Golden",
+        "hex": "#f7bc34"
+      },
+      {
+        "handle": "banana",
+        "name": "Banana",
+        "hex": "#f0c529"
+      },
+      {
+        "handle": "dijon",
+        "name": "Dijon",
+        "hex": "#cea146"
+      },
+      {
+        "handle": "canary-yellow",
+        "name": "Canary",
+        "hex": "#f4e125"
+      },
+      {
+        "handle": "sunshine-yellow",
+        "name": "Limoncello",
+        "hex": "#f4f420"
+      },
+      {
+        "handle": "citrine-yellow",
+        "name": "Citrine",
+        "hex": "#dccc53"
+      },
+      {
+        "handle": "flax-yellow",
+        "name": "Custard",
+        "hex": "#edd87b"
+      },
+      {
+        "handle": "sandy",
+        "name": "Chamomile",
+        "hex": "#f0d979"
+      },
+      {
+        "handle": "sunflower",
+        "name": "Sunflower",
+        "hex": "#f4d41d"
+      },
+      {
+        "handle": "bumblebee",
+        "name": "Bumblebee",
+        "hex": "#ffc239"
+      },
+      {
+        "handle": "butter",
+        "name": "Buttercup",
+        "hex": "#f4dc6e"
+      },
+      {
+        "handle": "tuscany",
+        "name": "Tuscany",
+        "hex": "#f9c83d"
+      },
+      {
+        "handle": "mustard-yellow",
+        "name": "Mustard",
+        "hex": "#eaa927"
+      },
+      {
+        "handle": "sunny-yellow",
+        "name": "Sunshine",
+        "hex": "#fdce4c"
+      },
+      {
+        "handle": "illuminate",
+        "name": "Sunbeam",
+        "hex": "#fff164"
+      },
+      {
+        "handle": "corn-yellow",
+        "name": "Daffodil",
+        "hex": "#f5d914"
+      }
+    ],
+    "Playful Pink": [
+      {
+        "handle": "fuchsia",
+        "name": "Fuchsia",
+        "hex": "#e0028d"
+      },
+      {
+        "handle": "watermelon",
+        "name": "Watermelon",
+        "hex": "#fa465f"
+      },
+      {
+        "handle": "flamingo",
+        "name": "Flamingo",
+        "hex": "#fc92b6"
+      },
+      {
+        "handle": "salmon",
+        "name": "Salmon Pink",
+        "hex": "#ff6a64"
+      },
+      {
+        "handle": "rouge",
+        "name": "Rouge",
+        "hex": "#f2638f"
+      },
+      {
+        "handle": "pastel",
+        "name": "Pastel Pink",
+        "hex": "#f2bdcd"
+      },
+      {
+        "handle": "hot-pink",
+        "name": "Peony",
+        "hex": "#ea0eac"
+      },
+      {
+        "handle": "light-pink",
+        "name": "Light Pink",
+        "hex": "#ffd2e9"
+      },
+      {
+        "handle": "magenta",
+        "name": "Magenta",
+        "hex": "#ed008c"
+      },
+      {
+        "handle": "baby-pink",
+        "name": "Baby Pink",
+        "hex": "#ffacd0"
+      },
+      {
+        "handle": "bubblegum",
+        "name": "Bubblegum",
+        "hex": "#f086c6"
+      },
+      {
+        "handle": "deep",
+        "name": "Camellia",
+        "hex": "#e02693"
+      },
+      {
+        "handle": "rose",
+        "name": "Rose",
+        "hex": "#f5a2b4"
+      },
+      {
+        "handle": "bright",
+        "name": "Bright Pink",
+        "hex": "#fe0094"
+      },
+      {
+        "handle": "punch",
+        "name": "Punch",
+        "hex": "#ef4b7e"
+      },
+      {
+        "handle": "blush",
+        "name": "Blush",
+        "hex": "#f4b6bb"
+      },
+      {
+        "handle": "peachy",
+        "name": "Peachy",
+        "hex": "#ffbcac"
+      },
+      {
+        "handle": "neon",
+        "name": "Neon",
+        "hex": "#ee27fe"
+      },
+      {
+        "handle": "crepe",
+        "name": "Crepe",
+        "hex": "#cf91a8"
+      },
+      {
+        "handle": "ballerina",
+        "name": "Ballerina",
+        "hex": "#efa3af"
+      },
+      {
+        "handle": "electric",
+        "name": "Gumball",
+        "hex": "#ff5fff"
+      },
+      {
+        "handle": "orchid",
+        "name": "Orchid",
+        "hex": "#e881b9"
+      },
+      {
+        "handle": "doll",
+        "name": "Doll",
+        "hex": "#e64c95"
+      },
+      {
+        "handle": "neon-pink",
+        "name": "Neon Pink",
+        "hex": "#ee27fe"
+      },
+      {
+        "handle": "berry",
+        "name": "Berry",
+        "hex": "#ff6090"
+      }
+    ],
+    "Roaring Red": [
+      {
+        "handle": "ruby-red",
+        "name": "Ruby Red",
+        "hex": "#b31f2d"
+      },
+      {
+        "handle": "classic-red",
+        "name": "Classic Red",
+        "hex": "#ef1123"
+      },
+      {
+        "handle": "burgundy-red",
+        "name": "Burgundy",
+        "hex": "#82001e"
+      },
+      {
+        "handle": "mahagony-red",
+        "name": "Mahogany",
+        "hex": "#470406"
+      },
+      {
+        "handle": "raspberry-red",
+        "name": "Raspberry",
+        "hex": "#cd2550"
+      },
+      {
+        "handle": "vermillion-red",
+        "name": "Vermilion",
+        "hex": "#dd4b3a"
+      },
+      {
+        "handle": "cinober-red",
+        "name": "Paprika",
+        "hex": "#f3342e"
+      },
+      {
+        "handle": "maroon-red",
+        "name": "Maroon",
+        "hex": "#730034"
+      },
+      {
+        "handle": "carmine-red",
+        "name": "Claret",
+        "hex": "#9b021c"
+      },
+      {
+        "handle": "chilli-red",
+        "name": "Chilli Red",
+        "hex": "#bb0f1c"
+      },
+      {
+        "handle": "imperial-red",
+        "name": "Imperial Red",
+        "hex": "#e81638"
+      },
+      {
+        "handle": "scarlet-red",
+        "name": "Scarlet Red",
+        "hex": "#c30117"
+      },
+      {
+        "handle": "mars-red",
+        "name": "Mars",
+        "hex": "#b84533"
+      },
+      {
+        "handle": "red-wine",
+        "name": "Red Wine",
+        "hex": "#4b0923"
+      },
+      {
+        "handle": "cherry-red",
+        "name": "Cherry Red",
+        "hex": "#8f0125"
+      },
+      {
+        "handle": "apple",
+        "name": "Apple",
+        "hex": "#ab091b"
+      },
+      {
+        "handle": "red-currant",
+        "name": "Red Currant",
+        "hex": "#a23744"
+      },
+      {
+        "handle": "blood-red",
+        "name": "Blood Red",
+        "hex": "#850312"
+      },
+      {
+        "handle": "hibiscus",
+        "name": "Hibiscus",
+        "hex": "#a0183d"
+      },
+      {
+        "handle": "pastel-red",
+        "name": "Pastel Red",
+        "hex": "#fe6c6b"
+      },
+      {
+        "handle": "terracotta-red",
+        "name": "Terracotta",
+        "hex": "#9a3f3d"
+      },
+      {
+        "handle": "rose-red",
+        "name": "Rose Red",
+        "hex": "#c70451"
+      },
+      {
+        "handle": "red-passion",
+        "name": "Crimson",
+        "hex": "#d20000"
+      },
+      {
+        "handle": "strawberry",
+        "name": "Strawberry",
+        "hex": "#f4315c"
+      }
+    ],
+    "Stormy Grey": [
+      {
+        "handle": "ash-grey",
+        "name": "Ash Grey",
+        "hex": "#848988"
+      },
+      {
+        "handle": "charcoal",
+        "name": "Charcoal",
+        "hex": "#393f44"
+      },
+      {
+        "handle": "coal-grey",
+        "name": "Cool Grey",
+        "hex": "#767b89"
+      },
+      {
+        "handle": "dark-grey",
+        "name": "Dark Grey",
+        "hex": "#444444"
+      },
+      {
+        "handle": "dolphin",
+        "name": "Dolphin",
+        "hex": "#9d9d9d"
+      },
+      {
+        "handle": "dove-grey",
+        "name": "Dove Grey",
+        "hex": "#9c9c9c"
+      },
+      {
+        "handle": "fog-grey",
+        "name": "Fog Grey",
+        "hex": "#797474"
+      },
+      {
+        "handle": "graphite",
+        "name": "Graphite",
+        "hex": "#424548"
+      },
+      {
+        "handle": "harbor-grey",
+        "name": "Harbor Grey",
+        "hex": "#a8a9a3"
+      },
+      {
+        "handle": "iron-grey",
+        "name": "Iron Grey",
+        "hex": "#43464c"
+      },
+      {
+        "handle": "koala-grey",
+        "name": "Koala Grey",
+        "hex": "#878685"
+      },
+      {
+        "handle": "lava-grey",
+        "name": "Lava Grey",
+        "hex": "#5e5d61"
+      },
+      {
+        "handle": "mouse-grey",
+        "name": "Mouse Grey",
+        "hex": "#696a6d"
+      },
+      {
+        "handle": "pale-grey",
+        "name": "Pale Grey",
+        "hex": "#bbbab8"
+      },
+      {
+        "handle": "pastel-grey",
+        "name": "Pastel Grey",
+        "hex": "#b8b8b1"
+      },
+      {
+        "handle": "pearl-grey",
+        "name": "Pearl Grey",
+        "hex": "#b3bab0"
+      },
+      {
+        "handle": "rhino-grey",
+        "name": "Rhino Grey",
+        "hex": "#788082"
+      },
+      {
+        "handle": "shadow",
+        "name": "Shadow",
+        "hex": "#686b6f"
+      },
+      {
+        "handle": "shark-grey",
+        "name": "Shark Grey",
+        "hex": "#5b6369"
+      },
+      {
+        "handle": "silver-grey",
+        "name": "Silver Grey",
+        "hex": "#acacac"
+      },
+      {
+        "handle": "smoke-grey",
+        "name": "Smoke Grey",
+        "hex": "#7d7d7d"
+      },
+      {
+        "handle": "steel-grey",
+        "name": "Steel Grey",
+        "hex": "#929292"
+      },
+      {
+        "handle": "stone-grey",
+        "name": "Stone Grey",
+        "hex": "#54524d"
+      },
+      {
+        "handle": "warm-grey",
+        "name": "Warm Grey",
+        "hex": "#7d787b"
+      },
+      {
+        "handle": "shadow-1",
+        "name": "Almost Black",
+        "hex": "#43464c"
+      }
+    ],
+    "Vivid Violet": [
+      {
+        "handle": "lavender",
+        "name": "Lavender",
+        "hex": "#986db5"
+      },
+      {
+        "handle": "violet",
+        "name": "Classic Violet",
+        "hex": "#9010bf"
+      },
+      {
+        "handle": "amethyst",
+        "name": "Amethyst",
+        "hex": "#8554d1"
+      },
+      {
+        "handle": "wildberry",
+        "name": "Wildberry",
+        "hex": "#a04d95"
+      },
+      {
+        "handle": "wine",
+        "name": "Purple Orchid",
+        "hex": "#911489"
+      },
+      {
+        "handle": "lilac",
+        "name": "Lilac",
+        "hex": "#c988c8"
+      },
+      {
+        "handle": "mauve",
+        "name": "Mauve",
+        "hex": "#dfa4f8"
+      },
+      {
+        "handle": "bright-violet",
+        "name": "Bright Violet",
+        "hex": "#b944ea"
+      },
+      {
+        "handle": "wine-1",
+        "name": "Wine",
+        "hex": "#572048"
+      },
+      {
+        "handle": "pale-violet",
+        "name": "Pale Violet",
+        "hex": "#ecd0f9"
+      },
+      {
+        "handle": "psychedelic",
+        "name": "Psychedelic",
+        "hex": "#ae00ff"
+      },
+      {
+        "handle": "plum",
+        "name": "Plum",
+        "hex": "#4e0973"
+      },
+      {
+        "handle": "palatinate",
+        "name": "Fig",
+        "hex": "#671e67"
+      },
+      {
+        "handle": "eggplant",
+        "name": "Eggplant",
+        "hex": "#4a154d"
+      },
+      {
+        "handle": "royal",
+        "name": "Royal",
+        "hex": "#492376"
+      },
+      {
+        "handle": "midnight",
+        "name": "Midnight",
+        "hex": "#492376"
+      },
+      {
+        "handle": "iris",
+        "name": "Iris",
+        "hex": "#6947d1"
+      },
+      {
+        "handle": "grape",
+        "name": "Grape",
+        "hex": "#5f114f"
+      },
+      {
+        "handle": "indigo",
+        "name": "Indigo",
+        "hex": "#39178f"
+      },
+      {
+        "handle": "ultra-violet",
+        "name": "Ultra Violet",
+        "hex": "#4a108b"
+      },
+      {
+        "handle": "mulberry",
+        "name": "Mulberry",
+        "hex": "#742665"
+      },
+      {
+        "handle": "russian",
+        "name": "Elderberry",
+        "hex": "#391265"
+      },
+      {
+        "handle": "pastel-purple",
+        "name": "Pastel Purple",
+        "hex": "#d7b9ed"
+      },
+      {
+        "handle": "light-purple",
+        "name": "Light Purple",
+        "hex": "#f5e3fb"
+      },
+      {
+        "handle": "purple-1",
+        "name": "Purple",
+        "hex": "#472b59"
+      }
+    ]
+  },
+  "unassigned": [],
+  "generic": [
+    {
+      "handle": "blue",
+      "name": "Blue",
+      "hex": "#005BD3",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2"
+      ]
+    },
+    {
+      "handle": "black",
+      "name": "Black",
+      "hex": "#000000",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/1"
+      ]
+    },
+    {
+      "handle": "pink",
+      "name": "Pink",
+      "hex": "#FFC0CB",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/11"
+      ]
+    },
+    {
+      "handle": "green",
+      "name": "Green",
+      "hex": "#05AA3D",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/9"
+      ]
+    },
+    {
+      "handle": "purple",
+      "name": "Purple",
+      "hex": "#A54DCF",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/12"
+      ]
+    },
+    {
+      "handle": "gray",
+      "name": "Gray",
+      "hex": "#808080",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/8"
+      ]
+    },
+    {
+      "handle": "beige",
+      "name": "Beige",
+      "hex": "#ddd2cc",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/7"
+      ]
+    },
+    {
+      "handle": "white",
+      "name": "White",
+      "hex": "#FFFFFF",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/3"
+      ]
+    },
+    {
+      "handle": "silver",
+      "name": "Silver",
+      "hex": "#D3D3D3",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/5"
+      ]
+    },
+    {
+      "handle": "red",
+      "name": "Red",
+      "hex": "#F61F1F",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/13"
+      ]
+    },
+    {
+      "handle": "bronze",
+      "name": "Bronze",
+      "hex": "#a95c26",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/7"
+      ]
+    },
+    {
+      "handle": "orange",
+      "name": "Orange",
+      "hex": "#FF8A00",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/10"
+      ]
+    },
+    {
+      "handle": "rose-gold",
+      "name": "Rose gold",
+      "hex": "#B76E79",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/16"
+      ]
+    },
+    {
+      "handle": "clear",
+      "name": "Clear",
+      "hex": "#FFFFFF",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/17"
+      ]
+    },
+    {
+      "handle": "gold",
+      "name": "Gold",
+      "hex": "#D49A06",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/4"
+      ]
+    },
+    {
+      "handle": "navy",
+      "name": "Navy",
+      "hex": "#282099",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2"
+      ]
+    },
+    {
+      "handle": "brown",
+      "name": "Brown",
+      "hex": "#9A5630",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/7"
+      ]
+    },
+    {
+      "handle": "multicolor",
+      "name": "Multicolor",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2865"
+      ]
+    },
+    {
+      "handle": "grey",
+      "name": "Grey",
+      "hex": "#808080",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/8"
+      ]
+    },
+    {
+      "handle": "animal",
+      "name": "Animal",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2865"
+      ]
+    },
+    {
+      "handle": "green-1",
+      "name": "Green",
+      "hex": "#05AA3D",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/9"
+      ]
+    },
+    {
+      "handle": "white-1",
+      "name": "White",
+      "hex": "#FFFFFF",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/3"
+      ]
+    },
+    {
+      "handle": "gray-1",
+      "name": "Gray",
+      "hex": "#808080",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/8"
+      ]
+    },
+    {
+      "handle": "floral",
+      "name": "Floral",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2865"
+      ]
+    },
+    {
+      "handle": "white-2",
+      "name": "White",
+      "hex": "#FFFFFF",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/3"
+      ]
+    },
+    {
+      "handle": "gray-2",
+      "name": "Gray",
+      "hex": "#808080",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/8"
+      ]
+    },
+    {
+      "handle": "beige-1",
+      "name": "Beige",
+      "hex": "#EAD8AB",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/6"
+      ]
+    },
+    {
+      "handle": "white-3",
+      "name": "White",
+      "hex": "#FFFFFF",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/3"
+      ]
+    },
+    {
+      "handle": "pink-1",
+      "name": "Pink",
+      "hex": "#FFC0CB",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/11"
+      ]
+    },
+    {
+      "handle": "multicolor-1",
+      "name": "Multicolor",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2865"
+      ]
+    },
+    {
+      "handle": "white-4",
+      "name": "White",
+      "hex": "#FFFFFF",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/3"
+      ]
+    }
+  ],
+  "patterns": [
+    {
+      "handle": "blue-orange",
+      "name": "Sunset",
+      "hex": "#005BD3",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2",
+        "gid://shopify/TaxonomyValue/10"
+      ]
+    },
+    {
+      "handle": "purple-pink",
+      "name": "Blossom",
+      "hex": "#A54DCF",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/12",
+        "gid://shopify/TaxonomyValue/11"
+      ]
+    },
+    {
+      "handle": "blue-green",
+      "name": "Earth",
+      "hex": "#005BD3",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2",
+        "gid://shopify/TaxonomyValue/7",
+        "gid://shopify/TaxonomyValue/9"
+      ]
+    },
+    {
+      "handle": "yellow-stripes-1",
+      "name": "Yellow Stripes 1",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/14"
+      ]
+    },
+    {
+      "handle": "yellow-stripes-2",
+      "name": "Yellow Stripes 2",
+      "hex": "#FFE500",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/14"
+      ]
+    },
+    {
+      "handle": "yellow-stripes-3",
+      "name": "Yellow Stripes 3",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/14"
+      ]
+    },
+    {
+      "handle": "pink-gradient",
+      "name": "Pink Gradient",
+      "hex": "#FFC0CB",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/11"
+      ]
+    },
+    {
+      "handle": "pink-bubbles",
+      "name": "Pink Bubbles",
+      "hex": "#FFC0CB",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/11"
+      ]
+    },
+    {
+      "handle": "red-stripes-1",
+      "name": "Red Stripes",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/13"
+      ]
+    },
+    {
+      "handle": "green-gradient-1",
+      "name": "Green Gradient 1",
+      "hex": "#05AA3D",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/9"
+      ]
+    },
+    {
+      "handle": "green-gradient-2",
+      "name": "Green Gradient 2",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/9"
+      ]
+    },
+    {
+      "handle": "red-gingham-1",
+      "name": "Red Gingham 1",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/13"
+      ]
+    },
+    {
+      "handle": "red-gingham-2",
+      "name": "Red Gingham 2",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/13"
+      ]
+    },
+    {
+      "handle": "red-waves",
+      "name": "Red Waves",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/13"
+      ]
+    },
+    {
+      "handle": "green-polka",
+      "name": "Green Polka",
+      "hex": "#05AA3D",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/9"
+      ]
+    },
+    {
+      "handle": "brown-gingham",
+      "name": "Brown Gingham",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/7"
+      ]
+    },
+    {
+      "handle": "brown-swirl",
+      "name": "Brown Swirl",
+      "hex": "#9A5630",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/7"
+      ]
+    },
+    {
+      "handle": "purple-stripes-1",
+      "name": "Purple Stripes 1",
+      "hex": "#A54DCF",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/12"
+      ]
+    },
+    {
+      "handle": "purple-stripes-2",
+      "name": "Purple Stripes 2",
+      "hex": "#A54DCF",
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/12"
+      ]
+    },
+    {
+      "handle": "purple-stripes-3",
+      "name": "Purple Stripes 3",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/12"
+      ]
+    },
+    {
+      "handle": "purple-stripes-4",
+      "name": "Purple Stripes 4",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/12"
+      ]
+    },
+    {
+      "handle": "blue-bird",
+      "name": "Blue Bird",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2"
+      ]
+    },
+    {
+      "handle": "blue-waves-3",
+      "name": "Blue Waves 3",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2"
+      ]
+    },
+    {
+      "handle": "blue-abstract-2",
+      "name": "Blue Abstract 2",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2"
+      ]
+    },
+    {
+      "handle": "blue-abstract-3",
+      "name": "Blue Abstract 3",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2"
+      ]
+    },
+    {
+      "handle": "blue-abstract-4",
+      "name": "Blue Abstract 4",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2"
+      ]
+    },
+    {
+      "handle": "blue-abstract-1",
+      "name": "Blue Abstract 1",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2"
+      ]
+    },
+    {
+      "handle": "blue-waves-1",
+      "name": "Blue Waves 1",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2"
+      ]
+    },
+    {
+      "handle": "blue-waves-2",
+      "name": "Blue Waves 2",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2"
+      ]
+    },
+    {
+      "handle": "blue-stripes-1",
+      "name": "Blue Stripes 1",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2"
+      ]
+    },
+    {
+      "handle": "blue-stripes-2",
+      "name": "Blue Stripes 2",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2"
+      ]
+    },
+    {
+      "handle": "blue-pattern-1",
+      "name": "Sunny-Side Up",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2"
+      ]
+    },
+    {
+      "handle": "blue-pattern-2",
+      "name": "Evil Eye",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2"
+      ]
+    },
+    {
+      "handle": "blue-florals",
+      "name": "Blue Florals",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2"
+      ]
+    },
+    {
+      "handle": "blue-brick",
+      "name": "Blue Brick",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2"
+      ]
+    },
+    {
+      "handle": "yellow-florals",
+      "name": "Yellow Florals",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/14"
+      ]
+    },
+    {
+      "handle": "metallic-mint",
+      "name": "Metallic Mint",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/9"
+      ]
+    },
+    {
+      "handle": "metallic-fig",
+      "name": "Metallic Fig",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/12"
+      ]
+    },
+    {
+      "handle": "metallic-frost",
+      "name": "Metallic Frost",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2"
+      ]
+    },
+    {
+      "handle": "metallic-teal-blue",
+      "name": "Metallic Teal",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2"
+      ]
+    },
+    {
+      "handle": "metallic-slate",
+      "name": "Metallic Slate",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2"
+      ]
+    },
+    {
+      "handle": "metallic-ink",
+      "name": "Metallic Ink",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/2"
+      ]
+    },
+    {
+      "handle": "metallic-navy",
+      "name": "Metallic Navy",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/15"
+      ]
+    },
+    {
+      "handle": "metallic-graphite",
+      "name": "Metallic Graphite",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/8"
+      ]
+    },
+    {
+      "handle": "metallic-shark",
+      "name": "Metallic Shark",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/8"
+      ]
+    },
+    {
+      "handle": "metallic-storm",
+      "name": "Metallic Storm",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/8"
+      ]
+    },
+    {
+      "handle": "metallic-ash",
+      "name": "Metallic Ash",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/8"
+      ]
+    },
+    {
+      "handle": "metallic-rhino",
+      "name": "Metallic Rhino",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/8"
+      ]
+    },
+    {
+      "handle": "metallic-khaki",
+      "name": "Metallic Khaki",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/9"
+      ]
+    },
+    {
+      "handle": "metallic-basil",
+      "name": "Metallic Basil",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/9"
+      ]
+    },
+    {
+      "handle": "metallic-lime",
+      "name": "Metallic Lime",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/9"
+      ]
+    },
+    {
+      "handle": "metallic-neon-yellow",
+      "name": "Metallic Neon",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/14"
+      ]
+    },
+    {
+      "handle": "metallic-mustard",
+      "name": "Metallic Mustard",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/14"
+      ]
+    },
+    {
+      "handle": "metallic-gold",
+      "name": "Metallic Gold",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/4"
+      ]
+    },
+    {
+      "handle": "metallic-dijon",
+      "name": "Metallic Dijon",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/14"
+      ]
+    },
+    {
+      "handle": "metallic-tangerine",
+      "name": "Metallic Tangerine",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/10"
+      ]
+    },
+    {
+      "handle": "metallic-melon",
+      "name": "Metallic Melon",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/10"
+      ]
+    },
+    {
+      "handle": "metallic-ginger",
+      "name": "Metallic Ginger",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/10"
+      ]
+    },
+    {
+      "handle": "metallic-almond",
+      "name": "Metallic Almond",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/3"
+      ]
+    },
+    {
+      "handle": "metallic-ivory",
+      "name": "Metallic Cashmere",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/3"
+      ]
+    },
+    {
+      "handle": "metallic-pearl",
+      "name": "Metallic Pearl",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/3"
+      ]
+    },
+    {
+      "handle": "metallic-cider",
+      "name": "Metallic Cider",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/7"
+      ]
+    },
+    {
+      "handle": "metallic-clay",
+      "name": "Metallic Clay",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/10",
+        "gid://shopify/TaxonomyValue/7"
+      ]
+    },
+    {
+      "handle": "metallic-rose-taupe",
+      "name": "Metallic Rose Taupe",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/7",
+        "gid://shopify/TaxonomyValue/657"
+      ]
+    },
+    {
+      "handle": "metallic-bronze",
+      "name": "Metallic Bronze",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/657"
+      ]
+    },
+    {
+      "handle": "metallic-wood",
+      "name": "Metallic Wood",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/7"
+      ]
+    },
+    {
+      "handle": "metallic-cocoa",
+      "name": "Metallic Cocoa",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/7"
+      ]
+    },
+    {
+      "handle": "metallic-cocoa-1",
+      "name": "Metallic Cocoa",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/7"
+      ]
+    },
+    {
+      "handle": "metallic-mocha",
+      "name": "Metallic Mocha",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/7"
+      ]
+    },
+    {
+      "handle": "metallic-wenge",
+      "name": "Metallic Wenge",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/7"
+      ]
+    },
+    {
+      "handle": "metallic-walnut",
+      "name": "Metallic Walnut",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/7"
+      ]
+    },
+    {
+      "handle": "metallic-terracotta",
+      "name": "Metallic Terracotta",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/7",
+        "gid://shopify/TaxonomyValue/13"
+      ]
+    },
+    {
+      "handle": "metallic-wine",
+      "name": "Metallic Wine",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/13"
+      ]
+    },
+    {
+      "handle": "metallic-burgundy",
+      "name": "Metallic Burgundy",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/13"
+      ]
+    },
+    {
+      "handle": "metallic-fuchsia",
+      "name": "Metallic Fuchsia",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/11"
+      ]
+    },
+    {
+      "handle": "metallic-magenta",
+      "name": "Metallic Magenta",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/11"
+      ]
+    },
+    {
+      "handle": "metallic-flamingo",
+      "name": "Metallic Flamingo",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/11"
+      ]
+    },
+    {
+      "handle": "metallic-poppy",
+      "name": "Metallic Poppy",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/13"
+      ]
+    },
+    {
+      "handle": "metallic-crepe",
+      "name": "Metallic Crepe",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/11"
+      ]
+    },
+    {
+      "handle": "metallic-blush",
+      "name": "Metallic Blush",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/11"
+      ]
+    },
+    {
+      "handle": "metallic-mauve",
+      "name": "Metallic Mauve",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/12",
+        "gid://shopify/TaxonomyValue/11"
+      ]
+    },
+    {
+      "handle": "metallic-amethyst",
+      "name": "Metallic Amethyst",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/12"
+      ]
+    },
+    {
+      "handle": "metallic-amethyst-1",
+      "name": "Metallic Amethyst",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/12"
+      ]
+    },
+    {
+      "handle": "metallic-plum",
+      "name": "Metallic Plum",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/12"
+      ]
+    },
+    {
+      "handle": "metallic-aubergine",
+      "name": "Metallic Aubergine",
+      "hex": null,
+      "taxonomy": [
+        "gid://shopify/TaxonomyValue/12"
+      ]
+    }
+  ],
+  "finishes": [
+    {
+      "handle": "gloss",
+      "name": "Gloss",
+      "taxonomy": "gid://shopify/TaxonomyValue/17355"
+    },
+    {
+      "handle": "matte",
+      "name": "Matte",
+      "taxonomy": "gid://shopify/TaxonomyValue/17356"
+    },
+    {
+      "handle": "metallic",
+      "name": "Metallic",
+      "taxonomy": "gid://shopify/TaxonomyValue/17378"
+    },
+    {
+      "handle": "metallic-matte",
+      "name": "Metallic Matte",
+      "taxonomy": "gid://shopify/TaxonomyValue/17378"
+    },
+    {
+      "handle": "metallic-gloss",
+      "name": "Metallic Gloss",
+      "taxonomy": "gid://shopify/TaxonomyValue/17378"
+    }
+  ],
+  "caseTypes": [
+    {
+      "handle": "snap-case",
+      "name": "Snap Case",
+      "taxonomy": "gid://shopify/TaxonomyValue/11551"
+    },
+    {
+      "handle": "tough-case",
+      "name": "Tough Case",
+      "taxonomy": "gid://shopify/TaxonomyValue/11551"
+    },
+    {
+      "handle": "mt",
+      "name": "M",
+      "taxonomy": "gid://shopify/TaxonomyValue/11551"
+    },
+    {
+      "handle": "tough",
+      "name": "T",
+      "taxonomy": "gid://shopify/TaxonomyValue/11551"
+    },
+    {
+      "handle": "back-cover",
+      "name": "Back cover",
+      "taxonomy": "gid://shopify/TaxonomyValue/11551"
+    },
+    {
+      "handle": "shell-cover",
+      "name": "Shell cover",
+      "taxonomy": "gid://shopify/TaxonomyValue/11562"
+    },
+    {
+      "handle": "magtough-case",
+      "name": "MagTough Case",
+      "taxonomy": "gid://shopify/TaxonomyValue/11551"
+    },
+    {
+      "handle": "armor-case",
+      "name": "Armor Case",
+      "taxonomy": "gid://shopify/TaxonomyValue/11551"
+    },
+    {
+      "handle": "ultra-case",
+      "name": "Ultra Case",
+      "taxonomy": "gid://shopify/TaxonomyValue/11551"
+    }
+  ],
+  "notes": [
+    "Duplicate hex #ee27fe: Neon (neon, Playful Pink) and Neon Pink (neon-pink, Playful Pink)",
+    "Duplicate hex #492376: Royal (royal, Vivid Violet) and Midnight (midnight, Vivid Violet)",
+    "Duplicate hex #43464c: Iron Grey (iron-grey, Stormy Grey) and Almost Black (shadow-1, Stormy Grey)",
+    "Duplicate name \"purple\": handles purple, purple-1",
+    "Duplicate name \"sunset\": handles sunset, blue-orange",
+    "Duplicate name \"metallic cocoa\": handles metallic-cocoa, metallic-cocoa-1",
+    "Duplicate name \"metallic amethyst\": handles metallic-amethyst, metallic-amethyst-1",
+    "Handles berry, dark-green-1, purple-1 and wave are solid colours with non-standard handles/casing (likely added via product import); kept in families by taxonomy.",
+    "Handles metallic-* with null hex are photo swatches for the Metallic finish; grouped under 'patterns', not counted as Skreed shades.",
+    "Entries with multiple color_taxonomy_reference values (Sunset, Blossom, Earth, Metallic Clay, Metallic Rose Taupe, Metallic Terracotta, Metallic Mauve) are print/pattern designs and are in 'patterns'."
+  ],
+  "counts": {
+    "Basic Brown": 22,
+    "Blushing Coral": 24,
+    "Blissful Blue": 25,
+    "Frosty White": 24,
+    "Go Green": 25,
+    "Mellow Yellow": 24,
+    "Playful Pink": 25,
+    "Roaring Red": 24,
+    "Stormy Grey": 25,
+    "Vivid Violet": 25,
+    "total": 243,
+    "unassigned": 0,
+    "generic": 31,
+    "patterns": 85,
+    "metaobjectsExported": 359
+  }
+}

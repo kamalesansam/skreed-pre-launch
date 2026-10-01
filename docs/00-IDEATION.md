@@ -1,0 +1,182 @@
+# Skreed Pre-Launch Site: Ideation & Plan
+
+Prepared 2026-10-01. Live window: skreed.in forwards to this site until Nov 3, then to skreed.com on Nov 4 (two days before Dhanteras, four before Diwali on Nov 8).
+
+Detailed research behind every section lives in `docs/research/` (six reports) and the data files in `docs/data/`. This document is the synthesis: what we know, what we recommend, and what the team still has to decide.
+
+---
+
+## 1. What we are building and why
+
+**Goal stack (Prem's priority order)**
+1. Position Skreed as a lifestyle brand that connects, not a tech brand.
+2. Say "this changes everything in the space".
+3. Get people to share their details.
+4. Get people to follow @skreedofficial.
+
+**Hard constraints**
+- Must be as magnetic on a phone as on a laptop. Most traffic will arrive from the Instagram bio link, inside Instagram's in-app browser, on mid-range Android over 4G.
+- One developer (Sam + Claude Code), roughly three working weeks.
+- Brand voice from the Skreed Brain doc: confident, minimal, design-led, short sentences, no hype, max two emojis, never sound like a discount brand.
+
+**The one idea everything hangs on**
+Skreed's real product is *shade*, not a print and not protection. Every competitor in India (DailyObjects, Qrioh, The Case Company, Kalakaar) sells artwork grids; every global one (Casetify, Burga, Dbrand, Mous) sells prints or armour. Nobody sells a colour system. So the teaser should look like a paint brand or Pantone that happens to make cases, not like a case brand. The 240-shade wall is the hero, the shock stat, and the lead magnet at the same time.
+
+**What we found in the company's own data**
+- The store already runs: 1,157 active products, 70 orders / $2.9K in September, US-first, AOV ~$44.
+- Shopify holds the shade data: 243 solid shades across the 10 families with hex values (exported to `docs/data/shades.json`). Three pairs share a hex and should be checked before launch (Royal/Midnight, Neon/Neon Pink, Iron Grey/Almost Black).
+- Finishes in Shopify: gloss, matte, metallic, metallic-matte, metallic-gloss. Case types: snap, tough, magtough, armor, ultra, plus legacy back-cover/shell-cover.
+- Renders: Dropbox "Product Images Folder/amazon product listings" holds per-shade PNG renders organised series → case type → family → device (full inventory in `docs/data/dropbox-asset-inventory.md`). Shopify Files holds the logo PNGs; no SVG logo exists yet.
+- Instagram sits at 59 followers with the content system dark for half of September. The site has to do real follower work, not just link out.
+
+---
+
+## 2. The site: recommended spine
+
+A single page, phone-first, each section roughly one screen tall. Narrative: *Basic is over → here are the 240 → which one is you → claim it → tell someone → gift it this Diwali → who we are.*
+
+| # | Section | What happens | Goal served |
+|---|---|---|---|
+| 1 | **Hero: Basic vs Beyond Basic** | A thumb-drag divider: left is the black case everyone owns, right is the same phone in a Skreed shade. Headline "Go Beyond Basic." Sub "240 shades. Doors open Nov 4." A day counter in the corner tinted by today's shade. | 2, 1 |
+| 2 | **The Wall** | All 240 shades as one living grid. Tap a tile: it swells, shows name + family + a Reserve chip. Family tabs on phone, full grid on laptop. One greyed 241st tile: "Follow to reveal." | 1, 2, 4 |
+| 3 | **Find your shade** | Tabs: Quiz (six swipe cards, "Beige or Rouge?") as default; From a photo (upload, five-colour palette matched to the 240); Live camera behind a flag for week two. Result: a shade card with tilt-to-see gloss vs matte on phone. | 1, 3 |
+| 4 | **Reserve your shade** | Phone number (+91 fixed) as the one required field, email optional after. Device and finish pickers. Live per-shade counter. Confirmation: "Mauve is yours. First dibs Nov 4." Then "Find your twin": a referral link that unlocks a complementary pair shade for both. | 3 |
+| 5 | **Share** | Canvas-generated 1080×1920 story card ("My Skreed shade is Mauve") sent through the native share sheet to WhatsApp or Instagram Stories. "Tag @skreedofficial." | 4, 3 |
+| 6 | **Diwali light stories** | Five days, five shade stories (Dhanteras gold → Sand; Diwali night → Amethyst; Bhai Dooj → Ballerina). "Gift a pair" reserve with a recipient field. Colour and type only, no clipart. | 1, 3 |
+| 7 | **Manifesto + founders' note** | Pinned kinetic type: "Smart. Sleek. Skreed." each word fills with a family colour. Then a 120-word founders' note with a reply field. | 1, 2 |
+| 8 | **Footer** | Nov 4, Instagram and broadcast-channel links, privacy and T&Cs. | 4 |
+
+**Why this spine and not the others.** The concept catalog (`06-concept-catalog.md`) scores 27 concepts on phone wow, laptop wow, lead capture and shareability. The five chosen are the ones that score four or five on phone *and* on lead capture or shareability, cost under two days each, and need no WebGL. The splitter hero is the cheapest big-impact concept in the whole list. The quiz is the highest-converting mechanic. The wall is the USP. Reserve and share are the business.
+
+**Ambient layer.** The site re-tints daily: 34 days, 34 shades, so there is a reason to come back and a different screenshot every day.
+
+**Kept on the bench (ship only if ahead of schedule by day 12):** shake-to-shuffle, Shade of the Day with daily WhatsApp, City Shade ("Hyderabad at 6:12pm"), Case Wardrobe planner, sound-reactive shade, AR on-desk via model-viewer, the "name the 241st shade" contest.
+
+---
+
+## 3. Stack decision
+
+| Layer | Recommendation | Why |
+|---|---|---|
+| Framework | **Astro 7, static output** | Zero-JS baseline is the only way to hit LCP under 2.5 s on Indian mid-range Android while still layering heavy interactivity as lazy islands. Claude Code works very well with Astro's plain HTML/TS. |
+| Motion | **GSAP 3.15 (ScrollTrigger, SplitText, Flip)** | Free for commercial use since v3.13 (Webflow). Best scroll-storytelling toolkit; `matchMedia()` handles reduced-motion and per-breakpoint timelines. |
+| Micro-interactions | Motion (mini build) inside any React island; CSS scroll-driven animations where supported | Tiny, hardware-accelerated. |
+| Background | `@paper-design/shaders` mesh gradient at half resolution, slow OKLCH drift through the 10 families | One fullscreen shader pass is affordable on mobile; it gives the "material" feel without WebGL 3D. |
+| 3D | **None in the spine.** If a 3D hero is wanted later: procedural case in react-three-fiber (rounded box, PBR matte/gloss presets, colour from shades.json), loaded on tap and gated by detect-gpu tier | $0, 1–2 days, no licence issues. Buying or AI-generating a case model costs more and looks worse for a hard-surface product. |
+| Hosting | **Cloudflare Workers + Static Assets, DNS zone for skreed.in moved to Cloudflare** | Unlimited static bandwidth, 22 Indian PoPs, Turnstile + redirect rules + analytics in one dashboard. Vercel Hobby is non-commercial and would be a terms breach; Vercel Pro ($20) is the fallback. |
+| Domain | Serve the site **directly** on skreed.in (CNAME, proxied). Do not use registrar forwarding (HTTPS breaks). | On Nov 4, add one Cloudflare Single Redirect rule `skreed.in/* → skreed.com/$1`; live in seconds, no DNS change, instant rollback. |
+| Lead store | **Supabase** `leads` table as source of truth, insert-only via an edge function | Keeps consent evidence, referral codes, UTM. Mirror to Shopify customers (tag `prelaunch-in`) so Shopify Email can send on Nov 4 for free. |
+| Anti-spam | Cloudflare Turnstile (free, invisible) + honeypot + per-IP/phone rate limit + unique indexes | Standard; official Supabase example exists. |
+| Email | Shopify Email (10,000/month free) | Klaviyo and Mailchimp free tiers now cap at 250 contacts; Klaviyo has no India SMS. |
+| WhatsApp | AiSensy (cheapest broadcasts) or Interakt (Shopify-native). Templates submitted by Oct 25; account verification takes 1–3 days. | WhatsApp is the India launch-day channel: 85–95% open rates. |
+| Analytics | PostHog (1M events free) + Cloudflare Web Analytics for Core Web Vitals | Custom events for signup, follow click, shade selected, share. UTMs on every link because Instagram strips Referer. |
+| Fonts | Self-hosted Poppins 700 + Inter variable (brand), Instrument Serif Italic for shade names, Clash Display for the hero | ~40 KB total; `font-display: swap`. |
+
+Full package list with versions and the repo tree are in `01-stack-and-hosting.md`.
+
+---
+
+## 4. Decisions the team needs to make
+
+Each has a recommended default so the build can start without a meeting.
+
+| # | Decision | Recommended default |
+|---|---|---|
+| 1 | Scope: the five-concept spine, or more? | Spine. Freeze by build day 3. Extras only if ahead by day 12. |
+| 2 | Required field: phone or email? | Phone (+91) required, email optional on the confirmation screen. No OTP (20–30% abandonment, DLT registration delays). The Nov 4 WhatsApp message is the verification. |
+| 3 | What does reserving get you? | Priority access + free shipping for the first 48 hours. No discount language (brand rule). |
+| 4 | Show scarcity counters? | Yes, but only real counts, and only once a shade passes 10 reservations. |
+| 5 | Camera at launch? | No. Photo upload at launch; live camera in week two. Camera permission prompts lose 30–50% of users. |
+| 6 | Run a contest? | Optional: "name the 241st shade", judged on stated criteria (skill, not draw), prize under ₹10,000, T&Cs published, Tamil Nadu excluded from any chance element. Instagram follow can be a bonus entry, never a condition. |
+| 7 | Render approach | One greyscale master render per case type, tinted via CSS/canvas for all 240 shades; ten real hero photos (one per family) for the stories. Do not ship 240 images. |
+| 8 | Shade data | `docs/data/shades.json` from Shopify is the single source; resolve the three duplicate hex pairs. |
+| 9 | Hosting | Cloudflare. Needs skreed.in nameservers moved (Prem, as domain owner). |
+| 10 | Cutover | Cloudflare redirect rule on Nov 3 night, 302 for ten minutes of testing, then 301. Keep the teaser alive at skreed.com/teaser for referral links. |
+| 11 | Instagram follow gate | Honour-system only. Meta cannot verify follows and prohibits enforced engagement gates. The broadcast-channel join link is the real follow driver because joining forces a follow. |
+| 12 | Emojis | Zero sitewide. |
+
+---
+
+## 5. Assets: what exists, what has to be made
+
+**Exists**
+- Shade dataset with hex: `docs/data/shades.json` and `.csv` (243 solid shades, 10 families, finishes, case types).
+- Per-shade PNG renders on Dropbox (Amazon listing renders by series/case type/family/device) and on the Shopify CDN (2500×2500 diagonal-split matte/gloss composites).
+- Logo as PNG on Shopify Files (`skreed_logo_1200_628.png`, `Logo_skreed-4_20240711_charcoal.png`, `skreed_logo_300a.png`).
+- Brand fonts and voice rules (Skreed Brain doc).
+
+**Has to be made (owner: Sam unless noted)**
+| Asset | How |
+|---|---|
+| Logo SVG (wordmark, mark, mono, reversed) | Vectorise the Shopify PNG with the Adobe MCP `image_vectorize`, or source the original from whoever made it. Everything else (favicon, OG, share card) depends on this. Do first. |
+| Favicon set + OG image | From the mark; per-shade OG images generated at build time with Satori. |
+| Greyscale master renders, one per case type | From the Dropbox renders: background removal via Adobe MCP, desaturate, keep the specular layer separate for the gloss overlay. |
+| Ten family hero photos | Real render composited on a Firefly-generated colour-drenched set (Firefly is commercially safe). Prompt pattern in `05-assets-and-creative-tooling.md`. Never let a generator draw the case. |
+| Share-card template | Drawn in Canvas 2D at runtime, not DOM screenshots (fonts and CORS break on iOS). |
+| Copy deck | Headline, sub, CTA, confirmation, error, ten family blurbs, 240 one-line shade stories, founders' note. Jyotika and Prem to review voice. |
+| Legal | Privacy notice (DPDP-style: what we collect, why, how to withdraw), T&Cs if a contest runs. |
+| WhatsApp templates | Launch-day and reminder templates submitted by Oct 25. |
+
+Target weights: hero image ≤ 120 KB AVIF, grid tile ≤ 25 KB, swatch ≤ 2 KB, first-view page ≤ 1.5 MB, JS ≤ 150 KB gz before any lazy island.
+
+---
+
+## 6. Growth mechanics
+
+- **Reserve your shade** is the capture. Deterministic reward (priority + free shipping), real counters.
+- **Shade Twin referral**: unique link per lead; when a friend reserves, both unlock a complementary pair shade and move up the queue. Rewards are earned, not drawn, so no lottery exposure. Count a referral only once the friend's number receives a message (anti-fraud).
+- **Referral ladder** (Harry's model, adapted): 3 friends = early access hour, 10 = a free matte case in any shade, 25 = name a shade, 50 = a full family set.
+- **Share card** at the end of every flow, through the native share sheet to WhatsApp (India's default) and Instagram Stories.
+- **Instagram**: universal-link follow button, `ig.me/m/skreedofficial` DM link for "DM us your shade", and the broadcast-channel invite as the primary post-signup CTA. Hidden 241st shade as an honour-system nudge.
+- **Launch day (Nov 4)**: 07:00 IST WhatsApp template with early-access link, 07:05 Shopify Email to the `prelaunch` segment, 12:00 broadcast-channel post and story, Nov 5 reminder to non-clickers, Nov 8 "48 hours left".
+
+---
+
+## 7. Build plan (15 working days)
+
+| Day | Work |
+|---|---|
+| 1 | Astro repo, shades.json wired, Cloudflare deploy, skreed.in DNS move started, Turnstile keys |
+| 2 | Design tokens, type, phone and laptop layout skeleton, daily-shade theming |
+| 3 | Hero split slider; greyscale render + tint pipeline. **Scope freeze.** |
+| 4 | The Wall: grid, stagger, tap sheet, family tabs; perf pass on a Redmi-class device with 4× CPU throttle |
+| 5 | Supabase schema (leads, referrals, share_events), edge function with Turnstile + rate limit; Reserve sheet |
+| 6 | Live per-shade counters, Shopify customer mirror, confirmation screen |
+| 7 | Quiz: cards, scoring, result screen |
+| 8 | Photo palette: k-means, OKLCH nearest-shade match, upload UX |
+| 9 | Share card: canvas template, Web Share, download fallback, per-shade OG images |
+| 10 | Tilt gloss/matte on the shade card; finish toggle; iOS motion-permission flow |
+| 11 | Shade Twin referral, hidden 241st tile, Instagram and broadcast-channel links |
+| 12 | Diwali stories, manifesto, founders' note, copy pass |
+| 13 | Analytics events; camera flow behind a flag |
+| 14 | QA matrix: iPhone 13/15/17 Safari, Pixel and Samsung Chrome, Redmi-class Android, Instagram in-app browser, Jio 4G throttle, Lighthouse ≥ 90 mobile, reduced motion |
+| 15 | Cutover rehearsal, seed counters, legal pages, buffer |
+
+Parallel, not on the dev path: logo SVG (day 1–2), copy deck (days 3–8), hero photos (days 4–9), WhatsApp BSP account and templates (by Oct 25), nameserver move (Prem, day 1).
+
+---
+
+## 8. Risks
+
+| Risk | Mitigation |
+|---|---|
+| Jank on budget Android (240 animated tiles, scroll scrub) | Transform/opacity only, `content-visibility: auto`, no WebGL in the spine, AVIF ≤ 60 KB tiles, test on a real Redmi, LCP < 2.5 s on throttled 4G |
+| Instagram in-app browser | Detect the UA; plain https links instead of app schemes; stateless form; "open in browser" hint |
+| Camera permission drop-off | Upload first, camera second, quiz as the zero-permission default; say "processed on your phone", which is true |
+| iOS motion permission for tilt | "Tap to enable tilt" chip; pointer fallback on desktop |
+| Contest legality | Skill-judged, modest prize, published rules, Tamil Nadu excluded from any chance element |
+| Meta rules on follow gating | Honour-system only; include the standard "not sponsored by Instagram" release |
+| DPDP consent | Unticked boxes, itemised notice, withdrawal link; store timestamp, IP, text version |
+| Fake scarcity would break brand trust | Real counts only |
+| Scope creep | Freeze on day 3 |
+| Nov 4 cutover | Rehearse the redirect rule a week early with 302; keep `/teaser` alive |
+
+---
+
+## 9. Open items and gaps in this research
+
+- **Your Instagram saved collections ("claude", "web design", "dev") could not be read.** Instagram's API has no saved-collections endpoint, so Composio cannot reach them. Two ways to get them in: export via Instagram → Settings → Accounts Center → Your information and permissions → Download your information → Saved (gives `saved_collections.json` with every post link), or paste the post links into the chat. I will fold them into the reference list as soon as they arrive.
+- **Egress blocks**: skreed.com, instagram.com and most design galleries (Awwwards, Codrops, Spline, GSAP, Rive) were blocked from this sandbox, so a few facts in `03-references-competitors-playbooks.md` are marked as from search snippets or prior knowledge. Confirm GSAP's licence clause and Spline/Rive prices on their sites before budgeting.
+- **Logo**: only PNGs exist. Whoever designed the 2024 logo may have the vector.
+- **Three duplicate hex pairs** in the shade data need a decision (rename, re-render, or merge).
+- **Nothing was built yet.** The repo contains only this documentation and the data files, as requested.
