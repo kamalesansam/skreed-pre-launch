@@ -164,6 +164,29 @@ Parallel, not on the dev path: logo SVG (day 1–2), copy deck (days 3–8), her
 
 ---
 
+## 7b. The sixteen layers, each with an owner and a decision
+
+AI writes code; the team still holds every layer below. Each one has an answer for the teaser so nothing is discovered on launch night.
+
+| Layer | Decision for the teaser | Where it is specified |
+|---|---|---|
+| System design | One static page + one write endpoint + one read endpoint (counters) + one redirect page (`/r/<code>`). Nothing else. | §2 spine, `01-stack-and-hosting.md` §7 |
+| System architecture | Astro static on Cloudflare Workers Static Assets; Worker handles `/api/signup`, `/api/counts`, `/r/*`; Supabase Postgres; Shopify mirror fire-and-forget; PostHog + Cloudflare Analytics. | `01-stack-and-hosting.md` |
+| Frontend | Astro + GSAP + tokens; React islands only for quiz and share; 50 design rules; review loop per section. | `CLAUDE.md`, `docs/CHECKLIST.md`, `.claude/skills/*` |
+| APIs and backend logic | Three routes above. Zod validation, Turnstile verify, E.164 normalisation, `reserve_shade()` Postgres function for the counter, idempotent Shopify `customerCreate`. | `04-signup-virality-social.md` §2, `08-prelaunch-security-checklist.md` |
+| Databases and storage | Supabase: `leads`, `referrals`, `share_events`, `attempts`. Unique indexes on lower(email) and phone_e164, index on referral_code. No file storage (photos processed on-device). Daily CSV export in the final week. | `08-prelaunch-security-checklist.md` rows 2, 8, 19 |
+| Auth and permissions | No user accounts. RLS deny-all for anon; service-role key only inside the Worker. Referral cookie HttpOnly/Secure/SameSite=Lax. Team dashboard, if any, behind Cloudflare Access. | `08-…` rows 2, 5, 6, 17 |
+| Hosting and cloud | Cloudflare (free): Workers, Static Assets, DNS zone for skreed.in, Turnstile, Rate Limiting, Redirect Rules. Fallback Vercel Pro. | `01-stack-and-hosting.md` §2–3 |
+| CI/CD and version control | GitHub repo; branch per section; `.github/workflows/deploy.yml` builds and runs `wrangler deploy`; Lighthouse CI asserts the mobile budget on every PR; gitleaks pre-commit. | `01-…` §7, `08-…` row 4 |
+| Security | The 20-check list, run on day 14 and again at cutover, ending with Claude attacking the live endpoint. | `08-prelaunch-security-checklist.md` |
+| Rate limiting | Cloudflare rule on `/api/signup` per IP (5 per 10 min) + Postgres `attempts` table per phone. | `08-…` row 7 |
+| Caching and CDN | Static assets immutable with content hashes; HTML `max-age=0, s-maxage=60`; counters endpoint cached 10 s at the edge; images AVIF/WebP via Astro; 22 Indian PoPs. | `01-…` §4 |
+| Error tracking and logs | Worker logs request id + outcome only (no PII); Cloudflare Workers Logs; PostHog captures front-end exceptions; a Slack/email alert if signup error rate exceeds 5% in 10 minutes (Cloudflare notification). | `08-…` row 12 |
+| Monitoring and alerts | Cloudflare Web Analytics for Core Web Vitals; PostHog funnel (view → quiz → reserve → share); Cloudflare health check on `/` every 5 min with email alert; Supabase usage alert at 80% of free tier. | `01-…` §5 |
+| Testing | Playwright screenshots at 390/1280 per section (review loop); Playwright e2e for the signup happy path and the five error states; Lighthouse CI; the day-14 attack script. | `docs/CHECKLIST.md` B1, E4; `08-…` row 20 |
+| Scaling | Static site scales by itself. The only hot path is `/api/signup`: Workers scale horizontally; Supabase free tier handles ~60 inserts/s, far above any plausible teaser peak; counters read from a 10 s edge cache so a viral spike never hits Postgres for reads. | `01-…` §2, §6 |
+| And more (ops) | Nov 4 cutover rehearsal with a 302 a week early; Supabase keep-alive ping so the free project never pauses; WhatsApp templates submitted by Oct 25; Composio key rotated. | §7 build plan days 13–15 |
+
 ## 8. Risks
 
 | Risk | Mitigation |
