@@ -32,6 +32,12 @@ E1. `/web-design-guidelines` run on the section's files; zero findings left, or 
 E2. `visual-critique:critique-screen` run on the 390 px screenshot; its findings addressed or justified.
 E3. Accessibility: semantic HTML, labelled controls, visible focus, AA contrast on both neutrals.
 E4. For anything that writes data: the relevant rows of `docs/research/08-prelaunch-security-checklist.md` pass.
+E5. Database audit (run once the schema exists, re-run after any migration). Each of the five must be answered with evidence from the code, not assumed:
+  - N+1 queries: the counters endpoint reads all shade counts in one query (`select shade_id, count from shade_counts`), never one query per tile.
+  - Pagination: no endpoint returns an unbounded list. The only list read is the 240-row counts view; any admin export uses `range()` pages of 500.
+  - Indexes: `leads(lower(email))` unique, `leads(phone_e164)` unique, `leads(referral_code)` unique, `referrals(referred_by)`, `attempts(ip, created_at)`. Confirm with `\d` or `pg_indexes`.
+  - Connection pool: the Worker uses supabase-js over HTTP (PostgREST), so there is no direct Postgres connection to exhaust; if any direct connection is ever added it goes through Supavisor transaction mode, never a direct 5432 connection from the edge.
+  - SELECT *: every query names its columns; the signup response and counters response are built from explicit selects (`select('referral_code, position')`).
 
 ## G. Real-site essentials (page-level; graded once before launch and re-checked at cutover)
 G1. Custom 404 page in the brand (off-white, one line, link back to the Wall).
