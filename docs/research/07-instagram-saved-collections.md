@@ -104,7 +104,7 @@ Net: GSAP + CSS scroll-driven animations do 90% of the work. Motion mini in the 
 | 44 | reel/DaN7gavx6CO | Job search repo | Off-topic |
 | 45 | p/DaNYCILlDgO | 42 design skills in 6 layers; stack 3-4: frontend-design / impeccable / taste-skill + animate + playwright-mcp | The recommended skill stack |
 | 46 | reel/DaNlmaoEofm | "AI builds a site from a name and a colour" (gated prompt) | None |
-| 47 | reel/DaNmIwdvLNo | Site to find animated components (part 1056) | Likely 21st.dev / Aceternity-style; see libraries |
+| 47 | reel/DaNmIwdvLNo | React Bits (reactbits.dev), part 1056 | Keep/ban split in `10-reactbits-textures-endlesstools.md` §1 and §4 |
 | 48 | reel/DZ7izKAu0Pv | Obsidian critique, "second brain" (gated) | None |
 | 49 | reel/DaJW_-6RFch | Desk setup: Claude Cowork, Wispr Flow voice, Clicky | Personal workflow |
 | 50 | reel/DaLTp7-O-h4 | Matt Pocock skills (mattpocock/skills, in Claude Code marketplace): grills you first, writes failing test, builds to green | Install; useful for the signup edge function |
@@ -210,13 +210,13 @@ Net: GSAP + CSS scroll-driven animations do 90% of the work. Motion mini in the 
 | 140 | reel/Da2uUOhMGis | "Your site needs better animation, not a redesign" | Thesis for the spine |
 | 141 | reel/DaYHzBVj35H | Reject non-JSON content types on the API | Add to the signup worker |
 | 142 | reel/DaWuiBsTrh3 | Portfolio resources (gated) | None |
-| 143 | reel/DaNmIwdvLNo | Animated components site (duplicate of 47) | As above |
+| 143 | reel/DaNmIwdvLNo | React Bits (duplicate of 47) | As above |
 | 144 | reel/DZ9mmeIyt3s | polygram.dev: AI app/website builder with an infinite design canvas | Not for a hand-crafted teaser |
-| 145 | p/DZkPlHeE_L7 | 5 hidden-gem design sites (no list in caption) | None |
-| 146 | reel/DZalHLZM2FT | Simple components that upgrade UI (Framer; gated) | None |
-| 147 | p/DOInYxDkvrs | Free texture packs | Matte grain layer |
-| 148 | reel/DO1H-IsiOm6 | endlesstools.io: no-code 3D visuals, materials, effects, interactive embeds | Hero visual / social assets without Blender |
-| 149 | reel/DSWCBYCDevb | "Elements to make $10k websites" library (gated) | None |
+| 145 | p/DZkPlHeE_L7 | Creatoom, Craftwork Design, Internet Gems, Morflax Studio, Endless Tools (+ Start UX Design, App Motion) | Creatoom iPhone 17 mockup; Internet Gems Shopify refs; Morflax vs endlesstools for 3D stills; see `10-...` §6 |
+| 146 | reel/DZalHLZM2FT | kaya.dsgn: text distortion, gravity particles, 3D carousel, orbit preloader | Only the 3D carousel, laptop family picker; see `10-...` §5 |
+| 147 | p/DOInYxDkvrs | pixelsurplus vintage grit; resourceboy light leak, scribble, VHS | Vintage grit only, 2–4% on charcoal; see `10-...` §2a |
+| 148 | reel/DO1H-IsiOm6 | endlesstools.io: no-code 3D, brick mosaic, 8K/USDZ export; PRO ~$20/mo for commercial | One PRO month if the mosaic hero is green-lit; compare Morflax $15; see `10-...` §3a |
+| 149 | reel/DSWCBYCDevb | React Bits again (Curved Loop, Flowing Menu, Splash Cursor) | Curved Loop maybe, Flowing Menu maybe, Splash Cursor banned; see `10-...` §1 |
 
 ## Honest read of the collections
 

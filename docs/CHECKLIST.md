@@ -61,6 +61,29 @@ G18. Analytics installed and verified: PostHog events firing (signup_submitted, 
 G19. Real contact details in the footer: collab@skreed.in, Hyderabad, Telangana (from the catalog), plus the Instagram handle.
 G20. Nov 4 cutover rehearsed: the Cloudflare redirect rule tested with 302 on a staging hostname.
 
+## H. Every user state, per section (from Sam's ten-state checklist; expands D3)
+
+Each row is reviewed by the CHECKER before a section is marked done. "n/a" must be argued, not assumed.
+
+| State | 1 Splitter hero | 2 The Wall | 3 Find your shade | 4 Reserve | 5 Share card | 6 Stories | 8 Footer |
+|---|---|---|---|---|---|---|---|
+| Empty | n/a (static) | Family tab with 0 matches cannot happen; assert 24 per family at build | Quiz with no answers picked: "Pick one to continue", button disabled | Counters at 0 read "Be the first" not "0 reserved" | No shade chosen: card shows the daily shade | n/a (static) | n/a |
+| Loading | None; first paint is HTML | Tiles are inline CSS; no loader. Enlarged render: blurred swatch placeholder until WebP arrives | Photo upload: progress ring on the image itself, not a spinner | Counters: skeleton bar until the Worker responds, then count up. Submit: button text becomes "Reserving..." and stays disabled | Canvas render under 100 ms; if Web Share is slow, button shows "Opening..." | Images lazy with swatch placeholder | n/a |
+| Error | n/a | Render 404: tile falls back to the flat swatch, logged | Photo decode fails: "That photo didn't open. Try another, or take the quiz" | Worker 5xx or Turnstile fail: form stays filled, message under the button, retry allowed | Canvas unsupported: fall back to a server-rendered PNG at /card/{shade}.png | Image error: swatch block | n/a |
+| No internet | Page already loaded works | Enlarge works (inline swatch); render fetch shows swatch | Quiz works fully offline (static logic) | Submit queues locally with "You're offline. We'll send it when you're back" and retries on `online` | Share works (canvas is local); link copy works | Works | Works |
+| Slow network | LCP is text, no block | Renders stream in; no layout shift (aspect-ratio boxes) | Same as loading | Counters skeleton, submit never times out silently: 8 s then "Still trying..." | Same as loading | Lazy below the fold | n/a |
+| No results | n/a | Search by shade name: "No shade called X. Closest: Y, Z" with the two nearest by name and hue | Quiz always resolves (deterministic mapping to a family + shade) | n/a | n/a | n/a | n/a |
+| Permission denied | n/a | n/a | Camera (if shipped): fall back to upload, then to quiz, with one line, never a dead end. Photo upload needs no permission on the web | Clipboard write denied: show the link in a selectable field | Web Share denied or absent: download PNG + copy caption | n/a | n/a |
+| Session expired | n/a (no sessions) | n/a | n/a | Turnstile token expired (5 min): re-run Turnstile silently and resubmit once | Referral link always valid (code, not session) | n/a | n/a |
+| Form validation | n/a | n/a | n/a | Phone: +91 and 10 digits, inline, on blur not on keystroke; email optional but checked if present; consent box required; errors in plain words, field keeps its value | n/a | n/a | n/a |
+| Success | n/a | Tile tapped: enlarged state with name + family + "Reserve this one" | Result card with the shade, "Reserve" and "Not quite? Try again" | Confirmation: shade, position number, referral link, share card; email/WhatsApp follows; reachable at /thanks | "Shared" or "Copied" for 2 s, then back | n/a | n/a |
+
+Rules that fall out of the table:
+- H1. No full-page loaders anywhere. Loading is always local to the thing that is loading.
+- H2. Every error keeps the user's input and offers one next action.
+- H3. Offline is a first-class state for the reserve form: queue, retry, confirm. Tested with the network throttled to offline in Playwright.
+- H4. Validation runs on blur and on submit, never on every keystroke; success states are 2 s and reversible.
+
 ## F. Done means
 F1. The acceptance criteria written in the plan for this section are each met, quoted back with evidence.
 F2. No TODOs, placeholders, lorem ipsum or commented-out code left in the section.
