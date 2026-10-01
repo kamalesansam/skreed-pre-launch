@@ -31,6 +31,38 @@ This repo is the skreed.in pre-launch teaser (live until Nov 3 2026, then skreed
 19. No Space Grotesk, Instrument Serif, Satoshi, Geist, Manrope, DM Sans, Plus Jakarta Sans or Outfit. See rule 4.
 20. No grain or noise texture layered over a gradient. If a matte texture is used it sits on a flat colour, is subtle, and never touches text.
 
+## Never do these, part two (30 more tells)
+21. No harsh gradients of any kind.
+22. No Lucide icons (and no other icon set sprinkled as decoration).
+23. No pure white (#fff) page background. The page neutral is the catalog's warm off-white.
+24. No rainbow colouring of UI or text. Precise reading for Skreed: the 240 shades are the product and may appear together in the Wall as swatches, in catalog order. They never colour headings, buttons, borders, backgrounds or icons. UI chrome is off-white and charcoal only.
+25. No drop shadows. Depth comes from the renders and from colour, not from `box-shadow`.
+26. No three feature cards in a row.
+27. No emojis.
+28. No liquid glass, no glassmorphism.
+29. No em dashes.
+30. No Inter, Geist or Space Grotesk.
+31. No coloured left stripe on cards or quotes.
+32. No fake testimonials. No testimonials at all before launch; there are no customers in India yet.
+33. No bento grids.
+34. No terminal or code-window mockups.
+35. No "it's not X, it's Y" copy constructions. The tagline "Go Beyond Basic" stands as-is; never extend it into "it's not a case, it's...".
+36. No checkmark bullet lists.
+37. No three pricing tiers. No pricing at all on the teaser.
+38. No section without a real product. Every section shows the actual case, the actual shades or the actual swatches. No abstract illustration standing in for the product.
+39. No default soft corner radius everywhere. Radius is a token: either the catalog's large rounded card radius for a single hero panel, or square. Nothing in between, and never `rounded-lg` on every element.
+40. No purple-and-black colour scheme.
+41. Skeleton loaders are required wherever data loads (the Wall counters, the reserve confirmation). A spinner or a blank is a tell.
+42. No radial orbs or blurred glow blobs.
+43. No dot-grid backgrounds.
+44. No sparkle icons, no "AI" sparkle motifs.
+45. No animated arrows.
+46. Terms of service page is required.
+47. Privacy policy page is required (DPDP-shaped; see the plan).
+48. No gratuitous hover animations. Hover and press states exist for controls and the Wall tiles because they are interactions, and each is choreographed once. Nothing else moves on hover.
+49. No neon colours in UI chrome. Neon shades in the palette (Neon, Gumball, Psychedelic) appear only as swatches.
+50. No "basic pastel" UI colouring. Pastel shades in the palette (Chiffon, Ballerina, Pale Violet) appear only as swatches, never as section backgrounds or card fills.
+
 ## Always do these
 - Phone first. Build and test at 390 px before any desktop layout. Must look as strong on a phone as on a laptop.
 - Performance budget: critical JS under 60 KB gz, total JS under 250 KB gz, hero image under 120 KB, first view under 1.5 MB, LCP under 2.5 s on throttled 4G. No WebGL in the five spine sections.
