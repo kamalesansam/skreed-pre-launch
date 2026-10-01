@@ -42,3 +42,11 @@ This repo is the skreed.in pre-launch teaser (live until Nov 3 2026, then skreed
 
 ## Stack (decided; do not swap without asking)
 Astro 7 static on Cloudflare Workers + Static Assets. GSAP (ScrollTrigger, SplitText, Flip) for motion; CSS scroll-driven animations where supported; Motion mini only inside React islands; Lenis on desktop only. Supabase for leads via one Worker endpoint with Turnstile; Shopify customer mirror; PostHog + Cloudflare Web Analytics. Details in `docs/research/01-stack-and-hosting.md`.
+
+## Day-1 Claude Code setup (install before writing UI)
+1. Taste layer, pick one: `npx skills add https://github.com/pbakaus/impeccable --skill impeccable` or `npx skills add https://github.com/Leonxlnx/taste-skill --skill design-taste-frontend`.
+2. Vercel audit: `web-design-guidelines` from `vercel-labs/agent-skills`; run `/web-design-guidelines <file>` before every push.
+3. Design-system skill: the `ui-design` plugin from `/plugin marketplace add Owl-Listener/designer-skills` (`color-palette`, `type-system`) to turn `shades-240.json` and the Urbanist scale into tokens. Also install `visual-critique` and `designer-toolkit` from the same marketplace.
+4. 21st.dev MCP (`/ui` component search) for polished primitives; never paste a component without restyling it to the tokens (rule 11).
+5. Playwright MCP/CLI so Claude screenshots every section at 390 px and 1280 px and reviews its own output before reporting done.
+6. Also: `animate` skill, Context7 MCP, Matt Pocock's skills (`claude plugins install mattpocock-skills`) for the signup worker, a security skill (StackHawk or UnitOneAI SecuritySkills), PostHog MCP once live.
