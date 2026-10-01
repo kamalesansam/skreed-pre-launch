@@ -60,6 +60,13 @@ G17. Cookie notice: only required if non-essential cookies load; with PostHog in
 G18. Analytics installed and verified: PostHog events firing (signup_submitted, signup_success, ig_follow_click, shade_selected, share) and Cloudflare Web Analytics on.
 G19. Real contact details in the footer: collab@skreed.in, Hyderabad, Telangana (from the catalog), plus the Instagram handle.
 G20. Nov 4 cutover rehearsed: the Cloudflare redirect rule tested with 302 on a staging hostname.
+G21. Internal links: every section links to at least one other (Wall → Reserve, Quiz → Wall, Thanks → Share, footer → privacy/terms); no dead ends.
+G22. Breadcrumbs: not on a one-page teaser; the sticky section index (01–08) does the same job. Noted as n/a with reason.
+G23. Five FAQs in the footer as native `<details>`: when it launches, what reserving means, is it a payment, which phones, how to withdraw consent. Marked up with FAQPage JSON-LD.
+G24. Response-time promise next to the contact line: "We reply on WhatsApp within one working day."
+G25. Team photo: a real one of Sam, Prem and Jyotika in the founders' note, not a render (rule: no stock faces).
+G26. Organization + LocalBusiness JSON-LD (Hyderabad address, collab@skreed.in, Instagram sameAs), and a map link only if the team wants walk-ins; otherwise address text alone.
+G27. Case studies and reviews: none exist before launch. Do not fabricate. The honest substitute is the live reservation counter and the first shade-naming entries.
 
 ## H. Every user state, per section (from Sam's ten-state checklist; expands D3)
 

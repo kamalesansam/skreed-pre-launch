@@ -218,6 +218,8 @@ Net: GSAP + CSS scroll-driven animations do 90% of the work. Motion mini in the 
 | 148 | reel/DO1H-IsiOm6 | endlesstools.io: no-code 3D, brick mosaic, 8K/USDZ export; PRO ~$20/mo for commercial | One PRO month if the mosaic hero is green-lit; compare Morflax $15; see `10-...` §3a |
 | 149 | reel/DSWCBYCDevb | React Bits again (Curved Loop, Flowing Menu, Splash Cursor) | Curved Loop maybe, Flowing Menu maybe, Splash Cursor banned; see `10-...` §1 |
 
+Reels Sam sent after the export (not in the saved collections): coursewallah "must try" patterns (`10-...` §7), avi_vashishta29 Pt. 08 portfolio sites (`10-...` §8), kevin.snippet six animations (`10-...` §9), the ten-UI-state checklist (CHECKLIST §H), yatesvids twenty launch items (CHECKLIST G21–G27).
+
 ## Honest read of the collections
 
 Roughly a third of the posts carry no usable content in the caption because the resource is gated behind a comment. Of the rest, the signal is consistent and points one way: give Claude Code a taste layer, a design-guidelines audit, an animation skill and a browser feedback loop, then build with a small set of premium motion patterns rather than a pile of libraries. That is already how the plan is written; these posts confirm it and name the specific tools to install.

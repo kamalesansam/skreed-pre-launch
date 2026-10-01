@@ -117,3 +117,33 @@ Five "must try" patterns, each shown on a real site. No URLs in the reel. Verdic
 | Smooth loaders | Farm Minerals "CropTab" with a soft gradient and a 3D product | **No loader.** The site is static and must paint in under a second; a loader hides a problem we will not have (checklist C1–C4, D1). What to borrow instead: the soft two-tone gradient behind a product, which fits rule 20's "flat colour, subtle". | n/a |
 
 Net from this reel: horizontal ribbon and image-sequence scroll were already in the plan; 3D illustration confirms the Morflax/endlesstools decision; physics goes to a single gated moment; loaders stay out.
+
+## 8. avi_vashishta29 "Cool Devs Don't Gatekeep Pt. 08 (Portfolio Edition)": four sites, visited
+
+Sam's call: "these are definitely cool, we should use these." All four are real sites and the remote browser went to each one. What they actually are, measured, and what we take:
+
+| Site | What it does | Measured | What Skreed takes |
+|---|---|---|---|
+| **Pacôme Pertant** (pacomepertant.com) "Crazy carousels with sound effects" | Projects on a 3D spiral, WebGL canvas with shader texture-warping; `spiral / list` toggle; sounds on hover (`hover.ogg`), on scroll (`tick.ogg`), on toggle. Spiral survives at 390 px. | Nuxt. First load about 3.15 MB. Font: Indivisible (Typekit). | **The spiral, as the Wall's laptop ribbon.** 240 tiles on a helix you scroll through, with the `spiral / grid` toggle borrowed verbatim. Built as DOM tiles on CSS 3D transforms driven by GSAP ScrollTrigger, not WebGL, so phones get the plain grid and the spine stays WebGL-free. **The sounds, opt-in.** One soft tick per tile at low volume, muted by default, a single speaker toggle in the nav. Audio never autoplays (browsers block it anyway). Budget: the whole site must stay under 1 MB on first load, a third of this reference. |
+| **Kenichi Aikawa** (aikawakenichi.com) "More carousels with hover effects" | A ring of image segments (blue, orange, pink) on white; hover a segment to bring it forward, drag or scroll to rotate; WebGL canvas plus GSAP. | About 0.9 MB. Fonts: Neue Montreal, Editorial Old. | **The ring, as the family picker.** Ten arcs on one ring, each arc filled with its family's 24 shades as a conic gradient; hover or tap an arc to open that family in the Wall. This is the catalog's circle-swatch language in motion, and it is doable with `conic-gradient` + one rotating element, no canvas. Works on phone with touch-rotate. This replaces the React Bits Circular Gallery idea in section 1. |
+| **Podium** (podium.global) "Scroll based animations" | Dark page; a shoe, a rock, an eye drift at different speeds as you scroll (per-layer parallax translate, no pin), behind a percentage preloader (52%, 93%). | Next.js + Lenis; animation library not exposed, likely Motion. Fonts: Futura, Univers Condensed. Preloader hides a heavy first load. | **The drift, for the Diwali stories.** Lifestyle photos (we have 218) at three parallax speeds on the charcoal section, translate only, CSS scroll-driven animations with a GSAP fallback. **Not the preloader** (checklist C, D1, H1). |
+| **Hiroto Sato** (hirotos.com) "Interactive 3D models with CTAs" | A Three.js street-sign scene: plates are clickable routes (Projects archive), traffic light is the pointer target; `model.glb` is 862 KB; a 6.7 MB video also loads; a "LOADING..." screen with a scramble message first. | Three.js, GLB. Total well over 7 MB. | **The idea of clickable parts of a 3D object, deferred to the upgrade path.** For the teaser: the case render with three hotspots (camera bump, finish, shade name) that open the quiz, the finish toggle and the reserve form. Hotspots are HTML buttons positioned over the WebP, so it reads as "interactive 3D with CTAs" at 60 KB. The real GLB case (img2threejs, Vengeance Model Viewer pattern) is a week-3 add behind a user tap, laptop only, with the WebP as the fallback. |
+
+What this changes in the plan: the Wall gets a spiral ribbon and a `spiral / grid` toggle on laptop; the family picker becomes the ring; sound is a feature flag, default off; the 3D hotspot card joins the hero. Nothing here adds WebGL to the spine; the budget stays 1 MB first load, Lighthouse 90+ on a mid-range Android.
+
+## 9. kevin.snippet "6 website animations that instantly upgrade your site" (all Framer demos)
+
+Sam's call: "should definitely try these as well." Each one is a Framer-made demo, so the names are patterns, not code. Verdict and placement:
+
+| Animation | What the demo shows | Verdict | Skreed version |
+|---|---|---|---|
+| Entrance reveal | "Pixel reveal made simple": a block of tiles flips in to reveal text | **Yes, once.** | The 240-tile Wall is the pixel grid. On first view, tiles flip in from the centre outward over 600 ms (GSAP stagger from "center"), then never again. Reduced-motion: no flip. |
+| 3D motion | A grainy sphere that spins on scroll and drag ("Scroll & Drag") | **Yes, as the case turntable.** | The image-sequence scrub from section 7 (36 frames per case type), plus drag-to-rotate on the same frames. No sphere, no particles. |
+| Smooth loader | "BEYOND THE OR..." text typing in on black | **No loader.** The site paints in under a second (C1–C4, H1). | The text-in idea moves to the hero: "Basic." resolves into "Beyond Basic." once, as the splitter's first state. |
+| Hover effects | A fanned stack of colour cards that spreads on hover | **Yes.** | The family picker's phone fallback and the share-card preview: a fan of six shade cards that spreads on hover (laptop) or on first tap (phone). Pure CSS transforms. |
+| Parallax effect | A product card floating over a branch with moss, layers moving at different speeds | **Yes, subtle.** | Same as Podium's drift in section 8: three layers, small offsets, translate only. No cursor-parallax on text (rule 13). |
+| Micro interaction | Fullstack studio: a row of project cards that tilt and lift as the cursor passes | **Yes.** | Tile hover on the Wall (lift 4 px, shadow from the shade's own hue at 20%), button press states, the counter tick, the consent checkbox. Choreographed once (D4). |
+
+Also in the reel: **Mondragon** (digital agency) with a helix of images across the hero. Same family as the Pacôme spiral; one spiral on the site is enough, and it lives in the Wall.
+
+Across sections 7, 8 and 9 the same five ideas keep appearing: horizontal or spiral scroll, a 3D product that turns, parallax drift, a hover fan, and a pixel reveal. They are all in the plan now, each in exactly one place, each with a phone and reduced-motion fallback.
