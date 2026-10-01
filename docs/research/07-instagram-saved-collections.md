@@ -35,6 +35,20 @@ Source: Instagram data export from @kamalesan_sam (saved_collections.json), 2026
 - Seedance single-prompt 12-second film (post 11) and Qwen / Hunyuan / LM Arena free generation (post 14) for teaser video experiments.
 - DAPI (diffusionstudio/dapi): open-source video editing CLI for agents (post 26).
 
+## Animation library list from post 9 (pinned comment)
+
+| Library | The comment's pitch | Our verdict for the teaser |
+|---|---|---|
+| GSAP | cinematic scroll effects | **Yes, the backbone.** ScrollTrigger, SplitText and Flip are free since 3.13. Covers the hero, the Wall, the manifesto and every scroll beat. See report 02 for the iOS pinning fixes. |
+| Motion (motion.dev) | animations that just happen | **Only inside a React island, mini build (~5 KB).** Astro keeps the page static; Motion is for the quiz cards and the share sheet, not page-wide. |
+| React Spring | natural-feeling interactions | **No.** Overlaps Motion; two spring libraries in one bundle is waste. Motion's springs do the same job. |
+| Three.js | real 3D | **Not in the spine.** Report 02 and the assets report agree: a procedural R3F case is the upgrade path, loaded on tap and gated by GPU tier, after the five spine sections ship. |
+| anime.js | tiny details | **No.** GSAP already covers micro-timing; anime v4 is a fine MIT alternative but adds 25 KB for nothing new. |
+| Trig JS | scroll animations without slowdown | **No, but the idea is right.** Trig JS is a tiny class-toggling scroll library (iDev-Games/Trig-JS). We get the same zero-JS win from CSS scroll-driven animations (`animation-timeline: view()`) where supported, with GSAP as the fallback. |
+| Lenis | premium scrolling | **Desktop only.** Load it behind `(hover: hover) and (pointer: fine)`; never on phones, where native momentum scroll is better and Lenis adds jank risk. |
+
+Net: GSAP + CSS scroll-driven animations do 90% of the work. Motion mini in the two React islands. Lenis on desktop. Nothing else.
+
 ## Collection: claude (91 posts)
 
 | # | Post | What it names | Take for Skreed |
@@ -47,7 +61,7 @@ Source: Instagram data export from @kamalesan_sam (saved_collections.json), 2026
 | 6 | reel/Dc6ea6URPXr | Building a brand with no marketing budget | Mindset only |
 | 7 | reel/Dc6BAeAThkx | Tutorial series, link in bio | None |
 | 8 | reel/Dc6GhevhCQN | GitHub repo: 200+ skills, 70+ commands, 33 plugins for designers (research, UX strategy, UI, design systems, design ops) | Pull the design-research skills for the quiz copy and UI states |
-| 9 | reel/DbybYnVo7yn | "Generic prompts make generic design" + libraries for premium feel | See libraries above |
+| 9 | reel/DbybYnVo7yn | Pinned comment lists: GSAP (gsap.com), Motion (motion.dev), React Spring (react-spring.dev), Three.js (threejs.org), anime.js (animejs.com), Trig JS (github.com/iDev-Games/Trig-JS), Lenis (lenis.dev) | Verdicts below in "Animation library list from post 9" |
 | 10 | reel/DcyYJIjBEQr | Skiper UI, Animaster Lib (250+ animated components), ThreeUI (3D/WebGL) | Reference for Wall and hero motion |
 | 11 | reel/Dcnk4FoIvUk | Seedance one-prompt 12 s film with time-freeze | Teaser video experiment |
 | 12 | reel/DczDlj4qQjI | "LinkedIn OS" for Claude: 11 skills incl. hook formulas and Humanizer | Model for a Skreed caption skill |
