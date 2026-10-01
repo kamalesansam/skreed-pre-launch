@@ -64,7 +64,7 @@ A single page, phone-first, each section roughly one screen tall. Narrative: *Ba
 | Framework | **Astro 7, static output** | Zero-JS baseline is the only way to hit LCP under 2.5 s on Indian mid-range Android while still layering heavy interactivity as lazy islands. Claude Code works very well with Astro's plain HTML/TS. |
 | Motion | **GSAP 3.15 (ScrollTrigger, SplitText, Flip)** | Free for commercial use since v3.13 (Webflow). Best scroll-storytelling toolkit; `matchMedia()` handles reduced-motion and per-breakpoint timelines. |
 | Micro-interactions | Motion (mini build) inside any React island; CSS scroll-driven animations where supported | Tiny, hardware-accelerated. |
-| Background | `@paper-design/shaders` mesh gradient at half resolution, slow OKLCH drift through the 10 families | One fullscreen shader pass is affordable on mobile; it gives the "material" feel without WebGL 3D. |
+| Background | Flat off-white and charcoal sections, as in the catalog. Colour comes from the shades, never from a gradient. | Cheapest possible paint; nothing to jank. A gradient background is on the banned list in `CLAUDE.md`. |
 | 3D | **None in the spine.** If a 3D hero is wanted later: procedural case in react-three-fiber (rounded box, PBR matte/gloss presets, colour from shades.json), loaded on tap and gated by detect-gpu tier | $0, 1–2 days, no licence issues. Buying or AI-generating a case model costs more and looks worse for a hard-surface product. |
 | Hosting | **Cloudflare Workers + Static Assets, DNS zone for skreed.in moved to Cloudflare** | Unlimited static bandwidth, 22 Indian PoPs, Turnstile + redirect rules + analytics in one dashboard. Vercel Hobby is non-commercial and would be a terms breach; Vercel Pro ($20) is the fallback. |
 | Domain | Serve the site **directly** on skreed.in (CNAME, proxied). Do not use registrar forwarding (HTTPS breaks). | On Nov 4, add one Cloudflare Single Redirect rule `skreed.in/* → skreed.com/$1`; live in seconds, no DNS change, instant rollback. |
@@ -73,13 +73,15 @@ A single page, phone-first, each section roughly one screen tall. Narrative: *Ba
 | Email | Shopify Email (10,000/month free) | Klaviyo and Mailchimp free tiers now cap at 250 contacts; Klaviyo has no India SMS. |
 | WhatsApp | AiSensy (cheapest broadcasts) or Interakt (Shopify-native). Templates submitted by Oct 25; account verification takes 1–3 days. | WhatsApp is the India launch-day channel: 85–95% open rates. |
 | Analytics | PostHog (1M events free) + Cloudflare Web Analytics for Core Web Vitals | Custom events for signup, follow click, shade selected, share. UTMs on every link because Instagram strips Referer. |
-| Fonts | Self-hosted Poppins 700 + Inter variable (brand), Instrument Serif Italic for shade names, Clash Display for the hero | ~40 KB total; `font-display: swap`. |
+| Fonts | One sans family in thin and black weights, matching the catalog (family to be confirmed with Sam). No Inter, no serif accents. | Two weights self-hosted, ~40 KB; `font-display: swap`. |
 
 Full package list with versions and the repo tree are in `01-stack-and-hosting.md`.
 
 **Claude Code setup for the build (from Sam's saved posts, verified; details in `07-instagram-saved-collections.md`):** one taste layer (`impeccable` or `taste-skill`), Vercel's `web-design-guidelines` audit skill, the `animate` skill, three plugins from Owl-Listener/designer-skills (`ui-design`, `visual-critique`, `designer-toolkit`), Playwright MCP so Claude screenshots and grades its own output, 21st.dev MCP for polished primitives, Context7 MCP for current docs, Matt Pocock's skills for test-first work on the signup function, a security skill plus the vibe-coder checklist (no hard-coded keys, verify webhook signatures, reject non-JSON, rate limit, no public tables), and PostHog MCP once the campaign is live. Reference libraries for motion patterns: Skiper UI and Animaster Lib. endlesstools.io for quick 3D key visuals.
 
 ---
+
+**Design rules Claude Code is bound by.** The root `CLAUDE.md` carries the brand facts and a 20-item "never do this" list (no gradients, no gradient text, no emojis, no Inter-by-default, no glass cards, no icon rows, no badge above the headline, no fade-in-on-scroll as the default reveal, no cursor beams, no serif italic accents, no grain over gradients, no em dashes, no buzzword copy, one spacing scale). Several of those overrule earlier suggestions in the research reports (Instrument Serif, Lucide everywhere, grain on a mesh gradient); `CLAUDE.md` wins.
 
 ## 4. Decisions the team needs to make
 
