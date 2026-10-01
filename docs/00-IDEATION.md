@@ -26,7 +26,8 @@ Skreed's real product is *shade*, not a print and not protection. Every competit
 - The store already runs: 1,157 active products, 70 orders / $2.9K in September, US-first, AOV ~$44.
 - Shopify holds the shade data: 243 solid shades across the 10 families with hex values (exported to `docs/data/shades.json`). Three pairs share a hex and should be checked before launch (Royal/Midnight, Neon/Neon Pink, Iron Grey/Almost Black).
 - Finishes in Shopify: gloss, matte, metallic, metallic-matte, metallic-gloss. Case types: snap, tough, magtough, armor, ultra, plus legacy back-cover/shell-cover.
-- Renders: Dropbox "Product Images Folder/amazon product listings" holds per-shade PNG renders organised series → case type → family → device (full inventory in `docs/data/dropbox-asset-inventory.md`). Shopify Files holds the logo PNGs; no SVG logo exists yet.
+- Renders (full inventory in `docs/data/dropbox-asset-inventory.md`): Dropbox holds 10,080 Amazon hero renders (`{Shade}_A1.png`, ~1.1 MB each) covering exactly 240 shades (24 per family) for 21 devices across iPhone 15/16/17, Galaxy S25/S26 and Pixel 10. Only the "tough" and "magtough" folders are populated and they are byte-identical, so there are 5,040 unique renders. Also 264 tiny swatch PNGs (`{Shade}_SWCH.png`), 218 lifestyle shots (per family × device, 4–9 MB), and finish/compatibility/comparison panels. No logos, videos or source files. Whether the renders have transparent backgrounds could not be checked from the sandbox.
+- Shopify Files holds the logo PNGs; no SVG logo exists yet.
 - Instagram sits at 59 followers with the content system dark for half of September. The site has to do real follower work, not just link out.
 
 ---
@@ -101,7 +102,7 @@ Each has a recommended default so the build can start without a meeting.
 
 **Exists**
 - Shade dataset with hex: `docs/data/shades.json` and `.csv` (243 solid shades, 10 families, finishes, case types).
-- Per-shade PNG renders on Dropbox (Amazon listing renders by series/case type/family/device) and on the Shopify CDN (2500×2500 diagonal-split matte/gloss composites).
+- 5,040 unique per-shade hero renders on Dropbox (240 shades × 21 devices, Amazon `_A1` angle only), 264 swatch PNGs, 218 lifestyle shots; plus 2500×2500 diagonal-split matte/gloss composites on the Shopify CDN. Recommended teaser picks: `tough/{family}/{17 pro | S26 Ultra | Pixel 10 Pro}/{Shade}_A1.png`, downscaled to AVIF/WebP.
 - Logo as PNG on Shopify Files (`skreed_logo_1200_628.png`, `Logo_skreed-4_20240711_charcoal.png`, `skreed_logo_300a.png`).
 - Brand fonts and voice rules (Skreed Brain doc).
 
