@@ -8,6 +8,7 @@ Source: Instagram data export from @kamalesan_sam (saved_collections.json), 2026
 - A single taste layer: `impeccable` (pbakaus, 18 skills, `/impeccable`) or `taste-skill` (Leonxlnx, DESIGN_VARIANCE / MOTION_INTENSITY dials). Pick one. Posts 17, 45, 123 all converge on this.
 - `web-design-guidelines` from vercel-labs/agent-skills: audits UI code against Vercel's 100+ interface and accessibility rules, file:line output. Run before every push.
 - `animate` skill for motion that doesn't look cheap (post 45).
+- From Owl-Listener/designer-skills (post 8): the `ui-design` plugin (`color-palette`, `type-system`), `visual-critique` (`critique-screen`) and `designer-toolkit` (UX writing). Not the research or ops plugins.
 - Playwright MCP / CLI so Claude screenshots what it built and grades its own work (posts 17, 45). This is the feedback loop that makes the "loop engineering" idea in posts 28 and 30 real.
 - 21st.dev MCP for 12,000+ React/Tailwind components when a section needs a polished primitive (posts 17, 92).
 - Graphify (Graphify-Labs/graphify) to cut token use once the repo grows; Context7 MCP for current library docs (posts 4, 92).
@@ -64,7 +65,7 @@ Net: GSAP + CSS scroll-driven animations do 90% of the work. Motion mini in the 
 | 5 | reel/Dc8SR6hqzs4 | "Did I miss anything?" | None |
 | 6 | reel/Dc6ea6URPXr | Building a brand with no marketing budget | Mindset only |
 | 7 | reel/Dc6BAeAThkx | Tutorial series, link in bio | None |
-| 8 | reel/Dc6GhevhCQN | GitHub repo: 200+ skills, 70+ commands, 33 plugins for designers (research, UX strategy, UI, design systems, design ops) | Pull the design-research skills for the quiz copy and UI states |
+| 8 | reel/Dc6GhevhCQN | github.com/Owl-Listener/designer-skills (MIT, 2.8k stars): 273 skills, 76 commands, 33 plugins. Install: `/plugin marketplace add Owl-Listener/designer-skills`, then `/plugin`. Plugins: design-research, design-systems, ux-strategy, ui-design, interaction-design, prototyping-testing, design-ops, designer-toolkit, visual-critique | Install three plugins only: `ui-design` (`color-palette`, `type-system`) to formalise the 240-shade tokens and the catalog type scale, `visual-critique` (`critique-screen`) as a second pair of eyes on each section, `designer-toolkit` for the UX-writing skill on microcopy. Skip the research and ops plugins for a 15-day build. |
 | 9 | reel/DbybYnVo7yn | Pinned comment lists: GSAP (gsap.com), Motion (motion.dev), React Spring (react-spring.dev), Three.js (threejs.org), anime.js (animejs.com), Trig JS (github.com/iDev-Games/Trig-JS), Lenis (lenis.dev) | Verdicts below in "Animation library list from post 9" |
 | 10 | reel/DcyYJIjBEQr | Skiper UI, Animaster Lib (250+ animated components), ThreeUI (3D/WebGL) | Reference for Wall and hero motion |
 | 11 | reel/Dcnk4FoIvUk | Seedance one-prompt 12 s film with time-freeze | Teaser video experiment |

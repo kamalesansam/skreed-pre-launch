@@ -77,7 +77,7 @@ A single page, phone-first, each section roughly one screen tall. Narrative: *Ba
 
 Full package list with versions and the repo tree are in `01-stack-and-hosting.md`.
 
-**Claude Code setup for the build (from Sam's saved posts, verified; details in `07-instagram-saved-collections.md`):** one taste layer (`impeccable` or `taste-skill`), Vercel's `web-design-guidelines` audit skill, the `animate` skill, Playwright MCP so Claude screenshots and grades its own output, 21st.dev MCP for polished primitives, Context7 MCP for current docs, Matt Pocock's skills for test-first work on the signup function, a security skill plus the vibe-coder checklist (no hard-coded keys, verify webhook signatures, reject non-JSON, rate limit, no public tables), and PostHog MCP once the campaign is live. Reference libraries for motion patterns: Skiper UI and Animaster Lib. endlesstools.io for quick 3D key visuals.
+**Claude Code setup for the build (from Sam's saved posts, verified; details in `07-instagram-saved-collections.md`):** one taste layer (`impeccable` or `taste-skill`), Vercel's `web-design-guidelines` audit skill, the `animate` skill, three plugins from Owl-Listener/designer-skills (`ui-design`, `visual-critique`, `designer-toolkit`), Playwright MCP so Claude screenshots and grades its own output, 21st.dev MCP for polished primitives, Context7 MCP for current docs, Matt Pocock's skills for test-first work on the signup function, a security skill plus the vibe-coder checklist (no hard-coded keys, verify webhook signatures, reject non-JSON, rate limit, no public tables), and PostHog MCP once the campaign is live. Reference libraries for motion patterns: Skiper UI and Animaster Lib. endlesstools.io for quick 3D key visuals.
 
 ---
 
