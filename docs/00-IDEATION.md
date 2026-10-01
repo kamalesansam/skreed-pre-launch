@@ -133,6 +133,7 @@ Target weights: hero image ≤ 120 KB AVIF, grid tile ≤ 25 KB, swatch ≤ 2 KB
 - **Referral ladder** (Harry's model, adapted): 3 friends = early access hour, 10 = a free matte case in any shade, 25 = name a shade, 50 = a full family set.
 - **Share card** at the end of every flow, through the native share sheet to WhatsApp (India's default) and Instagram Stories.
 - **Instagram**: universal-link follow button, `ig.me/m/skreedofficial` DM link for "DM us your shade", and the broadcast-channel invite as the primary post-signup CTA. Hidden 241st shade as an honour-system nudge.
+- **Expectancy check on every ask** (Vroom's expectancy × instrumentality × valence; applied in `09-expectancy-theory-applied.md`): show the reward before the action, make it specific (a named shade, a date, a queue position), keep the action to one tap or one field, keep progress toward delayed rewards on screen, and prove the first promise fast with a WhatsApp confirmation within a minute. Two concrete changes: the 241st tile links to the broadcast channel instead of an honour-system "I followed" button, and the share screen shows "1 of 3 friends joined" with the pair shade greyed until unlocked.
 - **Launch day (Nov 4)**: 07:00 IST WhatsApp template with early-access link, 07:05 Shopify Email to the `prelaunch` segment, 12:00 broadcast-channel post and story, Nov 5 reminder to non-clickers, Nov 8 "48 hours left".
 
 ---
