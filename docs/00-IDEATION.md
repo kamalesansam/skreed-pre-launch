@@ -40,16 +40,18 @@ A single page, phone-first, each section roughly one screen tall. Narrative: *Ba
 
 | # | Section | What happens | Goal served |
 |---|---|---|---|
-| 1 | **Hero: Basic vs Beyond Basic** | A thumb-drag divider: left is the black case everyone owns, right is the same phone in a Skreed shade. Headline "Go Beyond Basic." Sub "240 shades. Doors open Nov 4." A day counter in the corner tinted by today's shade. | 2, 1 |
-| 2 | **The Wall** | All 240 shades as one living grid. Tap a tile: it swells, shows name + family + a Reserve chip. Family tabs on phone, full grid on laptop. One greyed 241st tile: "Follow to reveal." | 1, 2, 4 |
+| 1 | **Hero: Basic vs Beyond Basic** | A thumb-drag divider: left is the black case everyone owns, right is the same phone in a Skreed shade. Headline resolves once from "Basic." to "Beyond Basic." Sub "240 shades. Doors open Nov 4." Three hotspots on the case render (camera bump, finish, shade name) open the quiz, the finish toggle and the reserve form. A day counter in the corner tinted by today's shade. | 2, 1 |
+| 2 | **The Wall** | All 240 shades as one living grid; tiles flip in from the centre once on first view. Tap a tile: it swells, shows name + family + a Reserve chip. Family picker is a ring of ten arcs (each arc a conic gradient of its 24 shades), touch-rotate on phone, hover on laptop. Laptop adds a `spiral / grid` toggle: the 240 on a scroll-driven helix (CSS 3D, no WebGL). Optional soft tick per tile, muted by default. One greyed 241st tile: "Follow to reveal." | 1, 2, 4 |
 | 3 | **Find your shade** | Tabs: Quiz (six swipe cards, "Beige or Rouge?") as default; From a photo (upload, five-colour palette matched to the 240); Live camera behind a flag for week two. Result: a shade card with tilt-to-see gloss vs matte on phone. | 1, 3 |
 | 4 | **Reserve your shade** | Phone number (+91 fixed) as the one required field, email optional after. Device and finish pickers. Live per-shade counter. Confirmation: "Mauve is yours. First dibs Nov 4." Then "Find your twin": a referral link that unlocks a complementary pair shade for both. | 3 |
 | 5 | **Share** | Canvas-generated 1080×1920 story card ("My Skreed shade is Mauve") sent through the native share sheet to WhatsApp or Instagram Stories. "Tag @skreedofficial." | 4, 3 |
-| 6 | **Diwali light stories** | Five days, five shade stories (Dhanteras gold → Sand; Diwali night → Amethyst; Bhai Dooj → Ballerina). "Gift a pair" reserve with a recipient field. Colour and type only, no clipart. | 1, 3 |
+| 6 | **Diwali light stories** | Five days, five shade stories (Dhanteras gold → Sand; Diwali night → Amethyst; Bhai Dooj → Ballerina). Lifestyle photos drift at three parallax speeds on charcoal (translate only). "Gift a pair" reserve with a recipient field. Colour and type only, no clipart. | 1, 3 |
 | 7 | **Manifesto + founders' note** | Pinned kinetic type: "Smart. Sleek. Skreed." each word fills with a family colour. Then a 120-word founders' note with a reply field. | 1, 2 |
 | 8 | **Footer** | Nov 4, Instagram and broadcast-channel links, privacy and T&Cs. | 4 |
 
 **Why this spine and not the others.** The concept catalog (`06-concept-catalog.md`) scores 27 concepts on phone wow, laptop wow, lead capture and shareability. The five chosen are the ones that score four or five on phone *and* on lead capture or shareability, cost under two days each, and need no WebGL. The splitter hero is the cheapest big-impact concept in the whole list. The quiz is the highest-converting mechanic. The wall is the USP. Reserve and share are the business.
+
+**Reference sites behind these choices** (visited, measured, in `research/10-reactbits-textures-endlesstools.md` §8–9): Pacôme Pertant's spiral and sound (3.15 MB; ours must stay under 1 MB), Kenichi Aikawa's ring (0.9 MB), Podium's drift, Hiroto Sato's clickable 3D plates (7 MB+; ours is hotspots over a WebP, the GLB case is week-3 and tap-to-load).
 
 **Ambient layer.** The site re-tints daily: 34 days, 34 shades, so there is a reason to come back and a different screenshot every day.
 
