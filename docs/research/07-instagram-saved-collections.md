@@ -16,7 +16,11 @@ Source: Instagram data export from @kamalesan_sam (saved_collections.json), 2026
 - Remotion with Claude Code for the shade-cycle loops and social teasers (posts 42, 112). Already in the assets plan.
 
 **Component and animation libraries worth pulling from**
-- Skiper UI (70+ motion-ready shadcn components, Framer Motion + GSAP; open source with a $129 premium tier) and Animaster Lib (300+ components: WebGL + GSAP, 3D shaders, scroll, mouse tracking). Posts 9, 10, 95, 137, 140, 143, 147, 149 are all variations of "these libraries make a site feel premium". Use them as reference for the Wall, the splitter hero and the tilt card, not as a dependency pile; the stack stays Astro + GSAP.
+- The three libraries Sam flagged to try (sites are blocked from the build sandbox, so these notes come from search results and the post captions; verify on the sites):
+  - **Skiper UI** — https://skiper-ui.com/ — 70+ motion-ready React components on shadcn/ui, Framer Motion + GSAP, open source with a $129 premium pack. Look for: scroll-stacked cards, pricing/feature sections, text reveals. Candidate source for the quiz card stack and the "Basic vs Beyond Basic" comparison slider.
+  - **Animaster Lib** — https://animmasterlib.dev/ — 300+ animated components launched July 2026: WebGL + GSAP, 3D shaders, scroll animations, mouse tracking. Look for: a mesh-gradient or liquid background, a grid reveal, an image-tilt card. Candidate reference for the Wall stagger and the tilt gloss/matte card. Check bundle size per component before copying anything.
+  - **Three UI** — https://threeui.com/browse — Three.js / WebGL components. Look for: a product turntable, a material/colour switcher, a shader background. Only relevant if the 3D case upgrade is picked after the spine ships; still worth a look for the shader background idea.
+  - Posts 9, 10, 95, 137, 140, 143, 147, 149 are all variations of "these libraries make a site feel premium". Use them as reference for the Wall, the splitter hero and the tilt card, not as a dependency pile; the stack stays Astro + GSAP. Anything copied in gets ported to vanilla GSAP or lives inside one of the two React islands.
 - endlesstools.io for quick 3D key visuals (type + materials + lighting, exports GLB/USDZ/web embed, 8K, commercial use). Useful for a hero visual or social assets without Blender (post 148).
 - Free texture packs (post 147) for the matte grain layer.
 
