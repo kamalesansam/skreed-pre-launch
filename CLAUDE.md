@@ -75,6 +75,9 @@ This repo is the skreed.in pre-launch teaser (live until Nov 3 2026, then skreed
 ## Stack (decided; do not swap without asking)
 Astro 7 static on Cloudflare Workers + Static Assets. GSAP (ScrollTrigger, SplitText, Flip) for motion; CSS scroll-driven animations where supported; Motion mini only inside React islands; Lenis on desktop only. Supabase for leads via one Worker endpoint with Turnstile; Shopify customer mirror; PostHog + Cloudflare Web Analytics. Details in `docs/research/01-stack-and-hosting.md`.
 
+## How work gets done here: the loop
+Every section is built by `/ship-section "<brief>"`, which runs the `plan` skill, then `build`, then `review`, and repeats build → review until the reviewer returns PASS against `docs/CHECKLIST.md` (max 5 iterations, then stop and report). The builder never grades its own work. Specs live in `docs/specs/`, review logs next to them. Do not build a section outside this loop.
+
 ## Day-1 Claude Code setup (install before writing UI)
 1. Taste layer, pick one: `npx skills add https://github.com/pbakaus/impeccable --skill impeccable` or `npx skills add https://github.com/Leonxlnx/taste-skill --skill design-taste-frontend`.
 2. Vercel audit: `web-design-guidelines` from `vercel-labs/agent-skills`; run `/web-design-guidelines <file>` before every push.
