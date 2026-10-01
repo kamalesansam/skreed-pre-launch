@@ -1,0 +1,2009 @@
+{
+ "source": "Catalog_Updated.pdf (2026-27) is the canonical name list; hex from Shopify shopify--color-pattern; renderStem from Dropbox amazon renders",
+ "families": [
+  {
+   "id": "frosty-whites",
+   "name": "Frosty Whites",
+   "shopifyFamily": "Frosty White",
+   "dropboxFolder": "frosty white",
+   "shades": [
+    {
+     "id": "frosty-whites-01",
+     "index": 1,
+     "name": "Pearl",
+     "shopifyName": "Pearl",
+     "hex": "#f7f7f7",
+     "renderStem": "Pearl"
+    },
+    {
+     "id": "frosty-whites-02",
+     "index": 2,
+     "name": "Vanilla",
+     "shopifyName": "Vanilla",
+     "hex": "#f7f7ef",
+     "renderStem": "Vanilla"
+    },
+    {
+     "id": "frosty-whites-03",
+     "index": 3,
+     "name": "Cotton",
+     "shopifyName": "Cotton",
+     "hex": "#f8efea",
+     "renderStem": "Cotton"
+    },
+    {
+     "id": "frosty-whites-04",
+     "index": 4,
+     "name": "Lace",
+     "shopifyName": "Lace",
+     "hex": "#f5f0ea",
+     "renderStem": "Lace"
+    },
+    {
+     "id": "frosty-whites-05",
+     "index": 5,
+     "name": "Cream",
+     "shopifyName": "Cream",
+     "hex": "#f3f2ed",
+     "renderStem": "Cream"
+    },
+    {
+     "id": "frosty-whites-06",
+     "index": 6,
+     "name": "Frost",
+     "shopifyName": "Frost",
+     "hex": "#f2f0e3",
+     "renderStem": "Frost"
+    },
+    {
+     "id": "frosty-whites-07",
+     "index": 7,
+     "name": "Snow",
+     "shopifyName": "Snowflake",
+     "hex": "#f0f4f5",
+     "renderStem": "Snowflake"
+    },
+    {
+     "id": "frosty-whites-08",
+     "index": 8,
+     "name": "Daisy",
+     "shopifyName": "Daisy",
+     "hex": "#eff7f9",
+     "renderStem": "Daisy"
+    },
+    {
+     "id": "frosty-whites-09",
+     "index": 9,
+     "name": "Rice",
+     "shopifyName": "Rice",
+     "hex": "#f0f8ed",
+     "renderStem": "Rice"
+    },
+    {
+     "id": "frosty-whites-10",
+     "index": 10,
+     "name": "Porcelain",
+     "shopifyName": "Porcelain",
+     "hex": "#eff1f0",
+     "renderStem": "Porcelain"
+    },
+    {
+     "id": "frosty-whites-11",
+     "index": 11,
+     "name": "Ivory",
+     "shopifyName": "Ivory",
+     "hex": "#f7f6e4",
+     "renderStem": "Ivory"
+    },
+    {
+     "id": "frosty-whites-12",
+     "index": 12,
+     "name": "Parchment",
+     "shopifyName": "Parchment",
+     "hex": "#edeee6",
+     "renderStem": "Parchment"
+    },
+    {
+     "id": "frosty-whites-13",
+     "index": 13,
+     "name": "Coconut",
+     "shopifyName": "Coconut",
+     "hex": "#eaeff3",
+     "renderStem": "Coconut"
+    },
+    {
+     "id": "frosty-whites-14",
+     "index": 14,
+     "name": "Alabaster",
+     "shopifyName": "Alabaster",
+     "hex": "#efece5",
+     "renderStem": "Alabaster"
+    },
+    {
+     "id": "frosty-whites-15",
+     "index": 15,
+     "name": "Oyster",
+     "shopifyName": "Oyester",
+     "hex": "#efeae6",
+     "renderStem": "Oyster"
+    },
+    {
+     "id": "frosty-whites-16",
+     "index": 16,
+     "name": "Mist",
+     "shopifyName": "Mist",
+     "hex": "#eae9e7",
+     "renderStem": "Mist"
+    },
+    {
+     "id": "frosty-whites-17",
+     "index": 17,
+     "name": "Off White",
+     "shopifyName": "Off-White",
+     "hex": "#eaeaea",
+     "renderStem": "Off-white"
+    },
+    {
+     "id": "frosty-whites-18",
+     "index": 18,
+     "name": "Bone",
+     "shopifyName": "Bone",
+     "hex": "#edebde",
+     "renderStem": "Bone"
+    },
+    {
+     "id": "frosty-whites-19",
+     "index": 19,
+     "name": "Seashell",
+     "shopifyName": "Seashell",
+     "hex": "#f0e8db",
+     "renderStem": "Seashell"
+    },
+    {
+     "id": "frosty-whites-20",
+     "index": 20,
+     "name": "Linen",
+     "shopifyName": "Linen",
+     "hex": "#efe6d5",
+     "renderStem": "Linen"
+    },
+    {
+     "id": "frosty-whites-21",
+     "index": 21,
+     "name": "Eggshell",
+     "shopifyName": "Eggshell",
+     "hex": "#eae6da",
+     "renderStem": "Eggshell"
+    },
+    {
+     "id": "frosty-whites-22",
+     "index": 22,
+     "name": "Antique",
+     "shopifyName": "Antique",
+     "hex": "#e8e5d6",
+     "renderStem": "Antique"
+    },
+    {
+     "id": "frosty-whites-23",
+     "index": 23,
+     "name": "Chiffon",
+     "shopifyName": "Chiffon",
+     "hex": "#e1e5d7",
+     "renderStem": "Chiffon"
+    },
+    {
+     "id": "frosty-whites-24",
+     "index": 24,
+     "name": "Oatmeal",
+     "shopifyName": "Oatmeal",
+     "hex": "#e2d6c6",
+     "renderStem": "Oatmeal"
+    }
+   ]
+  },
+  {
+   "id": "blissful-blues",
+   "name": "Blissful Blues",
+   "shopifyFamily": "Blissful Blue",
+   "dropboxFolder": "blissful blue",
+   "shades": [
+    {
+     "id": "blissful-blues-01",
+     "index": 1,
+     "name": "Electric",
+     "shopifyName": "Electric Blue",
+     "hex": "#76f2fc",
+     "renderStem": "Electric-Blue"
+    },
+    {
+     "id": "blissful-blues-02",
+     "index": 2,
+     "name": "Baby Blue",
+     "shopifyName": "Baby Blue",
+     "hex": "#8be2fb",
+     "renderStem": "Baby-Blue"
+    },
+    {
+     "id": "blissful-blues-03",
+     "index": 3,
+     "name": "Powder",
+     "shopifyName": "Powder Blue",
+     "hex": "#9adeee",
+     "renderStem": "Powder-Blue"
+    },
+    {
+     "id": "blissful-blues-04",
+     "index": 4,
+     "name": "Turquoise",
+     "shopifyName": "Turquoise",
+     "hex": "#00e8d9",
+     "renderStem": "Turquoise"
+    },
+    {
+     "id": "blissful-blues-05",
+     "index": 5,
+     "name": "Aqua",
+     "shopifyName": "Aqua",
+     "hex": "#04dcf7",
+     "renderStem": "Aqua"
+    },
+    {
+     "id": "blissful-blues-06",
+     "index": 6,
+     "name": "Aquamarine",
+     "shopifyName": "Aquamarine",
+     "hex": "#3ef9da",
+     "renderStem": "Aquamarine"
+    },
+    {
+     "id": "blissful-blues-07",
+     "index": 7,
+     "name": "Cyan",
+     "shopifyName": "Cyan",
+     "hex": "#01ffff",
+     "renderStem": "Cyan"
+    },
+    {
+     "id": "blissful-blues-08",
+     "index": 8,
+     "name": "Sky",
+     "shopifyName": "Sky Blue",
+     "hex": "#08bcf4",
+     "renderStem": "Sky-Blue"
+    },
+    {
+     "id": "blissful-blues-09",
+     "index": 9,
+     "name": "Ocean",
+     "shopifyName": "Ocean",
+     "hex": "#1494e4",
+     "renderStem": "Ocean"
+    },
+    {
+     "id": "blissful-blues-10",
+     "index": 10,
+     "name": "Azure",
+     "shopifyName": "Azure",
+     "hex": "#007dd3",
+     "renderStem": "Azure"
+    },
+    {
+     "id": "blissful-blues-11",
+     "index": 11,
+     "name": "Cobalt",
+     "shopifyName": "Cobalt",
+     "hex": "#1040ca",
+     "renderStem": "Cobalt"
+    },
+    {
+     "id": "blissful-blues-12",
+     "index": 12,
+     "name": "Royal",
+     "shopifyName": "Royal Blue",
+     "hex": "#0040c1",
+     "renderStem": "Royal-Blue"
+    },
+    {
+     "id": "blissful-blues-13",
+     "index": 13,
+     "name": "Egyptian",
+     "shopifyName": "Egyptian Blue",
+     "hex": "#0036ac",
+     "renderStem": "Egyptian-Blue"
+    },
+    {
+     "id": "blissful-blues-14",
+     "index": 14,
+     "name": "Indigo",
+     "shopifyName": "Indigo Blue",
+     "hex": "#1919a4",
+     "renderStem": "Indigo-Blue"
+    },
+    {
+     "id": "blissful-blues-15",
+     "index": 15,
+     "name": "Sapphire",
+     "shopifyName": "Sapphire",
+     "hex": "#002c84",
+     "renderStem": "Sapphire"
+    },
+    {
+     "id": "blissful-blues-16",
+     "index": 16,
+     "name": "Blueberry",
+     "shopifyName": "Blueberry",
+     "hex": "#1d1968",
+     "renderStem": "Blueberry"
+    },
+    {
+     "id": "blissful-blues-17",
+     "index": 17,
+     "name": "Classic",
+     "shopifyName": "Classic Blue",
+     "hex": "#074882",
+     "renderStem": "Classic-Blue"
+    },
+    {
+     "id": "blissful-blues-18",
+     "index": 18,
+     "name": "Teal",
+     "shopifyName": "Teal Blue",
+     "hex": "#00818e",
+     "renderStem": "Teal-Blue"
+    },
+    {
+     "id": "blissful-blues-19",
+     "index": 19,
+     "name": "Pigeon",
+     "shopifyName": "Pigeon Blue",
+     "hex": "#5c6f92",
+     "renderStem": "Pigeon-Blue"
+    },
+    {
+     "id": "blissful-blues-20",
+     "index": 20,
+     "name": "Stone",
+     "shopifyName": "Stone Blue",
+     "hex": "#608592",
+     "renderStem": "Stone-Blue"
+    },
+    {
+     "id": "blissful-blues-21",
+     "index": 21,
+     "name": "Prussian",
+     "shopifyName": "Prussian",
+     "hex": "#2f3f5c",
+     "renderStem": "Prussian"
+    },
+    {
+     "id": "blissful-blues-22",
+     "index": 22,
+     "name": "Navy",
+     "shopifyName": "Navy Blue",
+     "hex": "#0e305b",
+     "renderStem": "Navy-Blue"
+    },
+    {
+     "id": "blissful-blues-23",
+     "index": 23,
+     "name": "Space",
+     "shopifyName": "Space Blue",
+     "hex": "#15284f",
+     "renderStem": "Space-Blue"
+    },
+    {
+     "id": "blissful-blues-24",
+     "index": 24,
+     "name": "Midnight",
+     "shopifyName": "Midnight Blue",
+     "hex": "#0e1442",
+     "renderStem": "Midnight-Blue"
+    }
+   ]
+  },
+  {
+   "id": "playful-pinks",
+   "name": "Playful Pinks",
+   "shopifyFamily": "Playful Pink",
+   "dropboxFolder": "playful pink",
+   "shades": [
+    {
+     "id": "playful-pinks-01",
+     "index": 1,
+     "name": "Light Pink",
+     "shopifyName": "Light Pink",
+     "hex": "#ffd2e9",
+     "renderStem": "Light-Pink"
+    },
+    {
+     "id": "playful-pinks-02",
+     "index": 2,
+     "name": "Pastel",
+     "shopifyName": "Pastel Pink",
+     "hex": "#f2bdcd",
+     "renderStem": "Pastel-Pink"
+    },
+    {
+     "id": "playful-pinks-03",
+     "index": 3,
+     "name": "Blush",
+     "shopifyName": "Blush",
+     "hex": "#f4b6bb",
+     "renderStem": "Blush"
+    },
+    {
+     "id": "playful-pinks-04",
+     "index": 4,
+     "name": "Peachy",
+     "shopifyName": "Peachy",
+     "hex": "#ffbcac",
+     "renderStem": "Peachy"
+    },
+    {
+     "id": "playful-pinks-05",
+     "index": 5,
+     "name": "Baby Pink",
+     "shopifyName": "Baby Pink",
+     "hex": "#ffacd0",
+     "renderStem": "Baby-Pink"
+    },
+    {
+     "id": "playful-pinks-06",
+     "index": 6,
+     "name": "Ballerina",
+     "shopifyName": "Ballerina",
+     "hex": "#efa3af",
+     "renderStem": "Ballerina"
+    },
+    {
+     "id": "playful-pinks-07",
+     "index": 7,
+     "name": "Rose Pink",
+     "shopifyName": "Rose",
+     "hex": "#f5a2b4",
+     "renderStem": "Rose"
+    },
+    {
+     "id": "playful-pinks-08",
+     "index": 8,
+     "name": "Flamingo",
+     "shopifyName": "Flamingo",
+     "hex": "#fc92b6",
+     "renderStem": "Flamingo"
+    },
+    {
+     "id": "playful-pinks-09",
+     "index": 9,
+     "name": "Bubblegum",
+     "shopifyName": "Bubblegum",
+     "hex": "#f086c6",
+     "renderStem": "Bubblegum"
+    },
+    {
+     "id": "playful-pinks-10",
+     "index": 10,
+     "name": "Orchid",
+     "shopifyName": "Orchid",
+     "hex": "#e881b9",
+     "renderStem": "Orchid"
+    },
+    {
+     "id": "playful-pinks-11",
+     "index": 11,
+     "name": "Crepe",
+     "shopifyName": "Crepe",
+     "hex": "#cf91a8",
+     "renderStem": "Crepe"
+    },
+    {
+     "id": "playful-pinks-12",
+     "index": 12,
+     "name": "Salmon Pink",
+     "shopifyName": "Salmon Pink",
+     "hex": "#ff6a64",
+     "renderStem": "Salmon-Pink"
+    },
+    {
+     "id": "playful-pinks-13",
+     "index": 13,
+     "name": "Berry",
+     "shopifyName": "Berry",
+     "hex": "#ff6090",
+     "renderStem": "Berry"
+    },
+    {
+     "id": "playful-pinks-14",
+     "index": 14,
+     "name": "Rouge",
+     "shopifyName": "Rouge",
+     "hex": "#f2638f",
+     "renderStem": "Rouge"
+    },
+    {
+     "id": "playful-pinks-15",
+     "index": 15,
+     "name": "Punch",
+     "shopifyName": "Punch",
+     "hex": "#ef4b7e",
+     "renderStem": "Punch"
+    },
+    {
+     "id": "playful-pinks-16",
+     "index": 16,
+     "name": "Doll",
+     "shopifyName": "Doll",
+     "hex": "#e64c95",
+     "renderStem": "Doll"
+    },
+    {
+     "id": "playful-pinks-17",
+     "index": 17,
+     "name": "Gumball",
+     "shopifyName": "Gumball",
+     "hex": "#ff5fff",
+     "renderStem": "Gumball"
+    },
+    {
+     "id": "playful-pinks-18",
+     "index": 18,
+     "name": "Neon",
+     "shopifyName": "Neon",
+     "hex": "#ee27fe",
+     "renderStem": "Neon-Pink"
+    },
+    {
+     "id": "playful-pinks-19",
+     "index": 19,
+     "name": "Peony",
+     "shopifyName": "Peony",
+     "hex": "#ea0eac",
+     "renderStem": "Peony"
+    },
+    {
+     "id": "playful-pinks-20",
+     "index": 20,
+     "name": "Bright Pink",
+     "shopifyName": "Bright Pink",
+     "hex": "#fe0094",
+     "renderStem": "Bright-Pink"
+    },
+    {
+     "id": "playful-pinks-21",
+     "index": 21,
+     "name": "Watermelon",
+     "shopifyName": "Watermelon",
+     "hex": "#fa465f",
+     "renderStem": "Watermelon"
+    },
+    {
+     "id": "playful-pinks-22",
+     "index": 22,
+     "name": "Camellia",
+     "shopifyName": "Camellia",
+     "hex": "#e02693",
+     "renderStem": "Camellia"
+    },
+    {
+     "id": "playful-pinks-23",
+     "index": 23,
+     "name": "Magenta",
+     "shopifyName": "Magenta",
+     "hex": "#ed008c",
+     "renderStem": "Magenta"
+    },
+    {
+     "id": "playful-pinks-24",
+     "index": 24,
+     "name": "Fuchsia",
+     "shopifyName": "Fuchsia",
+     "hex": "#e0028d",
+     "renderStem": "Fuchsia"
+    }
+   ]
+  },
+  {
+   "id": "vivid-violets",
+   "name": "Vivid Violets",
+   "shopifyFamily": "Vivid Violet",
+   "dropboxFolder": "vivid violet",
+   "shades": [
+    {
+     "id": "vivid-violets-01",
+     "index": 1,
+     "name": "Light Violet",
+     "shopifyName": "Light Purple",
+     "hex": "#f5e3fb",
+     "renderStem": "Light-Purple"
+    },
+    {
+     "id": "vivid-violets-02",
+     "index": 2,
+     "name": "Pale Violet",
+     "shopifyName": "Pale Violet",
+     "hex": "#ecd0f9",
+     "renderStem": "Pale-Violet"
+    },
+    {
+     "id": "vivid-violets-03",
+     "index": 3,
+     "name": "Mauve",
+     "shopifyName": "Mauve",
+     "hex": "#dfa4f8",
+     "renderStem": "Mauve"
+    },
+    {
+     "id": "vivid-violets-04",
+     "index": 4,
+     "name": "Pastel",
+     "shopifyName": "Pastel Purple",
+     "hex": "#d7b9ed",
+     "renderStem": "Pastel-Purple"
+    },
+    {
+     "id": "vivid-violets-05",
+     "index": 5,
+     "name": "Lilac",
+     "shopifyName": "Lilac",
+     "hex": "#c988c8",
+     "renderStem": "Lilac"
+    },
+    {
+     "id": "vivid-violets-06",
+     "index": 6,
+     "name": "Lavender",
+     "shopifyName": "Lavender",
+     "hex": "#986db5",
+     "renderStem": "Lavender"
+    },
+    {
+     "id": "vivid-violets-07",
+     "index": 7,
+     "name": "Amethyst",
+     "shopifyName": "Amethyst",
+     "hex": "#8554d1",
+     "renderStem": "Amethyst"
+    },
+    {
+     "id": "vivid-violets-08",
+     "index": 8,
+     "name": "Iris",
+     "shopifyName": "Iris",
+     "hex": "#6947d1",
+     "renderStem": "Iris"
+    },
+    {
+     "id": "vivid-violets-09",
+     "index": 9,
+     "name": "Psychedelic",
+     "shopifyName": "Psychedelic",
+     "hex": "#ae00ff",
+     "renderStem": "Psychedelic"
+    },
+    {
+     "id": "vivid-violets-10",
+     "index": 10,
+     "name": "Bright Violet",
+     "shopifyName": "Bright Violet",
+     "hex": "#b944ea",
+     "renderStem": "Bright-Violet"
+    },
+    {
+     "id": "vivid-violets-11",
+     "index": 11,
+     "name": "Classic Violet",
+     "shopifyName": "Classic Violet",
+     "hex": "#9010bf",
+     "renderStem": "Classic-Violet"
+    },
+    {
+     "id": "vivid-violets-12",
+     "index": 12,
+     "name": "Orchid",
+     "shopifyName": "Purple Orchid",
+     "hex": "#911489",
+     "renderStem": "Purple-Orchid"
+    },
+    {
+     "id": "vivid-violets-13",
+     "index": 13,
+     "name": "Wildberry",
+     "shopifyName": "Wildberry",
+     "hex": "#a04d95",
+     "renderStem": "Wildberry"
+    },
+    {
+     "id": "vivid-violets-14",
+     "index": 14,
+     "name": "Mulberry",
+     "shopifyName": "Mulberry",
+     "hex": "#742665",
+     "renderStem": "Mulberry"
+    },
+    {
+     "id": "vivid-violets-15",
+     "index": 15,
+     "name": "Grape",
+     "shopifyName": "Grape",
+     "hex": "#5f114f",
+     "renderStem": "Grape"
+    },
+    {
+     "id": "vivid-violets-16",
+     "index": 16,
+     "name": "Fig",
+     "shopifyName": "Fig",
+     "hex": "#671e67",
+     "renderStem": "Fig"
+    },
+    {
+     "id": "vivid-violets-17",
+     "index": 17,
+     "name": "Ultra Violet",
+     "shopifyName": "Ultra Violet",
+     "hex": "#4a108b",
+     "renderStem": "Ultraviolet"
+    },
+    {
+     "id": "vivid-violets-18",
+     "index": 18,
+     "name": "Indigo",
+     "shopifyName": "Indigo",
+     "hex": "#39178f",
+     "renderStem": "Indigo"
+    },
+    {
+     "id": "vivid-violets-19",
+     "index": 19,
+     "name": "Royal",
+     "shopifyName": "Royal",
+     "hex": "#492376",
+     "renderStem": "Royal"
+    },
+    {
+     "id": "vivid-violets-20",
+     "index": 20,
+     "name": "Midnight",
+     "shopifyName": "Midnight",
+     "hex": "#492376",
+     "renderStem": "Midnight"
+    },
+    {
+     "id": "vivid-violets-21",
+     "index": 21,
+     "name": "Elderberry",
+     "shopifyName": "Elderberry",
+     "hex": "#391265",
+     "renderStem": "Elderberry"
+    },
+    {
+     "id": "vivid-violets-22",
+     "index": 22,
+     "name": "Plum",
+     "shopifyName": "Plum",
+     "hex": "#4e0973",
+     "renderStem": "Plum"
+    },
+    {
+     "id": "vivid-violets-23",
+     "index": 23,
+     "name": "Wine",
+     "shopifyName": "Wine",
+     "hex": "#572048",
+     "renderStem": "Wine"
+    },
+    {
+     "id": "vivid-violets-24",
+     "index": 24,
+     "name": "Eggplant",
+     "shopifyName": "Eggplant",
+     "hex": "#4a154d",
+     "renderStem": "Eggplant"
+    }
+   ]
+  },
+  {
+   "id": "mellow-yellows",
+   "name": "Mellow Yellows",
+   "shopifyFamily": "Mellow Yellow",
+   "dropboxFolder": "mellow yellow",
+   "shades": [
+    {
+     "id": "mellow-yellows-01",
+     "index": 1,
+     "name": "Sunbeam",
+     "shopifyName": "Sunbeam",
+     "hex": "#fff164",
+     "renderStem": "Sunbeam"
+    },
+    {
+     "id": "mellow-yellows-02",
+     "index": 2,
+     "name": "Pale Yellow",
+     "shopifyName": "Pale Yellow",
+     "hex": "#fbf9c6",
+     "renderStem": "Pale-Yellow"
+    },
+    {
+     "id": "mellow-yellows-03",
+     "index": 3,
+     "name": "Lemonade",
+     "shopifyName": "Lemonade",
+     "hex": "#f4ef94",
+     "renderStem": "Lemonade"
+    },
+    {
+     "id": "mellow-yellows-04",
+     "index": 4,
+     "name": "Pastel",
+     "shopifyName": "Pastel Yellow",
+     "hex": "#f5eda5",
+     "renderStem": "Pastel-Yellow"
+    },
+    {
+     "id": "mellow-yellows-05",
+     "index": 5,
+     "name": "Custard",
+     "shopifyName": "Custard",
+     "hex": "#edd87b",
+     "renderStem": "Custard"
+    },
+    {
+     "id": "mellow-yellows-06",
+     "index": 6,
+     "name": "Buttercup",
+     "shopifyName": "Buttercup",
+     "hex": "#f4dc6e",
+     "renderStem": "Buttercup"
+    },
+    {
+     "id": "mellow-yellows-07",
+     "index": 7,
+     "name": "Chamomile",
+     "shopifyName": "Chamomile",
+     "hex": "#f0d979",
+     "renderStem": "Chamomile"
+    },
+    {
+     "id": "mellow-yellows-08",
+     "index": 8,
+     "name": "Canary",
+     "shopifyName": "Canary",
+     "hex": "#f4e125",
+     "renderStem": "Canary"
+    },
+    {
+     "id": "mellow-yellows-09",
+     "index": 9,
+     "name": "Limoncello",
+     "shopifyName": "Limoncello",
+     "hex": "#f4f420",
+     "renderStem": "Limoncello"
+    },
+    {
+     "id": "mellow-yellows-10",
+     "index": 10,
+     "name": "Daffodil",
+     "shopifyName": "Daffodil",
+     "hex": "#f5d914",
+     "renderStem": "Daffodil"
+    },
+    {
+     "id": "mellow-yellows-11",
+     "index": 11,
+     "name": "Sunflower",
+     "shopifyName": "Sunflower",
+     "hex": "#f4d41d",
+     "renderStem": "Sunflower"
+    },
+    {
+     "id": "mellow-yellows-12",
+     "index": 12,
+     "name": "Dandelion",
+     "shopifyName": "Dandelion",
+     "hex": "#f5d71d",
+     "renderStem": "Dandelion"
+    },
+    {
+     "id": "mellow-yellows-13",
+     "index": 13,
+     "name": "Bright",
+     "shopifyName": "Bright Yellow",
+     "hex": "#fef200",
+     "renderStem": "Bright-Yellow"
+    },
+    {
+     "id": "mellow-yellows-14",
+     "index": 14,
+     "name": "Lemon",
+     "shopifyName": "Lemon",
+     "hex": "#f4ef55",
+     "renderStem": "Lemon"
+    },
+    {
+     "id": "mellow-yellows-15",
+     "index": 15,
+     "name": "Mimosa",
+     "shopifyName": "Mimosa",
+     "hex": "#f2d031",
+     "renderStem": "Mimosa"
+    },
+    {
+     "id": "mellow-yellows-16",
+     "index": 16,
+     "name": "Sunshine",
+     "shopifyName": "Sunshine",
+     "hex": "#fdce4c",
+     "renderStem": "Sunshine"
+    },
+    {
+     "id": "mellow-yellows-17",
+     "index": 17,
+     "name": "Tuscany",
+     "shopifyName": "Tuscany",
+     "hex": "#f9c83d",
+     "renderStem": "Tuscany"
+    },
+    {
+     "id": "mellow-yellows-18",
+     "index": 18,
+     "name": "Golden",
+     "shopifyName": "Golden",
+     "hex": "#f7bc34",
+     "renderStem": "Golden"
+    },
+    {
+     "id": "mellow-yellows-19",
+     "index": 19,
+     "name": "Banana",
+     "shopifyName": "Banana",
+     "hex": "#f0c529",
+     "renderStem": "Banana"
+    },
+    {
+     "id": "mellow-yellows-20",
+     "index": 20,
+     "name": "Bumblebee",
+     "shopifyName": "Bumblebee",
+     "hex": "#ffc239",
+     "renderStem": "Bumblebee"
+    },
+    {
+     "id": "mellow-yellows-21",
+     "index": 21,
+     "name": "Mustard",
+     "shopifyName": "Mustard",
+     "hex": "#eaa927",
+     "renderStem": "Mustard"
+    },
+    {
+     "id": "mellow-yellows-22",
+     "index": 22,
+     "name": "Citrine",
+     "shopifyName": "Citrine",
+     "hex": "#dccc53",
+     "renderStem": "Citrine"
+    },
+    {
+     "id": "mellow-yellows-23",
+     "index": 23,
+     "name": "Neon",
+     "shopifyName": "Neon Yellow",
+     "hex": "#d6f430",
+     "renderStem": "Neon-Yellow"
+    },
+    {
+     "id": "mellow-yellows-24",
+     "index": 24,
+     "name": "Dijon",
+     "shopifyName": "Dijon",
+     "hex": "#cea146",
+     "renderStem": "Dijon"
+    }
+   ]
+  },
+  {
+   "id": "earthy-browns",
+   "name": "Earthy Browns",
+   "shopifyFamily": "Basic Brown",
+   "dropboxFolder": "basic brown",
+   "shades": [
+    {
+     "id": "earthy-browns-01",
+     "index": 1,
+     "name": "Almond",
+     "shopifyName": "Almond",
+     "hex": "#e8d2bd",
+     "renderStem": "Almond"
+    },
+    {
+     "id": "earthy-browns-02",
+     "index": 2,
+     "name": "Sand",
+     "shopifyName": "Sand",
+     "hex": "#e1c39f",
+     "renderStem": "Sand"
+    },
+    {
+     "id": "earthy-browns-03",
+     "index": 3,
+     "name": "Beige",
+     "shopifyName": "Beige",
+     "hex": "#EAD8AB",
+     "renderStem": "Beige"
+    },
+    {
+     "id": "earthy-browns-04",
+     "index": 4,
+     "name": "Desert",
+     "shopifyName": "Desert",
+     "hex": "#c6a884",
+     "renderStem": "Desert"
+    },
+    {
+     "id": "earthy-browns-05",
+     "index": 5,
+     "name": "Rosy",
+     "shopifyName": "Rosy Brown",
+     "hex": "#c29995",
+     "renderStem": "Rosy-Brown"
+    },
+    {
+     "id": "earthy-browns-06",
+     "index": 6,
+     "name": "Light Brown",
+     "shopifyName": "Light Brown",
+     "hex": "#c3a082",
+     "renderStem": "Light-Brown"
+    },
+    {
+     "id": "earthy-browns-07",
+     "index": 7,
+     "name": "Cinnamon",
+     "shopifyName": "Cinnamon",
+     "hex": "#ba7237",
+     "renderStem": "Cinnamon"
+    },
+    {
+     "id": "earthy-browns-08",
+     "index": 8,
+     "name": "Peanut",
+     "shopifyName": "Peanut",
+     "hex": "#c88737",
+     "renderStem": "Peanut"
+    },
+    {
+     "id": "earthy-browns-09",
+     "index": 9,
+     "name": "Peru",
+     "shopifyName": "Peru",
+     "hex": "#d08647",
+     "renderStem": "Peru"
+    },
+    {
+     "id": "earthy-browns-10",
+     "index": 10,
+     "name": "Cider",
+     "shopifyName": "Cider",
+     "hex": "#b37840",
+     "renderStem": "Cider"
+    },
+    {
+     "id": "earthy-browns-11",
+     "index": 11,
+     "name": "Bronze",
+     "shopifyName": "Bronze",
+     "hex": "#a95c26",
+     "renderStem": "Bronze"
+    },
+    {
+     "id": "earthy-browns-12",
+     "index": 12,
+     "name": "Cocoa",
+     "shopifyName": "Cocoa",
+     "hex": "#81553a",
+     "renderStem": "Cocoa"
+    },
+    {
+     "id": "earthy-browns-13",
+     "index": 13,
+     "name": "Coffee",
+     "shopifyName": "Coffee",
+     "hex": "#7a583f",
+     "renderStem": "Coffee"
+    },
+    {
+     "id": "earthy-browns-14",
+     "index": 14,
+     "name": "Wood",
+     "shopifyName": "Wood",
+     "hex": "#7d5d44",
+     "renderStem": "Wood"
+    },
+    {
+     "id": "earthy-browns-15",
+     "index": 15,
+     "name": "Chocolate",
+     "shopifyName": "Chocolate",
+     "hex": "#7f5229",
+     "renderStem": "Chocolate"
+    },
+    {
+     "id": "earthy-browns-16",
+     "index": 16,
+     "name": "Brick",
+     "shopifyName": "Brick",
+     "hex": "#7c2b18",
+     "renderStem": "Brick"
+    },
+    {
+     "id": "earthy-browns-17",
+     "index": 17,
+     "name": "Russet",
+     "shopifyName": "Russet",
+     "hex": "#74421f",
+     "renderStem": "Russet"
+    },
+    {
+     "id": "earthy-browns-18",
+     "index": 18,
+     "name": "Taupe",
+     "shopifyName": "Taupe",
+     "hex": "#896950",
+     "renderStem": "Taupe"
+    },
+    {
+     "id": "earthy-browns-19",
+     "index": 19,
+     "name": "Wenge",
+     "shopifyName": "Wenge",
+     "hex": "#5c4d4a",
+     "renderStem": "Wenge"
+    },
+    {
+     "id": "earthy-browns-20",
+     "index": 20,
+     "name": "Chestnut",
+     "shopifyName": "Chestnut",
+     "hex": "#5d2b24",
+     "renderStem": "Chestnut"
+    },
+    {
+     "id": "earthy-browns-21",
+     "index": 21,
+     "name": "Walnut",
+     "shopifyName": "Walnut",
+     "hex": "#59402c",
+     "renderStem": "Walnut"
+    },
+    {
+     "id": "earthy-browns-22",
+     "index": 22,
+     "name": "Brunette",
+     "shopifyName": "Brunette",
+     "hex": "#543733",
+     "renderStem": "Brunette"
+    },
+    {
+     "id": "earthy-browns-23",
+     "index": 23,
+     "name": "Dark Chocolate",
+     "shopifyName": "Dark Chocolate",
+     "hex": "#4d301e",
+     "renderStem": "Dark-chocolate"
+    },
+    {
+     "id": "earthy-browns-24",
+     "index": 24,
+     "name": "Umber",
+     "shopifyName": "Umber",
+     "hex": "#662917",
+     "renderStem": "Umber"
+    }
+   ]
+  },
+  {
+   "id": "blushing-corals",
+   "name": "Blushing Corals",
+   "shopifyFamily": "Blushing Coral",
+   "dropboxFolder": "blushing coral",
+   "shades": [
+    {
+     "id": "blushing-corals-01",
+     "index": 1,
+     "name": "Bellini",
+     "shopifyName": "Bellini",
+     "hex": "#ffb98a",
+     "renderStem": "Bellini"
+    },
+    {
+     "id": "blushing-corals-02",
+     "index": 2,
+     "name": "Apricot",
+     "shopifyName": "Apricot",
+     "hex": "#faab6f",
+     "renderStem": "Apricot"
+    },
+    {
+     "id": "blushing-corals-03",
+     "index": 3,
+     "name": "Melon",
+     "shopifyName": "Melon",
+     "hex": "#fb934b",
+     "renderStem": "Melon"
+    },
+    {
+     "id": "blushing-corals-04",
+     "index": 4,
+     "name": "Mango",
+     "shopifyName": "Mango",
+     "hex": "#ff9f40",
+     "renderStem": "Mango"
+    },
+    {
+     "id": "blushing-corals-05",
+     "index": 5,
+     "name": "Bright Coral",
+     "shopifyName": "Bright Coral",
+     "hex": "#ff961a",
+     "renderStem": "Bright-Coral"
+    },
+    {
+     "id": "blushing-corals-06",
+     "index": 6,
+     "name": "True Coral",
+     "shopifyName": "True Coral",
+     "hex": "#ff815e",
+     "renderStem": "True-coral"
+    },
+    {
+     "id": "blushing-corals-07",
+     "index": 7,
+     "name": "Fire",
+     "shopifyName": "Fire",
+     "hex": "#ff7c22",
+     "renderStem": "Fire"
+    },
+    {
+     "id": "blushing-corals-08",
+     "index": 8,
+     "name": "Neon",
+     "shopifyName": "Neon Orange",
+     "hex": "#ff7901",
+     "renderStem": "Neon-Orange"
+    },
+    {
+     "id": "blushing-corals-09",
+     "index": 9,
+     "name": "Clementine",
+     "shopifyName": "Clementine",
+     "hex": "#f78628",
+     "renderStem": "Clementine"
+    },
+    {
+     "id": "blushing-corals-10",
+     "index": 10,
+     "name": "Orange Peel",
+     "shopifyName": "Orange Peel",
+     "hex": "#f1891f",
+     "renderStem": "Orange-Peel"
+    },
+    {
+     "id": "blushing-corals-11",
+     "index": 11,
+     "name": "Sunset",
+     "shopifyName": "Sunset",
+     "hex": "#ef9721",
+     "renderStem": "Sunset"
+    },
+    {
+     "id": "blushing-corals-12",
+     "index": 12,
+     "name": "Tangerine",
+     "shopifyName": "Tangerine",
+     "hex": "#ea821a",
+     "renderStem": "Tangerine"
+    },
+    {
+     "id": "blushing-corals-13",
+     "index": 13,
+     "name": "Amber",
+     "shopifyName": "Amber",
+     "hex": "#fcb627",
+     "renderStem": "Amber"
+    },
+    {
+     "id": "blushing-corals-14",
+     "index": 14,
+     "name": "Honey",
+     "shopifyName": "Honey",
+     "hex": "#e5811f",
+     "renderStem": "Honey"
+    },
+    {
+     "id": "blushing-corals-15",
+     "index": 15,
+     "name": "Tangelo",
+     "shopifyName": "Tangelo",
+     "hex": "#f67622",
+     "renderStem": "Tangelo"
+    },
+    {
+     "id": "blushing-corals-16",
+     "index": 16,
+     "name": "Pumpkin",
+     "shopifyName": "Pumpkin Spice",
+     "hex": "#f0652f",
+     "renderStem": "Pumpkin-spice"
+    },
+    {
+     "id": "blushing-corals-17",
+     "index": 17,
+     "name": "Marmalade",
+     "shopifyName": "Marmalade",
+     "hex": "#e85728",
+     "renderStem": "Marmalade"
+    },
+    {
+     "id": "blushing-corals-18",
+     "index": 18,
+     "name": "Saffron",
+     "shopifyName": "Saffron",
+     "hex": "#e67300",
+     "renderStem": "Saffron"
+    },
+    {
+     "id": "blushing-corals-19",
+     "index": 19,
+     "name": "Autumn",
+     "shopifyName": "Autumn",
+     "hex": "#e56228",
+     "renderStem": "Autumn"
+    },
+    {
+     "id": "blushing-corals-20",
+     "index": 20,
+     "name": "Persian",
+     "shopifyName": "Persian",
+     "hex": "#d48c5b",
+     "renderStem": "Persian"
+    },
+    {
+     "id": "blushing-corals-21",
+     "index": 21,
+     "name": "Clay",
+     "shopifyName": "Clay",
+     "hex": "#c17956",
+     "renderStem": "Clay"
+    },
+    {
+     "id": "blushing-corals-22",
+     "index": 22,
+     "name": "Maple",
+     "shopifyName": "Maple",
+     "hex": "#bd5816",
+     "renderStem": "Maple"
+    },
+    {
+     "id": "blushing-corals-23",
+     "index": 23,
+     "name": "Ginger",
+     "shopifyName": "Ginger",
+     "hex": "#b04a18",
+     "renderStem": "Ginger"
+    },
+    {
+     "id": "blushing-corals-24",
+     "index": 24,
+     "name": "Rust",
+     "shopifyName": "Rust",
+     "hex": "#af410b",
+     "renderStem": "Rust"
+    }
+   ]
+  },
+  {
+   "id": "stormy-greys",
+   "name": "Stormy Greys",
+   "shopifyFamily": "Stormy Grey",
+   "dropboxFolder": "stormy grey",
+   "shades": [
+    {
+     "id": "stormy-greys-01",
+     "index": 1,
+     "name": "Pale Grey",
+     "shopifyName": "Pale Grey",
+     "hex": "#bbbab8",
+     "renderStem": "Pale-Grey"
+    },
+    {
+     "id": "stormy-greys-02",
+     "index": 2,
+     "name": "Pastel",
+     "shopifyName": "Pastel Grey",
+     "hex": "#b8b8b1",
+     "renderStem": "Pastel-Grey"
+    },
+    {
+     "id": "stormy-greys-03",
+     "index": 3,
+     "name": "Pearl Grey",
+     "shopifyName": "Pearl Grey",
+     "hex": "#b3bab0",
+     "renderStem": "Pearl-Grey"
+    },
+    {
+     "id": "stormy-greys-04",
+     "index": 4,
+     "name": "Harbor",
+     "shopifyName": "Harbor Grey",
+     "hex": "#a8a9a3",
+     "renderStem": "Harbor-Grey"
+    },
+    {
+     "id": "stormy-greys-05",
+     "index": 5,
+     "name": "Silver",
+     "shopifyName": "Silver Grey",
+     "hex": "#acacac",
+     "renderStem": "Silver-Grey"
+    },
+    {
+     "id": "stormy-greys-06",
+     "index": 6,
+     "name": "Dolphin",
+     "shopifyName": "Dolphin",
+     "hex": "#9d9d9d",
+     "renderStem": "Dolphin"
+    },
+    {
+     "id": "stormy-greys-07",
+     "index": 7,
+     "name": "Dove",
+     "shopifyName": "Dove Grey",
+     "hex": "#9c9c9c",
+     "renderStem": "Dove"
+    },
+    {
+     "id": "stormy-greys-08",
+     "index": 8,
+     "name": "Steel",
+     "shopifyName": "Steel Grey",
+     "hex": "#929292",
+     "renderStem": "Steel-Grey"
+    },
+    {
+     "id": "stormy-greys-09",
+     "index": 9,
+     "name": "Koala",
+     "shopifyName": "Koala Grey",
+     "hex": "#878685",
+     "renderStem": "Koala-Grey"
+    },
+    {
+     "id": "stormy-greys-10",
+     "index": 10,
+     "name": "Ash",
+     "shopifyName": "Ash Grey",
+     "hex": "#848988",
+     "renderStem": "Ash-Grey"
+    },
+    {
+     "id": "stormy-greys-11",
+     "index": 11,
+     "name": "Rhino",
+     "shopifyName": "Rhino Grey",
+     "hex": "#788082",
+     "renderStem": "Rhino-Grey"
+    },
+    {
+     "id": "stormy-greys-12",
+     "index": 12,
+     "name": "Fog",
+     "shopifyName": "Fog Grey",
+     "hex": "#797474",
+     "renderStem": "Fog-Grey"
+    },
+    {
+     "id": "stormy-greys-13",
+     "index": 13,
+     "name": "Coal",
+     "shopifyName": "Cool Grey",
+     "hex": "#767b89",
+     "renderStem": "Cool-Grey"
+    },
+    {
+     "id": "stormy-greys-14",
+     "index": 14,
+     "name": "Smoke",
+     "shopifyName": "Smoke Grey",
+     "hex": "#7d7d7d",
+     "renderStem": "Smoke-Grey"
+    },
+    {
+     "id": "stormy-greys-15",
+     "index": 15,
+     "name": "Warm Grey",
+     "shopifyName": "Warm Grey",
+     "hex": "#7d787b",
+     "renderStem": "Warm-Grey"
+    },
+    {
+     "id": "stormy-greys-16",
+     "index": 16,
+     "name": "Shadow",
+     "shopifyName": "Shadow",
+     "hex": "#686b6f",
+     "renderStem": "Shadow"
+    },
+    {
+     "id": "stormy-greys-17",
+     "index": 17,
+     "name": "Mouse",
+     "shopifyName": "Mouse Grey",
+     "hex": "#696a6d",
+     "renderStem": "Mouse-Grey"
+    },
+    {
+     "id": "stormy-greys-18",
+     "index": 18,
+     "name": "Shark",
+     "shopifyName": "Shark Grey",
+     "hex": "#5b6369",
+     "renderStem": "Shark-Grey"
+    },
+    {
+     "id": "stormy-greys-19",
+     "index": 19,
+     "name": "Lava",
+     "shopifyName": "Lava Grey",
+     "hex": "#5e5d61",
+     "renderStem": "Lava-Grey"
+    },
+    {
+     "id": "stormy-greys-20",
+     "index": 20,
+     "name": "Stone",
+     "shopifyName": "Stone Grey",
+     "hex": "#54524d",
+     "renderStem": "Stone-Grey"
+    },
+    {
+     "id": "stormy-greys-21",
+     "index": 21,
+     "name": "Dark Grey",
+     "shopifyName": "Dark Grey",
+     "hex": "#444444",
+     "renderStem": "Dark-Grey"
+    },
+    {
+     "id": "stormy-greys-22",
+     "index": 22,
+     "name": "Iron",
+     "shopifyName": "Iron Grey",
+     "hex": "#43464c",
+     "renderStem": "Iron-Grey"
+    },
+    {
+     "id": "stormy-greys-23",
+     "index": 23,
+     "name": "Graphite",
+     "shopifyName": "Graphite",
+     "hex": "#424548",
+     "renderStem": "Graphite"
+    },
+    {
+     "id": "stormy-greys-24",
+     "index": 24,
+     "name": "Charcoal",
+     "shopifyName": "Charcoal",
+     "hex": "#393f44",
+     "renderStem": "Charcoal"
+    }
+   ]
+  },
+  {
+   "id": "go-green",
+   "name": "Go Green",
+   "shopifyFamily": "Go Green",
+   "dropboxFolder": "go green",
+   "shades": [
+    {
+     "id": "go-green-01",
+     "index": 1,
+     "name": "Light Green",
+     "shopifyName": "Light Green",
+     "hex": "#e3f7ba",
+     "renderStem": "Light-Green"
+    },
+    {
+     "id": "go-green-02",
+     "index": 2,
+     "name": "Green Tea",
+     "shopifyName": "Green Tea",
+     "hex": "#caed91",
+     "renderStem": "Green-Tea"
+    },
+    {
+     "id": "go-green-03",
+     "index": 3,
+     "name": "Pear",
+     "shopifyName": "Pear Green",
+     "hex": "#c7dd4a",
+     "renderStem": "Pear-Green"
+    },
+    {
+     "id": "go-green-04",
+     "index": 4,
+     "name": "Pastel",
+     "shopifyName": "Pastel Green",
+     "hex": "#baeaa0",
+     "renderStem": "Pastel-Green"
+    },
+    {
+     "id": "go-green-05",
+     "index": 5,
+     "name": "Mint",
+     "shopifyName": "Mint Green",
+     "hex": "#6be5b4",
+     "renderStem": "Mint-Green"
+    },
+    {
+     "id": "go-green-06",
+     "index": 6,
+     "name": "Neon",
+     "shopifyName": "Neon Green",
+     "hex": "#26ff00",
+     "renderStem": "Neon-Green"
+    },
+    {
+     "id": "go-green-07",
+     "index": 7,
+     "name": "Pistachio",
+     "shopifyName": "Pistachio",
+     "hex": "#96cc76",
+     "renderStem": "Pistachio"
+    },
+    {
+     "id": "go-green-08",
+     "index": 8,
+     "name": "Jade",
+     "shopifyName": "Jade Green",
+     "hex": "#8ab269",
+     "renderStem": "Jade-Green"
+    },
+    {
+     "id": "go-green-09",
+     "index": 9,
+     "name": "Sage",
+     "shopifyName": "Sage",
+     "hex": "#96a880",
+     "renderStem": "Sage"
+    },
+    {
+     "id": "go-green-10",
+     "index": 10,
+     "name": "Lime",
+     "shopifyName": "Lime Green",
+     "hex": "#6bbc3b",
+     "renderStem": "Lime-Green"
+    },
+    {
+     "id": "go-green-11",
+     "index": 11,
+     "name": "Green Apple",
+     "shopifyName": "Green Apple",
+     "hex": "#91b521",
+     "renderStem": "Green-Apple"
+    },
+    {
+     "id": "go-green-12",
+     "index": 12,
+     "name": "Lawn",
+     "shopifyName": "Lawn Green",
+     "hex": "#4aa325",
+     "renderStem": "Lawn-Green"
+    },
+    {
+     "id": "go-green-13",
+     "index": 13,
+     "name": "Olive",
+     "shopifyName": "Olive Green",
+     "hex": "#83841e",
+     "renderStem": "Olive-Green"
+    },
+    {
+     "id": "go-green-14",
+     "index": 14,
+     "name": "Fern",
+     "shopifyName": "Fern",
+     "hex": "#335a01",
+     "renderStem": "Fern"
+    },
+    {
+     "id": "go-green-15",
+     "index": 15,
+     "name": "Basil",
+     "shopifyName": "Basil Green",
+     "hex": "#476d3e",
+     "renderStem": "Basil-Green"
+    },
+    {
+     "id": "go-green-16",
+     "index": 16,
+     "name": "Thyme",
+     "shopifyName": "Thyme",
+     "hex": "#717d67",
+     "renderStem": "Thyme"
+    },
+    {
+     "id": "go-green-17",
+     "index": 17,
+     "name": "Khaki",
+     "shopifyName": "Khaki",
+     "hex": "#666046",
+     "renderStem": "Khaki"
+    },
+    {
+     "id": "go-green-18",
+     "index": 18,
+     "name": "Persian",
+     "shopifyName": "Persian Green",
+     "hex": "#19a598",
+     "renderStem": "Persian-Green"
+    },
+    {
+     "id": "go-green-19",
+     "index": 19,
+     "name": "Teal",
+     "shopifyName": "Teal",
+     "hex": "#05877d",
+     "renderStem": "Teal-Green"
+    },
+    {
+     "id": "go-green-20",
+     "index": 20,
+     "name": "Emerald",
+     "shopifyName": "Emerald Green",
+     "hex": "#006d48",
+     "renderStem": "Emerald-Green"
+    },
+    {
+     "id": "go-green-21",
+     "index": 21,
+     "name": "Pine",
+     "shopifyName": "Pine Green",
+     "hex": "#004c16",
+     "renderStem": "Pine-Green"
+    },
+    {
+     "id": "go-green-22",
+     "index": 22,
+     "name": "Forest",
+     "shopifyName": "Forest Green",
+     "hex": "#084f3d",
+     "renderStem": "Forest-Green"
+    },
+    {
+     "id": "go-green-23",
+     "index": 23,
+     "name": "Hunter",
+     "shopifyName": "Hunter Green",
+     "hex": "#063f1e",
+     "renderStem": "Hunter-Green"
+    },
+    {
+     "id": "go-green-24",
+     "index": 24,
+     "name": "Army",
+     "shopifyName": "Army Green",
+     "hex": "#434714",
+     "renderStem": "Army-Green"
+    }
+   ]
+  },
+  {
+   "id": "roaring-reds",
+   "name": "Roaring Reds",
+   "shopifyFamily": "Roaring Red",
+   "dropboxFolder": "roaring red",
+   "shades": [
+    {
+     "id": "roaring-reds-01",
+     "index": 1,
+     "name": "Pastel",
+     "shopifyName": "Pastel Red",
+     "hex": "#fe6c6b",
+     "renderStem": "Pastel-Red"
+    },
+    {
+     "id": "roaring-reds-02",
+     "index": 2,
+     "name": "Paprika",
+     "shopifyName": "Paprika",
+     "hex": "#f3342e",
+     "renderStem": "Paprika"
+    },
+    {
+     "id": "roaring-reds-03",
+     "index": 3,
+     "name": "Strawberry",
+     "shopifyName": "Strawberry",
+     "hex": "#f4315c",
+     "renderStem": "Strawberry"
+    },
+    {
+     "id": "roaring-reds-04",
+     "index": 4,
+     "name": "Vermilion",
+     "shopifyName": "Vermilion",
+     "hex": "#dd4b3a",
+     "renderStem": "Vermillion"
+    },
+    {
+     "id": "roaring-reds-05",
+     "index": 5,
+     "name": "Imperial",
+     "shopifyName": "Imperial Red",
+     "hex": "#e81638",
+     "renderStem": "Imperial-Red"
+    },
+    {
+     "id": "roaring-reds-06",
+     "index": 6,
+     "name": "Classic",
+     "shopifyName": "Classic Red",
+     "hex": "#ef1123",
+     "renderStem": "Classic-Red"
+    },
+    {
+     "id": "roaring-reds-07",
+     "index": 7,
+     "name": "Crimson",
+     "shopifyName": "Crimson",
+     "hex": "#d20000",
+     "renderStem": "Crimson"
+    },
+    {
+     "id": "roaring-reds-08",
+     "index": 8,
+     "name": "Raspberry",
+     "shopifyName": "Raspberry",
+     "hex": "#cd2550",
+     "renderStem": "Raspberry"
+    },
+    {
+     "id": "roaring-reds-09",
+     "index": 9,
+     "name": "Scarlet",
+     "shopifyName": "Scarlet Red",
+     "hex": "#c30117",
+     "renderStem": "Scarlet-Red"
+    },
+    {
+     "id": "roaring-reds-10",
+     "index": 10,
+     "name": "Rose",
+     "shopifyName": "Rose Red",
+     "hex": "#c70451",
+     "renderStem": "Rose-Red"
+    },
+    {
+     "id": "roaring-reds-11",
+     "index": 11,
+     "name": "Ruby",
+     "shopifyName": "Ruby Red",
+     "hex": "#b31f2d",
+     "renderStem": "Ruby-Red"
+    },
+    {
+     "id": "roaring-reds-12",
+     "index": 12,
+     "name": "Mars",
+     "shopifyName": "Mars",
+     "hex": "#b84533",
+     "renderStem": "Mars"
+    },
+    {
+     "id": "roaring-reds-13",
+     "index": 13,
+     "name": "Apple",
+     "shopifyName": "Apple",
+     "hex": "#ab091b",
+     "renderStem": "Apple"
+    },
+    {
+     "id": "roaring-reds-14",
+     "index": 14,
+     "name": "Chilli",
+     "shopifyName": "Chilli Red",
+     "hex": "#bb0f1c",
+     "renderStem": "Chilli-Red"
+    },
+    {
+     "id": "roaring-reds-15",
+     "index": 15,
+     "name": "Claret",
+     "shopifyName": "Claret",
+     "hex": "#9b021c",
+     "renderStem": "Claret"
+    },
+    {
+     "id": "roaring-reds-16",
+     "index": 16,
+     "name": "Red Currant",
+     "shopifyName": "Red Currant",
+     "hex": "#a23744",
+     "renderStem": "Red-Currant"
+    },
+    {
+     "id": "roaring-reds-17",
+     "index": 17,
+     "name": "Hibiscus",
+     "shopifyName": "Hibiscus",
+     "hex": "#a0183d",
+     "renderStem": "Hibiscus"
+    },
+    {
+     "id": "roaring-reds-18",
+     "index": 18,
+     "name": "Terracotta",
+     "shopifyName": "Terracotta",
+     "hex": "#9a3f3d",
+     "renderStem": "Terracotta"
+    },
+    {
+     "id": "roaring-reds-19",
+     "index": 19,
+     "name": "Cherry",
+     "shopifyName": "Cherry Red",
+     "hex": "#8f0125",
+     "renderStem": "Cherry-Red"
+    },
+    {
+     "id": "roaring-reds-20",
+     "index": 20,
+     "name": "Blood",
+     "shopifyName": "Blood Red",
+     "hex": "#850312",
+     "renderStem": "Blood-Red"
+    },
+    {
+     "id": "roaring-reds-21",
+     "index": 21,
+     "name": "Burgundy",
+     "shopifyName": "Burgundy",
+     "hex": "#82001e",
+     "renderStem": "Burgundy"
+    },
+    {
+     "id": "roaring-reds-22",
+     "index": 22,
+     "name": "Maroon",
+     "shopifyName": "Maroon",
+     "hex": "#730034",
+     "renderStem": "Maroon"
+    },
+    {
+     "id": "roaring-reds-23",
+     "index": 23,
+     "name": "Wine",
+     "shopifyName": "Red Wine",
+     "hex": "#4b0923",
+     "renderStem": "Red-Wine"
+    },
+    {
+     "id": "roaring-reds-24",
+     "index": 24,
+     "name": "Mahogany",
+     "shopifyName": "Mahogany",
+     "hex": "#470406",
+     "renderStem": "Mahogany"
+    }
+   ]
+  }
+ ],
+ "issues": [
+  "duplicate hex #492376: Vivid Violets/Royal and Vivid Violets/Midnight"
+ ],
+ "total": 240
+}

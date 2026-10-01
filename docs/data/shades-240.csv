@@ -1,0 +1,241 @@
+family,index,name,hex,shopifyName,renderStem
+Frosty Whites,1,Pearl,#f7f7f7,Pearl,Pearl
+Frosty Whites,2,Vanilla,#f7f7ef,Vanilla,Vanilla
+Frosty Whites,3,Cotton,#f8efea,Cotton,Cotton
+Frosty Whites,4,Lace,#f5f0ea,Lace,Lace
+Frosty Whites,5,Cream,#f3f2ed,Cream,Cream
+Frosty Whites,6,Frost,#f2f0e3,Frost,Frost
+Frosty Whites,7,Snow,#f0f4f5,Snowflake,Snowflake
+Frosty Whites,8,Daisy,#eff7f9,Daisy,Daisy
+Frosty Whites,9,Rice,#f0f8ed,Rice,Rice
+Frosty Whites,10,Porcelain,#eff1f0,Porcelain,Porcelain
+Frosty Whites,11,Ivory,#f7f6e4,Ivory,Ivory
+Frosty Whites,12,Parchment,#edeee6,Parchment,Parchment
+Frosty Whites,13,Coconut,#eaeff3,Coconut,Coconut
+Frosty Whites,14,Alabaster,#efece5,Alabaster,Alabaster
+Frosty Whites,15,Oyster,#efeae6,Oyester,Oyster
+Frosty Whites,16,Mist,#eae9e7,Mist,Mist
+Frosty Whites,17,Off White,#eaeaea,Off-White,Off-white
+Frosty Whites,18,Bone,#edebde,Bone,Bone
+Frosty Whites,19,Seashell,#f0e8db,Seashell,Seashell
+Frosty Whites,20,Linen,#efe6d5,Linen,Linen
+Frosty Whites,21,Eggshell,#eae6da,Eggshell,Eggshell
+Frosty Whites,22,Antique,#e8e5d6,Antique,Antique
+Frosty Whites,23,Chiffon,#e1e5d7,Chiffon,Chiffon
+Frosty Whites,24,Oatmeal,#e2d6c6,Oatmeal,Oatmeal
+Blissful Blues,1,Electric,#76f2fc,Electric Blue,Electric-Blue
+Blissful Blues,2,Baby Blue,#8be2fb,Baby Blue,Baby-Blue
+Blissful Blues,3,Powder,#9adeee,Powder Blue,Powder-Blue
+Blissful Blues,4,Turquoise,#00e8d9,Turquoise,Turquoise
+Blissful Blues,5,Aqua,#04dcf7,Aqua,Aqua
+Blissful Blues,6,Aquamarine,#3ef9da,Aquamarine,Aquamarine
+Blissful Blues,7,Cyan,#01ffff,Cyan,Cyan
+Blissful Blues,8,Sky,#08bcf4,Sky Blue,Sky-Blue
+Blissful Blues,9,Ocean,#1494e4,Ocean,Ocean
+Blissful Blues,10,Azure,#007dd3,Azure,Azure
+Blissful Blues,11,Cobalt,#1040ca,Cobalt,Cobalt
+Blissful Blues,12,Royal,#0040c1,Royal Blue,Royal-Blue
+Blissful Blues,13,Egyptian,#0036ac,Egyptian Blue,Egyptian-Blue
+Blissful Blues,14,Indigo,#1919a4,Indigo Blue,Indigo-Blue
+Blissful Blues,15,Sapphire,#002c84,Sapphire,Sapphire
+Blissful Blues,16,Blueberry,#1d1968,Blueberry,Blueberry
+Blissful Blues,17,Classic,#074882,Classic Blue,Classic-Blue
+Blissful Blues,18,Teal,#00818e,Teal Blue,Teal-Blue
+Blissful Blues,19,Pigeon,#5c6f92,Pigeon Blue,Pigeon-Blue
+Blissful Blues,20,Stone,#608592,Stone Blue,Stone-Blue
+Blissful Blues,21,Prussian,#2f3f5c,Prussian,Prussian
+Blissful Blues,22,Navy,#0e305b,Navy Blue,Navy-Blue
+Blissful Blues,23,Space,#15284f,Space Blue,Space-Blue
+Blissful Blues,24,Midnight,#0e1442,Midnight Blue,Midnight-Blue
+Playful Pinks,1,Light Pink,#ffd2e9,Light Pink,Light-Pink
+Playful Pinks,2,Pastel,#f2bdcd,Pastel Pink,Pastel-Pink
+Playful Pinks,3,Blush,#f4b6bb,Blush,Blush
+Playful Pinks,4,Peachy,#ffbcac,Peachy,Peachy
+Playful Pinks,5,Baby Pink,#ffacd0,Baby Pink,Baby-Pink
+Playful Pinks,6,Ballerina,#efa3af,Ballerina,Ballerina
+Playful Pinks,7,Rose Pink,#f5a2b4,Rose,Rose
+Playful Pinks,8,Flamingo,#fc92b6,Flamingo,Flamingo
+Playful Pinks,9,Bubblegum,#f086c6,Bubblegum,Bubblegum
+Playful Pinks,10,Orchid,#e881b9,Orchid,Orchid
+Playful Pinks,11,Crepe,#cf91a8,Crepe,Crepe
+Playful Pinks,12,Salmon Pink,#ff6a64,Salmon Pink,Salmon-Pink
+Playful Pinks,13,Berry,#ff6090,Berry,Berry
+Playful Pinks,14,Rouge,#f2638f,Rouge,Rouge
+Playful Pinks,15,Punch,#ef4b7e,Punch,Punch
+Playful Pinks,16,Doll,#e64c95,Doll,Doll
+Playful Pinks,17,Gumball,#ff5fff,Gumball,Gumball
+Playful Pinks,18,Neon,#ee27fe,Neon,Neon-Pink
+Playful Pinks,19,Peony,#ea0eac,Peony,Peony
+Playful Pinks,20,Bright Pink,#fe0094,Bright Pink,Bright-Pink
+Playful Pinks,21,Watermelon,#fa465f,Watermelon,Watermelon
+Playful Pinks,22,Camellia,#e02693,Camellia,Camellia
+Playful Pinks,23,Magenta,#ed008c,Magenta,Magenta
+Playful Pinks,24,Fuchsia,#e0028d,Fuchsia,Fuchsia
+Vivid Violets,1,Light Violet,#f5e3fb,Light Purple,Light-Purple
+Vivid Violets,2,Pale Violet,#ecd0f9,Pale Violet,Pale-Violet
+Vivid Violets,3,Mauve,#dfa4f8,Mauve,Mauve
+Vivid Violets,4,Pastel,#d7b9ed,Pastel Purple,Pastel-Purple
+Vivid Violets,5,Lilac,#c988c8,Lilac,Lilac
+Vivid Violets,6,Lavender,#986db5,Lavender,Lavender
+Vivid Violets,7,Amethyst,#8554d1,Amethyst,Amethyst
+Vivid Violets,8,Iris,#6947d1,Iris,Iris
+Vivid Violets,9,Psychedelic,#ae00ff,Psychedelic,Psychedelic
+Vivid Violets,10,Bright Violet,#b944ea,Bright Violet,Bright-Violet
+Vivid Violets,11,Classic Violet,#9010bf,Classic Violet,Classic-Violet
+Vivid Violets,12,Orchid,#911489,Purple Orchid,Purple-Orchid
+Vivid Violets,13,Wildberry,#a04d95,Wildberry,Wildberry
+Vivid Violets,14,Mulberry,#742665,Mulberry,Mulberry
+Vivid Violets,15,Grape,#5f114f,Grape,Grape
+Vivid Violets,16,Fig,#671e67,Fig,Fig
+Vivid Violets,17,Ultra Violet,#4a108b,Ultra Violet,Ultraviolet
+Vivid Violets,18,Indigo,#39178f,Indigo,Indigo
+Vivid Violets,19,Royal,#492376,Royal,Royal
+Vivid Violets,20,Midnight,#492376,Midnight,Midnight
+Vivid Violets,21,Elderberry,#391265,Elderberry,Elderberry
+Vivid Violets,22,Plum,#4e0973,Plum,Plum
+Vivid Violets,23,Wine,#572048,Wine,Wine
+Vivid Violets,24,Eggplant,#4a154d,Eggplant,Eggplant
+Mellow Yellows,1,Sunbeam,#fff164,Sunbeam,Sunbeam
+Mellow Yellows,2,Pale Yellow,#fbf9c6,Pale Yellow,Pale-Yellow
+Mellow Yellows,3,Lemonade,#f4ef94,Lemonade,Lemonade
+Mellow Yellows,4,Pastel,#f5eda5,Pastel Yellow,Pastel-Yellow
+Mellow Yellows,5,Custard,#edd87b,Custard,Custard
+Mellow Yellows,6,Buttercup,#f4dc6e,Buttercup,Buttercup
+Mellow Yellows,7,Chamomile,#f0d979,Chamomile,Chamomile
+Mellow Yellows,8,Canary,#f4e125,Canary,Canary
+Mellow Yellows,9,Limoncello,#f4f420,Limoncello,Limoncello
+Mellow Yellows,10,Daffodil,#f5d914,Daffodil,Daffodil
+Mellow Yellows,11,Sunflower,#f4d41d,Sunflower,Sunflower
+Mellow Yellows,12,Dandelion,#f5d71d,Dandelion,Dandelion
+Mellow Yellows,13,Bright,#fef200,Bright Yellow,Bright-Yellow
+Mellow Yellows,14,Lemon,#f4ef55,Lemon,Lemon
+Mellow Yellows,15,Mimosa,#f2d031,Mimosa,Mimosa
+Mellow Yellows,16,Sunshine,#fdce4c,Sunshine,Sunshine
+Mellow Yellows,17,Tuscany,#f9c83d,Tuscany,Tuscany
+Mellow Yellows,18,Golden,#f7bc34,Golden,Golden
+Mellow Yellows,19,Banana,#f0c529,Banana,Banana
+Mellow Yellows,20,Bumblebee,#ffc239,Bumblebee,Bumblebee
+Mellow Yellows,21,Mustard,#eaa927,Mustard,Mustard
+Mellow Yellows,22,Citrine,#dccc53,Citrine,Citrine
+Mellow Yellows,23,Neon,#d6f430,Neon Yellow,Neon-Yellow
+Mellow Yellows,24,Dijon,#cea146,Dijon,Dijon
+Earthy Browns,1,Almond,#e8d2bd,Almond,Almond
+Earthy Browns,2,Sand,#e1c39f,Sand,Sand
+Earthy Browns,3,Beige,#EAD8AB,Beige,Beige
+Earthy Browns,4,Desert,#c6a884,Desert,Desert
+Earthy Browns,5,Rosy,#c29995,Rosy Brown,Rosy-Brown
+Earthy Browns,6,Light Brown,#c3a082,Light Brown,Light-Brown
+Earthy Browns,7,Cinnamon,#ba7237,Cinnamon,Cinnamon
+Earthy Browns,8,Peanut,#c88737,Peanut,Peanut
+Earthy Browns,9,Peru,#d08647,Peru,Peru
+Earthy Browns,10,Cider,#b37840,Cider,Cider
+Earthy Browns,11,Bronze,#a95c26,Bronze,Bronze
+Earthy Browns,12,Cocoa,#81553a,Cocoa,Cocoa
+Earthy Browns,13,Coffee,#7a583f,Coffee,Coffee
+Earthy Browns,14,Wood,#7d5d44,Wood,Wood
+Earthy Browns,15,Chocolate,#7f5229,Chocolate,Chocolate
+Earthy Browns,16,Brick,#7c2b18,Brick,Brick
+Earthy Browns,17,Russet,#74421f,Russet,Russet
+Earthy Browns,18,Taupe,#896950,Taupe,Taupe
+Earthy Browns,19,Wenge,#5c4d4a,Wenge,Wenge
+Earthy Browns,20,Chestnut,#5d2b24,Chestnut,Chestnut
+Earthy Browns,21,Walnut,#59402c,Walnut,Walnut
+Earthy Browns,22,Brunette,#543733,Brunette,Brunette
+Earthy Browns,23,Dark Chocolate,#4d301e,Dark Chocolate,Dark-chocolate
+Earthy Browns,24,Umber,#662917,Umber,Umber
+Blushing Corals,1,Bellini,#ffb98a,Bellini,Bellini
+Blushing Corals,2,Apricot,#faab6f,Apricot,Apricot
+Blushing Corals,3,Melon,#fb934b,Melon,Melon
+Blushing Corals,4,Mango,#ff9f40,Mango,Mango
+Blushing Corals,5,Bright Coral,#ff961a,Bright Coral,Bright-Coral
+Blushing Corals,6,True Coral,#ff815e,True Coral,True-coral
+Blushing Corals,7,Fire,#ff7c22,Fire,Fire
+Blushing Corals,8,Neon,#ff7901,Neon Orange,Neon-Orange
+Blushing Corals,9,Clementine,#f78628,Clementine,Clementine
+Blushing Corals,10,Orange Peel,#f1891f,Orange Peel,Orange-Peel
+Blushing Corals,11,Sunset,#ef9721,Sunset,Sunset
+Blushing Corals,12,Tangerine,#ea821a,Tangerine,Tangerine
+Blushing Corals,13,Amber,#fcb627,Amber,Amber
+Blushing Corals,14,Honey,#e5811f,Honey,Honey
+Blushing Corals,15,Tangelo,#f67622,Tangelo,Tangelo
+Blushing Corals,16,Pumpkin,#f0652f,Pumpkin Spice,Pumpkin-spice
+Blushing Corals,17,Marmalade,#e85728,Marmalade,Marmalade
+Blushing Corals,18,Saffron,#e67300,Saffron,Saffron
+Blushing Corals,19,Autumn,#e56228,Autumn,Autumn
+Blushing Corals,20,Persian,#d48c5b,Persian,Persian
+Blushing Corals,21,Clay,#c17956,Clay,Clay
+Blushing Corals,22,Maple,#bd5816,Maple,Maple
+Blushing Corals,23,Ginger,#b04a18,Ginger,Ginger
+Blushing Corals,24,Rust,#af410b,Rust,Rust
+Stormy Greys,1,Pale Grey,#bbbab8,Pale Grey,Pale-Grey
+Stormy Greys,2,Pastel,#b8b8b1,Pastel Grey,Pastel-Grey
+Stormy Greys,3,Pearl Grey,#b3bab0,Pearl Grey,Pearl-Grey
+Stormy Greys,4,Harbor,#a8a9a3,Harbor Grey,Harbor-Grey
+Stormy Greys,5,Silver,#acacac,Silver Grey,Silver-Grey
+Stormy Greys,6,Dolphin,#9d9d9d,Dolphin,Dolphin
+Stormy Greys,7,Dove,#9c9c9c,Dove Grey,Dove
+Stormy Greys,8,Steel,#929292,Steel Grey,Steel-Grey
+Stormy Greys,9,Koala,#878685,Koala Grey,Koala-Grey
+Stormy Greys,10,Ash,#848988,Ash Grey,Ash-Grey
+Stormy Greys,11,Rhino,#788082,Rhino Grey,Rhino-Grey
+Stormy Greys,12,Fog,#797474,Fog Grey,Fog-Grey
+Stormy Greys,13,Coal,#767b89,Cool Grey,Cool-Grey
+Stormy Greys,14,Smoke,#7d7d7d,Smoke Grey,Smoke-Grey
+Stormy Greys,15,Warm Grey,#7d787b,Warm Grey,Warm-Grey
+Stormy Greys,16,Shadow,#686b6f,Shadow,Shadow
+Stormy Greys,17,Mouse,#696a6d,Mouse Grey,Mouse-Grey
+Stormy Greys,18,Shark,#5b6369,Shark Grey,Shark-Grey
+Stormy Greys,19,Lava,#5e5d61,Lava Grey,Lava-Grey
+Stormy Greys,20,Stone,#54524d,Stone Grey,Stone-Grey
+Stormy Greys,21,Dark Grey,#444444,Dark Grey,Dark-Grey
+Stormy Greys,22,Iron,#43464c,Iron Grey,Iron-Grey
+Stormy Greys,23,Graphite,#424548,Graphite,Graphite
+Stormy Greys,24,Charcoal,#393f44,Charcoal,Charcoal
+Go Green,1,Light Green,#e3f7ba,Light Green,Light-Green
+Go Green,2,Green Tea,#caed91,Green Tea,Green-Tea
+Go Green,3,Pear,#c7dd4a,Pear Green,Pear-Green
+Go Green,4,Pastel,#baeaa0,Pastel Green,Pastel-Green
+Go Green,5,Mint,#6be5b4,Mint Green,Mint-Green
+Go Green,6,Neon,#26ff00,Neon Green,Neon-Green
+Go Green,7,Pistachio,#96cc76,Pistachio,Pistachio
+Go Green,8,Jade,#8ab269,Jade Green,Jade-Green
+Go Green,9,Sage,#96a880,Sage,Sage
+Go Green,10,Lime,#6bbc3b,Lime Green,Lime-Green
+Go Green,11,Green Apple,#91b521,Green Apple,Green-Apple
+Go Green,12,Lawn,#4aa325,Lawn Green,Lawn-Green
+Go Green,13,Olive,#83841e,Olive Green,Olive-Green
+Go Green,14,Fern,#335a01,Fern,Fern
+Go Green,15,Basil,#476d3e,Basil Green,Basil-Green
+Go Green,16,Thyme,#717d67,Thyme,Thyme
+Go Green,17,Khaki,#666046,Khaki,Khaki
+Go Green,18,Persian,#19a598,Persian Green,Persian-Green
+Go Green,19,Teal,#05877d,Teal,Teal-Green
+Go Green,20,Emerald,#006d48,Emerald Green,Emerald-Green
+Go Green,21,Pine,#004c16,Pine Green,Pine-Green
+Go Green,22,Forest,#084f3d,Forest Green,Forest-Green
+Go Green,23,Hunter,#063f1e,Hunter Green,Hunter-Green
+Go Green,24,Army,#434714,Army Green,Army-Green
+Roaring Reds,1,Pastel,#fe6c6b,Pastel Red,Pastel-Red
+Roaring Reds,2,Paprika,#f3342e,Paprika,Paprika
+Roaring Reds,3,Strawberry,#f4315c,Strawberry,Strawberry
+Roaring Reds,4,Vermilion,#dd4b3a,Vermilion,Vermillion
+Roaring Reds,5,Imperial,#e81638,Imperial Red,Imperial-Red
+Roaring Reds,6,Classic,#ef1123,Classic Red,Classic-Red
+Roaring Reds,7,Crimson,#d20000,Crimson,Crimson
+Roaring Reds,8,Raspberry,#cd2550,Raspberry,Raspberry
+Roaring Reds,9,Scarlet,#c30117,Scarlet Red,Scarlet-Red
+Roaring Reds,10,Rose,#c70451,Rose Red,Rose-Red
+Roaring Reds,11,Ruby,#b31f2d,Ruby Red,Ruby-Red
+Roaring Reds,12,Mars,#b84533,Mars,Mars
+Roaring Reds,13,Apple,#ab091b,Apple,Apple
+Roaring Reds,14,Chilli,#bb0f1c,Chilli Red,Chilli-Red
+Roaring Reds,15,Claret,#9b021c,Claret,Claret
+Roaring Reds,16,Red Currant,#a23744,Red Currant,Red-Currant
+Roaring Reds,17,Hibiscus,#a0183d,Hibiscus,Hibiscus
+Roaring Reds,18,Terracotta,#9a3f3d,Terracotta,Terracotta
+Roaring Reds,19,Cherry,#8f0125,Cherry Red,Cherry-Red
+Roaring Reds,20,Blood,#850312,Blood Red,Blood-Red
+Roaring Reds,21,Burgundy,#82001e,Burgundy,Burgundy
+Roaring Reds,22,Maroon,#730034,Maroon,Maroon
+Roaring Reds,23,Wine,#4b0923,Red Wine,Red-Wine
+Roaring Reds,24,Mahogany,#470406,Mahogany,Mahogany

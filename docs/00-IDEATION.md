@@ -24,7 +24,9 @@ Skreed's real product is *shade*, not a print and not protection. Every competit
 
 **What we found in the company's own data**
 - The store already runs: 1,157 active products, 70 orders / $2.9K in September, US-first, AOV ~$44.
-- Shopify holds the shade data: 243 solid shades across the 10 families with hex values (exported to `docs/data/shades.json`). Three pairs share a hex and should be checked before launch (Royal/Midnight, Neon/Neon Pink, Iron Grey/Almost Black).
+- **The 2026-27 product catalog is the source of truth for the shade system:** exactly 240 shades, 24 per family, with short display names (e.g. "Sky", not "Sky Blue"). Family names as the catalog prints them: Frosty Whites, Blissful Blues, Playful Pinks, Vivid Violets, Mellow Yellows, Earthy Browns, Blushing Corals, Stormy Greys, Go Green, Roaring Reds. Every catalog name is matched to a Shopify hex and a Dropbox render in `docs/data/shades-240.json` (and `.csv`). Shopify's raw export (`shades.json`) carries three extra legacy entries that are not in the catalog and should be ignored. One remaining collision: Royal and Midnight (violets) share a hex in Shopify although the catalog shows them as different colours; get the real Royal value from whoever built the catalog.
+- **Catalog brand facts to carry into the site:** tagline "Tech Essentials That Go Beyond Basic"; "colour is personal"; "Skreed has redefined colour-first tech personalisation in international markets. Now, we are bringing that innovation to India." Ecosystem: phone cases (Snap, Tough, MagTough, Armor, Ultra, plus Sylvr metallic in 48 shades), AirPods cases (Pro 2, Pro 3, 4, Max), MagSafe wallets (240 shades, four finishes), LenSkin camera accents, MagSocket, Forge-X screen protector, lanyards. Devices: iPhone 15/16/17/18, Galaxy S25/S26, Pixel 10/11. Contact: collab@skreed.in, Hyderabad.
+- **Catalog visual identity:** a thin-weight and black-weight sans pairing in the same family for every heading ("PRODUCT / **CATALOG**"), warm off-white pages alternating with charcoal, circle swatches in a 6×4 grid per family, soft lifestyle photography on neutral backdrops. The teaser should extend this, not invent a new look; the Poppins/Inter rule in the Brain doc predates the catalog, so confirm which typeface the catalog uses and standardise on it.
 - Finishes in Shopify: gloss, matte, metallic, metallic-matte, metallic-gloss. Case types: snap, tough, magtough, armor, ultra, plus legacy back-cover/shell-cover.
 - Renders (full inventory in `docs/data/dropbox-asset-inventory.md`): Dropbox holds 10,080 Amazon hero renders (`{Shade}_A1.png`, ~1.1 MB each) covering exactly 240 shades (24 per family) for 21 devices across iPhone 15/16/17, Galaxy S25/S26 and Pixel 10. Only the "tough" and "magtough" folders are populated and they are byte-identical, so there are 5,040 unique renders. Also 264 tiny swatch PNGs (`{Shade}_SWCH.png`), 218 lifestyle shots (per family × device, 4–9 MB), and finish/compatibility/comparison panels. No logos, videos or source files. Whether the renders have transparent backgrounds could not be checked from the sandbox.
 - Shopify Files holds the logo PNGs; no SVG logo exists yet.
@@ -90,7 +92,7 @@ Each has a recommended default so the build can start without a meeting.
 | 5 | Camera at launch? | No. Photo upload at launch; live camera in week two. Camera permission prompts lose 30–50% of users. |
 | 6 | Run a contest? | Optional: "name the 241st shade", judged on stated criteria (skill, not draw), prize under ₹10,000, T&Cs published, Tamil Nadu excluded from any chance element. Instagram follow can be a bonus entry, never a condition. |
 | 7 | Render approach | One greyscale master render per case type, tinted via CSS/canvas for all 240 shades; ten real hero photos (one per family) for the stories. Do not ship 240 images. |
-| 8 | Shade data | `docs/data/shades.json` from Shopify is the single source; resolve the three duplicate hex pairs. |
+| 8 | Shade data | `docs/data/shades-240.json` (catalog names + Shopify hex) is the single source; resolve the Royal/Midnight hex. |
 | 9 | Hosting | Cloudflare. Needs skreed.in nameservers moved (Prem, as domain owner). |
 | 10 | Cutover | Cloudflare redirect rule on Nov 3 night, 302 for ten minutes of testing, then 301. Keep the teaser alive at skreed.com/teaser for referral links. |
 | 11 | Instagram follow gate | Honour-system only. Meta cannot verify follows and prohibits enforced engagement gates. The broadcast-channel join link is the real follow driver because joining forces a follow. |
@@ -101,7 +103,7 @@ Each has a recommended default so the build can start without a meeting.
 ## 5. Assets: what exists, what has to be made
 
 **Exists**
-- Shade dataset with hex: `docs/data/shades.json` and `.csv` (243 solid shades, 10 families, finishes, case types).
+- Canonical shade dataset: `docs/data/shades-240.json` and `.csv` (240 shades, catalog names, Shopify hex, Dropbox render stem per shade).
 - 5,040 unique per-shade hero renders on Dropbox (240 shades × 21 devices, Amazon `_A1` angle only), 264 swatch PNGs, 218 lifestyle shots; plus 2500×2500 diagonal-split matte/gloss composites on the Shopify CDN. Recommended teaser picks: `tough/{family}/{17 pro | S26 Ultra | Pixel 10 Pro}/{Shade}_A1.png`, downscaled to AVIF/WebP.
 - Logo as PNG on Shopify Files (`skreed_logo_1200_628.png`, `Logo_skreed-4_20240711_charcoal.png`, `skreed_logo_300a.png`).
 - Brand fonts and voice rules (Skreed Brain doc).
@@ -179,5 +181,5 @@ Parallel, not on the dev path: logo SVG (day 1–2), copy deck (days 3–8), her
 - **Your Instagram saved collections ("claude", "web design", "dev") could not be read.** Instagram's API has no saved-collections endpoint, so Composio cannot reach them. Two ways to get them in: export via Instagram → Settings → Accounts Center → Your information and permissions → Download your information → Saved (gives `saved_collections.json` with every post link), or paste the post links into the chat. I will fold them into the reference list as soon as they arrive.
 - **Egress blocks**: skreed.com, instagram.com and most design galleries (Awwwards, Codrops, Spline, GSAP, Rive) were blocked from this sandbox, so a few facts in `03-references-competitors-playbooks.md` are marked as from search snippets or prior knowledge. Confirm GSAP's licence clause and Spline/Rive prices on their sites before budgeting.
 - **Logo**: only PNGs exist. Whoever designed the 2024 logo may have the vector.
-- **Three duplicate hex pairs** in the shade data need a decision (rename, re-render, or merge).
+- **Royal vs Midnight** (Vivid Violets) share one hex in Shopify; the catalog shows two colours. Needs the true value.
 - **Nothing was built yet.** The repo contains only this documentation and the data files, as requested.
