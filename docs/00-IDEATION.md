@@ -73,7 +73,7 @@ A single page, phone-first, each section roughly one screen tall. Narrative: *Ba
 | Email | Shopify Email (10,000/month free) | Klaviyo and Mailchimp free tiers now cap at 250 contacts; Klaviyo has no India SMS. |
 | WhatsApp | AiSensy (cheapest broadcasts) or Interakt (Shopify-native). Templates submitted by Oct 25; account verification takes 1–3 days. | WhatsApp is the India launch-day channel: 85–95% open rates. |
 | Analytics | PostHog (1M events free) + Cloudflare Web Analytics for Core Web Vitals | Custom events for signup, follow click, shade selected, share. UTMs on every link because Instagram strips Referer. |
-| Fonts | One sans family in thin and black weights, matching the catalog (family to be confirmed with Sam). No Inter, no serif accents. | Two weights self-hosted, ~40 KB; `font-display: swap`. |
+| Fonts | **Urbanist**, one family, thin + black for headings, 400/500 for text. Alternatives if Sam prefers after the specimen page: Geologica, Bricolage Grotesque, Onest. No Inter, no serif accents. | Free, 100–900 range, not in the AI-default set; ~40 KB self-hosted; `font-display: swap`. |
 
 Full package list with versions and the repo tree are in `01-stack-and-hosting.md`.
 

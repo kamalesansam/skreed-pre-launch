@@ -13,7 +13,7 @@ This repo is the skreed.in pre-launch teaser (live until Nov 3 2026, then skreed
 1. No purple-to-blue gradients. No gradient as a brand device at all; the brand's colour comes from the 240 shades themselves.
 2. No gradient-filled hero text.
 3. No emojis anywhere in the UI or copy.
-4. No Inter as the default face. Use the catalog's typeface family (thin + black weights). Confirm the family with Sam before day 2; until then use a system sans placeholder, not Inter.
+4. No Inter. The site uses one family only: **Urbanist** (Google Fonts, self-hosted WOFF2, weights 200, 400, 500, 900), set in the catalog's thin + black pairing for headings. Sam may swap it for Geologica, Bricolage Grotesque or Onest after reviewing the specimen page; whichever is chosen, it is still one family and never Inter.
 5. No coloured-border cards.
 6. No glassmorphism cards, no `backdrop-filter` blur panels. Gloss is shown with a specular highlight on the case render, not with glass UI.
 7. No low-contrast dark mode. Charcoal sections use the catalog's charcoal with near-white text that passes WCAG AA.
@@ -28,7 +28,7 @@ This repo is the skreed.in pre-launch teaser (live until Nov 3 2026, then skreed
 16. No em dashes in copy. Use a full stop or a comma.
 17. No generic buzzword copy ("seamless", "elevate", "unleash", "next-level", "revolutionary"). Specific over clever.
 18. No serif italic accents. No Instrument Serif. One sans family does all the work.
-19. No Space Grotesk, no Instrument Serif, no Satoshi-by-default. See rule 4.
+19. No Space Grotesk, Instrument Serif, Satoshi, Geist, Manrope, DM Sans, Plus Jakarta Sans or Outfit. See rule 4.
 20. No grain or noise texture layered over a gradient. If a matte texture is used it sits on a flat colour, is subtle, and never touches text.
 
 ## Always do these
