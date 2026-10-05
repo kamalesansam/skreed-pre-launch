@@ -1,0 +1,26 @@
+fontTools 4.66.1; google/fonts 9710da1eacb3be272583c3224dcb70f9da6eadbb
+source  Poppins-Bold.ttf               sha256 983676516167748b  google/fonts@9710da1
+source  OpenSans[wdth,wght].ttf        sha256 36643644f318a812  google/fonts@9710da1
+source  SourceSerif4[opsz,wght].ttf    sha256 97b2d4da6e3cb494  google/fonts@9710da1
+
+== BYTES
+file                                         bytes      KB     KiB  sha256
+poppins-700-latin.woff2                       8000     8.0     7.8  a432660dbbf27a2887679d7239418bc789f6ef092ed54a35c2888fdff37dbdce
+open-sans-400-600-latin.woff2                19712    19.7    19.2  326c573f9aa6c3f1065ec129ebab798f973046706545a60f5e46b4ea0a02e6a5
+source-serif-4-400-opsz-latin.woff2          48932    48.9    47.8  aad409c3823594741302b420bfbdff3f998fea31fed6cb85fe467af449f05f63
+source-serif-4-600-opsz20-latin.woff2        21252    21.3    20.8  4fcd256a70325d15df3c2161207e6066163f8c9659625b05fffaca696f65c4dd
+total                                        97896    97.9    95.6
+cap 120,000 bytes: ok (81.6%)
+
+== METRICS (em units; digits = distinct advances in font units)
+poppins-700-latin.woff2: glyphs 223, upm 1000, x-height 0.558, cap 0.705, useTypo True, typo asc/desc/gap 1.050/-0.350/0.100, digit advances [376, 535, 571, 605, 615, 637, 648, 650, 652, 677], axes None, features 
+open-sans-400-600-latin.woff2: glyphs 260, upm 2048, x-height 0.535, cap 0.714, useTypo True, typo asc/desc/gap 1.069/-0.293/0.000, digit advances [1171], axes [('wght', 400.0, 400.0, 600.0)], features liga,locl,pnum,tnum
+source-serif-4-400-opsz-latin.woff2: glyphs 323, upm 1000, x-height 0.475, cap 0.670, useTypo True, typo asc/desc/gap 1.036/-0.335/0.000, digit advances [500], axes [('opsz', 8.0, 20.0, 60.0)], features case,ccmp,liga,locl,pnum,tnum
+source-serif-4-600-opsz20-latin.woff2: glyphs 323, upm 1000, x-height 0.475, cap 0.670, useTypo True, typo asc/desc/gap 1.036/-0.335/0.000, digit advances [520], axes None, features case,ccmp,liga,locl,pnum,tnum
+
+== FALLBACK OVERRIDES (size-adjust = mean advance of the shipped file over the Liberation clone, on the site copy; overrides = typo metrics divided by size-adjust)
+Poppins Fallback 700: size-adjust 106.70%; ascent-override 98.41%; descent-override 32.80%; line-gap-override 9.37%
+Open Sans Fallback 400: size-adjust 104.30%; ascent-override 102.47%; descent-override 28.09%; line-gap-override 0.00%
+Open Sans Fallback 600: size-adjust 100.92%; ascent-override 105.91%; descent-override 29.03%; line-gap-override 0.00%
+Source Serif 4 Fallback 400: size-adjust 110.69%; ascent-override 93.59%; descent-override 30.26%; line-gap-override 0.00%
+Source Serif 4 Fallback 600: size-adjust 106.14%; ascent-override 97.61%; descent-override 31.56%; line-gap-override 0.00%

@@ -1,0 +1,4 @@
+scripts/fonts/src/
+node_modules/
+dist/
+.astro/

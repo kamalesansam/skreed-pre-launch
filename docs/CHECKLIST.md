@@ -4,8 +4,8 @@ Each item is PASS or FAIL with a one-line reason. A section ships only when ever
 
 ## A. Brand and design (from CLAUDE.md)
 A1. Zero violations of rules 1–50 in CLAUDE.md. List any violation by rule number.
-A2. Colours used come only from `docs/data/shades-240.json` plus the two neutrals (off-white, charcoal), as CSS tokens.
-A3. Typeface is the one chosen family only (Urbanist unless Sam changed it), thin + black pairing for headings.
+A2. Colours used come only from `docs/data/shades-240.json`, Pearl Whisper, Urban Slate and Ember Luxe, as CSS tokens. No invented greys; the only derived neutral is `--skeleton`.
+A3. Type follows `docs/brand/type-system.md`: Poppins 700 sentence-case headlines, Source Serif 4 roman for first-person prose only, Open Sans for UI, numerals (tabular) and legal prose. Only the four shipped files; no italic; no digits inside h1, h2 or the manifesto; no face under 12 px.
 A4. Copy: Skreed voice (confident, minimal, short sentences), no buzzwords, no em dashes, no emojis, real shade names, no invented facts or counts.
 A5. The section shows the real product (case render, shades or swatches), not an abstract stand-in.
 

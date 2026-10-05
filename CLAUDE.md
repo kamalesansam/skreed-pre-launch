@@ -8,7 +8,7 @@ This repo is the skreed.in pre-launch teaser (live until Nov 3 2026, then skreed
 - Finishes: Matte and Gloss. Case types: Snap, Tough, MagTough, Armor, Ultra (plus Sylvr metallic).
 - Voice: confident, minimal, design-led, short sentences. Never discount language. No hype.
 - Visual identity: Pearl Whisper (#F7F6F3) pages alternating with Urban Slate (#383F43), Ember Luxe (#FF9900) as the single accent for the primary button and focus rings, circle swatches in a 6x4 grid, soft lifestyle photography on neutral backdrops. Extend this. Do not invent a new look.
-- Typography (brand guide, `docs/brand/brand-guidelines-extract.md`): Poppins Bold for headlines in sentence case, Inter Medium for sub-headlines, Open Sans for body and UI. No other face on the site. Never all-caps headlines.
+- Typography (`docs/brand/type-system.md`, decided 2026-10-05): three families, four self-hosted files, 98 KB. **Poppins 700** is the voice: headlines in sentence case, the manifesto, the quiz question, the enlarged tile name, "You are #212", the 404. **Source Serif 4** 400 and 600, roman only, is the letter: hero sub-line, standfirsts, founders' note, Diwali stories, confirmation sentence. **Open Sans** 400 to 600 is the fittings: labels, inputs, buttons, family names, every live numeral with tabular figures, eyebrow, footer, legal prose. Never all-caps headlines, never italic, never a live number in Poppins.
 - Voice (brand guide): first person, short sentences, active voice, sensory colour words. "We believe in the power of color."
 
 
@@ -16,7 +16,7 @@ This repo is the skreed.in pre-launch teaser (live until Nov 3 2026, then skreed
 1. No purple-to-blue gradients. No gradient as a brand device at all; the brand's colour comes from the 240 shades themselves.
 2. No gradient-filled hero text.
 3. No emojis anywhere in the UI or copy.
-4. No typeface outside the brand guide. Headlines **Poppins 700** (sentence case), sub-headlines **Inter 500**, body and UI **Open Sans 400/600**. All self-hosted WOFF2 Latin subsets. Inter is used only in its sub-headline role; it is never the body or default UI face, and nothing else from the vibe-coded font list appears.
+4. No typeface outside `docs/brand/type-system.md`: **Poppins 700** headlines in sentence case, **Source Serif 4** 400/600 roman for first-person prose only, **Open Sans** 400 to 600 for UI, numerals, legal prose and small text. Only the four shipped WOFF2 files; a weight that is not shipped cannot be used. **Inter is banned in every role**, including the sub-headline slot the brand guide gave it.
 5. No coloured-border cards.
 6. No glassmorphism cards, no `backdrop-filter` blur panels. Gloss is shown with a specular highlight on the case render, not with glass UI.
 7. No low-contrast dark mode. Charcoal sections use the catalog's charcoal with near-white text that passes WCAG AA.
@@ -30,8 +30,8 @@ This repo is the skreed.in pre-launch teaser (live until Nov 3 2026, then skreed
 15. No inconsistent spacing. One spacing scale, set as tokens, used everywhere. Flex and grid with `gap`, not per-element margins.
 16. No em dashes in copy. Use a full stop or a comma.
 17. No generic buzzword copy ("seamless", "elevate", "unleash", "next-level", "revolutionary"). Specific over clever.
-18. No serif italic accents. No Instrument Serif. Playfair is a campaign-creative face only and never appears on the site.
-19. No Space Grotesk, Instrument Serif, Satoshi, Geist, Manrope, DM Sans, Plus Jakarta Sans, Outfit, Urbanist, Montserrat or Lato on the site. See rule 4.
+18. No serif italic accents and no italic of any face (`font-synthesis: none`). No Instrument Serif. Playfair is a campaign-creative face only. Source Serif 4 is never a headline, never above 28 px in the DOM, never UI chrome.
+19. No Inter, Space Grotesk, Instrument Serif, Satoshi, Geist, Geist Mono, Manrope, DM Sans, Plus Jakarta Sans, Outfit, Urbanist, Montserrat, Lato, Playfair, League Spartan, Century Gothic or Aghita on the site. See rule 4.
 20. No grain or noise texture layered over a gradient. If a matte texture is used it sits on a flat colour, is subtle, and never touches text.
 
 ## Never do these, part two (30 more tells)
@@ -44,7 +44,7 @@ This repo is the skreed.in pre-launch teaser (live until Nov 3 2026, then skreed
 27. No emojis.
 28. No liquid glass, no glassmorphism.
 29. No em dashes.
-30. No Geist or Space Grotesk. Inter only as the sub-headline face per rule 4.
+30. No Inter, Geist or Space Grotesk, in any role.
 31. No coloured left stripe on cards or quotes.
 32. No fake testimonials. No testimonials at all before launch; there are no customers in India yet.
 33. No bento grids.
@@ -84,10 +84,10 @@ Every section is built by `/ship-section "<brief>"`, which runs the `plan` skill
 ## Day-1 Claude Code setup (install before writing UI)
 1. Taste layer, pick one: `npx skills add https://github.com/pbakaus/impeccable --skill impeccable` or `npx skills add https://github.com/Leonxlnx/taste-skill --skill design-taste-frontend`.
 2. Vercel audit: `web-design-guidelines` from `vercel-labs/agent-skills`; run `/web-design-guidelines <file>` before every push.
-3. Design-system skill: the `ui-design` plugin from `/plugin marketplace add Owl-Listener/designer-skills` (`color-palette`, `type-system`) to turn `shades-240.json`, the brand palette and the Poppins/Inter/Open Sans scale into tokens. Also install `visual-critique` and `designer-toolkit` from the same marketplace.
+3. Design-system skill: the `ui-design` plugin from `/plugin marketplace add Owl-Listener/designer-skills` (`color-palette`, `type-system`) to turn `shades-240.json`, the brand palette and the Poppins/Source Serif 4/Open Sans scale into tokens. Also install `visual-critique` and `designer-toolkit` from the same marketplace.
 4. 21st.dev MCP (`/ui` component search) for polished primitives; never paste a component without restyling it to the tokens (rule 11).
 5. Playwright MCP/CLI so Claude screenshots every section at 390 px and 1280 px and reviews its own output before reporting done.
-6. Day 2 writes `DESIGN.md` at the repo root in the awesome-design-md format (tokens for the brand palette, the 240 shades by family, the Poppins/Inter/Open Sans scale, spacing, radius, motion durations). After that, every UI change reads `DESIGN.md` first.
+6. Day 2 writes `DESIGN.md` at the repo root in the awesome-design-md format (tokens for the brand palette, the 240 shades by family, the Poppins/Source Serif 4/Open Sans scale from `docs/brand/type-system.md`, spacing, radius, motion durations). After that, every UI change reads `DESIGN.md` first.
 7. 3D upgrade path only (after the five spine sections ship): the `img2threejs` skill (github.com/img2threejs/img2threejs) to rebuild a case from one Dropbox render as procedural Three.js, loaded on tap and gated by GPU tier.
 8. The "you need" five, all day 1: 21st.dev MCP (above), Lighthouse (run on every build; score is checklist C4), Context7 MCP (current docs for Astro, GSAP, Supabase), Graphify (`graphify claude install`; run `/graphify` once the repo has more than a handful of files, and re-run after each section), and a security skill. "never-get-hacked" could not be found under that name; use UnitOneAI/SecuritySkills (OWASP/NIST-grounded, works in Claude Code) as the equivalent, and before installing any third-party skill read its raw SKILL.md for curl, wget, eval, base64 or outbound requests.
 9. Also: `animate` skill, Matt Pocock's skills (`claude plugins install mattpocock-skills`) for the signup worker, PostHog MCP once live.
