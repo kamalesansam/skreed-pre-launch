@@ -1,0 +1,140 @@
+=== REFERENCE BRIEF ===
+URL: https://www.ciaoenergy.com/ (ciaoenergy.com redirects here)
+Captured on: 6 October 2026, Chrome 153 on macOS (Apple M3 Pro), 1512 x 827 viewport, DPR 2. Window minimised, so frames were stepped under a virtual clock in a same-origin frame. Site last published 17 September 2026 (HTML comment).
+What Sam liked, in Sam's words: the scroll animations and how the assets are used for the animations
+Where it is on the page: the whole page. One 3D can choreography runs behind all eleven scroll beats.
+
+1. Page in one paragraph:
+A French energy-drink launch site built in Webflow, with a hand-written three.js scene behind the DOM. A fixed full-viewport WebGL canvas holds one can model (cloned 24 times on desktop, 12 on mobile) and a two-part chrome podium. The page is eleven scroll spacers (125svh each) under fixed text overlays, and one GSAP timeline with one tween per section is seeked directly by the Lenis scroll position, so every section boundary is a fixed 3D keyframe: a wave carousel of six flavours, a giant tilted hero can, the back label scanned by a masked spotlight for four benefits, a "ZERO BULLSHIT" poster beat over a flavour smoke video, a twisted line-up of every can, the cans flying out and back around the FAQ, then a seamless loop to the top. Wheel input is paged a section at a time (1.5 s or 1 s, cubic ease-out); the carousel drags, snaps and recolours the whole page per flavour. Opens with a 7 s logo video and a 4.5 s 3D intro. About 5.0 MB first load.
+
+2. Sections, top to bottom (one line each: content, layout, motion, trigger):
+(desktop: sections are 1,034 px, FAQ 1,591 px, total 11,928 px; the 3D state at each section top is a fixed keyframe)
+- Loader (fixed, black): centred vertical logo video (540 x 1080) with a spaced percent counter under it; the counter follows the video time; exits when the video ends and the scene is loaded; trigger: load.
+- 1 Range carousel (0 px): six flavours as a wave of cans across the screen (centre can large, others recede and tilt), chrome podium halves above and below the centre can, flavour name under it in the display face, dotted prev/next arrows beside it, gradient pagination line with a dot, scroll prompt, corner HUD brackets; trigger: drag, arrows, pagination, click.
+- 2 Profile (1,034 px): a radial wash in the flavour colour fades in; the can grows into a huge diagonal close-up on the right; flavour name and short description on the left; the flavour name's letters spread across the background as a sparse 30% white grid; benefit icon rail appears on the right; trigger: wheel page, 1.5 s.
+- 3 to 6 Benefits (2,068 / 3,101 / 4,135 / 5,169 px): the can turns to its back label and goes dark while a crescent-shaped spotlight band lights one printed benefit line; each step lifts the can so the next printed line slides into the light, with a small alternating roll; left column: struck-out bad-ingredient tag, benefit heading, paragraph; icon rail tracks the step; trigger: wheel page, 1 s (1.5 s out of the last).
+- 7 Argument (6,203 px): can upright, centred and brightly lit over a looping flavour smoke video; the two-line tagline in giant letters behind it in the flavour's light colour, with a blurred glow; trigger: wheel page, 1.5 s.
+- 8 Full range (7,236 px): all 24 cans in a tight diagonal line-up twisting from bottoms (left) to tops (right) on a black-to-grey gradient; no DOM content; draggable; trigger: wheel page, 1.5 s.
+- 9 FAQ, newsletter, footer (8,270 px, 1,591 px tall): free smooth scroll resumes; cans fly up and out; giant two-line FAQ heading, ten-item accordion, newsletter block (email field and button), footer links; the camera then teleports above and the cans descend back during the newsletter; trigger: free scroll.
+- 10 Spacer (9,861 px): one small centred can far away (camera z 29, spacing 5).
+- 11 Spacer (10,895 px): cans regroup into the opening wave with the podium; scrolling past the end wraps to 0 and snaps (1.2 s cubic ease-out), so the page loops forever.
+
+3. The thing Sam liked, in detail:
+Resting state: section 1 after the intro. Camera z 29, FOV 20; 24 cans spaced 3.5 units in a sine wave, the centre can large and tilted; podium halves closed around it; key lights 50, environment tint 1; flavour 1 (Double Litchi) active; scroll at 0.
+Trigger: wheel (paged on sections 1 to 7, free after), vertical swipe on touch, carousel drag and arrows. There is no keyboard handling.
+What happens, step by step, with timings and easing:
+1. Scroll mechanics: Lenis (smooth wheel, lerp 0.1, infinite, syncTouch) runs from the scene's own rAF. On sections 1 to 7 a wheel listener cancels native scroll and calls lenis.scrollTo(next section top minus 10 px), easing 1 - (1 - t)^3, locked until it lands (one notch = one section; extra notches are ignored). Duration is 1.5 s out of sections 1, 2, 6 and 7 and 1 s between benefits. After section 7 the wheel scrolls freely. On desktop, when scrolling stops (250 ms debounce, or scrollend plus 50 ms) it snaps back to section 1 or 2 if one of them is nearest.
+2. The choreography: one paused GSAP timeline (default ease power1.inOut) with one tween per section, each lasting section height / total height. Every frame calls timeline.seek(scroll / total), so the 3D state is a pure function of scroll position, with no extra smoothing beyond Lenis and the paging tween. Keyframes reached at each section top:
+   - 2 Profile: camera z 6, FOV 40; can at (0.5, -0.5), rotated x -37.5, y 15, z 22.5 deg; spacing 3.5 (neighbours pushed off screen); wave 0; podium opens to 3; key lights 30.
+   - 3 Benefit 1: camera (0, -2, 12), pitch 10, roll -10 deg, FOV 20; can y -0.8, label spun 120 deg (back to camera); spacing 2.2; key lights 0, tint 0.2 (can almost black); spotlight 35 at height 2.2; pointer influence 0.
+   - 4, 5, 6 Benefits 2 to 4: can y -0.48, 0.02, 0.5, so each next printed line rises into the fixed light band; roll 5, -10, 5 deg; spin 130, 120, 130 deg.
+   - 7 Argument: camera (0, 0, 8), FOV 45; can z -0.5, rotated x -20, z -5 deg, spin 0; spacing 5; key lights 45, cone 1.5x, tint 2; spotlight off; pointer influence 0.2.
+   - 8 Full range: camera (-3, -3.5, 20) rotated 10, -9, -10 deg, FOV 30; spacing 0.47 (cans nearly touching); swirl 1 (each can pitched by x * 0.06 * window ratio + 0.2, so the line twists); podium pushed 20 away; key lights 10, cone 3x; tint 2; swipe speed 2.
+   - 9 FAQ: camera (0, -5.5, 10), FOV 30, spacing 0.6, lights 0 (cans exit upward). At the FAQ top the camera jumps to (0, 8, 10), FOV 20, spacing 5.
+   - 10: camera back to (0, 0, 29); can z 0.5, spin 20 deg; spacing 5; podium 10; lights 50.
+   - 11: back to the start values, so the wrap to the top is invisible.
+3. Per can, every frame: slot x = wrap(i * 3.5 - carouselPosition) around the ring of cans; centredness p = 1 - |x| / 3.5 (1 only for the centre can); position x = x * spacing, y = sin(x * spacing * waveAmount) where waveAmount = 0.25 x window ratio (1440 / width, clamped 1 to 2.4) x (1 - progress out of section 1) x wave, z = -|x| - 0.2 (recede). Everything blends to the keyframe values by progress out of section 1. Only the centre can gets the label spin (child mesh rotation z = can rotation y * 0.6 + spin * p) and the pointer tilt (rotation y += cursorX / 1280 * 0.2 * p, rotation x += cursorY / 1280 * 0.2 * p; cursor smoothed at 10/s; not centred, so it is about 7 deg at screen middle and 13 deg at the right edge on 1512 px).
+4. Lighting is the storytelling device. Spot 1 above (0, 3.5, 0) and spot 2 below (0, -3, 2) are the key lights, with intensity and cone keyed per section. Spot 3 sits at (0, height, 2) aiming 2.5 below and projects a gobo (a soft white crescent on black) onto the can. It is only on for the benefits, so as the can rises the crescent highlight reads one printed line at a time while the environment light is tinted down to 0.2.
+5. Carousel (section 1): arrows set target +-3.5; position eases exponentially at 10/s (42% at 50 ms, 89% at 200 ms, 99% at 400 ms). Drag moves 0.02 units per px (175 px per can) with grab and grabbing cursors; on release the last movement is multiplied by 8 as a fling, then it snaps to the nearest can. Clicking a side can steps once; clicking the centre can pages to section 2 (1.5 s). When the centred index changes: name and description swap (fade 0.5 s power2.inOut; characters mask out and back in, yPercent 110 to 0, 0.6 s power3.out, 0.01 s stagger, 0.3 s delay); pagination dot slides (0.6 s power3.out; on wrap it shrinks out in 0.3 s and back in 0.45 s); a conic colour ring rotates 60 deg (0.8 s power2.inOut); the two page colour variables cross-fade over 0.6 s (registered @property colours), repainting the radial wash, the tagline fill and the loop video choice; a tick sound plays.
+6. DOM layer (ScrollTrigger per section): fixed containers fade with autoAlpha 0.5 s power2.inOut. Text uses SplitText masks (in: yPercent 110 to 0, 0.6 to 0.7 s power3.out, stagger 0.08 per line or 0.01 per character; out: to -110). Benefits start revealing at 0.35 s and draw a strike line through the bad-ingredient tag over 0.8 s (power3.out) after 1 s. Argument letters pop from scale 0.6 to 1 (0.5 s back.out(2), 0.04 s stagger, 0.4 s delay) and their glow fades in at 1 s. The loop video cross-fades in 0.6 s. Sounds play on leaving the hero and on each benefit change.
+7. Intro after the loader video: counter to 100% in 0.4 s and fades; after 0.5 s the loader fades (0.6 s power2.in), canvas fades in (0.6 s), a grey-to-black page gradient slides up from 100vh to 0 (1 s power2.out), navbar drops in from -120% and the HUD sides slide in from 10rem (0.9 s power3.out). In parallel the 3D intro (2.5 s tweens, power4.out): one dark can sits exactly where the logo was, lights rise 0 to 30, camera z 25 to 29 from 1 s, then from 2 s spacing 10 to 1 (neighbours fly in from the sides), wave 0 to 1, spin 20 deg to 0, podium closes in, lights to 50. Scroll unlocks at 4.5 s.
+End state: section 11 equals section 1 and scrolling on wraps to the top (Lenis infinite plus a guard that snaps to 0 over 1.2 s), so there is no end.
+On a 390 px window: same-origin frame at 390 x 844, so real media queries and the site's own width checks applied. Below 1024 px the script takes a low-power path: 12 cans instead of 24, standard instead of physical material (no clearcoat or sheen, flatter reflections), no bloom, no SMAA, 8-bit render target, DPR capped at 2 (canvas 780 x 1688). Keyframes are unchanged, so the framing is a portrait crop: the hero shows the centre can large with neighbours clipped at the edges. Text blocks move to the bottom, centred; the contact button is hidden; the tagline sits under the can; the line-up shows 3 to 4 cans. Window ratio hits its 2.4 cap, so the wave is 2.4x deeper and the line-up twists harder. Paging is a vertical swipe (24 px threshold, 1.5 s cubic ease-out) for the first 8 sections; horizontal swipe drags the carousel. No pointer tilt (a small fixed tilt remains) and no cursor states. The HUD fades out over the FAQ; loop videos switch to object-fit cover. Sections are 1,055 px (125svh), total 12,076 px.
+
+4. How it is built:
+HTML structure:
+  body > div.page-wrapper > main.main-wrapper
+    div.navbar (fixed, z 10): scroll progress line, sound toggle, logo, menu, contact button
+    div.loader (fixed, z 10000): hidden SVG, video.loader_video (webm, mp4, poster), percent
+    section#gamme.section.is-gamme (125svh, z 2) > div.gamme_container (fixed overlay)
+    section.is-profile > div.profile_container (fixed)
+    section#benefits-1 to -4 > div.benefits_container (fixed), plus a fixed icon rail
+    section.is-argument > div.argument_container (fixed) > 6 video wrappers, SVG letters, glow
+    section.is-full-gamme (empty spacer)
+    section#FAQ > div.faq_container + div#newsletter (Brevo form, footer)
+    section.is-last-copy, section.is-last (empty spacers)
+    div.carousel_title-bis-wrapper (fixed letter grid), div.hud (fixed corners and overlay)
+    canvas (fixed, inset 0; appended by the three.js module)
+  embeds: three.js module script, UI script (GSAP), sound script, button hover script
+CSS that matters:
+  .section { min-height: 125svh }   each section is a scroll beat; overlays are fixed and full viewport, shown and hidden by GSAP autoAlpha
+  canvas { position: fixed; inset: 0 }   cleared transparent, CSS gradients show through
+  @property --color-scheme-1--taste-primary / -secondary { syntax: '<color>' }
+  :root { transition: those two variables 0.6s ease-in-out }
+  body::before { linear-gradient(9.02deg, #eee -30%, #959492 15%, #000 65%); transform: translateY(var(--loader-reveal)) }   registered length, 100vh to 0
+  body::after { radial-gradient(88.85% 121.19% at 43.49% 112.49%, secondary 4.96%, primary 54.38%, #000 93.49%); opacity 0, 1 on body.is-profile-active (0.4s) }
+  .gamme_gradient { conic-gradient(from 17deg, #00a6e2, #71bd96, #eeb169, #e59de6, #ff659d, #9089d3) }
+  .scroll_indicator { width: calc(var(--p) * 100%) }   four stacked white gradients
+  .subhead_text::before { strike line, transform: scaleX(var(--benefits-line)) }
+  .argument_svg svg * { fill: var(--color-scheme-1--taste-secondary) }
+  .argument_svg-blur { mask-image: url(zero-bullshit-mask.svg) }
+  html { font-size: clamp(0.875rem, 0.833vw, 1rem) }   14 px at both widths tested
+Libraries detected: three.js 0.161.0 as ES modules from jsDelivr via an import map (EffectComposer, RenderPass, UnrealBloomPass, SMAAPass, OutputPass, GLTFLoader, RGBELoader; FXAA and BloomPass imported but unused); Lenis 1.3.23 (unpkg); GSAP 3.15.0 with ScrollTrigger and SplitText (Webflow CDN); Webflow runtime and interactions; jQuery 3.5.1; Umami analytics; Brevo form script (reCAPTCHA loads only on email focus); plain WebAudio. Not present: Locomotive, Swiper, Splide, Lottie, Rive, Spline, OGL, Framer Motion / Motion.
+Canvas or WebGL: yes. One fixed canvas, WebGL2 through three.js (antialias, alpha, ACES filmic tone mapping, sRGB output). DPR min(device, 1.5) on desktop (2268 x 1240 backing here), min(device, 2) on mobile. Draws only the cans and the podium, lit by three spotlights and an HDR environment whose diffuse and specular are multiplied by a per-section tint (patched into the material shader). Post: render, bloom (strength 0.1, radius 0.1, threshold 1), output, SMAA (desktop); half-float target on desktop.
+Code excerpt (rewritten from the inline module, not verbatim; values exact):
+  const lenis = new Lenis({ autoRaf: false, infinite: true, syncTouch: true });
+  const tl = gsap.timeline({ paused: true, defaults: { ease: 'power1.inOut' } });
+  KEYFRAMES.forEach((k, i) => tl.to(state, { ...k, duration: sections[i].h / scrollHeight }));
+  function frame(t, dt) {
+    lenis.raf(t);
+    const pos = wrap(lenis.animatedScroll, 0, scrollHeight - viewportHeight);
+    tl.seek(pos / scrollHeight);                        // scroll position is the playhead
+    carousel.position = lerp(carousel.position, carousel.target, dt * 10);
+    cans.forEach((can, i) => {
+      const x = wrap(i * 3.5 - carousel.position, minX, maxX);
+      const p = clamp(1 - Math.abs(x) / 3.5, 0, 1);       // 1 = centred can
+      can.position.set(x * state.spacing, Math.sin(x * state.spacing * waveAmt), (-Math.abs(x) - 0.2) * state.wave);
+      can.children.forEach(m => { m.rotation.z = can.rotation.y * 0.6 + state.canSpin * p; });
+    });
+    spot3.intensity = state.spotIntensity;              // gobo light that reads the label
+    spot3.position.set(0, state.spotY, 2);
+    composer.render();
+  }
+  addEventListener('wheel', e => {                      // paging on sections 1 to 7
+    e.preventDefault(); if (locked || Math.abs(e.deltaY) < 4) return;
+    const slow = [0, 1, 5, 6].includes(current);
+    lenis.scrollTo(tops[current + Math.sign(e.deltaY)] - 10, { duration: slow ? 1.5 : 1, easing: t => 1 - Math.pow(1 - t, 3), lock: true });
+  }, { passive: false });
+
+5. Fonts (family, role, size, case):
+- Franklin Gothic ATF Black Italic (one woff2, 33.5 KB): every heading, uppercase. Flavour names and section headings 42 px (3rem), line-height 1.2; FAQ title 113 px (8.1rem), line-height 0.8. The tagline is SVG outlines, not live text.
+- Geist Light 300 (45.4 KB): body 14 px (1rem); paragraphs 17.5 px (1.25rem), line-height 1.5; small labels 12.25 px uppercase at 30 to 60% white; loader counter 14 px with 1em letter spacing; footer 10.5 px uppercase.
+- Geist Regular 400 (45.2 KB): buttons 14 px uppercase; open-menu links 30 px uppercase.
+- Geist Mono Regular (35.0 KB): HUD side labels 10.5 px at 50% white.
+- All font-display swap, from the Webflow CDN.
+
+6. Colours and surfaces:
+- Base #000000; text #FFFFFF; labels white at 30, 50 and 60%; borders white 20%; contact button white with black text.
+- Load-reveal page gradient: 9 deg linear #EEEEEE to #959492 to #000000.
+- Flavour pairs, primary / secondary: Double Litchi #3D2B68 / #9089D3; Coco Citron Vert #27326B / #00A6E2; Kiwi Concombre #024A44 / #71BD96; Pêche Blanche #BA5200 / #EFB36B; Pomme Rhubarbe #9B0984 / #E6A0E8; Abricot Framboise #800035 / #FF659D (registered defaults #959492 / #EEEEEE before JS runs).
+- Pagination ring: conic #00A6E2, #71BD96, #EEB169, #E59DE6, #FF659D, #9089D3.
+- Surfaces: brushed aluminium cans (metalness 0.9, roughness 0.2, clearcoat 1, sheen 0.8 on desktop) with a printed label, chrome podium (metalness 0.9, roughness 0.3) with copper cables, both reflecting a studio HDR; light bloom; smoky video in the argument beat.
+
+7. Weight: about 5.0 MB on first load (about 70 requests; text sizes estimated at gzip). HDR 1.43 MB, six label textures 1.36 MB, podium GLB 0.62 MB, JS 0.49 MB (three.js 257 KB), loader video 0.37 MB, sounds 0.26 MB, can GLB 0.16 MB, fonts 0.16 MB, video posters 0.08 MB, HTML 42 KB, CSS 18 KB. Reaching section 7 adds the active flavour's loop video (0.86 to 1.14 MB); each flavour change there loads another. Largest files: hdri2.hdr 1.43 MB, base.glb 622 KB, loader webm 372 KB, three.module.js 257 KB, label textures 192 to 253 KB each (six), can.glb 163 KB, two transition sounds 134 KB and 111 KB. Fonts: four woff2 files, 159 KB total.
+
+8. Assets used:
+- can.glb, glTF binary, 163 KB, 3 meshes (Shell with the label UVs, Top, Bottom), 3,918 vertices; loaded once with GLTFLoader and cloned 24 times (12 on mobile).
+- base.glb, glTF binary, 622 KB, 14,733 vertices: top and bottom chrome podium halves with metal tubes and copper cables; the halves part and close with scroll.
+- Six label textures, AVIF 2048 x 1603, 192 to 253 KB each (TextureLoader): the full wrap-around print per flavour (ingredients and legal panel, giant front logo and flavour name, back panel listing the four benefits with icons, barcode). The benefits beat literally lights these printed lines.
+- can-metallic-2.avif, 1024 x 1024, 35 KB: fine grey brushed noise, metalness map for all cans.
+- spot-mask.avif, 408 x 408, 2.7 KB: soft white crescent on black, the benefits spotlight gobo.
+- hdri2.hdr, Radiance HDR 1024 x 512, 1.43 MB (RGBELoader then PMREM): studio reflections.
+- Loader video, webm 372 KB (mp4 fallback 822 KB), 540 x 1080, 7.06 s, 25 fps, preload auto, AVIF poster 3.6 KB: grey vertical wordmark; a chrome highlight sweeps up it, it brightens to white around 3.8 to 4.7 s, returns to chrome and fades to a dark outline by 6.6 s.
+- Six flavour loop videos, webm 0.86 to 1.14 MB (mp4 2.0 to 2.8 MB), 1918 x 1728, 5.23 s, 25 fps, seamless, preload none, loaded only while section 7 is in view: left-right mirrored volumetric smoke in the flavour colour drifting slowly, dark vignette top and bottom. AVIF posters 2600 x 2342, 11 to 14 KB each.
+- Tagline letters: inline SVG paths, each animated; zero-bullshit-mask.svg 3.4 KB, the CSS mask for the glow layer. Logo SVG 7 KB. Icons inline SVG (41 SVGs on the page).
+- Four MP3 sounds, fetched and decoded into WebAudio, played at 0.5 volume after the first gesture: carousel tick 6 KB, hero-to-profile whoosh 134 KB, benefit transition 111 KB, click 4 KB.
+Production brief:
+- 3D: one product model with clean UVs (a single wrap-around label island) and separate top and bottom; one hero prop (podium or dock) split in two; glTF binary, product under 200 KB.
+- Print and label art: a flat, print-accurate wrap texture per colourway at about 2048 px wide, with the story copy actually printed on the product so the camera can read it.
+- Lighting assets: one studio HDR (1024 x 512 is enough), a gobo mask for the moving highlight, a subtle brushed metalness map.
+- Video: a 7 s vertical logo animation for the loader (540 x 1080) and one 5 s seamless abstract loop per colourway (about 1920 x 1728), exported as VP9 webm plus H.264 mp4 with tiny AVIF posters.
+- Illustration: slogan lettering as separate SVG paths for per-letter animation.
+- Audio: four short UI sounds. Photography: none; the product is rendered live.
+- Said plainly: the motion is code (one timeline seeked by scroll, carousel maths, lighting keyframes). What makes it read are two small assets, the label textures (the benefit story is printed on them) and the gobo. The atmosphere is pre-rendered video.
+
+9. What makes it work, and what would be lost without WebGL or a cursor:
+There is exactly one object, and scroll only ever moves the camera, the object and the lights between hand-set keyframes, one per section. Paging means the user always lands on a composed frame. The best trick is using the real packaging as content: the benefits section adds no graphics; it turns the can round, kills the fill light and slides the printed benefit list through a crescent spotlight while the DOM repeats each line in big type. Colour does the rest: one pair of registered CSS colour variables per flavour drives the wash, the tagline fill and the video choice, cross-faded in 0.6 s, so picking a flavour repaints the site. It is cheap: 5 MB, and one 163 KB can reused 24 times. Weak spots: 7 s of video plus a 4.5 s intro before scroll unlocks, wheel hijacking with a lock, and a pointer tilt that is not centred. Without WebGL, the DOM layer survives (text reveals, washes, videos, tagline). Because the 3D path is a fixed pose per section, it can be rebuilt as pre-rendered sequences scrubbed by scroll (one per transition, ten transitions). You lose live lighting, free carousel drag physics and per-flavour label swaps (they need a sequence per colourway or a tintable render). Without a cursor, only the can tilt and the grab cursors are lost; swipe paging and carousel drag work by touch.
+
+10. One-line recommendation for the Skreed section it fits:
+Skreed shades section: a paged, pinned scroll where each beat is one fixed pose of a single case, with the 240 shades as a draggable wave carousel that repaints the page through registered CSS colour variables, built without WebGL as pre-rendered case sequences on a 2D canvas (one neutral render tinted per shade plus a highlight pass) scrubbed by GSAP ScrollTrigger, with Ciao-style swipe paging on phones.
+=== END BRIEF ===

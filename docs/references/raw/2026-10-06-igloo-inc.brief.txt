@@ -1,0 +1,122 @@
+=== REFERENCE BRIEF ===
+URL: https://www.igloo.inc/
+Captured on: 6 October 2026, Chrome 154 on Windows, 1536 x 674 viewport, DPR 1.25, integrated Intel GPU. Window minimised, so frames were stepped under a virtual clock.
+What Sam liked, in Sam's words: the scroll animations and how the assets are used for the animations
+Where it is on the page: the whole experience. The site is one full-screen WebGL canvas with no DOM page underneath; "scroll" is a virtual value that drives three looping 3D scenes.
+
+1. Page in one paragraph:
+igloo.inc is a single full-screen WebGL2 app (three.js r143 in a custom engine; the console credits the studio abeto) that replaces the page entirely: no native scroll, no DOM text, every word drawn in WebGL as MSDF text. Wheel, arrow keys and drag move one virtual scroll value that loops forever through three scenes: a misty snow mountain with an igloo built from 70 separate glowing ice blocks (manifesto), three refractive ice cubes each holding a portfolio company logo (click opens a detail view), and a vertical dive through glowing rings into a room where 150,000 particles form social-network logos. Each scene scrubs its own camera timeline, scenes are joined by a full-screen ice-crack wipe with chromatic aberration, and 1.4 s after input stops the scroll glides to the nearest resting pose. Cold grey-blue palette, IBM Plex Mono throughout, optional sound design. About 17.4 MB, all loaded behind the preloader.
+
+2. Sections, top to bottom (one line each: content, layout, motion, trigger):
+(1 scroll unit = 1,333 px of wheel delta; full loop = 10.85 units, about 14,470 px)
+- Preloader: flat #A0A5B1 screen, a centred 10-character ASCII ticker of - = + that changes every 50 ms (CSS keyframes, 5 s loop); stays until all ~110 files load (about 10 s on a fast line); trigger: load.
+- Intro (time based, 8.2 s): flat #8B909D overlay fades to the scene in 1 s; white outline and wireframe cage draw on, blocks materialise top-down with a blue triangle-pattern edge, particles burst, mountains, terrain, smoke, snow and sky fade in; camera glides from high above (y 21) to the hero pose over 5.5 s; UI types on at 4.5 s; scroll unlocks at 5 s.
+- Igloo hero (rest at 0.66 units): igloo centred on a snowy knoll, mountains in fog; logo top-left with two copyright lines under it; manifesto heading and short paragraph, right-aligned, top-right; scroll prompt and sound toggle bottom-left; blocks breathe, hover pushes blocks out and tags them with numbers; trigger: idle and pointer.
+- Igloo scroll-out (0.66 to 1.35): camera climbs and pulls back along a scrubbed path, fog thickens, scroll prompt hides after about 0.59 units, wind sound rises; trigger: scroll.
+- Transition 1 (1.35 to 2.35): the frame cracks away diagonally like ice to reveal the cubes, both scenes slide vertically with an RGB fringe along the cut; trigger: scroll.
+- Cubes 1, 2, 3 (rest at 2.35, 3.35, 4.35): one frosted ice cube per company, centred in a pale grey void with blurred floating data text and a dot grid; HUD callouts (index and name, a temperature readout, a date and an explore prompt) draw on with leader lines; cubes wobble, FOV kicks with scroll speed; hover frosts the glass; trigger: scroll, snaps to nearest cube.
+- Project detail (route /portfolio/<slug>): frost-displacement dissolve into a dark navy scene with the company logo object in light shafts; centred summary column, social and website links, bracketed close button top-right; trigger: click a cube.
+- Transition 2 (4.35 to 5.35): same ice-crack wipe into the entry scene; trigger: scroll.
+- Entry dive (5.35 to about 8.5): camera looks straight down and drops through three glowing segmented rings while the view rolls 180 deg, with smoke trails, plasma and glitch squares as each ring passes; after 1.4 s idle it autopilots to the room (up to 20 s); trigger: scroll.
+- Links room (rest at 9.29): circular floor with concentric light rings, a 150,000-particle sculpture (penguin with headphones for LinkedIn, an X, an M for Medium), thin left and right arrows, bracketed selector at the bottom; trigger: arrows, arrow keys, tap halves, swipe.
+- Loop back (9.85 to 10.85): wipe back to the mountain while flying ice blocks reassemble into the igloo; position wraps and the cycle repeats; trigger: scroll.
+
+3. The thing Sam liked, in detail:
+Resting state: after the intro the scroll sits at 0.66 (igloo timeline at 49.5%). Camera about (-13.5, 2.65, 14.4) looking at (0, 1.24, 0), FOV 30, mouse parallax up to 0.07 / 0.025, shake 0.01. Blocks idle-breathe (each pushed along its centroid by a slow sine of time and x). All UI text visible, sound off.
+Trigger: wheel (deltaY x 0.00075 units), ArrowDown/ArrowUp (0.1125 units a press), mouse or touch drag (1.25 units per full screen height), autopilot after 1.4 s idle. There is no native scroll.
+What happens, step by step, with timings and easing:
+1. Input to motion: input adds to a target. Each frame a first follower chases it at 7.5% per frame (60 fps normalised, capped at 0.075 units, about 100 px, per frame), a second follower chases that at 15% per frame, and the target may never lead by more than 0.5625 units. One 100 px wheel notch moves 0.075 units and settles in about 0.5 s: heavy, damped, no overshoot. Speed feeds a velocity value (friction 0.98 per frame) used by shaders and the cube FOV kick (45 deg falling to 40 deg at full speed).
+2. Scene scrubbing: the loop is igloo 2.35 + cubes 3 + entry 5.5 units. The screen is a 1-unit window; the scene under its top is rendered, plus the next scene while the window straddles a boundary. Each scene owns a paused GSAP timeline set to progress = (position + 1 - sceneTop) / (sceneHeight + 1), so camera moves are keyframed in timeline time and scrubbed 1:1 by scroll.
+3. Igloo camera (21-unit timeline): camera y descends to 2.5 and target y to 1 over the first 14 units (power2.out); from unit 7 to 21 x goes -13.25 to -15.25 and z 13.25 to 23.25 (power1.inOut). Coming in from the previous scene (progress 0 to 0.4) the upper blocks are blown out along their centroids by up to 2x with random spins (sine.in falloff), so scrolling on from the room shows the igloo assembling. The baked lighting cross-fades from an assembled lightmap to an exploded lightmap as each block separates (mix = 5 x displacement).
+4. Scene transition, across the 1-unit overlap: a full-screen shader mixes scene A and scene B with a diagonal edge (slope 0.2 x aspect). The red channel of a 1024 px data texture breaks the edge into ice-crack shapes, green adds blocky tech displacement (0.025 UV), blue wobbles the diagonal. Scene A slides up by 0.4 x progress squared while B rises from 0.4 below. A 5-tap chromatic aberration peaks along the cut and fades toward the screen edges, dithered with blue noise. Mid-overlap the frame is about half each scene.
+5. Cubes: cube centres are 1 unit apart and the camera drops 5.75 world units per cube. As a cube nears centre its HUD draws on: leader lines in 0.2 s (linear), text in 0.4 s with a glyph scramble, a beep. Each cube renders twice a frame (back faces into a texture, then front faces sampling it) to fake refraction against an EXR environment with normal and roughness maps.
+6. Auto-centre: 1.4 s after the last input. If straddling two scenes it tweens to that scene's rest pose (2 s plus extra, the bundle's named in-out ease "inOut3"); inside the cubes it snaps to the nearest cube (1.6 to 2.4 s); inside the entry scene it glides to the room (4 s per unit, clamped 2 to 20 s).
+7. Entry dive (9.2-unit timeline): camera y 0 to -9.83 (custom ease, 7 units); the up vector rolls 180 deg (power3.inOut, 5.25 units) and then eases back to upright; FOV 22 to 30; z pulls back to -3 at the end. Each ring hides once passed. At each pass (timeline 2.0, 2.95, 3.8) glitch squares flash in the composite (0.5 s in power1.in, 0.4 s out power1.out) and a portal hum peaks. Particles fade in from 1.5, floor from 3.4 (power2.out), text cylinders from 4.5.
+8. Links room: arrows and selector show between 64% and 90% of the entry timeline. Next or previous (click a screen half, ArrowLeft/Right, or a swipe over 100 px faster than 1000 px/s) swaps the 3D volume texture the particles sample, fires a noise burst 1 to 0 over 0.5 s (power2.inOut), resets the sculpture rotation and spins the floor rings 4 units over 3 s (power4.out). The pointer drives a 128 px fluid sim (splat radius 0.22, force 35) that stirs the particles.
+9. Project open (click a cube): scroll locks; the cube centres (up to 1.5 s); camera dollies 3.5 units in (1.25 s power3.in) while the composite pushes frost displacement and RGB split (1.25 s power3.in), then reveals the detail scene (1.25 s sine.out, starting 0.75 s later); detail camera z 4 to 2.5 over 2 s; text blocks reveal in sequence (0.25 s short lines, 0.75 s paragraphs, 0.1 to 0.3 s apart). Close reverses in 1.25 s (power2.out); scroll returns after 1 s.
+Hover in the hero: blocks within 1 to 3 units of the projected pointer push outward (up to about 0.5 to 0.8), smoothed by two followers (5% and 6% per frame). The five nearest displaced blocks get white 25% lines and two-digit distance labels (in 0.1 s, out 0.06 s), and a hum fades in.
+End state: none. Position wraps modulo 10.85, so after the room you are back on the hero. Each scene comes to rest on its auto-centre pose (0.66; 2.35, 3.35, 4.35; 9.29).
+On a 390 px window: framing is blocked (X-Frame-Options DENY), so I re-booted the app with a 390 x 844 viewport, DPR 3 and a touch user agent. Same scenes, same assets, same 17.4 MB. Canvas 585 x 1266 (DPR capped at 1.5 above device DPR 2). Cameras zoom out to fit portrait (zoom = aspect x 1.25 = 0.58 for igloo and cubes; aspect x 1.5 = 0.69 for the room), so igloo and cubes span the width. UI moves to the mobile grid (25 px side margin, 25 px top); manifesto stays top-right in a narrower block; prompt and sound bottom-left. Vertical swipe scrolls 1.25 units per screen height (a 300 px swipe = 0.44 units) with the same damping. Tap opens a cube; the detail text is a 350 px column at 18 px, scrolled by drag; swipe changes the room link. Nothing is dropped. The only low-power measure is adaptive DPR (steps down 10% at a time to 60% while average fps stays under 30).
+
+4. How it is built:
+HTML structure:
+  body
+    div#app
+      div#webgl (absolute, 100% x 100%)
+        div (host of a CLOSED shadow root holding the only canvas)
+      style
+    div#loader > div.ascii (only while loading; removed with a short fade)
+  script type=module index-2eb69c09.js (6 KB), which imports App3D-f554a111.js (423 KB gz)
+CSS that matters:
+  html, body { margin: 0; width/height: 100%; overflow: hidden; touch-action: none; background: var(--bgColor) }  /* #A0A5B1 */
+  canvas (inline) { display: block; position: absolute; top: 0; left: 0; width/height in px = viewport; touch-action: none; user-select: none }
+  #loader { position: absolute; inset 0; display: flex; centred; pointer-events: none; background: var(--bgColor); will-change: opacity }
+  .ascii:before { content: 10 characters; color: #fff; font: bold 17px monospace; text-shadow: 0 0 5px rgba(255,255,255,.4); animation: head 5s infinite }
+  No media queries that matter; all layout is computed in JS from the window size.
+Libraries detected: three.js r143 (bundled); GSAP 3.12.5 with CustomEase (custom curves inOut5, entry_ease, entry_ease_2, entry_ease_3, igloo_ease_1); Svelte (compiled shell and router: / and /portfolio/:project); EffectComposer-style post (6-level bloom, 3D LUT grade); DRACOLoader + Draco WASM; KTX2 loader + Basis Universal WASM; custom MSDF text, EXR loader, wheel/touch input and WebAudio engine; tweakpane styles (debug only). Workers: audio, MSDF, bitmap, EXR, plus decoders. Not present: Lenis, ScrollTrigger, Locomotive, Swiper, Splide, Lottie, Rive, Spline, OGL, Framer Motion / Motion.
+Canvas or WebGL: yes. One WebGL2 canvas in a closed shadow root, created without antialias, depth, stencil or alpha; each scene renders into its own composer and render targets. DPR is min(device, 1.15) up to device DPR 2 and min(device, 1.5) above, with adaptive DPR (backing 1766 x 775 here). It draws everything: three scenes, the transition composite, the detail scene, and an orthographic UI scene holding all the text.
+Code excerpt (rewritten from the minified bundle, not verbatim; values exact):
+  const UNIT = 0.00075;                               // 1 unit = 1333 px of wheel delta
+  const scenes = [{ h: 2.35 }, { h: 3 }, { h: 5.5 }]; // igloo, cubes, entry
+  const TOTAL = 10.85;
+  onWheel = e => { stopAutoCenter(); s.t2 += e.deltaY * UNIT; };
+  onKey   = k => { s.t2 += (k === 'ArrowDown' ? 150 : k === 'ArrowUp' ? -150 : 0) * UNIT; };
+  onDrag  = d => { s.t2 += d.delta01.y * 1.25; };     // full-height swipe = 1.25 units
+  function render() {
+    const prev = s.y;
+    s.t1 = lerpFps(s.t1, s.t2, 0.075, 0.075);         // eased, max 0.075 units per frame
+    s.y  = lerpFps(s.y, s.t1, 0.15);
+    s.t2 = clamp(s.t2, s.y - 0.5625, s.y + 0.5625);
+    s.vel = clamp((s.vel + Math.abs(s.y - prev)) * 0.98, 0, 1);
+    const top = mod(s.y, TOTAL), bottom = mod(top + 1, TOTAL); // screen = 1 unit tall
+    let t0 = 0, A = null, B = null, mix = 0;
+    for (const sc of scenes) {
+      sc.top = t0; t0 += sc.h;
+      if (top >= sc.top && top < sc.top + sc.h) { A = sc; sc.p = (top + 1 - sc.top) / (sc.h + 1); }
+      else if (bottom > sc.top && bottom <= sc.top + sc.h) {
+        B = sc; mix = bottom - sc.top; sc.p = (bottom - sc.top) / (sc.h + 1); }
+    }
+    A.timeline.progress(A.p); A.renderToTexture();    // each scene scrubs its own timeline
+    if (B) { B.timeline.progress(B.p); B.renderToTexture(); }
+    composite.uProgress = mix;                         // ice-crack wipe across the overlap
+    composite.uProgressVel = s.vel;
+    if (idle > 1.4) gsap.to(s, { y: restPose(), duration: 2, ease: 'inOut3' });
+  }
+
+5. Fonts (family, role, size, case):
+- IBM Plex Mono Medium, the only typeface, drawn in WebGL from an MSDF atlas (512 x 1024 KTX2, 110 KB, plus a 1.3 KB glyph JSON). Manifesto heading, paragraph and copyright about 12 px on a 1536 px view, mixed case (manifesto right-aligned, copyright left). Cube callouts uppercase, about 13 px. Numeric HUD labels about 9 px. Project summary 18 px below 1600 x 800, 24 px above, mixed case. Room selector about 14 px. All text reveals with a per-glyph scramble.
+- Logo: an MSDF wordmark texture, about 155 x 34 px top-left on desktop, blinks and glitches in three steps as it appears.
+- CSS declares IBM Plex Mono Medium and Regular woff2 files (40 KB, 39 KB), but they are never downloaded.
+
+6. Colours and surfaces:
+- Page and loader #A0A5B1; intro overlay #8B909D; UI #FFFFFF; manifesto heading and copyright #3C3C54; project titles #67707E; project text #A1AAB7; detail background gradient #09121F to #6B7685; ice glow rgb(0.5, 0.7, 1.0) = #80B3FF; room particles #B5D5FF, #BDC6D4, #222B42, #D7EBFA.
+- Sampled frames: igloo sky #AEB2BD, snow ground #6C717E, shadowed blocks #474E5D, frame average #858A96; cubes scene average #9AA0AC; room average #9DA4B1, floor #828D9D.
+- Surfaces: matte snow with baked light; ice blocks with baked lightmaps and an inner blue glow; frosted refractive glass cubes; dark glass logos with caustics in the detail view; fog everywhere; bloom (threshold 0.2 in igloo and cubes, 0 in the room); per-scene 3D LUT grade.
+
+7. Weight: about 17.4 MB transferred on first load (about 110 files), all before the preloader clears; nothing lazy-loads. KTX2 textures 12.7 MB (49 files), OGG audio 2.94 MB (18), Draco geometry 0.59 MB (22), JS 0.57 MB compressed (1.8 MB raw), WASM decoders 0.31 MB, EXR 0.26 MB, PNG 0.03 MB, HTML 0.4 KB. Largest: music-highq.ogg 1.53 MB, scroll-datatexture.ktx2 1.29 MB, cube3_normal 1.13 MB, cube1_normal 1.08 MB, cube2_normal 1.08 MB, igloo_exploded_color 842 KB, volumes/peachesbody_64 837 KB, floor_color 630 KB, ground_sansigloo_color 629 KB, ground_color 625 KB, room.ogg 610 KB, mountain_color 592 KB, wind.ogg 573 KB, igloo_color 533 KB, App3D JS 423 KB. Fonts: MSDF atlas 110 KB plus JSON 1.3 KB (the woff2 files are not loaded).
+
+8. Assets used:
+- Geometry (Draco .drc, DRACOLoader): igloo 222 KB (70 separate blocks with centroid and random attributes, 40.8k verts), igloo_outline 19 KB and igloo_cage 5 KB (line versions for the build-on), mountain 12 KB (used 5x), ground 19 KB (terrain 5x plus base), patch 0.2 KB, intro_particles 2 KB; cube1 28 KB, cube2 29 KB, cube3 40 KB (irregular ice cubes, 5.3k to 7.9k verts); pudgy 31 KB, overpass_logo 15 KB, abstractlogo 7 KB (logo objects in cubes and detail view); background_shapes 0.7 KB, blurrytext 1 KB, blurrytext_cylinder 5 KB; shattered_ring 40 KB, shattered_ring2 43 KB, shattered_ring_smoke 10 KB, smoke_trail 4 KB, ceilingsmoke 13 KB, floor 40 KB (entry scene).
+- Baked colour maps (KTX2, sRGB, mipmapped): igloo_color 2048 px 533 KB and igloo_exploded_color 2048 px 842 KB (cross-faded as blocks separate), ground_color 625 KB and ground_sansigloo_color 629 KB (2048 px), ground_glow 1024 px 214 KB, mountain_color 2048 px 592 KB, floor_color 2048 px 630 KB, shattered_ring_color and shattered_ring2_color 1024 px 219 to 229 KB plus 256 px AO maps 17 to 18 KB, three dark logo colour maps 1024 px 129 to 182 KB, three cube logo colour maps 1024 px 183 to 233 KB.
+- Ice cube surfaces: cube1/2/3_normal 2048 px KTX2 1.08 to 1.13 MB each, cube1/2/3_roughness 1024 px 237 to 248 KB each, cubes_env.exr 259 KB environment (worker-decoded), cubes/bg.png 2 KB refraction backdrop.
+- Data and noise textures (linear KTX2 unless noted): scroll-datatexture 1024 px 1.29 MB (RGB = ice-crack cut, tech blocks, slope noise for the wipe), frost-datatexture 256 px 135 KB (project-open dissolve), blue-noise 128 px 50 KB (dither), perlin 64 px 4 KB, wind_noise 256 px 18 KB, clouds_noise 256 px 25 KB, bokeh 512 px 22 KB, caustics 64 px 2 KB, mosaic 32 px 1 KB, triangles_tiling 512 px 48 KB (materialise pattern), numbers 32 x 1024 5 KB and numbers-datatexture 280 x 36 14 KB (HUD digits), dot_pattern 64 px 1 KB, blurrytext_atlas 256 px 8 KB, shapes_blurred 512 x 1024 39 KB, advect.png 27 KB (mouse frost), perlin .png 4 KB.
+- Volume textures (3D KTX2): peachesbody_64 64^3 837 KB (penguin), x_64 64^3 318 KB (X), medium_32 32^3 45 KB (M), the shapes the room particles snap to; colour LUTs igloo_scene and cube_scene 32^3, 14 KB and 41 KB.
+- UI MSDF textures: logo 128 px 2 KB, sound 64 x 128 4 KB, close 64 px 1 KB, arrow 64 px 2 KB, visit 100 x 32 1 KB; font atlas 512 x 1024 110 KB plus glyph JSON 1.3 KB.
+- Audio (OGG, WebAudio, muted by default): loops music-highq 1.53 MB, room 610 KB, wind 573 KB (volume follows igloo scroll), igloo 62 KB (hover hum), shard 22 KB (cube frost), circles 28 KB (ring proximity), particles 17 KB (room). One-shots: beeps x3 about 10 KB each, click-project 7 KB, enter-project 22 KB, leave-project 12 KB, project-text 11 KB, logo 5 KB, ui-long 4 KB, ui-short 3 KB, manifesto 6 KB.
+- Code: App3D 423 KB gz, index 6 KB, workers (audio 79 KB, EXR 28 KB, MSDF 2 KB, bitmap 1 KB), Draco 12 KB plus 85 KB WASM, Basis 18 KB plus 230 KB WASM.
+- No photos, video, Lottie, Rive or SVG artwork.
+Production brief:
+- 3D: hero object modelled as separable pieces, each its own mesh pivoted at its centroid, plus outline and wireframe versions for the build-on; low-poly terrain and props; Draco compressed.
+- Renders/bakes: two lightmaps per hero (assembled and exploded) at 2048 px, ground with and without the hero, 2048 px normals and 1024 px roughness for glass objects; ship as KTX2.
+- Data textures: one 1024 px RGB transition texture (R crack or shard silhouettes, G blocky glitch noise, B soft low-frequency noise), a 256 px frost displacement, a tileable noise set, 32^3 LUTs from a grading app, 64^3 volumes of each logo or mascot for particle sculptures.
+- Type and icons: MSDF atlas of the UI font and MSDF icons.
+- Audio: three ambient loops, four contextual loops, about ten short UI one-shots, OGG.
+- Photography, video, illustration: none.
+- Said plainly: the effect is mostly code. Camera timelines, the wipe shader and all block, particle and hover motion are code; the assets are static bakes and data textures the code animates. The one asset that is the effect itself is the 1.29 MB transition data texture.
+
+9. What makes it work, and what would be lost without WebGL or a cursor:
+It feels expensive because nothing is a page. One heavily damped virtual scroll value scrubs keyframed cameras, so every notch is a dolly move, and every scene change is a material event (the frame cracks like ice with an RGB fringe) instead of a cut or a fade. Assets are used cleverly: the igloo is one batched mesh of 70 blocks whose breathe, push and explode motions are maths on centroids, with the bake cross-faded between assembled and exploded versions so the shading stays right as blocks part; the cubes fake refraction by rendering themselves twice; the particle sculptures are just 3D textures, so changing a logo is swapping a texture. Auto-centring after 1.4 s makes it feel authored even when the user stops halfway. The costs: 17 MB, a long blank preloader, a 5 s intro before scroll, no accessible text, no fallback. Without WebGL nothing remains (the only fallback is a one-line browser warning) because even the text is WebGL. A non-WebGL version needs pre-rendered sequences scrubbed by scroll plus DOM text, and loses the live hover reactions, refraction and per-pixel wipe. Without a cursor, scrolling still works (drag, swipe, taps), but block pushing with its labels, cube frost, particle stirring and camera parallax are gone.
+
+10. One-line recommendation for the Skreed section it fits:
+Skreed intro/manifesto: a pinned full-screen stage where scroll scrubs a pre-rendered sequence of a case assembling from 240 shade tiles, with scene changes as a crack-mask wipe (mask image sequence plus a small RGB offset) and auto-snap to rest poses; skip igloo's 17 MB realtime route.
+=== END BRIEF ===
