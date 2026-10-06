@@ -27,14 +27,14 @@ Sources: devradar-dev.github.io Astro notes; dev.to framework comparisons 2026; 
 
 Sources: deploywise.dev Vercel free-tier limits 2026; developers.cloudflare.com static-assets billing & workers pricing; netli.fyi; docs.github.com pages limits; vercel.com/docs/regions; getdeploying.com India datacentres; justinmckelvey.com "is Vercel free"; blog.cloudflare.com full-stack Workers; mecanik.dev Pages vs Workers 2026.
 
-**Recommendation: Cloudflare Workers + Static Assets, with skreed.in's DNS zone moved to Cloudflare (free).** Unlimited static bandwidth matters because 240-shade imagery + hero video + GLB can push a viral IG day past 100 GB; 22 Indian PoPs; 100k req/day free is ample for a form; Turnstile, Redirect Rules and Web Analytics live in the same dashboard, which makes the Nov 4 flip trivial. Fallback: Vercel Pro ($20/mo for one month). Do not run this on Vercel Hobby.
+**Recommendation: Cloudflare Workers + Static Assets, with skreed.in's DNS zone moved to Cloudflare (free).** Unlimited static bandwidth matters because 240-shade imagery + hero video + GLB can push a viral IG day past 100 GB; 22 Indian PoPs; 100k req/day free is ample for a form; Turnstile, Redirect Rules and Web Analytics live in the same dashboard, which makes the Nov 1 flip trivial. Fallback: Vercel Pro ($20/mo for one month). Do not run this on Vercel Hobby.
 
 ## 3. Domain forwarding mechanics for skreed.in
 
 - **Serve the site directly on skreed.in (CNAME/A to host); do not registrar-forward.** Registrar forwarders default to 302 and most don't terminate HTTPS, so `https://skreed.in` shows a cert error before redirecting (domain-forward.com; domainee.dev). Search engines only see the HTTP redirect, not the DNS record type.
 - **Setup now:** move nameservers to Cloudflare (free zone). `CNAME @ → <worker>.workers.dev` (proxied, apex auto-flattened) + `CNAME www → same`. Enable "Always Use HTTPS". TTL 300 s / Auto.
-- **Nov 4 flip (minutes, no DNS change):** add a Cloudflare Single Redirect rule `skreed.in/* → https://skreed.com/$1` with 302 while testing, then 301. Takes effect at the edge in seconds; the microsite stays deployed for rollback. Alternative: add skreed.in as a secondary domain in Shopify (A `23.227.38.65`, CNAME `shops.myshopify.com`), which auto-redirects to the primary, but that is a DNS change with propagation lag.
-- **SEO:** 302 for any temporary redirect during the teaser; 301 on Nov 4 so link equity consolidates on skreed.com. Keep `<link rel="canonical">` to skreed.in and allow indexing unless you'd rather the teaser not be cached by Google. Never test the flip with 301 (browsers cache it aggressively).
+- **Nov 1 flip (minutes, no DNS change):** add a Cloudflare Single Redirect rule `skreed.in/* → https://skreed.com/$1` with 302 while testing, then 301. Takes effect at the edge in seconds; the microsite stays deployed for rollback. Alternative: add skreed.in as a secondary domain in Shopify (A `23.227.38.65`, CNAME `shops.myshopify.com`), which auto-redirects to the primary, but that is a DNS change with propagation lag.
+- **SEO:** 302 for any temporary redirect during the teaser; 301 on Nov 1 so link equity consolidates on skreed.com. Keep `<link rel="canonical">` to skreed.in and allow indexing unless you'd rather the teaser not be cached by Google. Never test the flip with 301 (browsers cache it aggressively).
 
 ## 4. Performance budget for Indian mobile
 
@@ -62,8 +62,8 @@ Sources: deploywise.dev Vercel free-tier limits 2026; developers.cloudflare.com 
 
 | Path | Pros | Cons |
 |---|---|---|
-| **Supabase table + Edge Function** (free: 500 MB DB, 500k invocations) | Official Turnstile verification example; full data ownership; easy export to Shopify on Nov 4 | Free projects pause after 7 idle days (add a daily cron ping); write RLS (insert via service role only) |
-| Shopify Admin `customerCreate` with `tags:["prelaunch-in"]`, `emailMarketingConsent{SUBSCRIBED, SINGLE_OPT_IN}`, `smsMarketingConsent` | Contacts land where they're used; Shopify Email sends Nov 4 | Admin token must stay server-side; 422 on duplicates; API-created customers skip double opt-in |
+| **Supabase table + Edge Function** (free: 500 MB DB, 500k invocations) | Official Turnstile verification example; full data ownership; easy export to Shopify on Nov 1 | Free projects pause after 7 idle days (add a daily cron ping); write RLS (insert via service role only) |
+| Shopify Admin `customerCreate` with `tags:["prelaunch-in"]`, `emailMarketingConsent{SUBSCRIBED, SINGLE_OPT_IN}`, `smsMarketingConsent` | Contacts land where they're used; Shopify Email sends Nov 1 | Admin token must stay server-side; 422 on duplicates; API-created customers skip double opt-in |
 | Shopify Forms app | Zero code, tags + segments | Lives on skreed.com theme, not embeddable in Astro without iframe hacks |
 | Klaviyo / Mailchimp | Flows, SMS | Free tiers now 250 contacts / 500 emails, will cap in days |
 | Google Sheets via Composio | Trivial | ~70% of public form posts are spam; no dedupe |
@@ -103,4 +103,4 @@ Packages (npm latest, 2026-10-01): `astro@7.3.5`, `@astrojs/cloudflare@14.3.3` (
 └─ .github/workflows/deploy.yml  # build → wrangler deploy; lhci assert on PR
 ```
 
-Key calendar: now → move skreed.in NS to Cloudflare; ~Oct 8 → deploy, Turnstile + rate-limit rule; Nov 3 23:59 IST → Single Redirect `skreed.in/* → skreed.com/$1` (302 for 10 min test, then 301); Nov 5 → export Supabase CSV, confirm Shopify customers tagged `prelaunch-in`, pause the Worker.
+Key calendar: now → move skreed.in NS to Cloudflare; ~Oct 8 → deploy, Turnstile + rate-limit rule; Oct 31 23:59 IST → Single Redirect `skreed.in/* → skreed.com/$1` (302 for 10 min test, then 301); Nov 2 → export Supabase CSV, confirm Shopify customers tagged `prelaunch-in`, pause the Worker.

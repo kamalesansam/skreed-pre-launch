@@ -59,7 +59,7 @@ G16. Terms page (plus contest rules if the naming contest runs).
 G17. Cookie notice: only required if non-essential cookies load; with PostHog in cookieless mode and the referral cookie being first-party functional, a one-line notice with no banner is acceptable. Decide and document.
 G18. Analytics installed and verified: PostHog events firing (signup_submitted, signup_success, ig_follow_click, shade_selected, share) and Cloudflare Web Analytics on.
 G19. Real contact details in the footer: collab@skreed.in, Hyderabad, Telangana (from the catalog), plus the Instagram handle.
-G20. Nov 4 cutover rehearsed: the Cloudflare redirect rule tested with 302 on a staging hostname.
+G20. Nov 1 cutover rehearsed: the Cloudflare redirect rule tested with 302 on a staging hostname.
 G21. Internal links: every section links to at least one other (Wall → Reserve, Quiz → Wall, Thanks → Share, footer → privacy/terms); no dead ends.
 G22. Breadcrumbs: not on a one-page teaser; the sticky section index (01–08) does the same job. Noted as n/a with reason.
 G23. Five FAQs in the footer as native `<details>`: when it launches, what reserving means, is it a payment, which phones, how to withdraw consent. Marked up with FAQPage JSON-LD.

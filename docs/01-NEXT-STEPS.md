@@ -13,7 +13,7 @@ Status on 2026-10-05. Ideation is complete: plan (`00-IDEATION.md`), ten researc
 | D5 | Name-the-241st-shade contest: run it or not. If yes, the prize and the judging criteria. | Not at launch. |
 | D6 | Sound tick on the Wall: ship behind a muted-by-default toggle, or drop. | Ship muted, toggle in nav. |
 | D7 | Physics tumble of swatches on the reserve confirmation (1.2 s, once). | Off. |
-| D8 | Teaser go-live date. The build plan is 15 working days; from Oct 6 that lands on Oct 24, leaving ten days of live teaser before the Nov 3 cutover. Earlier means cutting scope. | Oct 24. |
+| D8 | Teaser go-live date. The build plan is 15 working days; from Oct 6 that lands on Oct 21, leaving ten days of live teaser before the Oct 31 cutover. Earlier means cutting scope. | Oct 21. |
 | D9 | 3D tooling: one month of Morflax Pro ($15) or endlesstools PRO ($20) for the mosaic hero and stills, or neither. | Morflax, only if the mosaic hero is approved. |
 | D10 | Animaster Lib Premium ($8) for scroll patterns. | Buy. |
 
@@ -21,12 +21,12 @@ Status on 2026-10-05. Ideation is complete: plan (`00-IDEATION.md`), ten researc
 
 | # | Item | Why | Owner |
 |---|---|---|---|
-| A1 | Cloudflare account with skreed.in added, and the nameservers at the registrar pointed to it. | Hosting, Workers, Turnstile, the Nov 4 redirect, analytics. | Prem (domain owner) |
+| A1 | Cloudflare account with skreed.in added, and the nameservers at the registrar pointed to it. | Hosting, Workers, Turnstile, the Nov 1 redirect, analytics. | Prem (domain owner) |
 | A2 | A Cloudflare API token (Workers + Pages deploy, Turnstile) stored as a secret in this environment, never in the repo. | Deploys from the build loop. | Sam |
 | A3 | Supabase: the connected org "Skreed" already has two projects (Skreed Sales Analytics in Tokyo, The Daily Edit in Seoul). Confirm one of: a new `skreed-prelaunch` project in Mumbai (ap-south-1), which needs the Pro plan if the org is on Free (two active projects is the Free limit), or a `prelaunch` schema with its own RLS inside Skreed Sales Analytics. | Lead storage. | Sam |
 | A4 | Shopify: confirm I may create customers tagged `prelaunch-in` on zeosmobile-com via the connector. | Shopify mirror of leads. | Sam |
 | A5 | PostHog project and key (free tier is enough). | Funnel events. | Sam |
-| A6 | WhatsApp BSP: choose AiSensy or Interakt, open the account, submit the launch-day and reminder templates by Oct 25. | Nov 4 message is the verification. | Sam |
+| A6 | WhatsApp BSP: choose AiSensy or Interakt, open the account, submit the launch-day and reminder templates by Oct 22. | Nov 1 message is the verification. | Sam |
 | A7 | Instagram broadcast channel on @skreedofficial and its join link. | The real follow driver. | Sam |
 | A8 | Rotate the Composio API key that was pasted in chat. | It is exposed. | Sam |
 | A9 | Allow the Day-1 tool installs in Claude Code (impeccable or taste-skill, web-design-guidelines, designer-skills plugins, 21st.dev MCP, Playwright, Lighthouse, Context7, Graphify, UnitOneAI SecuritySkills, animate, Matt Pocock skills). These need permission prompts approved once. | The loop depends on them. | Sam |

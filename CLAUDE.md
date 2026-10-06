@@ -1,6 +1,6 @@
 # Skreed pre-launch site: rules for Claude Code
 
-This repo is the skreed.in pre-launch teaser (live until Nov 3 2026, then skreed.in redirects to skreed.com). Read `docs/00-IDEATION.md` for the plan and `docs/data/shades-240.json` for the shade system before touching UI.
+This repo is the skreed.in pre-launch teaser (live until Oct 31 2026, then skreed.in redirects to skreed.com). Read `docs/00-IDEATION.md` for the plan and `docs/data/shades-240.json` for the shade system before touching UI.
 
 ## Brand facts (from the 2026-27 catalog, `docs/brand/`)
 - 240 shades, exactly 24 per family. Families in catalog order: Frosty Whites, Blissful Blues, Playful Pinks, Vivid Violets, Mellow Yellows, Earthy Browns, Blushing Corals, Stormy Greys, Go Green, Roaring Reds. Use the display names in `shades-240.json` (e.g. "Sky", not "Sky Blue").
@@ -8,7 +8,7 @@ This repo is the skreed.in pre-launch teaser (live until Nov 3 2026, then skreed
 - Finishes: Matte and Gloss. Case types: Snap, Tough, MagTough, Armor, Ultra (plus Sylvr metallic).
 - Voice: confident, minimal, design-led, short sentences. Never discount language. No hype.
 - Visual identity: Pearl Whisper (#F7F6F3) pages alternating with Urban Slate (#383F43), Ember Luxe (#FF9900) as the single accent for the primary button and focus rings, circle swatches in a 6x4 grid, soft lifestyle photography on neutral backdrops. Extend this. Do not invent a new look.
-- Typography (`docs/brand/type-system.md`, decided 2026-10-05): three families, four self-hosted files, 98 KB. **Poppins 700** is the voice: headlines in sentence case, the manifesto, the quiz question, the enlarged tile name, "You are #212", the 404. **Source Serif 4** 400 and 600, roman only, is the letter: hero sub-line, standfirsts, founders' note, Diwali stories, confirmation sentence. **Open Sans** 400 to 600 is the fittings: labels, inputs, buttons, family names, every live numeral with tabular figures, eyebrow, footer, legal prose. Never all-caps headlines, never italic, never a live number in Poppins.
+- Typography (`docs/brand/type-system.md`, decided 2026-10-05): three families, four self-hosted files, 98 KB. **Poppins 700** is the voice: headlines in sentence case, the manifesto, the quiz question, the enlarged tile name, "You are #212", the 404. **Source Serif 4** 400 and 600, roman only, is the letter: hero sub-line, standfirsts, founders' note, day-in-shades stories, confirmation sentence. **Open Sans** 400 to 600 is the fittings: labels, inputs, buttons, family names, every live numeral with tabular figures, eyebrow, footer, legal prose. Never all-caps headlines, never italic, never a live number in Poppins.
 - Voice (brand guide): first person, short sentences, active voice, sensory colour words. "We believe in the power of color."
 
 

@@ -1,6 +1,6 @@
 # Skreed Pre-Launch Site: Ideation & Plan
 
-Prepared 2026-10-01. Live window: skreed.in forwards to this site until Nov 3, then to skreed.com on Nov 4 (two days before Dhanteras, four before Diwali on Nov 8).
+Prepared 2026-10-01. Live window: skreed.in forwards to this site until Oct 31, then to skreed.com on Nov 1. No festival framing anywhere on the site (Sam, 2026-10-06).
 
 Detailed research behind every section lives in `docs/research/` (seven reports, including a digest of Sam's 149 saved Instagram posts) and the data files in `docs/data/`. This document is the synthesis: what we know, what we recommend, and what the team still has to decide.
 
@@ -36,18 +36,18 @@ Skreed's real product is *shade*, not a print and not protection. Every competit
 
 ## 2. The site: recommended spine
 
-A single page, phone-first, each section roughly one screen tall. Narrative: *Basic is over → here are the 240 → which one is you → claim it → tell someone → gift it this Diwali → who we are.*
+A single page, phone-first, each section roughly one screen tall. Narrative: *Basic is over → here are the 240 → which one is you → claim it → tell someone → see it in a day → who we are.*
 
 | # | Section | What happens | Goal served |
 |---|---|---|---|
-| 1 | **Hero: Basic vs Beyond Basic** | A thumb-drag divider: left is the black case everyone owns, right is the same phone in a Skreed shade. Headline resolves once from "Basic." to "Beyond Basic." Sub "240 shades. Doors open Nov 4." Three hotspots on the case render (camera bump, finish, shade name) open the quiz, the finish toggle and the reserve form. A day counter in the corner tinted by today's shade. | 2, 1 |
+| 1 | **Hero: Basic vs Beyond Basic** | A thumb-drag divider: left is the black case everyone owns, right is the same phone in a Skreed shade. Headline resolves once from "Basic." to "Beyond Basic." Sub "240 shades. Doors open Nov 1." Three hotspots on the case render (camera bump, finish, shade name) open the quiz, the finish toggle and the reserve form. A day counter in the corner tinted by today's shade. | 2, 1 |
 | 2 | **The Wall** | All 240 shades as one living grid; tiles flip in from the centre once on first view. Tap a tile: it swells, shows name + family + a Reserve chip. Family picker is a ring of ten arcs (each arc a conic gradient of its 24 shades), touch-rotate on phone, hover on laptop. Laptop adds a `spiral / grid` toggle: the 240 on a scroll-driven helix (CSS 3D, no WebGL). Optional soft tick per tile, muted by default. One greyed 241st tile: "Follow to reveal." | 1, 2, 4 |
 | 3 | **Find your shade** | Tabs: Quiz (six swipe cards, "Beige or Rouge?") as default; From a photo (upload, five-colour palette matched to the 240); Live camera behind a flag for week two. Result: a shade card with tilt-to-see gloss vs matte on phone. | 1, 3 |
-| 4 | **Reserve your shade** | Phone number (+91 fixed) as the one required field, email optional after. Device and finish pickers. Live per-shade counter. Confirmation: "Mauve is yours. First dibs Nov 4." Then "Find your twin": a referral link that unlocks a complementary pair shade for both. | 3 |
+| 4 | **Reserve your shade** | Phone number (+91 fixed) as the one required field, email optional after. Device and finish pickers. Live per-shade counter. Confirmation: "Mauve is yours. First dibs Nov 1." Then "Find your twin": a referral link that unlocks a complementary pair shade for both. | 3 |
 | 5 | **Share** | Canvas-generated 1080×1920 story card ("My Skreed shade is Mauve") sent through the native share sheet to WhatsApp or Instagram Stories. "Tag @skreedofficial." | 4, 3 |
-| 6 | **Diwali light stories** | Five days, five shade stories (Dhanteras gold → Sand; Diwali night → Amethyst; Bhai Dooj → Ballerina). Lifestyle photos drift at three parallax speeds on charcoal (translate only). "Gift a pair" reserve with a recipient field. Colour and type only, no clipart. | 1, 3 |
+| 6 | **One day, five shades** | Five moments of an ordinary day, five shades (7 am Sunbeam, 9 am Charcoal, 2 pm Aquamarine, 7 pm Rouge, 11 pm Midnight). Lifestyle photos drift at three parallax speeds on charcoal (translate only). "Reserve for two" with a second name. Colour and type only, no clipart, nothing seasonal. | 1, 3 |
 | 7 | **Manifesto + founders' note** | Pinned kinetic type: "Smart. Sleek. Skreed." each word fills with a family colour. Then a 120-word founders' note with a reply field. | 1, 2 |
-| 8 | **Footer** | Nov 4, Instagram and broadcast-channel links, privacy and T&Cs. | 4 |
+| 8 | **Footer** | Nov 1, Instagram and broadcast-channel links, privacy and T&Cs. | 4 |
 
 **Why this spine and not the others.** The concept catalog (`06-concept-catalog.md`) scores 27 concepts on phone wow, laptop wow, lead capture and shareability. The five chosen are the ones that score four or five on phone *and* on lead capture or shareability, cost under two days each, and need no WebGL. The splitter hero is the cheapest big-impact concept in the whole list. The quiz is the highest-converting mechanic. The wall is the USP. Reserve and share are the business.
 
@@ -69,11 +69,11 @@ A single page, phone-first, each section roughly one screen tall. Narrative: *Ba
 | Background | Flat off-white and charcoal sections, as in the catalog. Colour comes from the shades, never from a gradient. | Cheapest possible paint; nothing to jank. A gradient background is on the banned list in `CLAUDE.md`. |
 | 3D | **None in the spine.** If a 3D hero is wanted later: procedural case in react-three-fiber (rounded box, PBR matte/gloss presets, colour from shades.json), loaded on tap and gated by detect-gpu tier | $0, 1–2 days, no licence issues. Buying or AI-generating a case model costs more and looks worse for a hard-surface product. |
 | Hosting | **Cloudflare Workers + Static Assets, DNS zone for skreed.in moved to Cloudflare** | Unlimited static bandwidth, 22 Indian PoPs, Turnstile + redirect rules + analytics in one dashboard. Vercel Hobby is non-commercial and would be a terms breach; Vercel Pro ($20) is the fallback. |
-| Domain | Serve the site **directly** on skreed.in (CNAME, proxied). Do not use registrar forwarding (HTTPS breaks). | On Nov 4, add one Cloudflare Single Redirect rule `skreed.in/* → skreed.com/$1`; live in seconds, no DNS change, instant rollback. |
-| Lead store | **Supabase** `leads` table as source of truth, insert-only via an edge function | Keeps consent evidence, referral codes, UTM. Mirror to Shopify customers (tag `prelaunch-in`) so Shopify Email can send on Nov 4 for free. |
+| Domain | Serve the site **directly** on skreed.in (CNAME, proxied). Do not use registrar forwarding (HTTPS breaks). | On Nov 1, add one Cloudflare Single Redirect rule `skreed.in/* → skreed.com/$1`; live in seconds, no DNS change, instant rollback. |
+| Lead store | **Supabase** `leads` table as source of truth, insert-only via an edge function | Keeps consent evidence, referral codes, UTM. Mirror to Shopify customers (tag `prelaunch-in`) so Shopify Email can send on Nov 1 for free. |
 | Anti-spam | Cloudflare Turnstile (free, invisible) + honeypot + per-IP/phone rate limit + unique indexes | Standard; official Supabase example exists. |
 | Email | Shopify Email (10,000/month free) | Klaviyo and Mailchimp free tiers now cap at 250 contacts; Klaviyo has no India SMS. |
-| WhatsApp | AiSensy (cheapest broadcasts) or Interakt (Shopify-native). Templates submitted by Oct 25; account verification takes 1–3 days. | WhatsApp is the India launch-day channel: 85–95% open rates. |
+| WhatsApp | AiSensy (cheapest broadcasts) or Interakt (Shopify-native). Templates submitted by Oct 22; account verification takes 1–3 days. | WhatsApp is the India launch-day channel: 85–95% open rates. |
 | Analytics | PostHog (1M events free) + Cloudflare Web Analytics for Core Web Vitals | Custom events for signup, follow click, shade selected, share. UTMs on every link because Instagram strips Referer. |
 | Fonts | **Three families, one job each** (`docs/brand/type-system.md`): Poppins 700 the voice, Source Serif 4 400/600 roman the letter, Open Sans 400 to 600 the fittings. Inter banned. Campaign alternates stay off the site. | All OFL; four self-hosted WOFF2 Latin subsets, 97.9 KB measured, built by `scripts/fonts/build.py`; `font-display: swap`; measured `size-adjust` fallbacks; `font-synthesis: none`. |
 
@@ -92,7 +92,7 @@ Each has a recommended default so the build can start without a meeting.
 | # | Decision | Recommended default |
 |---|---|---|
 | 1 | Scope: the five-concept spine, or more? | Spine. Freeze by build day 3. Extras only if ahead by day 12. |
-| 2 | Required field: phone or email? | Phone (+91) required, email optional on the confirmation screen. No OTP (20–30% abandonment, DLT registration delays). The Nov 4 WhatsApp message is the verification. |
+| 2 | Required field: phone or email? | Phone (+91) required, email optional on the confirmation screen. No OTP (20–30% abandonment, DLT registration delays). The Nov 1 WhatsApp message is the verification. |
 | 3 | What does reserving get you? | Priority access + free shipping for the first 48 hours. No discount language (brand rule). |
 | 4 | Show scarcity counters? | Yes, but only real counts, and only once a shade passes 10 reservations. |
 | 5 | Camera at launch? | No. Photo upload at launch; live camera in week two. Camera permission prompts lose 30–50% of users. |
@@ -100,7 +100,7 @@ Each has a recommended default so the build can start without a meeting.
 | 7 | Render approach | One greyscale master render per case type, tinted via CSS/canvas for all 240 shades; ten real hero photos (one per family) for the stories. Do not ship 240 images. |
 | 8 | Shade data | `docs/data/shades-240.json` (catalog names + Shopify hex) is the single source; resolve the Royal/Midnight hex. |
 | 9 | Hosting | Cloudflare. Needs skreed.in nameservers moved (Prem, as domain owner). |
-| 10 | Cutover | Cloudflare redirect rule on Nov 3 night, 302 for ten minutes of testing, then 301. Keep the teaser alive at skreed.com/teaser for referral links. |
+| 10 | Cutover | Cloudflare redirect rule on Oct 31 night, 302 for ten minutes of testing, then 301. Keep the teaser alive at skreed.com/teaser for referral links. |
 | 11 | Instagram follow gate | Honour-system only. Meta cannot verify follows and prohibits enforced engagement gates. The broadcast-channel join link is the real follow driver because joining forces a follow. |
 | 12 | Emojis | Zero sitewide. |
 
@@ -124,7 +124,7 @@ Each has a recommended default so the build can start without a meeting.
 | Share-card template | Drawn in Canvas 2D at runtime, not DOM screenshots (fonts and CORS break on iOS). |
 | Copy deck | Headline, sub, CTA, confirmation, error, ten family blurbs, 240 one-line shade stories, founders' note. Jyotika and Prem to review voice. |
 | Legal | Privacy notice (DPDP-style: what we collect, why, how to withdraw), T&Cs if a contest runs. |
-| WhatsApp templates | Launch-day and reminder templates submitted by Oct 25. |
+| WhatsApp templates | Launch-day and reminder templates submitted by Oct 22. |
 
 Target weights: hero image ≤ 120 KB AVIF, grid tile ≤ 25 KB, swatch ≤ 2 KB, first-view page ≤ 1.5 MB, JS ≤ 150 KB gz before any lazy island.
 
@@ -138,7 +138,7 @@ Target weights: hero image ≤ 120 KB AVIF, grid tile ≤ 25 KB, swatch ≤ 2 KB
 - **Share card** at the end of every flow, through the native share sheet to WhatsApp (India's default) and Instagram Stories.
 - **Instagram**: universal-link follow button, `ig.me/m/skreedofficial` DM link for "DM us your shade", and the broadcast-channel invite as the primary post-signup CTA. Hidden 241st shade as an honour-system nudge.
 - **Expectancy check on every ask** (Vroom's expectancy × instrumentality × valence; applied in `09-expectancy-theory-applied.md`): show the reward before the action, make it specific (a named shade, a date, a queue position), keep the action to one tap or one field, keep progress toward delayed rewards on screen, and prove the first promise fast with a WhatsApp confirmation within a minute. Two concrete changes: the 241st tile links to the broadcast channel instead of an honour-system "I followed" button, and the share screen shows "1 of 3 friends joined" with the pair shade greyed until unlocked.
-- **Launch day (Nov 4)**: 07:00 IST WhatsApp template with early-access link, 07:05 Shopify Email to the `prelaunch` segment, 12:00 broadcast-channel post and story, Nov 5 reminder to non-clickers, Nov 8 "48 hours left".
+- **Launch day (Nov 1)**: 07:00 IST WhatsApp template with early-access link, 07:05 Shopify Email to the `prelaunch` segment, 12:00 broadcast-channel post and story, Nov 2 reminder to non-clickers, Nov 8 "48 hours left".
 
 ---
 
@@ -157,12 +157,12 @@ Target weights: hero image ≤ 120 KB AVIF, grid tile ≤ 25 KB, swatch ≤ 2 KB
 | 9 | Share card: canvas template, Web Share, download fallback, per-shade OG images |
 | 10 | Tilt gloss/matte on the shade card; finish toggle; iOS motion-permission flow |
 | 11 | Shade Twin referral, hidden 241st tile, Instagram and broadcast-channel links |
-| 12 | Diwali stories, manifesto, founders' note, copy pass |
+| 12 | Day-in-shades stories, manifesto, founders' note, copy pass |
 | 13 | Analytics events; camera flow behind a flag |
 | 14 | QA matrix: iPhone 13/15/17 Safari, Pixel and Samsung Chrome, Redmi-class Android, Instagram in-app browser, Jio 4G throttle, Lighthouse ≥ 90 mobile, reduced motion. Security pass: the 20-check list in `08-prelaunch-security-checklist.md`, ending with Claude attacking the deployed signup endpoint |
 | 15 | Cutover rehearsal, seed counters, legal pages, the 20 real-site essentials in `docs/CHECKLIST.md` section G (404, meta, OG, favicons, robots, sitemap, alt text, sticky mobile CTA, thank-you state, privacy, terms, analytics verified, real contact), buffer |
 
-Parallel, not on the dev path: logo SVG (day 1–2), copy deck (days 3–8), hero photos (days 4–9), WhatsApp BSP account and templates (by Oct 25), nameserver move (Prem, day 1).
+Parallel, not on the dev path: logo SVG (day 1–2), copy deck (days 3–8), hero photos (days 4–9), WhatsApp BSP account and templates (by Oct 22), nameserver move (Prem, day 1).
 
 ---
 
@@ -187,7 +187,7 @@ AI writes code; the team still holds every layer below. Each one has an answer f
 | Monitoring and alerts | Cloudflare Web Analytics for Core Web Vitals; PostHog funnel (view → quiz → reserve → share); Cloudflare health check on `/` every 5 min with email alert; Supabase usage alert at 80% of free tier. | `01-…` §5 |
 | Testing | Playwright screenshots at 390/1280 per section (review loop); Playwright e2e for the signup happy path and the five error states; Lighthouse CI; the day-14 attack script. | `docs/CHECKLIST.md` B1, E4; `08-…` row 20 |
 | Scaling | Static site scales by itself. The only hot path is `/api/signup`: Workers scale horizontally; Supabase free tier handles ~60 inserts/s, far above any plausible teaser peak; counters read from a 10 s edge cache so a viral spike never hits Postgres for reads. | `01-…` §2, §6 |
-| And more (ops) | Nov 4 cutover rehearsal with a 302 a week early; Supabase keep-alive ping so the free project never pauses; WhatsApp templates submitted by Oct 25; Composio key rotated. | §7 build plan days 13–15 |
+| And more (ops) | Nov 1 cutover rehearsal with a 302 a week early; Supabase keep-alive ping so the free project never pauses; WhatsApp templates submitted by Oct 22; Composio key rotated. | §7 build plan days 13–15 |
 
 ## 8. Risks
 
@@ -202,7 +202,7 @@ AI writes code; the team still holds every layer below. Each one has an answer f
 | DPDP consent | Unticked boxes, itemised notice, withdrawal link; store timestamp, IP, text version |
 | Fake scarcity would break brand trust | Real counts only |
 | Scope creep | Freeze on day 3 |
-| Nov 4 cutover | Rehearse the redirect rule a week early with 302; keep `/teaser` alive |
+| Nov 1 cutover | Rehearse the redirect rule a week early with 302; keep `/teaser` alive |
 
 ---
 

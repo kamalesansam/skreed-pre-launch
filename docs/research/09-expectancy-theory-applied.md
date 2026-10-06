@@ -32,7 +32,7 @@ That is the bar for every ask on skreed.in.
 | Component | Current plan | Fix or confirm |
 |---|---|---|
 | Expectancy | One required field (+91 phone), no OTP, Turnstile invisible. | Good. Add: show the field pre-focused on the shade card with the shade already chosen, so the user sees it is one tap. Show "takes 10 seconds" nowhere; show it by making it true. |
-| Instrumentality | "Mauve is yours. First dibs Nov 4." | Make the outcome concrete and immediate: the confirmation screen shows the reserved shade, the user's queue position, and the exact date and hour they get access. Send the WhatsApp confirmation within a minute so the promise is proven before they leave. |
+| Instrumentality | "Mauve is yours. First dibs Nov 1." | Make the outcome concrete and immediate: the confirmation screen shows the reserved shade, the user's queue position, and the exact date and hour they get access. Send the WhatsApp confirmation within a minute so the promise is proven before they leave. |
 | Valence | Priority access + free shipping first 48 h. | Priority is status, which fits the brand voice. Strengthen it with identity: the reserved shade carries their name on the share card ("Reserved by Priya · Mauve 07"). Avoid discount framing; a discount lowers perceived valence for a design-led brand. |
 
 ### 2. Follow @skreedofficial

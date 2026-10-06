@@ -3,12 +3,12 @@
 ## 1. Signup form for India mobile
 
 - **Phone-first.** Indian D2C practice is phone-first with WhatsApp opt-in, email optional. WhatsApp open rates 85–95% vs 20–25% email, 3–5× the conversion (growwwtech; frameleads; enzodigital). Recommendation: one required field (10-digit mobile, fixed "+91" prefix, `type="tel" inputmode="numeric" autocomplete="tel-national" pattern="[6-9][0-9]{9}"`), email as optional second step after the "you're in" moment or on the share screen. Store E.164 `+91XXXXXXXXXX`.
-- **OTP: no.** SMS OTP abandonment is 20–30%, >50% if a second OTP is needed; 43% abandon onboarding over verification friction (ipification; prove.com; zyphe). OTP costs ₹0.10–0.25 each via DLT. Verify lazily: the first WhatsApp template on Nov 4 is the verification (undelivered = dead lead). For referral rewards, count a referral only after the friend's number receives one message.
+- **OTP: no.** SMS OTP abandonment is 20–30%, >50% if a second OTP is needed; 43% abandon onboarding over verification friction (ipification; prove.com; zyphe). OTP costs ₹0.10–0.25 each via DLT. Verify lazily: the first WhatsApp template on Nov 1 is the verification (undelivered = dead lead). For referral rewards, count a referral only after the friend's number receives one message.
 - **Consent (DPDP Act 2023 + Rules 2025).** Rules notified 13/14 Nov 2025; Consent Manager framework from 13 Nov 2026; substantive obligations from 13 May 2027. Nothing enforceable during the teaser, but build to the standard now since leads will be used past May 2027. Requirements: free, specific, informed, unambiguous, affirmative action; no pre-ticked boxes; marketing is not a "legitimate use" so consent is the only lawful basis; itemised notice separating purposes; withdrawal as easy as giving consent; store timestamp, IP, text shown, channel. Minimal notice: "We collect your mobile number (and email if given) to (1) send you Skreed launch updates and your early-access code on WhatsApp/SMS/email, and (2) run the referral leaderboard. Unsubscribe anytime by replying STOP or via the link in any message. See Privacy Notice." Two unticked boxes if you want promotional comms beyond launch. Sample forms: dpdpactindia.in; easydp.in.
 
 ## 2. Lead storage and launch-day use
 
-**Architecture:** Supabase `leads` table is the system of record (raw, with consent evidence, referral code, referrer, UTM, share events). A sync job upserts into Shopify Customers with tags; Shopify Email sends on Nov 4. Google Sheets only as a read replica. Do not make Shopify primary (US-configured, rate-limited, strict about phone/email uniqueness).
+**Architecture:** Supabase `leads` table is the system of record (raw, with consent evidence, referral code, referrer, UTM, share events). A sync job upserts into Shopify Customers with tags; Shopify Email sends on Nov 1. Google Sheets only as a read replica. Do not make Shopify primary (US-configured, rate-limited, strict about phone/email uniqueness).
 
 **Shopify Admin GraphQL `customerCreate` (2026-10).** CustomerInput supports `email`, `phone` (E.164; duplicates rejected "Phone has already been taken"), `tags`, `emailMarketingConsent`, `smsMarketingConsent`, `whatsAppMarketingConsent` (phone required; also `customerWhatsAppMarketingConsentUpdate`). customerCreate upserts by unique key per 2025+ docs.
 
@@ -49,7 +49,7 @@ LaunchList: free to 100 submissions, then one-time $19 (500) / $39 (2K) / $79 (1
 Legal frame: lottery is a state subject (Lotteries (Regulation) Act 1998). Prize Competitions Act 1955 caps puzzle/number-based competitions at ₹1,000/month and 2,000 entries, but games of substantial skill are outside it (RMD Chamarbaugwala). Tamil Nadu Prize Schemes (Prohibition) Act 1979 bans draws/lots for purchasers; big brands exclude TN from lucky draws. Safe pattern: no purchase required; winner by skill or objective ranking (most referrals, judged caption) or deterministic rewards; publish T&Cs (18+, India resident, dates, prize value, judging criteria, TDS note: prizes over ₹10,000 attract 30% TDS under s.194B; "residents of Tamil Nadu may participate only in skill-based components"). Instagram Promotion Guidelines (2025): you may not require like/follow/share/tag as a condition of entry; include the "not sponsored, endorsed or administered by Instagram" release; you can invite follows. Meta's Spam standard prohibits requiring engagement to access exclusive content, so an enforced "follow to unlock" is a policy risk.
 
 Five incentives, ranked by conversion vs risk:
-1. **Early access + launch code** (deterministic): every signup gets a unique code valid Nov 4–10; queue position determines access hour. Highest conversion, zero legal risk. (Brand rule: avoid discount language; frame as early access.)
+1. **Early access + launch code** (deterministic): every signup gets a unique code valid Nov 1–10; queue position determines access hour. Highest conversion, zero legal risk. (Brand rule: avoid discount language; frame as early access.)
 2. **Reserve your shade** (scarcity, deterministic): first N reservations per shade get it guaranteed on day one; free, non-binding. Strong share hook.
 3. **Referral ladder** (milestones): 3 friends = free screen guard, 10 = free case, 25 = named in launch post. Verified count, not chance. Medium fraud risk.
 4. **Leaderboard top-10 win a limited drop** (ranking = effort, not chance). Legal across states incl. TN.
@@ -68,9 +68,9 @@ Web Share API: `navigator.share({title, text, url, files})`, HTTPS + user gestur
 
 ## 7. Launch-day sequence and tools
 
-WhatsApp Business API BSPs (India): AiSensy from ₹1,500/mo (Pro 3,200); Wati from ₹1,999/mo; Interakt from ₹2,499/quarter. Meta rates ≈ ₹0.97–1.09 marketing, ₹0.145 utility/auth; 10,000 marketing messages ≈ ₹10.9K–13.4K. Interakt is Shopify-native; AiSensy cheapest for broadcasts. Template approval: minutes to 30 min typical; marketing up to 24 h; human review up to 48 h. Budget 1–3 days for WhatsApp Business verification and display-name approval; DLT registration for any SMS. Submit all templates by Oct 25.
+WhatsApp Business API BSPs (India): AiSensy from ₹1,500/mo (Pro 3,200); Wati from ₹1,999/mo; Interakt from ₹2,499/quarter. Meta rates ≈ ₹0.97–1.09 marketing, ₹0.145 utility/auth; 10,000 marketing messages ≈ ₹10.9K–13.4K. Interakt is Shopify-native; AiSensy cheapest for broadcasts. Template approval: minutes to 30 min typical; marketing up to 24 h; human review up to 48 h. Budget 1–3 days for WhatsApp Business verification and display-name approval; DLT registration for any SMS. Submit all templates by Oct 22.
 
-Nov 4 plan: 07:00 IST WhatsApp template "You're in: your early-access code {{1}} works now at skreed.com/{{2}}" with CTA URL button + UTM; 07:05 Shopify Email to the `prelaunch` segment; 12:00 IST Instagram broadcast channel post + story; Nov 5 reminder to non-clickers; Nov 8 "48 hours left". Pre-launch: 1 WhatsApp update per week max (Oct 20 shade reveal, Oct 31 "3 days"); referral milestone messages triggered by Supabase.
+Nov 1 plan: 07:00 IST WhatsApp template "You're in: your early-access code {{1}} works now at skreed.com/{{2}}" with CTA URL button + UTM; 07:05 Shopify Email to the `prelaunch` segment; 12:00 IST Instagram broadcast channel post + story; Nov 2 reminder to non-clickers; Nov 8 "48 hours left". Pre-launch: 1 WhatsApp update per week max (Oct 20 shade reveal, Oct 31 "3 days"); referral milestone messages triggered by Supabase.
 
 ## 8. Spam and bot protection
 
@@ -78,7 +78,7 @@ Cloudflare Turnstile free (1M/month), invisible; official Supabase edge-function
 
 ## Summary
 - Phone-first single field (+91), email optional later, no OTP; two unticked consent boxes; DPDP-style itemised notice; store consent evidence.
-- Supabase as source of truth; edge function upserts to Shopify `customerCreate` with tags + SINGLE_OPT_IN; Shopify Email for Nov 4 email; AiSensy or Interakt for WhatsApp; no Klaviyo.
+- Supabase as source of truth; edge function upserts to Shopify `customerCreate` with tags + SINGLE_OPT_IN; Shopify Email for Nov 1 email; AiSensy or Interakt for WhatsApp; no Klaviyo.
 - Build referral custom (1–2 days); deterministic rewards + ranked leaderboard, no random draw.
 - Instagram: cannot verify follows; nudge via profile deep link and especially the broadcast-channel join link. Keep "follow to unlock" honour-based.
 - Share: Web Share API with generated shade image, wa.me fallback, per-code OG pages, UTM + cookie attribution.

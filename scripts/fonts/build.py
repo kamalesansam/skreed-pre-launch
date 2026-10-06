@@ -111,7 +111,7 @@ SAMPLE = ("Go beyond basic. 240 shades. One of them is yours. We started Skreed 
           "case says nothing about either of them. So we built a system instead of a print catalogue. Ten "
           "families, twenty-four shades in each, two hundred and forty in all, each one mixed, named and matched "
           "to the case in your hand. Pick the one that feels like yours. Reserve it before the doors open on "
-          "November 4. Smart. Sleek. Skreed. Reserve my shade. Phone number. Needs ten digits. Privacy policy. "
+          "November 1. Smart. Sleek. Skreed. Reserve my shade. Phone number. Needs ten digits. Privacy policy. "
           "Terms of service. Vivid Violets. Mauve, Bellini, Aquamarine.")
 LIB = "/usr/share/fonts/truetype/liberation/"
 FALLBACKS = [

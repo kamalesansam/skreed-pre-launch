@@ -78,12 +78,12 @@ Caveat: the egress proxy blocked direct fetches of most brand/gallery domains. *
 - **Rhode (2022):** 3 SKUs under $30; sold out in 3 days; 440K waitlist for one product; $10M in 11 days. optimonk; femfounded [S].
 - **Nothing Phone (1) India 2022:** community invite codes 48 h; 100K+ waitlist in 2 days; serialized first-100 auctioned; ₹2,000 refundable pass; 10M "notify me"; 100K units in 20 days. screenrant; techradar [S]. Phone (3a) Community Edition co-designed with 4 community winners; Delhi "Drops". nothing.community [S].
 - **boAt:** bootstrapped ₹30L; lifestyle positioning; Shark Tank +60% recall at zero spend. eflot [S].
-- **Diwali 2026 (verified):** Dhanteras Fri Nov 6, Diwali Sun Nov 8, Bhai Dooj Tue Nov 10. calendardate.com; awarenessdays.com [S]. The Nov 4 flip lands 2 days before Dhanteras: the "gift your shade" window.
+- **Festival dates (not used; the site carries no festival framing as of 2026-10-06):** Dhanteras Fri Nov 6, Diwali Sun Nov 8, Bhai Dooj Tue Nov 10. calendardate.com; awarenessdays.com [S]. The Nov 1 flip lands 2 days before Dhanteras: the "gift your shade" window.
 - **India WhatsApp festive data:** 83% of WhatsApp-driven orders in Oct–Dec 2025 were first-time buyers; automated journeys CTR 11.1% vs broadcasts 2.6%. 4-phase plan: teaser → early bird → peak rush → last-minute. campaignhq.co; wati.io [S].
 
 **Legal notes [S]:** free-entry, no-purchase giveaways are not lotteries; purchase-tied draws fall under Prize Competitions Act 1955 + Consumer Protection Act 2019; Tamil Nadu bans lucky-draw contests (standard T&Cs exclude TN); prefer a skill element ("name this shade"). DPDP Act 2023 / Rules notified 13 Nov 2025: per-purpose affirmative consent (waitlist ≠ promo WhatsApp); withdrawal as easy as opt-in; records; core obligations by 13 May 2027. Separate checkboxes for email vs WhatsApp updates.
 
-**Mechanics menu:** referral tiers (Harry's), position counter (Robinhood/Mailbox), shade reservation ("x people reserved Teal 07"), golden-ticket skip-the-queue (Monzo), serialized first-100 (Nothing), countdown to Nov 3 + Dhanteras, WhatsApp 4-phase, IG broadcast channel.
+**Mechanics menu:** referral tiers (Harry's), position counter (Robinhood/Mailbox), shade reservation ("x people reserved Teal 07"), golden-ticket skip-the-queue (Monzo), serialized first-100 (Nothing), countdown to Oct 31 + Dhanteras, WhatsApp 4-phase, IG broadcast channel.
 
 ## 4. Instagram growth mechanics tied to a website
 
@@ -118,4 +118,4 @@ Caveat: the egress proxy blocked direct fetches of most brand/gallery domains. *
 - Farrow & Ball family grid as the IA model: https://www.farrow-ball.com/paint [S].
 
 ## Synthesis
-Position as a paint/Pantone brand that happens to make cases: Cloud-Dancer-white canvas, a 10×24 swatch wall as the hero that recolours a single hero case in place (Apple pattern), matte rendered with grain and gloss with liquid-glass refraction, kinetic "240" counter, countdown to Nov 4 positioned 2 days before Dhanteras. Capture with "Reserve your shade" (phone + optional email, separate DPDP consents), a Robinhood-style position + Harry's-style referral tiers, and route IG growth through a universal-link follow button, an ig.me DM link, a broadcast-channel invite, and a skill-based "name this shade" contest (TN excluded, follow = bonus entry only).
+Position as a paint/Pantone brand that happens to make cases: Cloud-Dancer-white canvas, a 10×24 swatch wall as the hero that recolours a single hero case in place (Apple pattern), matte rendered with grain and gloss with liquid-glass refraction, kinetic "240" counter, countdown to Nov 1 positioned 2 days before Dhanteras. Capture with "Reserve your shade" (phone + optional email, separate DPDP consents), a Robinhood-style position + Harry's-style referral tiers, and route IG growth through a universal-link follow button, an ig.me DM link, a broadcast-channel invite, and a skill-based "name this shade" contest (TN excluded, follow = bonus entry only).
