@@ -20,3 +20,9 @@ Next, once a world is chosen: export the near terrain and boulders as a real mes
 - Neutral white light: key light from behind the spires (silhouettes, rim light, long shadows across the snow toward the viewer), weak white fill, sun 3.5 degrees below the horizon for a pale band behind the spires; post grade removes most of the blue (`blender/post2.py`, which also adds low mist in the distance from a height pass).
 - A sparse, brighter star field.
 - The snowfield is raised to about 1.3 units under the logo, rendered from the exact hero camera (no pitch on this plate), and the logo bobs gently (0.07 units) so it reads as hovering.
+
+## v6 Moon (same day): the `spires` world is now the moon floor, and the default
+- Ground: one continuous detailed mesh to the horizon (1024 x 1024, rows packed densely near the camera), lunar regolith: grit, lumps, colour drift, rock outcrops breaking through, and about 3,600 half-buried faceted stones as real geometry. Gentle low valleys, no craters, no spires.
+- Sky: airless black, a sparse star field, and a coloured Milky Way band (dust lanes, blue-violet edges, rose and gold towards the core).
+- Light: hard white key from the side, faint white fill; `post2.py` keeps the ground neutral grey and the sky in colour, with only a breath of distance haze.
+- igloo's labels in the page: up to 5 moving blocks (displacement over 0.1, within 2 units of the pointer) get 25% white links to their 2 nearest labelled neighbours and a two-digit readout floor(distance moved x 50); in over 0.1 s, out over 0.06 s, one block joins or leaves per 0.05 units of pointer travel. Readouts are Open Sans 600 with tabular figures.

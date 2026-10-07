@@ -22,6 +22,9 @@ body{background:var(--slate);color:var(--pearl);font-family:'Open Sans',Arial,sa
 
 .wallcopy{justify-content:flex-start;padding-top:calc(10svh + env(safe-area-inset-top,0px));color:var(--slate)}
 .wallcopy p{color:#5f676c}
+.labels{position:fixed;inset:0;pointer-events:none;z-index:1}
+.lab{position:absolute;left:0;top:0;font-family:'Open Sans',Arial,sans-serif;font-weight:600;font-size:11px;line-height:1;letter-spacing:.04em;font-variant-numeric:tabular-nums;color:#F7F6F3;will-change:transform,opacity;display:flex;align-items:center;gap:6px}
+.lab i{display:block;width:3px;height:3px;background:#F7F6F3}
 .hint{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:16px;font-size:.8rem;color:var(--muted);z-index:2}
 .tune{position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:3;background:var(--panel);border:1px solid var(--line);border-radius:12px;max-width:min(320px,calc(100vw - 24px));font-size:.82rem;color:var(--pearl)}
 .tune summary{cursor:pointer;padding:10px 14px;font-weight:600;list-style:none}
@@ -37,6 +40,7 @@ body{background:var(--slate);color:var(--pearl);font-family:'Open Sans',Arial,sa
 :focus-visible{outline:2px solid var(--ember);outline-offset:2px}
 </style>
 <canvas id="stage" aria-hidden="true"></canvas>
+<div class="labels" id="labels" aria-hidden="true"></div>
 <div class="hint" id="hint">Move over the logo. On a phone, touch and drag. Scroll to pull back, keep scrolling for the transition.</div>
 <div class="track"></div>
 <section class="copy" id="heroCopy">
@@ -52,7 +56,7 @@ body{background:var(--slate);color:var(--pearl);font-family:'Open Sans',Arial,sa
   <summary>Tune</summary>
   <div class="body">
     <h3>World</h3>
-    <div class="row seg"><button type="button" data-world="canyon">Canyon</button><button type="button" data-world="spires">Spires</button><button type="button" data-world="dunes">Dunes</button></div>
+    <div class="row seg"><button type="button" data-world="canyon">Canyon</button><button type="button" data-world="spires">Moon</button><button type="button" data-world="dunes">Dunes</button></div>
     <h3>Blocks</h3>
     <div class="row seg"><button type="button" data-n="10">10</button><button type="button" data-n="20">20</button><button type="button" data-n="30">30</button></div>
     <h3>Hover (igloo values)</h3>
@@ -448,6 +452,68 @@ const camState = { theta: 0, phi: 0 };
 const scroll = { a: 0, b: 0 };
 const tmpQ = new THREE.Quaternion(), ax = [new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(1, 0, 0)];
 const dir = new THREE.Vector3();
+
+// ---- igloo's labels: when blocks part, up to 5 nearby moving blocks get thin white links (25% opacity, 2 links each)
+// and a two-digit readout of how far each has moved, floor(distance x 50). Drawn in over 0.1 s, out over 0.06 s;
+// one block joins or leaves per 0.05 units of pointer travel.
+const LAB = { max: 5, links: 2, minDisp: 0.1, near: 2, step: 0.05, inT: 0.1, outT: 0.06 };
+const labLayer = $('labels');
+const labs = new Map();                  // block index -> { el, a, on }
+let labTravel = 0; const labLast = new THREE.Vector2(99, 99);
+const linkGeo = new THREE.BufferGeometry(); const linkPos = new Float32Array(LAB.max * LAB.links * 2 * 3);
+linkGeo.setAttribute('position', new THREE.BufferAttribute(linkPos, 3)); linkGeo.setDrawRange(0, 0);
+const linkMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, depthTest: false, depthWrite: false, fog: false, toneMapped: false });
+const links = new THREE.LineSegments(linkGeo, linkMat); links.renderOrder = 10; links.frustumCulled = false; sceneA.add(links);
+const _lp = new THREE.Vector3(), _lq = new THREE.Quaternion(), _front = new THREE.Vector3();
+function blockPoint(i, out) {             // the centre of a block's front face, where it is now, in world space
+  const b = blocks[i]; _front.set(0, 0, DEPTH / 2);
+  _lq.set(U.uQ.value[i].x, U.uQ.value[i].y, U.uQ.value[i].z, U.uQ.value[i].w); _front.applyQuaternion(_lq);
+  return out.set(b.c.x, b.c.y, 0).add(U.uOff.value[i]).add(_front).applyMatrix4(logo.matrixWorld);
+}
+function updateLabels(dt, active) {
+  labTravel += Math.hypot(mouse.x - labLast.x, mouse.y - labLast.y); labLast.set(mouse.x, mouse.y);
+  const cand = [];
+  if (active) blocks.forEach((b, i) => { const dd = Math.hypot(b.c.x - mouse.x, b.c.y - mouse.y); if (b.d > LAB.minDisp && dd < LAB.near) cand.push([dd, i]); });
+  cand.sort((a, b) => a[0] - b[0]); const candSet = new Set(cand.map(c => c[1]));
+  if (!active) labTravel = 0;
+  while (labTravel > LAB.step) {
+    labTravel -= LAB.step;
+    const leaving = [...labs].find(([i, l]) => l.on && !candSet.has(i));
+    if (leaving) { leaving[1].on = false; continue; }
+    const onCount = [...labs.values()].filter(l => l.on).length;
+    const joining = cand.find(([, i]) => !(labs.get(i) || {}).on);
+    if (joining && onCount < LAB.max) {
+      const i = joining[1]; let l = labs.get(i);
+      if (!l) { const el = document.createElement('div'); el.className = 'lab'; el.innerHTML = '<i></i><span></span>'; labLayer.appendChild(el); l = { el, a: 0, on: true }; labs.set(i, l); }
+      l.on = true;
+    }
+    if (!leaving && !joining) labTravel = 0;
+  }
+  if (!active) for (const l of labs.values()) l.on = false;
+  // fade, place, number
+  const shown = [];
+  for (const [i, l] of labs) {
+    l.a = l.on ? Math.min(1, l.a + dt / LAB.inT) : Math.max(0, l.a - dt / LAB.outT);
+    if (l.a <= 0 && !l.on) { l.el.remove(); labs.delete(i); continue; }
+    blockPoint(i, _lp); const sp = _lp.clone().project(camA);
+    const x = (sp.x * 0.5 + 0.5) * innerWidth, y = (-sp.y * 0.5 + 0.5) * innerHeight;
+    const n = Math.floor(U.uOff.value[i].length() * 50) % 100;
+    l.el.lastChild.textContent = String(n).padStart(2, '0');
+    l.el.style.transform = `translate3d(${(x - 1.5).toFixed(1)}px,${(y - 6).toFixed(1)}px,0)`;
+    l.el.style.opacity = l.a.toFixed(3);
+    if (l.a > 0.5) shown.push([i, _lp.clone()]);
+  }
+  // links: each shown block to its two nearest shown neighbours
+  let k = 0; const seen = new Set();
+  for (const [i, p] of shown) {
+    const near = shown.filter(([j]) => j !== i).map(([j, q]) => [p.distanceTo(q), j, q]).sort((a, b) => a[0] - b[0]).slice(0, LAB.links);
+    for (const [, j, q] of near) {
+      const key = i < j ? i + ':' + j : j + ':' + i; if (seen.has(key)) continue; seen.add(key);
+      linkPos.set([p.x, p.y, p.z, q.x, q.y, q.z], k * 6); k++;
+    }
+  }
+  linkGeo.attributes.position.needsUpdate = true; linkGeo.setDrawRange(0, k * 2);
+}
 const heroCopy = $('heroCopy'), wallCopy = $('wallCopy');
 
 // camera poses: hero, then pulled back
@@ -505,6 +571,9 @@ function frame() {
     b.q.multiply(tmpQ.setFromAxisAngle(ax[2], Math.cos(b.d * 2 + b.rand.y * 30) * b.d * 0.5));
     U.uQ.value[i].set(b.q.x, b.q.y, b.q.z, b.q.w); U.uD.value[i] = b.d;
   });
+  logo.updateMatrixWorld();
+  updateLabels(dt, !!target && heroOn > 0.5 && tp <= 0);
+  labLayer.style.visibility = tp > 0 ? 'hidden' : 'visible';
 
   // camera: base pose from scroll, then igloo's parallax (0.07, 0.025 of 90 degrees, 3.5% a frame) and 0.01 shake
   basePos.lerpVectors(camFrom, camTo, s); baseTgt.lerpVectors(tgtFrom, tgtTo, s);

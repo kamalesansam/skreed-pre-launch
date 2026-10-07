@@ -6,7 +6,7 @@ CFG = {
   'canyon': dict(exposure=0.2, bg=1.0, stars=0.6, key=dict(el=9, rot=-75, e=3.6, c=(1.0, 0.6, 0.4)), fill=dict(el=30, rot=120, e=0.25, c=(0.55, 0.65, 1.0)), hmax=80, sun_el=-5, sun_rot=-8, air=1.0, aerosol=2.0, ozone=1.0, fog=0.0018, fogc=(0.85, 0.62, 0.48),
                  rock=[(0.0, (0.20, 0.07, 0.035)), (0.35, (0.36, 0.13, 0.06)), (0.55, (0.52, 0.25, 0.12)), (0.75, (0.30, 0.10, 0.05)), (1.0, (0.58, 0.36, 0.22))],
                  sand=(0.55, 0.30, 0.16), planet=dict(dir=(0.2532, 0.9448, 0.2079), r=62, dist=900, col=(0.80, 0.70, 0.62), ring=True)),
-  'spires': dict(exposure=1.2, bg=0.6, stars=1.0, key=dict(el=11, rot=12, e=3.2, c=(1.0, 0.98, 0.95)), fill=dict(el=30, rot=-170, e=0.22, c=(1.0, 1.0, 1.0)), noplanet=True, monolith=True, hmax=70, sun_el=-3.5, sun_rot=12, air=1.0, aerosol=1.0, ozone=2.0, fog=0.003, fogc=(0.62, 0.70, 0.82),
+  'spires': dict(exposure=0.4, bg=0.6, airless=True, stars=1.0, key=dict(el=12, rot=-70, e=4.0, c=(1.0, 1.0, 1.0)), fill=dict(el=30, rot=150, e=0.12, c=(1.0, 1.0, 1.0)), noplanet=True, monolith=True, hmax=70, sun_el=-9, sun_rot=12, air=1.0, aerosol=1.0, ozone=2.0, fog=0.003, fogc=(0.62, 0.70, 0.82),
                  rock=[(0.0, (0.035, 0.035, 0.038)), (0.5, (0.07, 0.07, 0.075)), (1.0, (0.12, 0.12, 0.125))],
                  sand=(0.78, 0.78, 0.80), snow=True, planet=dict(dir=(-0.2375, 0.9525, 0.1908), r=80, dist=900, col=(0.80, 0.84, 0.92), ring=False)),
   'dunes': dict(exposure=0.0, bg=1.0, stars=0.5, key=dict(el=5, rot=-48, e=4.0, c=(1.0, 0.55, 0.32)), fill=dict(el=35, rot=110, e=0.2, c=(0.55, 0.62, 1.0)), hmax=45, sun_el=-4.5, sun_rot=-45, air=0.9, aerosol=1.5, ozone=1.0, fog=0.0015, fogc=(0.95, 0.80, 0.62),
@@ -34,7 +34,14 @@ gx, gy = np.meshgrid(xs, ys)
 dd = np.sqrt((gx / 1.6) ** 2 + (np.maximum(gy - 10, 0)) ** 2 + np.minimum(gy - 10, 0) ** 2 * 4)
 mask = np.clip((dd - 30) / 120, 0, 1); mask = mask * mask * (3 - 2 * mask)
 gz = GROUND - 1.5 + h * CFG['hmax'] * (0.16 + 0.84 * mask)
-if CFG.get('monolith'): gz = -4.35 + h * 30 * (0.03 + 0.97 * mask)   # a snowfield just under the logo, rising slowly
+if CFG.get('monolith'):
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import terrain as T0
+    roll = T0.fbm(512, 2, 4, 401); roll = (roll - roll.min()) / (roll.max() - roll.min())
+    far_ = np.clip((gy - 40) / 260, 0, 1)
+    side = np.clip((np.abs(gx) - 25) / 140, 0, 1) ** 1.4
+    gz = -4.35 + roll * (1.5 + 9 * far_ ** 1.3) + side * 10 * (0.5 + roll) + h * 1.5 * far_   # a wide valley: soft hills rising on both sides and towards the horizon
+    gz_open = gz.copy()
 verts = np.stack([gx.ravel(), gy.ravel(), gz.ravel()], 1)
 ii = np.arange(N * N).reshape(N, N)
 quads = np.stack([ii[:-1, :-1].ravel(), ii[1:, :-1].ravel(), ii[1:, 1:].ravel(), ii[:-1, 1:].ravel()], 1)
@@ -47,7 +54,7 @@ me.polygons.foreach_set('use_smooth', np.ones(len(quads), dtype=bool))
 ob = bpy.data.objects.new('terrain', me); sc.collection.objects.link(ob)
 # foreground undulation: low dunes and swales so the valley floor is never a flat plane
 tx = bpy.data.textures.new('und', 'CLOUDS'); tx.noise_scale = 9.0; tx.noise_depth = 3
-md = ob.modifiers.new('und', 'DISPLACE'); md.texture = tx; md.strength = 2.2; md.mid_level = 0.5; md.direction = 'Z'; md.texture_coords = 'GLOBAL'
+md = ob.modifiers.new('und', 'DISPLACE'); md.texture = tx; md.strength = 0.6 if CFG.get('monolith') else 2.2; md.mid_level = 0.5; md.direction = 'Z'; md.texture_coords = 'GLOBAL'
 
 # terrain material: strata by height, sand on the flats, rock on the slopes, two scales of bump
 m = bpy.data.materials.new('ground'); m.use_nodes = True; nt = m.node_tree; nd = nt.nodes; ln = nt.links
@@ -78,6 +85,98 @@ ln.new(sm.outputs['Result'], mixb.inputs['Factor']); ln.new(b1.outputs['Fac'], m
 ln.new(mixb.outputs[0], bump.inputs['Height']); ln.new(bump.outputs['Normal'], bsdf.inputs['Normal'])
 ob.data.materials.append(m)
 
+if CFG.get('monolith'):
+    # the near ground, in detail (0.16 units per vertex): wind-cut snow (sastrugi), drifts, and rock breaking through here and there
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import terrain as T
+    # one continuous ground to the horizon: rows packed densely near the camera, sparse far away; width grows with distance
+    NP = 1024
+    tt = np.linspace(1, 0, NP)[:, None]                              # row 0 = far
+    PYr = -30 + 450 * tt ** 2.2
+    uu = np.linspace(-1, 1, NP)[None, :]
+    PX = uu * (34 + 1.25 * (PYr + 30)); PY = np.repeat(PYr, NP, 1)
+    # the valley's large shape, sampled from the far terrain grid
+    fx = (PX - X0) / SIZE * (N - 1); fy = (Y0 + SIZE - PY) / SIZE * (N - 1)
+    fx = np.clip(fx, 0, N - 1.001); fy = np.clip(fy, 0, N - 1.001)
+    x0_ = np.floor(fx).astype(int); y0_ = np.floor(fy).astype(int); ax_ = fx - x0_; ay_ = fy - y0_
+    G_ = gz_open
+    base_h = (G_[y0_, x0_] * (1 - ax_) + G_[y0_, x0_ + 1] * ax_) * (1 - ay_) + (G_[y0_ + 1, x0_] * (1 - ax_) + G_[y0_ + 1, x0_ + 1] * ax_) * ay_
+    drift = T.fbm(NP, 4, 5, 303)
+    lumps = T.fbm(NP, 32, 4, 307)
+    grit = T.fbm(NP, 256, 2, 308)
+    cover = T.fbm(NP, 8, 7, 304); cover = (cover - cover.min()) / (cover.max() - cover.min())
+    rockmask = np.clip((cover - 0.66) / 0.04, 0, 1)
+    rk = np.abs(T.fbm(NP, 64, 4, 305)) * 2
+    keep = np.clip((np.hypot(PX / 1.4, (PY - 18) / 1.0) - 8) / 10, 0, 1)
+    rockmask *= keep
+    hgt = base_h + (drift * 0.8 + lumps * 0.18 + grit * 0.035) * np.clip(1 - (PY - 60) / 300, 0.3, 1) + rockmask * (0.2 + rk * 0.8)
+    V2 = np.stack([PX.ravel(), PY.ravel(), hgt.ravel()], 1)
+    I2 = np.arange(NP * NP).reshape(NP, NP)
+    Q2 = np.stack([I2[:-1, :-1].ravel(), I2[1:, :-1].ravel(), I2[1:, 1:].ravel(), I2[:-1, 1:].ravel()], 1)
+    m2 = bpy.data.meshes.new('near')
+    m2.vertices.add(len(V2)); m2.vertices.foreach_set('co', V2.ravel().astype(np.float32))
+    m2.loops.add(Q2.size); m2.loops.foreach_set('vertex_index', Q2.ravel().astype(np.int32))
+    m2.polygons.add(len(Q2)); m2.polygons.foreach_set('loop_start', (np.arange(len(Q2)) * 4).astype(np.int32))
+    m2.update(calc_edges=True); m2.validate()
+    m2.polygons.foreach_set('use_smooth', np.ones(len(Q2), dtype=bool))
+    at = m2.attributes.new('rock', 'FLOAT', 'POINT'); at.data.foreach_set('value', rockmask.ravel().astype(np.float32))
+    on = bpy.data.objects.new('near', m2); sc.collection.objects.link(on)
+    # snow and rock material: crisp matte snow with fine grain, dark wet-looking rock where it breaks through
+    sm_ = bpy.data.materials.new('snowrock'); sm_.use_nodes = True; sn = sm_.node_tree.nodes; sk = sm_.node_tree.links
+    sb = sn['Principled BSDF']; sb.inputs['Roughness'].default_value = 1.0
+    atn = sn.new('ShaderNodeAttribute'); atn.attribute_name = 'rock'
+    gm = sn.new('ShaderNodeNewGeometry'); gs = sn.new('ShaderNodeSeparateXYZ'); sk.new(gm.outputs['Normal'], gs.inputs[0])
+    sl = sn.new('ShaderNodeMapRange'); sl.inputs['From Min'].default_value = 0.93; sl.inputs['From Max'].default_value = 0.70; sk.new(gs.outputs['Z'], sl.inputs['Value'])
+    mx = sn.new('ShaderNodeMath'); mx.operation = 'MAXIMUM'; sk.new(atn.outputs['Fac'], mx.inputs[0]); sk.new(sl.outputs['Result'], mx.inputs[1])
+    nz = sn.new('ShaderNodeTexNoise'); nz.inputs['Scale'].default_value = 3.0; nz.inputs['Detail'].default_value = 10
+    th_ = sn.new('ShaderNodeMapRange'); th_.inputs['From Min'].default_value = 0.35; th_.inputs['From Max'].default_value = 0.65; sk.new(nz.outputs['Fac'], th_.inputs['Value'])
+    mu = sn.new('ShaderNodeMath'); mu.operation = 'MULTIPLY'; sk.new(mx.outputs[0], mu.inputs[0]); sk.new(th_.outputs['Result'], mu.inputs[1])
+    ad = sn.new('ShaderNodeMath'); ad.operation = 'ADD'; sk.new(mu.outputs[0], ad.inputs[0]); sk.new(atn.outputs['Fac'], ad.inputs[1])
+    cl = sn.new('ShaderNodeClamp'); sk.new(ad.outputs[0], cl.inputs['Value'])
+    cm = sn.new('ShaderNodeMix'); cm.data_type = 'RGBA'; sk.new(cl.outputs[0], cm.inputs['Factor'])
+    cm.inputs[6].default_value = (0.20, 0.20, 0.205, 1); cm.inputs[7].default_value = (0.07, 0.07, 0.072, 1)
+    tone = sn.new('ShaderNodeTexNoise'); tone.inputs['Scale'].default_value = 0.6; tone.inputs['Detail'].default_value = 8
+    tr_ = sn.new('ShaderNodeMapRange'); tr_.inputs['To Min'].default_value = 0.7; tr_.inputs['To Max'].default_value = 1.25; sk.new(tone.outputs['Fac'], tr_.inputs['Value'])
+    tm = sn.new('ShaderNodeMix'); tm.data_type = 'RGBA'; tm.blend_type = 'MULTIPLY'; tm.inputs['Factor'].default_value = 1.0
+    sk.new(cm.outputs[2], tm.inputs[6]); sk.new(tr_.outputs['Result'], tm.inputs[7])
+    sk.new(tm.outputs[2], sb.inputs['Base Color'])
+    gr = sn.new('ShaderNodeTexNoise'); gr.inputs['Scale'].default_value = 140.0; gr.inputs['Detail'].default_value = 6; gr.inputs['Roughness'].default_value = 0.75
+    gr2 = sn.new('ShaderNodeTexVoronoi'); gr2.inputs['Scale'].default_value = 26.0
+    ad2 = sn.new('ShaderNodeMath'); ad2.operation = 'ADD'; sk.new(gr.outputs['Fac'], ad2.inputs[0]); sk.new(gr2.outputs['Distance'], ad2.inputs[1])
+    bp = sn.new('ShaderNodeBump'); bp.inputs['Strength'].default_value = 1.0; bp.inputs['Distance'].default_value = 0.03
+    sk.new(ad2.outputs[0], bp.inputs['Height']); sk.new(bp.outputs['Normal'], sb.inputs['Normal'])
+    on.data.materials.append(sm_)
+    # the far snow takes the same look
+    for i_ in range(len(ob.material_slots)): ob.material_slots[i_].material = sm_
+    ob.hide_render = True                                            # the detailed ground replaces it
+
+    srng2 = np.random.default_rng(21)
+    bases = []
+    for k_ in range(3):
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=3, radius=1.0, location=(0, 0, -900 - k_ * 5)); bo = bpy.context.active_object
+        tv = bpy.data.textures.new('st%d' % k_, 'VORONOI'); tv.noise_scale = 0.6 + k_ * 0.2
+        dm_ = bo.modifiers.new('d', 'DISPLACE'); dm_.texture = tv; dm_.strength = 0.5
+        bpy.ops.object.modifier_apply(modifier='d'); bo.data.materials.append(sm_)
+        for p_ in bo.data.polygons: p_.use_smooth = False
+        bases.append(bo)
+    def ground_near(x, y):
+        t_ = ((y + 30) / 450) ** (1 / 2.2); r_ = int(round((1 - t_) * (NP - 1)))
+        w_ = 34 + 1.25 * (y + 30); c_ = int(round((x / w_ + 1) / 2 * (NP - 1)))
+        if 0 <= r_ < NP and 0 <= c_ < NP: return hgt[r_, c_]
+        return None
+    ns = 0
+    for _ in range(3600):
+        y = -12 + srng2.random() ** 2.0 * 110; x = (srng2.random() - 0.5) * 2 * (20 + 1.1 * (y + 30))
+        if abs(x) < 3 and 8 < y < 28: continue
+        z = ground_near(x, y)
+        if z is None: continue
+        sz = 0.03 + srng2.random() ** 5 * 0.9
+        o = bases[ns % 3].copy(); o.data = bases[ns % 3].data; sc.collection.objects.link(o)
+        o.location = (x, y, z - sz * 0.35); o.scale = (sz * (0.7 + srng2.random() * 0.6), sz * (0.7 + srng2.random() * 0.6), sz * (0.45 + srng2.random() * 0.35))
+        o.rotation_euler = (srng2.random() * 0.5, srng2.random() * 0.5, srng2.random() * 6.28); ns += 1
+    print('stones', ns)
+    print('near patch', len(V2))
+
 # sky: physical sky with a low sun
 wd = bpy.data.worlds.new('world'); sc.world = wd; wd.use_nodes = True
 wn = wd.node_tree.nodes; wl = wd.node_tree.links
@@ -85,7 +184,7 @@ sky = wn.new('ShaderNodeTexSky'); sky.sky_type = 'MULTIPLE_SCATTERING'
 for k, v in dict(sun_elevation=math.radians(CFG['sun_el']), sun_rotation=math.radians(CFG['sun_rot']), air_density=CFG['air'],
                  aerosol_density=CFG['aerosol'], dust_density=CFG['aerosol'], ozone_density=CFG['ozone'], altitude=200.0, sun_intensity=1.0).items():
     if hasattr(sky, k): setattr(sky, k, v)
-tcw = wn.new('ShaderNodeTexCoord'); vor = wn.new('ShaderNodeTexVoronoi'); vor.inputs['Scale'].default_value = 170.0 if CFG.get('monolith') else 420.0
+tcw = wn.new('ShaderNodeTexCoord'); vor = wn.new('ShaderNodeTexVoronoi'); vor.inputs["Scale"].default_value = 300.0 if CFG.get("monolith") else 420.0
 wl.new(tcw.outputs['Generated'], vor.inputs['Vector'])
 st = wn.new('ShaderNodeMapRange'); st.inputs['From Min'].default_value = 0.0; st.inputs['From Max'].default_value = 0.035 if CFG.get('monolith') else 0.05; st.inputs['To Min'].default_value = 1.0; st.inputs['To Max'].default_value = 0.0
 wl.new(vor.outputs['Distance'], st.inputs['Value'])
@@ -97,8 +196,54 @@ hz_ = wn.new('ShaderNodeMapRange'); hz_.inputs['From Min'].default_value = 0.02;
 m2_ = wn.new('ShaderNodeMath'); m2_.operation = 'MULTIPLY'; wl.new(m1_.outputs[0], m2_.inputs[0]); wl.new(hz_.outputs['Result'], m2_.inputs[1])
 m3_ = wn.new('ShaderNodeMath'); m3_.operation = 'MULTIPLY'; m3_.inputs[1].default_value = CFG['stars'] * (0.6 if CFG.get('monolith') else 0.08); wl.new(m2_.outputs[0], m3_.inputs[0])
 addc = wn.new('ShaderNodeMix'); addc.data_type = 'RGBA'; addc.blend_type = 'ADD'; addc.inputs['Factor'].default_value = 1.0
-wl.new(sky.outputs['Color'], addc.inputs[6]); wl.new(m3_.outputs[0], addc.inputs[7])
+wl.new(sky.outputs['Color'], addc.inputs[6])
+if CFG.get('airless'):
+    blk = wn.new('ShaderNodeRGB'); blk.outputs[0].default_value = (0.0006, 0.0006, 0.0007, 1); wl.new(blk.outputs[0], addc.inputs[6])
+wl.new(m3_.outputs[0], addc.inputs[7])
 wl.new(addc.outputs[2], wn['Background'].inputs['Color']); wn['Background'].inputs['Strength'].default_value = CFG['bg']
+
+if CFG.get('monolith'):
+    # the Milky Way: a tilted band of cloudy light with dark dust lanes, many faint stars inside it
+    nrm = wn.new('ShaderNodeVectorMath'); nrm.operation = 'DOT_PRODUCT'; nrm.inputs[1].default_value = (0.62, -0.25, 0.74)
+    wl.new(tcw.outputs['Generated'], nrm.inputs[0])
+    sq = wn.new('ShaderNodeMath'); sq.operation = 'MULTIPLY'; wl.new(nrm.outputs['Value'], sq.inputs[0]); wl.new(nrm.outputs['Value'], sq.inputs[1])
+    bandw = wn.new('ShaderNodeMath'); bandw.operation = 'MULTIPLY'; bandw.inputs[1].default_value = -55.0; wl.new(sq.outputs[0], bandw.inputs[0])
+    band = wn.new('ShaderNodeMath'); band.operation = 'EXPONENT'; wl.new(bandw.outputs[0], band.inputs[0])
+    cloud = wn.new('ShaderNodeTexNoise'); cloud.inputs['Scale'].default_value = 7.0; cloud.inputs['Detail'].default_value = 12; cloud.inputs['Roughness'].default_value = 0.62
+    wl.new(tcw.outputs['Generated'], cloud.inputs['Vector'])
+    dust = wn.new('ShaderNodeTexNoise'); dust.inputs['Scale'].default_value = 11.0; dust.inputs['Detail'].default_value = 10
+    wl.new(tcw.outputs['Generated'], dust.inputs['Vector'])
+    dl = wn.new('ShaderNodeMapRange'); dl.inputs['From Min'].default_value = 0.45; dl.inputs['From Max'].default_value = 0.62; dl.inputs['To Min'].default_value = 1.0; dl.inputs['To Max'].default_value = 0.15
+    wl.new(dust.outputs['Fac'], dl.inputs['Value'])
+    cc = wn.new('ShaderNodeMapRange'); cc.inputs['From Min'].default_value = 0.35; cc.inputs['From Max'].default_value = 0.75; wl.new(cloud.outputs['Fac'], cc.inputs['Value'])
+    g1 = wn.new('ShaderNodeMath'); g1.operation = 'MULTIPLY'; wl.new(band.outputs[0], g1.inputs[0]); wl.new(cc.outputs['Result'], g1.inputs[1])
+    g2 = wn.new('ShaderNodeMath'); g2.operation = 'MULTIPLY'; wl.new(g1.outputs[0], g2.inputs[0]); wl.new(dl.outputs['Result'], g2.inputs[1])
+    g3 = wn.new('ShaderNodeMath'); g3.operation = 'MULTIPLY'; g3.inputs[1].default_value = 0.06; wl.new(g2.outputs[0], g3.inputs[0])
+    vb2 = wn.new('ShaderNodeTexVoronoi'); vb2.inputs['Scale'].default_value = 900.0; wl.new(tcw.outputs['Generated'], vb2.inputs['Vector'])
+    s2 = wn.new('ShaderNodeMapRange'); s2.inputs['From Max'].default_value = 0.06; s2.inputs['To Min'].default_value = 1.0; s2.inputs['To Max'].default_value = 0.0
+    wl.new(vb2.outputs['Distance'], s2.inputs['Value'])
+    p2 = wn.new('ShaderNodeMath'); p2.operation = 'POWER'; p2.inputs[1].default_value = 10.0; wl.new(s2.outputs['Result'], p2.inputs[0])
+    p3 = wn.new('ShaderNodeMath'); p3.operation = 'MULTIPLY'; wl.new(p2.outputs[0], p3.inputs[0]); wl.new(g1.outputs[0], p3.inputs[1])
+    p4 = wn.new('ShaderNodeMath'); p4.operation = 'MULTIPLY'; p4.inputs[1].default_value = 0.6; wl.new(p3.outputs[0], p4.inputs[0])
+    tot = wn.new('ShaderNodeMath'); tot.operation = 'ADD'; wl.new(g3.outputs[0], tot.inputs[0]); wl.new(p4.outputs[0], tot.inputs[1])
+    hz2 = wn.new('ShaderNodeMath'); hz2.operation = 'MULTIPLY'; wl.new(tot.outputs[0], hz2.inputs[0]); wl.new(hz_.outputs['Result'], hz2.inputs[1])
+    # colour: blue-violet edges, rose and warm gold towards the core, varied by a slow noise
+    hue = wn.new('ShaderNodeTexNoise'); hue.inputs['Scale'].default_value = 2.2; hue.inputs['Detail'].default_value = 4
+    wl.new(tcw.outputs['Generated'], hue.inputs['Vector'])
+    core = wn.new('ShaderNodeMath'); core.operation = 'MULTIPLY'; wl.new(band.outputs[0], core.inputs[0]); wl.new(hue.outputs['Fac'], core.inputs[1])
+    cr = wn.new('ShaderNodeValToRGB'); wl.new(core.outputs[0], cr.inputs['Fac'])
+    E_ = cr.color_ramp.elements
+    E_[0].position, E_[0].color = 0.0, (0.30, 0.42, 1.0, 1)
+    E_[1].position, E_[1].color = 1.0, (1.0, 0.92, 0.78, 1)
+    for p_, c_ in [(0.22, (0.55, 0.40, 1.0)), (0.42, (1.0, 0.45, 0.75)), (0.62, (1.0, 0.70, 0.45))]:
+        e_ = E_.new(p_); e_.color = (*c_, 1)
+    tint = wn.new('ShaderNodeMix'); tint.data_type = 'RGBA'; tint.blend_type = 'MULTIPLY'; tint.inputs['Factor'].default_value = 1.0
+    wl.new(cr.outputs['Color'], tint.inputs[6]); wl.new(hz2.outputs[0], tint.inputs[7])
+    boost = wn.new('ShaderNodeMix'); boost.data_type = 'RGBA'; boost.blend_type = 'MULTIPLY'; boost.inputs['Factor'].default_value = 1.0
+    boost.inputs[7].default_value = (2.2, 2.2, 2.2, 1); wl.new(tint.outputs[2], boost.inputs[6])
+    add2 = wn.new('ShaderNodeMix'); add2.data_type = 'RGBA'; add2.blend_type = 'ADD'; add2.inputs['Factor'].default_value = 1.0
+    wl.new(addc.outputs[2], add2.inputs[6]); wl.new(boost.outputs[2], add2.inputs[7])
+    wl.new(add2.outputs[2], wn['Background'].inputs['Color'])
 from mathutils import Vector
 def lamp(name, spec, angle=1.5):
     ld = bpy.data.lights.new(name, 'SUN'); ld.energy = spec['e']; ld.color = spec['c']; ld.angle = math.radians(angle)
@@ -194,13 +339,15 @@ if CFG.get('monolith'):
         o_.data.materials.append(m)
     placed = []
     # two giants framing the logo, then bands receding into the distance
-    for (x, y, H, R) in [(-44, 75, 200, 5.0), (50, 105, 240, 5.6), (-17, 175, 170, 3.8), (21, 215, 210, 4.4)]:
+    for (x, y, H, R) in [(-44, 75, 200, 5.0), (50, 105, 240, 5.6), (-48, 190, 170, 3.8), (62, 230, 210, 4.4)]:
         placed.append((x, y, H, R))
     for _ in range(46):
         y = 140 + srng.random() ** 0.7 * 280; x = (srng.random() - 0.5) * (y * 1.9)
-        if abs(x) < 14 and y < 200: continue
+        if abs(x) < 0.32 * y: H *= 0.32 if False else 1.0
+        if abs(x) < 0.30 * y: continue                              # an open sky window behind the logo
         H = 70 + srng.random() ** 1.3 * 200 * (0.6 + y / 500); R = 1.8 + srng.random() * 3.0 * (0.6 + y / 600)
         placed.append((x, y, H, R))
+    placed = []                                                       # no spires: open land
     for i_, (x, y, H, R) in enumerate(placed):
         z = ground_at(x, y); z = -6 if z is None else z
         spire(x, y, z - 4, H, R, ((srng.random() - 0.5) * 0.12, (srng.random() - 0.5) * 0.08), 100 + i_)
