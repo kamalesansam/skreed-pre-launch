@@ -6,9 +6,9 @@ CFG = {
   'canyon': dict(exposure=0.2, bg=1.0, stars=0.6, key=dict(el=9, rot=-75, e=3.6, c=(1.0, 0.6, 0.4)), fill=dict(el=30, rot=120, e=0.25, c=(0.55, 0.65, 1.0)), hmax=80, sun_el=-5, sun_rot=-8, air=1.0, aerosol=2.0, ozone=1.0, fog=0.0018, fogc=(0.85, 0.62, 0.48),
                  rock=[(0.0, (0.20, 0.07, 0.035)), (0.35, (0.36, 0.13, 0.06)), (0.55, (0.52, 0.25, 0.12)), (0.75, (0.30, 0.10, 0.05)), (1.0, (0.58, 0.36, 0.22))],
                  sand=(0.55, 0.30, 0.16), planet=dict(dir=(0.2532, 0.9448, 0.2079), r=62, dist=900, col=(0.80, 0.70, 0.62), ring=True)),
-  'spires': dict(exposure=1.6, bg=1.0, stars=1.0, key=dict(el=24, rot=62, e=0.9, c=(0.62, 0.74, 1.0)), fill=dict(el=40, rot=-120, e=0.12, c=(0.5, 0.6, 1.0)), hmax=70, sun_el=-7, sun_rot=20, air=1.0, aerosol=1.0, ozone=2.0, fog=0.003, fogc=(0.62, 0.70, 0.82),
-                 rock=[(0.0, (0.05, 0.055, 0.065)), (0.5, (0.11, 0.12, 0.14)), (1.0, (0.20, 0.21, 0.24))],
-                 sand=(0.55, 0.60, 0.68), snow=True, planet=dict(dir=(-0.2375, 0.9525, 0.1908), r=80, dist=900, col=(0.80, 0.84, 0.92), ring=False)),
+  'spires': dict(exposure=1.2, bg=0.6, stars=1.0, key=dict(el=11, rot=12, e=3.2, c=(1.0, 0.98, 0.95)), fill=dict(el=30, rot=-170, e=0.22, c=(1.0, 1.0, 1.0)), noplanet=True, monolith=True, hmax=70, sun_el=-3.5, sun_rot=12, air=1.0, aerosol=1.0, ozone=2.0, fog=0.003, fogc=(0.62, 0.70, 0.82),
+                 rock=[(0.0, (0.035, 0.035, 0.038)), (0.5, (0.07, 0.07, 0.075)), (1.0, (0.12, 0.12, 0.125))],
+                 sand=(0.78, 0.78, 0.80), snow=True, planet=dict(dir=(-0.2375, 0.9525, 0.1908), r=80, dist=900, col=(0.80, 0.84, 0.92), ring=False)),
   'dunes': dict(exposure=0.0, bg=1.0, stars=0.5, key=dict(el=5, rot=-48, e=4.0, c=(1.0, 0.55, 0.32)), fill=dict(el=35, rot=110, e=0.2, c=(0.55, 0.62, 1.0)), hmax=45, sun_el=-4.5, sun_rot=-45, air=0.9, aerosol=1.5, ozone=1.0, fog=0.0015, fogc=(0.95, 0.80, 0.62),
                  rock=[(0.0, (0.28, 0.17, 0.10)), (0.6, (0.42, 0.28, 0.17)), (1.0, (0.62, 0.48, 0.34))],
                  sand=(0.80, 0.58, 0.38), planet=dict(dir=(0.2686, 0.9366, 0.2250), r=50, dist=900, col=(0.90, 0.86, 0.80), ring=True), twin=True),
@@ -34,6 +34,7 @@ gx, gy = np.meshgrid(xs, ys)
 dd = np.sqrt((gx / 1.6) ** 2 + (np.maximum(gy - 10, 0)) ** 2 + np.minimum(gy - 10, 0) ** 2 * 4)
 mask = np.clip((dd - 30) / 120, 0, 1); mask = mask * mask * (3 - 2 * mask)
 gz = GROUND - 1.5 + h * CFG['hmax'] * (0.16 + 0.84 * mask)
+if CFG.get('monolith'): gz = -4.35 + h * 30 * (0.03 + 0.97 * mask)   # a snowfield just under the logo, rising slowly
 verts = np.stack([gx.ravel(), gy.ravel(), gz.ravel()], 1)
 ii = np.arange(N * N).reshape(N, N)
 quads = np.stack([ii[:-1, :-1].ravel(), ii[1:, :-1].ravel(), ii[1:, 1:].ravel(), ii[:-1, 1:].ravel()], 1)
@@ -84,9 +85,9 @@ sky = wn.new('ShaderNodeTexSky'); sky.sky_type = 'MULTIPLE_SCATTERING'
 for k, v in dict(sun_elevation=math.radians(CFG['sun_el']), sun_rotation=math.radians(CFG['sun_rot']), air_density=CFG['air'],
                  aerosol_density=CFG['aerosol'], dust_density=CFG['aerosol'], ozone_density=CFG['ozone'], altitude=200.0, sun_intensity=1.0).items():
     if hasattr(sky, k): setattr(sky, k, v)
-tcw = wn.new('ShaderNodeTexCoord'); vor = wn.new('ShaderNodeTexVoronoi'); vor.inputs['Scale'].default_value = 420.0
+tcw = wn.new('ShaderNodeTexCoord'); vor = wn.new('ShaderNodeTexVoronoi'); vor.inputs['Scale'].default_value = 170.0 if CFG.get('monolith') else 420.0
 wl.new(tcw.outputs['Generated'], vor.inputs['Vector'])
-st = wn.new('ShaderNodeMapRange'); st.inputs['From Min'].default_value = 0.0; st.inputs['From Max'].default_value = 0.05; st.inputs['To Min'].default_value = 1.0; st.inputs['To Max'].default_value = 0.0
+st = wn.new('ShaderNodeMapRange'); st.inputs['From Min'].default_value = 0.0; st.inputs['From Max'].default_value = 0.035 if CFG.get('monolith') else 0.05; st.inputs['To Min'].default_value = 1.0; st.inputs['To Max'].default_value = 0.0
 wl.new(vor.outputs['Distance'], st.inputs['Value'])
 pw = wn.new('ShaderNodeMath'); pw.operation = 'POWER'; pw.inputs[1].default_value = 8.0; wl.new(st.outputs['Result'], pw.inputs[0])
 br = wn.new('ShaderNodeSeparateColor'); wl.new(vor.outputs['Color'], br.inputs[0])
@@ -94,7 +95,7 @@ m1_ = wn.new('ShaderNodeMath'); m1_.operation = 'MULTIPLY'; wl.new(pw.outputs[0]
 sepd = wn.new('ShaderNodeSeparateXYZ'); wl.new(tcw.outputs['Generated'], sepd.inputs[0])
 hz_ = wn.new('ShaderNodeMapRange'); hz_.inputs['From Min'].default_value = 0.02; hz_.inputs['From Max'].default_value = 0.35; wl.new(sepd.outputs['Z'], hz_.inputs['Value'])
 m2_ = wn.new('ShaderNodeMath'); m2_.operation = 'MULTIPLY'; wl.new(m1_.outputs[0], m2_.inputs[0]); wl.new(hz_.outputs['Result'], m2_.inputs[1])
-m3_ = wn.new('ShaderNodeMath'); m3_.operation = 'MULTIPLY'; m3_.inputs[1].default_value = CFG['stars'] * 0.08; wl.new(m2_.outputs[0], m3_.inputs[0])
+m3_ = wn.new('ShaderNodeMath'); m3_.operation = 'MULTIPLY'; m3_.inputs[1].default_value = CFG['stars'] * (0.6 if CFG.get('monolith') else 0.08); wl.new(m2_.outputs[0], m3_.inputs[0])
 addc = wn.new('ShaderNodeMix'); addc.data_type = 'RGBA'; addc.blend_type = 'ADD'; addc.inputs['Factor'].default_value = 1.0
 wl.new(sky.outputs['Color'], addc.inputs[6]); wl.new(m3_.outputs[0], addc.inputs[7])
 wl.new(addc.outputs[2], wn['Background'].inputs['Color']); wn['Background'].inputs['Strength'].default_value = CFG['bg']
@@ -109,6 +110,7 @@ lamp('key', CFG['key']); lamp('fill', CFG['fill'], 8)
 sc.view_settings.exposure = CFG['exposure']
 # the planet (and rings), lit by the same sun
 pc = CFG['planet']; dv = Vector(pc['dir']).normalized() * pc['dist']
+if CFG.get('noplanet'): dv = Vector((0, 0, -5000))   # parked far below the ground, never seen
 bpy.ops.mesh.primitive_uv_sphere_add(segments=96, ring_count=48, radius=pc['r'], location=dv)
 pl = bpy.context.active_object; bpy.ops.object.shade_smooth()
 pm = bpy.data.materials.new('planet'); pm.use_nodes = True; pn = pm.node_tree.nodes; pk = pm.node_tree.links
@@ -152,7 +154,7 @@ def ground_at(x, y):
     if 0 <= i < N and 0 <= j < N: return gz[i, j]
     return None
 count = 0
-for _ in range(700):
+for _ in range(0 if CFG.get('monolith') else 700):
     y = -8 + rng.random() ** 1.3 * 150; x = (rng.random() - 0.5) * (60 + y * 1.8)
     if abs(x) < 4 and y < 30: continue                      # keep the space right under the logo clear
     z = ground_at(x, y)
@@ -162,6 +164,48 @@ for _ in range(700):
     o.location = (x, y, z + s_ * 0.2); o.scale = (s_ * (0.8 + rng.random() * 0.6), s_ * (0.8 + rng.random() * 0.6), s_ * (0.5 + rng.random() * 0.4))
     o.rotation_euler = (rng.random() * 0.4, rng.random() * 0.4, rng.random() * 6.28); count += 1
 print('boulders', count)
+if CFG.get('monolith'):
+    # sculpted spires: fluted, tapering, leaning towers of rock, layered into the distance
+    srng = np.random.default_rng(11)
+    def spire(x, y, base_z, H, R, lean, seed):
+        r_ = np.random.default_rng(seed); RINGS, SEG = 48, 9
+        th = np.linspace(0, 2 * np.pi, SEG, endpoint=False)
+        ph = r_.random(6) * 6.28; fr = r_.integers(3, 9, 6)
+        vs = []
+        for i in range(RINGS + 1):
+            t = i / RINGS
+            taper = (1 - t) ** 1.4 * (1 - 0.22 * np.sin(t * 7 + ph[0])) * (1.3 - 0.3 * t) + 0.01
+            flute = 1 + 0.25 * r_.random(SEG) + 0.15 * np.sin(th * fr[0] + ph[1] + t * 3)   # broken, angular cross-section
+            ledge = 1 + 0.12 * (np.sin(t * 40 + ph[4]) > 0.75)                       # strata ledges
+            rr = R * taper * flute * ledge
+            cx_ = x + lean[0] * t * t * H; cy_ = y + lean[1] * t * t * H
+            tw = t * (1.2 + ph[5] * 0.2)                                              # a slow twist up the spire
+            for k_ in range(SEG): vs.append((cx_ + rr[k_] * np.cos(th[k_] + tw), cy_ + rr[k_] * np.sin(th[k_] + tw), base_z + t * H))
+        faces = []
+        for i in range(RINGS):
+            for k_ in range(SEG): a_ = i * SEG + k_; b_ = i * SEG + (k_ + 1) % SEG; faces.append((a_, b_, b_ + SEG, a_ + SEG))
+        me_ = bpy.data.meshes.new('spire'); me_.from_pydata(vs, [], faces); me_.update()
+        for p_ in me_.polygons: p_.use_smooth = False   # faceted, crystalline faces
+        o_ = bpy.data.objects.new('spire', me_); sc.collection.objects.link(o_)
+        t1_ = bpy.data.textures.new('sv', 'VORONOI'); t1_.noise_scale = R * 0.35
+        d1_ = o_.modifiers.new('d', 'DISPLACE'); d1_.texture = t1_; d1_.strength = R * 0.18; d1_.texture_coords = 'GLOBAL'
+        t2_ = bpy.data.textures.new('sc', 'CLOUDS'); t2_.noise_scale = R * 0.12
+        d2_ = o_.modifiers.new('d2', 'DISPLACE'); d2_.texture = t2_; d2_.strength = R * 0.12; d2_.texture_coords = 'GLOBAL'
+        o_.data.materials.append(m)
+    placed = []
+    # two giants framing the logo, then bands receding into the distance
+    for (x, y, H, R) in [(-44, 75, 200, 5.0), (50, 105, 240, 5.6), (-17, 175, 170, 3.8), (21, 215, 210, 4.4)]:
+        placed.append((x, y, H, R))
+    for _ in range(46):
+        y = 140 + srng.random() ** 0.7 * 280; x = (srng.random() - 0.5) * (y * 1.9)
+        if abs(x) < 14 and y < 200: continue
+        H = 70 + srng.random() ** 1.3 * 200 * (0.6 + y / 500); R = 1.8 + srng.random() * 3.0 * (0.6 + y / 600)
+        placed.append((x, y, H, R))
+    for i_, (x, y, H, R) in enumerate(placed):
+        z = ground_at(x, y); z = -6 if z is None else z
+        spire(x, y, z - 4, H, R, ((srng.random() - 0.5) * 0.12, (srng.random() - 0.5) * 0.08), 100 + i_)
+    print('spires', len(placed))
+
 
 # camera: hero position, equirectangular plate covering 100 x 60 degrees
 cd = bpy.data.cameras.new('cam'); cam = bpy.data.objects.new('cam', cd); sc.collection.objects.link(cam); sc.camera = cam
@@ -193,3 +237,14 @@ sc.render.image_settings.color_depth = '16'; sc.render.filter_size = 0.01
 sc.render.filepath = OUT.replace('.png', '_depth.png')
 bpy.ops.render.render(write_still=True)
 print('wrote depth')
+hm = bpy.data.materials.new('height'); hm.use_nodes = True; hn = hm.node_tree.nodes; hk = hm.node_tree.links
+hn.remove(hn['Principled BSDF']); gg = hn.new('ShaderNodeNewGeometry'); sz = hn.new('ShaderNodeSeparateXYZ'); hk.new(gg.outputs['Position'], sz.inputs[0])
+ma = hn.new('ShaderNodeMapRange'); ma.inputs['From Min'].default_value = -20; ma.inputs['From Max'].default_value = 180; hk.new(sz.outputs['Z'], ma.inputs['Value'])
+he = hn.new('ShaderNodeEmission'); hk.new(ma.outputs['Result'], he.inputs['Color']); hk.new(he.outputs[0], hn['Material Output'].inputs['Surface'])
+for o in sc.objects:
+    if o.type == 'MESH':
+        for i in range(len(o.material_slots)): o.material_slots[i].link = 'OBJECT'; o.material_slots[i].material = hm
+bg.outputs[0].default_value = (0, 0, 0, 1)
+sc.render.filepath = OUT.replace('.png', '_height.png')
+bpy.ops.render.render(write_still=True)
+print('wrote height')

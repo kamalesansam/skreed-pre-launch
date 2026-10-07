@@ -257,18 +257,19 @@ const plateMat = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, fog: fals
 const plate = new THREE.Mesh(new THREE.SphereGeometry(180, 96, 48, Math.PI * 1.5 - LON / 2, LON,
   THREE.MathUtils.degToRad(90 - LAT_TOP), THREE.MathUtils.degToRad(LAT_TOP - LAT_BOT)), plateMat);
 plate.scale.x = -1;            // seen from inside: flip so the image reads left to right
-plate.rotation.x = THREE.MathUtils.degToRad(-6);   // horizon sits a little low: sky and planet above the logo, land behind the copy
+const PLATE_PITCH = { canyon: -6, spires: 0, dunes: -6 };   // spires: rendered from the hero camera exactly, so the snowfield sits right under the logo
 plate.renderOrder = -1; plate.frustumCulled = false;
 sceneA.add(plate);
-const PLATE_BG = { canyon: '#1d1a24', spires: '#121a2c', dunes: '#1f1b26' };
+const PLATE_BG = { canyon: '#1d1a24', spires: '#16181b', dunes: '#1f1b26' };
 function setWorld(name) {
   if (!PLATES[name]) name = 'canyon';
   if (!plateTex[name]) { const t = new THREE.TextureLoader().load(PLATES[name]); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; plateTex[name] = t; }
   plateMat.map = plateTex[name]; plateMat.needsUpdate = true;
+  plate.rotation.x = THREE.MathUtils.degToRad(PLATE_PITCH[name]);
   sceneA.background.set(PLATE_BG[name]); sceneA.fog.color.set(PLATE_BG[name]);
   document.querySelectorAll('[data-world]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.world === name)));
 }
-setWorld(new URLSearchParams(location.search).get('world') || 'canyon');
+setWorld(new URLSearchParams(location.search).get('world') || 'spires');
 document.querySelectorAll('[data-world]').forEach(b => b.addEventListener('click', () => setWorld(b.dataset.world)));
 
 // =====================================================================
@@ -470,6 +471,7 @@ const clock = new THREE.Clock(); let t = 0;
 function frame() {
   const dt = Math.min(clock.getDelta(), 1 / 12); t += dt; ratio = Math.min(5, dt / (1 / 60));
   U.uTime.value = t;
+  logo.position.y = reduce ? 0 : Math.sin(t * 0.7) * 0.07;   // hovering just above the ground
   const pr = scrollY / innerHeight;
   scroll.a = lerpFPS(scroll.a, pr, 0.075); scroll.b = lerpFPS(scroll.b, scroll.a, 0.15);   // igloo's two followers
   const s = ease(clamp01(scroll.b / PULL));
