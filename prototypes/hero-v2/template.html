@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Skreed Hero Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@700&family=Open+Sans:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,400&display=swap">
+<style>
+/* v2: one fixed WebGL stage. Scroll drives: hero pull-back, then the igloo-style wipe into section 2 (the Wall), scrubbed both ways. */
+:root{--slate:#383F43;--pearl:#F7F6F3;--ember:#FF9900;--panel:#2b3134;--line:#4a5257;--muted:#c3c8cb;--s1:8px;--s2:12px;--s3:16px;color-scheme:dark}
+body{background:var(--slate);color:var(--pearl);font-family:'Open Sans',Arial,sans-serif;margin:0;font-synthesis:none}
+#stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:pan-y}
+.track{position:relative;height:460svh;pointer-events:none}
+.copy{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:flex-end;gap:var(--s2);padding:0 var(--s3) 9svh;max-width:1180px;margin:0 auto;pointer-events:none;will-change:transform,clip-path}
+.copy h1{font-family:'Poppins','Arial Black',sans-serif;font-weight:700;font-size:clamp(2.2rem,7vw,4.6rem);line-height:.95;letter-spacing:-.015em;margin:0;text-wrap:balance}
+.copy p{font-family:'Source Serif 4',Georgia,serif;font-size:clamp(1.05rem,2.4vw,1.25rem);margin:0;color:var(--muted);max-width:30ch}
+.copy .cta{pointer-events:auto;align-self:flex-start;background:var(--ember);color:#383F43;font-weight:600;border:0;border-radius:999px;padding:12px 20px;font-size:1rem;cursor:pointer;transition:transform .25s cubic-bezier(.2,.7,.2,1),background-color .25s}
+.copy .cta:hover{background:#ffad33;transform:translateY(-2px)}
+.copy .cta:active{transform:translateY(0) scale(.98)}
+.wallcopy{justify-content:flex-start;padding-top:calc(10svh + env(safe-area-inset-top,0px));color:var(--slate)}
+.wallcopy p{color:#5f676c}
+.hint{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:16px;font-size:.8rem;color:var(--muted);z-index:2}
+.tune{position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:3;background:var(--panel);border:1px solid var(--line);border-radius:12px;max-width:min(320px,calc(100vw - 24px));font-size:.82rem;color:var(--pearl)}
+.tune summary{cursor:pointer;padding:10px 14px;font-weight:600;list-style:none}
+.tune summary::-webkit-details-marker{display:none}
+.tune .body{display:grid;gap:8px;padding:0 14px 14px;max-height:60svh;overflow:auto}
+.tune label{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center}
+.tune input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--ember)}
+.tune button{font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:transparent;color:inherit;cursor:pointer}
+.tune output{font-variant-numeric:tabular-nums;color:var(--muted)}
+.tune h3{margin:6px 0 0;font-size:.75rem;font-weight:600;color:var(--muted)}
+.fallback{position:fixed;inset:auto 16px 40% 16px;text-align:center;color:var(--muted)}
+:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+</style>
+<canvas id="stage" aria-hidden="true"></canvas>
+<div class="hint" id="hint">Move over the logo. On a phone, touch and drag. Scroll to pull back, keep scrolling for the transition.</div>
+<div class="track"></div>
+<section class="copy" id="heroCopy">
+  <h1>Go beyond basic.</h1>
+  <p>240 shades. One of them is yours.</p>
+  <button class="cta" type="button" id="cta">Reserve my shade</button>
+</section>
+<section class="copy wallcopy" id="wallCopy" aria-label="Section 2 placeholder">
+  <h1>The Wall.</h1>
+  <p>All 240 shades, in catalog order. Section 2 placeholder.</p>
+</section>
+<details class="tune" id="tune">
+  <summary>Tune</summary>
+  <div class="body">
+    <h3>Hover (igloo values)</h3>
+    <label for="push">Push amount <output id="o-push"></output><input id="push" type="range" min="0" max="1.2" step="0.01"></label>
+    <label for="wob">Push wobble <output id="o-wob"></output><input id="wob" type="range" min="0" max="0.6" step="0.01"></label>
+    <label for="r0">Full push within (units) <output id="o-r0"></output><input id="r0" type="range" min="0" max="3" step="0.05"></label>
+    <label for="r1">No push beyond (units) <output id="o-r1"></output><input id="r1" type="range" min="0.5" max="6" step="0.05"></label>
+    <label for="follow">Push follower, per frame <output id="o-follow"></output><input id="follow" type="range" min="0.01" max="0.3" step="0.005"></label>
+    <label for="mouse">Pointer follower, per frame <output id="o-mouse"></output><input id="mouse" type="range" min="0.01" max="0.3" step="0.005"></label>
+    <label for="breath">Breathing <output id="o-breath"></output><input id="breath" type="range" min="0" max="2" step="0.05"></label>
+    <label for="lift">Push toward camera <output id="o-lift"></output><input id="lift" type="range" min="0" max="4" step="0.05"></label>
+    <h3>Look</h3>
+    <label for="glow">Inner glow <output id="o-glow"></output><input id="glow" type="range" min="0" max="6" step="0.05"></label>
+    <label for="rest">Glow at rest <output id="o-rest"></output><input id="rest" type="range" min="0" max="1.5" step="0.01"></label>
+    <label for="tint">Shade in the black <output id="o-tint"></output><input id="tint" type="range" min="0" max="0.4" step="0.005"></label>
+    <label for="blend">Colour blend width <output id="o-blend"></output><input id="blend" type="range" min="0.2" max="2.5" step="0.05"></label>
+    <label for="tex">Texture <output id="o-tex"></output><input id="tex" type="range" min="0" max="1.5" step="0.05"></label>
+    <label for="key">Key light <output id="o-key"></output><input id="key" type="range" min="0" max="4" step="0.05"></label>
+    <label for="bloom">Bloom <output id="o-bloom"></output><input id="bloom" type="range" min="0" max="2" step="0.05"></label>
+    <div><button type="button" id="ghost">Auto sweep: on</button></div>
+  </div>
+</details>
+<p class="fallback" id="fallback" hidden>This prototype needs WebGL2. On the real site this is where the poster image of the logo would stay.</p>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const PIECES = /*PIECES*/null;
+const FAMILIES = /*SHADES*/null;
+const $ = (id) => document.getElementById(id);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const touch = matchMedia('(hover: none)').matches;
+
+// One shade per family, in catalog order, placed clockwise round the logo from the top.
+const REGION = [['Frosty Whites', 'Snow'], ['Blissful Blues', 'Sky'], ['Playful Pinks', 'Rouge'], ['Vivid Violets', 'Amethyst'], ['Mellow Yellows', 'Sunbeam'],
+  ['Earthy Browns', 'Cinnamon'], ['Blushing Corals', 'Mango'], ['Stormy Greys', 'Silver'], ['Go Green', 'Lawn'], ['Roaring Reds', 'Crimson']]
+  .map(([fam, name]) => FAMILIES.find(f => f.n === fam).s.find(s => s[0] === name)[1]);
+
+// ---- tuning state. Hover defaults are igloo.inc's own numbers (wiring doc 4.2). ----
+const P = { push: 0.5, wob: 0.3, r0: 1, r1: 3, follow: 0.06, mouse: 0.05, breath: reduce ? 0 : 0.3, lift: 1.6,
+  glow: 2.4, rest: 0.06, tint: 0.05, blend: 0.95, tex: 1, key: 1.4, bloom: 0.7 };
+for (const k of Object.keys(P)) {
+  const el = $(k); if (!el) continue; el.value = P[k]; $('o-' + k).textContent = (+el.value).toFixed(2);
+  el.addEventListener('input', () => { P[k] = +el.value; $('o-' + k).textContent = (+el.value).toFixed(2); apply(); });
+}
+
+// ---- frame-rate independent helpers, same maths as igloo's damp/lerpFPS ----
+let ratio = 1;
+const lerpFPS = (a, b, k) => a + (b - a) * (1 - Math.pow(1 - k, ratio));
+const smoothstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+const fit = (x, a, b, c, d) => c + (d - c) * Math.min(1, Math.max(0, (x - a) / (b - a)));
+const clamp01 = (x) => Math.min(1, Math.max(0, x));
+
+// ---- renderer ----
+const canvas = $('stage');
+let renderer;
+try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); }
+catch (e) { $('fallback').hidden = false; throw e; }
+const DPR = Math.min(devicePixelRatio, touch ? 1.25 : 1.5);
+renderer.setPixelRatio(DPR);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.autoClear = true;
+
+// =====================================================================
+// Scene A: the hero
+// =====================================================================
+const sceneA = new THREE.Scene();
+const camA = new THREE.PerspectiveCamera(30, 1, 0.1, 200);            // igloo FOV
+const SLATE = new THREE.Color('#383F43');
+sceneA.background = SLATE.clone();
+sceneA.fog = new THREE.Fog(SLATE.clone(), 30, 80);
+
+// ---- the logo: 30 equal-area blocks, extruded, merged; each block moved by uniforms ----
+const [VW, VH] = PIECES.viewBox; const LW = 5.6; const S = LW / VW; const DEPTH = 0.95;
+const NB = PIECES.pieces.length;
+const toLocal = (x, y) => new THREE.Vector2((x - VW / 2) * S, -(y - VH / 2) * S);
+let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const blocks = []; const parts = [];
+PIECES.pieces.forEach((piece, id) => {
+  const v = piece.pts.map(([x, y]) => toLocal(x, y));
+  if (THREE.ShapeUtils.isClockWise(v)) v.reverse();
+  let geo = new THREE.ExtrudeGeometry(new THREE.Shape(v), { depth: DEPTH, bevelEnabled: true, bevelThickness: 0.035, bevelSize: 0.03, bevelSegments: 2, curveSegments: 3 });
+  geo.translate(0, 0, -DEPTH / 2);
+  let a = 0, cx = 0, cy = 0;
+  for (let i = 0; i < v.length; i++) { const p = v[i], q = v[(i + 1) % v.length]; const c = p.x * q.y - q.x * p.y; a += c; cx += (p.x + q.x) * c; cy += (p.y + q.y) * c; }
+  a *= 0.5; cx /= 6 * a; cy /= 6 * a;
+  const n = geo.attributes.position.count;
+  const ids = new Float32Array(n).fill(id), cen = new Float32Array(n * 3), side = new Float32Array(n);
+  for (let i = 0; i < n; i++) cen.set([cx, cy, 0], i * 3);
+  for (const g of geo.groups) if (g.materialIndex === 1) for (let i = g.start; i < g.start + g.count; i++) side[i] = 1;
+  geo.setAttribute('aId', new THREE.BufferAttribute(ids, 1));
+  geo.setAttribute('aCentroid', new THREE.BufferAttribute(cen, 3));
+  geo.setAttribute('aSide', new THREE.BufferAttribute(side, 1));
+  geo.clearGroups(); parts.push(geo);
+  blocks.push({ c: new THREE.Vector2(cx, cy), rand: new THREE.Vector3(rnd(), rnd(), rnd()), t1: 0, t2: 0, d: 0, q: new THREE.Quaternion() });
+});
+const logoGeo = mergeGeometries(parts, false);
+const anchors = PIECES.anchors.map(([x, y]) => toLocal(x, y));
+const U = {
+  uOff: { value: blocks.map(() => new THREE.Vector3()) }, uQ: { value: blocks.map(() => new THREE.Vector4(0, 0, 0, 1)) }, uD: { value: new Float32Array(NB) },
+  uAnchor: { value: anchors }, uRegion: { value: REGION.map(h => new THREE.Color(h)) },
+  uTime: { value: 0 }, uGlow: { value: P.glow }, uRest: { value: P.rest }, uTint: { value: P.tint }, uBlend: { value: P.blend }, uTex: { value: P.tex }, uKey: { value: P.key },
+};
+const logoMat = new THREE.ShaderMaterial({
+  uniforms: U, fog: false,
+  vertexShader: /* glsl */`
+    #define NB ${NB}
+    uniform vec3 uOff[NB]; uniform vec4 uQ[NB]; uniform float uD[NB];
+    attribute float aId; attribute vec3 aCentroid; attribute float aSide;
+    varying vec3 vN; varying vec3 vW; varying vec3 vRest; varying vec3 vRestN; varying float vSide; varying float vDisp;
+    vec3 qrot(vec4 q, vec3 v){ return v + 2.0 * cross(q.xyz, cross(q.xyz, v) + q.w * v); }
+    void main(){
+      int i = int(aId + 0.5);
+      vec3 local = (position - aCentroid) * 0.992;           // a hair of seam between blocks
+      vec3 p = aCentroid + uOff[i] + qrot(uQ[i], local);
+      vec4 wp = modelMatrix * vec4(p, 1.0);
+      vN = normalize(mat3(modelMatrix) * qrot(uQ[i], normal)); vW = wp.xyz;
+      vRest = position; vRestN = normal; vSide = aSide; vDisp = uD[i];
+      gl_Position = projectionMatrix * viewMatrix * wp;
+    }`,
+  fragmentShader: /* glsl */`
+    uniform vec2 uAnchor[10]; uniform vec3 uRegion[10];
+    uniform float uTime, uGlow, uRest, uTint, uBlend, uTex, uKey;
+    varying vec3 vN; varying vec3 vW; varying vec3 vRest; varying vec3 vRestN; varying float vSide; varying float vDisp;
+    float h21(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+    float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+      return mix(mix(h21(i), h21(i + vec2(1, 0)), f.x), mix(h21(i + vec2(0, 1)), h21(i + vec2(1, 1)), f.x), f.y); }
+    // the ten shades, blended softly by distance so neighbouring areas melt into each other
+    vec3 region(vec2 p){
+      vec3 acc = vec3(0.0); float wsum = 0.0;
+      for (int k = 0; k < 10; k++) { vec2 d = p - uAnchor[k]; float w = exp(-dot(d, d) / (uBlend * uBlend)); w *= w; acc += uRegion[k] * w; wsum += w; }
+      return acc / max(wsum, 1e-5);
+    }
+    // faceted matte texture: a triangle lattice, each facet tilted a little, plus fine grain
+    vec3 facet(vec2 p, out float tone){
+      vec2 s = vec2(p.x + p.y * 0.57735, p.y * 1.1547);
+      vec2 i = floor(s); vec2 f = fract(s); float up = step(f.y, f.x);
+      vec2 id = i * 2.0 + vec2(up, 0.0);
+      float a = h21(id) * 6.2831, m = h21(id + 17.3);
+      tone = 0.88 + 0.24 * h21(id + 3.1);
+      return vec3(cos(a), sin(a), 0.0) * (0.04 + 0.12 * m);
+    }
+    void main(){
+      vec3 N = normalize(vN); vec3 V = normalize(cameraPosition - vW);
+      bool front = abs(vRestN.z) > 0.5 && vSide < 0.5;
+      vec2 tp = front ? vRest.xy : vec2(vRest.x + vRest.y, vRest.z * 1.7);
+      float tone; vec3 tilt = facet(tp * 11.0, tone);
+      float grain = vnoise(tp * 90.0) * 0.6 + vnoise(tp * 31.0) * 0.4;
+      float mottle = vnoise(tp * 1.3 + 7.0);
+      N = normalize(N + tilt * uTex);
+      vec3 shade = region(vRest.xy);
+      // matte: Lambert with a soft wrap, no specular, no rim
+      vec3 L1 = normalize(vec3(-0.45, 0.75, 0.55)); vec3 L2 = normalize(vec3(0.7, -0.2, 0.6));
+      float k1 = max((dot(N, L1) + 0.25) / 1.25, 0.0); float k2 = max(dot(N, L2), 0.0);
+      float hemi = 0.5 + 0.5 * N.y;
+      float albedo = 0.011 * mix(1.0, tone * (0.75 + 0.5 * grain) * (0.85 + 0.3 * mottle), uTex);
+      vec3 base = mix(vec3(albedo), shade * albedo * 2.2, uTint * 6.0);
+      vec3 col = base * (uKey * k1 + 0.3 * k2 + 0.45 * hemi + 0.2);
+      // inner glow: the cut faces carry the shade, brighter as the block lifts away (igloo mixes by 5 x displacement)
+      float lift = clamp(5.0 * vDisp, 0.0, 1.0);
+      float deep = vSide * (0.55 + 0.45 * smoothstep(0.5, -0.5, vRest.z));
+      float shimmer = 0.85 + 0.15 * sin(uTime * 1.3 + vRest.x * 2.1 + vRest.y * 1.7);
+      col += shade * deep * (uRest + uGlow * lift) * shimmer;
+      // a little light from the open seams spills onto the face edges
+      col += shade * (1.0 - vSide) * lift * 0.04 * uGlow;
+      gl_FragColor = vec4(col, 1.0);
+    }`,
+});
+const logo = new THREE.Mesh(logoGeo, logoMat); logo.frustumCulled = false;
+sceneA.add(logo);
+
+// ---- the place (placeholder until the background pass): shade blocks in catalog order, fading into fog ----
+const SHADES = FAMILIES.flatMap(f => f.s.map(s => s[1]));
+const COLS = touch ? 40 : 60, ROWS = touch ? 40 : 60, STEP = 1.5;
+const field = new THREE.InstancedMesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), new THREE.MeshStandardMaterial({ roughness: 0.9, metalness: 0 }), COLS * ROWS);
+{
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 4, 0)), sc = new THREE.Vector3(), pos = new THREE.Vector3(), col = new THREE.Color();
+  let k = 0;
+  for (let i = 0; i < ROWS; i++) for (let j = 0; j < COLS; j++) {
+    const x = (j - COLS / 2) * STEP + (i % 2) * STEP * 0.5, z = (i - ROWS / 2) * STEP * 0.87;
+    const h = 0.4 + 0.7 * Math.pow(rnd(), 3);
+    pos.set(x, -7.6 + h * 0.5, z - 22); sc.set(1, h / 1.2, 1); m4.compose(pos, q, sc); field.setMatrixAt(k, m4);
+    field.setColorAt(k, col.set(SHADES[(Math.floor(i / (ROWS / 10)) % 10) * 24 + (j % 24)]).multiplyScalar(0.3)); k++;
+  }
+}
+sceneA.add(field);
+sceneA.add(new THREE.HemisphereLight(0xffffff, 0x383F43, 0.5));
+const sun = new THREE.DirectionalLight(0xffffff, 0.7); sun.position.set(4, 10, 6); sceneA.add(sun);
+
+// =====================================================================
+// Scene B: section 2 placeholder, the Wall (240 swatches, catalog order)
+// =====================================================================
+const sceneB = new THREE.Scene();
+sceneB.background = new THREE.Color('#F7F6F3');
+const camB = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+const wall = new THREE.InstancedMesh(new THREE.CircleGeometry(0.2, 48), new THREE.MeshBasicMaterial(), 240);
+sceneB.add(wall);
+function layoutWall(portrait) {
+  const cols = portrait ? 12 : 24, gap = 0.5, rows = 240 / cols;
+  const m4 = new THREE.Matrix4(), col = new THREE.Color();
+  for (let i = 0; i < 240; i++) {
+    const r = Math.floor(i / cols), c = i % cols;
+    m4.makeTranslation((c - (cols - 1) / 2) * gap, -(r - (rows - 1) / 2) * gap - (portrait ? 0.9 : 0.6), 0);
+    wall.setMatrixAt(i, m4); wall.setColorAt(i, col.set(SHADES[i]));
+  }
+  wall.instanceMatrix.needsUpdate = true; wall.instanceColor.needsUpdate = true;
+  camB.position.set(0, 0, portrait ? 26 : 19); camB.lookAt(0, 0, 0);
+}
+
+// =====================================================================
+// Post: each scene renders into its own target; one composite shader wipes between them
+// =====================================================================
+function makeComposer(scene, cam, withBloom) {
+  const c = new EffectComposer(renderer); c.renderToScreen = false;
+  c.addPass(new RenderPass(scene, cam));
+  let b = null;
+  if (withBloom) { b = new UnrealBloomPass(new THREE.Vector2(256, 256), P.bloom, 0.5, 0.55); c.addPass(b); }
+  c.addPass(new OutputPass());
+  return { c, b };
+}
+const A = makeComposer(sceneA, camA, true), B = makeComposer(sceneB, camB, false);
+
+// The wipe's data texture, generated here (igloo ships an authored 1024 px PNG; ours is procedural).
+// R: grungy ice-crack threshold, G: hard-edged tech blocks, B: slow wobble of the diagonal.
+function makeScrollTexture(N = 512) {
+  const data = new Uint8Array(N * N * 4);
+  const hash = (x, y, s) => { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967295; };
+  const vn = (x, y, per, s) => { // periodic value noise
+    const xi = Math.floor(x), yi = Math.floor(y), fx = x - xi, fy = y - yi, u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
+    const g = (a, b) => hash(((a % per) + per) % per, ((b % per) + per) % per, s);
+    return (g(xi, yi) * (1 - u) + g(xi + 1, yi) * u) * (1 - v) + (g(xi, yi + 1) * (1 - u) + g(xi + 1, yi + 1) * u) * v;
+  };
+  const fbm = (x, y, base, s) => { let a = 0, w = 0.5, f = base; for (let o = 0; o < 5; o++) { a += w * vn(x * f, y * f, f, s + o); w *= 0.5; f *= 2; } return a; };
+  // cells for cracks
+  const CELLS = 7, pts = [];
+  for (let j = 0; j < CELLS; j++) for (let i = 0; i < CELLS; i++) pts.push([(i + hash(i, j, 5)) / CELLS, (j + hash(i, j, 6)) / CELLS]);
+  // tech blocks: recursive rectangle split
+  const blocksG = [];
+  (function split(x, y, w, h, d) {
+    if (d > 5 || (d > 2 && hash(x * 999 | 0, y * 999 | 0, d) < 0.3)) { blocksG.push([x, y, w, h, hash(x * 777 | 0, y * 555 | 0, 9)]); return; }
+    if (w > h) { const k = 0.3 + 0.4 * hash(x * 100 | 0, d, 1); split(x, y, w * k, h, d + 1); split(x + w * k, y, w * (1 - k), h, d + 1); }
+    else { const k = 0.3 + 0.4 * hash(y * 100 | 0, d, 2); split(x, y, w, h * k, d + 1); split(x, y + h * k, w, h * (1 - k), d + 1); }
+  })(0, 0, 1, 1, 0);
+  const G = new Float32Array(N * N);
+  for (const [x, y, w, h, val] of blocksG) for (let j = Math.floor(y * N); j < Math.floor((y + h) * N); j++) for (let i = Math.floor(x * N); i < Math.floor((x + w) * N); i++) G[j * N + i] = val;
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const x = i / N, y = j / N;
+    // shards: each Voronoi cell (warped a little) gets its own arrival time; cracks along the cell edges arrive first
+    const wx = x + (fbm(x, y, 4, 11) - 0.5) * 0.06, wy = y + (fbm(x, y, 4, 12) - 0.5) * 0.06;
+    let d1 = 9, d2 = 9, id = 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) for (let k = 0; k < pts.length; k++) {
+      const ex = pts[k][0] + dx - wx, ey = pts[k][1] + dy - wy; if (Math.abs(ex) > 0.3 || Math.abs(ey) > 0.3) continue;
+      const d = ex * ex + ey * ey; if (d < d1) { d2 = d1; d1 = d; id = k; } else if (d < d2) d2 = d;
+    }
+    const edge = Math.min(1, (Math.sqrt(d2) - Math.sqrt(d1)) * 40);
+    const grunge = fbm(x, y, 8, 1);
+    const r = Math.min(1, Math.max(0, 0.08 + 0.62 * hash(id, 3, 8) + 0.22 * grunge * edge + (vn(x * 96, y * 96, 96, 3) - 0.5) * 0.08));
+    const b = fbm(x, y, 2, 7);
+    const o = (j * N + i) * 4;
+    data[o] = r * 255; data[o + 1] = G[j * N + i] * 255; data[o + 2] = b * 255; data[o + 3] = 255;
+  }
+  const t = new THREE.DataTexture(data, N, N, THREE.RGBAFormat);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearFilter; t.needsUpdate = true;
+  return t;
+}
+const C = {
+  tA: { value: null }, tB: { value: null }, tScroll: { value: makeScrollTexture() },
+  uProgress: { value: 0 }, uAspect: { value: 1 }, uNoiseOff: { value: new THREE.Vector2() },
+};
+const composite = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
+  uniforms: C, depthTest: false, depthWrite: false,
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`,
+  fragmentShader: /* glsl */`
+    uniform sampler2D tA, tB, tScroll; uniform float uProgress, uAspect; uniform vec2 uNoiseOff;
+    varying vec2 vUv;
+    float linstep(float a, float b, float t){ return clamp((t - a) / (b - a), 0.0, 1.0); }
+    // a sweep from start to end with a soft margin; progress 0..1 moves it across
+    float falloff(float x, float start, float end, float margin, float progress){
+      float m = margin * sign(end - start); float p = mix(start - m, end, progress); return linstep(p + m, p, x); }
+    float cubicIn(float t){ return t * t * t; }
+    // dither: interleaved gradient noise, re-offset every frame (igloo uses a blue-noise texture)
+    float ign(vec2 p){ return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715)))); }
+    // 5-tap spectral chromatic aberration with a barrel bend
+    vec4 spectrum(float t){ float lo = step(t, 0.5); float hi = 1.0 - lo; float w = clamp(1.0 - abs(2.0 * clamp((t - 1.0/6.0) / (4.0/6.0), 0.0, 1.0) - 1.0), 0.0, 1.0);
+      return pow(vec4(lo, 1.0, hi, 1.0) * vec4(1.0 - w, w, 1.0 - w, 1.0), vec4(1.0 / 2.2)); }
+    vec2 barrel(vec2 uv, float amt){ vec2 cc = uv - 0.5; return uv + cc * dot(cc, cc) * amt; }
+    vec3 ca(sampler2D t, vec2 uv, float maxd, float bend){
+      vec4 sum = vec4(0.0), sw = vec4(0.0);
+      for (int i = 0; i < 5; i++) { float k = float(i) / 5.0; vec4 w = spectrum(k); sw += w; sum += w * texture2D(t, barrel(uv, bend * maxd * k)); }
+      return (sum / sw).rgb; }
+    void main(){
+      if (uProgress <= 0.0) { gl_FragColor = vec4(texture2D(tA, vUv).rgb, 1.0); return; }
+      if (uProgress >= 1.0) { gl_FragColor = vec4(texture2D(tB, vUv).rgb, 1.0); return; }
+      vec2 uvTex = vUv - 0.5; uvTex.x *= uAspect; uvTex += 0.5;
+      vec3 st = texture2D(tScroll, uvTex).rgb;
+      float slopeDisp = (st.b * 2.0 - 1.0) * 0.4;
+      float slope = -0.2 * uAspect;
+      float incl = vUv.x + slopeDisp;
+      float incP = uProgress * (1.0 + abs(slope));
+      float sweep = vUv.y + incl * abs(slope);
+      float blurDiag = falloff(sweep, 0.0, 1.0, 2.0, incP);
+      float dispDiag = falloff(sweep, 0.0, 1.0, 0.9, incP);
+      float cutDisp = falloff(st.g, 0.0, 1.0, 1.0, dispDiag);
+      float cutDiag = falloff(sweep, 0.0, 1.0, 0.2, incP);
+      float cut = falloff(st.r, 0.0, 1.0, 2.0, cutDiag);
+      const float parallaxY = 0.4; const float disp = 0.025;
+      vec2 n = vec2(ign(gl_FragCoord.xy + uNoiseOff * 97.0), ign(gl_FragCoord.xy + uNoiseOff.yx * 131.0 + 17.0));
+      float modulator = 12.0 * smoothstep(1.0, 0.7, abs(vUv.x * 2.0 - 1.0)) * smoothstep(1.0, 0.7, abs(vUv.y * 2.0 - 1.0));
+      vec3 s1 = vec3(0.0), s2 = vec3(0.0);
+      if (cut < 1.0) s1 = ca(tA, vUv - vec2(0.0, parallaxY * cubicIn(uProgress) + disp * cutDisp), modulator, blurDiag * n.x);
+      if (cut > 0.0) s2 = ca(tB, vUv + vec2(0.0, parallaxY * cubicIn(1.0 - uProgress) + disp * (1.0 - cutDisp)), modulator, (1.0 - blurDiag) * n.y);
+      gl_FragColor = vec4(clamp(mix(s1, s2, cut), 0.0, 1.0), 1.0);
+    }`,
+}));
+const screenScene = new THREE.Scene(); screenScene.add(composite);
+const screenCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+let portrait = false;
+function resize() {
+  const w = innerWidth, h = innerHeight; const asp = w / h;
+  renderer.setSize(w, h, false);
+  A.c.setSize(w, h); B.c.setSize(w, h); A.b.resolution.set(w / 2, h / 2);
+  camA.aspect = camB.aspect = asp;
+  camA.zoom = Math.min(1, asp * 1.25);                                  // igloo's portrait rule
+  camA.updateProjectionMatrix(); camB.updateProjectionMatrix();
+  C.uAspect.value = asp;
+  const p = asp < 0.9; if (p !== portrait || !wall.userData.done) { portrait = p; layoutWall(p); wall.userData.done = true; }
+}
+addEventListener('resize', resize); resize();
+
+function apply() {
+  U.uGlow.value = P.glow; U.uRest.value = P.rest; U.uTint.value = P.tint; U.uBlend.value = P.blend; U.uTex.value = P.tex; U.uKey.value = P.key;
+  A.b.strength = P.bloom;
+}
+let ghost = touch && !reduce;
+$('ghost').textContent = 'Auto sweep: ' + (ghost ? 'on' : 'off');
+$('ghost').addEventListener('click', () => { ghost = !ghost; $('ghost').textContent = 'Auto sweep: ' + (ghost ? 'on' : 'off'); });
+
+// ---- input ----
+const ndc = new THREE.Vector2(0, 0), ray = new THREE.Raycaster(), plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+const hit = new THREE.Vector3(); let pointerActive = false, lastInput = -1e9;
+function onMove(x, y) { ndc.set((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1); pointerActive = true; lastInput = performance.now(); }
+addEventListener('pointermove', e => onMove(e.clientX, e.clientY), { passive: true });
+addEventListener('pointerdown', e => onMove(e.clientX, e.clientY), { passive: true });
+document.addEventListener('pointerleave', () => { pointerActive = false; });
+addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') pointerActive = false; });
+
+// ---- state ----
+const mouse = new THREE.Vector3(99, 99, 0);                // smoothed pointer on the logo plane
+const camState = { theta: 0, phi: 0 };
+const scroll = { a: 0, b: 0 };
+const tmpQ = new THREE.Quaternion(), ax = [new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(1, 0, 0)];
+const dir = new THREE.Vector3();
+const heroCopy = $('heroCopy'), wallCopy = $('wallCopy');
+
+// camera poses: hero, then pulled back
+const camFrom = new THREE.Vector3(0, 0, 19.25), camTo = new THREE.Vector3(0, 4.5, 34);
+const tgtFrom = new THREE.Vector3(0, -0.9, 0), tgtTo = new THREE.Vector3(0, -2.6, -2);
+const basePos = new THREE.Vector3(), baseTgt = new THREE.Vector3(), off = new THREE.Vector3(), right = new THREE.Vector3(), upv = new THREE.Vector3();
+const sineNoise = (a, b, c) => (Math.sin(a * 1.5 + b * 3.4598 + c * 1.234) + Math.sin(a * 3.12 - b * 3.234 + c * 4.221) + Math.sin(a * 0.355 + b * 2.3 - c * 1.375)) / 3;
+const ease = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+
+// scroll map, in screens: 0 to 1.5 pull back, 1.5 to 2.5 the wipe (igloo's one-unit overlap), then the Wall
+const PULL = 1.5, WIPE = 1.0;
+function clipFor(tp, above) {
+  // straight-line approximation of the wipe edge, for the DOM copy only
+  const asp = innerWidth / innerHeight, sl = 0.2 * asp, pp = -0.2 + 1.2 * tp * (1 + sl) + 0.1;
+  const yL = 1 - pp, yR = 1 - (pp - sl);     // CSS y (0 top) of the edge at x=0 and x=1
+  const L = (yL * 100).toFixed(2), R = (yR * 100).toFixed(2);
+  return above ? `polygon(0 0,100% 0,100% ${R}%,0 ${L}%)` : `polygon(0 ${L}%,100% ${R}%,100% 100%,0 100%)`;
+}
+
+const clock = new THREE.Clock(); let t = 0;
+function frame() {
+  const dt = Math.min(clock.getDelta(), 1 / 12); t += dt; ratio = Math.min(5, dt / (1 / 60));
+  U.uTime.value = t;
+  const pr = scrollY / innerHeight;
+  scroll.a = lerpFPS(scroll.a, pr, 0.075); scroll.b = lerpFPS(scroll.b, scroll.a, 0.15);   // igloo's two followers
+  const s = ease(clamp01(scroll.b / PULL));
+  const tp = clamp01((scroll.b - PULL) / WIPE);
+  const heroOn = 1 - smoothstep(0, 0.45, s);               // push only works near the hero pose, like igloo
+
+  // pointer target: real pointer, or a slow sweep on touch when idle
+  let target = null;
+  if (pointerActive) target = ndc;
+  else if (ghost && performance.now() - lastInput > 2500) target = new THREE.Vector2(Math.sin(t * 0.45) * 0.55, Math.sin(t * 0.31 + 1) * 0.3 + 0.1);
+  if (target) { ray.setFromCamera(target, camA); if (ray.ray.intersectPlane(plane, hit)) { mouse.x = lerpFPS(mouse.x, hit.x, P.mouse); mouse.y = lerpFPS(mouse.y, hit.y, P.mouse); } }
+  else { mouse.x = lerpFPS(mouse.x, 99, P.mouse * 0.25); mouse.y = lerpFPS(mouse.y, 99, P.mouse * 0.25); }
+
+  // blocks: igloo's breath and push, two 6% followers, move along the centroid vector, small three-axis spin
+  blocks.forEach((b, i) => {
+    let l = 0.4;
+    l *= Math.sin(-t * 2 + b.c.x) * 0.5 + 0.5;
+    l *= Math.cos(-t) * 0.5 + 0.5;
+    l *= 0.5 + 1.5 * b.rand.z;
+    l *= 0.5 * P.breath;
+    const c = Math.sin(t + b.rand.x * 12.342) * b.rand.y;
+    const dist = Math.hypot(b.c.x - mouse.x, b.c.y - mouse.y);
+    const h = fit(smoothstep(P.r0, P.r1, dist), 0, 1, P.push + P.wob * c, 0);
+    l = Math.max(0, Math.max(l, h * heroOn));
+    b.t1 = l; b.t2 = lerpFPS(b.t2, b.t1, P.follow); b.d = lerpFPS(b.d, b.t2, P.follow);
+    dir.set(b.c.x, b.c.y, P.lift);
+    U.uOff.value[i].copy(dir).multiplyScalar(b.d);
+    b.q.identity();
+    b.q.multiply(tmpQ.setFromAxisAngle(ax[0], Math.cos(b.d * 2 + b.rand.z * 30) * b.d * 0.5));
+    b.q.multiply(tmpQ.setFromAxisAngle(ax[1], Math.cos(b.d * 2 + b.rand.x * 30) * b.d * 0.5));
+    b.q.multiply(tmpQ.setFromAxisAngle(ax[2], Math.cos(b.d * 2 + b.rand.y * 30) * b.d * 0.5));
+    U.uQ.value[i].set(b.q.x, b.q.y, b.q.z, b.q.w); U.uD.value[i] = b.d;
+  });
+
+  // camera: base pose from scroll, then igloo's parallax (0.07, 0.025 of 90 degrees, 3.5% a frame) and 0.01 shake
+  basePos.lerpVectors(camFrom, camTo, s); baseTgt.lerpVectors(tgtFrom, tgtTo, s);
+  const tx = pointerActive && !reduce ? target.x : 0, ty = pointerActive && !reduce ? target.y : 0;
+  camState.theta = lerpFPS(camState.theta, tx * Math.PI * 0.5 * 0.07, 0.035);
+  camState.phi = lerpFPS(camState.phi, -ty * Math.PI * 0.5 * 0.025, 0.035);
+  off.subVectors(basePos, baseTgt); dir.copy(off).normalize();
+  right.crossVectors(camA.up, dir).normalize(); upv.crossVectors(dir, right);
+  off.applyAxisAngle(right, camState.phi).applyAxisAngle(upv, camState.theta);
+  camA.position.copy(baseTgt).add(off);
+  const sh = reduce ? 0 : 0.01;
+  const look = baseTgt.clone().sub(camA.position)
+    .applyAxisAngle(right, sineNoise(-2.45, 4.789, 7.343 + t * 0.5) * sh).applyAxisAngle(upv, sineNoise(12.23, 3.44, -3.234 + t * 0.5) * sh);
+  camA.lookAt(camA.position.clone().add(look));
+
+  // wall camera: a slow drift as you scroll through it
+  camB.position.y = -(clamp01((scroll.b - PULL - WIPE) / 1.5)) * 0.8;
+
+  // render the visible scenes, then the composite
+  if (tp < 1) A.c.render(dt);
+  if (tp > 0) { renderer.toneMapping = THREE.NoToneMapping; B.c.render(dt); renderer.toneMapping = THREE.ACESFilmicToneMapping; }   // swatches stay true to the catalog
+  C.tA.value = A.c.readBuffer.texture; C.tB.value = B.c.readBuffer.texture;
+  C.uProgress.value = tp; C.uNoiseOff.value.set(Math.random(), Math.random());
+  renderer.setRenderTarget(null); renderer.render(screenScene, screenCam);
+
+  // the DOM copy rides with its scene: hero slides up by 0.4 p^3, the Wall rises from 0.4 (1-p)^3 below
+  $('hint').style.visibility = tp > 0 ? 'hidden' : 'visible';
+  heroCopy.style.transform = `translate3d(0,${(-0.4 * tp ** 3 * 100).toFixed(3)}vh,0)`;
+  heroCopy.style.clipPath = tp > 0 ? clipFor(tp, true) : 'none';
+  heroCopy.style.visibility = tp >= 1 ? 'hidden' : 'visible';
+  wallCopy.style.transform = `translate3d(0,${(0.4 * (1 - tp) ** 3 * 100).toFixed(3)}vh,0)`;
+  wallCopy.style.clipPath = tp < 1 ? clipFor(tp, false) : 'none';
+  wallCopy.style.visibility = tp <= 0 ? 'hidden' : 'visible';
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+$('cta').addEventListener('click', () => scrollTo({ top: (PULL + WIPE + 0.2) * innerHeight, behavior: reduce ? 'auto' : 'smooth' }));
+</script>
+</html>

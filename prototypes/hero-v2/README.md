@@ -1,0 +1,15 @@
+# Hero prototype v2 (2026-10-07)
+
+Live: https://claude.ai/artifact/QDXUhF32ZLd7L9a5ccDnq8 (same link as v1, now version 2).
+
+What changed from v1:
+- **30 blocks of exactly equal area** (28,191 sq units each in SVG space). `slice3.py` cuts the logo only along its own three grid directions (30, 150 and 90 degrees), splitting each region by bisection until every piece has the same area, choosing the most compact cut each time. One half is sliced and the other half is its 180-degree copy, so the mark stays symmetric. `slices.png` shows the cut.
+- **Matte black.** Lambert lighting with a soft wrap, no specular, no rim. The faces carry a fine faceted texture (a triangle lattice with each facet tilted slightly) plus grain and slow mottling, our procedural take on igloo's faceted snow.
+- **Ten shades, one per family**, clockwise from the top in catalog order: Snow, Sky, Rouge, Amethyst, Sunbeam, Cinnamon, Mango, Silver, Lawn, Crimson. Each colour owns three blocks and blends softly into its neighbours (Gaussian weights). The shade glows from the cut faces and tints the black slightly.
+- **igloo's hover maths, number for number**: pointer on the logo plane smoothed at 5% a frame; push 0.5 plus or minus 0.3 within 1 unit, gone by 3 units; two 6% followers; each block moves along its centroid vector by `1 + displacement`; spin `cos(d x 2 + rand x 30) x d x 0.5` on three axes; glow mixed by `5 x displacement`; FOV 30; camera 19.25 units from the logo; parallax 0.07 and 0.025 of 90 degrees at 3.5% a frame; shake 0.01 at speed 0.5; igloo's portrait zoom rule. The breathing wave is igloo's formula, scaled to 0.3 because a logo cannot open up at rest the way an igloo's top courses can (Tune slider goes to 2).
+- **The igloo wipe into section 2**: both scenes render to their own targets, one full-screen shader mixes them. Diagonal tilted by `0.2 x aspect`, wobbled by the data texture's blue channel; red channel is the shard threshold, green the hard-edged tech blocks (0.025 screen shift); upper scene slides up `0.4 x p^3`, lower rises from `0.4 x (1 - p)^3`; 5-tap spectral chromatic aberration with barrel bend, 12 at the centre, 0 at the edges, dithered per frame. The data texture is generated in code (igloo ships a painted PNG), and the dither is interleaved gradient noise instead of a blue-noise image. Scrubbed by scroll both ways over one screen.
+- Section 2 is a placeholder: the Wall, 240 swatches in catalog order on Pearl Whisper, unlit so the colours stay true.
+
+Not settled: the background (next pass), the hero copy riding the wipe (DOM text is clipped along a straight-line approximation of the cut; on the real site the copy may be drawn into the scene so it shatters with it), and whether section 2 renders in WebGL at all (CLAUDE.md allows one WebGL island; a wipe like this needs section 2 as a texture).
+
+Rebuild: `python3 build.py` (inlines `pieces.json` and the shades). Screenshot: `node shot.mjs <w> <h> <mobile 0|1> <out.png> <scroll in screens> [mouseX mouseY]`.
