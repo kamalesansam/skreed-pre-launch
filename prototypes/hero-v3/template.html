@@ -80,6 +80,8 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { SavePass } from 'three/addons/postprocessing/SavePass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
 const PIECES = /*PIECES*/null;
 const FAMILIES = /*SHADES*/null;
@@ -94,7 +96,7 @@ const REGION = [['Frosty Whites', 'Snow'], ['Blissful Blues', 'Sky'], ['Playful 
 
 // ---- tuning state. Hover defaults are igloo.inc's own numbers (wiring doc 4.2). ----
 const P = { push: 0.5, wob: 0.3, r0: 1, r1: 3, follow: 0.06, mouse: 0.05, breath: reduce ? 0 : 0.3, lift: 1.6,
-  glow: 2.4, rest: 0.06, tint: 0.035, blend: 0.95, tex: 1, relief: 0.13, key: 2.0, bloom: 0.7 };
+  glow: 2.4, rest: 0.06, tint: 0.035, blend: 0.95, tex: 1, relief: 0.08, key: 2.0, bloom: 0.7 };
 for (const k of Object.keys(P)) {
   const el = $(k); if (!el) continue; el.value = P[k]; $('o-' + k).textContent = (+el.value).toFixed(2);
   el.addEventListener('input', () => { P[k] = +el.value; $('o-' + k).textContent = (+el.value).toFixed(2); apply(); });
@@ -222,15 +224,16 @@ const logoMat = new THREE.ShaderMaterial({
       float k1 = max((dot(N, L1) + 0.1) / 1.1, 0.0); float k2 = max(dot(N, L2), 0.0);
       float hemi = 0.5 + 0.5 * N.y;
       float albedo = 0.013 * mix(1.0, (0.8 + 0.4 * grain) * (0.85 + 0.3 * mottle), uTex);
-      vec3 base = mix(vec3(albedo), shade * albedo * 2.2, uTint * 6.0);
+      // the black faces stay black: no shade tint on them, only on the cut sides
+      vec3 base = vSide > 0.5 ? mix(vec3(albedo), shade * albedo * 2.2, uTint * 6.0) : vec3(albedo);
       vec3 col = base * (uKey * k1 * k1 * 1.6 + 0.25 * k2 + 0.3 * hemi + 0.12);
       // inner glow: the cut faces carry the shade, brighter as the block lifts away (igloo mixes by 5 x displacement)
       float lift = clamp(5.0 * vDisp, 0.0, 1.0);
       float deep = vSide * (0.55 + 0.45 * smoothstep(0.5, -0.5, vRest.z));
       float shimmer = 0.85 + 0.15 * sin(uTime * 1.3 + vRest.x * 2.1 + vRest.y * 1.7);
       col += shade * deep * (uRest + uGlow * lift) * shimmer;
-      col += shade * (1.0 - vSide) * lift * 0.04 * uGlow;
-      gl_FragColor = vec4(col, 1.0);
+      // alpha marks the black faces (0) so the bloom pass can keep its haze off them
+      gl_FragColor = vec4(col, vSide > 0.5 ? 1.0 : 0.0);
     }`,
 });
 const logo = new THREE.Mesh(new THREE.BufferGeometry(), logoMat); logo.frustumCulled = false;
@@ -280,11 +283,23 @@ function layoutWall(portrait) {
 // =====================================================================
 // Post: each scene renders into its own target; one composite shader wipes between them
 // =====================================================================
+let savePass = null;
 function makeComposer(scene, cam, withBloom) {
   const c = new EffectComposer(renderer); c.renderToScreen = false;
   c.addPass(new RenderPass(scene, cam));
   let b = null;
-  if (withBloom) { b = new UnrealBloomPass(new THREE.Vector2(256, 256), P.bloom, 0.5, 0.55); c.addPass(b); }
+  if (withBloom) {
+    // the glow blooms, but the bloom never lands on a black face: save the clean frame, bloom, then put the faces back
+    const save = new SavePass(new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType })); c.addPass(save);
+    b = new UnrealBloomPass(new THREE.Vector2(256, 256), P.bloom, 0.5, 0.55); c.addPass(b);
+    c.addPass(new ShaderPass({
+      uniforms: { tDiffuse: { value: null }, tClean: { value: null } },
+      vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: 'uniform sampler2D tDiffuse, tClean; varying vec2 vUv; void main(){ vec4 c = texture2D(tClean, vUv); vec3 b = texture2D(tDiffuse, vUv).rgb; gl_FragColor = vec4(mix(c.rgb, b, step(0.5, c.a)), 1.0); }',
+    }));
+    c.passes[c.passes.length - 1].uniforms.tClean.value = save.renderTarget.texture;
+    savePass = save;
+  }
   c.addPass(new OutputPass());
   return { c, b };
 }
@@ -389,7 +404,7 @@ let portrait = false;
 function resize() {
   const w = innerWidth, h = innerHeight; const asp = w / h;
   renderer.setSize(w, h, false);
-  A.c.setSize(w, h); B.c.setSize(w, h); A.b.resolution.set(w / 2, h / 2);
+  A.c.setSize(w, h); B.c.setSize(w, h); savePass.renderTarget.setSize(w * DPR, h * DPR); A.b.resolution.set(w / 2, h / 2);
   camA.aspect = camB.aspect = asp;
   camA.zoom = Math.min(1, asp * 1.25);                                  // igloo's portrait rule
   camA.updateProjectionMatrix(); camB.updateProjectionMatrix();

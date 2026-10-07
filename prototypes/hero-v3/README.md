@@ -7,3 +7,7 @@ Live: https://claude.ai/artifact/QDXUhF32ZLd7L9a5ccDnq8 (version 3). Tune → Bl
 - Everything else (igloo hover maths, glow, the wipe into the Wall) is unchanged from v2.
 
 Rebuild: `python3 mesh3.py` (needs scipy, shapely, svgpathtools; writes `pieces_all.json`), copy to `pieces.json`, then `python3 build.py`.
+
+## v3.1 (same day)
+- **Black faces stay black.** The faces no longer take any shade tint or seam spill, and the bloom cannot drift over them: the frame is saved before bloom (the black faces are flagged in its alpha), then the faces are put back unbloomed. Only the cut sides and the light between blocks carry colour, at rest and while hovering.
+- **Denser relief.** Facet spacing halved (17 SVG units, about 0.08 world units; rim points every 15). About 6,900 facets per variant. Default relief depth 0.08 so the denser facets keep the same stone character.

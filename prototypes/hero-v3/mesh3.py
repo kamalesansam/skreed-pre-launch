@@ -4,7 +4,7 @@ import numpy as np
 from scipy.spatial import Delaunay
 from shapely.geometry import Polygon, Point
 W, H = 1207.63, 1312.81
-SP = 34.0   # facet spacing in SVG units (about 0.16 world units)
+SP = 17.0   # facet spacing in SVG units (about 0.08 world units)
 out = {'viewBox': [W, H], 'variants': {}}
 for N in (10, 20, 30):
     subprocess.run(['python3', 'slice3.py', str(N)], check=True, capture_output=True)
@@ -25,7 +25,7 @@ for N in (10, 20, 30):
         ring = list(poly.exterior.coords)[:-1]
         bnd = []
         for (x0, y0), (x1, y1) in zip(ring, ring[1:] + ring[:1]):
-            L = math.hypot(x1 - x0, y1 - y0); n = max(1, round(L / 30))
+            L = math.hypot(x1 - x0, y1 - y0); n = max(1, round(L / 15))
             for k in range(n): bnd.append((x0 + (x1 - x0) * k / n, y0 + (y1 - y0) * k / n))
         inner = []
         minx, miny, maxx, maxy = poly.bounds
