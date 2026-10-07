@@ -1,0 +1,283 @@
+<title>Skreed Hero Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@700&family=Open+Sans:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,400&display=swap">
+<style>
+/* Layout: one fixed WebGL stage behind a tall scroll track; hero copy in the first screen, a tuning panel bottom-right. Single-look (night world) by design; the light world is a toggle. */
+:root{--slate:#383F43;--pearl:#F7F6F3;--ember:#FF9900;--ink:#F7F6F3;--muted:#c3c8cb;--panel:#2b3134;--line:#4a5257;color-scheme:dark}
+html,body{height:auto}
+body{background:var(--slate);color:var(--ink);font-family:'Open Sans',Arial,sans-serif;margin:0;padding-inline:16px;padding-block:0}
+body.light{--ink:#383F43;--muted:#5f676c;--panel:#ffffff;--line:#d9d4cc;background:var(--pearl);color-scheme:light}
+#stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:pan-y}
+.track{position:relative;height:420svh;pointer-events:none}
+.hero{position:sticky;top:0;height:100svh;display:flex;flex-direction:column;justify-content:flex-end;gap:12px;padding-block:0 9svh;max-width:1180px;margin:0 auto}
+.hero h1{font-family:'Poppins','Arial Black',sans-serif;font-weight:700;font-size:clamp(2.2rem,7vw,4.6rem);line-height:.95;letter-spacing:-.015em;margin:0;text-wrap:balance}
+.hero p{font-family:'Source Serif 4',Georgia,serif;font-size:clamp(1.05rem,2.4vw,1.25rem);margin:0;color:var(--muted);max-width:30ch}
+.hero .cta{pointer-events:auto;align-self:flex-start;background:var(--ember);color:#383F43;font-weight:600;border:0;border-radius:999px;padding:12px 20px;font-size:1rem;cursor:pointer}
+.next{position:absolute;bottom:0;left:0;right:0;height:100svh;display:grid;place-items:center;text-align:center}
+.next p{font-family:'Poppins',sans-serif;font-weight:700;font-size:clamp(1.4rem,4vw,2.4rem);margin:0}
+.next small{display:block;font-family:'Open Sans',sans-serif;font-weight:400;font-size:.9rem;color:var(--muted);margin-top:8px}
+.hint{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:16px;font-size:.8rem;color:var(--muted);z-index:2}
+.tune{position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:3;background:var(--panel);border:1px solid var(--line);border-radius:12px;max-width:min(320px,calc(100vw - 24px));font-size:.82rem}
+.tune summary{cursor:pointer;padding:10px 14px;font-weight:600;list-style:none}
+.tune summary::-webkit-details-marker{display:none}
+.tune .body{display:grid;gap:8px;padding:0 14px 14px;max-height:60svh;overflow:auto}
+.tune label{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center}
+.tune input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--ember)}
+.tune select,.tune button{font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:transparent;color:inherit}
+.tune output{font-variant-numeric:tabular-nums;color:var(--muted)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.fallback{position:fixed;inset:auto 16px 40% 16px;text-align:center;color:var(--muted)}
+:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+</style>
+<canvas id="stage" aria-hidden="true"></canvas>
+<div class="hint" id="hint">Move over the logo. On a phone, touch and drag. Scroll to pull back.</div>
+<div class="track">
+  <section class="hero">
+    <h1>Go beyond basic.</h1>
+    <p>240 shades. One of them is yours.</p>
+    <button class="cta" type="button" id="cta">Reserve my shade</button>
+  </section>
+  <section class="next"><div><p>The Wall</p><small>Section 2 placeholder. The transition into it comes in the next prototype.</small></div></section>
+</div>
+<details class="tune" id="tune">
+  <summary>Tune</summary>
+  <div class="body">
+    <label for="shade">Glow shade <select id="shade"></select></label>
+    <div class="row"><button type="button" id="world">Light world</button><button type="button" id="ghost">Auto sweep: on</button></div>
+    <label for="radius">Push radius <output id="o-radius"></output><input id="radius" type="range" min="0.4" max="3" step="0.05" value="1.35"></label>
+    <label for="push">Push strength <output id="o-push"></output><input id="push" type="range" min="0" max="1.5" step="0.01" value="0.55"></label>
+    <label for="spin">Block spin <output id="o-spin"></output><input id="spin" type="range" min="0" max="2" step="0.01" value="0.7"></label>
+    <label for="glow">Glow <output id="o-glow"></output><input id="glow" type="range" min="0" max="4" step="0.05" value="1.6"></label>
+    <label for="breath">Breathing <output id="o-breath"></output><input id="breath" type="range" min="0" max="0.08" step="0.002" value="0.018"></label>
+    <label for="stiff">Spring stiffness <output id="o-stiff"></output><input id="stiff" type="range" min="20" max="400" step="5" value="120"></label>
+    <label for="damp">Spring damping <output id="o-damp"></output><input id="damp" type="range" min="2" max="40" step="0.5" value="14"></label>
+    <label for="par">Camera parallax (deg) <output id="o-par"></output><input id="par" type="range" min="0" max="10" step="0.25" value="4"></label>
+    <label for="bloom">Bloom <output id="o-bloom"></output><input id="bloom" type="range" min="0" max="2" step="0.05" value="0.85"></label>
+  </div>
+</details>
+<p class="fallback" id="fallback" hidden>This prototype needs WebGL2. On the real site this is where the poster image of the logo would stay.</p>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const PIECES = {"viewBox":[1207.63,1312.81],"pieces":[{"half":0,"pts":[[985.3,715.63],[899.2,765.34],[966.2,804.02],[1052.3,754.31]]},{"half":1,"pts":[[1.27,469.31],[0.52,602.8],[116.5,535.84]]},{"half":0,"pts":[[710.1,656.16],[642.7,695.07],[746.1,754.77],[813.5,715.86]]},{"half":1,"pts":[[500.63,535.22],[433.36,574.21],[536.9,633.99],[604.3,595.07]]},{"half":1,"pts":[[393.83,596.73],[308.57,547.35],[222.5,597.04],[307.9,646.34]]},{"half":0,"pts":[[899.6,666.15],[813.5,715.86],[899.2,765.34],[985.3,715.63]]},{"half":0,"pts":[[1171.04,685.75],[1104.18,646.99],[985.3,715.63],[1052.3,754.31]]},{"half":1,"pts":[[585.94,486.37],[502.63,535.22],[604.59,595.24],[688.34,545.36]]},{"half":0,"pts":[[711.1,656.16],[813.47,715.4],[746.11,754.78],[813.49,715.97],[899.2,765.34],[813.5,715.59],[898.6,666.15],[796.2,607.03]]},{"half":1,"pts":[[308.57,547.35],[241.68,508.61],[241.68,463.56],[116.5,535.84],[222.5,597.04]]},{"half":1,"pts":[[103.41,665.79],[188.63,715.21],[307.9,646.34],[222.5,597.04]]},{"half":0,"pts":[[1104.18,646.99],[1018.67,597.4],[899.6,666.15],[985.3,715.63]]},{"half":0,"pts":[[1206.36,843.26],[1207.13,706.68],[1171.04,685.75],[1052.3,754.31]]},{"half":0,"pts":[[709.33,655.72],[796.77,605.74],[899.6,664.99],[1016.67,597.4],[913.93,537.25]]},{"half":1,"pts":[[188.67,715.23],[292.2,775.26],[411.7,706.27],[307.9,646.34]]},{"half":1,"pts":[[0.5,606.12],[103.41,665.79],[222.5,597.04],[116.5,535.84],[0.52,602.8]]},{"half":0,"pts":[[517.48,767.34],[620.94,825.88],[744.1,754.77],[642.19,694.78]]},{"half":1,"pts":[[292.21,775.26],[293.71,776.12],[535.96,634.6],[433.36,575.36],[393.86,597.87],[309.9,646.34],[412.14,706.0]]},{"half":1,"pts":[[241.68,463.55],[247.53,449.09],[257.83,438.58],[294.79,416.38],[70.0,286.59],[50.39,311.22],[31.17,342.0]]},{"half":0,"pts":[[965.95,804.2],[965.59,851.93],[960.1,863.72],[951.06,873.1],[1161.91,994.84],[1180.68,962.68],[1192.51,934.68]]},{"half":0,"pts":[[242.56,1144.45],[309.83,1182.97],[551.1,1043.68],[484.1,1004.99]]},{"half":0,"pts":[[1192.51,934.68],[1204.04,887.51],[1206.36,843.26],[1052.3,754.31],[966.2,804.02]]},{"half":1,"pts":[[1019.5,478.1],[1207.63,587.25],[1207.03,445.87],[1202.27,415.78],[1191.88,378.58]]},{"half":0,"pts":[[0.0,725.55],[0.6,866.93],[5.36,897.02],[15.77,934.28],[188.2,834.73]]},{"half":1,"pts":[[294.79,416.38],[381.01,366.74],[138.93,226.97],[101.73,254.99],[70.0,286.59]]},{"half":1,"pts":[[1050.55,217.58],[965.04,168.33],[723.5,307.79],[808.9,357.09]]},{"half":0,"pts":[[156.75,1095.03],[242.56,1144.45],[484.1,1004.99],[398.4,955.51]]},{"half":1,"pts":[[241.68,463.55],[31.17,342.0],[18.56,368.93],[7.74,403.11],[2.65,432.96],[1.27,469.31],[116.5,535.84]]},{"half":1,"pts":[[1191.99,377.34],[1182.37,352.56],[1169.67,326.71],[1157.03,306.01],[1141.25,285.07],[912.7,417.02],[1018.5,478.1]]},{"half":0,"pts":[[15.64,935.46],[25.26,960.24],[37.96,986.09],[50.6,1006.79],[66.43,1027.78],[295.0,895.82],[189.2,834.73]]},{"half":0,"pts":[[74.5,1036.17],[104.07,1062.53],[156.75,1094.45],[398.45,955.48],[295.03,895.8],[67.2,1027.92]]},{"half":1,"pts":[[808.84,357.12],[912.66,417.04],[1140.48,284.94],[1123.98,267.38],[1103.56,250.27],[1050.55,218.15]]},{"half":1,"pts":[[965.04,168.33],[858.57,107.41],[617.5,246.59],[723.5,307.79]]},{"half":0,"pts":[[951.06,873.1],[826.83,945.95],[1068.9,1085.7],[1096.13,1066.03],[1120.06,1044.73],[1142.46,1020.61],[1161.91,994.84]]},{"half":1,"pts":[[381.01,366.74],[584.1,249.96],[597.2,245.65],[617.5,246.59],[362.11,99.14],[138.93,226.97]]},{"half":0,"pts":[[826.83,945.95],[623.53,1062.85],[615.83,1065.96],[604.17,1067.64],[589.55,1065.0],[551.1,1043.68],[845.53,1213.66],[1068.9,1085.7]]},{"half":1,"pts":[[616.24,247.31],[626.22,251.65],[723.49,307.79],[617.57,246.04],[857.56,107.41],[706.96,22.17],[683.17,13.72],[655.59,6.7],[627.8,2.24],[603.23,0.56],[577.2,1.29],[557.06,3.82],[536.67,8.38],[516.26,15.24],[488.52,28.83],[363.11,99.14],[617.29,245.89]]},{"half":0,"pts":[[309.83,1182.97],[497.32,1289.71],[520.45,1298.35],[546.85,1305.5],[573.91,1310.33],[598.07,1312.52],[623.84,1312.46],[643.88,1310.53],[671.09,1304.9],[691.55,1298.02],[719.35,1284.41],[845.53,1213.66],[551.1,1043.68]]}]};
+const FAMILIES = [{"n":"Frosty Whites","s":[["Pearl","#f7f7f7"],["Vanilla","#f7f7ef"],["Cotton","#f8efea"],["Lace","#f5f0ea"],["Cream","#f3f2ed"],["Frost","#f2f0e3"],["Snow","#f0f4f5"],["Daisy","#eff7f9"],["Rice","#f0f8ed"],["Porcelain","#eff1f0"],["Ivory","#f7f6e4"],["Parchment","#edeee6"],["Coconut","#eaeff3"],["Alabaster","#efece5"],["Oyster","#efeae6"],["Mist","#eae9e7"],["Off White","#eaeaea"],["Bone","#edebde"],["Seashell","#f0e8db"],["Linen","#efe6d5"],["Eggshell","#eae6da"],["Antique","#e8e5d6"],["Chiffon","#e1e5d7"],["Oatmeal","#e2d6c6"]]},{"n":"Blissful Blues","s":[["Electric","#76f2fc"],["Baby Blue","#8be2fb"],["Powder","#9adeee"],["Turquoise","#00e8d9"],["Aqua","#04dcf7"],["Aquamarine","#3ef9da"],["Cyan","#01ffff"],["Sky","#08bcf4"],["Ocean","#1494e4"],["Azure","#007dd3"],["Cobalt","#1040ca"],["Royal","#0040c1"],["Egyptian","#0036ac"],["Indigo","#1919a4"],["Sapphire","#002c84"],["Blueberry","#1d1968"],["Classic","#074882"],["Teal","#00818e"],["Pigeon","#5c6f92"],["Stone","#608592"],["Prussian","#2f3f5c"],["Navy","#0e305b"],["Space","#15284f"],["Midnight","#0e1442"]]},{"n":"Playful Pinks","s":[["Light Pink","#ffd2e9"],["Pastel","#f2bdcd"],["Blush","#f4b6bb"],["Peachy","#ffbcac"],["Baby Pink","#ffacd0"],["Ballerina","#efa3af"],["Rose Pink","#f5a2b4"],["Flamingo","#fc92b6"],["Bubblegum","#f086c6"],["Orchid","#e881b9"],["Crepe","#cf91a8"],["Salmon Pink","#ff6a64"],["Berry","#ff6090"],["Rouge","#f2638f"],["Punch","#ef4b7e"],["Doll","#e64c95"],["Gumball","#ff5fff"],["Neon","#ee27fe"],["Peony","#ea0eac"],["Bright Pink","#fe0094"],["Watermelon","#fa465f"],["Camellia","#e02693"],["Magenta","#ed008c"],["Fuchsia","#e0028d"]]},{"n":"Vivid Violets","s":[["Light Violet","#f5e3fb"],["Pale Violet","#ecd0f9"],["Mauve","#dfa4f8"],["Pastel","#d7b9ed"],["Lilac","#c988c8"],["Lavender","#986db5"],["Amethyst","#8554d1"],["Iris","#6947d1"],["Psychedelic","#ae00ff"],["Bright Violet","#b944ea"],["Classic Violet","#9010bf"],["Orchid","#911489"],["Wildberry","#a04d95"],["Mulberry","#742665"],["Grape","#5f114f"],["Fig","#671e67"],["Ultra Violet","#4a108b"],["Indigo","#39178f"],["Royal","#492376"],["Midnight","#492376"],["Elderberry","#391265"],["Plum","#4e0973"],["Wine","#572048"],["Eggplant","#4a154d"]]},{"n":"Mellow Yellows","s":[["Sunbeam","#fff164"],["Pale Yellow","#fbf9c6"],["Lemonade","#f4ef94"],["Pastel","#f5eda5"],["Custard","#edd87b"],["Buttercup","#f4dc6e"],["Chamomile","#f0d979"],["Canary","#f4e125"],["Limoncello","#f4f420"],["Daffodil","#f5d914"],["Sunflower","#f4d41d"],["Dandelion","#f5d71d"],["Bright","#fef200"],["Lemon","#f4ef55"],["Mimosa","#f2d031"],["Sunshine","#fdce4c"],["Tuscany","#f9c83d"],["Golden","#f7bc34"],["Banana","#f0c529"],["Bumblebee","#ffc239"],["Mustard","#eaa927"],["Citrine","#dccc53"],["Neon","#d6f430"],["Dijon","#cea146"]]},{"n":"Earthy Browns","s":[["Almond","#e8d2bd"],["Sand","#e1c39f"],["Beige","#EAD8AB"],["Desert","#c6a884"],["Rosy","#c29995"],["Light Brown","#c3a082"],["Cinnamon","#ba7237"],["Peanut","#c88737"],["Peru","#d08647"],["Cider","#b37840"],["Bronze","#a95c26"],["Cocoa","#81553a"],["Coffee","#7a583f"],["Wood","#7d5d44"],["Chocolate","#7f5229"],["Brick","#7c2b18"],["Russet","#74421f"],["Taupe","#896950"],["Wenge","#5c4d4a"],["Chestnut","#5d2b24"],["Walnut","#59402c"],["Brunette","#543733"],["Dark Chocolate","#4d301e"],["Umber","#662917"]]},{"n":"Blushing Corals","s":[["Bellini","#ffb98a"],["Apricot","#faab6f"],["Melon","#fb934b"],["Mango","#ff9f40"],["Bright Coral","#ff961a"],["True Coral","#ff815e"],["Fire","#ff7c22"],["Neon","#ff7901"],["Clementine","#f78628"],["Orange Peel","#f1891f"],["Sunset","#ef9721"],["Tangerine","#ea821a"],["Amber","#fcb627"],["Honey","#e5811f"],["Tangelo","#f67622"],["Pumpkin","#f0652f"],["Marmalade","#e85728"],["Saffron","#e67300"],["Autumn","#e56228"],["Persian","#d48c5b"],["Clay","#c17956"],["Maple","#bd5816"],["Ginger","#b04a18"],["Rust","#af410b"]]},{"n":"Stormy Greys","s":[["Pale Grey","#bbbab8"],["Pastel","#b8b8b1"],["Pearl Grey","#b3bab0"],["Harbor","#a8a9a3"],["Silver","#acacac"],["Dolphin","#9d9d9d"],["Dove","#9c9c9c"],["Steel","#929292"],["Koala","#878685"],["Ash","#848988"],["Rhino","#788082"],["Fog","#797474"],["Coal","#767b89"],["Smoke","#7d7d7d"],["Warm Grey","#7d787b"],["Shadow","#686b6f"],["Mouse","#696a6d"],["Shark","#5b6369"],["Lava","#5e5d61"],["Stone","#54524d"],["Dark Grey","#444444"],["Iron","#43464c"],["Graphite","#424548"],["Charcoal","#393f44"]]},{"n":"Go Green","s":[["Light Green","#e3f7ba"],["Green Tea","#caed91"],["Pear","#c7dd4a"],["Pastel","#baeaa0"],["Mint","#6be5b4"],["Neon","#26ff00"],["Pistachio","#96cc76"],["Jade","#8ab269"],["Sage","#96a880"],["Lime","#6bbc3b"],["Green Apple","#91b521"],["Lawn","#4aa325"],["Olive","#83841e"],["Fern","#335a01"],["Basil","#476d3e"],["Thyme","#717d67"],["Khaki","#666046"],["Persian","#19a598"],["Teal","#05877d"],["Emerald","#006d48"],["Pine","#004c16"],["Forest","#084f3d"],["Hunter","#063f1e"],["Army","#434714"]]},{"n":"Roaring Reds","s":[["Pastel","#fe6c6b"],["Paprika","#f3342e"],["Strawberry","#f4315c"],["Vermilion","#dd4b3a"],["Imperial","#e81638"],["Classic","#ef1123"],["Crimson","#d20000"],["Raspberry","#cd2550"],["Scarlet","#c30117"],["Rose","#c70451"],["Ruby","#b31f2d"],["Mars","#b84533"],["Apple","#ab091b"],["Chilli","#bb0f1c"],["Claret","#9b021c"],["Red Currant","#a23744"],["Hibiscus","#a0183d"],["Terracotta","#9a3f3d"],["Cherry","#8f0125"],["Blood","#850312"],["Burgundy","#82001e"],["Maroon","#730034"],["Wine","#4b0923"],["Mahogany","#470406"]]}];
+const $ = (id) => document.getElementById(id);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const touch = matchMedia('(hover: none)').matches;
+
+// ---- tuning state (the panel writes here) ----
+const P = { radius: 1.35, push: 0.55, spin: 0.7, glow: 1.6, breath: reduce ? 0 : 0.018, stiff: 120, damp: 14, par: reduce ? 0 : 4, bloom: 0.85 };
+for (const k of Object.keys(P)) {
+  const el = $(k); if (!el) continue; el.value = P[k]; $('o-' + k).textContent = (+el.value).toFixed(2);
+  el.addEventListener('input', () => { P[k] = +el.value; $('o-' + k).textContent = (+el.value).toFixed(2); apply(); });
+}
+const sel = $('shade');
+for (const f of FAMILIES) { const g = document.createElement('optgroup'); g.label = f.n; for (const [n, h] of f.s) { const o = document.createElement('option'); o.value = h; o.textContent = n; if (n === 'Mauve' && f.n === 'Vivid Violets') o.selected = true; g.appendChild(o); } sel.appendChild(g); }
+
+// ---- renderer ----
+const canvas = $('stage');
+let renderer;
+try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); }
+catch (e) { $('fallback').hidden = false; throw e; }
+const DPR = Math.min(devicePixelRatio, touch ? 1.25 : 1.5);
+renderer.setPixelRatio(DPR);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 120);
+let light = false;
+const BG = { dark: new THREE.Color('#1d2124'), light: new THREE.Color('#F7F6F3') };
+scene.background = BG.dark.clone();
+scene.fog = new THREE.Fog(BG.dark.clone(), 11, 30);
+
+// ---- the logo: SVG halves sliced into isometric blocks, extruded, merged into one mesh ----
+const [VW, VH] = PIECES.viewBox; const S = 2.35 / VW; const DEPTH = 0.42;
+const parts = [];
+let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+for (const piece of PIECES.pieces) {
+  const v = piece.pts.map(([x, y]) => new THREE.Vector2((x - VW / 2) * S, -(y - VH / 2) * S));
+  if (THREE.ShapeUtils.isClockWise(v)) v.reverse();
+  const shape = new THREE.Shape(v);
+  let geo = new THREE.ExtrudeGeometry(shape, { depth: DEPTH, bevelEnabled: true, bevelThickness: 0.018, bevelSize: 0.012, bevelSegments: 2, curveSegments: 3 });
+  geo.translate(0, 0, -DEPTH / 2);
+  // centroid of the 2D outline (area-weighted)
+  let a = 0, cx = 0, cy = 0;
+  for (let i = 0; i < v.length; i++) { const p = v[i], q = v[(i + 1) % v.length]; const c = p.x * q.y - q.x * p.y; a += c; cx += (p.x + q.x) * c; cy += (p.y + q.y) * c; }
+  a *= 0.5; cx /= 6 * a; cy /= 6 * a;
+  const n = geo.attributes.position.count;
+  const cen = new Float32Array(n * 3), rand = new Float32Array(n * 3), side = new Float32Array(n);
+  const r = [rnd(), rnd(), rnd()];
+  for (let i = 0; i < n; i++) { cen.set([cx, cy, 0], i * 3); rand.set(r, i * 3); }
+  for (const g of geo.groups) if (g.materialIndex === 1) for (let i = g.start; i < g.start + g.count; i++) side[i] = 1;
+  geo.setAttribute('aCentroid', new THREE.BufferAttribute(cen, 3));
+  geo.setAttribute('aRand', new THREE.BufferAttribute(rand, 3));
+  geo.setAttribute('aSide', new THREE.BufferAttribute(side, 1));
+  geo.clearGroups();
+  parts.push(geo);
+}
+const logoGeo = mergeGeometries(parts, false);
+const U = {
+  uTime: { value: 0 }, uPointer: { value: new THREE.Vector3(9, 9, 0) }, uPush: { value: 0 }, uRadius: { value: P.radius },
+  uSpin: { value: P.spin }, uBreath: { value: P.breath }, uGap: { value: 0.985 }, uGlow: { value: P.glow },
+  uShade: { value: new THREE.Color(sel.value) }, uBase: { value: new THREE.Color('#5b666c') }, uLight: { value: 0 },
+};
+const logoMat = new THREE.ShaderMaterial({
+  uniforms: U,
+  vertexShader: /* glsl */`
+    uniform float uTime, uPush, uRadius, uSpin, uBreath, uGap; uniform vec3 uPointer;
+    attribute vec3 aCentroid; attribute vec3 aRand; attribute float aSide;
+    varying vec3 vN; varying vec3 vW; varying float vSide; varying float vDisp;
+    mat3 rot(vec3 ax, float a){ ax = normalize(ax); float s = sin(a), c = cos(a), o = 1.0 - c;
+      return mat3(o*ax.x*ax.x+c, o*ax.x*ax.y+ax.z*s, o*ax.z*ax.x-ax.y*s,
+                  o*ax.x*ax.y-ax.z*s, o*ax.y*ax.y+c, o*ax.y*ax.z+ax.x*s,
+                  o*ax.z*ax.x+ax.y*s, o*ax.y*ax.z-ax.x*s, o*ax.z*ax.z+c); }
+    void main(){
+      vec3 c = aCentroid;
+      vec3 local = (position - c) * uGap;                 // shrink a hair so seams show and glow
+      vec2 away = c.xy - uPointer.xy; float d = length(away);
+      float f = uPush * smoothstep(uRadius, 0.0, d);      // falloff by distance to the cursor
+      vec3 dirPush = normalize(vec3(normalize(away + 1e-4) * 0.75 + normalize(c.xy + 1e-4) * 0.35, 0.45 + aRand.z * 0.7));
+      float breath = uBreath * (0.5 + 0.5 * sin(uTime * 0.9 + aRand.x * 6.2831));
+      mat3 R = rot(aRand * 2.0 - 1.0 + vec3(0.001), f * (aRand.y - 0.5) * uSpin * 2.0);
+      float disp = f * (0.6 + 0.4 * aRand.y);
+      vec3 p = c + R * local + dirPush * disp + normalize(vec3(c.xy, 0.25)) * breath;
+      vec4 wp = modelMatrix * vec4(p, 1.0);
+      vN = normalize(mat3(modelMatrix) * (R * normal)); vW = wp.xyz; vSide = aSide; vDisp = disp + breath;
+      gl_Position = projectionMatrix * viewMatrix * wp;
+    }`,
+  fragmentShader: /* glsl */`
+    uniform vec3 uShade, uBase; uniform float uGlow, uTime, uLight;
+    varying vec3 vN; varying vec3 vW; varying float vSide; varying float vDisp;
+    void main(){
+      vec3 N = normalize(vN); vec3 V = normalize(cameraPosition - vW);
+      vec3 L = normalize(vec3(0.35, 0.8, 0.55));
+      float diff = max(dot(N, L), 0.0); float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
+      float sheen = smoothstep(-1.2, 1.4, vW.y) * 0.35;                 // soft top-lit gradient across the face
+      vec3 base = uBase * (0.42 + 0.75 * diff + sheen) + vec3(0.9) * fres * mix(0.22, 0.35, uLight);
+      float shimmer = 0.8 + 0.2 * sin(uTime * 1.4 + vW.y * 3.1 + vW.x * 2.3);
+      float inner = vSide * uGlow * (0.55 + 3.2 * vDisp) * shimmer;      // glow from inside, grows as blocks part
+      vec3 col = mix(base, uShade * 0.6, vSide * clamp(0.5 + vDisp * 2.5, 0.0, 1.0));
+      col += uShade * inner;
+      col += uShade * 0.10 * fres * uGlow;                                 // a breath of the shade through the frosted faces
+      gl_FragColor = vec4(col, 1.0);
+    }`,
+});
+const logo = new THREE.Mesh(logoGeo, logoMat);
+const logoGroup = new THREE.Group(); logoGroup.add(logo); scene.add(logoGroup); const LOGO_Y = 0.45;
+const glowLight = new THREE.PointLight(U.uShade.value, 6, 9, 1.6); glowLight.position.set(0, 0, 0.6); logoGroup.add(glowLight);
+
+// ---- the place: a field of shade blocks, families in catalog order, fading into fog ----
+const SHADES = FAMILIES.flatMap(f => f.s.map(s => s[1]));
+const COLS = touch ? 48 : 72, ROWS = touch ? 48 : 72, STEP = 0.62;
+const blockGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+const blockMat = new THREE.MeshStandardMaterial({ roughness: 0.82, metalness: 0.0 });
+const field = new THREE.InstancedMesh(blockGeo, blockMat, COLS * ROWS);
+const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), pos = new THREE.Vector3(), col = new THREE.Color();
+let k = 0;
+for (let i = 0; i < ROWS; i++) for (let j = 0; j < COLS; j++) {
+  const x = (j - COLS / 2) * STEP + (i % 2) * STEP * 0.5, z = (i - ROWS / 2) * STEP * 0.87;
+  const h = 0.18 + 0.28 * Math.pow(rnd(), 3);
+  pos.set(x, -3.1 + h * 0.5, z - 9); q.setFromEuler(new THREE.Euler(0, Math.PI / 4, 0)); sc.set(1, h / 0.5, 1);
+  m4.compose(pos, q, sc); field.setMatrixAt(k, m4);
+  const fam = Math.floor(i / (ROWS / 10)) % 10; const shade = SHADES[fam * 24 + (j % 24)];
+  field.setColorAt(k, col.set(shade)); k++;
+}
+scene.add(field);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x1d2124, 0.55));
+const sun = new THREE.DirectionalLight(0xffffff, 0.9); sun.position.set(4, 10, 6); scene.add(sun);
+
+// ---- post: bloom only catches the glow ----
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), P.bloom, 0.55, 0.82);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false); composer.setSize(w, h); bloom.resolution.set(w / 2, h / 2);
+  camera.aspect = w / h;
+  camera.zoom = w / h < 0.8 ? Math.max(0.62, (w / h) * 1.05) : 1;   // portrait: zoom out so the logo fits
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+
+function apply() {
+  U.uRadius.value = P.radius; U.uSpin.value = P.spin; U.uGlow.value = P.glow; U.uBreath.value = P.breath;
+  bloom.strength = P.bloom;
+}
+sel.addEventListener('change', () => { U.uShade.value.set(sel.value); glowLight.color.set(sel.value); });
+$('world').addEventListener('click', () => {
+  light = !light; document.body.classList.toggle('light', light);
+  const c = light ? BG.light : BG.dark; scene.background.copy(c); scene.fog.color.copy(c);
+  U.uLight.value = light ? 1 : 0; $('world').textContent = light ? 'Night world' : 'Light world';
+});
+let ghost = touch && !reduce;
+$('ghost').textContent = 'Auto sweep: ' + (ghost ? 'on' : 'off');
+$('ghost').addEventListener('click', () => { ghost = !ghost; $('ghost').textContent = 'Auto sweep: ' + (ghost ? 'on' : 'off'); });
+
+// ---- input: pointer projected onto the logo's plane ----
+const ndc = new THREE.Vector2(0, 0), ray = new THREE.Raycaster(), plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+const hit = new THREE.Vector3(); let pointerActive = false, lastInput = -1e9;
+function onMove(x, y) { ndc.set((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1); pointerActive = true; lastInput = performance.now(); }
+addEventListener('pointermove', e => onMove(e.clientX, e.clientY), { passive: true });
+addEventListener('pointerdown', e => onMove(e.clientX, e.clientY), { passive: true });
+document.addEventListener('pointerleave', () => { pointerActive = false; });
+addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') pointerActive = false; });
+addEventListener('touchend', () => { pointerActive = false; });
+
+// ---- springs: critically-ish damped, frame-rate independent ----
+function spring(s, target, dt) {      // s = {x, v}
+  const a = P.stiff * (target - s.x) - P.damp * s.v; s.v += a * dt; s.x += s.v * dt;
+}
+const sp = { px: { x: 9, v: 0 }, py: { x: 9, v: 0 }, push: { x: 0, v: 0 } };
+const scroll = { a: 0, b: 0 }; const par = { x: 0, y: 0 };
+
+// ---- loop ----
+const clock = new THREE.Clock(); let t = 0;
+const camFrom = new THREE.Vector3(0, 0.25, 8.4), camTo = new THREE.Vector3(0, 6.5, 19), look = new THREE.Vector3();
+const ease = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+function frame() {
+  const dt = Math.min(clock.getDelta(), 1 / 20); t += dt;
+  U.uTime.value = t;
+  // scroll progress through the first three screens, smoothed twice like igloo
+  const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+  const p = Math.min(1, scrollY / (max * 0.72));
+  scroll.a += (p - scroll.a) * (1 - Math.exp(-dt * 7)); scroll.b += (scroll.a - scroll.b) * (1 - Math.exp(-dt * 9));
+  const s = ease(scroll.b);
+  // pointer target: real pointer, or a slow sweep on touch devices when idle
+  let target = null;
+  if (pointerActive) target = ndc.clone();
+  else if (ghost && performance.now() - lastInput > 2500) target = new THREE.Vector2(Math.sin(t * 0.45) * 0.55, Math.sin(t * 0.31 + 1) * 0.35);
+  if (target) {
+    ray.setFromCamera(target, camera);
+    if (ray.ray.intersectPlane(plane.clone().applyMatrix4(logoGroup.matrixWorld), hit)) {
+      logoGroup.worldToLocal(hit); spring(sp.px, hit.x, dt); spring(sp.py, hit.y, dt);
+    }
+  }
+  spring(sp.push, target && s < 0.6 ? P.push : 0, dt);
+  U.uPointer.value.set(sp.px.x, sp.py.x, 0); U.uPush.value = Math.max(0, sp.push.x);
+  // idle float
+  logoGroup.position.y = LOGO_Y * (1 - s) + (reduce ? 0 : Math.sin(t * 0.6) * 0.06);
+  logoGroup.rotation.y = reduce ? 0 : Math.sin(t * 0.25) * 0.08;
+  // camera: pull back on scroll, parallax with the pointer
+  const tgt = pointerActive ? ndc : new THREE.Vector2(0, 0);
+  par.x += (tgt.x - par.x) * (1 - Math.exp(-dt * 3)); par.y += (tgt.y - par.y) * (1 - Math.exp(-dt * 3));
+  camera.position.lerpVectors(camFrom, camTo, s);
+  const r = THREE.MathUtils.degToRad(P.par);
+  const dist = camera.position.length();
+  camera.position.x += Math.sin(par.x * r) * dist * 0.5; camera.position.y += Math.sin(par.y * r * 0.5) * dist * 0.5;
+  look.set(0, -2.2 * s, -2 * s); camera.lookAt(look);
+  composer.render(dt);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+$('cta').addEventListener('click', () => scrollTo({ top: document.documentElement.scrollHeight, behavior: reduce ? 'auto' : 'smooth' }));
+</script>

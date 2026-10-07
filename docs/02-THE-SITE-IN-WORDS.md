@@ -18,6 +18,8 @@ The page background is Pearl Whisper, the warm off-white from the brand guide, e
 
 ## Section 1. Basic, or beyond basic
 
+Superseded on 2026-10-07: the splitter hero is dropped. Section 1 is now the Skreed logomark in glowing blocks over a field of the 240 shades, with a cursor or touch push and a scroll pull-back (prototype in `prototypes/hero-v1/`). The text below is kept for the record until the new section is written up.
+
 The first screen is a single photograph-grade render of a phone, the phone the visitor is most likely holding (we detect iPhone, Pixel or Galaxy from the browser and pick the nearest device render; the default is iPhone 17 Pro). It fills the width between the 16 px gutters and sits on a flat Pearl Whisper ground with a soft two-tone gradient behind it, the only gradient on the site, so subtle it reads as light rather than colour.
 
 The phone wears a plain black case. A thin vertical line with a round handle sits at about 30 percent from the left. To the right of the line, the same phone wears today's shade. The visitor drags the handle. The black case gives way to colour under their thumb, and the headline above the render changes with it.

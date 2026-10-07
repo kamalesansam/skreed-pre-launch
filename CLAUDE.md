@@ -68,7 +68,7 @@ This repo is the skreed.in pre-launch teaser (live until Oct 31 2026, then skree
 
 ## Always do these
 - Phone first. Build and test at 390 px before any desktop layout. Must look as strong on a phone as on a laptop.
-- Performance budget: critical JS under 60 KB gz, total JS under 250 KB gz, hero image under 120 KB, first view under 1.5 MB, LCP under 2.5 s on throttled 4G. No WebGL in the five spine sections.
+- Performance budget: critical JS under 60 KB gz, total JS under 250 KB gz, hero image under 120 KB, first view under 1.5 MB, LCP under 2.5 s on throttled 4G. One WebGL island only: the hero (the logo in glowing blocks, decided 2026-10-07), lazy-loaded behind a static poster image, with a no-WebGL, data-saver and reduced-motion fallback. No WebGL anywhere else.
 - Honour `prefers-reduced-motion` everywhere via `gsap.matchMedia()`.
 - Every UI state designed: empty, loading, error, offline, slow network, no results, permission denied, validation, success.
 - Colours only from `shades-240.json`, the two page neutrals (Pearl Whisper, Urban Slate) and the one accent (Ember Luxe). Almond Silk, Steel Twilight and Rust Ember are available for the share card and stories, never for UI chrome. Define them as CSS tokens on `:root`.
