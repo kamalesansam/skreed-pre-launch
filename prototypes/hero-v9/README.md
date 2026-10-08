@@ -1,6 +1,6 @@
 # Hero prototype v9 (2026-10-08)
 
-Live: https://claude.ai/artifact/QDXUhF32ZLd7L9a5ccDnq8 (version 16). Builds on v8.2 (`../hero-v8`).
+Live: https://claude.ai/artifact/QDXUhF32ZLd7L9a5ccDnq8 (version 18). Builds on v8.2 (`../hero-v8`).
 
 ## The floor, re-created from igloo.inc's snow
 Sam asked for the floor to look exactly like igloo's. Three Blender variants were built from the hero camera and judged against four igloo screenshots by three reviews (surface, shape, tone): variant a won on composition (flank knolls, open centre, foreground mounds), with b's tone and stone scatter and c's measurement harness grafted on. The integrated floor (`blender/floor_final.py`, post curve `blender/floor_final_post.py`, LUT `blender/floor_lut.json`, checks `blender/floor_judge.py` and `blender/verify_bake.py`) adds:
@@ -27,6 +27,9 @@ Sam asked for the hero copy to go: no headline, no sub-line, no button, plain an
 - **Tune: Reset to defaults** restores every slider, toggle and the block colour order.
 - **From the review (three lenses, each finding verified):** days are padded to two digits and the numeral carries the 2ch reservation, so the row never jumps; ticks are aligned to the wall-clock second; the numerals stay hidden until the first tick and a `<noscript>` line gives the date; at zero the countdown stops and the eyebrow reads "Skreed is live. skreed.com"; the seconds group is hidden under reduced motion; the eyebrow and labels are Open Sans 600 at 14 px; spacing uses the `--s` tokens; below 1100 px the countdown lifts so the cue has its own row.
 - Not changed on purpose: there is no call to action on the fold. Sam chose the plain countdown; the reserve flow lives in the later sections.
+
+## v9.3 (same day)
+The instruction line under the logotype ("Move over the logo...") is removed at Sam's request; the hero carries only the logotype, the mark, the countdown and the cue.
 
 ## Logotype glitch, in our shades
 The classic glitch splits red and blue. Ours splits a near-complementary pair from the hero's ten family shades (OKLCH hues 130 to 170 degrees apart, the same theory behind a chromatic split): Sky and Crimson, Amethyst and Sunbeam, Lawn and Rouge, Sky and Mango. Each burst picks one pair; about 40 percent of the slabs get two ghost copies of the wordmark pulled 1.5 to 2.7 percent of the width to either side, opacity balanced by lightness so Sunbeam and Amethyst read with the same weight, with the Pearl Whisper copy on top so the colour shows only as fringes. The intro burst uses Sky and Crimson, the pair the mark itself shows at rest. Tune: "Colour split" toggle. Off under reduced motion with the rest of the glitch.
