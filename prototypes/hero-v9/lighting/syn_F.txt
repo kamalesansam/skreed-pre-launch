@@ -1,0 +1,1 @@
+key=2.0&keyX=-6&keyY=7&keyZ=10&keyRad=3.5&ktemp=1&spec=0.8&rough=0.55&alb=0.017&wrap=0.25&bevel=0.05&bevelAng=50&rim=2.4&rimX=-4&rimY=9&rimZ=-3&rimRad=4.5&rim2=0.75&rim2X=9&rim2Y=7&rim2Z=-3&rim2Rad=4&bounce=1.0&floor=0.24&hz=0.06&sky=0.008&amb=1&wear=0.3&occ=0.3&knee=0.55&fogBright=0.4

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="loading">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Skreed Hero Prototype</title>
@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@700&family=Open+Sans:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,400&display=swap">
 <style>
 /* v2: one fixed WebGL stage. Scroll drives: hero pull-back, then the igloo-style wipe into section 2 (the Wall), scrubbed both ways. */
-:root{--slate:#383F43;--pearl:#F7F6F3;--ember:#FF9900;--panel:#2b3134;--line:#4a5257;--muted:#c3c8cb;--s1:8px;--s2:12px;--s3:16px;--inset:clamp(16px,3.5vw,56px);color-scheme:dark}   /* one corner inset for the logo, the hint, the countdown and the cue: equal from the left and from the bottom, scaling with the viewport */
+:root{--slate:#383F43;--pearl:#F7F6F3;--ember:#FF9900;--panel:#2b3134;--line:#4a5257;--muted:rgba(247,246,243,.7);--s1:8px;--s2:12px;--s3:16px;--inset:clamp(16px,3.5vw,56px);color-scheme:dark}   /* one corner inset for the logo, the hint, the countdown and the cue: equal from the left and from the bottom, scaling with the viewport */
 body{background:var(--slate);color:var(--pearl);font-family:'Open Sans',Arial,sans-serif;margin:0;font-synthesis:none}
 #stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:pan-y}
 .track{position:relative;height:460svh;pointer-events:none}
@@ -58,10 +58,124 @@ body{background:var(--slate);color:var(--pearl);font-family:'Open Sans',Arial,sa
 .tune output{font-variant-numeric:tabular-nums;color:var(--muted)}
 .seg{display:flex;gap:6px}.seg button{flex:1}.seg button[aria-pressed=true]{background:var(--pearl);color:var(--slate);border-color:var(--pearl)}
 .tune h3{margin:6px 0 0;font-size:.75rem;font-weight:600;color:var(--muted)}
-.fallback{position:fixed;inset:auto 16px 40% 16px;text-align:center;color:var(--muted)}
+.fallback{position:fixed;left:var(--inset);right:var(--inset);top:45%;text-align:center;color:var(--muted)}
 :focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+/*LOADER-CSS*/
+:root{--night:#050506;--skeleton:#f7f6f340}
+html.loading .cue{opacity:0}
+.intro{position:fixed;inset:0;background:var(--night);will-change:clip-path;contain:strict}
+.intro.fade{transition:opacity .4s cubic-bezier(.2,0,0,1)}
+.intro svg{width:100%;height:100%;display:block;overflow:visible}
+#seams path{fill:none;stroke:var(--pearl);stroke-opacity:.45;stroke-width:1}
+.po #seams path{fill:#0c0c0d;stroke-opacity:.28}
+.wb{fill:none;stroke:var(--pearl);stroke-opacity:.16;stroke-width:1;opacity:0}
+#ticks rect{fill:var(--pearl);opacity:0}
+#head{stroke:var(--pearl);stroke-width:1;stroke-opacity:.9}
+#labs .lab{opacity:0}
+#pct{opacity:1;right:0;flex-direction:column;gap:var(--s1)}
+#pct .r{display:flex;align-items:center;gap:6px}
+#pct b{display:block;width:40px;height:3px;background:var(--skeleton)}
+#pct b[hidden]{visibility:hidden}
+#pctSt{font-weight:400;text-align:center;line-height:1.4;max-width:calc(100% - 32px)}
+/*LOADER-CSS-END*/
 </style>
 <canvas id="stage" aria-hidden="true"></canvas>
+<div class="intro" id="intro" aria-hidden="true"><svg id="plot"><defs><clipPath id="scanClip"><rect id="sr"/></clipPath></defs><g id="backs"></g><g id="seams" clip-path="url(#scanClip)"></g><g id="ticks"></g><g class="head" id="head"><line id="hl"/><path id="ht"/></g></svg><div id="labs"></div><div class="lab pct" id="pct"><span class="r"><i></i><span id="pn">000 / 240</span><b id="pctBar"></b></span><span class="st" id="pctSt"></span></div></div><noscript><style>.intro{display:none}</style></noscript>
+<script>/* Skreed intro loader: plot, scan, cut. Inline, no network. */
+(function(){
+var G=/*PLOT*/null,POSE={cam:[0,-2.5,24],tgt:[0,-1,0],fov:30,lw:5.6,z:.475};window.SKREED_POSE=POSE;
+var WT=/*WT*/null;
+var D=document,HT=D.documentElement,NS='http://www.w3.org/2000/svg',$=function(i){return D.getElementById(i)};
+var reduce=matchMedia('(prefers-reduced-motion:reduce)').matches,OFF='You are offline. The countdown still runs.';
+var intro=$('intro'),seams=$('seams'),backs=$('backs'),ticks=$('ticks'),labs=$('labs'),pct=$('pct'),pn=$('pn'),bar=$('pctBar'),st=$('pctSt'),sr=$('sr'),hl=$('hl'),ht=$('ht'),head=$('head');
+var W,H,box=[0,0,0,0],blk=[],tk=[],lab=[],L0,L1,hx=-1e4,hold=-1;
+var p=0,pm=0,pd=0,ready=false,phase='plot',mode='',manual=false,got={},lastP=performance.now(),last=-1,rush=0,cutT=0,shown=0,raf=0;
+function sa(e,a){for(var k in a)e.setAttribute(k,a[k]);return e}
+function r(x){return+x.toFixed(1)}
+function dec(w){for(var o=[],i=0;i<w.length;i+=3)o.push(parseInt(w.substr(i,3),36));return o}
+var PC=G.s.split('|').map(dec),AN=dec(G.a);
+function el(n,a,q){return q.appendChild(sa(D.createElementNS(NS,n),a))}
+function pend(){for(var k in WT)if(!got[k])return k}
+function projector(){var asp=W/H,zoom=Math.min(1,asp*1.25),f=zoom/Math.tan(POSE.fov*Math.PI/360),c=POSE.cam,t=POSE.tgt;
+  var z=[c[0]-t[0],c[1]-t[1],c[2]-t[2]],L=Math.hypot(z[0],z[1],z[2]);z=[z[0]/L,z[1]/L,z[2]/L];
+  var x=[z[2],0,-z[0]];L=Math.hypot(x[0],x[1],x[2]);x=[x[0]/L,x[1]/L,x[2]/L];
+  var y=[z[1]*x[2]-z[2]*x[1],z[2]*x[0]-z[0]*x[2],z[0]*x[1]-z[1]*x[0]];
+  return function(wx,wy,wz){var dx=wx-c[0],dy=wy-c[1],dz=wz-c[2],vz=dx*z[0]+dy*z[1]+dz*z[2];
+    return[(f*(dx*x[0]+dy*x[1]+dz*x[2])/-vz/asp*.5+.5)*W,(-f*(dx*y[0]+dy*y[1]+dz*y[2])/-vz*.5+.5)*H]}}
+function hd(x,full){hx=x;var a=full?0:box[1]-24,b=full?H:box[3]+24;
+  sa(hl,{x1:x,x2:x,y1:a,y2:b});ht.setAttribute('d','M'+(x-4)+' '+a+'h8M'+(x-4)+' '+b+'h8')}
+function build(){
+  W=innerWidth;H=innerHeight;if(!W||!H)return;
+  $('plot').setAttribute('viewBox','0 0 '+W+' '+H);
+  var P=projector(),S=POSE.lw/G.vw,x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,i,j;
+  seams.textContent=backs.textContent=ticks.textContent=labs.textContent='';blk=[];tk=[];lab=[];
+  for(i=0;i<PC.length;i++){
+    var q=PC[i],n=q.length/2,cx=(AN[2*i]-G.vw/2)*S,cy=-(AN[2*i+1]-G.vh/2)*S,df='',db='',pf=[],pb=[],mx=-1e9,mn=1e9,g=el('g',{class:'wb'},backs);
+    for(j=0;j<n;j++){var wx=cx+((q[2*j]-G.vw/2)*S-cx)*.992,wy=cy+(-(q[2*j+1]-G.vh/2)*S-cy)*.992,f=P(wx,wy,POSE.z),b=P(wx,wy,-POSE.z);
+      pf.push(f);pb.push(b);df+=(j?'L':'M')+r(f[0])+' '+r(f[1]);db+=(j?'L':'M')+r(b[0])+' '+r(b[1]);
+      if(f[0]<x0)x0=f[0];if(f[0]>x1)x1=f[0];if(f[1]<y0)y0=f[1];if(f[1]>y1)y1=f[1];if(f[0]>mx)mx=f[0];if(f[0]<mn)mn=f[0]}
+    for(j=0;j<n;j++){var a=2*((j+n-1)%n),k=2*((j+1)%n),ux=q[2*j]-q[a],uy=q[2*j+1]-q[a+1],vx=q[k]-q[2*j],vy=q[k+1]-q[2*j+1];
+      if(Math.abs(Math.atan2(ux*vy-uy*vx,ux*vx+uy*vy))>.4363){
+        tk.push({el:el('rect',{x:r(pf[j][0]-1.5),y:r(pf[j][1]-1.5),width:3,height:3},ticks),x:pf[j][0],t:-1});
+        el('line',{x1:r(pf[j][0]),y1:r(pf[j][1]),x2:r(pb[j][0]),y2:r(pb[j][1])},g)}}
+    el('path',{d:db+'Z'},g);
+    blk.push({p:el('path',{d:df+'Z',pathLength:1},seams),g:g,mx:mx,mn:mn,f:pf,b:pb,a:0})}
+  box=[x0,y0,x1,y1];L0=x0-24;L1=x1+24;
+  sa(sr,{x:x0-30,y:y0-30,height:y1-y0+60});
+  for(i=0;i<PC.length;i++){var an=P((AN[2*i]-G.vw/2)*S,-(AN[2*i+1]-G.vh/2)*S,POSE.z),e=D.createElement('div');e.className='lab';
+    e.innerHTML='<i></i><span>'+(i<9?'0':'')+(i+1)+'</span>';e.style.transform='translate3d('+r(an[0]-1.5)+'px,'+r(an[1]-6)+'px,0)';
+    labs.appendChild(e);lab.push({el:e,x:an[0],a:0})}
+  pct.style.top=r(y1+28)+'px';
+  hd(hx,phase==='cut');if(mode)still()}
+function still(){sr.setAttribute('width',W+60);head.style.display='none';ticks.textContent='';var i,sk=mode==='skip',po=mode==='poster';intro.classList.toggle('po',po);
+  for(i=0;i<blk.length;i++){var b=blk[i];b.a=1;b.g.style.opacity=sk?0:1;b.p.style.opacity=sk?0:''}
+  for(i=0;i<lab.length;i++)lab[i].el.style.opacity=sk||po?0:1;
+  if(po)pct.firstChild.style.display='none'}
+function setMode(m,msg){if(phase!=='plot'||mode===m)return;mode=m;still();if(msg)st.textContent=msg}
+function count(){var n=Math.max(0,Math.min(240,Math.floor(pd*240+1e-6)));if(!manual&&!got.frame1)n=Math.min(n,216);if(n!==shown){shown=n;pn.textContent=('00'+n).slice(-3)+' / 240'}}
+function ease(x){return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2}
+function tickFrame(now){
+  raf=requestAnimationFrame(tickFrame);
+  if(last<0)last=now;var dt=Math.max(0,Math.min(.5,(now-last)/1000)),i,x,nx=pend();last=now;if(dt>.12)rush=1;
+  if(!mode&&scrollY>H*.12)setMode('skip');
+  if(phase==='plot'){
+    if(!manual&&nx&&!ready)p=Math.max(p,Math.min(pm+.9*WT[nx],p+.02*dt));
+    pd=mode||reduce?Math.min(p,1):Math.min(p,pd+(rush?2.2:1.1)*dt);if(pd>=p)rush=0;
+    x=L0+(L1-L0)*pd;
+    if(!mode){
+      sr.setAttribute('width',Math.max(0,x-(box[0]-30)));hd(x);
+      for(i=0;i<tk.length;i++){var k=tk[i];if(k.t<0&&k.x<=x)k.t=now;if(k.t>=0){var a=(now-k.t)/1000;k.el.style.opacity=a<.12?a/.12:a<.7?1:Math.max(0,1-(a-.7)/.4)}}
+      for(i=0;i<blk.length;i++){var b=blk[i];if(b.mx<=x&&b.a<1){b.a=Math.min(1,b.a+dt/.3);b.g.style.opacity=b.a}}
+      for(i=0;i<lab.length;i++){var l=lab[i];if(l.x+28<=x&&l.a<1){l.a=Math.min(1,l.a+dt/.1);l.el.style.opacity=l.a}}}
+    count();
+    if(!manual&&mode!=='poster'){var sl=p<1&&now-lastP>4000?/[tyd]$/.test(nx)?'Slow connection':'Still loading':'';if(sl!==st.textContent)st.textContent=sl;
+      if(!ready&&now-lastP>(got.scene?12e3:2e4)){var fb=$('fallback');setMode('poster',got.scene?fb&&fb.textContent:'')}}
+    if(pd>=1&&ready){phase='cut';cutT=now;if(mode!=='poster')st.textContent='';
+      if(mode||reduce){intro.classList.add('fade');intro.style.opacity='0';setTimeout(done,420);phase='fade'}}
+  }else if(phase==='cut'){
+    var u=hold<0?(now-cutT)/1000:.15+.7*hold;
+    if(u<.15)hd(L1+(W-L1)*(u/.15),true);
+    else{var v=Math.min(1,(u-.15)/.7),x2=W*(1-ease(v));hd(x2-.5,true);intro.style.clipPath='inset(0 '+r(W-x2)+'px 0 0)';
+      for(i=0;i<blk.length;i++){var q=blk[i],f=Math.min(1,Math.max(0,(q.mx+6-x2)/(q.mx-q.mn+12)));
+        q.p.style.strokeDasharray='1';q.p.style.strokeDashoffset=f;q.g.style.opacity=q.a*(1-f)}
+      for(i=0;i<lab.length;i++){var l2=lab[i];if(l2.x>=x2)l2.a=Math.max(0,l2.a-dt/.12);l2.el.style.opacity=l2.a}
+      pct.style.opacity=Math.max(0,1-v*3);
+      if(v>=1)done()}}}
+function done(){cancelAnimationFrame(raf);phase='done';intro.remove();HT.classList.remove('loading');if(window.__introDone)window.__introDone()}
+window.__skreedLoaderReport=function(m){if(manual||!WT[m]||got[m])return;got[m]=1;lastP=performance.now();
+  pm=Math.min(1,pm+WT[m]);p=Math.max(p,pm);if(m==='frame1')bar.hidden=true;if(m==='frame2'){ready=true;p=1}};
+window.__skreedLoader={
+  setProgress:function(v){manual=true;p=Math.min(1,Math.max(0,+v||0));if(p>=1)bar.hidden=true},
+  cut:function(v){manual=true;p=pd=1;ready=true;bar.hidden=true;hold=v==null?-1:+v;if(hold<0&&phase==='cut')cutT=performance.now()-150},
+  fail:function(m){setMode('poster',m)},
+  state:function(){return{phase:phase,mode:mode,p:p,pd:pd,n:shown,ready:ready,box:box,head:hx,note:st.textContent,next:pend()}},
+  pts:function(){return blk.map(function(b){return{f:b.f,b:b.b}})}};
+addEventListener('resize',build);build();
+if(reduce)setMode('still');
+if(!navigator.onLine)setMode('poster',OFF);
+addEventListener('offline',function(){if(!ready)setMode('poster',OFF)});
+raf=requestAnimationFrame(tickFrame);
+})();</script><!--LOADER-END-->
 <a class="site-logo" id="siteLogo" href="#" aria-label="Skreed, home"><svg viewBox="0 0 1209.46 292.9" aria-hidden="true" focusable="false"><defs><g id="skreed-wordmark" fill="currentColor"><path d="M43.09,287c-12.35-3.43-21.83-7.07-28.44-10.92-6.61-3.86-11.49-7.07-14.65-9.64,1.72-7.14,4.67-13.71,8.83-19.7,4.17-6,8.69-10.57,13.57-13.71,10.63,7.71,21.04,12.99,31.24,15.85,10.2,2.86,20.76,4.28,31.67,4.28,13.5,0,23.41-2.21,29.73-6.64,6.32-4.43,9.48-10.35,9.48-17.78,0-6.85-3.66-12.42-10.99-16.71-7.33-4.28-19.75-7.71-37.27-10.28-24.42-3.71-42.3-10.64-53.65-20.77-11.35-10.14-17.02-23.77-17.02-40.91,0-18.85,7.9-34.12,23.7-45.83,15.8-11.71,36.48-17.56,62.05-17.56,16.66,0,31.74,1.93,45.25,5.78,13.5,3.86,23.99,8.5,31.46,13.92-2.3,15.13-8.47,26.7-18.53,34.7-18.1-10.28-38.06-15.42-59.9-15.42-12.35,0-21.62,1.86-27.79,5.57-6.18,3.71-9.26,8.85-9.26,15.42s3.09,11.78,9.26,15.63c6.18,3.86,17.74,7.07,34.69,9.64,27.87,4.28,47.62,11.57,59.25,21.84,11.63,10.28,17.45,23.7,17.45,40.26,0,21.13-7.83,37.77-23.48,49.9-15.66,12.14-37.42,18.2-65.28,18.2-15.23,0-29.02-1.71-41.37-5.14Z"/><path d="M393.46,288.95c-10.92,2.63-22.69,3.95-35.33,3.95-8.9,0-17.09-.44-24.56-1.32l-68.52-79.48-16.8,10.1v68.07c-6.32,1.46-14.36,2.2-24.13,2.2-9.19,0-17.38-.73-24.56-2.2V2.2c6.89-1.46,14.94-2.2,24.13-2.2s17.67.73,24.56,2.2v167.75c34.19-22.25,60.76-51.09,79.72-86.51,5.75-.88,13.93-1.32,24.56-1.32,11.49,0,21.4,1.02,29.73,3.07-21.55,38.94-47.83,71.87-78.86,98.8l90.06,104.95Z"/><path d="M551.53,86.93c0,7.47-1.15,15.08-3.45,22.84s-5.46,14.22-9.48,19.39c-3.73-.86-8.83-1.72-15.3-2.59s-11.71-1.29-15.73-1.29c-7.47,0-14.65.72-21.55,2.15s-12.5,3.45-16.81,6.03v156.85c-6.32,1.44-14.51,2.15-24.56,2.15-9.48,0-17.67-.72-24.56-2.15V109.77c8.62-7.76,20.68-14.58,36.2-20.47,15.51-5.89,32.18-8.83,49.99-8.83s33.47,2.15,45.25,6.46Z"/><path d="M977.98,196.99h-144.36c1.44,12.35,5.24,22.91,11.42,31.67,6.18,8.76,13.65,14.72,22.41,17.88,8.76,3.16,17.02,4.74,24.78,4.74,6.61,0,14.72-1.01,24.35-3.02,9.62-2.01,21.62-8.04,35.98-18.1,4.88,3.16,9.41,7.97,13.57,14.44,4.17,6.46,6.68,12.71,7.54,18.74-24.13,19.25-52.43,28.87-84.89,28.87-14.94,0-28.87-2.44-41.8-7.32-12.93-4.88-24.13-11.99-33.61-21.33-9.48-9.34-16.81-20.76-21.98-34.26-5.17-13.5-7.76-28.3-7.76-44.38,0-15.23,2.59-29.59,7.76-43.09,5.17-13.5,12.42-25.14,21.76-34.9,9.34-9.77,20.32-17.38,32.96-22.84,12.64-5.46,26-8.19,40.07-8.19,13.22,0,25.64,2.23,37.27,6.68,11.63,4.45,21.62,10.77,29.95,18.96,8.33,8.19,14.79,18.03,19.39,29.52,4.6,11.49,6.89,23.84,6.89,37.06,0,9.19-.57,18.82-1.72,28.87ZM931.87,164.67c0-13.21-3.81-24.63-11.42-34.26-7.61-9.62-19.03-14.58-34.26-14.87-14.65,0-26.57,4.6-35.77,13.79s-14.65,20.97-16.37,35.33h97.82Z"/><path d="M752.48,196.99h-144.36c1.44,12.35,5.24,22.91,11.42,31.67,6.18,8.76,13.65,14.72,22.41,17.88,8.76,3.16,17.02,4.74,24.78,4.74,6.61,0,14.72-1.01,24.35-3.02s21.62-8.04,35.98-18.1c4.88,3.16,9.41,7.97,13.57,14.44,4.17,6.46,6.68,12.71,7.54,18.74-24.13,19.25-52.43,28.87-84.89,28.87-14.94,0-28.87-2.44-41.8-7.33-12.93-4.88-24.13-11.99-33.61-21.33s-16.81-20.76-21.98-34.26c-5.17-13.5-7.76-28.3-7.76-44.38,0-15.23,2.59-29.59,7.76-43.09,5.17-13.5,12.42-25.14,21.76-34.9,9.34-9.77,20.32-17.38,32.97-22.84,12.64-5.46,26-8.19,40.07-8.19,13.22,0,25.64,2.23,37.27,6.68,11.63,4.45,21.62,10.77,29.95,18.96,8.33,8.19,14.79,18.03,19.39,29.52,4.6,11.49,6.9,23.84,6.9,37.06,0,9.19-.58,18.82-1.72,28.87ZM706.37,164.67c0-13.22-3.81-24.63-11.42-34.26-7.61-9.62-19.03-14.58-34.26-14.87-14.65,0-26.57,4.6-35.77,13.79-9.19,9.19-14.65,20.97-16.37,35.33h97.82Z"/><path d="M1209.46,2.64v269.32c-10.92,5.75-24.42,10.56-40.51,14.44-16.09,3.88-32.03,5.82-47.83,5.82-16.66,0-31.96-2.37-45.89-7.11-13.93-4.74-25.85-11.63-35.77-20.68-9.91-9.05-17.6-20.32-23.05-33.83-5.46-13.5-8.19-28.58-8.19-45.25s2.87-30.95,8.62-44.6c5.75-13.65,13.72-25.28,23.92-34.9,10.2-9.62,22.12-16.95,35.77-21.98,13.65-5.03,27.94-7.54,42.88-7.54,16.37,0,30.16,2.15,41.37,6.46V2.64c6.61-1.44,14.65-2.15,24.13-2.15s17.67.72,24.56,2.15ZM1160.77,243.09v-114.62c-9.48-6.03-22.69-9.05-39.64-9.05-11.2,0-21.4,2.37-30.59,7.11-9.19,4.74-16.95,11.99-23.27,21.76-6.32,9.77-9.48,21.83-9.48,36.2,0,19.82,5.75,35.62,17.24,47.4,11.49,11.78,26.57,17.67,45.25,17.67,14.08.29,27.58-1.87,40.51-6.46Z"/></g></defs><use class="logo-base" href="#skreed-wordmark"/><g class="logo-tiles" display="none"></g></svg></a>
 <div class="labels" id="labels" aria-hidden="true"></div>
 <div class="track"></div>
@@ -153,8 +267,9 @@ addEventListener('scroll',cueCheck,{passive:true});cueCheck();})();</script>
   </div>
 </details>
 <script>/* if the 3D module never starts (CDN unreachable, an error at load), show the designed fallback instead of an empty page */
-addEventListener("error",function(){if(!window.__heroStarted){var f=document.getElementById("fallback");if(f)f.hidden=false;}});
-setTimeout(function(){if(!window.__heroStarted){var f=document.getElementById("fallback");if(f)f.hidden=false;}},8000);</script>
+function noHero(e){if(window.__heroStarted||(e&&e.target&&e.target!==window&&e.target.type!=="module")||(!e&&window.__skreedLoader))return;   /* only the module script's load error, a window error or the timer: never a font or image */
+var f=document.getElementById("fallback");if(window.__skreedLoader)window.__skreedLoader.fail(f?f.textContent:"");else if(f)f.hidden=false}   /* the loader's drawing stays as the poster */
+addEventListener("error",noHero,true);setTimeout(noHero,8000);</script>
 <p class="fallback" id="fallback" hidden>This prototype needs WebGL2. On the real site this is where the poster image of the logo would stay.</p>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"}}</script>
 <script type="module">
@@ -171,6 +286,12 @@ const FAMILIES = /*SHADES*/null;
 const $ = (id) => document.getElementById(id);
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const touch = matchMedia('(hover: none)').matches;
+const report = window.__skreedLoaderReport || (() => {});   // the inline loader's milestone bridge (a no-op if the loader is absent)
+report('import');
+const yieldFrame = () => new Promise(r => setTimeout(r, 0));   // a task boundary, so the loader's frame paints between build chunks
+// the loader hands over at its cut: until then the hero holds the plotted pose exactly (shake, parallax, bob, breath and sweep gated by `live`)
+let introDone = !document.documentElement.classList.contains('loading'), tHero0 = 0, live = 0, texOK = 0, texFrames = 0;
+const SP = window.SKREED_POSE || { cam: [0, -2.5, 24], tgt: [0, -1, 0], lw: 5.6, z: 0.475 };   // one pose object, shared with the loader's projection
 
 // One shade per family, in catalog order, placed clockwise round the logo from the top.
 const REGION = [['Frosty Whites', 'Snow'], ['Blissful Blues', 'Sky'], ['Playful Pinks', 'Rouge'], ['Vivid Violets', 'Amethyst'], ['Mellow Yellows', 'Sunbeam'],
@@ -195,7 +316,7 @@ const orderNames = () => BLOCK_ORDERS[blockOrder] || blockOrder.split(',');
 
 // ---- tuning state. Hover defaults are igloo.inc's own numbers (wiring doc 4.2). ----
 const P = { push: 0.5, wob: 0.3, r0: 1, r1: 3, follow: 0.06, mouse: 0.05, breath: reduce ? 0 : 0.3, lift: 1.6,
-  glow: 2.4, rest: 0.06, tint: 0.035, grad: 0.7, logoIdle: 1, logoSplit: 0.4, clear: 0.2, skyGain: 1, hue: 0.8, hueScale: 2.2, crumb: 0.35, crumbSize: 0.03, gExp: 0.45, gGamma: 0.7, gNear: 0.8, mist: 0.55, mistSpeed: 1, fog: 1, fogBright: 0.4, fogSpeed: 0.15, fogSize: 1, fogHug: 1.6, tex: 1.5, relief: 0.01, key: 2.9, bloom: 0.5, rim: 0.0, spec: 0.0, rough: 0.5, bounce: 0.0, amb: 0.0, rimAz: 35, rimEl: 40 };   // relief, grain and key light set by Sam on 2026-10-08
+  glow: 2.4, rest: 0.06, tint: 0.035, grad: 0.7, logoIdle: 1, logoSplit: 0.4, clear: 0.2, skyGain: 1, hue: 0.8, hueScale: 2.2, crumb: 0.35, crumbSize: 0.03, gExp: 0.45, gGamma: 0.7, gNear: 0.8, mist: 0.55, mistSpeed: 1, fog: 1, fogBright: 0.4, fogSpeed: 0.15, fogSize: 1, fogHug: 1.6, tex: 1.5, relief: 0.01, key: 2.0, bloom: 0.5, rim: 2.4, spec: 0.8, rough: 0.55, bounce: 1.0, amb: 1, rimAz: 35, rimEl: 40, bevel: 0.05, bevelAng: 50, alb: 0.017, wrap: 0.25, keyX: -6, keyY: 7, keyZ: 10, keyRad: 3.5, rimX: -4, rimY: 9, rimZ: -3, rimRad: 4.5, rim2: 0.75, rim2X: 9, rim2Y: 7, rim2Z: -3, rim2Rad: 4, floor: 0.24, hz: 0.06, sky: 0.008, ktemp: 1, wear: 0.3, occ: 0.3, knee: 0.55 };   // relief, grain and key light set by Sam on 2026-10-08
 const P_DEFAULTS = { ...P };   // for the Tune reset
 { const q = new URLSearchParams(location.search); for (const k of Object.keys(P)) if (q.has(k) && isFinite(+q.get(k))) P[k] = +q.get(k); }   // test overrides, e.g. ?rest=1
 for (const k of Object.keys(P)) {
@@ -231,31 +352,33 @@ sceneA.fog = new THREE.Fog(SLATE.clone(), 30, 80);
 
 // ---- the logo: 10, 20 or 30 equal-area blocks. Each block is real geometry: a faceted, chiselled front
 // (Delaunay facets lifted to different heights, edges chamfered down), straight sides, flat back.
-const [VW, VH] = PIECES.viewBox; const LW = 5.6; const S = LW / VW; const DEPTH = 0.95; const MAXB = 30;
+const [VW, VH] = PIECES.viewBox; const LW = SP.lw; const S = LW / VW; const DEPTH = SP.z * 2; const MAXB = 30;
 const toLocal = (x, y) => new THREE.Vector2((x - VW / 2) * S, -(y - VH / 2) * S);
 let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 const hash2 = (x, y) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
 const vnoise2 = (x, y) => { const xi = Math.floor(x), yi = Math.floor(y), fx = x - xi, fy = y - yi, u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
   return (hash2(xi, yi) * (1 - u) + hash2(xi + 1, yi) * u) * (1 - v) + (hash2(xi, yi + 1) * (1 - u) + hash2(xi + 1, yi + 1) * u) * v; };
 let blocks = [], NB = 0;
-function buildVariant(N) {
+async function buildVariant(N, step) {   // step(id): the first build yields after every block, so the loader's count keeps moving
   const V = PIECES.variants[N]; seed = 11; blocks = []; NB = V.pieces.length;
-  const P3 = [], ID = [], CEN = [], SIDE = [], HH = [];
-  V.pieces.forEach((piece, id) => {
-    const v = piece.v.map(([x, y]) => toLocal(x, y)), nb = piece.nb;
+  const P3 = [], ID = [], CEN = [], SIDE = [], HH = [], EDGE = [];
+  for (let id = 0; id < V.pieces.length; id++) {
+    const piece = V.pieces[id], v = piece.v.map(([x, y]) => toLocal(x, y)), nb = piece.nb;
     // relief height per vertex, in units of the Relief slider: rim chamfered down, facets up by a broken amount
     const h = v.map((p, k) => k < nb ? -0.55 - 0.35 * hash2(p.x * 9, p.y * 9)
       : 0.15 + 0.5 * vnoise2(p.x * 2.4 + 3, p.y * 2.4) + 0.55 * hash2(p.x * 13, p.y * 13));
     let a = 0, cx = 0, cy = 0;
     for (let i = 0; i < nb; i++) { const p = v[i], q = v[(i + 1) % nb]; const c = p.x * q.y - q.x * p.y; a += c; cx += (p.x + q.x) * c; cy += (p.y + q.y) * c; }
     a *= 0.5; cx /= 6 * a; cy /= 6 * a; const ccw = a > 0;
-    const push = (p, z, hh, side) => { P3.push(p.x, p.y, z); ID.push(id); CEN.push(cx, cy, 0); SIDE.push(side); HH.push(hh); };
+    const segD = (p, a, b) => { const dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy || 1e-9; const u = Math.min(1, Math.max(0, ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2)); return Math.hypot(p.x - a.x - u * dx, p.y - a.y - u * dy); };
+    const ed = v.map((p, k) => { if (k < nb) return 0; let d = Infinity; for (let i = 0; i < nb; i++) d = Math.min(d, segD(p, v[i], v[(i + 1) % nb])); return d; });
+    const push = (p, z, hh, side, e = 0) => { P3.push(p.x, p.y, z); ID.push(id); CEN.push(cx, cy, 0); SIDE.push(side); HH.push(hh); EDGE.push(e); };
     const t = piece.t;
     for (let k = 0; k < t.length; k += 3) {
       let [i0, i1, i2] = [t[k], t[k + 1], t[k + 2]];
       const A = v[i0], B = v[i1], C = v[i2];
       if ((B.x - A.x) * (C.y - A.y) - (B.y - A.y) * (C.x - A.x) < 0) [i1, i2] = [i2, i1];
-      push(v[i0], DEPTH / 2, h[i0], 0); push(v[i1], DEPTH / 2, h[i1], 0); push(v[i2], DEPTH / 2, h[i2], 0);     // front, faceted
+      push(v[i0], DEPTH / 2, h[i0], 0, ed[i0]); push(v[i1], DEPTH / 2, h[i1], 0, ed[i1]); push(v[i2], DEPTH / 2, h[i2], 0, ed[i2]);     // front, faceted
       push(v[i0], -DEPTH / 2, 0, 0); push(v[i2], -DEPTH / 2, 0, 0); push(v[i1], -DEPTH / 2, 0, 0);            // back, flat
     }
     for (let i = 0; i < nb; i++) {
@@ -267,13 +390,15 @@ function buildVariant(N) {
     const hull = [];
     for (let i = 0; i < nb; i++) for (const z of [DEPTH / 2, -DEPTH / 2]) hull.push(new THREE.Vector3(v[i].x - cx, v[i].y - cy, z));
     blocks.push({ c: new THREE.Vector2(cx, cy), rand: new THREE.Vector3(rnd(), rnd(), rnd()), t1: 0, t2: 0, d: 0, q: new THREE.Quaternion(), hull });
-  });
+    if (step) await step(id);
+  }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(P3, 3));
   g.setAttribute('aId', new THREE.Float32BufferAttribute(ID, 1));
   g.setAttribute('aCentroid', new THREE.Float32BufferAttribute(CEN, 3));
   g.setAttribute('aSide', new THREE.Float32BufferAttribute(SIDE, 1));
   g.setAttribute('aH', new THREE.Float32BufferAttribute(HH, 1));
+  g.setAttribute('aEdge', new THREE.Float32BufferAttribute(EDGE, 1));
   if (logo.geometry) logo.geometry.dispose();
   logo.geometry = g;
   V.anchors.forEach(([x, y], k) => U.uAnchor.value[k].copy(toLocal(x, y)));
@@ -286,6 +411,11 @@ const U = {
   uAnchor: { value: Array.from({ length: 10 }, () => new THREE.Vector2()) }, uRegion: { value: REGION.map(h => new THREE.Color(h)) },
   uBlockCol: { value: Array.from({ length: MAXB }, () => new THREE.Color()) },
   uTime: { value: 0 }, uGlow: { value: P.glow }, uRest: { value: P.rest }, uTint: { value: P.tint }, uGrad: { value: P.grad }, uTex: { value: P.tex }, uKey: { value: P.key }, uRelief: { value: P.relief },
+  uBevelW: { get value() { return P.bevel; } }, uBevelAng: { get value() { return P.bevelAng * Math.PI / 180; } }, uAlb: { get value() { return P.alb; } }, uWrap: { get value() { return P.wrap; } },
+  uKeyPos: { get value() { return new THREE.Vector3(P.keyX, P.keyY, P.keyZ); } }, uKeyRad: { get value() { return P.keyRad; } },
+  uRimPos: { get value() { return new THREE.Vector3(P.rimX, P.rimY, P.rimZ); } }, uRimRad: { get value() { return P.rimRad; } },
+  uRim2: { get value() { return P.rim2; } }, uRim2Pos: { get value() { return new THREE.Vector3(P.rim2X, P.rim2Y, P.rim2Z); } }, uRim2Rad: { get value() { return P.rim2Rad; } },
+  uFloor: { get value() { return P.floor; } }, uHz: { get value() { return P.hz; } }, uSky: { get value() { return P.sky; } }, uKTemp: { get value() { return P.ktemp; } }, uWear: { get value() { return P.wear; } }, uOcc: { get value() { return P.occ; } }, uKnee: { get value() { return P.knee; } },
   uRim: { get value() { return P.rim; } }, uSpec: { get value() { return P.spec; } }, uRough: { get value() { return P.rough; } }, uBounce: { get value() { return P.bounce; } }, uAmb: { get value() { return P.amb; } },
   uRimDir: { get value() { const az = P.rimAz * Math.PI / 180, el = P.rimEl * Math.PI / 180; return new THREE.Vector3(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)); } },
 };
@@ -300,8 +430,8 @@ const logoMat = new THREE.ShaderMaterial({
   vertexShader: /* glsl */`
     #define NB ${MAXB}
     uniform vec3 uOff[NB]; uniform vec4 uQ[NB]; uniform float uD[NB]; uniform float uRelief;
-    attribute float aId; attribute vec3 aCentroid; attribute float aSide; attribute float aH;
-    varying vec3 vW; varying vec3 vRest; varying float vSide; varying float vDisp; varying float vId; varying vec2 vCen;
+    attribute float aId; attribute vec3 aCentroid; attribute float aSide; attribute float aH; attribute float aEdge;
+    varying vec3 vW; varying vec3 vRest; varying float vSide; varying float vDisp; varying float vId; varying vec2 vCen; varying float vEdge;
     vec3 qrot(vec4 q, vec3 v){ return v + 2.0 * cross(q.xyz, cross(q.xyz, v) + q.w * v); }
     void main(){
       int i = int(aId + 0.5);
@@ -309,16 +439,36 @@ const logoMat = new THREE.ShaderMaterial({
       vec3 local = (pos - aCentroid) * 0.992;                     // a hair of seam between blocks
       vec3 p = aCentroid + uOff[i] + qrot(uQ[i], local);
       vec4 wp = modelMatrix * vec4(p, 1.0);
-      vW = wp.xyz; vRest = pos; vSide = aSide; vDisp = uD[i]; vId = aId; vCen = aCentroid.xy;
+      vW = wp.xyz; vRest = pos; vSide = aSide; vDisp = uD[i]; vId = aId; vCen = aCentroid.xy; vEdge = aEdge;
       gl_Position = projectionMatrix * viewMatrix * wp;
     }`,
   fragmentShader: /* glsl */`
     uniform vec3 uBlockCol[${MAXB}];
     uniform float uTime, uGlow, uRest, uTint, uGrad, uTex, uKey, uRim, uSpec, uRough, uBounce, uAmb; uniform vec3 uRimDir;
-    varying vec3 vW; varying vec3 vRest; varying float vSide; varying float vDisp; varying float vId; varying vec2 vCen;
+    uniform float uBevelW, uBevelAng, uAlb, uWrap, uKeyRad, uRimRad, uRim2, uRim2Rad, uFloor, uHz, uSky, uKTemp, uWear, uOcc, uKnee; uniform vec3 uKeyPos, uRimPos, uRim2Pos;
+    varying vec3 vW; varying vec3 vRest; varying float vSide; varying float vDisp; varying float vId; varying vec2 vCen; varying float vEdge;
     float h21(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
     float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
       return mix(mix(h21(i), h21(i + vec2(1, 0)), f.x), mix(h21(i + vec2(0, 1)), h21(i + vec2(1, 1)), f.x), f.y); }
+
+    #define PI 3.14159265
+    // GGX / Trowbridge-Reitz (Walter 2007), Schlick Fresnel (1994), Schlick-GGX Smith visibility (Karis 2013)
+    float D_GGX(float NH, float a2){ float d = NH * NH * (a2 - 1.0) + 1.0; return a2 / (PI * d * d); }
+    float G_Smith(float NV, float NL, float alpha){ float k = alpha * 0.5; return (NV / (NV * (1.0 - k) + k)) * (NL / (NL * (1.0 - k) + k)); }
+    float F_Schlick(float VH, float F0){ return F0 + (1.0 - F0) * pow(1.0 - VH, 5.0); }
+    // sphere area light (Karis 2013, representative point): the point on the sphere nearest the reflection ray stands in
+    // for the whole source, and the lobe is widened by the source's angular size so a big soft source does not blow out.
+    // Returns the specular term (already times NL); NLc is the plain cosine to the sphere's centre for the diffuse.
+    float sphereSpec(vec3 Pl, float rad, vec3 Pw, vec3 N, vec3 V, float rough, float F0, out float NLc){
+      vec3 Lc = Pl - Pw; float dist = length(Lc); NLc = dot(N, Lc / dist);
+      vec3 R = reflect(-V, N); vec3 toRay = dot(Lc, R) * R - Lc;
+      vec3 L = normalize(Lc + toRay * clamp(rad / max(length(toRay), 1e-4), 0.0, 1.0));
+      float alpha = rough * rough, a2 = alpha * alpha;
+      float alphaW = clamp(alpha + rad / (2.0 * dist), 0.0, 1.0); float norm = alpha / alphaW; norm *= norm;
+      vec3 H = normalize(L + V);
+      float NL = max(dot(N, L), 0.0), NV = max(dot(N, V), 1e-3), NH = max(dot(N, H), 0.0), VH = max(dot(V, H), 0.0);
+      return D_GGX(NH, a2) * F_Schlick(VH, F0) * G_Smith(NV, NL, alpha) / max(4.0 * NV * NL, 1e-3) * NL * norm;
+    }
     void main(){
       vec3 V = normalize(cameraPosition - vW);
       vec3 N = normalize(cross(dFdx(vW), dFdy(vW)));            // true facet normal from the geometry itself
@@ -332,32 +482,60 @@ const logoMat = new THREE.ShaderMaterial({
       vec2 rdir = normalize(vCen + vec2(1e-4));
       float g = clamp(0.5 + dot(vRest.xy - vCen, rdir) / 1.4, 0.0, 1.0);
       shade *= mix(1.0 - 0.55 * uGrad, 1.0 + 0.35 * uGrad, g);
-      // matte: Lambert with a soft wrap, no specular, no rim
-      vec3 L1 = normalize(vec3(-0.62, 0.68, 0.38)); vec3 L2 = normalize(vec3(0.7, -0.2, 0.6));   // key rakes across the facets
-      float k1 = max((dot(N, L1) + 0.1) / 1.1, 0.0); float k2 = max(dot(N, L2), 0.0);
-      float hemi = 0.5 + 0.5 * N.y;
-      float albedo = 0.013 * mix(1.0, (0.8 + 0.4 * grain) * (0.85 + 0.3 * mottle), uTex);
-      // the black faces stay black: no shade tint on them, only on the cut sides
+      // ---- material: matte black. Black paint sits at 2 to 5% diffuse albedo; a dielectric has F0 = 0.04, so on a black
+      // surface the specular sheen carries more light than the diffuse: black is lit by what it reflects.
+      float albedo = uAlb * mix(1.0, (0.8 + 0.4 * grain) * (0.85 + 0.3 * mottle), uTex);
       vec3 base = vSide > 0.5 ? mix(vec3(albedo), shade * albedo * 2.2, uTint * 6.0) : vec3(albedo);
-      vec3 col = base * (uKey * k1 * k1 * 1.6 + 0.25 * k2 + 0.3 * hemi + 0.12);
-      // cinematic separation from the black sky (all off at 0): light on the object, never a glow behind it
-      {
-        float NV = max(dot(N, V), 0.0);
-        float fres = pow(1.0 - NV, 4.0);                                           // grazing edges catch more
-        // rim / kicker: a cool light from behind and above (uRimDir, camera looks down -z) draws the silhouette
-        float rimL = max(dot(N, uRimDir) + 0.25, 0.0) / 1.25;
-        col += uRim * rimL * rimL * (0.08 + 0.92 * fres) * vec3(0.84, 0.90, 1.0) * 0.6;
-        // broad soft specular from the key: matte black still has a sheen, and a large source reads as a gradient
-        vec3 H = normalize(L1 + V); float a2 = max(uRough * uRough, 0.02); a2 *= a2;
-        float NH = max(dot(N, H), 0.0); float D = a2 / (3.14159 * pow(NH * NH * (a2 - 1.0) + 1.0, 2.0));
-        float F = 0.04 + 0.96 * pow(1.0 - max(dot(H, V), 0.0), 5.0);
-        col += uSpec * D * F * max(dot(N, L1), 0.0) * vec3(0.95, 0.97, 1.0) * 0.25;
-        // floor bounce: the pale snow throws light up onto the under faces and the lower halves of the sides
-        float down = clamp(-N.y * 0.8 + 0.2, 0.0, 1.0);
-        col += uBounce * down * (0.25 + 0.75 * fres) * vec3(0.55, 0.60, 0.72) * 0.08;
-        // sky ambient: a faint violet dome from above
-        col += uAmb * (0.5 + 0.5 * N.y) * vec3(0.10, 0.07, 0.16) * 0.12;
+      const float F0 = 0.04;
+      // ---- bevel: within uBevelW of the block outline tilt the normal outward (normal-only round corner, as Arnold's
+      // round_corners and Blender's Bevel node do), so the edge has a surface for the kicker and the floor to land on
+      vec3 Nf = N; float bev = 0.0;
+      if (vSide < 0.5) {
+        float fw = fwidth(vEdge) * 0.75;
+        float t = 1.0 - smoothstep(uBevelW - fw, uBevelW + fw, vEdge);
+        if (t > 0.0) {
+          vec2 de = vec2(dFdx(vEdge), dFdy(vEdge));
+          vec3 dWx = dFdx(vW), dWy = dFdy(vW);
+          float a = dot(dWx, dWx), b = dot(dWx, dWy), c = dot(dWy, dWy); float det = max(a * c - b * b, 1e-14);
+          vec3 inward = ((c * de.x - b * de.y) * dWx + (a * de.y - b * de.x) * dWy) / det;
+          if (dot(inward, inward) < 1e-10) inward = vec3(vCen - vRest.xy, 0.0);     // a boundary-only triangle: fall back to the block centre
+          bev = t; float ang = t * uBevelAng;
+          Nf = normalize(N * cos(ang) - normalize(inward) * sin(ang));
+        }
       }
+      float NV = max(dot(Nf, V), 1e-3);
+      // roughness: the grain breaks the sheen like real matte paint; a handled edge is a touch glossier (edge wear)
+      float rough = clamp(uRough * (0.9 + 0.2 * grain), 0.2, 1.0); rough = mix(rough, 0.35, uWear * bev * mottle);
+      // ---- key: one big soft source, front upper left (the moon behind the camera, the same light that lights the snow).
+      // Lambert with a soft wrap for the body, plus the broad GGX sheen: on matte black the sheen is the gradient you see.
+      float NLk; float specK = sphereSpec(uKeyPos, uKeyRad, vW, Nf, V, rough, F0, NLk);
+      float dK = length(uKeyPos - vW); float keyI = uKey * 100.0 / (dK * dK);         // inverse square, 1.0 at 10 units
+      float diffK = max((NLk + uWrap) / (1.0 + uWrap), 0.0);
+      vec3 keyCol = uKTemp >= 0.0 ? mix(vec3(1.0), vec3(1.0, 0.96, 0.90), uKTemp) : mix(vec3(1.0), vec3(0.84, 0.90, 1.0), -uKTemp);
+      vec3 col = base * keyCol * keyI * diffK + uSpec * keyCol * keyI * specK;
+      // ---- kicker: a cool strip source behind and above, on the side where the sky is blackest. It lands on the bevel
+      // ring and the side faces only: that line is the silhouette.
+      vec3 rimCol = vec3(0.80, 0.88, 1.0);
+      float NLr; float specR = sphereSpec(uRimPos, uRimRad, vW, Nf, V, max(rough * 0.8, 0.25), F0, NLr);
+      float dR = length(uRimPos - vW); float rimI = uRim * 100.0 / (dR * dR);
+      col += rimCol * rimI * (specR + base * max(NLr, 0.0) * 0.5);
+      if (uRim2 > 0.0) {   // second, weaker strip on the other side (optional)
+        float NLr2; float specR2 = sphereSpec(uRim2Pos, uRim2Rad, vW, Nf, V, max(rough * 0.8, 0.25), F0, NLr2);
+        float dR2 = length(uRim2Pos - vW); float rimI2 = uRim2 * 100.0 / (dR2 * dR2);
+        col += rimCol * rimI2 * (specR2 + base * max(NLr2, 0.0) * 0.5);
+      }
+      // ---- environment: the snow floor below (bright, cool white), a fog band at the horizon, the near-black violet sky
+      // above. Specular with roughness-aware Fresnel: the floor reflects in the under faces and the lower bevels at
+      // grazing angles (that is the floor bounce you can actually see on a black object); diffuse hemisphere for the rest.
+      vec3 R = reflect(-V, Nf);
+      vec3 envFloor = vec3(0.86, 0.90, 1.0) * uFloor, envHz = vec3(0.92, 0.93, 1.0) * uHz, envSky = vec3(0.60, 0.45, 0.90) * uSky;
+      vec3 env = mix(envFloor, envHz, smoothstep(-0.35, -0.02, R.y)); env = mix(env, envSky, smoothstep(0.0, 0.30, R.y));
+      float Fr = F0 + (max(1.0 - rough, F0) - F0) * pow(1.0 - NV, 5.0);
+      col += uBounce * env * Fr;
+      col += uAmb * base * mix(envFloor, envSky, 0.5 + 0.5 * Nf.y);
+      // the cut faces inside the S see less of the rig; a knee keeps the black material under the bloom threshold (0.62)
+      col *= 1.0 - uOcc * vSide * (0.4 + 0.6 * smoothstep(0.5, -0.5, vRest.z));
+      float hi = max(col.r, max(col.g, col.b)); if (hi > uKnee) col *= (uKnee + (hi - uKnee) * 0.3) / hi;
       // inner glow: the cut faces carry the shade, brighter as the block lifts away (igloo mixes by 5 x displacement)
       float lift = clamp(5.0 * vDisp, 0.0, 1.0);
       float deep = vSide * (0.55 + 0.45 * smoothstep(0.5, -0.5, vRest.z));
@@ -369,7 +547,10 @@ const logoMat = new THREE.ShaderMaterial({
 });
 const logo = new THREE.Mesh(new THREE.BufferGeometry(), logoMat); logo.frustumCulled = false;
 sceneA.add(logo);
-buildVariant(10);                       // locked to 10 blocks, one per colour family (Sam, 2026-10-08)
+// locked to 10 blocks, one per colour family (Sam, 2026-10-08). Block k is built with band k of the wipe texture (the costly part
+// of the build), then the task yields: one loader frame per block, ten sub-milestones built:1 to built:10.
+const scrollTex = makeScrollTexture();
+await buildVariant(10, async (id) => { scrollTex.fill(Math.round(id * 51.2), Math.round((id + 1) * 51.2)); await yieldFrame(); report('b' + (id + 1)); });
 document.querySelectorAll('[data-n]').forEach(b => b.addEventListener('click', () => buildVariant(+b.dataset.n)));
 
 const SHADES = FAMILIES.flatMap(f => f.s.map(s => s[1]));
@@ -392,7 +573,8 @@ sceneA.add(plate);
 const MOON = /*MOON*/null;
 const moon = new THREE.Group(); moon.visible = false; sceneA.add(moon);
 const skyLon = THREE.MathUtils.degToRad(140), SKY_TOP = 60, SKY_BOT = -10;
-const skyTex = new THREE.TextureLoader().load(MOON.sky); skyTex.colorSpace = THREE.SRGBColorSpace; skyTex.anisotropy = 8;
+const texDone = (m) => () => { texOK++; report(m); };   // a failed decode still hands over: the hero renders without that texture
+const skyTex = new THREE.TextureLoader().load(MOON.sky, texDone('sky'), undefined, texDone('sky')); skyTex.colorSpace = THREE.SRGBColorSpace; skyTex.anisotropy = 8;
 const skyDome = new THREE.Mesh(new THREE.SphereGeometry(900, 128, 64, Math.PI * 1.5 - skyLon / 2, skyLon,
   THREE.MathUtils.degToRad(90 - SKY_TOP), THREE.MathUtils.degToRad(SKY_TOP - SKY_BOT)),
   new THREE.ShaderMaterial({
@@ -426,7 +608,8 @@ moon.add(skyDome);
 // WebAssembly decoder, no workers. The artifact viewer's sandbox blocks those, which is why the floor never appeared.
 let moonGroundAt = null, stoneTopAt = () => -Infinity;
 const b64 = (s) => { const bin = atob(s); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; };
-const groundTex = new THREE.TextureLoader().load(MOON.ground);
+await yieldFrame();
+const groundTex = new THREE.TextureLoader().load(MOON.ground, texDone('ground'), undefined, texDone('ground'));
 groundTex.colorSpace = THREE.SRGBColorSpace; groundTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
 {
   // ground: the same grid the bake used (rows packed densely near the camera, widening with distance)
@@ -714,7 +897,7 @@ function setWorld(name) {
   plate.visible = !isMoon; moon.visible = isMoon;
   // the moon is shot lower and looking up, so the sky fills the top of the frame
   // moon: horizon at about 62% down, so the floor holds the lower third and the logo floats just above it
-  if (isMoon) { camFrom.set(0, -2.5, 24); tgtFrom.set(0, -1.0, 0); camTo.set(0, 3.2, 36); tgtTo.set(0, -1.2, -6); sceneA.fog.near = 60; sceneA.fog.far = 430; }
+  if (isMoon) { camFrom.fromArray(SP.cam); tgtFrom.fromArray(SP.tgt); camTo.set(0, 3.2, 36); tgtTo.set(0, -1.2, -6); sceneA.fog.near = 60; sceneA.fog.far = 430; }
   else { camFrom.set(0, 0, 19.25); tgtFrom.set(0, -0.9, 0); camTo.set(0, 4.5, 34); tgtTo.set(0, -2.6, -2); sceneA.fog.near = 30; sceneA.fog.far = 80; }
   plate.rotation.x = THREE.MathUtils.degToRad(PLATE_PITCH[name]);
   sceneA.background.set(PLATE_BG[name]); sceneA.fog.color.set(PLATE_BG[name]);
@@ -747,6 +930,7 @@ function layoutWall(portrait) {
 // =====================================================================
 // Post: each scene renders into its own target; one composite shader wipes between them
 // =====================================================================
+await yieldFrame();
 let savePass = null;
 function makeComposer(scene, cam, withBloom) {
   const c = new EffectComposer(renderer); c.renderToScreen = false;
@@ -771,7 +955,7 @@ const A = makeComposer(sceneA, camA, true), B = makeComposer(sceneB, camB, false
 
 // The wipe's data texture, generated here (igloo ships an authored 1024 px PNG; ours is procedural).
 // R: grungy ice-crack threshold, G: hard-edged tech blocks, B: slow wobble of the diagonal.
-function makeScrollTexture(N = 512) {
+function makeScrollTexture(N = 512) {   // returns the texture and fill(j0, j1): rows j0 to j1, so the work can be spread over several frames
   const data = new Uint8Array(N * N * 4);
   const hash = (x, y, s) => { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967295; };
   const vn = (x, y, per, s) => { // periodic value noise
@@ -792,7 +976,7 @@ function makeScrollTexture(N = 512) {
   })(0, 0, 1, 1, 0);
   const G = new Float32Array(N * N);
   for (const [x, y, w, h, val] of blocksG) for (let j = Math.floor(y * N); j < Math.floor((y + h) * N); j++) for (let i = Math.floor(x * N); i < Math.floor((x + w) * N); i++) G[j * N + i] = val;
-  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+  const fill = (j0, j1) => { for (let j = j0; j < Math.min(N, j1); j++) for (let i = 0; i < N; i++) {
     const x = i / N, y = j / N;
     // shards: each Voronoi cell (warped a little) gets its own arrival time; cracks along the cell edges arrive first
     const wx = x + (fbm(x, y, 4, 11) - 0.5) * 0.06, wy = y + (fbm(x, y, 4, 12) - 0.5) * 0.06;
@@ -807,13 +991,13 @@ function makeScrollTexture(N = 512) {
     const b = fbm(x, y, 2, 7);
     const o = (j * N + i) * 4;
     data[o] = r * 255; data[o + 1] = G[j * N + i] * 255; data[o + 2] = b * 255; data[o + 3] = 255;
-  }
+  } };
   const t = new THREE.DataTexture(data, N, N, THREE.RGBAFormat);
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearFilter; t.needsUpdate = true;
-  return t;
+  return { tex: t, fill };
 }
 const C = {
-  tA: { value: null }, tB: { value: null }, tScroll: { value: makeScrollTexture() },
+  tA: { value: null }, tB: { value: null }, tScroll: { value: scrollTex.tex },
   uProgress: { value: 0 }, uAspect: { value: 1 }, uNoiseOff: { value: new THREE.Vector2() }, uCalm: { value: reduce ? 1 : 0 },
 };
 const composite = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
@@ -1056,17 +1240,24 @@ const logoGlitch = (() => {
   link.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') burst(0.25); });
   link.addEventListener('focus', () => { if (link.matches(':focus-visible')) burst(0.25); });
   link.addEventListener('click', (e) => { e.preventDefault(); scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); });
-  burst(0.5, 0.75); pair = PAIRS[0];                       // igloo's intro glitch, split in the pair the mark shows at rest (Sky, Crimson)
+  const intro = (delay) => { burst(0.5, delay); pair = PAIRS[0]; };   // igloo's intro glitch, split in the pair the mark shows at rest (Sky, Crimson)
+  if (introDone) intro(0.75);                                        // no loader on the page: the burst keeps its old timing; otherwise it marks the cut
   let idleTimer = 0;
   const scheduleIdle = () => { clearTimeout(idleTimer); idleTimer = setTimeout(() => { if (P.logoIdle) burst(0.25); scheduleIdle(); }, rand(8000, 16000)); };
   scheduleIdle();
-  return { burst, setTone: (light) => { link.dataset.tone = light ? 'light' : 'dark'; } };
+  return { burst, intro, setTone: (light) => { link.dataset.tone = light ? 'light' : 'dark'; } };
 })();
 window.__skreedLogo = logoGlitch;   // test hook (screenshot harness)
+window.__introDone = () => { if (introDone) return; introDone = true; tHero0 = t; logoGlitch.intro(0.25); };   // the loader's cut is over: the hero's life ramps in from here
+window.__skreedProject = (i, px, py, back) => {   // test hook: a viewBox point of block i through the module's own geometry and camera, in CSS px
+  const c = blocks[i].c, l = toLocal(px, py);
+  const v = new THREE.Vector3(c.x + (l.x - c.x) * 0.992, c.y + (l.y - c.y) * 0.992, back ? -DEPTH / 2 : DEPTH / 2).applyMatrix4(logo.matrixWorld).project(camA);
+  return [(v.x * 0.5 + 0.5) * innerWidth, (-v.y * 0.5 + 0.5) * innerHeight];
+};
 const heroCopy = $('heroCopy'), wallCopy = $('wallCopy'), cue = $('cue');
 // test hook: lowest point of every block against the floor under it (used by the screenshot harness, harmless otherwise)
 // test hook: light one block in plain white, every other block black (-1 restores the arranged colours)
-window.__skreedState = () => ({ t, ratio, cam: camA.position.toArray().map(v => +v.toFixed(4)), th: camState.theta, ph: camState.phi, sb: scroll.b, mx: mouse.x, my: mouse.y, d: blocks.map(b => +b.d.toFixed(4)) });
+window.__skreedState = () => ({ t, ratio, live: +live.toFixed(4), cam: camA.position.toArray().map(v => +v.toFixed(4)), th: camState.theta, ph: camState.phi, sb: scroll.b, mx: mouse.x, my: mouse.y, d: blocks.map(b => +b.d.toFixed(4)) });
 window.__skreedSolo = (i) => { if (i < 0) return assignBlockColours(); blocks.forEach((b, j) => U.uBlockCol.value[j].set(j === i ? 0xffffff : 0x000000)); };
 window.__skreedFloorCheck = () => blocks.map((b, i) => {
   const off = U.uOff.value[i], q = new THREE.Quaternion(U.uQ.value[i].x, U.uQ.value[i].y, U.uQ.value[i].z, U.uQ.value[i].w);
@@ -1099,7 +1290,8 @@ function frame() {
   const dt = window.__skreedFreeze ? (clock.getDelta(), 0) : Math.min(clock.getDelta(), 1 / 12);   // freeze: test hook for pixel-diff measurements
   t += dt; ratio = Math.min(5, dt / (1 / 60));
   U.uTime.value = reduce ? 0 : t;
-  logo.position.y = reduce ? 0 : Math.sin(t * 0.7) * 0.07;   // hovering just above the ground
+  live = introDone ? (reduce ? 1 : 1 - Math.pow(1 - clamp01((t - tHero0) / 2), 3)) : 0;   // 0 until the loader's cut, then eases out to 1 over 2 s
+  logo.position.y = reduce ? 0 : Math.sin(t * 0.7) * 0.07 * live;   // hovering just above the ground
   const pr = innerHeight > 0 ? scrollY / innerHeight : 0;
   if (!Number.isFinite(scroll.a) || !Number.isFinite(scroll.b)) scroll.a = scroll.b = 0;
   scroll.a = lerpFPS(scroll.a, pr, 0.075); scroll.b = lerpFPS(scroll.b, scroll.a, 0.15);   // igloo's two followers
@@ -1110,7 +1302,7 @@ function frame() {
   // pointer target: real pointer, or a slow sweep on touch when idle
   let target = null;
   if (pointerActive) target = ndc;
-  else if (ghost && performance.now() - lastInput > 2500) target = new THREE.Vector2(Math.sin(t * 0.45) * 0.55, Math.sin(t * 0.31 + 1) * 0.3 + 0.1);
+  else if (ghost && live >= 1 && performance.now() - lastInput > 2500) target = new THREE.Vector2(Math.sin(t * 0.45) * 0.55, Math.sin(t * 0.31 + 1) * 0.3 + 0.1);
   if (target) { ray.setFromCamera(target, camA); if (ray.ray.intersectPlane(plane, hit)) { mouse.x = lerpFPS(mouse.x, hit.x, P.mouse); mouse.y = lerpFPS(mouse.y, hit.y, P.mouse); } }
   else { mouse.x = lerpFPS(mouse.x, 99, P.mouse * 0.25); mouse.y = lerpFPS(mouse.y, 99, P.mouse * 0.25); }
 
@@ -1120,11 +1312,11 @@ function frame() {
     l *= Math.sin(-t * 2 + b.c.x) * 0.5 + 0.5;
     l *= Math.cos(-t) * 0.5 + 0.5;
     l *= 0.5 + 1.5 * b.rand.z;
-    l *= 0.5 * P.breath;
+    l *= 0.5 * P.breath * live;
     const c = Math.sin(t + b.rand.x * 12.342) * b.rand.y;
     const dist = Math.hypot(b.c.x - mouse.x, b.c.y - mouse.y);
     const h = fit(smoothstep(P.r0, P.r1, dist), 0, 1, P.push + P.wob * c, 0);
-    l = Math.max(0, Math.max(l, h * heroOn));
+    l = Math.max(0, Math.max(l, h * heroOn * live));
     b.t1 = l; b.t2 = lerpFPS(b.t2, b.t1, P.follow); b.d = lerpFPS(b.d, b.t2, P.follow);
     dir.set(b.c.x, b.c.y, P.lift);
     U.uOff.value[i].copy(dir).multiplyScalar(b.d);
@@ -1149,12 +1341,12 @@ function frame() {
     U.uQ.value[i].set(b.q.x, b.q.y, b.q.z, b.q.w); U.uD.value[i] = b.d;
   });
   logo.updateMatrixWorld();
-  updateLabels(dt, !!target && heroOn > 0.5 && tp <= 0);
+  updateLabels(dt, !!target && heroOn > 0.5 && tp <= 0 && live > 0.5);
   labLayer.style.visibility = tp > 0 ? 'hidden' : 'visible';
 
   // camera: base pose from scroll, then igloo's parallax (0.07, 0.025 of 90 degrees, 3.5% a frame) and 0.01 shake
   basePos.lerpVectors(camFrom, camTo, s); baseTgt.lerpVectors(tgtFrom, tgtTo, s);
-  const tx = pointerActive && !reduce ? target.x : 0, ty = pointerActive && !reduce ? target.y : 0;
+  const tx = pointerActive && !reduce ? target.x * live : 0, ty = pointerActive && !reduce ? target.y * live : 0;
   camState.theta = lerpFPS(camState.theta, tx * Math.PI * 0.5 * 0.07, 0.035);
   camState.phi = lerpFPS(camState.phi, -ty * Math.PI * 0.5 * 0.025, 0.035);
   off.subVectors(basePos, baseTgt); dir.copy(off).normalize();
@@ -1162,7 +1354,7 @@ function frame() {
   off.applyAxisAngle(right, camState.phi).applyAxisAngle(upv, camState.theta);
   camA.position.copy(baseTgt).add(off);
   plate.position.copy(basePos); skyDome.position.copy(camA.position);
-  const sh = reduce ? 0 : 0.01;
+  const sh = reduce ? 0 : 0.01 * live;
   const look = baseTgt.clone().sub(camA.position)
     .applyAxisAngle(right, sineNoise(-2.45, 4.789, 7.343 + t * 0.5) * sh).applyAxisAngle(upv, sineNoise(12.23, 3.44, -3.234 + t * 0.5) * sh);
   camA.lookAt(camA.position.clone().add(look));
@@ -1186,6 +1378,7 @@ function frame() {
   C.tA.value = A.c.readBuffer.texture; C.tB.value = B.c.readBuffer.texture;
   C.uProgress.value = tp; C.uNoiseOff.value.set(Math.random(), Math.random());
   renderer.setRenderTarget(null); renderer.render(screenScene, screenCam);
+  if (texOK === 2 && texFrames < 2) { texFrames++; report(texFrames === 1 ? 'frame1' : 'frame2'); }   // the first two frames with both textures on the GPU: the loader may cut after the second
 
   // the DOM copy rides with its scene: hero slides up by 0.4 p^3, the Wall rises from 0.4 (1-p)^3 below
   logoGlitch.setTone(tp > 0.5);
@@ -1197,6 +1390,24 @@ function frame() {
   wallCopy.style.clipPath = tp < 1 ? clipFor(tp, false) : 'none';
   wallCopy.style.visibility = tp <= 0 ? 'hidden' : 'visible';
 }
+report('scene'); await yieldFrame();
+// Shaders: compileAsync links every program of the hero scene (in parallel where KHR_parallel_shader_compile exists). Then one draw of each
+// material group into an 8 px buffer, under the overlay, because some drivers (SwiftShader, some mobile GPUs) build their pipelines and
+// upload textures at the first draw, not at link: that work lands here, one milestone per group (c1, c2, ...), so the count keeps moving
+// through the costliest part of the load and the first visible frame is a frame, not a stall.
+try {
+  await renderer.compileAsync(sceneA, camA); await renderer.compileAsync(screenScene, screenCam);
+  const warmRT = new THREE.WebGLRenderTarget(8, 8), vis = [], groups = new Map(); let k = 0;
+  sceneA.traverse(o => { if (!(o.isMesh || o.isLine) || !o.visible) return; for (let q = o.parent; q; q = q.parent) if (!q.visible) return;
+    vis.push(o); const key = o.material.fragmentShader || o.material.type; if (!groups.has(key)) groups.set(key, []); groups.get(key).push(o); });
+  for (const g of groups.values()) { for (const o of vis) o.visible = g.includes(o); renderer.setRenderTarget(warmRT); renderer.render(sceneA, camA); await yieldFrame(); report('c' + ++k); }
+  for (const o of vis) o.visible = true;
+  renderer.setSize(8, 8, false); A.c.setSize(8, 8); B.c.setSize(8, 8); savePass.renderTarget.setSize(8, 8);
+  A.c.render(0); await yieldFrame(); report('c' + ++k);
+  B.c.render(0); C.tA.value = A.c.readBuffer.texture; C.tB.value = B.c.readBuffer.texture; renderer.setRenderTarget(null); renderer.render(screenScene, screenCam);
+  resize(); warmRT.dispose();
+} catch (e) { console.warn('warm-up', e); }
+report('compile');
 requestAnimationFrame(frame);
 </script>
 </html>
