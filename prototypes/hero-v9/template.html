@@ -14,10 +14,19 @@ body{background:var(--slate);color:var(--pearl);font-family:'Open Sans',Arial,sa
 .copy{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:flex-end;gap:var(--s2);padding:0 var(--s3) 9svh;max-width:1180px;margin:0 auto;pointer-events:none;will-change:transform,clip-path}
 .copy h1{font-family:'Poppins','Arial Black',sans-serif;font-weight:700;font-size:clamp(2.2rem,7vw,4.6rem);line-height:.95;letter-spacing:-.015em;margin:0;text-wrap:balance}
 .copy p{font-family:'Source Serif 4',Georgia,serif;font-size:clamp(1.05rem,2.4vw,1.25rem);margin:0;color:var(--pearl);max-width:30ch}
-@media (max-width:600px){.copy p{font-weight:600}}   /* on the phone the sub-line sits on the brightest snow: the 600 weight keeps it inside AA for bold text */
-.copy .cta{pointer-events:auto;font-family:'Open Sans',Arial,sans-serif;align-self:flex-start;background:var(--ember);color:#383F43;font-weight:600;border:0;border-radius:0;min-height:48px;padding:0 24px;font-size:1rem;cursor:pointer;transition:transform .15s cubic-bezier(.2,0,0,1)}
-.copy .cta:hover{transform:translateY(-1px)}
-.copy .cta:active{transform:translateY(0) scale(.98)}
+/* hero: plain and simple, a countdown to launch. Open Sans with tabular figures for every live numeral (type system), never Poppins. */
+.copy .eyebrow{font-family:'Open Sans',Arial,sans-serif;font-size:.85rem;font-weight:400;color:var(--pearl);letter-spacing:.02em}   /* Pearl Whisper, not muted: the small text sits on pale snow and must hold AA */
+.count{display:flex;gap:clamp(14px,4vw,44px);font-family:'Open Sans',Arial,sans-serif;font-variant-numeric:tabular-nums;color:var(--pearl)}
+.count>div{display:flex;flex-direction:column;gap:6px;min-width:2ch}
+.count .n{font-weight:600;font-size:clamp(2.3rem,7vw,4.8rem);line-height:1;letter-spacing:-.02em}
+.count .l{font-weight:400;font-size:.8rem;color:var(--pearl)}
+@media (max-width:600px){.copy{padding-bottom:calc(14svh + 72px + env(safe-area-inset-bottom,0px))}}   /* room for the scroll cue under the countdown on a phone */
+/* scroll cue, bottom centre: a thin line with a short bright run sliding down it (not an arrow), fades once the page moves */
+.cue{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;font-family:'Open Sans',Arial,sans-serif;font-size:.75rem;letter-spacing:.04em;color:var(--pearl);pointer-events:none;transition:opacity .4s cubic-bezier(.2,0,0,1)}
+.cue i{display:block;width:1px;height:40px;background:rgba(247,246,243,.35);position:relative;overflow:hidden}
+.cue i::after{content:"";position:absolute;left:0;top:0;width:1px;height:14px;background:var(--pearl);animation:cue 1.8s cubic-bezier(.65,0,.35,1) infinite}
+@keyframes cue{0%{transform:translateY(-14px);opacity:0}12%{opacity:1}80%{opacity:1}100%{transform:translateY(40px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.cue i::after{animation:none;top:13px}}
 /* night landscapes: the hero copy stays Pearl Whisper */
 
 
@@ -53,10 +62,22 @@ body{background:var(--slate);color:var(--pearl);font-family:'Open Sans',Arial,sa
 <div class="hint" id="hint">Move over the logo. On a phone, touch and drag. Scroll to pull back, keep scrolling for the transition.</div>
 <div class="track"></div>
 <section class="copy" id="heroCopy">
-  <h1>Go beyond basic.</h1>
-  <p>240 shades. One of them is yours.</p>
-  <button class="cta" type="button" id="cta">Reserve my shade</button>
+  <p class="eyebrow">Launch in</p>
+  <div class="count" id="count" role="timer" aria-label="Time until launch">
+    <div><span class="n" id="cd-d">0</span><span class="l">days</span></div>
+    <div><span class="n" id="cd-h">00</span><span class="l">hours</span></div>
+    <div><span class="n" id="cd-m">00</span><span class="l">minutes</span></div>
+    <div><span class="n" id="cd-s">00</span><span class="l">seconds</span></div>
+  </div>
 </section>
+<div class="cue" id="cue" aria-hidden="true">Scroll<i></i></div>
+<script>/* countdown to launch: plain script, so it runs even if the 3D module never starts. Target is one constant. */
+(function(){var T=Date.UTC(2026,10,1)-5.5*3600*1000;   /* 1 November 2026, 00:00 IST (skreed.in hands over to skreed.com) */
+var el=['cd-d','cd-h','cd-m','cd-s'].map(function(i){return document.getElementById(i)});
+function pad(n){return(n<10?'0':'')+n}
+function tick(){var s=Math.max(0,Math.floor((T-Date.now())/1000)),d=Math.floor(s/86400);s-=d*86400;var h=Math.floor(s/3600);s-=h*3600;var m=Math.floor(s/60);s-=m*60;
+var v=[String(d),pad(h),pad(m),pad(s)];for(var k=0;k<4;k++)if(el[k].textContent!==v[k])el[k].textContent=v[k];}
+tick();setInterval(tick,1000);})();</script>
 <section class="copy wallcopy" id="wallCopy" aria-label="Section 2 placeholder">
   <h1>The Wall.</h1>
   <p>All 240 shades, in catalog order. Section 2 placeholder.</p>
@@ -1021,7 +1042,7 @@ const logoGlitch = (() => {
   return { burst, setTone: (light) => { link.dataset.tone = light ? 'light' : 'dark'; } };
 })();
 window.__skreedLogo = logoGlitch;   // test hook (screenshot harness)
-const heroCopy = $('heroCopy'), wallCopy = $('wallCopy');
+const heroCopy = $('heroCopy'), wallCopy = $('wallCopy'), cue = $('cue');
 // test hook: lowest point of every block against the floor under it (used by the screenshot harness, harmless otherwise)
 // test hook: light one block in plain white, every other block black (-1 restores the arranged colours)
 window.__skreedState = () => ({ t, ratio, cam: camA.position.toArray().map(v => +v.toFixed(4)), th: camState.theta, ph: camState.phi, sb: scroll.b, mx: mouse.x, my: mouse.y, d: blocks.map(b => +b.d.toFixed(4)) });
@@ -1151,11 +1172,11 @@ function frame() {
   heroCopy.style.transform = `translate3d(0,${(-0.4 * tp ** 3 * 100).toFixed(3)}vh,0)`;
   heroCopy.style.clipPath = tp > 0 ? clipFor(tp, true) : 'none';
   heroCopy.style.visibility = tp >= 1 ? 'hidden' : 'visible';
+  cue.style.opacity = s > 0.12 || tp > 0 ? '0' : '1';
   wallCopy.style.transform = `translate3d(0,${(0.4 * (1 - tp) ** 3 * 100).toFixed(3)}vh,0)`;
   wallCopy.style.clipPath = tp < 1 ? clipFor(tp, false) : 'none';
   wallCopy.style.visibility = tp <= 0 ? 'hidden' : 'visible';
 }
 requestAnimationFrame(frame);
-$('cta').addEventListener('click', () => scrollTo({ top: (PULL + WIPE + 0.2) * innerHeight, behavior: reduce ? 'auto' : 'smooth' }));
 </script>
 </html>
