@@ -1,0 +1,50 @@
+{
+ "A": [
+  "Sky",
+  "Cinnamon",
+  "Snow",
+  "Mango",
+  "Silver",
+  "Crimson",
+  "Lawn",
+  "Rouge",
+  "Sunbeam",
+  "Amethyst"
+ ],
+ "D": [
+  "Mango",
+  "Sky",
+  "Cinnamon",
+  "Snow",
+  "Crimson",
+  "Silver",
+  "Rouge",
+  "Lawn",
+  "Amethyst",
+  "Sunbeam"
+ ],
+ "E": [
+  "Mango",
+  "Snow",
+  "Crimson",
+  "Rouge",
+  "Silver",
+  "Lawn",
+  "Sky",
+  "Sunbeam",
+  "Amethyst",
+  "Cinnamon"
+ ],
+ "F": [
+  "Mango",
+  "Silver",
+  "Snow",
+  "Sky",
+  "Cinnamon",
+  "Amethyst",
+  "Sunbeam",
+  "Rouge",
+  "Lawn",
+  "Crimson"
+ ]
+}

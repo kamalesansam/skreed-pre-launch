@@ -92,6 +92,8 @@ body{background:var(--slate);color:var(--pearl);font-family:'Open Sans',Arial,sa
     <label for="skyGain">Stars and Milky Way <output id="o-skyGain"></output><input id="skyGain" type="range" min="0" max="2" step="0.05"></label>
     <label for="hue">Galaxy hues <output id="o-hue"></output><input id="hue" type="range" min="0" max="3" step="0.01"></label>
     <label for="hueScale">Galaxy hue size <output id="o-hueScale"></output><input id="hueScale" type="range" min="0.5" max="6" step="0.1"></label>
+    <h3>Block colours</h3>
+    <div class="row seg"><button type="button" data-order="cool">Cool heart</button><button type="button" data-order="warm">Warm over cool</button><button type="button" data-order="wheel">Wheel</button><button type="button" data-order="original">Original</button></div>
     <h3>Look</h3>
     <label for="glow">Inner glow <output id="o-glow"></output><input id="glow" type="range" min="0" max="6" step="0.05"></label>
     <label for="rest">Glow at rest <output id="o-rest"></output><input id="rest" type="range" min="0" max="1.5" step="0.01"></label>
@@ -128,10 +130,27 @@ const touch = matchMedia('(hover: none)').matches;
 const REGION = [['Frosty Whites', 'Snow'], ['Blissful Blues', 'Sky'], ['Playful Pinks', 'Rouge'], ['Vivid Violets', 'Amethyst'], ['Mellow Yellows', 'Sunbeam'],
   ['Earthy Browns', 'Cinnamon'], ['Blushing Corals', 'Mango'], ['Stormy Greys', 'Silver'], ['Go Green', 'Lawn'], ['Roaring Reds', 'Crimson']]
   .map(([fam, name]) => FAMILIES.find(f => f.n === fam).s.find(s => s[0] === name)[1]);
+const REGION_NAMES = ['Snow', 'Sky', 'Rouge', 'Amethyst', 'Sunbeam', 'Cinnamon', 'Mango', 'Silver', 'Lawn', 'Crimson'];
+// Block colour orders, by block index. 'cool' is the default (decided 2026-10-08 by a colour-theory, render and brand review):
+// the two inner ends that bloom on hover are Sky and Snow, a cool calm heart with a white light; the crown over it runs
+// Amethyst, Rouge, Crimson; the orange family (Mango, Cinnamon, Sunbeam) sits on the blocks that barely show, so Ember Luxe
+// stays the only orange that matters on the page. Each stroke is one hue walk with a neutral rest inside it, no touching pair
+// is a complement, and it holds up under deuteranopia and protanopia.
+const BLOCK_ORDERS = {
+  cool: ['Mango', 'Silver', 'Snow', 'Sky', 'Cinnamon', 'Amethyst', 'Sunbeam', 'Rouge', 'Lawn', 'Crimson'],
+  warm: ['Sky', 'Cinnamon', 'Snow', 'Mango', 'Silver', 'Crimson', 'Lawn', 'Rouge', 'Sunbeam', 'Amethyst'],
+  wheel: ['Mango', 'Sky', 'Cinnamon', 'Snow', 'Crimson', 'Silver', 'Rouge', 'Lawn', 'Amethyst', 'Sunbeam'],
+  original: ['Amethyst', 'Lawn', 'Rouge', 'Silver', 'Sunbeam', 'Crimson', 'Cinnamon', 'Snow', 'Mango', 'Sky'],
+};
+const qOrder = new URLSearchParams(location.search).get('blockColors');
+let blockOrder = (qOrder && BLOCK_ORDERS[qOrder]) ? qOrder
+  : (qOrder && qOrder.split(',').length === 10 && qOrder.split(',').every(n => REGION_NAMES.includes(n)) ? qOrder : 'cool');
+const orderNames = () => BLOCK_ORDERS[blockOrder] || blockOrder.split(',');
 
 // ---- tuning state. Hover defaults are igloo.inc's own numbers (wiring doc 4.2). ----
 const P = { push: 0.5, wob: 0.3, r0: 1, r1: 3, follow: 0.06, mouse: 0.05, breath: reduce ? 0 : 0.3, lift: 1.6,
   glow: 2.4, rest: 0.06, tint: 0.035, grad: 0.7, logoIdle: 1, clear: 0.2, skyGain: 1, hue: 0.8, hueScale: 2.2, crumb: 0.35, crumbSize: 0.03, mist: 0.55, mistSpeed: 1, fog: 1, fogBright: 0.22, fogSpeed: 0.15, fogSize: 1, fogHug: 1.6, tex: 1.5, relief: 0.01, key: 2.9, bloom: 0.5 };   // relief, grain and key light set by Sam on 2026-10-08
+{ const q = new URLSearchParams(location.search); for (const k of Object.keys(P)) if (q.has(k) && isFinite(+q.get(k))) P[k] = +q.get(k); }   // test overrides, e.g. ?rest=1
 for (const k of Object.keys(P)) {
   const el = $(k); if (!el) continue; el.value = P[k]; $('o-' + k).textContent = (+el.value).toFixed(2);
   el.addEventListener('input', () => { P[k] = +el.value; $('o-' + k).textContent = (+el.value).toFixed(2); apply(); });
@@ -211,12 +230,7 @@ function buildVariant(N) {
   if (logo.geometry) logo.geometry.dispose();
   logo.geometry = g;
   V.anchors.forEach(([x, y], k) => U.uAnchor.value[k].copy(toLocal(x, y)));
-  // one shade per block: the family of the colour area whose centre is nearest the block (with 10 blocks, one each)
-  blocks.forEach((b, i) => {
-    let best = 0, bd = Infinity;
-    U.uAnchor.value.forEach((a, k) => { const d = a.distanceToSquared(b.c); if (d < bd) { bd = d; best = k; } });
-    U.uBlockCol.value[i].copy(U.uRegion.value[best]); b.shade = best;
-  });
+  assignBlockColours();
   for (let i = 0; i < MAXB; i++) { U.uOff.value[i].set(0, 0, 0); U.uQ.value[i].set(0, 0, 0, 1); U.uD.value[i] = 0; }
   document.querySelectorAll('[data-n]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.n === N)));
 }
@@ -226,6 +240,12 @@ const U = {
   uBlockCol: { value: Array.from({ length: MAXB }, () => new THREE.Color()) },
   uTime: { value: 0 }, uGlow: { value: P.glow }, uRest: { value: P.rest }, uTint: { value: P.tint }, uGrad: { value: P.grad }, uTex: { value: P.tex }, uKey: { value: P.key }, uRelief: { value: P.relief },
 };
+// one shade per block, one family each, in the arranged order (see BLOCK_ORDERS)
+function assignBlockColours() {
+  const names = orderNames();
+  blocks.forEach((b, i) => { const k = REGION_NAMES.indexOf(names[i % names.length]); U.uBlockCol.value[i].copy(U.uRegion.value[k]); b.shade = k; });
+  document.querySelectorAll('[data-order]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.order === blockOrder)));
+}
 const logoMat = new THREE.ShaderMaterial({
   uniforms: U, fog: false,
   vertexShader: /* glsl */`
@@ -629,6 +649,7 @@ function setWorld(name) {
 }
 setWorld(new URLSearchParams(location.search).get('world') || 'spires');
 document.querySelectorAll('[data-world]').forEach(b => b.addEventListener('click', () => setWorld(b.dataset.world)));
+document.querySelectorAll('[data-order]').forEach(b => b.addEventListener('click', () => { blockOrder = b.dataset.order; assignBlockColours(); }));
 
 // =====================================================================
 // Scene B: section 2 placeholder, the Wall (240 swatches, catalog order)
@@ -947,6 +968,9 @@ const logoGlitch = (() => {
 window.__skreedLogo = logoGlitch;   // test hook (screenshot harness)
 const heroCopy = $('heroCopy'), wallCopy = $('wallCopy');
 // test hook: lowest point of every block against the floor under it (used by the screenshot harness, harmless otherwise)
+// test hook: light one block in plain white, every other block black (-1 restores the arranged colours)
+window.__skreedState = () => ({ t, ratio, cam: camA.position.toArray().map(v => +v.toFixed(4)), th: camState.theta, ph: camState.phi, sb: scroll.b, mx: mouse.x, my: mouse.y, d: blocks.map(b => +b.d.toFixed(4)) });
+window.__skreedSolo = (i) => { if (i < 0) return assignBlockColours(); blocks.forEach((b, j) => U.uBlockCol.value[j].set(j === i ? 0xffffff : 0x000000)); };
 window.__skreedFloorCheck = () => blocks.map((b, i) => {
   const off = U.uOff.value[i], q = new THREE.Quaternion(U.uQ.value[i].x, U.uQ.value[i].y, U.uQ.value[i].z, U.uQ.value[i].w);
   let minY = Infinity, worst = -Infinity;
@@ -973,8 +997,10 @@ function clipFor(tp, above) {
 const clock = new THREE.Clock(); let t = 0;
 function frame() {
   requestAnimationFrame(frame);          // first, so one bad frame can never stop the loop
+  window.__skreedFrame = (window.__skreedFrame | 0) + 1;   // test hook: rendered-frame counter
   window.__heroStarted = true;
-  const dt = Math.min(clock.getDelta(), 1 / 12); t += dt; ratio = Math.min(5, dt / (1 / 60));
+  const dt = window.__skreedFreeze ? (clock.getDelta(), 0) : Math.min(clock.getDelta(), 1 / 12);   // freeze: test hook for pixel-diff measurements
+  t += dt; ratio = Math.min(5, dt / (1 / 60));
   U.uTime.value = reduce ? 0 : t;
   logo.position.y = reduce ? 0 : Math.sin(t * 0.7) * 0.07;   // hovering just above the ground
   const pr = innerHeight > 0 ? scrollY / innerHeight : 0;
