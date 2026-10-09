@@ -28,11 +28,11 @@ REG = (100, 600, 700, 800)                                                      
 # v5 lateral tone over the far masses (world x, y): the left mass (x < -2, feathered to -7) takes LAT_L extra haze toward
 # the haze colour (igloo's is a uniformly hazy bright mass; ours had the camera-facing dune fronts in the key's shade), the
 # right mass (x > 2) a gain of 1 - LAT_R (its key-lit flank was 35 percent over on the page); y 2..8 feathered in, 45..90 out
-LAT_L, LAT_R = float(os.environ.get('FF_LAT_L', '0.50')), float(os.environ.get('FF_LAT_R', '0.62'))   # v6: 0.62 (far R 0.80 on the page)   # v5b: set through the page (far L 1.04, far R 0.85)
+LAT_L, LAT_R = float(os.environ.get('FF_LAT_L', '0.50')), float(os.environ.get('FF_LAT_R', '0.36'))   # v5b: set through the page (far L 1.04, far R 0.85)
 # v5 page calibration (bake only, after the LUT): the page's luminance tracks the texture with an exponent near 1.8, and
 # its own curve was tuned on an earlier bake, so the LUT's igloo quantiles alone land the near field off on the page; a
 # gain per depth band (near < 25 units, mid 25..60, far beyond), set from a quick bake measured through the real page
-PAGE_GAIN = [float(v) for v in os.environ.get('FF_PAGE_GAINS', '0.97,1.0,1.0').split(',')]   # v6: set through the page
+PAGE_GAIN = [float(v) for v in os.environ.get('FF_PAGE_GAINS', '1.0,1.0,1.0').split(',')]
 CAM = np.array([0.0, -24.0, -2.5])
 def sstep(e0, e1, x):
     t = np.clip((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t)
@@ -44,201 +44,23 @@ def lateral(rgb, x, y):
 # v5b page calibration of the left dome (world x < -2.5, y -20..10; the mid-L box and the dome top in the far-L box): a
 # gain, because the LUT refit on the near plain left the dome 15 percent dark on the page; and a band-pass relief boost
 # on the right swell (world x > 2.5, y -14..7), igloo's mid-right low-frequency contrast
-LEFT_G = float(os.environ.get('FF_LEFT_G', '1.05')); MIDR_K = float(os.environ.get('FF_MIDR_K', '1.6')); MIDR_G = float(os.environ.get('FF_MIDR_G', '-0.05'))   # v6: set through the page   # v5b: set through the page (mid R 1.10 -> ~1.0 with a 5 percent gain)
+LEFT_G = float(os.environ.get('FF_LEFT_G', '1.10')); MIDR_K = float(os.environ.get('FF_MIDR_K', '0.65')); MIDR_G = float(os.environ.get('FF_MIDR_G', '0.05'))   # v5b: set through the page (mid R 1.10 -> ~1.0 with a 5 percent gain)
 def left_gain(rgb, x, y):
     m = sstep(-2.0, -3.5, x) * sstep(-22.0, -18.0, y) * (1 - sstep(6.0, 14.0, y))
     return rgb * (1 + (LEFT_G - 1) * m)[..., None]
-def _gauss(a, sigma):
-    """numpy-only separable gaussian, edge padded (Blender's python has no scipy); sigma may be (sr, sc)"""
-    sr, sc = (sigma, sigma) if np.isscalar(sigma) else sigma
-    out = a.astype(np.float64)
-    for ax, sg in ((0, sr), (1, sc)):
-        if sg <= 0: continue
-        r = int(math.ceil(3 * sg)); k = np.exp(-0.5 * (np.arange(-r, r + 1) / sg) ** 2); k /= k.sum()
-        pw = [(0, 0), (0, 0)]; pw[ax] = (r, r); p_ = np.pad(out, pw, mode='edge'); n = out.shape[ax]
-        out = sum(k[i] * (p_[i:i + n] if ax == 0 else p_[:, i:i + n]) for i in range(2 * r + 1))
-    return out
-def _gauss_big(a, sigma, f=8):
-    """a large blur through an f-times box downsample (sigma in full-res texels)"""
-    H, W = a.shape; s_ = a[:H // f * f, :W // f * f].reshape(H // f, f, W // f, f).mean((1, 3))
-    s_ = _gauss(s_, sigma / f)
-    yi = (np.arange(H) + 0.5) / f - 0.5; xi = (np.arange(W) + 0.5) / f - 0.5
-    y0 = np.clip(np.floor(yi).astype(int), 0, s_.shape[0] - 2); x0 = np.clip(np.floor(xi).astype(int), 0, s_.shape[1] - 2)
-    ay = np.clip(yi - y0, 0, 1)[:, None]; ax = np.clip(xi - x0, 0, 1)[None, :]
-    return (s_[y0][:, x0] * (1 - ax) + s_[y0][:, x0 + 1] * ax) * (1 - ay) + (s_[y0 + 1][:, x0] * (1 - ax) + s_[y0 + 1][:, x0 + 1] * ax) * ay
 def relief_band(tex):
-    Y = (tex * W709).sum(-1); return _gauss(Y, 4.0) - _gauss_big(Y, 40.0)
-MIDR_KS = float(os.environ.get('FF_MIDR_KS', '0.0'))      # v6: the shaded side takes a smaller boost (the v5 lee of the right swell went near black)
+    from scipy.ndimage import gaussian_filter
+    Y = (tex * W709).sum(-1); return gaussian_filter(Y, 4.0) - gaussian_filter(Y, 40.0)
 def relief_boost(rgb, band, x, y):
     if not MIDR_K: return rgb
     m = sstep(2.0, 3.5, x) * sstep(-15.0, -11.0, y) * (1 - sstep(4.0, 10.0, y))   # the mid-right box only (y -13..1), not the far right mass
     Yb = np.maximum((rgb * W709).sum(-1), 1e-3)
-    k = np.where(band > 0, MIDR_K, MIDR_KS)                                         # v6: 0.65 on lit faces, 0.30 in shade
-    f = np.maximum(1 + MIDR_G * m + k * m * band / Yb, 1 - 0.20 * m)                # v6: never more than 20 percent darker
-    if LEFT_K:                                                                       # v6: the left dome's lit relief (its p98 was 25 under igloo's)
-        mL = sstep(-2.0, -3.5, x) * sstep(-22.0, -18.0, y) * (1 - sstep(6.0, 14.0, y))
-        f = f * (1 + LEFT_K * mL * np.maximum(band, 0) / Yb)
-    return np.clip(rgb * f[..., None], 0, 1)
-LEFT_K = float(os.environ.get('FF_LEFT_K', '1.5'))
+    return np.clip(rgb * (1 + MIDR_G * m + MIDR_K * m * band / Yb)[..., None], 0, 1)
 def cap215(rgb):
     """v5b: after the boost and the left gain, roll luma above 0.79 smoothly into 0.84 (214): the LUT's ceiling holds"""
     Y = np.maximum((rgb * W709).sum(-1), 1e-4)
     Yc = np.where(Y > 0.79, 0.79 + 0.05 * np.tanh((Y - 0.79) / 0.05), Y)
     return rgb * (Yc / Y)[..., None]
-# ------------------------------------------------------------------ v6 additions
-# far haze: the far terrain (camera distance FAR_D0..FAR_D1, the page's far L/R boxes sit at 22-60 units) is blended FAR_F toward
-# a fog tone at the band's own mean (computed per bake in a pre-pass), so its low-frequency spread halves (page lfstd 30 vs igloo 15)
-FAR_F = float(os.environ.get('FF_FAR_F', '0.47')); FAR_D0, FAR_D1 = float(os.environ.get('FF_FAR_D0', '22')), float(os.environ.get('FF_FAR_D1', '40'))
-# the crest and horizon rows (screen y <= HOR_Y0, ramp to HOR_Y1) brighten HOR_G in linear light (igloo's rows 380-410 are its brightest)
-HOR_G = float(os.environ.get('FF_HOR_G', '0.40')); HOR_Y0, HOR_Y1 = float(os.environ.get('FF_HOR_Y0', '402')), float(os.environ.get('FF_HOR_Y1', '430'))
-# cooler snow: lit B/R on the page was 1.05-1.09 (igloo 1.10-1.17); a red-down blue-up on the lit tones, luma kept
-COOL = np.array([float(v) for v in os.environ.get('FF_COOL', '0.965,1.0,1.055').split(',')])
-# a soft toe on the display luma: Y -> 0.5 (Y + sqrt(Y^2 + 4 t^2)) blended in by TOE_W, so no texel is a black hole on the page
-TOE_T = float(os.environ.get('FF_TOE', '0.15'))
-def screen_y(x, y, z):
-    """projected 1280x800 hero-camera row of a world point"""
-    f = np.array([0.0, 24.0, 1.5]); f /= np.linalg.norm(f); u = np.cross(np.array([1.0, 0, 0]), f)
-    vx, vy, vz = x - CAM[0], y - CAM[1], z - CAM[2]; d = vx * f[0] + vy * f[1] + vz * f[2]
-    return 400 - (vx * u[0] + vy * u[1] + vz * u[2]) / (np.maximum(d, 0.1) * math.tan(math.radians(15))) * 400
-def far_fog(rgb, d, tone):
-    w = (FAR_F * sstep(FAR_D0, FAR_D1, d))[..., None]
-    return rgb * (1 - w) + tone[None, None, :] * w
-def horizon(rgb, sy, d):
-    w = (1 - sstep(HOR_Y0, HOR_Y1, sy)) * sstep(20.0, 28.0, d)
-    return lin_to_srgb(np.clip(srgb_to_lin(rgb) * (1 + HOR_G * w)[..., None], 0, 1))
-def cool(rgb):
-    Y = np.maximum((rgb * W709).sum(-1), 1e-4); w = sstep(0.22, 0.50, Y)[..., None]
-    o = rgb * (1 + (COOL[None, None, :] - 1) * w); Yo = np.maximum((o * W709).sum(-1), 1e-4)
-    return np.clip(o * (Y / Yo)[..., None], 0, 1)
-def toe(rgb):
-    if TOE_T <= 0: return rgb
-    Y = np.maximum((rgb * W709).sum(-1), 1e-4); Yt = 0.5 * (Y + np.sqrt(Y * Y + 4 * TOE_T * TOE_T)) - (0.5 * (1 + math.sqrt(1 + 4 * TOE_T * TOE_T)) - 1) * Y   # 1 stays 1
-    return np.clip(rgb * (Yt / Y)[..., None], 0, 1)
-def post_block(t, wx, wy, hz, dcam, dz, band, tone, precomp=True):
-    """the whole bake post on one block of texels (display sRGB after the LUT): the v5 chain plus the v6 far fog, horizon,
-    cooling and toe. tone=None skips the far fog (the pre-pass that measures the band mean)."""
-    if band is not None: t = relief_boost(t, band, wx, wy)
-    t = haze(t, dcam)
-    t = lateral(t, wx, wy)
-    t = cap215(left_gain(t, wx, wy))
-    if tone is None: return t
-    t = far_fog(t, dcam, tone)
-    t = horizon(t, screen_y(wx, wy, hz), dcam)
-    t = toe(cool(t))
-    t = cap215(t)
-    t = page_gain(t, dcam)
-    if precomp and os.environ.get('FF_PAGEFOG', '1') == '1':
-        t = page_precomp(t, (dz * 24.0 + (hz - CAM[2]) * 1.5) / 24.047)
-    return t
-def post_texture(tex, PX, PY, hgt, NP=1024, log=print):
-    """tex: display sRGB (TEX x TEX x 3) after the LUT, row 0 = grid row 0 (far). In place, in 512-row blocks."""
-    TEX = tex.shape[0]
-    ri = np.linspace(0, NP - 1, TEX); r0 = np.floor(ri).astype(int); r1 = np.minimum(r0 + 1, NP - 1); fr = (ri - r0)[:, None]
-    ci = np.linspace(0, NP - 1, TEX); c0 = np.floor(ci).astype(int); c1 = np.minimum(c0 + 1, NP - 1); fc = (ci - c0)[None, :]
-    band = relief_band(tex) if MIDR_K else None
-    def geo(sl, cs=slice(None)):
-        rr0, rr1, ffr = r0[sl], r1[sl], fr[sl]; cc0, cc1, ffc = c0[cs], c1[cs], fc[:, cs]
-        S_ = lambda A: (A[rr0][:, cc0] * (1 - ffc) + A[rr0][:, cc1] * ffc) * (1 - ffr) + (A[rr1][:, cc0] * (1 - ffc) + A[rr1][:, cc1] * ffc) * ffr
-        wx, wy, hz = S_(PX), S_(PY), S_(hgt); dx, dy, dzz = wx - CAM[0], wy - CAM[1], hz - CAM[2]
-        return wx, wy, hz, np.sqrt(dx * dx + dy * dy + dzz * dzz), dy
-    # pre-pass on every 8th texel: the far band's mean after the v5 chain, over the texels in the hero frame
-    ss = slice(0, TEX, 8); wx, wy, hz, dcam, dy = geo(ss, ss)
-    tb = post_block(tex[ss, ss].copy(), wx, wy, hz, dcam, dy, band[ss, ss] if band is not None else None, None)
-    sel = (sstep(FAR_D0, FAR_D1, dcam) > 0.5) & (dcam < 140) & (np.abs(wx) < 0.42 * (wy + 24)) & (screen_y(wx, wy, hz) < 560)
-    tone = tb[sel].mean(0) if sel.any() else HAZE_RGB
-    log('v6 far fog tone %s (luma %.3f) from %d texels' % (np.round(tone, 3), float((tone * W709).sum()), int(sel.sum())))
-    for i0 in range(0, TEX, 512):
-        sl = slice(i0, i0 + 512); wx, wy, hz, dcam, dy = geo(sl)
-        tex[sl] = post_block(tex[sl], wx, wy, hz, dcam, dy, band[sl] if band is not None else None, tone)
-    return tex
-
-# v6 page mesh: the 1024 heightfield is low-passed (sigma about half a page cell) before it is sampled at 400 x 320, so the
-# coarse mesh never folds along a row over a feature it cannot carry (the straight seams at y 591 / 679 / 707 on the page)
-PAGE_SIG = [float(v) for v in os.environ.get('FF_PAGE_SIG', '1.1,1.4').split(',')]
-def page_mesh(hgt, NR=400, NC=320):
-    NP = hgt.shape[0]; h = _gauss(hgt, PAGE_SIG)
-    ri = np.linspace(0, NP - 1, NR); ci = np.linspace(0, NP - 1, NC)
-    r0 = np.floor(ri).astype(int); c0 = np.floor(ci).astype(int); r1 = np.minimum(r0 + 1, NP - 1); c1 = np.minimum(c0 + 1, NP - 1)
-    fr = (ri - r0)[:, None]; fc = (ci - c0)[None, :]
-    Z = (h[r0][:, c0] * (1 - fc) + h[r0][:, c1] * fc) * (1 - fr) + (h[r1][:, c0] * (1 - fc) + h[r1][:, c1] * fc) * fr
-    return Z + page_crest(NR, NC)
-
-# v6: skyline lumps on the left dome in the page mesh itself. The 1024 heightfield's 0.5-0.9-unit crest lumps are under two
-# page cells (0.43 x 0.36 units here, ~40 px on screen) and alias away at 400 x 320, so the shipped mesh adds its own, sized to
-# what it can carry: lump trains of 1.1 and 0.8-unit period (two to three cells, 80-120 px along the skyline), up to PAGE_CREST high, in a 0.8-unit
-# band around the dome's camera-facing tangent line (world (-6.2,-12.0)..(-2.9,-9.6))
-PAGE_CREST = float(os.environ.get('FF_PAGE_CREST', '0.10'))
-def page_crest(NR, NC):
-    if PAGE_CREST <= 0: return 0.0
-    tt = np.linspace(1, 0, NR)[:, None]; uu = np.linspace(-1, 1, NC)[None, :]
-    y = np.repeat(-30 + 450 * tt ** 2.2, NC, 1); x = uu * (34 + 1.25 * (y + 30))
-    ax, ay, bx, by = -6.2, -12.0, -2.9, -9.6; dx, dy = bx - ax, by - ay; L2 = dx * dx + dy * dy
-    t = np.clip(((x - ax) * dx + (y - ay) * dy) / L2, 0, 1); dseg = np.hypot(x - ax - t * dx, y - ay - t * dy)
-    band = np.exp(-(dseg / 0.8) ** 2) * sstep(0.0, 0.1, t) * sstep(1.0, 0.9, t)
-    s_ = t * math.sqrt(L2)                                                       # arc length along the crest (units)
-    n = np.sin(s_ / 0.55 * math.pi + 0.6) * 0.6 + np.sin(s_ / 0.40 * math.pi + 2.1) * 0.4    # two incommensurate lump trains (periods 1.1 and 0.8 units)
-    return PAGE_CREST * band * np.maximum(n, -0.3)
-
-def ground_fine(hgt, x, y):
-    NP = hgt.shape[0]; t_ = np.clip((y + 30) / 450, 0, 1) ** (1 / 2.2); r = np.clip((1 - t_) * (NP - 1), 0, NP - 1.001)
-    c = np.clip((x / (34 + 1.25 * (y + 30)) + 1) / 2 * (NP - 1), 0, NP - 1.001); r0 = r.astype(int); c0 = c.astype(int); a = r - r0; b = c - c0
-    return (hgt[r0, c0] * (1 - b) + hgt[r0, c0 + 1] * b) * (1 - a) + (hgt[r0 + 1, c0] * (1 - b) + hgt[r0 + 1, c0 + 1] * b) * a
-
-STONE_FLOOR = float(os.environ.get('FF_STONE_FLOOR', '0.17'))
-def fix_stones(pw, srgb, tri, hgt):
-    """pw: stone vertices in Blender world coords (n x 3); srgb: baked colours (n x 3, display). A vertex that sat under the
-    1024 ground in Blender baked black; the page's coarser mesh can expose it (the black half-disc at 899-917 x 608-616), so
-    it takes the median colour of its stone's exposed vertices; every vertex is floored at luma STONE_FLOOR (near-black grey)."""
-    n = len(pw); par = np.arange(n)
-    def f(a):
-        while par[a] != a: par[a] = par[par[a]]; a = par[a]
-        return a
-    for t in tri:
-        a = f(int(t[0]))
-        for b in t[1:]: par[f(int(b))] = a
-    roots = np.array([f(i) for i in range(n)])
-    buried = pw[:, 2] < ground_fine(hgt, pw[:, 0], pw[:, 1]) + 0.004
-    out = srgb.copy(); nfix = 0
-    for rt in np.unique(roots):
-        sel = roots == rt; ex = sel & ~buried
-        ref = np.median(srgb[ex], 0) if ex.sum() >= 3 else None
-        if ref is None or (ref * W709).sum() < STONE_FLOOR: ref = np.array([STONE_FLOOR * 0.97, STONE_FLOOR * 1.0, STONE_FLOOR * 1.06])
-        bs = sel & buried; out[bs] = ref; nfix += int(bs.sum())
-    Y = np.maximum((out * W709).sum(-1), 1e-4); lo = Y < STONE_FLOOR
-    out[lo] = out[lo] * (STONE_FLOOR / Y[lo])[:, None] if lo.any() else out[lo]
-    out[lo] = np.where((out[lo] * W709).sum(-1, keepdims=True) < STONE_FLOOR * 0.9, np.array([STONE_FLOOR * 0.97, STONE_FLOOR, STONE_FLOOR * 1.06]), out[lo])
-    return np.clip(out, 0, 1), nfix, int(lo.sum())
-
-def page_ground(Z, x, y):
-    """the page mesh height (NR x NC, from page_mesh) at world (x, y), bilinear like the page's own moonGroundAt"""
-    nr, nc = Z.shape; PY = np.maximum(-30, y); rr = np.clip((1 - ((PY + 30) / 450) ** (1 / 2.2)) * (nr - 1), 0, nr - 1.001)
-    cc = np.clip((x / (34 + 1.25 * (PY + 30)) + 1) / 2 * (nc - 1), 0, nc - 1.001); r0 = rr.astype(int); c0 = cc.astype(int); a = rr - r0; b = cc - c0
-    return (Z[r0, c0] * (1 - b) + Z[r0, c0 + 1] * b) * (1 - a) + (Z[r0 + 1, c0] * (1 - b) + Z[r0 + 1, c0 + 1] * b) * a
-FG_PITS = [(-0.9, -12.7, 1.0), (2.7, -9.1, 0.72), (1.9, -16.7, 0.55)]   # floor_final.SCARPS[:3] (x, y, R)
-def drop_exposed_stones(pw, tri, hgt, Zpage, k=3, pits=FG_PITS):
-    """v6: a stone with k or more vertices that the 1024 ground buried in Blender (so they baked black) but the page mesh leaves
-    above ground shows its unlit underside on the page (the half-disc at 899-917 x 608-616, the specks at (764,626), (105,378),
-    (838,578)): its triangles are dropped. Returns the kept triangles and the dropped stones' centres."""
-    n = len(pw); par = np.arange(n)
-    def f(a):
-        while par[a] != a: par[a] = par[par[a]]; a = par[a]
-        return a
-    for t in tri:
-        a = f(int(t[0]))
-        for b in t[1:]: par[f(int(b))] = a
-    roots = np.array([f(i) for i in range(n)])
-    bad = (pw[:, 2] < ground_fine(hgt, pw[:, 0], pw[:, 1]) + 0.004) & (pw[:, 2] > page_ground(Zpage, pw[:, 0], pw[:, 1]))
-    sy = screen_y(pw[:, 0], pw[:, 1], pw[:, 2])
-    f_ = np.array([0.0, 24.0, 1.5]); f_ /= np.linalg.norm(f_); dd = (pw[:, 1] - CAM[1]) * f_[1] + (pw[:, 2] - CAM[2]) * f_[2]
-    sx = 640 + (pw[:, 0] - CAM[0]) / (np.maximum(dd, 0.1) * math.tan(math.radians(15)) * 1.6) * 640
-    def in_pit(rt):
-        c = pw[roots == rt].mean(0); return any(math.hypot(c[0] - px, c[1] - py) < 0.6 * pr for px, py, pr in pits)
-    # also any stone inside a foreground pit away from its lip (the page mesh cannot carry the pit floor, the stone shows as a dark half-disc)
-    drop = [rt for rt in np.unique(roots) if (bad[roots == rt].sum() >= max(k, 0.2 * (roots == rt).sum()) or in_pit(rt))
-            and np.any((sx[roots == rt] >= 0) & (sx[roots == rt] < 1280) & (sy[roots == rt] >= 0) & (sy[roots == rt] < 800))]
-    keep = ~np.isin(roots[tri[:, 0]], drop)
-    return tri[keep], [tuple(np.round(pw[roots == rt].mean(0)[:2], 2)) for rt in drop]
-
 def page_gain(rgb, d):
     # the two steps are smoothed over 8 units so no band shows
     g = PAGE_GAIN[0] + (PAGE_GAIN[1] - PAGE_GAIN[0]) * sstep(21.0, 29.0, np.nan_to_num(d, posinf=1e4, nan=1e4)) + (PAGE_GAIN[2] - PAGE_GAIN[1]) * sstep(56.0, 64.0, np.nan_to_num(d, posinf=1e4, nan=1e4))

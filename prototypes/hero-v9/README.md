@@ -1,6 +1,6 @@
 # Hero prototype v9 (2026-10-08)
 
-Live: https://claude.ai/artifact/QDXUhF32ZLd7L9a5ccDnq8 (version 22). Builds on v8.2 (`../hero-v8`).
+Live: https://claude.ai/artifact/QDXUhF32ZLd7L9a5ccDnq8 (version 23). Builds on v8.2 (`../hero-v8`).
 
 ## The floor, re-created from igloo.inc's snow
 Sam asked for the floor to look exactly like igloo's. Three Blender variants were built from the hero camera and judged against four igloo screenshots by three reviews (surface, shape, tone): variant a won on composition (flank knolls, open centre, foreground mounds), with b's tone and stone scatter and c's measurement harness grafted on. The integrated floor (`blender/floor_final.py`, post curve `blender/floor_final_post.py`, LUT `blender/floor_lut.json`, checks `blender/floor_judge.py` and `blender/verify_bake.py`) adds:
@@ -28,15 +28,8 @@ Sam asked for the hero copy to go: no headline, no sub-line, no button, plain an
 - **From the review (three lenses, each finding verified):** days are padded to two digits and the numeral carries the 2ch reservation, so the row never jumps; ticks are aligned to the wall-clock second; the numerals stay hidden until the first tick and a `<noscript>` line gives the date; at zero the countdown stops and the eyebrow reads "Skreed is live. skreed.com"; the seconds group is hidden under reduced motion; the eyebrow and labels are Open Sans 600 at 14 px; spacing uses the `--s` tokens; below 1100 px the countdown lifts so the cue has its own row.
 - Not changed on purpose: there is no call to action on the fold. Sam chose the plain countdown; the reserve flow lives in the later sections.
 
-## v9.7: snow floor round 6 (2026-10-09)
-The last automatic floor round. Fixed against round 5, judged on the page render:
-- **No holes:** the black half-disc and specks were stones whose undersides were buried in the bake's fine mesh, so they baked black, but the coarser page mesh left them exposed. Buried vertices now take their stone's exposed colour, stones are floored at luma 0.17, and the eight stones the page mesh exposes are dropped. On the page no floor pixel sits below luma 50.
-- **Grain direction:** igloo's fine grain descends to the right (minus 10 to minus 26 degrees on screen); ours rose. The streak headings are now blended by world x so the screen heading is about minus 15 degrees (measured minus 12 to minus 15, coherence 0.78 to 0.85).
-- **Right lee lifted:** the relief boost now acts on lit faces only, and a camera-side fill lights the swell's lee (mean luma 33 to 92).
-- **Drifts:** four crescent fronts in front of the logo pad, a sloped skirt at the ridge base (no flat-topped wall), shallower pits the page mesh can carry, the page mesh low-passed so it agrees with the baked shading.
-- **Far planes:** hazed toward their own band mean with distance; the bake's cooling step pushed them green on the page, so the shipped texture is a re-post of the saved raw bake without it (far-plane green over red 1.023, igloo 1.01 to 1.03). Re-posting takes 40 seconds instead of a 60-minute bake (`blender/floor_repost.py`).
-- **Tone on the page,** igloo over ours: far left 0.99, far right 0.79, mid left 0.95, mid right 0.99, near centre 0.95, near right 1.07.
-- **Still different from igloo** (stopping here; see `shot-floor-vs-igloo.png`): igloo's crust is finer and denser (2 to 4 px grain with small dark pits) where ours reads as broader smears; the left crest is a smooth dome where igloo's mound breaks into 30 to 60 px chunks; the mid-right relief is about 10 percent flatter than igloo's. igloo's camera also looks down onto its terrain while ours sits low and pitched up, which limits how much of the ground's form can show.
+## v9.7 reverted (2026-10-09)
+Sam preferred the v9.6 floor; the round 6 floor is withdrawn and v9.6 is live again (version 23). Floor work is stopped. The round 6 bake and its scripts stay in the session scratch only.
 
 ## v9.6: snow floor round 5, smooth edges, no black holes (2026-10-09)
 - **Round 5 bake:** the LUT refit on a v5 preview fixed the near field; a lateral haze on the far masses, a gain on the left dome and a relief boost on the right swell; wind streaks on the right foreground and visible pits; clustered crust on the left crest.
