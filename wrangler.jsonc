@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "skreed-teaser",
+  "compatibility_date": "2026-10-06",
+  "assets": { "directory": "./dist", "not_found_handling": "404-page", "html_handling": "auto-trailing-slash" },
+  "env": {
+    "staging": {
+      "name": "skreed-teaser-staging",
+      "assets": { "directory": "./dist", "not_found_handling": "404-page", "html_handling": "auto-trailing-slash" }
+    }
+  }
+  // After A1 (nameservers on Cloudflare), production adds:
+  // "routes": [ { "pattern": "skreed.in", "custom_domain": true }, { "pattern": "www.skreed.in", "custom_domain": true } ]
+  // With /api/* (Reserve section): "main", and "assets.run_worker_first": ["/api/*", "/r/*"]
+}

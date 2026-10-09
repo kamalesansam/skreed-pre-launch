@@ -1,0 +1,13 @@
+---
+// The scroll cue (part "cue") and, as the last element of body (part "script"), the countdown and cue script
+// (hero-architecture.md 4.3): LAUNCH and the live-link copy are prepended as JSON.
+import countdown from '../../inline/countdown.inline.js?raw';
+import { COPY } from '../../config/copy.ts';
+import { LAUNCH_ISO, LIVE_URL } from '../../config/site.ts';
+import { inlineScript } from '../shell/inlineScript.ts';
+interface Props { part: 'cue' | 'script' }
+const { part } = Astro.props;
+const code = inlineScript('countdown.js', { LAUNCH: Date.parse(LAUNCH_ISO), LIVE: { lead: COPY.cd.liveLead, link: COPY.cd.liveLink, href: LIVE_URL } }, countdown);
+---
+{part === 'cue' && <div class="cue" id="cue" aria-hidden="true"><span class="lbl">{COPY.cue.label}</span><i class="ball"></i><i class="base"></i></div>}
+{part === 'script' && <script is:inline set:html={code}></script>}

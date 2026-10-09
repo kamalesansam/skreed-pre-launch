@@ -1,0 +1,8 @@
+---
+// Test and staging builds only (PUBLIC_HERO_HOOKS '1'): a 100svh Pearl Whisper block after the track, so the track can
+// leave the viewport in the tests (hero.md section 7, "Filler"). Production renders nothing in the after-track slot.
+---
+<div class="filler" aria-hidden="true"></div>
+<style>
+  .filler { height: 100svh; background: var(--pearl-whisper); position: relative; }
+</style>

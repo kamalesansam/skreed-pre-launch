@@ -1,0 +1,40 @@
+{
+  "name": "skreed-pre-launch",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "skreed.in pre-launch teaser: Astro 7 static on Cloudflare Workers + Static Assets",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=1 PUBLIC_STAGING=0 astro dev",
+    "build": "PUBLIC_HERO_HOOKS=0 PUBLIC_TUNE=0 PUBLIC_STAGING=0 astro build && node scripts/csp.mjs",
+    "build:test": "PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=0 PUBLIC_STAGING=0 astro build && node scripts/csp.mjs",
+    "build:staging": "PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=1 PUBLIC_STAGING=1 astro build && node scripts/csp.mjs",
+    "preview": "wrangler dev --port 8787",
+    "check": "astro check",
+    "gen:shades": "node scripts/hero/gen-shades.mjs",
+    "assets:stage1": "node scripts/hero/copy-stage1-assets.mjs",
+    "test:unit": "node --test \"tests/unit/**/*.test.ts\"",
+    "test:e2e": "playwright test --project e2e",
+    "test:parity": "playwright test --project parity",
+    "deploy:dry": "wrangler deploy --env=\"\" --dry-run --outdir .wrangler/dry-run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kamalesansam/skreed-pre-launch.git"
+  },
+  "dependencies": {
+    "astro": "7.3.8",
+    "three": "0.165.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "@playwright/test": "1.56.1",
+    "@types/three": "0.165.0",
+    "lighthouse": "13.5.0",
+    "typescript": "5.9.3",
+    "wrangler": "4.149.0"
+  }
+}

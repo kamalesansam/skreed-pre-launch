@@ -1,0 +1,7 @@
+---
+// The corner logotype (DESIGN.md section 4): a link home with the glitch. The empty <defs> and .logo-tiles group are
+// filled by the glitch script. The script is processed by Vite (module, deferred) and runs before boot.ts (document order).
+import { COPY } from '../../config/copy.ts';
+---
+<a class="site-logo" id="siteLogo" href="/" aria-label={COPY.logo.aria}><svg viewBox="0 0 1209.46 292.9" aria-hidden="true" focusable="false"><defs></defs><use class="logo-base" href="#skreed-wordmark"/><g class="logo-tiles" display="none"></g></svg></a>
+<script>import '../../scripts/logotype/install.ts';</script>

@@ -1,0 +1,35 @@
+---
+// / : the hero (docs/specs/hero.md). Production renders the hero alone; test and staging builds add the after-track
+// filler, and dev and staging add the Tune panel.
+import Base from '../layouts/Base.astro';
+import '../styles/shell.css';
+import Gate from '../components/shell/Gate.astro';
+import WordmarkSprite from '../components/shell/WordmarkSprite.astro';
+import Loader from '../components/shell/Loader.astro';
+import SiteLogo from '../components/shell/SiteLogo.astro';
+import HeroStage from '../components/hero/HeroStage.astro';
+import HeroPoster from '../components/hero/HeroPoster.astro';
+import HeroPosterPreload from '../components/hero/HeroPosterPreload.astro';
+import Countdown from '../components/hero/Countdown.astro';
+import ScrollCue from '../components/hero/ScrollCue.astro';
+import { COPY } from '../config/copy.ts';
+// Dev-only components are imported only when their flag is set, so production carries neither their markup nor their
+// scripts and styles (Astro bundles the scripts of every imported component, rendered or not).
+const AfterTrackFiller = import.meta.env.PUBLIC_HERO_HOOKS === '1' ? (await import('../components/dev/AfterTrackFiller.astro')).default : null;
+const Tune = import.meta.env.PUBLIC_TUNE === '1' ? (await import('../components/dev/Tune.astro')).default : null;
+---
+<Base title={COPY.page.title} description={COPY.page.description} path="/" preloadFonts={['/fonts/open-sans-400-600-latin.woff2']}>
+  <Gate slot="head-first" />
+  <HeroPosterPreload slot="head" />
+  <HeroStage>
+    <HeroPoster slot="poster" />
+    <WordmarkSprite slot="sprite" />
+    <Loader slot="loader" />
+    <SiteLogo slot="logo" />
+    <Countdown slot="copy" />
+    <ScrollCue slot="cue" part="cue" />
+    {AfterTrackFiller && <AfterTrackFiller slot="after-track" />}
+    {Tune && <Tune slot="dev" />}
+    <ScrollCue slot="last" part="script" />
+  </HeroStage>
+</Base>

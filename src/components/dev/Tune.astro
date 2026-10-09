@@ -1,0 +1,73 @@
+---
+// Tune (dev and staging builds only, PUBLIC_TUNE '1'; spec D18): the prototype's panel, hidden until ?tune is in the URL,
+// which loads src/scripts/dev/tune.ts. Its greys and radius are the prototype's dev values and never ship to production
+// (scripts/guards.mjs greps for tuneReset).
+---
+<details class="tune" id="tune" hidden>
+  <summary>Tune</summary>
+  <div class="body">
+    <div class="row seg"><button type="button" id="tuneReset">Reset to defaults</button></div>
+    <h3>Logo glitch</h3>
+    <div class="row seg"><button type="button" id="glitchNow">Glitch now</button><button type="button" id="glitchIdle" aria-pressed="false">Idle twitch: off</button><button type="button" id="glitchSplit" aria-pressed="true">Colour split: on</button></div>
+    <h3>Hover (igloo values)</h3>
+    <label for="push">Push amount <output id="o-push"></output><input id="push" type="range" min="0" max="1.2" step="0.01"></label>
+    <label for="wob">Push wobble <output id="o-wob"></output><input id="wob" type="range" min="0" max="0.6" step="0.01"></label>
+    <label for="r0">Full push within (units) <output id="o-r0"></output><input id="r0" type="range" min="0" max="3" step="0.05"></label>
+    <label for="r1">No push beyond (units) <output id="o-r1"></output><input id="r1" type="range" min="0.5" max="6" step="0.05"></label>
+    <label for="follow">Push follower, per frame <output id="o-follow"></output><input id="follow" type="range" min="0.01" max="0.3" step="0.005"></label>
+    <label for="mouse">Pointer follower, per frame <output id="o-mouse"></output><input id="mouse" type="range" min="0.01" max="0.3" step="0.005"></label>
+    <label for="breath">Breathing <output id="o-breath"></output><input id="breath" type="range" min="0" max="2" step="0.05"></label>
+    <label for="clear">Ground clearance <output id="o-clear"></output><input id="clear" type="range" min="0" max="1" step="0.01"></label>
+    <label for="lift">Push toward camera <output id="o-lift"></output><input id="lift" type="range" min="0" max="4" step="0.05"></label>
+    <h3>Terrain</h3>
+    <label for="gExp">Ground exposure <output id="o-gExp"></output><input id="gExp" type="range" min="0.1" max="1.2" step="0.01"></label>
+    <label for="gGamma">Ground contrast <output id="o-gGamma"></output><input id="gGamma" type="range" min="0.4" max="1.4" step="0.01"></label>
+    <label for="gNear">Near ground <output id="o-gNear"></output><input id="gNear" type="range" min="0.3" max="1.2" step="0.01"></label>
+    <label for="gToe">Shadow floor <output id="o-gToe"></output><input id="gToe" type="range" min="0" max="0.12" step="0.005"></label>
+    <label for="crumb">Crumb grain contrast <output id="o-crumb"></output><input id="crumb" type="range" min="0" max="0.6" step="0.01"></label>
+    <label for="crumbSize">Crumb grain size <output id="o-crumbSize"></output><input id="crumbSize" type="range" min="0.01" max="0.2" step="0.005"></label>
+    <label for="mist">Ground mist <output id="o-mist"></output><input id="mist" type="range" min="0" max="3" step="0.05"></label>
+    <label for="mistSpeed">Ground mist speed <output id="o-mistSpeed"></output><input id="mistSpeed" type="range" min="0" max="3" step="0.05"></label>
+    <h3>Fog (igloo smoke)</h3>
+    <label for="fog">Fog amount <output id="o-fog"></output><input id="fog" type="range" min="0" max="3" step="0.05"></label>
+    <label for="fogBright">Fog brightness <output id="o-fogBright"></output><input id="fogBright" type="range" min="0" max="0.8" step="0.01"></label>
+    <label for="fogSpeed">Fog drift speed (igloo 0.15) <output id="o-fogSpeed"></output><input id="fogSpeed" type="range" min="0" max="0.6" step="0.01"></label>
+    <label for="fogSize">Wisp size <output id="o-fogSize"></output><input id="fogSize" type="range" min="0.25" max="3" step="0.05"></label>
+    <label for="fogHug">Ground hug <output id="o-fogHug"></output><input id="fogHug" type="range" min="0.5" max="4" step="0.05"></label>
+    <h3>Sky</h3>
+    <label for="skyGain">Stars and Milky Way <output id="o-skyGain"></output><input id="skyGain" type="range" min="0" max="2" step="0.05"></label>
+    <label for="hue">Galaxy hues <output id="o-hue"></output><input id="hue" type="range" min="0" max="3" step="0.01"></label>
+    <label for="hueScale">Galaxy hue size <output id="o-hueScale"></output><input id="hueScale" type="range" min="0.5" max="6" step="0.1"></label>
+    <h3>Look</h3>
+    <label for="glow">Inner glow <output id="o-glow"></output><input id="glow" type="range" min="0" max="6" step="0.05"></label>
+    <label for="rest">Glow at rest <output id="o-rest"></output><input id="rest" type="range" min="0" max="1.5" step="0.01"></label>
+    <label for="tint">Shade in the black <output id="o-tint"></output><input id="tint" type="range" min="0" max="0.4" step="0.005"></label>
+    <label for="grad">Gradient within each block <output id="o-grad"></output><input id="grad" type="range" min="0" max="1.5" step="0.05"></label>
+    <label for="relief">Relief depth <output id="o-relief"></output><input id="relief" type="range" min="0" max="0.25" step="0.005"></label>
+    <label for="tex">Grain <output id="o-tex"></output><input id="tex" type="range" min="0" max="1.5" step="0.05"></label>
+    <label for="key">Key light <output id="o-key"></output><input id="key" type="range" min="0" max="4" step="0.05"></label>
+    <h3>Logo light</h3>
+    <label for="rim">Rim light <output id="o-rim"></output><input id="rim" type="range" min="0" max="3" step="0.05"></label>
+    <label for="rimAz">Rim azimuth (deg, from behind) <output id="o-rimAz"></output><input id="rimAz" type="range" min="-90" max="90" step="1"></label>
+    <label for="rimEl">Rim elevation (deg) <output id="o-rimEl"></output><input id="rimEl" type="range" min="-20" max="80" step="1"></label>
+    <label for="spec">Specular <output id="o-spec"></output><input id="spec" type="range" min="0" max="3" step="0.05"></label>
+    <label for="rough">Roughness <output id="o-rough"></output><input id="rough" type="range" min="0.15" max="1" step="0.01"></label>
+    <label for="bounce">Floor bounce <output id="o-bounce"></output><input id="bounce" type="range" min="0" max="3" step="0.05"></label>
+    <label for="amb">Sky ambient <output id="o-amb"></output><input id="amb" type="range" min="0" max="3" step="0.05"></label>
+    <label for="bloom">Bloom <output id="o-bloom"></output><input id="bloom" type="range" min="0" max="2" step="0.05"></label>
+    <div><button type="button" id="ghost">Auto sweep: on</button></div>
+  </div>
+</details>
+<script>if (new URLSearchParams(location.search).has('tune')) import('../../scripts/dev/tune.ts');</script>
+<style is:global>
+.tune{position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:3;background:#2b3134;border:1px solid #4a5257;border-radius:12px;max-width:min(320px,calc(100vw - 24px));font-size:.82rem;color:var(--pearl-whisper)}
+.tune summary{cursor:pointer;padding:10px 14px;font-weight:600;list-style:none}
+.tune summary::-webkit-details-marker{display:none}
+.tune .body{display:grid;gap:8px;padding:0 14px 14px;max-height:60svh;overflow:auto}
+.tune label{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center}
+.tune input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--ember-luxe)}
+.tune button{font:inherit;padding:6px 8px;border-radius:8px;border:1px solid #4a5257;background:transparent;color:inherit;cursor:pointer}
+.tune output{font-variant-numeric:tabular-nums;color:rgba(247,246,243,.7)}
+.seg{display:flex;gap:6px}.seg button{flex:1}.seg button[aria-pressed=true]{background:var(--pearl-whisper);color:var(--urban-slate);border-color:var(--pearl-whisper)}
+.tune h3{margin:6px 0 0;font-size:.75rem;font-weight:600;color:rgba(247,246,243,.7)}
+</style>

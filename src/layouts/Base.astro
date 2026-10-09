@@ -1,0 +1,39 @@
+---
+// The page skeleton every route uses (hero-architecture.md 4.2): lang, meta, canonical, font preloads, staging noindex,
+// and the global stylesheets (tokens, the 240 shade tokens, the faces). Page-specific head items go in two slots:
+// "head-first" (inline scripts that must run before any CSS applies, such as the hero's Gate) and "head" (preloads).
+// Meta slots for OG, icons and JSON-LD arrive with the site-essentials pass (CHECKLIST G).
+import '../styles/tokens.css';
+import '../styles/shades.gen.css';
+import '../styles/fonts.css';
+import { SITE_URL } from '../config/site.ts';
+
+interface Props {
+  title: string;
+  description: string;
+  /** path of this page, for the canonical URL */
+  path?: string;
+  /** /fonts/ files to preload (the hero preloads Open Sans; a page with a Poppins headline preloads Poppins) */
+  preloadFonts?: string[];
+}
+const { title, description, path = '/', preloadFonts = [] } = Astro.props;
+const canonical = new URL(path, SITE_URL).href;
+const staging = import.meta.env.PUBLIC_STAGING === '1';
+---
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<slot name="head-first" />
+{preloadFonts.map((href) => <link rel="preload" as="font" type="font/woff2" crossorigin href={href}>)}
+<slot name="head" />
+<title>{title}</title>
+<meta name="description" content={description}>
+<link rel="canonical" href={canonical}>
+{staging && <meta name="robots" content="noindex">}
+</head>
+<body>
+<slot />
+</body>
+</html>

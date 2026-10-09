@@ -1,0 +1,7 @@
+---
+// Two AVIF preloads, one per aspect class, with the same media strings as the <picture> sources (architecture 4.2 item 5).
+// Browsers without AVIF skip both and find the WebP through the <picture>.
+import { POSTER } from './posterAssets.ts';
+---
+<link rel="preload" as="image" type="image/avif" fetchpriority="high" href={POSTER.wide.avif} media={POSTER.wide.media}>
+<link rel="preload" as="image" type="image/avif" fetchpriority="high" href={POSTER.portrait.avif} media={POSTER.portrait.media}>

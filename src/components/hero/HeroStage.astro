@@ -1,0 +1,25 @@
+---
+// The hero's body, in the prototype's sibling order (spec D17; hero-architecture.md 4.2): every element is a flat child
+// of body, because v10 styles siblings such as .intro.po ~ .site-logo. The pieces owned by other components arrive
+// through named slots so the order lives in one place.
+//   1 h1  2 poster  3 canvas  4 sprite  5 loader  6 logotype  7 labels  8 track  9 countdown  10 cue
+//   11 riders (section 2's DOM copy)  12 main around the after-track slot (rendered only when it has content)
+//   13 dev (Tune)  14 the boot script (build step 6)  15 last (the countdown and cue script)
+import { COPY } from '../../config/copy.ts';
+// main is rendered only when the after-track slot renders something (a conditional slot still counts for slots.has)
+const after = Astro.slots.has('after-track') ? (await Astro.slots.render('after-track')).trim() : '';
+---
+<h1 class="sr-only">{COPY.page.h1}</h1>
+<slot name="poster" />
+<canvas id="stage" aria-hidden="true"></canvas>
+<slot name="sprite" />
+<slot name="loader" />
+<slot name="logo" />
+<div class="labels" id="labels" aria-hidden="true"></div>
+<div class="track" id="track"></div>
+<slot name="copy" />
+<slot name="cue" />
+<slot name="riders" />
+{after && <main id="main" set:html={after} />}
+<slot name="dev" />
+<slot name="last" />

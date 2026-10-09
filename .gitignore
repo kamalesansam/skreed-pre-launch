@@ -2,3 +2,8 @@ scripts/fonts/src/
 node_modules/
 dist/
 .astro/
+.wrangler/
+test-results/
+playwright-report/
+assets-src/hero/masters/*.png
+assets-src/hero/poster/*.png

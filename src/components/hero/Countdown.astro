@@ -1,0 +1,16 @@
+---
+// The countdown (DESIGN.md section 4): bottom left, Open Sans 600 tabular numerals, role timer. Its script is the last
+// element of body (ScrollCue.astro, part "script"). Without JavaScript only the noscript line shows (D27).
+import { COPY } from '../../config/copy.ts';
+const [days, hours, minutes, seconds] = COPY.cd.units;
+---
+<section class="copy" id="heroCopy">
+  <p class="eyebrow" id="cdEyebrow">{COPY.cd.eyebrow}</p>
+  <div class="count" id="count" role="timer" aria-label={COPY.cd.aria}>
+    <div><span class="n" id="cd-d">00</span><span class="l">{days}</span></div>
+    <div><span class="n" id="cd-h">00</span><span class="l">{hours}</span></div>
+    <div><span class="n" id="cd-m">00</span><span class="l">{minutes}</span></div>
+    <div class="sec"><span class="n" id="cd-s">00</span><span class="l">{seconds}</span></div>
+  </div>
+  <noscript><p class="eyebrow">{COPY.cd.noscriptLead}<time datetime={COPY.cd.noscriptDatetime}>{COPY.cd.noscriptDate}</time></p></noscript>
+</section>

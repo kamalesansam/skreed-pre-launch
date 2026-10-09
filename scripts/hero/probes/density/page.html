@@ -1,0 +1,76 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000}</style>
+<script type="importmap">{"imports":{"three":"https://local.test/three/build/three.module.js"}}</script></head><body>
+<script type="module">
+// Texel density probe: the hero's ground grid and sky dome built exactly as template.html builds them (v9.9), rendered with a
+// shader that writes the texture footprint per device pixel (rho, in texels of the shipped texture) after the GPU's anisotropic
+// reduction, and the UV, so we can say which texture size each viewport actually samples.
+import * as THREE from 'three';
+const meta = await (await fetch('https://local.test/data/moon_meta.json')).json();
+const hq = new Uint16Array(await (await fetch('https://local.test/data/ground_h.bin')).arrayBuffer());
+const { nr, nc, zmin, zmax } = meta.ground;
+const pos = new Float32Array(nr * nc * 3), uv = new Float32Array(nr * nc * 2), idx = new Uint32Array((nr - 1) * (nc - 1) * 6);
+for (let r = 0; r < nr; r++) {
+  const PY = -30 + 450 * Math.pow(1 - r / (nr - 1), 2.2), halfW = 34 + 1.25 * (PY + 30);
+  for (let c = 0; c < nc; c++) { const k = r * nc + c;
+    pos[k * 3] = (-1 + 2 * c / (nc - 1)) * halfW; pos[k * 3 + 1] = zmin + hq[k] / 65535 * (zmax - zmin); pos[k * 3 + 2] = -PY;
+    uv[k * 2] = c / (nc - 1); uv[k * 2 + 1] = 1 - r / (nr - 1); } }
+let j = 0; for (let r = 0; r < nr - 1; r++) for (let c = 0; c < nc - 1; c++) { const a = r * nc + c, b = a + nc, d = a + 1, e = b + 1; idx[j++] = a; idx[j++] = b; idx[j++] = e; idx[j++] = a; idx[j++] = e; idx[j++] = d; }
+const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setIndex(new THREE.BufferAttribute(idx, 1));
+const VS = 'varying vec2 vUv; varying float vDepth; void main(){ vUv = uv; vec4 mv = modelViewMatrix * vec4(position, 1.0); vDepth = -mv.z; gl_Position = projectionMatrix * mv; }';
+const FS = `uniform vec2 uTex; uniform float uAniso, uId, uMode, uNear, uFar; varying vec2 vUv; varying float vDepth;
+  void main(){ vec2 t = vUv * uTex; float a = length(dFdx(t)), b = length(dFdy(t)); float rmax = max(a, b), rmin = max(min(a, b), 1e-6);
+    float N = min(ceil(rmax / rmin), uAniso); float rho = rmax / N; float fogF = clamp((vDepth - uNear) / (uFar - uNear), 0.0, 1.0);
+    gl_FragColor = uMode < 0.5 ? vec4(rho, fogF, uId, rmax) : vec4(vUv, uId, 1.0); }`;
+const mk = (tex, aniso, id, near, far) => new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS, side: THREE.DoubleSide,
+  uniforms: { uTex: { value: new THREE.Vector2(...tex) }, uAniso: { value: aniso }, uId: { value: id }, uMode: { value: 0 }, uNear: { value: near }, uFar: { value: far } } });
+const scene = new THREE.Scene();
+const groundMat = mk([4096, 4096], 16, 1, 60, 430), skyMat = mk([4200, 2100], 8, 2, 1e9, 2e9);
+const ground = new THREE.Mesh(g, groundMat); ground.frustumCulled = false; scene.add(ground);
+const skyLon = THREE.MathUtils.degToRad(140), SKY_TOP = 60, SKY_BOT = -10;
+const dome = new THREE.Mesh(new THREE.SphereGeometry(900, 128, 64, Math.PI * 1.5 - skyLon / 2, skyLon, THREE.MathUtils.degToRad(90 - SKY_TOP), THREE.MathUtils.degToRad(SKY_TOP - SKY_BOT)), skyMat);
+dome.scale.x = -1; dome.rotation.x = THREE.MathUtils.degToRad(-2.6); dome.renderOrder = -2; dome.frustumCulled = false; skyMat.depthWrite = false; scene.add(dome);
+const renderer = new THREE.WebGLRenderer({ antialias: false }); renderer.setClearColor(0x000000, 0);
+const cam = new THREE.PerspectiveCamera(30, 1, 0.1, 1200);
+const camFrom = new THREE.Vector3(0, -2.5, 24), tgtFrom = new THREE.Vector3(0, -1, 0), camTo = new THREE.Vector3(0, 3.2, 36), tgtTo = new THREE.Vector3(0, -1.2, -6);
+function pose(s, tx, ty) {
+  const basePos = new THREE.Vector3().lerpVectors(camFrom, camTo, s), baseTgt = new THREE.Vector3().lerpVectors(tgtFrom, tgtTo, s);
+  const off = new THREE.Vector3().subVectors(basePos, baseTgt), dir = off.clone().normalize();
+  const right = new THREE.Vector3().crossVectors(cam.up, dir).normalize(), upv = new THREE.Vector3().crossVectors(dir, right);
+  off.applyAxisAngle(right, -ty * Math.PI * 0.5 * 0.025).applyAxisAngle(upv, tx * Math.PI * 0.5 * 0.07);
+  cam.position.copy(baseTgt).add(off); cam.lookAt(baseTgt); cam.updateMatrixWorld(); dome.position.copy(cam.position); dome.updateMatrixWorld();
+}
+function render(W, H, mode) {
+  const rt = new THREE.WebGLRenderTarget(W, H, { type: THREE.FloatType, depthBuffer: true });
+  groundMat.uniforms.uMode.value = skyMat.uniforms.uMode.value = mode;
+  renderer.setRenderTarget(rt); renderer.clear(); renderer.render(scene, cam); const px = new Float32Array(W * H * 4); renderer.readRenderTargetPixels(rt, 0, 0, W, H, px); renderer.setRenderTarget(null); rt.dispose(); return px;
+}
+const pct = (arr, p) => arr.length ? arr[Math.min(arr.length - 1, Math.floor(p * arr.length))] : null;
+window.probe = (cssW, cssH, dpr) => {
+  const W = Math.round(cssW * dpr), H = Math.round(cssH * dpr), asp = cssW / cssH;
+  cam.aspect = asp; cam.zoom = Math.min(1, asp * 1.25); cam.updateProjectionMatrix();
+  const out = { viewport: `${cssW}x${cssH}@${dpr}`, device: `${W}x${H}` };
+  for (const s of [0, 1]) {
+    pose(s, 0, 0); const px = render(W, H, 0);
+    const R = { 1: [], 2: [] }, Rclear = [], I = { 1: [], 2: [] };
+    for (let i = 0; i < W * H; i++) { const id = Math.round(px[i * 4 + 2]); if (id === 1 || id === 2) { R[id].push(px[i * 4]); I[id].push(px[i * 4 + 3]); if (id === 1 && px[i * 4 + 1] < 0.5) Rclear.push(px[i * 4]); } }
+    for (const [name, arr] of [['ground', R[1]], ['groundUnfogged', Rclear], ['sky', R[2]], ['groundIso', I[1]], ['skyIso', I[2]]]) {
+      arr.sort((a, b) => a - b); const n = arr.length; const frac = (t) => n ? +(arr.filter(x => x < t).length / n).toFixed(3) : null;
+      out[`s${s}_${name}`] = { pxShare: +(n / (W * H)).toFixed(3), p10: +pct(arr, .1)?.toFixed(2), p50: +pct(arr, .5)?.toFixed(2), p90: +pct(arr, .9)?.toFixed(2),
+        magnifiedAtFull: frac(1), changedAtHalf: frac(2), changedAtQuarter: frac(4) };
+    }
+  }
+  // UV coverage over the scroll and parallax range, at half resolution (coverage only)
+  const cov = { 1: [1, 0, 1, 0], 2: [1, 0, 1, 0] }; const bins = new Uint8Array(64 * 64);
+  for (const s of [0, 0.25, 0.5, 0.75, 1]) for (const tx of [-1, 0, 1]) for (const ty of [-1, 0, 1]) {
+    pose(s, tx, ty); const w = Math.max(64, W >> 1), h = Math.max(64, H >> 1); const px = render(w, h, 1);
+    for (let i = 0; i < w * h; i++) { const id = Math.round(px[i * 4 + 2]); if (id !== 1 && id !== 2) continue; const u = px[i * 4], v = px[i * 4 + 1], c = cov[id];
+      c[0] = Math.min(c[0], u); c[1] = Math.max(c[1], u); c[2] = Math.min(c[2], v); c[3] = Math.max(c[3], v);
+      if (id === 1) bins[Math.min(63, Math.floor(v * 64)) * 64 + Math.min(63, Math.floor(u * 64))] = 1; }
+  }
+  out.groundUV = { u: [cov[1][0].toFixed(3), cov[1][1].toFixed(3)], v: [cov[1][2].toFixed(3), cov[1][3].toFixed(3)], binsHit: bins.reduce((a, b) => a + b, 0) / 4096 };
+  out.skyUV = { u: [cov[2][0].toFixed(3), cov[2][1].toFixed(3)], v: [cov[2][2].toFixed(3), cov[2][3].toFixed(3)] };
+  const rows = []; for (let r = 63; r >= 0; r -= 4) { let s = ''; for (let c = 0; c < 64; c += 2) s += bins[r * 64 + c] ? '#' : '.'; rows.push(s); } out.groundMap = rows;
+  return out;
+};
+window.ready = true;
+</script></body></html>

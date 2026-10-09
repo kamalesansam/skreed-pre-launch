@@ -1,0 +1,12 @@
+---
+// The head Gate (hero-architecture.md 8): one inline script, assembled here at build time. CFG from config/hero.ts is
+// prepended as JSON (inlineScript.ts); the ?tier= override is concatenated only into test and staging builds (PUBLIC_HERO_HOOKS '1').
+// scripts/csp.mjs hashes the emitted string after the build.
+import gate from '../../inline/gate.inline.js?raw';
+import override from '../../inline/gate.tier-override.inline.js?raw';
+import { GATE } from '../../config/hero.ts';
+import { inlineScript } from './inlineScript.ts';
+const hooks = import.meta.env.PUBLIC_HERO_HOOKS === '1';
+const code = inlineScript('gate.js', { CFG: GATE }, hooks ? override : '', gate);
+---
+<script is:inline set:html={code}></script>

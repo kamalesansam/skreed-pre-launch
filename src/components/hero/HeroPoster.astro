@@ -1,0 +1,14 @@
+---
+// The poster (spec D10): the hero's rest frame, the LCP element and the fallback for every tier and failure.
+// One <picture>, four sources split at aspect 0.9, one <img>: one request per page view.
+import { POSTER } from './posterAssets.ts';
+import { COPY } from '../../config/copy.ts';
+const { wide, portrait } = POSTER;
+---
+<picture class="hero-poster">
+  <source type="image/avif" media={wide.media} srcset={wide.avif} width={wide.width} height={wide.height}>
+  <source type="image/webp" media={wide.media} srcset={wide.webp} width={wide.width} height={wide.height}>
+  <source type="image/avif" media={portrait.media} srcset={portrait.avif} width={portrait.width} height={portrait.height}>
+  <source type="image/webp" media={portrait.media} srcset={portrait.webp} width={portrait.width} height={portrait.height}>
+  <img id="posterImg" src={portrait.webp} width={portrait.width} height={portrait.height} alt={COPY.poster.alt} fetchpriority="high" decoding="async">
+</picture>

@@ -1,0 +1,92 @@
+[
+  {
+    "family": "frosty-whites",
+    "familyName": "Frosty Whites",
+    "shade": "frosty-whites-07",
+    "name": "Snow",
+    "hex": "#f0f4f5",
+    "index": 7,
+    "n": 7
+  },
+  {
+    "family": "blissful-blues",
+    "familyName": "Blissful Blues",
+    "shade": "blissful-blues-08",
+    "name": "Sky",
+    "hex": "#08bcf4",
+    "index": 8,
+    "n": 32
+  },
+  {
+    "family": "playful-pinks",
+    "familyName": "Playful Pinks",
+    "shade": "playful-pinks-14",
+    "name": "Rouge",
+    "hex": "#f2638f",
+    "index": 14,
+    "n": 62
+  },
+  {
+    "family": "vivid-violets",
+    "familyName": "Vivid Violets",
+    "shade": "vivid-violets-07",
+    "name": "Amethyst",
+    "hex": "#8554d1",
+    "index": 7,
+    "n": 79
+  },
+  {
+    "family": "mellow-yellows",
+    "familyName": "Mellow Yellows",
+    "shade": "mellow-yellows-01",
+    "name": "Sunbeam",
+    "hex": "#fff164",
+    "index": 1,
+    "n": 97
+  },
+  {
+    "family": "earthy-browns",
+    "familyName": "Earthy Browns",
+    "shade": "earthy-browns-07",
+    "name": "Cinnamon",
+    "hex": "#ba7237",
+    "index": 7,
+    "n": 127
+  },
+  {
+    "family": "blushing-corals",
+    "familyName": "Blushing Corals",
+    "shade": "blushing-corals-04",
+    "name": "Mango",
+    "hex": "#ff9f40",
+    "index": 4,
+    "n": 148
+  },
+  {
+    "family": "stormy-greys",
+    "familyName": "Stormy Greys",
+    "shade": "stormy-greys-05",
+    "name": "Silver",
+    "hex": "#acacac",
+    "index": 5,
+    "n": 173
+  },
+  {
+    "family": "go-green",
+    "familyName": "Go Green",
+    "shade": "go-green-12",
+    "name": "Lawn",
+    "hex": "#4aa325",
+    "index": 12,
+    "n": 204
+  },
+  {
+    "family": "roaring-reds",
+    "familyName": "Roaring Reds",
+    "shade": "roaring-reds-07",
+    "name": "Crimson",
+    "hex": "#d20000",
+    "index": 7,
+    "n": 223
+  }
+]

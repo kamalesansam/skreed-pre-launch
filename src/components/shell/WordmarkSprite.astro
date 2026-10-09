@@ -1,0 +1,8 @@
+---
+// The page's one wordmark, #skreed-wordmark, built at build time from docs/brand/logo/skreed-logotype.svg: the six paths,
+// without their class and fill, drawn in currentColor. The loader's mask and outline and the corner logotype <use> it.
+import svg from '../../../docs/brand/logo/skreed-logotype.svg?raw';
+const paths = [...svg.matchAll(/<path[^>]*\sd="([^"]+)"/g)].map((m) => m[1]);
+if (paths.length !== 6) throw new Error(`skreed-logotype.svg: expected 6 paths, found ${paths.length}`);
+---
+<svg class="sprite" width="0" height="0" aria-hidden="true" focusable="false"><defs><g id="skreed-wordmark" fill="currentColor">{paths.map((d) => <path d={d} />)}</g></defs></svg>
