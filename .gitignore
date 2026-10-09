@@ -7,3 +7,4 @@ test-results/
 playwright-report/
 assets-src/hero/masters/*.png
 assets-src/hero/poster/*.png
+*.tmp.*
