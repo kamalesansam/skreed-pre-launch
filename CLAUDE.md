@@ -12,6 +12,7 @@ This repo is the skreed.in pre-launch teaser (live until Oct 31 2026, then skree
 - Voice (brand guide): first person, short sentences, active voice, sensory colour words. "We believe in the power of color."
 
 
+- Section 2 (Sam, 2026-10-09, replaces the "coloured ice rocks" of 2026-10-08): the ten stones are polished, faceted, deformed crystal gems (the look of Marvel's infinity stones), one per family in its shade, never frosted ice or clay. No copy text in the section; only a small family-name label beside each gem, revealed the way igloo reveals its labels, gems spread across the screen at equal spacing. The background is igloo's animated section-2 background, re-created. The blocks leave the logo one at a time while the scroll is pinned, each visibly travelling down into section 2 before it settles as a gem. Hover is igloo's: waves and small geometric lines on the gem. Every gem is a link to its family page (`/shades/<family>/`), by click, tap and keyboard.
 - Family pages (`/shades/<family>/`, 24 cases per family from one model, `docs/specs/family-page.md`): show the case only. Never draw a phone, device body, screen glass or lenses inside or behind a case; the camera window shows the page through (Sam, 2026-10-09).
 
 ## Never do these (the site must not look vibe-coded)
@@ -70,7 +71,7 @@ This repo is the skreed.in pre-launch teaser (live until Oct 31 2026, then skree
 
 ## Always do these
 - Phone first. Build and test at 390 px before any desktop layout. Must look as strong on a phone as on a laptop.
-- Performance budget: critical JS under 60 KB gz, total JS under 250 KB gz, hero image under 120 KB, first view under 1.5 MB, LCP under 2.5 s on throttled 4G. One WebGL island only: the pinned hero canvas, which spans section 1 (the logo in glowing blocks, decided 2026-10-07) and section 2 (the ten blocks dispersed into coloured ice rocks on igloo's fog, decided 2026-10-08), lazy-loaded behind a static poster image, with a no-WebGL, data-saver and reduced-motion fallback. No WebGL from section 3 (the Wall) on.
+- Performance budget: critical JS under 60 KB gz, total JS under 250 KB gz, hero image under 120 KB, first view under 1.5 MB, LCP under 2.5 s on throttled 4G. One WebGL island only: the pinned hero canvas, which spans section 1 (the logo in glowing blocks, decided 2026-10-07) and section 2 (the ten blocks dispersed one at a time into polished crystal gems on igloo's animated section-2 background, decided 2026-10-08, revised 2026-10-09), lazy-loaded behind a static poster image, with a no-WebGL, data-saver and reduced-motion fallback. No WebGL from section 3 (the Wall) on.
 - Honour `prefers-reduced-motion` everywhere via `gsap.matchMedia()`.
 - Every UI state designed: empty, loading, error, offline, slow network, no results, permission denied, validation, success.
 - Colours only from `shades-240.json`, the two page neutrals (Pearl Whisper, Urban Slate) and the one accent (Ember Luxe). Almond Silk, Steel Twilight and Rust Ember are available for the share card and stories, never for UI chrome. Define them as CSS tokens on `:root`.
