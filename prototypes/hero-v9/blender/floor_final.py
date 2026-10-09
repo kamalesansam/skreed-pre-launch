@@ -1,5 +1,23 @@
 # floor_final: the igloo-style snow floor for the Skreed hero. Variant a (shape first) with the grafts the three
-# judges agreed on, reworked after the fourth round of feedback (v4, 2026-10-08; v3 kept as floor_final_v3.py):
+# judges agreed on, reworked after the fifth round of feedback (v5, 2026-10-08; v4 kept as floor_final_v4.py):
+#   v5 changes  1 near tone: the spot fill is narrowed (22 deg) and aimed at x -7 so its cone ends at world x -2 and the
+#                 near plain's centre is lit by the key and the sky alone; the LUT is refit on the v5 raw preview and the
+#                 bake post carries a page calibration (floor_final_post.py: PAGE_GAIN per band, set from a 1024-texel
+#                 bake measured through the real page, whose luminance tracks the texture with an exponent near 1.8)
+#               2 far masses: a lateral tone in the post (world x, y masks over the left and right masses, y 2..90):
+#                 the left mass takes extra haze toward the haze colour (a uniformly hazy bright mass, igloo's), the right
+#                 mass a gain under 1 (its key-lit flank was 35 percent over)
+#               3 mid field: the y48/y62 crescents are gone; each remaining front has its own heading (the crest frame is
+#                 rotated about its centre, alternating sign) and its own lee width, so no two consecutive fronts are parallel
+#               4 left crest: a 3-4 unit crust band whose density varies along the crest (clusters and 1-3 unit gaps from a
+#                 noise along the arc, a lateral scatter so lumps sit off the ridge line), three F1 lump sizes
+#                 (0.14 / 0.25 / 0.40 units) with patches where one size dominates, bump 0.28, albedo -0.25 in the pockets
+#                 between lumps, specular and a lower roughness on the lump tops only
+#               5 pits: the two large ellipses are 0.30 / 0.33 deep with a crisp lip (lip width 0.06 + 0.06 R, lip 0.4 of
+#                 the drop); the soft hollows are 0.12 deep and 2.4-2.8 units wide; the wind streaks are sharp-crested
+#                 ridges (1 - |noise|) 0.06 high, 0.6-1.2 units apart at 140 deg, from world x 0.8 (feathered to 2.5) so
+#                 they cover the right-hand foreground on screen and leave the centre and the left alone
+# v4 (2026-10-08; v3 kept as floor_final_v3.py):
 #   v4 changes  1 far ridge: three layers in igloo's proportion (rim y70 amp 2.8, mid y140 amp 8 (1.5x on screen), far
 #                 mass y245 amp 26 (2.5-3x) with a 0.75 x 80-unit two-octave crest, knobs under 10 %), each with a lobed
 #                 front foot and foothill mounds, a steeper back (no lit plateau), two more dunes at y48/62 over the rim's
@@ -94,23 +112,25 @@ FAR_L = (-15.0, 14.0, 9.0, 9.0, 8.0, 2.4)                                       
 # crescent wind scarps: (x, y, radius, facing angle rad, lip height[, aspect, rotation]). The first three sit in the
 # foreground plain (each gets a small stone at its foot) and are v4 ellipses of different size (2x), aspect, orientation,
 # depth and spacing; the rest stack the mid field with low lips (v4: 0.3 of the drop, so they never clip)
-SCARPS = [(-0.9, -12.7, 1.0, math.pi / 2 + 0.45, env('FF_SCARP', 0.14), 0.62, 0.55), (2.7, -9.1, 0.72, math.pi / 2 - 0.3, 0.27, 0.85, -0.4),
+SCARPS = [(-0.9, -12.7, 1.0, math.pi / 2 + 0.45, env('FF_SCARP', 0.30), 0.62, 0.55), (2.7, -9.1, 0.72, math.pi / 2 - 0.3, env('FF_SCARP2', 0.33), 0.85, -0.4),
           (1.9, -16.7, 0.55, math.pi / 2 + 0.05, 0.13, 0.7, 0.15),
           (-7.5, -6.5, 1.3, math.pi / 2 + 0.3, 0.30), (6.8, -4.0, 1.4, math.pi / 2 - 0.2, 0.32),
           (-3.2, 6.8, 1.7, math.pi / 2, 0.36), (6.5, 14.5, 2.1, math.pi / 2 - 0.1, 0.42), (-9.5, 16.5, 2.3, math.pi / 2 + 0.2, 0.45)]
 N_FG_SCARPS = 3
 # v4: two softer hollows in the foreground plain (x, y, sx, sy, rotation, depth): no lip, a gaussian dish
-HOLLOWS = [(4.1, -13.6, 1.4, 0.8, 0.35, 0.11), (-2.7, -17.6, 0.95, 0.55, -0.25, 0.07)]
+HOLLOWS = [(4.1, -13.6, 1.4, 0.9, 0.35, env('FF_HOLLOW', 0.12)), (-2.7, -17.6, 1.2, 0.7, -0.25, env('FF_HOLLOW', 0.12))]   # v5: 0.12 deep, 2.4-2.8 units wide
 # v4: the dome's lee face is lower and wider (0.42/0.45 -> 0.22/0.85), a slope that catches the sky, not a terrace wall
 DOME_SCARP = (DOME_L[0] + 0.3, DOME_L[1] - 2.4, 3.0, math.pi / 2, env('FF_DSCARP', 0.22))
 # crescent dunes stacking the mid field: (x0, y0, half-width sx, height, crescent curvature, seed). The crest bows away
 # from the camera at the centre and the horns trail towards it (concave downwind face), the lee face is steep.
 # v4: the fronts are continuous (two-octave peaks and saddles, a trace of hummocks), 150-400 px wide on screen, and two
 # more at y 48 and 62 overlap the near rim's foot so its base is never a straight line
-DUNES = [(-6.0, 5.0, 7.0, env('FF_D1', 0.8), -1.2, 701), (5.0, 11.0, 9.0, env('FF_D2', 1.5), -1.6, 702),
-         (-4.0, 20.0, 12.0, env('FF_D3', 1.5), -2.2, 703), (9.0, 33.0, 15.0, env('FF_D4', 2.0), -2.8, 704),
-         (16.0, 48.0, 11.0, env('FF_D5', 2.0), -2.0, 705), (-12.0, 62.0, 12.0, env('FF_D6', 1.8), -2.4, 706),
-         (14.0, 7.0, 6.5, env('FF_D7', 2.6), -0.9, 707), (9.5, -2.5, 4.5, env('FF_D8', 1.3), -0.7, 708)]
+# v5: (..., heading deg, lee width factor). The y48/y62 fronts are gone (they stacked 15-20 px from the D4/D5/D6 feet on
+# screen); each front's crest frame is rotated about its centre with alternating sign (the world angles are large because
+# the mid field is seen at a grazing 8-12 deg, which flattens a world heading to a fraction of it on screen)
+DUNES = [(-6.0, 5.0, 7.0, env('FF_D1', 0.8), -1.2, 701, env('FF_D1R', 24.0), 1.0), (5.0, 11.0, 9.0, env('FF_D2', 1.5), -1.6, 702, env('FF_D2R', -20.0), 1.0),
+         (-4.0, 20.0, 12.0, env('FF_D3', 1.5), -2.2, 703, env('FF_D3R', 32.0), 1.1), (9.0, 33.0, 15.0, env('FF_D4', 2.0), -2.8, 704, env('FF_D4R', -28.0), 1.0),
+         (14.0, 7.0, 6.5, env('FF_D7', 2.6), -0.9, 707, env('FF_D7R', -14.0), 0.8), (9.5, -2.5, 4.5, env('FF_D8', 1.3), -0.7, 708, env('FF_D8R', 12.0), 0.7)]
 DUNE_LEE = env('FF_DLEE', 2.0)
 DUNE_CUSP = env('FF_DCUSP', 1.25)                                                # lee profile exponent: under 2 the crest is a cusp (a lip), not a rounded top                                                   # lee face width (units): v4 2.0, the faces catch the sky dome
 # far ridge planes: (y0, amplitude, wavelength along x, front-face sigma y, seed, along-crest scale, along-crest amplitude,
@@ -123,7 +143,10 @@ RIDGES = [(70.0, env('FF_R1', 2.8), 34.0, 7.0, 801, 0.7, 0.45, 0.12, 0.2, 3, 1.2
           (140.0, env('FF_R2', 8.0), 48.0, 11.0, 802, 0.7, 0.45, 0.08, 0.3, 2, 1.4, 0.3),
           (245.0, env('FF_R3', 26.0), 80.0, 20.0, 803, 0.75, 0.45, 0.07, 0.3, 2, 2.0, 0.25)]
 # v4: directional wind streaking, only on the right-hand foreground (x > 2, y < -5): 4:1 grooves along the wind
-STREAK = dict(amp=env('FF_STREAK', 0.20), len=5.0, wid=0.8, ang=env('FF_STREAK_ANG', 140.0))   # across the key, so the groove sides differ
+# v5: sharp-crested ridges 0.10 high, 0.6-1.2 units apart, from world x 0.8. Heading 55 deg: the key's azimuth is 130 deg, so
+# the ridge sides face into and away from the key (at 140 deg they ran along the key and the sides lit alike), and under the
+# hero camera's foreshortening a 55 deg world line shows at igloo's 20-25 deg up-to-the-right on screen
+STREAK = dict(amp=env('FF_STREAK', 0.10), len=5.0, wid=env('FF_STREAK_W', 0.5), ang=env('FF_STREAK_ANG', 55.0), x0=env('FF_STREAK_X', 0.8))
 
 # ------------------------------------------------------------------ noise on arbitrary coordinates (vectorised gradient noise)
 _GR = np.stack([np.cos(np.arange(16) * np.pi / 8), np.sin(np.arange(16) * np.pi / 8)], 1)
@@ -259,11 +282,13 @@ def dunes(x, y):
     over a shaded face: the along-crest variation is two broad octaves and the hummocks are a trace."""
     pad, *_ = masks(x, y)
     z = np.zeros_like(x)
-    for x0, y0, sx, h, curv, seed in DUNES:
-        xr = x - x0
-        yc = y0 + curv * (xr / sx) ** 2 + 0.22 * sx * fbm(x / (0.7 * sx) + seed, y / (0.7 * sx), 2, seed)   # a wandering crest line
-        s = y - yc
-        lee = DUNE_LEE * (0.75 + 0.5 * np.maximum(fbm(x / 4.0 + seed, y / 4.0, 2, seed + 3), -0.5))          # the lee face steepens and softens along the crest
+    for x0, y0, sx, h, curv, seed, rot, leem in DUNES:
+        c_, s_ = math.cos(math.radians(rot)), math.sin(math.radians(rot))                                     # v5: the crest frame has its own heading
+        xr = (x - x0) * c_ + (y - y0) * s_
+        yr = -(x - x0) * s_ + (y - y0) * c_
+        yc = curv * (xr / sx) ** 2 + 0.22 * sx * fbm(x / (0.7 * sx) + seed, y / (0.7 * sx), 2, seed)        # a wandering crest line
+        s = yr - yc
+        lee = DUNE_LEE * leem * (0.75 + 0.5 * np.maximum(fbm(x / 4.0 + seed, y / 4.0, 2, seed + 3), -0.5))   # the lee face steepens and softens along the crest
         prof = np.where(s > 0, np.exp(-(s / (0.35 * sx)) ** 2), np.exp(-(np.abs(s) / lee) ** DUNE_CUSP))     # v4: a cusp at the crest, the lip
         along = 0.72 + 0.45 * fbm(x / (0.6 * sx), y / (0.6 * sx), 2, seed + 1, gain=0.45)                      # broad peaks and saddles along the crest
         lumpy = 1 + 0.06 * fbm(x / 3.5, y / 3.5, 2, seed + 5)                                                  # a trace of hummocks
@@ -277,6 +302,7 @@ def scarp_one(x, y, cx, cy, R, ang, h, lipw=0.08, recover=True, lip=0.25, asp=1.
     if rot or asp != 1.0:
         c_, s_ = math.cos(rot), math.sin(rot); ex = dx * c_ + dy * s_; ey = (-dx * s_ + dy * c_) / asp; dx, dy = ex, ey
     r = np.hypot(dx, dy); th = np.arctan2(dy, dx)
+    R = R * (1 + 0.10 * fbm(np.cos(th) * 1.6 + cx, np.sin(th) * 1.6 + cy, 2, 661))   # v5: the rim wanders (no stamped ellipse)
     da = np.abs((th - ang + np.pi) % (2 * np.pi) - np.pi)
     arc = 1 - sstep(0.35, 0.85, da)                                               # the open side of the crescent faces the camera
     drop = sstep(R + lipw, R - lipw, r)                                           # crisp face at the rim
@@ -292,7 +318,8 @@ def scarps(x, y):
         # the mid-field scarps are seen at a grazing angle: the raised lip (lit top, shaded inner wall) carries them, not the
         # pit; v4 the lip is 0.3 of the drop over a wider lip width, so it rounds off instead of clipping
         fg = i < N_FG_SCARPS
-        z += scarp_one(x, y, cx, cy, R, ang, h if fg else 0.6 * h, lipw=0.08 + (0.12 if fg else 0.22) * R, lip=0.25 if fg else 0.3, asp=asp, rot=rot)
+        # v5: the foreground pits have a crisp lip (0.10 + 0.12 R wide) standing 0.32 of the drop over the rim
+        z += scarp_one(x, y, cx, cy, R, ang, h if fg else 0.6 * h, lipw=(0.10 + 0.12 * R) if fg else (0.08 + 0.22 * R), lip=0.32 if fg else 0.3, asp=asp, rot=rot)
     cx, cy, R, ang, h = DOME_SCARP
     # the dome's lee face: the drop does not recover, and it fades out along the horns with the dome's own height
     w = sstep(0.45, 0.80, dome(x, y, DOME_L) / DOME_L[5])                        # only on the dome's body, gone before the sight wedge
@@ -313,20 +340,21 @@ def streaks(x, y):
     4:1 grooves along the wind, 0.6 units apart, faded in past x 2 and gone beyond y -5."""
     wa = math.radians(STREAK['ang']); cw, sw = math.cos(wa), math.sin(wa)
     u = x * cw + y * sw; v = -x * sw + y * cw
-    n = fbm(u / STREAK['len'] + 11.3, v / STREAK['wid'], 3, 651, gain=0.5)
-    n = n - 0.6 * (1 - np.abs(fbm(u / STREAK['len'] + 4.1, v / (STREAK['wid'] * 0.8), 2, 653))) ** 3   # sastrugi: sharp grooves between the rounded ridges
-    m = sstep(1.5, 4.5, x) * sstep(-4.0, -8.0, y) * (0.6 + 0.4 * sstep(0.0, 0.5, fbm(x / 3.0, y / 3.0, 2, 652)))
+    # v5: sharp-crested ridges (1 - |noise|) with rounded troughs between them, a second octave so no two are alike
+    g = fbm(u / STREAK['len'] + 11.3, v / STREAK['wid'], 2, 651, gain=0.5)
+    n = (1 - 1.7 * np.abs(g)) + 0.35 * fbm(u / (STREAK['len'] * 0.4) + 4.1, v / (STREAK['wid'] * 0.6), 2, 653)
+    m = sstep(STREAK['x0'], STREAK['x0'] + 1.7, x) * sstep(-4.0, -8.0, y) * (0.5 + 0.5 * sstep(0.0, 0.5, fbm(x / 3.0, y / 3.0, 2, 652)))
     return STREAK['amp'] * n * m
 
 UX0, UY0, US, UN = -72.0, -32.0, 0.08, 1800
-CREST_PNG = os.path.join(CACHE, 'crest_%s.png' % os.environ.get('FF_TAG', 'v4'))
+CREST_PNG = os.path.join(CACHE, 'crest_%s.png' % os.environ.get('FF_TAG', 'v5'))
 def sample_uni(A, PX, PY):
     fx = np.clip((PX - UX0) / US, 0, UN - 1.001); fy = np.clip((PY - UY0) / US, 0, UN - 1.001)
     x0 = np.floor(fx).astype(int); y0 = np.floor(fy).astype(int); ax = fx - x0; ay = fy - y0
     return (A[y0, x0] * (1 - ax) + A[y0, x0 + 1] * ax) * (1 - ay) + (A[y0 + 1, x0] * (1 - ax) + A[y0 + 1, x0 + 1] * ax) * ay
 
 def build_height():
-    fn = os.path.join(CACHE, 'hgt_%s.npz' % os.environ.get('FF_TAG', 'v4'))
+    fn = os.path.join(CACHE, 'hgt_%s.npz' % os.environ.get('FF_TAG', 'v5'))
     if os.path.exists(fn) and not os.environ.get('FF_REBUILD'):
         z = np.load(fn); log('heights from cache', fn); return z['hgt'], z['uni']
     ux = UX0 + np.arange(UN) * US; uy = UY0 + np.arange(UN) * US
@@ -364,12 +392,21 @@ def build_height():
     crest_u = np.clip(cr / 0.22, 0, 1) * sstep(0.03, 0.18, slope)              # R: a crest, and a sloping one (the plain stays clean)
     dcx, dcy, dR, dang, _ = DOME_SCARP                                            # v4: the dome's lee lip is a crest too (its crust chunks)
     ddx = UXg - dcx; ddy = UYg - dcy; dr = np.hypot(ddx, ddy); dth = np.arctan2(ddy, ddx); dda = np.abs((dth - dang + np.pi) % (2 * np.pi) - np.pi)
-    # a 2.5-unit band over the crest (centred a little behind the lip), broken into clusters by a 0.6-unit noise so the
-    # lumps never line up as a string of beads
-    lipband = (1 - sstep(0.7, 1.15, dda)) * np.exp(-((dr - dR - 1.1) / 1.3) ** 2) * sstep(0.35, 0.70, dome(UXg, UYg, DOME_L) / DOME_L[5])
-    lipband = lipband * sstep(0.30, 0.62, fbm(UXg / 0.6 + 5.0, UYg / 0.6, 2, 612) + 0.5)
+    # v5: a 3-4 unit band over the crest whose density varies ALONG the crest (clusters 1-3 units long with 1-3 unit gaps,
+    # from a noise along the arc) and across it (a 0.7-unit scatter, so lumps sit off the ridge line too): never a string
+    arc = dR * ((dth - dang + np.pi) % (2 * np.pi) - np.pi)                       # signed arc position along the crest (units)
+    dens = sstep(-0.08, 0.28, fbm(arc / env('FF_CRUST_CL', 1.4) + 2.0, np.full_like(arc, 0.7), 2, 613))
+    band = np.exp(-((dr - dR - 0.8) / env('FF_CRUST_BW', 1.5)) ** 2)
+    scatter = sstep(0.12, 0.55, fbm(UXg / 0.7 + 5.0, UYg / 0.7, 2, 612) + 0.5)
+    lipband = (1 - sstep(0.7, 1.15, dda)) * band * sstep(0.35, 0.70, dome(UXg, UYg, DOME_L) / DOME_L[5]) * dens * (0.3 + 0.7 * scatter)
     dome_body = sstep(0.25, 0.6, dome(UXg, UYg, DOME_L) / DOME_L[5])
-    crust_u = np.maximum(lipband * (0.7 + 0.3 * fbm(UXg / 1.5, UYg / 1.5, 2, 611)), crest_u * dome_body)   # B: where the crust lumps live (v4: the left mass only)
+    # the dome's own ridge (the diagonal on screen, x150-350 y460-620): its crest line widened to a 3-4 unit band by a
+    # 1-unit blur, then the same clusters-and-gaps density and lateral scatter, so the lumps sit around the ridge, not on it
+    cwide = gaussian_filter(crest_u * dome_body, env('FF_CRUST_RW', 1.0) / US)
+    ref_ = np.percentile(cwide[dome_body > 0.5], 99.0) if (dome_body > 0.5).any() else 1.0
+    cwide = sstep(0.05, 0.40, cwide / max(ref_, 1e-6))
+    dens2 = sstep(-0.30, 0.15, fbm(UXg / 1.4 + 3.0, UYg / 1.4, 2, 614))
+    crust_u = np.maximum(lipband, cwide * dens2 * (0.5 + 0.5 * scatter))      # B: where the crust lumps live (the left mass only)
     flank_u = sstep(0.15, 0.32, slope) * sstep(-15.0, -9.0, UYg)                 # G: sloping flanks (the dome, the knolls, dune backs), not the near plain's mounds: shadow pockets
     crest_g = np.where(inside, sample_uni(crest_u, PX, PY), 0.0); flank_g = np.where(inside, sample_uni(flank_u, PX, PY), 0.0)
     crust_g = np.where(inside, sample_uni(crust_u, PX, PY), 0.0)
@@ -437,7 +474,7 @@ def lamp(name, spec):
 lamp('key', KEY); lamp('fill', FILL)
 # v4: a weak local fill for the left mass only: a spot from the camera's right, aimed at the dome's lee face, its cone
 # ending before the near plain's centre (x > -2), so the LUT fit region x100-700 and the near plain hold
-LFILL = dict(e=env('FF_LFILL', 0.2), pos=(7.0, -31.0, 7.0), aim=(-6.0, -13.0, -3.2), size=math.radians(env('FF_LFILL_SIZE', 34)), blend=0.6)
+LFILL = dict(e=env('FF_LFILL', 0.28), pos=(7.0, -31.0, 7.0), aim=(env('FF_LFILL_X', -7.0), -13.0, -3.2), size=math.radians(env('FF_LFILL_SIZE', 22)), blend=0.5)   # v5: the cone ends at world x -2
 if LFILL['e'] > 0:
     sd = bpy.data.lights.new('lfill', 'SPOT'); sd.spot_size = LFILL['size']; sd.spot_blend = LFILL['blend']; sd.shadow_soft_size = 4.0
     sd.color = (0.80, 0.88, 1.0)
@@ -519,7 +556,8 @@ S = dict(crumb_a=env('FF_CRUMB_A', 0.15), crumb_h=env('FF_CRUMB_H', 0.003), clod
          blota_a=env('FF_BLOTA_A', 0.07), blota_h=env('FF_BLOTA_H', 0.03),                 # v3 blotches, 0.3-1 unit
          blotb_a=env('FF_BLOTB_A', 0.05), blotb_h=env('FF_BLOTB_H', 0.09),                 # v3 blotches, 1-3 units (the old lumps)
          pocket_a=env('FF_POCKET_A', 0.26), pocket_h=env('FF_POCKET_H', 0.0),              # v3 irregular shadow pockets on flanks and crests (albedo only)
-         crust_h=env('FF_CRUST_H', 0.18), crust_a=env('FF_CRUST_A', 0.15),                 # v4 crust lumps on crests: taller, 8-20 px, more of the crest
+         crust_h=env('FF_CRUST_H', 0.07), crust_a=env('FF_CRUST_A', 0.40), crust_p=env('FF_CRUST_P', 0.22), crust_sh=env('FF_CRUST_SHA', 0.14),   # v5 crust lumps: bump 0.10, tops +0.30, the shadow under each lump -0.25, pockets -0.10
+         crust_spec=env('FF_CRUST_SPEC', 0.0),                                              # v5: specular on the lump tops only
          speck_a=env('FF_SPECK_A', 0.12), sparkle=env('FF_SPARK', 0.0))
 # distance weights: camera distance ~ Y + 24. Fine grain x1.25 in the nearest rows, x0.7 at the logo pad, gone by the far field
 DIST = m_('ADD', OY, 24.0)
@@ -573,17 +611,47 @@ cwn = noise(PO, 3.0, 2.0, 0.45)
 cwv = nd('ShaderNodeVectorMath', operation='MULTIPLY_ADD'); ln(cwn.outputs['Color'], cwv.inputs[0]); cwv.inputs[1].default_value = (0.12, 0.12, 0.12); ln(PO, cwv.inputs[2])
 # v4: broken crust on the left mass's crest: rounded lumps 0.25 units across (16-27 px on the dome crest) from an F1 voronoi
 # on warped coordinates, carried by the bump (a lit top, a 1-2 px shadow on the camera side) and a brighter albedo on top
-vf = voronoi(cwv.outputs['Vector'], env('FF_CHUNK_SC', 4.0), 1.0, 'F1')
-vf2 = voronoi(cwv.outputs['Vector'], env('FF_CHUNK_SC', 4.0) * 1.8, 1.0, 'F1')  # a second, smaller size mixed in: no even pebbles
-chunk = m_('MAXIMUM', mr(vf.outputs['Distance'], 0.44, 0.12, 0.0, 1.0, 'SMOOTHSTEP'), m_('MULTIPLY', mr(vf2.outputs['Distance'], 0.40, 0.10, 0.0, 1.0, 'SMOOTHSTEP'), 0.7))
-csel = noise(PO, 1.2, 1.0, 0.4)                                                  # denser and sparser patches along the crest
-chunk_w = m_('MULTIPLY', m_('MULTIPLY', CRUST, mr(DIST, 10.0, 30.0, 1.0, 0.0)), mr(csel.outputs['Fac'], 0.30, 0.50, 0.5, 1.0, 'SMOOTHSTEP'))
-chunk = m_('MULTIPLY', chunk, chunk_w)
+# v5: three F1 lump sizes, 0.14 / 0.25 / 0.40 units across (scales 7 / 4 / 2.5), each a rounded dome; 2-unit patches
+# where one size dominates (a selector noise), so a cluster of small lumps sits next to a few large ones
+csz = noise(PO, 0.5, 1.0, 0.4).outputs['Fac']
+w_s = mr(csz, 0.56, 0.42, 0.35, 1.0, 'SMOOTHSTEP'); w_l = mr(csz, 0.46, 0.60, 0.8, 1.0, 'SMOOTHSTEP')
+def lumps(vec, scale, lo, hi):
+    v_ = voronoi(vec, scale, 1.0, 'F1'); return mr(v_.outputs['Distance'], lo, hi, 0.0, 1.0, 'SMOOTHSTEP')
+def lump_field(vec):
+    # v5b: full rounded domes (no flat top, no steep ring): a flat-topped F1 dome with a steep wall read as a glossy crater
+    c_s, c_m, c_l = lumps(vec, 7.0, 0.50, 0.0), lumps(vec, 4.0, 0.52, 0.0), lumps(vec, 2.5, 0.54, 0.0)
+    return m_('MAXIMUM', m_('MAXIMUM', m_('MULTIPLY', c_s, w_s), m_('MULTIPLY', c_m, 0.85)), m_('MULTIPLY', c_l, w_l))
+chunk0 = lump_field(cwv.outputs['Vector'])
+# the key is behind the lumps, so a bump alone shows the camera their shaded fronts (dark holes with a glint). The crumbly
+# read igloo has (a lit rounded top, a 1-2 px shadow on the camera side) is painted into the albedo: the same lump field
+# sampled 0.07 units further from the camera gives, where it is set and the lump itself is not, the shadow under the lump
+cwo = nd('ShaderNodeVectorMath', operation='ADD'); ln(cwv.outputs['Vector'], cwo.inputs[0]); cwo.inputs[1].default_value = (0.0, env('FF_CRUST_SH', 0.07), 0.0)
+chunk_sh = m_('MAXIMUM', m_('SUBTRACT', lump_field(cwo.outputs['Vector']), chunk0), 0.0)
+chunk_w = m_('MULTIPLY', CRUST, mr(DIST, 10.0, 30.0, 1.0, 0.0))                   # the band's own density (clusters, gaps) is in the mask
+chunk = m_('MULTIPLY', chunk0, chunk_w)
+lump_shadow = m_('MULTIPLY', chunk_sh, chunk_w)
+pocket_c = m_('MULTIPLY', chunk_w, m_('SUBTRACT', 1.0, m_('MAXIMUM', chunk0, chunk_sh)))   # the gaps between lumps inside the band
+# specular and a lower roughness on the lump tops only
+ln(m_('ADD', env('FF_SPEC', 0.2), m_('MULTIPLY', chunk, S['crust_spec'])), sb.inputs['Specular IOR Level'])
+ln(m_('SUBTRACT', env('FF_ROUGH', 0.55), m_('MULTIPLY', chunk, env('FF_CRUST_RO', 0.0))), sb.inputs['Roughness'])   # v5b: matte lumps (the glints read as wet beads)
 # bump: fine crumb (preview only) + blotches + clod + crust - pockets, macro parts damped with distance
 Hfine = m_('MULTIPLY', m_('MULTIPLY', crumb_c, S['crumb_h'] if CRUMB else 0.0), fine_w)
 Hmac = m_('ADD', m_('MULTIPLY', blotB, S['blotb_h']), m_('MULTIPLY', m_('MULTIPLY', clod, S['clod_h']), macro_w))
 Hmac = m_('ADD', m_('MULTIPLY', Hmac, macro_w), m_('MULTIPLY', m_('MULTIPLY', blotA, S['blota_h']), blot_w))
 Hmac = m_('ADD', Hmac, m_('MULTIPLY', chunk, S['crust_h']))
+# v5b: wind streaks on the right-hand foreground in the shader (the 1024 heightfield's 0.15-unit rows blur 0.5-unit ridges
+# away): a noise stretched 8:1 along 55 deg world (igloo's 20-25 deg up-to-the-right on screen), its zero contours turned
+# into sharp crests (1 - |2f - 1|), 0.6-1.2 units apart, 0.05 high, from world x 0.8 (feathered to 2.5), y < -6
+srm = nd('ShaderNodeMapping', vector_type='POINT'); srm.inputs['Rotation'].default_value = (0, 0, -math.radians(env('FF_SSTREAK_ANG', 55.0)))
+srm.inputs['Scale'].default_value = (1.0, 1.0, 1.0); ln(PO, srm.inputs['Vector'])
+srs = nd('ShaderNodeMapping', vector_type='POINT'); srs.inputs['Scale'].default_value = (1.0 / 4.0, 1.0 / 0.55, 1.0); ln(srm.outputs['Vector'], srs.inputs['Vector'])
+sfac = noise(srs.outputs['Vector'], 1.0, 2.0, 0.40).outputs['Fac']
+sridge = m_('SUBTRACT', 1.0, m_('ABSOLUTE', m_('SUBTRACT', m_('MULTIPLY', sfac, 2.0), 1.0)))
+sridge = mr(sridge, 0.55, 1.0, 0.0, 1.0, 'SMOOTHSTEP')
+smask = m_('MULTIPLY', mr(OX, 0.8, 2.5, 0.0, 1.0, 'SMOOTHSTEP'), mr(OY, -5.0, -8.0, 0.0, 1.0, 'SMOOTHSTEP'))
+smask = m_('MULTIPLY', smask, mr(noise(PO, 0.35, 1.0, 0.4).outputs['Fac'], 0.35, 0.55, 0.45, 1.0, 'SMOOTHSTEP'))
+sstreak = m_('MULTIPLY', sridge, smask)
+Hmac = m_('ADD', Hmac, m_('MULTIPLY', sstreak, env('FF_SSTREAK_H', 0.05)))
 Hall = m_('MULTIPLY', m_('ADD', m_('ADD', Hfine, Hmac), m_('MULTIPLY', pocket, -S['pocket_h'])), fade_far)
 bp = nd('ShaderNodeBump'); bp.inputs['Strength'].default_value = 1.0; bp.inputs['Distance'].default_value = 1.0
 ln(Hall, bp.inputs['Height']); ln(bp.outputs['Normal'], sb.inputs['Normal'])
@@ -595,7 +663,8 @@ amul = m_('MULTIPLY', tone, mr(pocket, 0.0, 1.0, 1.0, 1.0 - S['pocket_a']))
 amul = m_('MULTIPLY', amul, m_('ADD', 1.0, m_('MULTIPLY', m_('MULTIPLY', clod, S['clod_a'] / 4.5), macro_w)))
 amul = m_('MULTIPLY', amul, m_('ADD', 1.0, m_('MULTIPLY', m_('MULTIPLY', blotA, S['blota_a'] / 4.0), blot_w)))
 amul = m_('MULTIPLY', amul, m_('ADD', 1.0, m_('MULTIPLY', blotB, S['blotb_a'] / 3.5)))
-amul = m_('MULTIPLY', amul, m_('ADD', 1.0, m_('MULTIPLY', m_('SUBTRACT', m_('MULTIPLY', chunk, 2.0), chunk_w), S['crust_a'])))   # v4: the lump tops +crust_a (bright crust), the gaps -crust_a
+amul = m_('MULTIPLY', amul, m_('ADD', 1.0, m_('SUBTRACT', m_('MULTIPLY', chunk, S['crust_a']), m_('ADD', m_('MULTIPLY', pocket_c, S['crust_p']), m_('MULTIPLY', lump_shadow, S['crust_sh'])))))   # v5: the lump tops +crust_a, their camera-side shadow -crust_sh, the pockets between them -crust_p
+amul = m_('MULTIPLY', amul, m_('ADD', 1.0, m_('MULTIPLY', m_('SUBTRACT', sstreak, m_('MULTIPLY', smask, 0.35)), env('FF_SSTREAK_A', 0.10))))   # v5b: the crests a touch brighter
 if CRUMB:
     grain = m_('ADD', m_('MULTIPLY', crumb_c, -S['crumb_a']), m_('MULTIPLY', speck, S['speck_a']))
     amul = m_('MULTIPLY', amul, m_('ADD', 1.0, m_('MULTIPLY', m_('MULTIPLY', grain, fine_w), slope_w)))
@@ -760,13 +829,19 @@ if not os.environ.get('FF_NOPOST'):
     # camera distance per texel row/column: texel (i, j) -> grid (r, c) = (i / (TEX-1) * (NP-1), j / (TEX-1) * (NP-1))
     ri = np.linspace(0, NP - 1, TEX); r0 = np.floor(ri).astype(int); r1 = np.minimum(r0 + 1, NP - 1); fr = (ri - r0)[:, None]
     ci = np.linspace(0, NP - 1, TEX); c0 = np.floor(ci).astype(int); c1 = np.minimum(c0 + 1, NP - 1); fc = (ci - c0)[None, :]
+    band = FP.relief_band(tex) if FP.MIDR_K else None                                       # v5b: the right swell's relief boost
     for i0 in range(0, TEX, 512):                                                           # in row blocks to bound memory
         sl = slice(i0, i0 + 512)
         rr0, rr1, ffr = r0[sl], r1[sl], fr[sl]
         def sampb(A):
             return (A[rr0][:, c0] * (1 - fc) + A[rr0][:, c1] * fc) * (1 - ffr) + (A[rr1][:, c0] * (1 - fc) + A[rr1][:, c1] * fc) * ffr
         dx = sampb(PX) - CAM[0]; dy = sampb(PY) - CAM[1]; dz = sampb(hgt) - CAM[2]
-        tex[sl] = FP.haze(tex[sl], np.sqrt(dx * dx + dy * dy + dz * dz))
+        dcam = np.sqrt(dx * dx + dy * dy + dz * dz)
+        if band is not None: tex[sl] = FP.relief_boost(tex[sl], band[sl], dx + CAM[0], dy + CAM[1])
+        tex[sl] = FP.haze(tex[sl], dcam)
+        tex[sl] = FP.lateral(tex[sl], dx + CAM[0], dy + CAM[1])                                 # v5: the far masses' lateral tone
+        tex[sl] = FP.cap215(FP.left_gain(tex[sl], dx + CAM[0], dy + CAM[1]))                    # v5b: the left dome's page calibration, then the 215 ceiling
+        tex[sl] = FP.page_gain(tex[sl], dcam)                                                   # v5: the page calibration per depth band
         if os.environ.get('FF_PAGEFOG', '1') == '1':                                           # v4: divide out the page's own fog (view-axis depth)
             tex[sl] = FP.page_precomp(tex[sl], (dy * 24.0 + dz * 1.5) / 24.047)
 Image.fromarray(np.round(np.clip(tex, 0, 1) * 255).astype(np.uint8)).save(os.path.join(OUTDIR, 'ground_bake.png'))

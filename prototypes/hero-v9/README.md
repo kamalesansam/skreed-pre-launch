@@ -1,6 +1,6 @@
 # Hero prototype v9 (2026-10-08)
 
-Live: https://claude.ai/artifact/QDXUhF32ZLd7L9a5ccDnq8 (version 20). Builds on v8.2 (`../hero-v8`).
+Live: https://claude.ai/artifact/QDXUhF32ZLd7L9a5ccDnq8 (version 21). Builds on v8.2 (`../hero-v8`).
 
 ## The floor, re-created from igloo.inc's snow
 Sam asked for the floor to look exactly like igloo's. Three Blender variants were built from the hero camera and judged against four igloo screenshots by three reviews (surface, shape, tone): variant a won on composition (flank knolls, open centre, foreground mounds), with b's tone and stone scatter and c's measurement harness grafted on. The integrated floor (`blender/floor_final.py`, post curve `blender/floor_final_post.py`, LUT `blender/floor_lut.json`, checks `blender/floor_judge.py` and `blender/verify_bake.py`) adds:
@@ -27,6 +27,12 @@ Sam asked for the hero copy to go: no headline, no sub-line, no button, plain an
 - **Tune: Reset to defaults** restores every slider, toggle and the block colour order.
 - **From the review (three lenses, each finding verified):** days are padded to two digits and the numeral carries the 2ch reservation, so the row never jumps; ticks are aligned to the wall-clock second; the numerals stay hidden until the first tick and a `<noscript>` line gives the date; at zero the countdown stops and the eyebrow reads "Skreed is live. skreed.com"; the seconds group is hidden under reduced motion; the eyebrow and labels are Open Sans 600 at 14 px; spacing uses the `--s` tokens; below 1100 px the countdown lifts so the cue has its own row.
 - Not changed on purpose: there is no call to action on the fold. Sam chose the plain countdown; the reserve flow lives in the later sections.
+
+## v9.6: snow floor round 5, smooth edges, no black holes (2026-10-09)
+- **Round 5 bake:** the LUT refit on a v5 preview fixed the near field; a lateral haze on the far masses, a gain on the left dome and a relief boost on the right swell; wind streaks on the right foreground and visible pits; clustered crust on the left crest.
+- **Two page fixes** the verifiers traced to the page, not the bake: the composer's render targets now multisample (4 samples, 2 on touch devices), so terrain silhouettes and block edges are no longer stair-stepped (the canvas antialiasing never applied to the composer); and the ground shader has a soft toe (`gToe` 0.03 linear, Tune "Shadow floor"), so the lee of a drift reads as shaded snow, never a black hole (`shot-ridge-msaa-toe.png`, before and after).
+- **Tone on the page,** igloo over ours: far left 1.00, far right 0.92, mid left 0.98, mid right 1.06, near centre 1.07, near right 1.13 (v9.5 had the far ridges at 1.57 and 0.73).
+- Still open, in round 6 (the last automatic round): the wind grain runs up-right where igloo's descends to the right, the left crest's lumps soften away on the page and its skyline is a clean diagonal, the centre mid field still lacks distinct fronts, a few specks and two faint straight seams where the coarse page mesh and the baked shading disagree.
 
 ## v9.5: snow floor round 4 (2026-10-09)
 Rounds 3 and 4 of the floor against igloo, each judged on the page render (not the Blender preview) by an eye judge and a numbers verifier:

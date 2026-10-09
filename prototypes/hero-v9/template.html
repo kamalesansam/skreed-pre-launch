@@ -230,6 +230,7 @@ addEventListener('scroll',cueCheck,{passive:true});cueCheck();})();</script>
     <label for="gExp">Ground exposure <output id="o-gExp"></output><input id="gExp" type="range" min="0.1" max="1.2" step="0.01"></label>
     <label for="gGamma">Ground contrast <output id="o-gGamma"></output><input id="gGamma" type="range" min="0.4" max="1.4" step="0.01"></label>
     <label for="gNear">Near ground <output id="o-gNear"></output><input id="gNear" type="range" min="0.3" max="1.2" step="0.01"></label>
+    <label for="gToe">Shadow floor <output id="o-gToe"></output><input id="gToe" type="range" min="0" max="0.12" step="0.005"></label>
     <label for="crumb">Crumb grain contrast <output id="o-crumb"></output><input id="crumb" type="range" min="0" max="0.6" step="0.01"></label>
     <label for="crumbSize">Crumb grain size <output id="o-crumbSize"></output><input id="crumbSize" type="range" min="0.01" max="0.2" step="0.005"></label>
     <label for="mist">Ground mist <output id="o-mist"></output><input id="mist" type="range" min="0" max="3" step="0.05"></label>
@@ -316,7 +317,7 @@ const orderNames = () => BLOCK_ORDERS[blockOrder] || blockOrder.split(',');
 
 // ---- tuning state. Hover defaults are igloo.inc's own numbers (wiring doc 4.2). ----
 const P = { push: 0.5, wob: 0.3, r0: 1, r1: 3, follow: 0.06, mouse: 0.05, breath: reduce ? 0 : 0.3, lift: 1.6,
-  glow: 2.4, rest: 0.06, tint: 0.035, grad: 0.7, logoIdle: 1, logoSplit: 0.4, clear: 0.2, skyGain: 1, hue: 0.8, hueScale: 2.2, crumb: 0.35, crumbSize: 0.03, gExp: 0.45, gGamma: 0.7, gNear: 0.68, mist: 0.55, mistSpeed: 1, fog: 1, fogBright: 0.4, fogSpeed: 0.15, fogSize: 1, fogHug: 1.6, tex: 1.5, relief: 0.01, key: 2.0, bloom: 0.5, rim: 2.4, spec: 0.8, rough: 0.55, bounce: 1.0, amb: 1, rimAz: 35, rimEl: 40, bevel: 0.05, bevelAng: 50, alb: 0.017, wrap: 0.25, keyX: -6, keyY: 7, keyZ: 10, keyRad: 3.5, rimX: -4, rimY: 9, rimZ: -3, rimRad: 4.5, rim2: 0.75, rim2X: 9, rim2Y: 7, rim2Z: -3, rim2Rad: 4, floor: 0.24, hz: 0.06, sky: 0.008, ktemp: 1, wear: 0.3, occ: 0.3, knee: 0.55 };   // relief, grain and key light set by Sam on 2026-10-08
+  glow: 2.4, rest: 0.06, tint: 0.035, grad: 0.7, logoIdle: 1, logoSplit: 0.4, clear: 0.2, skyGain: 1, hue: 0.8, hueScale: 2.2, crumb: 0.35, crumbSize: 0.03, gExp: 0.45, gGamma: 0.7, gNear: 0.68, gToe: 0.03, mist: 0.55, mistSpeed: 1, fog: 1, fogBright: 0.4, fogSpeed: 0.15, fogSize: 1, fogHug: 1.6, tex: 1.5, relief: 0.01, key: 2.0, bloom: 0.5, rim: 2.4, spec: 0.8, rough: 0.55, bounce: 1.0, amb: 1, rimAz: 35, rimEl: 40, bevel: 0.05, bevelAng: 50, alb: 0.017, wrap: 0.25, keyX: -6, keyY: 7, keyZ: 10, keyRad: 3.5, rimX: -4, rimY: 9, rimZ: -3, rimRad: 4.5, rim2: 0.75, rim2X: 9, rim2Y: 7, rim2Z: -3, rim2Rad: 4, floor: 0.24, hz: 0.06, sky: 0.008, ktemp: 1, wear: 0.3, occ: 0.3, knee: 0.55 };   // relief, grain and key light set by Sam on 2026-10-08
 const P_DEFAULTS = { ...P };   // for the Tune reset
 { const q = new URLSearchParams(location.search); for (const k of Object.keys(P)) if (q.has(k) && isFinite(+q.get(k))) P[k] = +q.get(k); }   // test overrides, e.g. ?rest=1
 for (const k of Object.keys(P)) {
@@ -637,11 +638,11 @@ groundTex.colorSpace = THREE.SRGBColorSpace; groundTex.anisotropy = renderer.cap
   //    multiplied, added as faint Pearl Whisper light, strongest on lit ground, fading near the camera and toward the horizon
   const groundMat = new THREE.MeshBasicMaterial({ map: groundTex, side: THREE.DoubleSide, fog: true, toneMapped: false });
   groundMat.onBeforeCompile = (sh) => {
-    Object.assign(sh.uniforms, FOG, { uCrumb: { get value() { return P.crumb; } }, uCrumbSize: { get value() { return P.crumbSize; } }, uGExp: { get value() { return P.gExp; } }, uGGamma: { get value() { return P.gGamma; } }, uGNear: { get value() { return P.gNear; } } });
+    Object.assign(sh.uniforms, FOG, { uCrumb: { get value() { return P.crumb; } }, uCrumbSize: { get value() { return P.crumbSize; } }, uGExp: { get value() { return P.gExp; } }, uGGamma: { get value() { return P.gGamma; } }, uGNear: { get value() { return P.gNear; } }, uGToe: { get value() { return P.gToe; } } });
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWPos;')
       .replace('#include <project_vertex>', '#include <project_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
-      varying vec3 vWPos; uniform float uCrumb, uCrumbSize, uGExp, uGGamma, uGNear;
+      varying vec3 vWPos; uniform float uCrumb, uCrumbSize, uGExp, uGGamma, uGNear, uGToe;
       #define vGroundW vWPos
 uniform sampler2D tWindProc;
 uniform float uTime;
@@ -669,6 +670,8 @@ float gtap(vec2 p) { return pow(texture2D(tWindProc, p).r, 2.2); }
         // ours was the reverse: a gentle falloff toward the camera (full by 20 units) matches that and keeps the headline legible.
         diffuseColor.rgb = uGExp * pow(max(diffuseColor.rgb, 0.0), vec3(uGGamma));
         diffuseColor.rgb *= mix(uGNear, 1.0, smoothstep(6.0, 20.0, dist));
+        // soft toe in linear light: 0 maps to uGToe, values well above it are untouched (shaded snow, never a hole)
+        diffuseColor.rgb = 0.5 * (diffuseColor.rgb + sqrt(diffuseColor.rgb * diffuseColor.rgb + 4.0 * uGToe * uGToe));
         vec2 q = vWPos.xz / max(uCrumbSize, 0.005);
         float crumb = gn(q) * 0.5 + gn(q * 2.3 + 7.1) * 0.3 + gh(floor(q * 3.1)) * 0.2 - 0.5;
         diffuseColor.rgb *= 1.0 + crumb * uCrumb * (1.0 - smoothstep(6.0, 45.0, dist));
@@ -933,7 +936,8 @@ function layoutWall(portrait) {
 await yieldFrame();
 let savePass = null;
 function makeComposer(scene, cam, withBloom) {
-  const c = new EffectComposer(renderer); c.renderToScreen = false;
+  // multisampled targets: without them every terrain silhouette and block edge is stair-stepped (the canvas MSAA does not apply to render targets)
+  const c = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: touch ? 2 : 4 })); c.renderToScreen = false;
   c.addPass(new RenderPass(scene, cam));
   let b = null;
   if (withBloom) {
