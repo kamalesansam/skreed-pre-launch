@@ -3,6 +3,7 @@
 // byte change to an inline script changes its hash.
 //   node scripts/csp.mjs                 enforcing header
 //   node scripts/csp.mjs --report-only   Content-Security-Policy-Report-Only (the first production deploy, section 15)
+//   node scripts/csp.mjs --dist <dir>    a build written elsewhere with astro build --outDir (default: dist/)
 // Fails the build when: a markup style="" attribute appears (it would need style-src-attr), the CSP line is longer than
 // 1900 characters (wrangler drops _headers lines over 2000 silently), or dist/_headers has no /* rule.
 import { createHash } from 'node:crypto';
@@ -11,7 +12,8 @@ import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
-const DIST = join(ROOT, 'dist');
+const di = process.argv.indexOf('--dist');
+const DIST = di > 0 ? resolve(process.argv[di + 1]) : join(ROOT, 'dist');
 const reportOnly = process.argv.includes('--report-only');
 const MAX_LINE = 1900;
 
