@@ -1,0 +1,57 @@
+{
+  "source": "supplier",
+  "model": "Cobalt.fbx, cleaned and simplified (scratchpad case/out, 2026-10-09)",
+  "lod0": "/models/case.lod0.e4e48720.glb",
+  "lod1": "/models/case.lod1.462e2dc8.glb",
+  "sha256": {
+    "lod0": "e4e48720def91f3479a8b133ca0f2da35a07b059a3d10790a94d2aed4a288c6a",
+    "lod1": "462e2dc8e5f7d1cc58f7c61746b56d54468aefc21657a3e62aec3bcda5f12550"
+  },
+  "decoder": "meshopt-reference-0.22.0",
+  "orient": [
+    0,
+    0,
+    0,
+    1
+  ],
+  "sizeMm": [
+    104.7,
+    196.7,
+    26.6
+  ],
+  "parts": {
+    "body": {
+      "node": "shell",
+      "material": "shell",
+      "followsShade": true
+    },
+    "accent": {
+      "node": "trim",
+      "material": "trim",
+      "followsShade": false,
+      "roughness": 0.553
+    },
+    "logo": {
+      "node": "logo",
+      "material": "logo",
+      "followsShade": true,
+      "tint": 0.8468
+    }
+  },
+  "triangles": {
+    "lod0": 20348,
+    "lod1": 9811
+  },
+  "bytes": {
+    "lod0": 106000,
+    "lod1": 54688
+  },
+  "lod1BackOnly": true,
+  "maps": {
+    "orm": null,
+    "normal": null
+  },
+  "instancing": true,
+  "caseType": "",
+  "device": ""
+}

@@ -201,3 +201,117 @@ Graded by the review skill (`.claude/skills/review/SKILL.md`) against `docs/CHEC
 - The 404 carries `noindex` and a canonical to `/404.html`. That is harmless, but a noindex page needs no canonical.
 - The production build still emits the `FamilyPage` script chunk into `_astro/` with no page referencing it (Astro bundles the scripts of imported components). It is never downloaded.
 - Builder open issue 6 (the state line under the finish) is graded as item 2 above. Iteration 1 missed it.
+
+## Iteration 3, 2026-10-09: FAIL
+
+### How it was checked
+
+- Screenshots read first: `family-blissful-blues-390x844.png` and `-1280x800.png`, the retaken `family-state-data-saver-390x844.png`, `family-state-data-saver-rest-{360x780,375x667}.png` and `family-state-3d-slow-390x844.png`.
+- Independent mirror (`scratchpad/famrev3`, own Astro and Vite caches, `wrangler dev` on 8797, stopped afterwards). The repo's `dist/`, `src/pages/index.astro` and the other workflows' servers were not touched. The step 1 mount was applied in the mirror only, with `scratchpad/fam2/mount-patch.sh`. Four builds:
+  - `npm run build` plus the mount (production): 2 pages, CSP line 594 characters. `index.html` has 0 `nav#families`, 0 `@view-transition` and 0 `/shades/` links. `_astro/` has no FamilyLinks chunk, only the unreferenced `FamilyPage` chunk noted in iteration 2. The sitemap lists 1 URL.
+  - `PUBLIC_FAMILY_PAGES=on npm run build` plus the mount: 12 pages, CSP line 1,242 characters. The nav, the 10 links and both `@view-transition` rules are inline. The `FamilyLinksNav` chunk (2,726 B, 1,378 B gzip) is referenced. The sitemap lists 11 URLs.
+  - `PUBLIC_FAMILY_PAGES=on npm run build` (graded, no mount): `grid.spec.ts` 39/39 (2.0 min).
+  - `PUBLIC_FAMILY_3D=dev npm run build:test` plus the mount: `states.spec.ts` 22/22 (1.6 min). `entry.spec.ts`: the 4 poster-path rows pass. The 6 3D rows fail at "the section 2 island does not place the link boxes".
+- `npm run test:family` 48/48. `tests/unit` 48/48 (run read-only in the repo, because the mirror leaves out `prototypes/`). `astro check`: 0 errors, 0 warnings, 4 hints.
+- Lighthouse 13.5 mobile on `/shades/blissful-blues/`, **grid mode**: performance 100, accessibility 100, best practices 100, SEO 100. LCP 1.5 s, TBT 0 ms, CLS 0, 57 KiB.
+- The reviewer's probes (`scratchpad/famrev3tools/probe3.mjs`, `cls3.mjs`, `firstpaint.mjs`, `slow3d.mjs`), all on the dev build:
+  - A data saver sweep at 12 sizes.
+  - Layout shifts at load for every grid-mode row, at 390x844, 1280x800, 1366x768 and 1920x1080, unthrottled and on a 3G profile, with the same rows repeated on the graded build.
+  - The first paint of grid mode with the page module held back.
+  - "Show in 3D" by keyboard.
+  - The 3D slow line at 1280x800 and 375x667.
+- Grep: no em or en dash, `box-shadow`, `backdrop-filter`, `gradient`, `blur(` or italic in the family sources, the spec or `states.spec.ts`. No `style=` and no `standin` in `dist/`. No TODO or placeholder. The page module is 3,841 B gzip, unchanged.
+
+### Iteration 2 items, re-checked
+
+- **Item 2 (state line behind the bar): fixed at the sizes it named.**
+  - `#state` follows `#hud` in the DOM and on screen at every size.
+  - In my sweep, unscrolled, "Show in 3D" is the element under its own centre and ends above the bar:
+
+    | Size | Button y | Bar top |
+    |---|---|---|
+    | 360x640 | 467 to 511 | 567 |
+    | 412x915 | 675 to 719 | 842 |
+    | 768x1024 | 743 to 787 | 951 |
+    | 820x1180 | 745 to 789 | 1107 |
+
+  - The grid circles stay 44 px or larger, and there is no horizontal scroll at any size.
+  - At 360x640 the finish row sits under the bar, as it does at rest there (stage 320 px, 2.3).
+  - In landscape (844x390, 667x375) the line sits below the fold together with the whole HUD, as 2.8 defines.
+  - On the wide layout the line takes the row under the HUD, centred with it. At 1280x800 this pushes the scrubber to y 806 to 850, below the fold, which the in-flow layout allows.
+- **Item 3 (link CSS and script with the pages off): fixed.** See the production build above. The unit test guards the source shape.
+
+### Checklist
+
+| Item | Verdict | Evidence |
+|---|---|---|
+| A1 | FAIL | Unchanged: rule 12 (R5) and rule 24 (R2) wait on Sam, and rules 46 and 47 have no terms or privacy page. The iteration 3 diff adds no motion, colour, face, shadow, gradient or copy. No violation of rules 1 to 11, 13 to 23, 25 to 45 or 48 to 50 |
+| A2, A3, A4, A5 | PASS | The state line is Open Sans 400 14 px with a 600 lead word, in `--fg` on the neutral. Letter spacing is normal (measured). No new colour |
+| B1 | PASS | 390 and 1280 for three families, plus the state shots |
+| B2 | PASS | No horizontal scroll at the 12 data-saver sizes. "Show in 3D" is 100 x 44 |
+| B3, B4 | PASS | Unchanged. The new rule uses `100svh` in a `min-height` and animates nothing |
+| C1 | PASS | Page module 3,841 B gzip. `FamilyLinksNav` 1,378 B gzip, loaded only when the pages are on |
+| C2, C3 | PASS | Unchanged. The stage resize is not animated |
+| C4 | PASS | Lighthouse mobile 100, grid mode, on the graded build |
+| D1, D2, D4 | PASS | Unchanged. R16 is still pending Sam |
+| D3 | FAIL | On a 3D build, grid mode is not grid mode at first paint (item 2) |
+| E1, E2 | BLOCKED | `web-design-guidelines` and `visual-critique` are still not installed. The reviewer's critique is in the notes |
+| E3 | PASS | Reading order: HUD, state line ("Show in 3D"), scrubber, finish. Focus visible. See the note on focus after "Show in 3D" |
+| E4 | PASS | Writes no data |
+| E5 | n/a | No database |
+| G1, G2, G3, G4, G6, G7, G8, G9, G10, G11, G12 | PASS | Unchanged from iteration 2 |
+| G5, G15, G16, G18, G23, G26 | FAIL | Each is still blocked on its input (iteration 2, item 5) |
+| G13, G14, G17, G20, G25 | n/a | As before |
+| G19, G24, G27 | PASS | Unchanged |
+| G21 | PASS (gated) | Production builds no `/shades/` page and, with the mount, renders and loads nothing |
+| G22 | Pending | R9 |
+| H | FAIL | Every grid-mode row reaches its designed end state. But the slow-connection row moves the controls after first paint, and so does every grid-mode row on the wide layout of a 3D build (item 2). H asks for no layout shift on slow networks, and acceptance 9 applies H by analogy |
+| F1 | FAIL | Acceptance 2 below |
+| F2 | PASS | No TODO, placeholder or commented-out code |
+
+### Acceptance criteria (run 1)
+
+| # | Verdict | Evidence |
+|---|---|---|
+| 1 | PASS | Unchanged: ten URLs, the sitemap, the branded 404 and the 23-shade build failure |
+| 2 | FAIL | `src/pages/index.astro` still does not mount `FamilyLinks`, and the port's section 2 is still `section2/placeholderWall.ts` with no gems. The repo's landing has 0 links to `/shades/`. In the mirror with the mount, the poster-path rows pass 4/4 and the 3D rows fail 6/6 at "the section 2 island does not place the link boxes" |
+| 6 | PASS | `grid.spec.ts` on the graded build |
+| 8 | PASS | Lighthouse 100, grid mode. Head 833 B and module 3.8 KB gzip, within budget |
+| 9 | PASS | `states.spec.ts` 22/22 on the dev build. Every grid-mode row shows the right mode and line, has no island request and zero CSP violations, and its screenshot is attached unscrolled. Its first paint is graded under D3 and H (item 2) |
+| 10 | PASS | `grid.spec.ts` accessibility rows. Guards clean |
+
+### Verdict: FAIL
+
+1. **Mount the family links on the landing (acceptance 2, G21, F1; CLAUDE.md: every gem links to its family page by click, tap and keyboard).** Nothing has changed since iteration 2, item 1. The hero owner's three steps in spec section 13 are still to do:
+   - The two-line mount in `src/pages/index.astro`.
+   - The gems in the port's section 2, with `installRockNav`, `placeLinkBoxes`, `offNav()` and `clearLinkBoxes`.
+   - The loader's return path and the lost-context check on `pageshow`.
+
+   Then add `?blockColors=` and run all 10 rows of `entry.spec.ts`. The family side is verified: the poster rows pass with the gated component. Sam's product question still stands: production gems link nowhere while `PUBLIC_FAMILY_PAGES` is off.
+2. **Make grid mode right at first paint on a 3D build (D3, H, spec 2.7 and 5 "First paint").** The head script sets `html.grid` and `data-why` before first paint. The rest of grid mode arrives only when the page module runs.
+   - **Wide layout.** The grid sits under "The whole family." until `page.ts` moves it into the stage. Until then the grid-mode stage (`height: auto`) is 0 px tall, so the HUD, scrubber, finish and Reserve sit right under the title. When the module runs they jump 449 px down (`.fp-ctl` from y 213 to 662). Measured CLS on Blissful Blues:
+
+     | Size | Reduced motion, no WebGL2, `deviceMemory` 2 | Data saver |
+     |---|---|---|
+     | 1280x800 | 0.257 | 0.289 |
+     | 1366x768 | 0.237 | 0.267 |
+     | 1920x1080 | 0.188 | 0.211 |
+
+     The same rows on the off build score 0.000 to 0.001. 0.25 and above is "poor", and reduced motion and no WebGL2 are common on laptops. Evidence: `screenshots/family-review-i3-grid-firstpaint-1280x800.png`, taken with the module held back.
+   - **Phone layout.** The stage is a blank 450 px box until the grid pops in (`family-review-i3-grid-firstpaint-390x844.png`). Then the data saver and 2G lines, which the module writes after first paint, shrink the stage. The HUD, scrubber and finish jump 81 px up (`.fp-ctl` from y 564 to 483). That is CLS 0.032 at 390x844 on a throttled 2G profile, arriving 1.2 s after first paint, in the very row the line exists for, and while the visitor may be reaching for Prev, Next or the scrubber.
+   - **Change.**
+     - (a) Put the grid in the stage in the HTML on every build, as the off build does. The existing `html.m3d .fp-stage > .sgrid { display: none }` hides it in 3D mode. Move it under "The whole family." only on the 3D path, where that section is below the fold. Alternatively, render a second copy and show one per mode in CSS: `display: none` keeps the hidden copy out of the tab order and the accessibility tree.
+     - (b) Render the data saver and slow-connection lines in the HTML: static copy, with `page.ts` wiring the button. On `has3d` builds, show them in CSS under `html[data-why="savedata"]` and `html[data-why="slow"]`, so the stage gives up the line's height from the first frame.
+     - Then add a Playwright row that delays the page module by 1 s and asserts a layout-shift total under 0.01 for every grid-mode row, at 390x844 and 1280x800, on the dev build.
+   - **Scope.** Production today (`FAMILY_3D` off) is not affected. Every 3D build is, and run 1 grades the grid-mode rows on that build.
+3. **Sam's written answers (A1 rules 12, 24, 46 and 47; spec 11 gate).** Still open: R1, R2, R3, R5, R7, R8, R9 and R11 to R16, then the CLAUDE.md and CHECKLIST.md amendments. Also his yes on the 404 copy. Not a code change.
+4. **Site essentials blocked on inputs (G5, G15, G16, G18, G23, G26).** Still blocked: the OG image, the legal facts, the PostHog key and Web Analytics token, the FAQ answers, and Base.astro and the footer (hero owner and section 8). Schedule the site-essentials pass before launch.
+5. **E1 and E2 stay BLOCKED.** Install `web-design-guidelines` and the `visual-critique` plugin where the loop runs, or have Sam accept the hand-applied pass.
+
+### Notes (not graded as FAIL)
+
+- **Visual critique at 390 (folded in for E2).** With data saver the page reads well. The line explains the swatches in one sentence, and "Show in 3D" sits where the eye goes after the shade name. The stage keeps a band of empty Pearl above and below the grid, smaller than in iteration 2. At 375x667 the grid tucks under the h1 with little air (builder note 6). It still reads, and nothing overlaps.
+- **Focus after "Show in 3D".** Activating it removes the button, so focus falls to `body`. Chrome then tabs on to the scrubber, because it keeps the sequential focus starting point. Other engines may restart from the top. Moving focus to the stage or the scrubber when the line clears would make this robust.
+- **Run 2, the 3D slow line.** At 375x667 the stage keeps its 320 px floor, so the scrubber moves from 528-572 to 559-603, under the bar at 594 (at rest only the finish row is under it). At 390x844 the HUD moves 29 px up when the line shows and back when it clears (builder note 6). Both belong to the 3D grading in run 2. A line that arrives after 8 s cannot be reserved at first paint, so run 2 should decide whether that line may move the HUD or should take space elsewhere.
+- **Rule 15, minor.** The new phone rule subtracts a raw `72px` for the bar height, the same value `scroll-padding-bottom` already uses. Registering it as a component dimension (for example `--bar-h`) would keep the two in step. The unit test covers gaps only.
+- **Spec edits by the builder.** Section 3 (state lines) and section 13 (step 1) were amended to match the code. Both are consistent with the iteration 2 fix list.

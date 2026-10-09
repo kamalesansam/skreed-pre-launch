@@ -125,14 +125,23 @@ html[data-deeplink] :is(#hudName, #hudNum, #barName) > span { color: transparent
 .btn-primary { flex: none; display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 var(--s3); box-sizing: border-box;
   background: var(--ember-luxe); color: var(--urban-slate); font-family: var(--font-ui); font-size: var(--fs-button); font-weight: 600; line-height: 1; text-decoration: none; white-space: nowrap; }
 
-/* state lines: validation style (type-system note 10), under the HUD, never over a case */
+/* state lines: validation style (type-system note 10), under the HUD, never over a case. Two kinds share #state: the
+   lines the page module writes (failed, offline, slow network: no data-line), and on 3D builds the data-saver and
+   slow-connection lines, which are in the HTML (p[data-line]) and show from first paint when the head script's
+   data-why picks them, so the layout is final before the module runs (review iteration 3, item 2). The module
+   removes both static lines at its first write. "A line shows", the condition the layout rules below repeat, is
+   html:is(:has(#state > :not([data-line])), [data-why="savedata"]:has(#state > [data-line]), [data-why="slow"]:has(#state > [data-line])). */
 .fp-state { padding: 0 var(--inset); font-size: var(--fs-label); line-height: var(--lh-ui); text-align: center; }
 .fp-state:empty { display: none; }
+html:not([data-why="savedata"], [data-why="slow"]) .fp-state:not(:has(> :not([data-line]))) { display: none; }
 .fp-state p { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--s1) var(--s2); }
+.fp-state > [data-line] { display: none; }
+html[data-why="savedata"] .fp-state > [data-line="savedata"], html[data-why="slow"] .fp-state > [data-line="slow"] { display: flex; }
 .fp-state strong { font-weight: 600; }
 .fp-state button { min-height: var(--hit); padding: 0 var(--s2); font-size: var(--fs-label); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 
-/* "The whole family." (3D mode only; in swatch grid mode the grid is the stage) */
+/* "The whole family." (3D mode only; in swatch grid mode and with no script the stage's own grid shows, 2.7) */
+html:not(.m3d) .whole { display: none; }
 .whole { display: flex; flex-direction: column; gap: var(--s4); padding: var(--s6) var(--inset) 0; }
 .whole .sgrid { --c: min(calc((100vw - 2 * var(--inset) - 5 * var(--s1)) / 6), 88px); justify-content: start; }
 .whole-cap { font-size: var(--fs-caption); line-height: var(--lh-ui); }
@@ -175,7 +184,7 @@ html[data-deeplink] :is(#hudName, #hudNum, #barName) > span { color: transparent
 .st3d { position: absolute; inset: 0; }
 .st3d canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity var(--dur-canvas) linear; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
 .st3d canvas.on { opacity: 1; }
-html.grid .st3d { display: none; }
+html:not(.m3d) .st3d { display: none; }
 html.m3d .fp-stage > .sgrid { display: none; }
 
 /* ---- wide layout (2.4, 2.7): the controls are one grid, the HUD centred, the finish and Reserve at the right ---- */
@@ -187,7 +196,7 @@ html.m3d .fp-stage > .sgrid { display: none; }
   .fp-ctl { display: grid; grid-template-columns: minmax(var(--side-w), 1fr) minmax(0, var(--scrub-w)) minmax(var(--side-w), 1fr);
     grid-template-areas: ". hud side" ". scrub side" ". . side"; align-content: start; column-gap: var(--s3); row-gap: var(--s2); padding: 0 var(--inset); }
   /* a state line takes the row under the HUD (spec 3), so the screen order is the reading order: HUD, state, scrubber */
-  .fp-ctl:has(> .fp-state:not(:empty)) { grid-template-areas: ". hud side" ". state side" ". scrub side"; }
+  html:is(:has(#state > :not([data-line])), [data-why="savedata"]:has(#state > [data-line]), [data-why="slow"]:has(#state > [data-line])) .fp-ctl { grid-template-areas: ". hud side" ". state side" ". scrub side"; }
   .fp-hud { grid-area: hud; justify-self: center; padding: 0; grid-template-columns: var(--hit) var(--name-w) var(--hit); grid-template-areas: "prev name next" "meta meta meta"; column-gap: 0; }
   .hud-btn.prev, .hud-btn.next { justify-self: center; }
   .fp-scrub { grid-area: scrub; padding: 0; }
@@ -216,7 +225,8 @@ html.m3d .fp-stage > .sgrid { display: none; }
   html.m3d .fp-stage { position: absolute; inset: 0; height: auto; }
   html.m3d .fp-ctl { position: absolute; z-index: 1; left: 0; right: 0; bottom: 0; height: var(--band); box-sizing: border-box; padding-top: var(--s4); row-gap: var(--s5); pointer-events: none; }
   html.m3d .fp-ctl > * { pointer-events: auto; }
-  html.m3d .fp-ctl:has(> .fp-state:not(:empty)) { row-gap: var(--s2); }   /* HUD, state line and scrubber stay inside the band */
+  /* HUD, state line and scrubber stay inside the band */
+  html.m3d:is(:has(#state > :not([data-line])), [data-why="savedata"]:has(#state > [data-line]), [data-why="slow"]:has(#state > [data-line])) .fp-ctl { row-gap: var(--s2); }
 }
 /* phone layout only: HUD, state line, scrubber and finish are one column under the stage; the bar is fixed to the bottom */
 @media not ((min-width: 900px) and (min-height: 600px)) {
@@ -227,9 +237,9 @@ html.m3d .fp-stage > .sgrid { display: none; }
      above the bar, and the stage takes what the title and the controls leave, between its floor and 520 px. The 3D
      stage keeps its floor (320 px, the landscape rule's height under 500 px tall); in swatch grid mode the floor is the
      height at which the circles reach 44 px. */
-  .fp:has(.fp-state:not(:empty)) { min-height: calc(100svh - var(--fh) - 72px - env(safe-area-inset-bottom, 0px) - var(--s2)); }
-  .fp:has(.fp-state:not(:empty)) .fp-stage { flex: 1 1 0; height: auto; min-height: min(320px, max(220px, calc(100svh - 128px))); max-height: 520px; }
-  html.grid .fp:has(.fp-state:not(:empty)) .fp-stage { min-height: calc(4 * var(--hit) + 3 * var(--s1) + var(--s5)); }
+  html:is(:has(#state > :not([data-line])), [data-why="savedata"]:has(#state > [data-line]), [data-why="slow"]:has(#state > [data-line])) .fp { min-height: calc(100svh - var(--fh) - 72px - env(safe-area-inset-bottom, 0px) - var(--s2)); }
+  html:is(:has(#state > :not([data-line])), [data-why="savedata"]:has(#state > [data-line]), [data-why="slow"]:has(#state > [data-line])) .fp-stage { flex: 1 1 0; height: auto; min-height: min(320px, max(220px, calc(100svh - 128px))); max-height: 520px; }
+  html.grid:is(:has(#state > :not([data-line])), [data-why="savedata"]:has(#state > [data-line]), [data-why="slow"]:has(#state > [data-line])) .fp-stage { min-height: calc(4 * var(--hit) + 3 * var(--s1) + var(--s5)); }
 }
 
 @view-transition { navigation: auto; }

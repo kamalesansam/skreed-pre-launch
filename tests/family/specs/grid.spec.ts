@@ -221,19 +221,20 @@ test.describe('5. selection in grid mode (DOM inputs)', () => {
     const ctx = await browser.newContext(PHONE);
     const page = await ctx.newPage();
     await page.goto(url('stormy-greys'));
-    await page.locator('.gsw[data-i="0"]').click();
+    // a 3D build has a second copy of the grid under "The whole family."; CSS shows one per mode, so work on the shown one
+    await page.locator('.gsw[data-i="0"]:visible').click();
     expect(await shade(page)).toBe('169');
-    await expect(page.locator('.gsw[data-i="0"]')).toHaveAttribute('aria-checked', 'true');
-    await page.locator('.gsw[data-i="0"]').focus();
+    await expect(page.locator('.gsw[data-i="0"]:visible')).toHaveAttribute('aria-checked', 'true');
+    await page.locator('.gsw[data-i="0"]:visible').focus();
     const y0 = await page.evaluate(() => scrollY);
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowRight');
     expect(await shade(page)).toBe('176');
-    await expect(page.locator('.gsw[data-i="7"]')).toBeFocused();
+    await expect(page.locator('.gsw[data-i="7"]:visible')).toBeFocused();
     await page.keyboard.press('End');
     expect(await shade(page)).toBe('192');
     expect(await page.evaluate(() => scrollY)).toBe(y0);
-    expect(await page.locator('.gsw[tabindex="0"]').count()).toBe(1);
+    expect(await page.locator('.sgrid:visible .gsw[tabindex="0"]').count()).toBe(1);
     await ctx.close();
   });
 
@@ -373,7 +374,8 @@ test.describe('10. accessibility and layout', () => {
       await page.evaluate(() => document.fonts.ready);
       const r = await page.evaluate(() => {
         const box = (e: Element) => e.getBoundingClientRect();
-        const targets = ['#prev', '#next', '#scrub', '#finish button', '.gsw', '#reserve', '#famBtn', '.fh-logo'].flatMap((s) => [...document.querySelectorAll(s)]);
+        // shown controls only: a 3D build's second grid copy is display: none in the mode that does not use it
+        const targets = ['#prev', '#next', '#scrub', '#finish button', '.gsw', '#reserve', '#famBtn', '.fh-logo'].flatMap((s) => [...document.querySelectorAll(s)]).filter((e) => e.checkVisibility());
         const small = targets.map((e) => { const b = box(e); const after = e.matches('.fh-logo') ? 22 : 0; return { s: e.id || e.className, w: b.width, h: b.height + after }; }).filter((b) => b.w < 44 || b.h < 44);
         return { sw: document.documentElement.scrollWidth, vw: innerWidth, small };
       });

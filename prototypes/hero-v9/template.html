@@ -60,6 +60,16 @@ body{background:var(--slate);color:var(--pearl);font-family:'Open Sans',Arial,sa
 .tune h3{margin:6px 0 0;font-size:.75rem;font-weight:600;color:var(--muted)}
 .fallback{position:fixed;left:var(--inset);right:var(--inset);top:45%;text-align:center;color:var(--muted)}
 :focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+/* intro (igloo's shot, our code): scroll stays locked to 5 s; the corner UI is hidden, then each line is written glyph by glyph.
+   Opacity, not display, so screen readers still read it. The loader's poster state (.intro.po) always shows the UI. */
+html.intro,html.intro body{overflow:hidden;overscroll-behavior:none}   /* the loader's poster() drops the class: the poster never locks the page */
+/* the two focusable corner controls are out of the tab order (and the accessibility tree) until the logotype is written at 5.25 s */
+html.uh1 .tune,html.uh1 .site-logo{visibility:hidden}   /* the prototype's Tune chip waits for the logotype */
+html.uh1 .site-logo,html.uh2 #heroCopy .eyebrow,html.uh2 #count,html.uh3 .cue .lbl{opacity:0}
+html.uh4 .cue .ball,html.uh4 .cue .base{visibility:hidden}
+.intro.po~.site-logo,.intro.po~#heroCopy .eyebrow,.intro.po~#heroCopy #count,.intro.po~.cue .lbl{opacity:1!important}
+.intro.po~.cue .ball,.intro.po~.cue .base{visibility:visible!important}
+.gl{display:inline-block;white-space:pre;text-align:left}
 /*LOADER-CSS*/
 :root{--night:#050506}
 html.loading,html.loading body{overflow:hidden}
@@ -80,6 +90,7 @@ html.loading .cue{opacity:0}
 #ldPct{font-size:.875rem;font-weight:400;line-height:1;letter-spacing:1.1em;margin-right:-1.1em;font-variant-numeric:tabular-nums}
 #ldSt{font-size:.75rem;line-height:1.4;color:var(--muted);max-width:calc(100vw - 32px)}
 #ldSt:empty{display:none}
+.po .ld-p{bottom:auto;top:calc(50% + 12svh)}
 /*LOADER-CSS-END*/
 </style>
 <canvas id="stage" aria-hidden="true"></canvas>
@@ -131,10 +142,10 @@ function lift(){if(ph==='done')return;ph='lift';intro.style.pointerEvents='none'
 function done(){cancelAnimationFrame(raf);ph='done';if(swA)swA.cancel();intro.remove()}
 function poster(msg){if(mode==='poster'||ph!=='load')return;mode='poster';if(swA)swA.cancel();
   GL.animate([{opacity:1},{opacity:0}],{duration:400,fill:'forwards'});LN.animate([{opacity:0},{opacity:1}],{duration:400,fill:'forwards'});
-  PC.hidden=true;ST.textContent=msg||'';intro.classList.add('po');intro.removeAttribute('role');HT.classList.remove('loading')}
+  PC.hidden=true;ST.textContent=msg||'';intro.classList.add('po');intro.removeAttribute('role');HT.classList.remove('loading','intro','uh1','uh2','uh3','uh4')}
 function tick(now){raf=requestAnimationFrame(tick);
   if(last<0){if((swA||fA).startTime==null)return;last=now}
-  var dt=Math.max(0,Math.min(.25,(now-last)/1e3));last=now;
+  var g=now-last,dt=Math.max(0,Math.min(.25,g/1e3));if(g>500)lastP=Math.min(now,lastP+g);last=now;
   if(ph==='load'){var nx=pend();
     if(!manual&&nx&&!ready)p=Math.max(p,Math.min(pm+.9*WT[nx],p+.02*dt));
     tl=(fA.currentTime||0)/1e3;
@@ -180,7 +191,7 @@ raf=requestAnimationFrame(tick);
 var el=['cd-d','cd-h','cd-m','cd-s'].map(function(i){return document.getElementById(i)}),box=document.getElementById('count'),eyebrow=document.querySelector('#heroCopy .eyebrow');
 function pad(n){return(n<10?'0':'')+n}
 function tick(){var s=Math.max(0,Math.floor((T-Date.now())/1000)),d=Math.floor(s/86400);s-=d*86400;var h=Math.floor(s/3600);s-=h*3600;var m=Math.floor(s/60);s-=m*60;
-var v=[pad(d),pad(h),pad(m),pad(s)];for(var k=0;k<4;k++)if(el[k].textContent!==v[k])el[k].textContent=v[k];
+var v=[pad(d),pad(h),pad(m),pad(s)];window.__skreedCountV=v;for(var k=0;k<4;k++)if(el[k].textContent!==v[k]&&!box.dataset.hold)el[k].textContent=v[k];   /* hold: the intro is writing the digits glyph by glyph */
 box.setAttribute('data-ready','');
 if(T-Date.now()<=0){eyebrow.textContent='Skreed is live. skreed.com';box.hidden=true;return false;}return true;}
 function loop(){if(tick())setTimeout(loop,1000-Date.now()%1000+5);}   /* aligned to the wall-clock second, so no value is skipped */
@@ -197,11 +208,14 @@ addEventListener('scroll',cueCheck,{passive:true});cueCheck();})();</script>
   <summary>Tune</summary>
   <div class="body">
     <div class="row seg"><button type="button" id="tuneReset">Reset to defaults</button></div>
+    <h3>Intro</h3>
+    <div class="row seg"><button type="button" id="introReplay">Replay intro</button></div>
+    <label for="introLines">Intro lines <output id="o-introLines"></output><input id="introLines" type="range" min="0.1" max="1.5" step="0.01"></label>
     <h3>Logo glitch</h3>
     <div class="row seg"><button type="button" id="glitchNow">Glitch now</button><button type="button" id="glitchIdle" aria-pressed="true">Idle twitch: on</button><button type="button" id="glitchSplit" aria-pressed="true">Colour split: on</button></div>
     <h3>World</h3>
     <div class="row seg"><button type="button" data-world="canyon">Canyon</button><button type="button" data-world="spires">Moon</button><button type="button" data-world="dunes">Dunes</button></div>
-    <h3>Hover (igloo values)</h3>
+    <h3>Hover</h3>
     <label for="push">Push amount <output id="o-push"></output><input id="push" type="range" min="0" max="1.2" step="0.01"></label>
     <label for="wob">Push wobble <output id="o-wob"></output><input id="wob" type="range" min="0" max="0.6" step="0.01"></label>
     <label for="r0">Full push within (units) <output id="o-r0"></output><input id="r0" type="range" min="0" max="3" step="0.05"></label>
@@ -220,10 +234,10 @@ addEventListener('scroll',cueCheck,{passive:true});cueCheck();})();</script>
     <label for="crumbSize">Crumb grain size <output id="o-crumbSize"></output><input id="crumbSize" type="range" min="0.01" max="0.2" step="0.005"></label>
     <label for="mist">Ground mist <output id="o-mist"></output><input id="mist" type="range" min="0" max="3" step="0.05"></label>
     <label for="mistSpeed">Ground mist speed <output id="o-mistSpeed"></output><input id="mistSpeed" type="range" min="0" max="3" step="0.05"></label>
-    <h3>Fog (igloo smoke)</h3>
+    <h3>Fog</h3>
     <label for="fog">Fog amount <output id="o-fog"></output><input id="fog" type="range" min="0" max="3" step="0.05"></label>
     <label for="fogBright">Fog brightness <output id="o-fogBright"></output><input id="fogBright" type="range" min="0" max="0.8" step="0.01"></label>
-    <label for="fogSpeed">Fog drift speed (igloo 0.15) <output id="o-fogSpeed"></output><input id="fogSpeed" type="range" min="0" max="0.6" step="0.01"></label>
+    <label for="fogSpeed">Fog drift speed <output id="o-fogSpeed"></output><input id="fogSpeed" type="range" min="0" max="0.6" step="0.01"></label>
     <label for="fogSize">Wisp size <output id="o-fogSize"></output><input id="fogSize" type="range" min="0.25" max="3" step="0.05"></label>
     <label for="fogHug">Ground hug <output id="o-fogHug"></output><input id="fogHug" type="range" min="0.5" max="4" step="0.05"></label>
     <h3>Sky</h3>
@@ -254,6 +268,7 @@ addEventListener('scroll',cueCheck,{passive:true});cueCheck();})();</script>
 </details>
 <script>/* if the 3D module never starts (CDN unreachable, an error at load), show the designed fallback instead of an empty page */
 function noHero(e){if(window.__heroStarted||(e&&e.target&&e.target!==window&&e.target.type!=="module")||(!e&&window.__skreedLoader))return;   /* only the module script's load error, a window error or the timer: never a font or image */
+document.documentElement.classList.remove("intro","uh1","uh2","uh3","uh4");   /* the poster path never hides the UI */
 var f=document.getElementById("fallback");if(window.__skreedLoader)window.__skreedLoader.fail(f?f.textContent:"");else if(f)f.hidden=false}   /* the loader's drawing stays as the poster */
 addEventListener("error",noHero,true);setTimeout(noHero,8000);</script>
 <p class="fallback" id="fallback" hidden>This prototype needs WebGL2. On the real site this is where the poster image of the logo would stay.</p>
@@ -275,8 +290,12 @@ const touch = matchMedia('(hover: none)').matches;
 const report = window.__skreedLoaderReport || (() => {});   // the inline loader's milestone bridge (a no-op if the loader is absent)
 report('import');
 const yieldFrame = () => new Promise(r => setTimeout(r, 0));   // a task boundary, so the loader's frame paints between build chunks
-// the loader hands over at its cut: until then the hero holds the plotted pose exactly (shake, parallax, bob, breath and sweep gated by `live`)
-let introDone = !document.documentElement.classList.contains('loading'), tHero0 = 0, live = 0, texOK = 0, texFrames = 0;
+// the hero's life (shake, parallax, bob, breath, push, sweep) is gated by `live`: igloo's touchAmount during the intro, 1 after it
+let live = 0, texOK = 0;
+const HT = document.documentElement, LD = () => window.__skreedLoader, posterNow = () => !!(LD() && LD().state().mode === 'poster');
+// the intro is skipped (end state at once) for reduced motion, ?intro=0 and deep links, as igloo skips it for a project link
+const SKIP = reduce || new URLSearchParams(location.search).get('intro') === '0' || !!location.hash;
+const fontsP = Promise.race([document.fonts.load('400 24px "Open Sans"'), new Promise(r => setTimeout(r, 3000))]).catch(() => 0);   // the number atlas
 const SP = window.SKREED_POSE || { cam: [0, -2.5, 24], tgt: [0, -1, 0], lw: 5.6, z: 0.475 };   // one pose object, shared with the loader's projection
 
 // One shade per family, in catalog order, placed clockwise round the logo from the top.
@@ -302,7 +321,7 @@ const orderNames = () => BLOCK_ORDERS[blockOrder] || blockOrder.split(',');
 
 // ---- tuning state. Hover defaults are igloo.inc's own numbers (wiring doc 4.2). ----
 const P = { push: 0.5, wob: 0.3, r0: 1, r1: 3, follow: 0.06, mouse: 0.05, breath: reduce ? 0 : 0.3, lift: 1.6,
-  glow: 2.4, rest: 0.06, tint: 0.035, grad: 0.7, logoIdle: 1, logoSplit: 0.4, clear: 0.2, skyGain: 1, hue: 0.8, hueScale: 2.2, crumb: 0.53, crumbSize: 0.07, gExp: 0.2, gGamma: 0.87, gNear: 0.54, gToe: 0.02, mist: 0.2, mistSpeed: 0.55, fog: 1, fogBright: 0.4, fogSpeed: 0.15, fogSize: 1, fogHug: 1.6, tex: 1.5, relief: 0.01, key: 2.0, bloom: 0.5, rim: 2.4, spec: 0.8, rough: 0.55, bounce: 1.0, amb: 1, rimAz: 35, rimEl: 40, bevel: 0.05, bevelAng: 50, alb: 0.017, wrap: 0.25, keyX: -6, keyY: 7, keyZ: 10, keyRad: 3.5, rimX: -4, rimY: 9, rimZ: -3, rimRad: 4.5, rim2: 0.75, rim2X: 9, rim2Y: 7, rim2Z: -3, rim2Rad: 4, floor: 0.24, hz: 0.06, sky: 0.008, ktemp: 1, wear: 0.3, occ: 0.3, knee: 0.55 };   // relief, grain and key light set by Sam on 2026-10-08; terrain and fog locked by Sam on 2026-10-09
+  glow: 2.4, rest: 0.06, tint: 0.035, grad: 0.7, logoIdle: 1, logoSplit: 0.4, clear: 0.2, skyGain: 1, hue: 0.8, hueScale: 2.2, crumb: 0.53, crumbSize: 0.07, gExp: 0.2, gGamma: 0.87, gNear: 0.54, gToe: 0.02, mist: 0.2, mistSpeed: 0.55, fog: 1, fogBright: 0.4, fogSpeed: 0.15, fogSize: 1, fogHug: 1.6, tex: 1.5, relief: 0.01, key: 2.0, bloom: 0.5, rim: 2.4, spec: 0.8, rough: 0.55, bounce: 1.0, amb: 1, rimAz: 35, rimEl: 40, bevel: 0.05, bevelAng: 50, alb: 0.017, wrap: 0.25, keyX: -6, keyY: 7, keyZ: 10, keyRad: 3.5, rimX: -4, rimY: 9, rimZ: -3, rimRad: 4.5, rim2: 0.75, rim2X: 9, rim2Y: 7, rim2Z: -3, rim2Rad: 4, floor: 0.24, hz: 0.06, sky: 0.008, ktemp: 1, wear: 0.3, occ: 0.3, knee: 0.55, introLines: 0.45 };   // relief, grain and key light set by Sam on 2026-10-08
 const P_DEFAULTS = { ...P };   // for the Tune reset
 { const q = new URLSearchParams(location.search); for (const k of Object.keys(P)) if (q.has(k) && isFinite(+q.get(k))) P[k] = +q.get(k); }   // test overrides, e.g. ?rest=1
 for (const k of Object.keys(P)) {
@@ -316,12 +335,21 @@ const lerpFPS = (a, b, k) => a + (b - a) * (1 - Math.pow(1 - k, ratio));
 const smoothstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 const fit = (x, a, b, c, d) => c + (d - c) * Math.min(1, Math.max(0, (x - a) / (b - a)));
 const clamp01 = (x) => Math.min(1, Math.max(0, x));
+// igloo's reveal helper, re-expressed in GLSL: a front that sweeps from s to e with a soft margin m, at progress p (iFallS: smooth)
+const IGL = `float iLin(float a, float b, float x){ return clamp((x - a) / (b - a), 0.0, 1.0); }
+float iFall(float x, float s, float e, float m, float p){ float M = m * sign(e - s), f = mix(s - M, e, p); return iLin(f + M, f, x); }
+float iFallS(float x, float s, float e, float m, float p){ float M = m * sign(e - s), f = mix(s - M, e, p), k = iLin(f + M, f, x); return k * k * (3.0 - 2.0 * k); }
+`;
 
 // ---- renderer ----
 const canvas = $('stage');
 let renderer;
-try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); }
-catch (e) { $('fallback').hidden = false; throw e; }
+// only the full-screen composite draws to the canvas, so it needs no MSAA, depth or stencil (igloo runs the same way)
+try { renderer = new THREE.WebGLRenderer({ canvas, antialias: false, depth: false, stencil: false, powerPreference: 'high-performance' }); }
+catch (e) { const f = $('fallback'); if (LD()) LD().fail(f.textContent); else f.hidden = false; await new Promise(() => {}); }   // no WebGL2: the poster, and the module stops here without an uncaught error (critique1 C18)
+// WebGL2 is up: lock the scroll and hide the corner UI until the intro writes it (never on the poster path)
+const noTouch = (e) => { if (HT.classList.contains('intro')) e.preventDefault(); };   // the lock follows html.intro, so the loader's poster() and noHero() release it too
+if (!SKIP && !posterNow()) { HT.classList.add('intro', 'uh1', 'uh2', 'uh3', 'uh4'); addEventListener('touchmove', noTouch, { passive: false }); }
 const DPR = Math.min(devicePixelRatio, touch ? 1.25 : 1.5);
 renderer.setPixelRatio(DPR);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -404,6 +432,7 @@ const U = {
   uFloor: { get value() { return P.floor; } }, uHz: { get value() { return P.hz; } }, uSky: { get value() { return P.sky; } }, uKTemp: { get value() { return P.ktemp; } }, uWear: { get value() { return P.wear; } }, uOcc: { get value() { return P.occ; } }, uKnee: { get value() { return P.knee; } },
   uRim: { get value() { return P.rim; } }, uSpec: { get value() { return P.spec; } }, uRough: { get value() { return P.rough; } }, uBounce: { get value() { return P.bounce; } }, uAmb: { get value() { return P.amb; } },
   uRimDir: { get value() { const az = P.rimAz * Math.PI / 180, el = P.rimEl * Math.PI / 180; return new THREE.Vector3(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)); } },
+  uPrint: { value: 1 }, uPrintCol: { value: new THREE.Color() }, tTri: { value: null },   // the intro print (1 = built, the chunk is skipped)
 };
 // one shade per block, one family each, in the arranged order (see BLOCK_ORDERS)
 function assignBlockColours() {
@@ -432,6 +461,8 @@ const logoMat = new THREE.ShaderMaterial({
     uniform vec3 uBlockCol[${MAXB}];
     uniform float uTime, uGlow, uRest, uTint, uGrad, uTex, uKey, uRim, uSpec, uRough, uBounce, uAmb; uniform vec3 uRimDir;
     uniform float uBevelW, uBevelAng, uAlb, uWrap, uKeyRad, uRimRad, uRim2, uRim2Rad, uFloor, uHz, uSky, uKTemp, uWear, uOcc, uKnee; uniform vec3 uKeyPos, uRimPos, uRim2Pos;
+    uniform float uPrint; uniform vec3 uPrintCol; uniform sampler2D tTri;
+    ${IGL}
     varying vec3 vW; varying vec3 vRest; varying float vSide; varying float vDisp; varying float vId; varying vec2 vCen; varying float vEdge;
     float h21(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
     float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
@@ -528,7 +559,17 @@ const logoMat = new THREE.ShaderMaterial({
       float shimmer = 0.85 + 0.15 * sin(uTime * 1.3 + vRest.x * 2.1 + vRest.y * 1.7);
       col += shade * deep * (uRest + uGlow * lift) * shimmer;
       // alpha marks the black faces (0) so the bloom pass can keep its haze off them
-      gl_FragColor = vec4(col, vSide > 0.5 ? 1.0 : 0.0);
+      float am = vSide > 0.5 ? 1.0 : 0.0;
+      // intro print (igloo's materialise): nothing below the edge, a blown-out band above it with a triangle pattern
+      // (triplanar, so the top faces do not streak), built above. The band is HDR so it clears ACES to white and blooms.
+      if (uPrint < 1.0) {
+        float e = 1.0 - iFallS(vRest.y, 3.38, -2.905, 2.17, uPrint);
+        if (e > 0.9999) discard;
+        vec3 an = abs(N); vec2 tq = an.y > 0.5 ? vRest.xz : (an.x > 0.5 ? vRest.zy : vRest.xy);
+        e += clamp(e * texture2D(tTri, tq * 0.6).r * 13.0, 0.0, 1.0);
+        col = min(col + e * uPrintCol, vec3(2.0)); am = max(am, step(0.001, e));
+      }
+      gl_FragColor = vec4(col, am);
     }`,
 });
 const logo = new THREE.Mesh(new THREE.BufferGeometry(), logoMat); logo.frustumCulled = false;
@@ -556,10 +597,46 @@ plate.renderOrder = -1; plate.frustumCulled = false;
 sceneA.add(plate);
 // ---- the moon: real 3D ground and stones from Blender with the lighting baked in, under a rendered sky dome (subtle Milky Way).
 // The ground is geometry, so the scroll pull-back has true parallax; the sky dome travels with the camera (it is at infinity).
+// ---- intro, part 1 (igloo's terrain reveal): the snow disc, its bright rim and the triangle ring ahead of it, on the ground and
+// the stones. One chunk, skipped at rest (uU2 = 1), so the hero's floor is untouched once the intro is over.
+const PEARL = new THREE.Color('#F7F6F3');
+const FLATC = new THREE.Color().setRGB(0.007455, 0.007454, 0.008448);   // linear; ACES + sRGB output it as the loader's night (5,5,6)
+const FLU = { uU: { value: 1 }, uU2: { value: 1 }, uFloorA: { value: 1 }, uFarA: { value: 1 }, uDim: { value: 1 }, uDimN: { value: 1 }, uRing: { value: 0.015 }, uO: { value: new THREE.Vector3() },
+  uGlowCol: { value: new THREE.Color() }, tTri: U.tTri, tMosaic: { value: null } };
+const floorIntro = (sh, stones) => {
+  Object.assign(sh.uniforms, FLU);
+  if (stones) sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWPos;')
+    .replace('#include <project_vertex>', '#include <project_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+  sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+    ${stones ? 'varying vec3 vWPos;' : ''} uniform float uU, uU2, uFloorA, uFarA, uDim, uDimN, uRing; uniform vec3 uO, uGlowCol; uniform sampler2D tTri, tMosaic;
+    ${IGL}`).replace('#include <color_fragment>', `#include <color_fragment>
+    if (uU2 < 1.0) {
+      // distance from the mark's footprint (a box), pushed out by up to 3.5 units of smooth mosaic noise: a jagged, stair-stepped edge.
+      // The disc runs 1.8 units from the box, so the first snow touches the mark's front base at 2.45 s and wraps it by 2.6 s;
+      // the unlit floor and the far field keep the 3.43 offset they were timed on (gf)
+      vec2 dq = abs(vWPos.xz - uO.xz) - vec2(2.8, 0.475);
+      float gd = length(max(dq, 0.0)) + min(max(dq.x, dq.y), 0.0), gs = 1.8 + gd, g = gs + texture2D(tMosaic, vWPos.xz * 0.07).r * 3.5, gf = gd + 3.43;
+      float tri = texture2D(tTri, vWPos.xz * 0.5).r;   // half-unit triangles: a fine frost speckle, not a wireframe
+      vec3 base = diffuseColor.rgb;
+      float tA = iFall(g, -0.1, 31.9, 0.1, uU2);                                            // the disc, hard edged
+      float trA = uRing * iFall(g, 1.0, 33.0, 0.1, uU) * (1.0 - iFallS(g, 0.0, 32.0, 6.0, uU)) * tri;   // the triangle ring just ahead of it
+      // the white-hot rim: both bands on the same noisy distance as the disc edge, so the glow hugs the jagged front. Inside it the
+      // pool is revealed terrain: the wide band carries only the triangle speckle, the narrow flat band widens with distance so the
+      // front stays a frosty band at grazing angles, and the whole glow fades out as the front leaves the frame (3.5 to 4 s)
+      vec3 c = base + ((1.0 - iFallS(g, 0.0, 32.0, 8.0, uU2)) * 4.0 * tri + 1.0 - iFallS(g, 0.0, 32.0, 3.0 + 0.2 * max(gs - 8.0, 0.0), uU2) + 1.0 - tA)
+        * uGlowCol * (1.0 - smoothstep(0.6, 0.75, uU2));
+      // the not-yet-lit floor: night near the mark while the camera is high, then the whole floor opaque as the crane descends
+      // (igloo's unrevealed ground is its grey field; ours would read as a black hole or as see-through ridges)
+      float a = tA + trA * (1.0 - tA), dim = mix(smoothstep(12.0, 24.0, gf), 1.0, uDimN) * uDim, ao = a + dim * (1.0 - a);
+      c = (c * a + base * dim * (1.0 - a)) / max(ao, 1e-4);
+      float far = smoothstep(32.0, 36.0, gf) * uFarA;
+      diffuseColor = vec4(min(mix(c, base, far), vec3(4.0)), max(ao, far) * uFloorA);
+    }`);
+};
 const MOON = /*MOON*/null;
 const moon = new THREE.Group(); moon.visible = false; sceneA.add(moon);
 const skyLon = THREE.MathUtils.degToRad(140), SKY_TOP = 60, SKY_BOT = -10;
-const texDone = (m) => () => { texOK++; report(m); };   // a failed decode still hands over: the hero renders without that texture
+const texDone = (m) => (tx) => { if (tx && tx.isTexture) renderer.initTexture(tx); texOK++; report(m); };   // a failed decode still hands over: the hero renders without that texture
 const skyTex = new THREE.TextureLoader().load(MOON.sky, texDone('sky'), undefined, texDone('sky')); skyTex.colorSpace = THREE.SRGBColorSpace; skyTex.anisotropy = 8;
 const skyDome = new THREE.Mesh(new THREE.SphereGeometry(900, 128, 64, Math.PI * 1.5 - skyLon / 2, skyLon,
   THREE.MathUtils.degToRad(90 - SKY_TOP), THREE.MathUtils.degToRad(SKY_TOP - SKY_BOT)),
@@ -567,10 +644,11 @@ const skyDome = new THREE.Mesh(new THREE.SphereGeometry(900, 128, 64, Math.PI * 
     // the rendered sky, plus a faint galaxy wash in the dark areas: deep catalog shades (Space, Eggplant, Forest, Wine)
     // drifting through each other on a large slow noise; it only lifts what is near black, so stars and the band stay as rendered
     uniforms: { tSky: { value: skyTex }, uSkyGain: { value: P.skyGain }, uHue: { value: P.hue }, uHueScale: { value: P.hueScale },
-      uC1: { value: new THREE.Color('#15284f') }, uC2: { value: new THREE.Color('#4a154d') }, uC3: { value: new THREE.Color('#084f3d') }, uC4: { value: new THREE.Color('#4b0923') } },
+      uC1: { value: new THREE.Color('#15284f') }, uC2: { value: new THREE.Color('#4a154d') }, uC3: { value: new THREE.Color('#084f3d') }, uC4: { value: new THREE.Color('#4b0923') },
+      uFlat: { value: FLATC }, uSkyP: { value: 1 }, uSkyB: { value: 1 } },
     vertexShader: 'varying vec2 vUv; varying vec3 vDir; void main(){ vUv = uv; vec4 w = modelMatrix * vec4(position, 1.0); vDir = normalize(w.xyz - cameraPosition); gl_Position = projectionMatrix * viewMatrix * w; }',
     fragmentShader: `
-      uniform sampler2D tSky; uniform float uSkyGain, uHue, uHueScale; uniform vec3 uC1, uC2, uC3, uC4;
+      uniform sampler2D tSky; uniform float uSkyGain, uHue, uHueScale; uniform vec3 uC1, uC2, uC3, uC4; uniform vec3 uFlat; uniform float uSkyP, uSkyB;
       varying vec2 vUv; varying vec3 vDir;
       float h31(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
       float n3(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
@@ -584,7 +662,9 @@ const skyDome = new THREE.Mesh(new THREE.SphereGeometry(900, 128, 64, Math.PI * 
         vec3 wash = uC1 * smoothstep(0.38, 0.78, a) + uC2 * smoothstep(0.42, 0.8, b) + uC3 * smoothstep(0.48, 0.84, c) + uC4 * smoothstep(0.5, 0.86, e);
         wash *= smoothstep(-0.03, 0.12, vDir.y);                       // nothing at the horizon line itself
         float dark = 1.0 - smoothstep(0.02, 0.18, dot(sky, vec3(0.2126, 0.7152, 0.0722)));
-        gl_FragColor = vec4(sky + wash * uHue * dark, 1.0);
+        vec3 col = sky + wash * uHue * dark;
+        if (uSkyP < 1.0 || uSkyB < 1.0) col = mix(uFlat, col, vDir.y < 0.0 ? uSkyB : uSkyP);   // intro: the night field, then the sky (below the horizon with the snow)
+        gl_FragColor = vec4(col, 1.0);
       }`,
     side: THREE.BackSide, depthWrite: false, fog: false }));
 skyDome.scale.x = -1; skyDome.rotation.x = THREE.MathUtils.degToRad(-2.6);   // keeps the approved planet and Milky Way positions after the floor reframing
@@ -674,7 +754,9 @@ float gtap(vec2 p) { return pow(texture2D(tWindProc, p).r, 2.2); }
       {
       }`);
   };
-  const ground = new THREE.Mesh(g, groundMat);
+  { const ob = groundMat.onBeforeCompile; groundMat.onBeforeCompile = (sh) => { ob(sh); floorIntro(sh, false); }; }
+  groundMat.transparent = true; groundMat.forceSinglePass = true;   // the intro fades the floor in; alpha is 1 at rest (critique1 C6)
+  const ground = new THREE.Mesh(g, groundMat); ground.renderOrder = -1;
   ground.frustumCulled = false; moon.add(ground);
   // height of the moon floor at a world (x, z), from the same grid: the logo's blocks use it so they never sink into the ground
   moonGroundAt = (x, z) => {
@@ -705,7 +787,9 @@ float gtap(vec2 p) { return pow(texture2D(tWindProc, p).r, 2.2); }
     }
   }
   stoneTopAt = (x, z) => { const a = Math.floor((x - SG.x0) / SG.cell), b = Math.floor((z - SG.z0) / SG.cell); return (a < 0 || b < 0 || a >= SG.n || b >= SG.m) ? -Infinity : top[b * SG.n + a]; };
-  const stones = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, fog: true, toneMapped: false }));
+  const stonesMat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, fog: true, toneMapped: false, transparent: true, forceSinglePass: true });
+  stonesMat.onBeforeCompile = (sh) => floorIntro(sh, true);
+  const stones = new THREE.Mesh(g, stonesMat); stones.renderOrder = -1;
   stones.frustumCulled = false; moon.add(stones);
 }
 
@@ -894,6 +978,304 @@ function setWorld(name) {
 setWorld(new URLSearchParams(location.search).get('world') || 'spires');
 document.querySelectorAll('[data-world]').forEach(b => b.addEventListener('click', () => setWorld(b.dataset.world)));
 document.querySelectorAll('[data-order]').forEach(b => b.addEventListener('click', () => { blockOrder = b.dataset.order; assignBlockColours(); }));
+const SKU = skyDome.material.uniforms;
+// =====================================================================
+// Intro: igloo.inc's opening shot, re-created for the mark (research/intro/final: spec, corrected by critique0 and critique1).
+// Our code and our geometry, generated here from one seed: no igloo code, model, texture or string ships.
+// t = seconds since the loader's lift (igloo hides its loader and plays its intro timeline on the same tick).
+// =====================================================================
+const IEND = 8.2, IO = new THREE.Vector3(0, moonGroundAt ? moonGroundAt(0, 0) : -3.61, 0);   // the shockwave origin: the floor under the mark
+const IP0 = new THREE.Vector3(0, 20.5, 19.8), IT0 = new THREE.Vector3();   // igloo's start: 28.5 from the target, 46 deg down (critique0 C3)
+const IN = { phase: 'armed', t: 0, t0: 0, paused: false, fresh: false, go: false, ready: false, pend: false, fin: false, sync: null, syncAt: 0, rsz: false, iv: [], last: 0, a0: 0,
+  w: 0, touch: 0, breath: 0, v: {}, ev: {}, lines: null, o: {}, lt: null };   // lt: when the hero's life starts on a skipped intro (null: not yet)   // o: test overrides (tune)
+FLU.uO.value.copy(IO); FLU.uGlowCol.value.copy(PEARL).multiplyScalar(1.2);   // the snow rim, in Pearl: HDR, so it clears ACES to white and blooms
+U.uPrintCol.value.copy(PEARL).multiplyScalar(2);                             // the band is HDR (up to 4): ACES maps it to 250 sRGB, and it blooms
+let iSeed = 20261009;   // mulberry32: the cage, the numbers and the mosaic are the same on every load
+const irnd = () => { iSeed = (iSeed + 0x6d2b79f5) >>> 0; let q = iSeed; q = Math.imul(q ^ (q >>> 15), q | 1); q ^= q + Math.imul(q ^ (q >>> 7), q | 61); return ((q ^ (q >>> 14)) >>> 0) / 4294967296; };
+const ipick = (a) => a[Math.floor(irnd() * a.length)];
+const ipickW = (w) => { let u = irnd() * w.reduce((a, b) => a + b, 0); for (let i = 0; i < w.length; i++) { u -= w[i]; if (u <= 0) return i; } return w.length - 1; };
+{ // textures: a 32 px mosaic for the stair-stepped disc edge, and a periodic jittered triangle tiling baked on the GPU
+  // smooth value noise (two periodic octaves, quantised to 32 cells), so the disc edge is a coherent jagged blob, not scattered squares
+  const vn = (n) => { const T = Array.from({ length: n * n }, irnd), S = (q) => q * q * (3 - 2 * q), g = (a, b) => T[(b % n) * n + a % n];
+    return (x, y) => { const fx = x * n / 32, fy = y * n / 32, i = fx | 0, j = fy | 0, u = S(fx - i), w = S(fy - j), a = g(i, j) + (g(i + 1, j) - g(i, j)) * u;
+      return a + (g(i, j + 1) + (g(i + 1, j + 1) - g(i, j + 1)) * u - a) * w; }; };
+  const n1 = vn(4), n2 = vn(8), mv = Array.from({ length: 1024 }, (_, k) => n1(k & 31, k >> 5) + 0.25 * n2(k & 31, k >> 5)), lo = Math.min(...mv), hi = Math.max(...mv);
+  const m = new THREE.DataTexture(Uint8Array.from(mv, (x) => (x - lo) / (hi - lo) * 255), 32, 32, THREE.RedFormat);
+  m.magFilter = m.minFilter = THREE.NearestFilter; m.wrapS = m.wrapT = THREE.RepeatWrapping; m.needsUpdate = true; FLU.tMosaic.value = m;
+  const rt = new THREE.WebGLRenderTarget(512, 512, { format: THREE.RedFormat, wrapS: THREE.RepeatWrapping, wrapT: THREE.RepeatWrapping,
+    generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter, depthBuffer: false });
+  const q = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({ depthTest: false, depthWrite: false,
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+    fragmentShader: `varying vec2 vUv;
+      float h(vec2 c, float s){ return fract(sin(dot(mod(c, 14.0), vec2(127.1, 311.7)) + s) * 43758.5453); }
+      vec2 V(vec2 c){ return c + 0.35 * (vec2(h(c, 1.0), h(c, 2.0)) * 2.0 - 1.0); }
+      float sg(vec2 p, vec2 a, vec2 b){ vec2 pa = p - a, ba = b - a; return length(pa - ba * clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0)); }
+      void main(){
+        vec2 p = vUv * 14.0, c0 = floor(p); float d = 9.0;
+        for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
+          vec2 c = c0 + vec2(i, j), a = V(c), b = V(c + vec2(1.0, 0.0)), e = V(c + vec2(0.0, 1.0)), f = V(c + vec2(1.0));
+          d = min(d, min(sg(p, a, b), sg(p, a, e))); d = min(d, h(c, 3.0) < 0.5 ? sg(p, a, f) : sg(p, b, e));
+        }
+        gl_FragColor = vec4(vec3(1.0 - smoothstep(0.2, 1.0, d * 512.0 / 14.0)), 1.0);
+      }` }));
+  const sc = new THREE.Scene(); sc.add(q); renderer.setRenderTarget(rt); renderer.render(sc, new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)); renderer.setRenderTarget(null);
+  q.geometry.dispose(); q.material.dispose(); U.tTri.value = rt.texture;
+}
+// the cage (igloo's "skeleton"): 117 cubes on a 2-unit lattice on the floor, yawed 45 degrees so the camera sits on a lattice diagonal
+// as igloo's does. Each cube is a 3-face shell (top, -z, +x) whose triangle index is drawn as line pairs: 6 edges (2 twice), 2 empty
+// pairs and one face diagonal per cube. Clumps grow to igloo's measured layer and band quotas, re-spread for our taller mark.
+function genCage() {
+  const RB = 3.433, MAXR = 4.24 * RB, N4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  const Q = { '-1': [0, 0, 7, 3, 2], 0: [0, 15, 28, 23, 19], 1: [3, 3, 0, 2, 1], 2: [3, 3, 0, 0, 0], 3: [3, 2, 0, 0, 0] };
+  const band = (i, j) => Math.floor(Math.hypot(2 * i, 2 * j) / RB), K = (i, j, L) => i + ',' + j + ',' + L;
+  const occ = new Map(), owner = new Map();
+  const free = (i, j, L) => !occ.has(K(i, j, L)) && Math.hypot(2 * i, 2 * j) <= MAXR && Q[L][band(i, j)] > 0;
+  const place = (i, j, L) => { occ.set(K(i, j, L), [i, j, L]); Q[L][band(i, j)]--; };
+  const cells = (L) => { const c = []; for (let i = -8; i <= 8; i++) for (let j = -8; j <= 8; j++) if (free(i, j, L)) c.push([i, j]); return c; };
+  const other = (i, j, id) => N4.some(([a, b]) => { const o = owner.get((i + a) + ',' + (j + b)); return o !== undefined && o !== id; });
+  let cid = 0;
+  const grow = (size) => {
+    const need = Q[0].map(v => Math.max(0, v)); if (need.every(v => !v)) return false;
+    const tb = ipickW(need), id = cid++, all = cells(0).filter(([i, j]) => band(i, j) === tb), sd = all.filter(([i, j]) => !other(i, j, id));
+    const sp = sd.length ? sd : all; if (!sp.length) { Q[0][tb] = 0; return true; }
+    const s0 = ipick(sp), fr = [s0]; place(s0[0], s0[1], 0); owner.set(s0[0] + ',' + s0[1], id);
+    for (let n = 1; n < size && fr.length;) {
+      const fi = Math.floor(irnd() * fr.length), [ci, cj] = fr[fi];
+      const op = N4.map(([a, b]) => [ci + a, cj + b]).filter(([i, j]) => free(i, j, 0) && !other(i, j, id));
+      if (!op.length) { fr.splice(fi, 1); continue; }
+      const [ni, nj] = ipick(op); place(ni, nj, 0); owner.set(ni + ',' + nj, id); fr.push([ni, nj]); n++;
+    }
+    return true;
+  };
+  for (const n of [28, 18, 13, 11, 8, 7, 6, 3, 3, 3, 2, 2, 2]) if (!grow(Math.max(1, Math.round(n * 85 / 117)))) break;
+  while (Q[0].some(v => v > 0)) if (!grow(1)) break;
+  const attach = (L, under) => { for (let b = 0; b < 5; b++) while (Q[L][b] > 0) {
+    const nb = [];
+    for (const [i, j, LL] of occ.values()) { if (under !== undefined && LL !== under) continue;
+      for (const [x, y] of under !== undefined ? [[i, j]] : N4.map(([a, c]) => [i + a, j + c])) if (free(x, y, L) && band(x, y) === b) nb.push([x, y]); }
+    const pool = nb.length ? nb : cells(L).filter(([i, j]) => band(i, j) === b); if (!pool.length) { Q[L][b] = 0; break; }
+    const [x, y] = ipick(pool); place(x, y, L); } };
+  attach(-1, 0); attach(1, 0); attach(2, 1); attach(2); attach(3, 2); attach(3);
+  const cubes = [...occ.values()], R = new THREE.Matrix4().makeRotationY(Math.PI / 4), v3 = new THREE.Vector3();
+  const W = (x, y, z) => v3.set(x, y, z).applyMatrix4(R).add(IO).toArray();
+  const TPL = [[[1, 1, 1], [1, 1, -1], [-1, 1, 1]], [[-1, 1, 1], [1, 1, -1], [-1, 1, -1]], [[-1, 1, -1], [1, 1, -1], [-1, -1, -1]],
+    [[-1, -1, -1], [1, 1, -1], [1, -1, -1]], [[1, 1, -1], [1, 1, 1], [1, -1, -1]], [[1, 1, 1], [1, -1, 1], [1, -1, -1]]];
+  const rXZ = ([x, y, z], r) => r === 0 ? [x, y, z] : r === 1 ? [-z, y, x] : r === 2 ? [-x, y, -z] : [z, y, -x];
+  const pos = [], cen = [], ph = [], idx = [], phase = new Map(), HALF = 0.9985;
+  for (const [i, j, L] of cubes) {
+    const c = [2 * i, 2 * L, 2 * j], r = ipickW([61, 13, 43, 0]);
+    for (let f = 0; f < 3; f++) {
+      const loc = new Map(), fv = [];
+      for (const sgn of [...TPL[2 * f], ...TPL[2 * f + 1]]) {
+        const key = sgn.join();
+        if (!loc.has(key)) {
+          loc.set(key, pos.length / 3); const o = rXZ(sgn, r); fv.push(o);
+          const p = W(c[0] + o[0] * HALF, c[1] + o[1] * HALF, c[2] + o[2] * HALF); pos.push(...p);
+          const pk = p.map(v => Math.round(v * 1000)).join(); if (!phase.has(pk)) phase.set(pk, irnd()); ph.push(phase.get(pk));
+        }
+        idx.push(loc.get(key));
+      }
+      const fc = [0, 1, 2].map(a => fv.reduce((s, o) => s + o[a], 0) / 4), cw = W(c[0] + fc[0], c[1] + fc[1], c[2] + fc[2]);
+      for (let k = 0; k < 4; k++) cen.push(...cw);
+    }
+  }
+  // number anchors: 58.5% of the lattice corners, each 0.1 right and up of its corner
+  const corners = new Map();
+  for (const [i, j, L] of cubes) for (let n = 0; n < 8; n++) { const s = [n & 1 ? 1 : -1, n & 2 ? 1 : -1, n & 4 ? 1 : -1], p = [2 * i + s[0], 2 * L + s[1], 2 * j + s[2]]; corners.set(p.join(), [p, s]); }
+  const cl = [...corners.values()];
+  for (let i = cl.length - 1; i > 0; i--) { const j = Math.floor(irnd() * (i + 1)); [cl[i], cl[j]] = [cl[j], cl[i]]; }
+  const pts = [], dd = [];
+  for (const [p, s] of cl.slice(0, Math.round(cl.length * 252 / 431))) { const w = W(p[0] - s[0] * 0.0015 + 0.1, p[1] - s[1] * 0.0015 + 0.1, p[2] - s[2] * 0.0015); pts.push(...w); dd.push(IO.distanceTo(v3.fromArray(w))); }
+  return { pos, cen, ph, idx, pts, dd, n: cubes.length };
+}
+// the outline (igloo's brick-edge wire): one loop per block on its front face and one on its back, inset like the seam, corners rounded
+function genOutline() {
+  const out = [], rc = 0.0532;
+  const rdp = (pts, tol) => {
+    const seg = (p) => { if (p.length < 3) return p; const a = p[0], b = p[p.length - 1], dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1; let best = -1, bi = 0;
+      for (let i = 1; i < p.length - 1; i++) { const d = Math.abs((p[i][0] - a[0]) * dy - (p[i][1] - a[1]) * dx) / L; if (d > best) { best = d; bi = i; } }
+      return best > tol ? seg(p.slice(0, bi + 1)).slice(0, -1).concat(seg(p.slice(bi))) : [a, b]; };
+    let far = 0; pts.forEach((q, i) => { if (Math.hypot(q[0] - pts[0][0], q[1] - pts[0][1]) > Math.hypot(pts[far][0] - pts[0][0], pts[far][1] - pts[0][1])) far = i; });
+    return seg(pts.slice(0, far + 1)).slice(0, -1).concat(seg(pts.slice(far).concat([pts[0]])).slice(0, -1));
+  };
+  const inset = (p, dist) => { let A = 0; const n = p.length; p.forEach((q, i) => { const r = p[(i + 1) % n]; A += q[0] * r[1] - r[0] * q[1]; }); const sgn = A > 0 ? 1 : -1;
+    return p.map((b, i) => { const a = p[(i - 1 + n) % n], c = p[(i + 1) % n], n1 = [a[1] - b[1], b[0] - a[0]], n2 = [b[1] - c[1], c[0] - b[0]], l1 = Math.hypot(...n1) || 1, l2 = Math.hypot(...n2) || 1;
+      const m = [n1[0] / l1 + n2[0] / l2, n1[1] / l1 + n2[1] / l2], ml = Math.hypot(...m) || 1, ch = Math.max(0.35, ml / 2);
+      return [b[0] + sgn * m[0] / ml * dist / ch, b[1] + sgn * m[1] / ml * dist / ch]; }); };
+  const roundSplit = (p) => { const n = p.length, o = [];
+    for (let i = 0; i < n; i++) { const a = p[(i - 1 + n) % n], b = p[i], c = p[(i + 1) % n], u = [b[0] - a[0], b[1] - a[1]], v = [c[0] - b[0], c[1] - b[1]], lu = Math.hypot(...u), lv = Math.hypot(...v);
+      if (Math.abs(Math.atan2(u[0] * v[1] - u[1] * v[0], u[0] * v[0] + u[1] * v[1])) > 0.4363 && lu > 2.2 * rc && lv > 2.2 * rc) {
+        const p0 = [b[0] - u[0] / lu * rc, b[1] - u[1] / lu * rc], p2 = [b[0] + v[0] / lv * rc, b[1] + v[1] / lv * rc];
+        for (let k = 0; k <= 3; k++) { const s = k / 3; o.push([0, 1].map(e => (1 - s) ** 2 * p0[e] + 2 * (1 - s) * s * b[e] + s * s * p2[e])); }
+      } else o.push(b); }
+    const r = []; o.forEach((a, i) => { const b = o[(i + 1) % o.length], k = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 0.222)); for (let j = 0; j < k; j++) r.push([a[0] + (b[0] - a[0]) * j / k, a[1] + (b[1] - a[1]) * j / k]); });
+    return r; };
+  PIECES.variants[10].pieces.forEach((pc, id) => {
+    const c = blocks[id].c, loop = roundSplit(inset(rdp(pc.v.slice(0, pc.nb).map(([x, y]) => { const l = toLocal(x, y); return [c.x + (l.x - c.x) * 0.992, c.y + (l.y - c.y) * 0.992]; }), 1.5 * S), 0.05));
+    for (const z of [0.477, -0.477]) loop.forEach((a, i) => { const b = loop[(i + 1) % loop.length]; out.push(a[0], a[1], z, b[0], b[1], z); });
+  });
+  return out;
+}
+// the number atlas: 32 cells of 32 px, blank, +, +, twenty values climbing 00 to 99 (our own seeded steps), +, +, in Open Sans 400
+await fontsP;
+const numCv = document.createElement('canvas'); numCv.width = 32; numCv.height = 1024;
+{
+  const c = numCv.getContext('2d'), st = []; let acc = 0;
+  for (let i = 0; i < 19; i++) st.push(acc += 3 + Math.floor(irnd() * 6));
+  const vals = [0, ...st.map(v => Math.round(v * 99 / acc))];
+  c.fillStyle = '#000'; c.fillRect(0, 0, 32, 1024); c.fillStyle = '#fff'; c.font = '400 24px "Open Sans", Arial, sans-serif';
+  for (let k = 8; k < 32; k++) { const plus = k < 10 || k > 29; c.textAlign = plus ? 'center' : 'left'; c.fillText(plus ? '+' : String(vals[k - 10]).padStart(2, '0'), plus ? 16 : 2, 32 * k + 25); }
+}
+const numTex = new THREE.CanvasTexture(numCv);
+// one material shape for the three wire layers: additive, no depth, 1-device-pixel GL lines or 8 px sprites. Alpha 1 where lit,
+// so the bloom save/restore pass blooms them over the mark's black faces too (critique0 C9).
+const ILINE = { value: new THREE.Color() };
+const imat = (u, vs, fs) => new THREE.ShaderMaterial({ uniforms: { uCol: ILINE, uTime: U.uTime, ...u }, vertexShader: vs, fragmentShader: IGL + fs,
+  transparent: true, depthTest: false, depthWrite: false, fog: false,
+  blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor, blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneFactor });
+const CG = genCage(), cageGeo = new THREE.BufferGeometry();
+cageGeo.setAttribute('position', new THREE.Float32BufferAttribute(CG.pos, 3)); cageGeo.setAttribute('aC', new THREE.Float32BufferAttribute(CG.cen, 3));
+cageGeo.setAttribute('aPh', new THREE.Float32BufferAttribute(CG.ph, 1)); cageGeo.setIndex(CG.idx);
+const CU = { uA: { value: 0 }, uP: { value: 0 }, uO: FLU.uO };
+// the shockwave: each face lights as a unit when the sphere front (25p - 5 full, 25p zero) passes its centre; a per-corner phase
+// interpolated along each edge makes bright dashes crawl at about 1 Hz
+const cage = new THREE.LineSegments(cageGeo, imat(CU,
+  'attribute vec3 aC; attribute float aPh; varying vec3 vC; varying float vPh; void main(){ vC = (modelMatrix * vec4(aC, 1.0)).xyz; vPh = aPh; gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0); }',
+  `uniform vec3 uCol, uO; uniform float uA, uP, uTime; varying vec3 vC; varying float vPh;
+  void main(){ float a = uA * iFall(length(vC - uO), 0.0, 20.0, 5.0, uP) * (sin(vPh * 13.0 + uTime * 6.0) * 0.5 + 0.5); gl_FragColor = vec4(uCol * a, step(0.004, a)); }`));
+const OU = { uA: { value: 1 }, uP: { value: 0 }, uK: { value: 2.2 } };   // uK: the wire outline reads above the cage, as igloo's does
+const outline = new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(genOutline(), 3)), imat(OU,
+  'varying vec3 vW; void main(){ vW = (modelMatrix * vec4(position, 1.0)).xyz; gl_Position = projectionMatrix * viewMatrix * vec4(vW, 1.0); }',
+  `uniform vec3 uCol; uniform float uA, uP, uK, uTime; varying vec3 vW;
+  void main(){ vec3 w = vW * 6.0; float T = uTime * 5.0;
+    float idle = (sin(w.y + T) * 0.5 + 0.5) * (cos(w.z + T) * 0.5 + 0.5) * (sin(w.x + T) * 0.5 + 0.5) * 0.8 + 0.2;
+    float a = uK * uA * idle * iFallS(vW.y, 2.73, -2.18, 2.89, uP); gl_FragColor = vec4(uCol * a, step(0.004, a)); }`));
+const NU = { uP: { value: 0 }, uSize: { value: 8 }, tNum: { value: numTex } }, numGeo = new THREE.BufferGeometry();
+numGeo.setAttribute('position', new THREE.Float32BufferAttribute(CG.pts, 3)); numGeo.setAttribute('aD', new THREE.Float32BufferAttribute(CG.dd, 1));
+// counting sprites: one glyph per 1/48 of progress, delayed one cell per unit of distance from the origin, so a counting wave
+// runs about 9 units behind the light front
+const nums = new THREE.Points(numGeo, imat(NU,
+  'attribute float aD; uniform float uSize; varying float vD; void main(){ vD = aD; gl_PointSize = uSize; gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0); }',
+  `uniform vec3 uCol; uniform float uP; uniform sampler2D tNum; varying float vD;
+  void main(){ float n = floor(uP * 48.0 - vD), cell = n >= 0.0 && n <= 30.0 ? n + 1.0 : 1.0;
+    float g = texture2D(tNum, vec2(gl_PointCoord.x, 1.0 - (cell + gl_PointCoord.y) / 32.0)).r;
+    float a = 0.5 * iFall(vD, 0.0, 20.0, 5.0, uP); gl_FragColor = vec4(min(uCol * g, vec3(1.0)) * a, step(0.004, a * g)); }`));
+cage.renderOrder = outline.renderOrder = 999; nums.renderOrder = 1000;
+for (const o of [cage, outline, nums]) { o.frustumCulled = false; sceneA.add(o); }
+report('intro');
+
+// ---- the timeline: igloo's rows (critique0 C2 eases), evaluated as a pure function of t so a seek is exact
+const bez = (x1, y1, x2, y2) => (x) => { if (x <= 0) return 0; if (x >= 1) return 1; let lo = 0, hi = 1, u = 0.5;
+  for (let i = 0; i < 40; i++) { u = (lo + hi) / 2; if (3 * (1 - u) * (1 - u) * u * x1 + 3 * (1 - u) * u * u * x2 + u * u * u < x) lo = u; else hi = u; }
+  return 3 * (1 - u) * (1 - u) * u * y1 + 3 * (1 - u) * u * u * y2 + u * u * u; };
+const EZ = { inOut1: bez(.5, 0, .1, 1), inOut3: bez(.6, 0, 0, 1), inOut4: bez(.4, 0, -.06, 1), printEase: bez(.662, .073, .047, 1), lin: (x) => x,
+  sineInOut: (x) => -(Math.cos(Math.PI * x) - 1) / 2, sineOut: (x) => Math.sin(x * Math.PI / 2),
+  power2InOut: (x) => x < .5 ? 4 * x ** 3 : 1 - (-2 * x + 2) ** 3 / 2,       // GSAP's power2.inOut is cubic
+  power3InOut: (x) => x < .5 ? 8 * x ** 4 : 1 - (-2 * x + 2) ** 4 / 2 };     // and its power3.inOut quartic
+const tw = (t, s, d, e, a = 0, b = 1) => a + (b - a) * EZ[e](clamp01((t - s) / d));
+const BLOOMF = [1, 0.8, 0.6, 0.4, 0.2], BLOOMT = [1, 0.45, 0.15, 0.04, 0];   // UnrealBloomPass's own mip weights, and a tight set
+function evalTL(t) {
+  const v = IN.v, end = IN.phase === 'done', on = !end && !SKIP;
+  C.uIntro.value = v.uIntro = tw(t, 0, 1, 'inOut3');                                   // flat night to the scene
+  OU.uP.value = v.outP = tw(t, 0, 2.5, 'power3InOut'); OU.uA.value = v.outA = tw(t, 2, 3, 'inOut4', 1, 0); outline.visible = !end && t < 5;
+  OU.uK.value = v.outK = tw(t, 1.4, 0.6, 'sineInOut', 2.2, 1.5);   // the wire is the brightest thing on screen until the print takes over
+  CU.uP.value = v.cageP = tw(t, 0, 4, 'sineInOut'); cage.visible = !end && t < 5.1;
+  CU.uA.value = v.cageA = t < 2.1 ? tw(t, 0, .1, 'power2InOut', 0, .4) : tw(t, 2.1, 3, 'power2InOut', .4, 0);
+  NU.uP.value = v.numP = tw(t, .5, 4, 'sineOut'); nums.visible = !end && t < 3.75;
+  U.uPrint.value = v.print = tw(t, 1.1, 2.25, 'printEase');
+  IN.breath = v.breath = tw(t, 2, 2, 'lin');
+  IN.w = v.w = tw(t, 2, 5.5, 'inOut1'); IN.touch = v.touch = tw(t, 2, 5, 'power2InOut');
+  // the far field and the unlit floor wait for the crane: from the high start pose the field stays night around the pool
+  const D = smoothstep(0.05, 0.16, IN.w);   // 0 until 2.9 s, 0.84 at 3.25 s, 1 by 3.4 s: the unlit floor fades in fast, so no half-opaque state lingers
+  FLU.uFloorA.value = v.floorA = t >= 2.1 ? 1 : 0; FLU.uFarA.value = v.farA = tw(t, .7, 3, 'power2InOut') * D;
+  FLU.uDim.value = FLU.uDimN.value = v.dim = D;
+  FLU.uU.value = v.u = tw(t, .7, 7.5, 'inOut1'); FLU.uU2.value = v.u2 = tw(t, .7, 7.5, 'inOut3');
+  FOG.uOpacity.value = v.fogA = tw(t, 2, 3, 'power2InOut') * smoothstep(0.35, 0.75, tw(t, 2, 5.5, 'inOut1'));   // igloo's smoke, held back until the crane is low: seen from above, our wisp cards read as streaks
+  SKU.uSkyP.value = v.skyP = tw(t, 1.5, 3, 'power2InOut'); SKU.uSkyB.value = v.u2;
+  FOG.uGMAmount.value = v.mist = end ? P.mist : P.mist * smoothstep(0.6, 0.9, IN.w);   // the ground mist's wind taps scroll along z: from the high pose that reads as rain-like streaks, so it waits for the crane
+  const BF = A.b.compositeMaterial.uniforms.bloomFactors.value, bk = end ? 0 : tw(t, 1.9, .4, 'sineInOut') * (1 - tw(t, 3.3, 1.2, 'sineInOut'));
+  for (let i = 0; i < 5; i++) BF[i] = BLOOMF[i] + (BLOOMT[i] - BLOOMF[i]) * bk;   // tight mips while the snow rim burns (no wide halo on night), the hero's after
+  if (end) { A.b.strength = P.bloom; A.b.threshold = 0.62; A.b.radius = 0.22; sceneA.background.copy(sceneA.fog.color); }   // exactly the hero's pass
+  // bloom (critique1 C12): the hero's 0.62 threshold throughout, so only the HDR print band and snow rim bloom and the lines stay thin
+  // on the night field. Strength and radius start lower than the hero's and ease to it (igloo eases 1.5 to 1 from 2.5 s; on night
+  // igloo's ratio blows the band into a blob), so the printed cap reads as a shape with a short glow
+  else { A.b.strength = P.bloom * (v.bloomK = tw(t, 2.5, 2, 'sineInOut', 0.7, 1)); A.b.threshold = 0.62; A.b.radius = v.rad = tw(t, 2.1, 1.2, 'sineInOut', 0, .22); sceneA.background.copy(FLATC);
+    /*TEST*/{ const O = IN.o;   // test overrides (__skreedIntro.tune), stripped from the ship build
+      if (O.bk !== undefined) A.b.strength = P.bloom * tw(t, 2.5, 2, 'sineInOut', O.bk, 1); if (O.thr !== undefined) A.b.threshold = tw(t, 2.1, 1.2, 'sineInOut', O.thr, .62);
+      if (O.rad !== undefined) A.b.radius = tw(t, 2.1, 1.2, 'sineInOut', O.rad, .22);
+      if (O.pk !== undefined) U.uPrintCol.value.copy(PEARL).multiplyScalar(O.pk); if (O.gk !== undefined) FLU.uGlowCol.value.copy(PEARL).multiplyScalar(O.gk);
+      if (O.ok !== undefined) OU.uK.value = O.ok; if (O.lines !== undefined) P.introLines = O.lines; if (O.ring !== undefined) FLU.uRing.value = O.ring; }/*TEST-END*/ }
+  HT.classList.toggle('intro', on && t < 5);
+  uiEval(t, on);
+}
+// ---- the UI (igloo's MSDF text, re-created in the DOM): per line, glyph alpha is a left-to-right wipe with a 10% edge (0.4 s
+// sine.out) and each glyph shows a substitute that steps back 5, 4, 3, 2, 1 to the real one (0.75 s sine.out). Layout never moves:
+// each glyph keeps its measured width. The real text is restored when the line is written.
+const UIQ = { eb: document.querySelector('#heroCopy .eyebrow'), cnt: $('count'), cue: $('cue') };
+const SUBS = ['0123456789', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'];
+const glyphSub = (ch, k) => { for (const s of SUBS) { const i = s.indexOf(ch); if (i >= 0) return s[(i + 3 * k + 1) % s.length]; } return ch; };
+const cdIdx = (el) => ['cd-d', 'cd-h', 'cd-m', 'cd-s'].indexOf(el.id), cdNow = (el) => { const k = cdIdx(el), v = window.__skreedCountV; return k >= 0 && v ? v[k] : null; };
+function splitLine(ln) {
+  if (ln.units) return;
+  const units = [], r = document.createRange(); ln.orig = ln.els.map(e => e.textContent);
+  ln.els.forEach((el, n) => {
+    const txt = ln.orig[n], node = el.firstChild, w = [];
+    if (node && node.nodeType === 3) for (let i = 0; i < txt.length; i++) { r.setStart(node, i); r.setEnd(node, i + 1); w.push(r.getBoundingClientRect().width); }
+    el.textContent = '';
+    [...txt].forEach((ch, i) => { if (ch === ' ') { el.append(' '); return; }
+      const s = document.createElement('span'); s.className = 'gl'; s.textContent = ch; if (w[i]) s.style.width = w[i] + 'px'; s.style.opacity = 0; el.append(s);
+      units.push({ s, ch, el, i, x: 0 }); });
+  });
+  const cx = units.map(u => { const b = u.s.getBoundingClientRect(); return b.left + b.width / 2; }), lo = Math.min(...cx), hi = Math.max(...cx);
+  units.forEach((u, i) => { u.x = hi > lo ? (cx[i] - lo) / (hi - lo) : 0; });
+  ln.units = units; if (ln.count) UIQ.cnt.dataset.hold = '1';   // the countdown script leaves the digits to us while they are written
+}
+function unsplitLine(ln) {
+  if (!ln.units) return;
+  ln.els.forEach((el, n) => { el.textContent = cdNow(el) || ln.orig[n]; });
+  ln.units = null; if (ln.count) delete UIQ.cnt.dataset.hold;
+}
+function drawLine(ln, t) {
+  const p1 = EZ.sineOut(clamp01((t - ln.start) / 0.4)), p2 = EZ.sineOut(clamp01((t - ln.start) / 0.75));
+  for (const u of ln.units) {
+    const k = Math.floor((1 - clamp01(2 * p2 - u.x)) * 5.753) % 8, real = (cdNow(u.el) || '')[u.i] || u.ch, g = k ? glyphSub(real, k) : real;
+    const a = clamp01((1.1 * p1 - u.x) / 0.1).toFixed(3);
+    if (u.g !== g) u.s.textContent = u.g = g;
+    if (u.a !== a) u.s.style.opacity = u.a = a;
+  }
+}
+function uiEval(t, on) {
+  HT.classList.toggle('uh1', on && t < 5.25); HT.classList.toggle('uh2', on && t < 4.5); HT.classList.toggle('uh3', on && t < 4.5); HT.classList.toggle('uh4', on && t < 6.37);
+  if (!IN.lines) IN.lines = [[[UIQ.eb], 5.5], [[...UIQ.cnt.querySelectorAll('.n,.l')], 5.63, 1], [[UIQ.cue.querySelector('.lbl')], 5.63]].map(([els, start, count]) => ({ els, start, count, units: null }));
+  for (const ln of IN.lines) { if (on && t >= 4.5 && t < ln.start + 0.75) { splitLine(ln); drawLine(ln, t); } else unsplitLine(ln); }
+}
+// one-off beats, only while the clock runs (igloo's webgl_show_ui_intro at 4.5, logo at 5.25, scroll at 5.0)
+function introEvents(t) {
+  const e = IN.ev;
+  if (t >= 5 && !e.s) { e.s = 1; removeEventListener('touchmove', noTouch); }
+  if (t >= 5.25 && !e.l) { e.l = 1; logoGlitch.intro(0); }
+  if (t >= 5.75 && !e.i) { e.i = 1; logoGlitch.idle(); }
+  if (t >= 6.37 && !e.b) { e.b = 1; for (const el of UIQ.cue.querySelectorAll('.ball,.base')) for (const a of el.getAnimations()) a.currentTime = 0; }   // the ball starts on its first drop
+}
+function introEnd() { IN.phase = 'done'; IN.t = IEND; IN.paused = false; evalTL(IEND); removeEventListener('touchmove', noTouch); if (IN.go && IN.lt === null) IN.lt = -1e9; if (IN.rsz) resize(); }
+// GPU fences (critique1 C8): each armed frame under the loader carries one and the next armed frame waits for it, so no backlog of
+// full-size frames builds up behind the loader (SwiftShader and some drivers give no backpressure). A fence that has not signalled
+// after 2 s is dropped, so a slow or odd driver can never hold the lift.
+function fenceDone(now) {
+  if (!IN.sync) return true;
+  const gl = renderer.getContext(), r = gl.clientWaitSync(IN.sync, 0, 0);
+  if (r !== gl.ALREADY_SIGNALED && r !== gl.CONDITION_SATISFIED && now - IN.syncAt < 2000) return false;
+  gl.deleteSync(IN.sync); IN.sync = null; return true;
+}
+// readiness: after the textures are up, three steady frame intervals (1.5 s cap), then the fence of the next full-size frame:
+// 'frame1' when it is issued, 'frame2' when it has signalled. Then the loader may lift.
+function readiness(now) {
+  if (IN.ready || texOK < 2) return;
+  if (IN.fin) { if (!IN.sync) { IN.ready = true; report('frame2'); if (!LD()) window.__introDone(); } return; }
+  if (!IN.a0) IN.a0 = now; else IN.iv.push(now - IN.last); IN.last = now;
+  const iv = IN.iv.slice(-3), med = [...IN.iv].sort((a, b) => a - b)[IN.iv.length >> 1] || 0;
+  if ((iv.length === 3 && iv.every(x => x <= Math.max(1.5 * med, 25))) || now - IN.a0 > 1500) IN.pend = true;
+}
 
 // =====================================================================
 // Scene B: section 2 placeholder, the Wall (240 swatches, catalog order)
@@ -987,12 +1369,13 @@ function makeScrollTexture(N = 512) {   // returns the texture and fill(j0, j1):
 const C = {
   tA: { value: null }, tB: { value: null }, tScroll: { value: scrollTex.tex },
   uProgress: { value: 0 }, uAspect: { value: 1 }, uNoiseOff: { value: new THREE.Vector2() }, uCalm: { value: reduce ? 1 : 0 },
+  uIntro: { value: 1 }, uFlat: { value: new THREE.Vector3(5 / 255, 5 / 255, 6 / 255) },   // the loader's night, in output sRGB
 };
 const composite = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
   uniforms: C, depthTest: false, depthWrite: false,
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`,
   fragmentShader: /* glsl */`
-    uniform sampler2D tA, tB, tScroll; uniform float uProgress, uAspect, uCalm; uniform vec2 uNoiseOff;
+    uniform sampler2D tA, tB, tScroll; uniform float uProgress, uAspect, uCalm, uIntro; uniform vec2 uNoiseOff; uniform vec3 uFlat;
     varying vec2 vUv;
     float linstep(float a, float b, float t){ return clamp((t - a) / (b - a), 0.0, 1.0); }
     // a sweep from start to end with a soft margin; progress 0..1 moves it across
@@ -1009,9 +1392,9 @@ const composite = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.Shader
       vec4 sum = vec4(0.0), sw = vec4(0.0);
       for (int i = 0; i < 5; i++) { float k = float(i) / 5.0; vec4 w = spectrum(k); sw += w; sum += w * texture2D(t, barrel(uv, bend * maxd * k)); }
       return (sum / sw).rgb; }
-    void main(){
-      if (uProgress <= 0.0) { gl_FragColor = vec4(texture2D(tA, vUv).rgb, 1.0); return; }
-      if (uProgress >= 1.0) { gl_FragColor = vec4(texture2D(tB, vUv).rgb, 1.0); return; }
+    vec3 wipe(){
+      if (uProgress <= 0.0) return texture2D(tA, vUv).rgb;
+      if (uProgress >= 1.0) return texture2D(tB, vUv).rgb;
       vec2 uvTex = vUv - 0.5; uvTex.x *= uAspect; uvTex += 0.5;
       vec3 st = texture2D(tScroll, uvTex).rgb;
       float slopeDisp = (st.b * 2.0 - 1.0) * 0.4;
@@ -1030,17 +1413,25 @@ const composite = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.Shader
       vec3 s1 = vec3(0.0), s2 = vec3(0.0);
       if (cut < 1.0) s1 = ca(tA, vUv - vec2(0.0, parallaxY * cubicIn(uProgress) + disp * cutDisp), modulator, blurDiag * n.x);
       if (cut > 0.0) s2 = ca(tB, vUv + vec2(0.0, parallaxY * cubicIn(1.0 - uProgress) + disp * (1.0 - cutDisp)), modulator, (1.0 - blurDiag) * n.y);
-      gl_FragColor = vec4(clamp(mix(s1, s2, cut), 0.0, 1.0), 1.0);
-    }`,
+      return clamp(mix(s1, s2, cut), 0.0, 1.0);
+    }
+    void main(){ gl_FragColor = vec4(mix(uFlat, wipe(), uIntro), 1.0); }`,
 }));
 const screenScene = new THREE.Scene(); screenScene.add(composite);
 const screenCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-let portrait = false;
+let portrait = false, lastW = 0, lastH = 0;
 function resize() {
-  const w = innerWidth, h = innerHeight; if (!w || !h) return; const asp = w / h;
+  const w = HT.clientWidth || innerWidth, h = innerHeight; if (!w || !h) return; const asp = w / h;   // clientWidth: the fixed canvas's width, without a classic scrollbar
+  // during the shot a small width change (a classic scrollbar arriving when the lock lifts at 5 s, up to 24 px) or a phone's URL bar
+  // (height only, up to 160 px) moves only the camera; the render targets keep their size until the intro is over (critique1 C13)
+  if (IN.phase !== 'done' && IN.ready && lastW && ((Math.abs(w - lastW) <= 24 && h === lastH) || (touch && w === lastW && Math.abs(h - lastH) <= 160))) {
+    camA.aspect = camB.aspect = asp; camA.zoom = Math.min(1, asp * 1.25); camA.updateProjectionMatrix(); camB.updateProjectionMatrix();
+    C.uAspect.value = asp; NU.uSize.value = h * DPR / 100; IN.rsz = true; return;
+  }
+  lastW = w; lastH = h; IN.rsz = false;
   renderer.setSize(w, h, false);
-  A.c.setSize(w, h); B.c.setSize(w, h); savePass.renderTarget.setSize(w * DPR, h * DPR); A.b.resolution.set(w / 2, h / 2);
+  A.c.setSize(w, h); B.c.setSize(w, h); savePass.renderTarget.setSize(w * DPR, h * DPR); A.b.resolution.set(w / 2, h / 2); NU.uSize.value = h * DPR / 100;
   camA.aspect = camB.aspect = asp;
   camA.zoom = Math.min(1, asp * 1.25);                                  // igloo's portrait rule
   camA.updateProjectionMatrix(); camB.updateProjectionMatrix();
@@ -1048,6 +1439,8 @@ function resize() {
   const p = asp < 0.9; if (p !== portrait || !wall.userData.done) { portrait = p; layoutWall(p); wall.userData.done = true; }
 }
 addEventListener('resize', resize); resize();
+// a classic scrollbar appearing or going (the lock at 5 s, the loader) changes the root's width without a window resize event
+if (window.ResizeObserver) new ResizeObserver(() => { if (HT.clientWidth !== lastW) resize(); }).observe(HT);
 
 function apply() {
   U.uGlow.value = P.glow; U.uRest.value = P.rest; U.uTint.value = P.tint; U.uGrad.value = P.grad; U.uTex.value = P.tex; U.uRelief.value = P.relief; U.uKey.value = P.key;
@@ -1229,14 +1622,31 @@ const logoGlitch = (() => {
   link.addEventListener('focus', () => { if (link.matches(':focus-visible')) burst(0.25); });
   link.addEventListener('click', (e) => { e.preventDefault(); scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); });
   const intro = (delay) => { burst(0.5, delay); pair = PAIRS[0]; };   // igloo's intro glitch, split in the pair the mark shows at rest (Sky, Crimson)
-  if (introDone) intro(0.75);                                        // no loader on the page: the burst keeps its old timing; otherwise it marks the cut
   let idleTimer = 0;
   const scheduleIdle = () => { clearTimeout(idleTimer); idleTimer = setTimeout(() => { if (P.logoIdle) burst(0.25); scheduleIdle(); }, rand(8000, 16000)); };
-  scheduleIdle();
-  return { burst, intro, setTone: (light) => { link.dataset.tone = light ? 'light' : 'dark'; } };
+  return { burst, intro, idle: scheduleIdle, setTone: (light) => { link.dataset.tone = light ? 'light' : 'dark'; } };
 })();
 window.__skreedLogo = logoGlitch;   // test hook (screenshot harness)
-window.__introDone = () => { if (introDone) return; introDone = true; tHero0 = t; logoGlitch.intro(0.25); };   // the loader's cut is over: the hero's life ramps in from here
+// the loader's lift: igloo's hide and introTL.play(0) on one tick. Skipped intros (reduced motion, ?intro=0, a deep link, the poster)
+// are already at their end state under the loader.
+window.__introDone = () => {
+  if (IN.go) return; IN.go = true;
+  if (IN.phase !== 'armed' || posterNow()) { if (IN.phase !== 'done') introEnd(); IN.lt = t; logoGlitch.intro(0.25); logoGlitch.idle(); return; }   // skipped: the life eases in from the lift, as v9.9
+  IN.phase = 'run'; IN.t = 0; IN.t0 = t; IN.fresh = true; IN.ev = {};
+};
+// Replay intro (the Tune panel): the shot again from t = 0. Not offered when the intro is skipped (reduced motion, ?intro=0, a deep link).
+const replay = () => { if (SKIP) return; scrollTo(0, 0); IN.ev = {}; IN.t = 0; IN.t0 = t; IN.paused = false; IN.fresh = true; IN.phase = 'run'; IN.go = true; addEventListener('touchmove', noTouch, { passive: false }); };
+$('introReplay').hidden = SKIP; $('introReplay').addEventListener('click', replay);
+// test hook (stripped from the ship build): seek(t) pins the intro (and the shader clock) at t and renders that frame; play() resumes
+/*TEST*/window.__skreedIntro = {
+  state: () => ({ phase: IN.phase, t: +IN.t.toFixed(4), paused: IN.paused, ready: IN.ready, ...Object.fromEntries(Object.entries(IN.v).map(([k, x]) => [k, +x.toFixed(4)])),
+    cam: camA.position.toArray().map(x => +x.toFixed(3)), html: HT.className, cubes: CG.n, segs: CG.idx.length / 2, nums: CG.dd.length, outSegs: outline.geometry.attributes.position.count / 2 }),
+  seek(x, t0) { if (t0 !== undefined) IN.t0 = t0; IN.paused = true; IN.go = true;   // t0: pin the absolute shader clock too (cross-build pixel diffs)
+    if (x >= IEND) introEnd(); else { IN.phase = 'run'; IN.t = x; IN.paused = true; evalTL(x); } t = IN.t0 + x; step(); return this.state(); },
+  play() { IN.paused = false; },
+  tune(o) { Object.assign(IN.o, o); return this.seek(IN.t); },
+  replay, skip: () => introEnd(),
+};/*TEST-END*/
 window.__skreedProject = (i, px, py, back) => {   // test hook: a viewBox point of block i through the module's own geometry and camera, in CSS px
   const c = blocks[i].c, l = toLocal(px, py);
   const v = new THREE.Vector3(c.x + (l.x - c.x) * 0.992, c.y + (l.y - c.y) * 0.992, back ? -DEPTH / 2 : DEPTH / 2).applyMatrix4(logo.matrixWorld).project(camA);
@@ -1271,14 +1681,29 @@ function clipFor(tp, above) {
 }
 
 const clock = new THREE.Clock(); let t = 0;
-function frame() {
-  requestAnimationFrame(frame);          // first, so one bad frame can never stop the loop
+/*TEST*/window.__skreedSetT = (x) => { t = x; };/*TEST-END*/   // test hook: pin the shader clock (with __skreedFreeze) for pixel diffs
+// the request first, so one bad frame can never stop the loop; hold (test hook): only seek() renders
+function frame() { requestAnimationFrame(frame); /*TEST*/if (window.__skreedHold) return;/*TEST-END*/ step(); }
+function step() {
   window.__skreedFrame = (window.__skreedFrame | 0) + 1;   // test hook: rendered-frame counter
   window.__heroStarted = true;
-  const dt = window.__skreedFreeze ? (clock.getDelta(), 0) : Math.min(clock.getDelta(), 1 / 12);   // freeze: test hook for pixel-diff measurements
+  const now = performance.now(), raw = clock.getDelta(), frozen = window.__skreedFreeze || IN.paused;   // freeze: test hook for pixel-diff measurements
+  const dt = frozen ? 0 : Math.min(raw, 1 / 12);
   t += dt; ratio = Math.min(5, dt / (1 / 60));
+  // the intro clock: a hitch over 0.5 s advances 1/30 s (igloo's GSAP lag smoothing), shorter ones at most 1/12 s, so a stall slows
+  // the shot rather than skipping part of it (a deliberate difference from igloo, which advances up to 0.5 s)
+  if (IN.phase === 'armed' && posterNow()) introEnd();
+  if (IN.phase === 'run') try {
+    if (!frozen) { if (IN.fresh) IN.fresh = false; else IN.t += raw > 0.5 ? 1 / 30 : dt; introEvents(IN.t); }
+    if (IN.t >= IEND) introEnd(); else evalTL(IN.t);
+  } catch (e) { console.warn('intro', e); introEnd(); }   // a failing intro frame ends the shot: never a locked page or hidden UI
+  const hold = !fenceDone(now) && IN.phase === 'armed';   // armed: the previous frame's fence is still pending, skip this render
+  ILINE.value.copy(PEARL).multiplyScalar(P.introLines * DPR / 1.15);   // 1-device-pixel lines: brighter when they are thinner (critique0 C13)
+  readiness(now);
   U.uTime.value = reduce ? 0 : t;
-  live = introDone ? (reduce ? 1 : 1 - Math.pow(1 - clamp01((t - tHero0) / 2), 3)) : 0;   // 0 until the loader's cut, then eases out to 1 over 2 s
+  // igloo's touchAmount during the shot; on a skipped intro (reduced motion, ?intro=0, a deep link, the poster) 0 under the loader,
+  // then eased in over 2 s from the lift exactly as v9.9 does, so no push or touch sweep has started before the page is seen
+  live = IN.phase !== 'done' ? IN.touch : IN.lt === null ? 0 : reduce ? 1 : 1 - (1 - clamp01((t - IN.lt) / 2)) ** 3;
   logo.position.y = reduce ? 0 : Math.sin(t * 0.7) * 0.07 * live;   // hovering just above the ground
   const pr = innerHeight > 0 ? scrollY / innerHeight : 0;
   if (!Number.isFinite(scroll.a) || !Number.isFinite(scroll.b)) scroll.a = scroll.b = 0;
@@ -1300,12 +1725,13 @@ function frame() {
     l *= Math.sin(-t * 2 + b.c.x) * 0.5 + 0.5;
     l *= Math.cos(-t) * 0.5 + 0.5;
     l *= 0.5 + 1.5 * b.rand.z;
-    l *= 0.5 * P.breath * live;
+    l *= 0.5 * P.breath * live * IN.breath;   // igloo's introDisplacementModulator gates the breathing from 2 s
     const c = Math.sin(t + b.rand.x * 12.342) * b.rand.y;
     const dist = Math.hypot(b.c.x - mouse.x, b.c.y - mouse.y);
     const h = fit(smoothstep(P.r0, P.r1, dist), 0, 1, P.push + P.wob * c, 0);
     l = Math.max(0, Math.max(l, h * heroOn * live));
     b.t1 = l; b.t2 = lerpFPS(b.t2, b.t1, P.follow); b.d = lerpFPS(b.d, b.t2, P.follow);
+    if (IN.paused) b.t2 = b.d = l;   // a seek shows the settled pose for its time
     dir.set(b.c.x, b.c.y, P.lift);
     U.uOff.value[i].copy(dir).multiplyScalar(b.d);
     b.q.identity();
@@ -1329,11 +1755,12 @@ function frame() {
     U.uQ.value[i].set(b.q.x, b.q.y, b.q.z, b.q.w); U.uD.value[i] = b.d;
   });
   logo.updateMatrixWorld();
-  updateLabels(dt, !!target && heroOn > 0.5 && tp <= 0 && live > 0.5);
+  updateLabels(dt, !!target && heroOn > 0.5 && tp <= 0 && live > 0.5 && IN.breath >= 1);   // igloo's labels wait for the breath gate (4 s)
   labLayer.style.visibility = tp > 0 ? 'hidden' : 'visible';
 
   // camera: base pose from scroll, then igloo's parallax (0.07, 0.025 of 90 degrees, 3.5% a frame) and 0.01 shake
   basePos.lerpVectors(camFrom, camTo, s); baseTgt.lerpVectors(tgtFrom, tgtTo, s);
+  if (IN.w < 1) { basePos.lerpVectors(IP0, basePos, IN.w); baseTgt.lerpVectors(IT0, baseTgt, IN.w); }   // the crane down from igloo's start pose
   const tx = pointerActive && !reduce ? target.x * live : 0, ty = pointerActive && !reduce ? target.y * live : 0;
   camState.theta = lerpFPS(camState.theta, tx * Math.PI * 0.5 * 0.07, 0.035);
   camState.phi = lerpFPS(camState.phi, -ty * Math.PI * 0.5 * 0.025, 0.035);
@@ -1361,12 +1788,15 @@ function frame() {
     renderer.getDrawingBufferSize(FOG.uResolution.value);
   }
   // render the visible scenes, then the composite
-  if (tp < 1) A.c.render(dt);
-  if (tp > 0) { renderer.toneMapping = THREE.NoToneMapping; B.c.render(dt); renderer.toneMapping = THREE.ACESFilmicToneMapping; }   // swatches stay true to the catalog
-  C.tA.value = A.c.readBuffer.texture; C.tB.value = B.c.readBuffer.texture;
-  C.uProgress.value = tp; C.uNoiseOff.value.set(Math.random(), Math.random());
-  renderer.setRenderTarget(null); renderer.render(screenScene, screenCam);
-  if (texOK === 2 && texFrames < 2) { texFrames++; report(texFrames === 1 ? 'frame1' : 'frame2'); }   // the first two frames with both textures on the GPU: the loader may cut after the second
+  if (!hold) {
+    if (tp < 1) A.c.render(dt);
+    if (tp > 0) { renderer.toneMapping = THREE.NoToneMapping; B.c.render(dt); renderer.toneMapping = THREE.ACESFilmicToneMapping; }   // swatches stay true to the catalog
+    C.tA.value = A.c.readBuffer.texture; C.tB.value = B.c.readBuffer.texture;
+    C.uProgress.value = tp; C.uNoiseOff.value.set(Math.random(), Math.random());
+    renderer.setRenderTarget(null); renderer.render(screenScene, screenCam);
+    if ((IN.phase === 'armed' || IN.pend) && !IN.sync) { const gl = renderer.getContext(); IN.sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0); gl.flush(); IN.syncAt = now;
+      if (IN.pend) { IN.pend = false; IN.fin = true; report('frame1'); } }
+  }
 
   // the DOM copy rides with its scene: hero slides up by 0.4 p^3, the Wall rises from 0.4 (1-p)^3 below
   logoGlitch.setTone(tp > 0.5);
@@ -1379,22 +1809,35 @@ function frame() {
   wallCopy.style.visibility = tp <= 0 ? 'hidden' : 'visible';
 }
 report('scene'); await yieldFrame();
-// Shaders: compileAsync links every program of the hero scene (in parallel where KHR_parallel_shader_compile exists). Then one draw of each
-// material group into an 8 px buffer, under the overlay, because some drivers (SwiftShader, some mobile GPUs) build their pipelines and
-// upload textures at the first draw, not at link: that work lands here, one milestone per group (c1, c2, ...), so the count keeps moving
-// through the costliest part of the load and the first visible frame is a frame, not a stall.
+// Readiness, igloo's upload step re-expressed (critique1 C3-C5): every object forced visible and unculled; programs linked with the
+// HalfFloat target bound, so they are the variants the composer really uses (linear, no tone mapping); every texture pushed to the
+// GPU; then one draw per material group into an 8 px HalfFloat target with the intro uniforms at mid values, so every branch and
+// pipeline (lines, points, blending, the transparent floor) is built; then both composers and the composite, B under NoToneMapping
+// exactly as frame() renders it. One milestone per group (c1, c2, ...) keeps the loader's count moving.
 try {
-  await renderer.compileAsync(sceneA, camA); await renderer.compileAsync(screenScene, screenCam);
-  const warmRT = new THREE.WebGLRenderTarget(8, 8), vis = [], groups = new Map(); let k = 0;
-  sceneA.traverse(o => { if (!(o.isMesh || o.isLine) || !o.visible) return; for (let q = o.parent; q; q = q.parent) if (!q.visible) return;
+  const warmRT = new THREE.WebGLRenderTarget(8, 8, { type: THREE.HalfFloatType }), saved = [], vis = [], groups = new Map(); let k = 0;
+  for (const sc of [sceneA, sceneB]) sc.traverse(o => { saved.push([o, o.visible, o.frustumCulled, o.material ? o.material.visible : 0]); o.visible = true; o.frustumCulled = false; if (o.material) o.material.visible = true; });
+  CU.uA.value = 0.4; CU.uP.value = OU.uP.value = NU.uP.value = U.uPrint.value = 0.5; OU.uA.value = 1;
+  FLU.uU.value = FLU.uU2.value = FLU.uFarA.value = FOG.uOpacity.value = SKU.uSkyP.value = SKU.uSkyB.value = C.uIntro.value = 0.5; FLU.uFloorA.value = 1;
+  for (const x of [FLU.tMosaic.value, numTex, scrollTex.tex]) renderer.initTexture(x);
+  sceneA.traverse(o => { if (!(o.isMesh || o.isLine || o.isPoints)) return;
     vis.push(o); const key = o.material.fragmentShader || o.material.type; if (!groups.has(key)) groups.set(key, []); groups.get(key).push(o); });
-  for (const g of groups.values()) { for (const o of vis) o.visible = g.includes(o); renderer.setRenderTarget(warmRT); renderer.render(sceneA, camA); await yieldFrame(); report('c' + ++k); }
+  // one group at a time: link its programs (parallel where the driver can), then draw it. Without parallel compile (SwiftShader,
+  // some Safari and Firefox builds) each link blocks, so a milestone per group keeps the loader's watchdog fed.
+  for (const g of groups.values()) { for (const o of vis) o.visible = g.includes(o); renderer.setRenderTarget(warmRT);
+    await renderer.compileAsync(sceneA, camA); renderer.setRenderTarget(warmRT); renderer.render(sceneA, camA); await yieldFrame(); report('c' + ++k); }
   for (const o of vis) o.visible = true;
+  renderer.setRenderTarget(warmRT); await renderer.compileAsync(sceneB, camB); renderer.setRenderTarget(null); await renderer.compileAsync(screenScene, screenCam);
   renderer.setSize(8, 8, false); A.c.setSize(8, 8); B.c.setSize(8, 8); savePass.renderTarget.setSize(8, 8);
   A.c.render(0); await yieldFrame(); report('c' + ++k);
-  B.c.render(0); C.tA.value = A.c.readBuffer.texture; C.tB.value = B.c.readBuffer.texture; renderer.setRenderTarget(null); renderer.render(screenScene, screenCam);
+  renderer.toneMapping = THREE.NoToneMapping; B.c.render(0); renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  C.tA.value = A.c.readBuffer.texture; C.tB.value = B.c.readBuffer.texture; renderer.setRenderTarget(null);
+  C.uProgress.value = 0.5; renderer.render(screenScene, screenCam); C.uProgress.value = 0; renderer.render(screenScene, screenCam);
+  for (const [o, v, f, m] of saved) { o.visible = v; o.frustumCulled = f; if (o.material) o.material.visible = m; }
   resize(); warmRT.dispose();
 } catch (e) { console.warn('warm-up', e); }
+if (SKIP || posterNow()) introEnd(); else evalTL(0);   // the armed frames: real full-size frames of t = 0 under the loader
+/*TEST*/window.__skreedPrograms = () => renderer.info.programs.length;/*TEST-END*/   // test hook: no program may link after ready
 report('compile');
 requestAnimationFrame(frame);
 </script>

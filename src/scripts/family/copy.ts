@@ -52,3 +52,10 @@ export const FAM_COPY = {
   instagram: '@skreedofficial',
   instagramHref: 'https://www.instagram.com/skreedofficial/',
 } as const;
+
+/** A state line's 600 lead sentence and the rest (spec 3, type-system note 10). Shared by the build, which writes the
+ * data-saver and slow-connection lines into the HTML, and the page module, which writes the runtime lines. */
+export function splitLine(line: string): [string, string] {
+  const k = line.indexOf('. ');
+  return k < 0 ? [line, ''] : [line.slice(0, k + 1), line.slice(k + 2)];
+}

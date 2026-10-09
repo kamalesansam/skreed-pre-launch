@@ -3,7 +3,7 @@
 // "Show in 3D" for data saver and 2G), no island request, zero CSP violations. One screenshot per row, at rest and
 // unscrolled: docs/specs/screenshots/family-state-<row>-390x844.png.
 import { test, expect, type BrowserContext } from '@playwright/test';
-import { PHONE, watch, cspViolations, shade, islandRequests } from './util.ts';
+import { PHONE, WIDE, watch, cspViolations, shade, islandRequests } from './util.ts';
 
 const SHOTS = new URL('../../../docs/specs/screenshots/', import.meta.url);
 const conn = (c: Record<string, unknown>) => (ctx: BrowserContext) => ctx.addInitScript((v) => Object.defineProperty(navigator, 'connection', { value: v, configurable: true }), c);
@@ -51,10 +51,10 @@ test.describe('9. states, grid-mode rows (PUBLIC_FAMILY_3D=dev build)', () => {
       await expect(page.locator('#stage .sgrid')).toBeVisible();
       if (r.line) {
         const [lead, rest] = [r.line.slice(0, r.line.indexOf('.') + 1), r.line.slice(r.line.indexOf('.') + 2)];
-        await expect(page.locator('#state strong')).toHaveText(lead);
-        await expect(page.locator('#state p')).toContainText(rest);
+        await expect(page.locator('#state strong:visible')).toHaveText(lead);
+        await expect(page.locator('#state p:visible')).toContainText(rest);
       } else {
-        await expect(page.locator('#state')).toBeEmpty();
+        await expect(page.locator('#state'), 'no line shows').toBeHidden();
       }
       await expect(page.getByRole('button', { name: /^Show in 3D/ })).toHaveCount(r.show3d ? 1 : 0);
       expect(islandRequests(reqs), r.row).toEqual([]);
@@ -80,7 +80,7 @@ test.describe('9. states, grid-mode rows (PUBLIC_FAMILY_3D=dev build)', () => {
         await expect(page.getByRole('button', { name: /^Show in 3D/ })).toBeVisible();
         const m = await page.evaluate(() => {
           const box = (s: string) => { const b = document.querySelector(s)!.getBoundingClientRect(); return { top: b.top, bottom: b.bottom }; };
-          const btn = document.querySelector('#state button')!, b = btn.getBoundingClientRect();
+          const btn = [...document.querySelectorAll('#state button')].find((x) => x.checkVisibility())!, b = btn.getBoundingClientRect();
           const dots = [...document.querySelectorAll('#stage .sgrid .dot')].map((d) => d.getBoundingClientRect().width);
           return { y: scrollY, hud: box('#hud'), state: box('#state'), scrub: box('#scrub'), finish: box('#finish'), bar: box('.bar'),
             onTop: document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2) === btn, minDot: Math.min(...dots) };
@@ -139,4 +139,65 @@ test.describe('9. states, grid-mode rows (PUBLIC_FAMILY_3D=dev build)', () => {
     await page.screenshot({ path: new URL('family-state-cross-family-390x844.png', SHOTS).pathname });
     await ctx.close();
   });
+});
+
+// Review iteration 3, item 2 (D3, H; spec 2.7 and 5 "First paint"): swatch grid mode is right at first paint on a 3D
+// build. The page module is held back 1 s, so everything it does lands well after the page has rendered; the layout
+// must not move when it runs. Every grid-mode row, at 390 x 844 and 1280 x 800: a frame rendered after parsing and
+// before the module; at the end of the hold (the layout the visitor has been looking at) the grid is in the stage and
+// the row's line (or none) is in place; the stage, HUD, scrubber and finish boxes are the same after the module; the
+// layout-shift total is under 0.01. The iteration 3 build fails every row (0.26 to 0.29 wide, 0.032 on the phone's 2G
+// rows); see the spec, section 17.
+type Snap = { frameAt: number | null; at: number; stage: number[]; hud: number[]; scrub: number[]; finish: number[]; lines: (string | null)[]; gridInStage: boolean };
+function layoutNow(): Snap {
+  const box = (s: string) => { const b = document.querySelector(s)!.getBoundingClientRect(); return [Math.round(b.top), Math.round(b.height)]; };
+  return { frameAt: (window as unknown as { __frameAt?: number }).__frameAt ?? null, at: performance.now(),
+    stage: box('#stage'), hud: box('#hud'), scrub: box('#scrub'), finish: box('#finish'),
+    lines: [...document.querySelectorAll('#state p')].filter((p) => p.checkVisibility()).map((p) => p.textContent),
+    gridInStage: !!document.querySelector('#stage > .sgrid')?.checkVisibility() };
+}
+test.describe('9. first paint in swatch grid mode (PUBLIC_FAMILY_3D=dev build, the page module held back 1 s)', () => {
+  const MODULE = /\/_astro\/FamilyPage\.astro_astro_type_script[^/]*\.js$/;
+  for (const r of ROWS) {
+    for (const [label, size] of [['390x844', PHONE], ['1280x800', WIDE]] as const) {
+      test(`${r.row} at ${label}: no layout shift when the page module runs`, async ({ browser }) => {
+        const ctx = await browser.newContext({ ...size, ...(r.opts ?? {}) });
+        if (r.setup) await r.setup(ctx);
+        await ctx.addInitScript(() => {
+          const w = window as unknown as { __shifts: number[]; __famAt: number; __frameAt: number };
+          w.__shifts = [];
+          new PerformanceObserver((l) => { for (const e of l.getEntries() as unknown as { value: number; hadRecentInput: boolean }[]) if (!e.hadRecentInput) w.__shifts.push(e.value); }).observe({ type: 'layout-shift', buffered: true });
+          // the first frame once parsing is done (readyState "interactive" comes before module scripts run)
+          document.addEventListener('readystatechange', () => { if (document.readyState === 'interactive') requestAnimationFrame(() => { w.__frameAt = performance.now(); }); });
+          // the page module sets window.__fam (test builds) as its last step: note when it ran
+          Object.defineProperty(window, '__fam', { configurable: true, set(v) { Object.defineProperty(window, '__fam', { value: v, writable: true, configurable: true }); w.__famAt = performance.now(); } });
+        });
+        let before: Snap | null = null;
+        await ctx.route(MODULE, async (route) => {
+          await new Promise((ok) => setTimeout(ok, 1000));
+          before = await route.request().frame().evaluate(layoutNow);   // the page as it stands at the end of the hold
+          await route.continue();
+        });
+        const page = await ctx.newPage();
+        await page.goto('/shades/blissful-blues/');
+        await page.waitForFunction(() => '__famAt' in window, null, { timeout: 30_000 });
+        await page.evaluate(() => document.fonts.ready);
+        await page.waitForTimeout(600);
+        const after = await page.evaluate(layoutNow);
+        const m = await page.evaluate(() => { const w = window as unknown as { __shifts: number[]; __famAt: number }; return { shifts: w.__shifts, famAt: w.__famAt, y: scrollY }; });
+        const cls = m.shifts.reduce((a, v) => a + v, 0);
+        const b = before as Snap | null;
+        expect(b, 'the page module went through the hold').not.toBeNull();
+        expect(b!.frameAt, 'a frame rendered after parsing, before the module ran').not.toBeNull();
+        expect(b!.at).toBeLessThan(m.famAt);
+        expect(m.y).toBe(0);
+        expect(cls, `layout-shift total ${cls.toFixed(4)} (${m.shifts.map((v) => v.toFixed(4)).join(', ')})`).toBeLessThan(0.01);
+        for (const k of ['stage', 'hud', 'scrub', 'finish'] as const) expect(after[k], `${k} box (top, height) before and after the module`).toEqual(b![k]);
+        expect(b!.gridInStage, 'the grid is in the stage before the module runs').toBe(true);
+        expect(b!.lines, "the row's state line is there before the module runs").toEqual(r.line ? [`${r.line}Show in 3D`] : []);
+        expect(after.lines, 'and the same line after it').toEqual(b!.lines);
+        await ctx.close();
+      });
+    }
+  }
 });

@@ -1,13 +1,15 @@
 ---
 // The 6 x 4 circle swatches (spec 2.6): catalog order, one radio group, one tab stop with arrow keys (the page module
 // moves the roving tabindex). Colours come from the page's [data-s] rules; the key shade is checked at build so the
-// page is right with JavaScript off. Captions show on the wide layout only (type-system note 8).
+// page is right with JavaScript off. Captions show on the wide layout only (type-system note 8). A 3D build renders
+// two copies, one in the stage and one under "The whole family."; CSS shows one per mode (family.css), so neither
+// ever moves (review iteration 3, item 2).
 import type { Family } from '../../scripts/family/data.ts';
 import { FAM_COPY } from '../../scripts/family/copy.ts';
 interface Props { fam: Family; labelledby?: string }
 const { fam, labelledby } = Astro.props;
 ---
-<div class="sgrid" id="sgrid" role="radiogroup" aria-labelledby={labelledby} aria-label={labelledby ? undefined : FAM_COPY.gridGroup(fam.name)}>
+<div class="sgrid" role="radiogroup" aria-labelledby={labelledby} aria-label={labelledby ? undefined : FAM_COPY.gridGroup(fam.name)}>
   {fam.shades.map((s, i) => {
     const on = s.id === fam.key.id;
     return <button type="button" class="gsw" role="radio" data-s={s.nnn} data-i={i} aria-checked={on ? 'true' : 'false'} tabindex={on ? 0 : -1} aria-label={FAM_COPY.swatch(s, fam.name)}><span class="dot"></span><span class="cap" aria-hidden="true" translate="no">{s.name}</span></button>;

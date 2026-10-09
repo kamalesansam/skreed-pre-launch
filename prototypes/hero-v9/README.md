@@ -1,6 +1,6 @@
 # Hero prototype v9 (2026-10-08)
 
-Live: https://claude.ai/artifact/QDXUhF32ZLd7L9a5ccDnq8 (version 24). Builds on v8.2 (`../hero-v8`).
+Live: https://claude.ai/artifact/QDXUhF32ZLd7L9a5ccDnq8 (version 28, v10). Builds on v8.2 (`../hero-v8`).
 
 ## The floor, re-created from igloo.inc's snow
 Sam asked for the floor to look exactly like igloo's. Three Blender variants were built from the hero camera and judged against four igloo screenshots by three reviews (surface, shape, tone): variant a won on composition (flank knolls, open centre, foreground mounds), with b's tone and stone scatter and c's measurement harness grafted on. The integrated floor (`blender/floor_final.py`, post curve `blender/floor_final_post.py`, LUT `blender/floor_lut.json`, checks `blender/floor_judge.py` and `blender/verify_bake.py`) adds:
@@ -27,6 +27,15 @@ Sam asked for the hero copy to go: no headline, no sub-line, no button, plain an
 - **Tune: Reset to defaults** restores every slider, toggle and the block colour order.
 - **From the review (three lenses, each finding verified):** days are padded to two digits and the numeral carries the 2ch reservation, so the row never jumps; ticks are aligned to the wall-clock second; the numerals stay hidden until the first tick and a `<noscript>` line gives the date; at zero the countdown stops and the eyebrow reads "Skreed is live. skreed.com"; the seconds group is hidden under reduced motion; the eyebrow and labels are Open Sans 600 at 14 px; spacing uses the `--s` tokens; below 1100 px the countdown lifts so the cue has its own row.
 - Not changed on purpose: there is no call to action on the fold. Sam chose the plain countdown; the reserve flow lives in the later sections.
+
+## v10: the intro, after igloo's (2026-10-09, artifact version 28)
+The loader lifts straight into an intro re-created from a frame-by-frame study of igloo.inc's opening. All code and data are ours; no igloo code, models, textures or strings ship. Spec, timeline, page plan, budget and risks: `docs/specs/hero-intro/`.
+- **What plays:** the camera starts high over the mark (igloo's 46 degree elevation) and cranes down to the hero pose. A Pearl Whisper wire cage and a ring of counting numbers open out from the floor point under the logo. The mark's outline traces top down, then the mark prints top down through its wire. The snow floor arrives as a growing ring of triangles and a disc of snow, the far ridges rise, the fog cards come in, and the flat Urban Slate start turns into the night sky. About 8 s at 60 fps.
+- **Values:** Sam's locked terrain and fog values (v9.10) are the defaults, and Reset returns to them.
+- **Build:** `SHIP=1 python build_v10.py <bake dir> template.html index.html`. SHIP strips the test hooks; `glslsq.py` squeezes the shaders; `jsstrip.py` and terser minify. Module 68,458 B minified (25,928 B gzipped). Loader 9,766 B raw (limit 10,000).
+- **Review:** three rounds, each a fidelity judge against igloo's frames and an engineer under the strict CSP. Round 3 passed both, with LOW findings only on fidelity and one MEDIUM on engineering: the intro adds 20.7 KB minified (7.8 KB gzipped) against a planned 14 KB (5.5 KB). Sam to choose: accept the larger budget or have the generators rewritten.
+- **Checked on the ship build:** the eight locked terrain values and five fog values are present in the minified module; the hooks are stripped; the only hosts are cdn.jsdelivr.net, fonts.googleapis.com and w3.org (SVG namespace); no fetch, eval or WebAssembly; every script parses; under the strict CSP the loader lifts and the intro plays.
+- The separate intro preview link is retired; this link carries it.
 
 ## Artifact version 27: hero and intro preview merged (2026-10-09)
 At Sam's request the main hero link now shows the igloo-style intro build (round 1, still in review) with the v9.10 locked terrain and fog values patched in. The diff against the intro build is exactly the title and the eight terrain values. This folder's index.html and template.html stay at v9.10 until the intro passes review; then the final intro template, with the locked values, replaces them.

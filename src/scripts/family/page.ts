@@ -4,7 +4,7 @@
 // API (decision 10). The selected markers are drawn by CSS from html[data-shade], so this module only moves the
 // attribute and writes text. Budget: 12 KB gzip (spec 6).
 import { reducedMQ } from '../motion.ts';
-import { FAM_COPY, type CopyShade } from './copy.ts';
+import { FAM_COPY, splitLine, type CopyShade } from './copy.ts';
 import { track } from './track.ts';
 import { emit, on, type Finish, type Input } from './bus.ts';
 import { SWAP_MS, SWAP_EASE, SHADE_MS, URL_DEBOUNCE_MS, SETTLE_MS, DRAG_HUD_MS, LIVE_MS } from './timing.ts';
@@ -20,7 +20,7 @@ const clamp = (i: number) => Math.max(0, Math.min(23, Math.round(i)));
 
 const hudName = $('hudName')!, hudNum = $('hudNum')!, hudNumSr = $('hudNumSr')!, barName = $('barName')!;
 const prevBtn = $<HTMLButtonElement>('prev')!, nextBtn = $<HTMLButtonElement>('next')!, scrub = $('scrub')!;
-const reserve = $<HTMLAnchorElement>('reserve')!, live = $('live')!, stateEl = $('state')!, stage = $('stage')!;
+const reserve = $<HTMLAnchorElement>('reserve')!, live = $('live')!, stateEl = $('state')!;
 const finishBox = $('finish')!, st3d = $('st3d'), wholeCap = $('wholeCap');
 
 // ---- the store ----
@@ -63,7 +63,9 @@ function fadeBar(from: string | undefined, instant: boolean): void {
 }
 
 // ---- writing a selection into the page ----
-const grid = () => $('sgrid');
+// A 3D build has two copies of the grid (the stage's and the one under "The whole family."); CSS shows one per mode
+// and both follow the selection, so a mode change never has to move or rebuild one.
+const grids = () => document.querySelectorAll<HTMLElement>('.sgrid');
 function writeText(i: number, instant: boolean): void {
   const s = shadeAt(i);
   swap(hudName, s.name, instant);
@@ -77,10 +79,10 @@ function writeControls(i: number): void {
   for (const [b, off] of [[prevBtn, i === 0], [nextBtn, i === 23]] as const) { if (off) b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled'); }
   scrub.setAttribute('aria-valuenow', String(i + 1));
   scrub.setAttribute('aria-valuetext', FAM_COPY.scrubberText(s));
-  grid()?.querySelectorAll<HTMLElement>('.gsw').forEach((b, k) => {
+  grids().forEach((g) => g.querySelectorAll<HTMLElement>('.gsw').forEach((b, k) => {
     b.setAttribute('aria-checked', k === i ? 'true' : 'false');
     b.tabIndex = k === i ? 0 : -1;
-  });
+  }));
   writeReserve();
 }
 function writeReserve(): void {
@@ -110,7 +112,7 @@ function settle(): void {
   liveT = window.setTimeout(() => {
     // a focused slider or radio announces its own new value; the live region speaks for every other input
     const a = document.activeElement;
-    if (a === scrub || (a instanceof HTMLElement && a.closest('#sgrid'))) return;
+    if (a === scrub || (a instanceof HTMLElement && a.closest('.sgrid'))) return;
     live.textContent = FAM_COPY.live(shadeAt(sel), D.name);
   }, LIVE_MS);
 }
@@ -194,7 +196,7 @@ document.addEventListener('keydown', (e) => {
   e.preventDefault();
   const to = Math.max(0, Math.min(23, f(Number(b.dataset.i))));
   select(to, 'grid');
-  grid()?.querySelectorAll<HTMLElement>('.gsw')[to]?.focus();
+  b.closest('.sgrid')?.querySelectorAll<HTMLElement>('.gsw')[to]?.focus();
 });
 
 // ---- finish ----
@@ -235,7 +237,9 @@ sw?.addEventListener('toggle', (e) => {
   else if (!document.activeElement || document.activeElement === document.body || sw.contains(document.activeElement)) famBtn.focus();
 });
 
-// ---- swatch grid mode and the state line (2.7, 5) ----
+// ---- swatch grid mode and the state line (2.7, 5). The head script set the mode, and CSS already shows the stage's
+// grid and, for data saver and 2G, the static line with "Show in 3D", so nothing here changes the first paint. Any
+// write to the state line replaces the static lines. ----
 function showState(lead: string, rest: string, action?: { label: string; run: () => void }): void {
   const p = document.createElement('p');
   const s = document.createElement('strong');
@@ -252,13 +256,10 @@ function showState(lead: string, rest: string, action?: { label: string; run: ()
   }
   stateEl.replaceChildren(p);
 }
-const splitLine = (line: string): [string, string] => { const k = line.indexOf('. '); return k < 0 ? [line, ''] : [line.slice(0, k + 1), line.slice(k + 2)]; };
 function toGrid(reason: string): void {
   H.classList.remove('m3d');
   H.classList.add('grid');
   H.dataset.why = reason;
-  const g = grid();
-  if (g && g.parentElement !== stage) { g.removeAttribute('aria-labelledby'); g.setAttribute('aria-label', FAM_COPY.gridGroup(D.name)); stage.append(g); }
 }
 const LINES = { failed: FAM_COPY.modelFailed, failedTwice: FAM_COPY.modelFailedTwice, offline: FAM_COPY.offline, saveData: FAM_COPY.saveData, slowConnection: FAM_COPY.slowConnection };
 on('fam:grid', ({ reason, message, retry }) => {
@@ -274,22 +275,13 @@ on('fam:slow', ({ on: show }) => { if (show) showState(FAM_COPY.slow, ''); else 
 on('fam:pick', ({ i, input, dragging }) => select(i, input, { fromIsland: true, dragging }));
 on('fam:live', () => {
   stateEl.replaceChildren();
-  // back from swatch grid mode ("Show in 3D", "Try again", online again): the grid returns under its heading
-  const g = grid(), whole = $('whole');
-  if (g && whole && g.parentElement !== whole) { g.removeAttribute('aria-label'); g.setAttribute('aria-labelledby', 'whole-h'); whole.insertBefore(g, wholeCap); }
   track('stage_mode', { mode: '3d', reason: '' });
 });
 
-if (H.classList.contains('grid')) {
-  const why = H.dataset.why ?? '';
-  toGrid(why);
-  track('stage_mode', { mode: 'grid', reason: why });
-  // data saver and 2G: the 3D is one tap away, never downloaded unasked (spec 5)
-  if (D.has3d && (why === 'savedata' || why === 'slow')) {
-    const [lead, rest] = splitLine(why === 'savedata' ? FAM_COPY.saveData : FAM_COPY.slowConnection);
-    showState(lead, rest, { label: D.size3d ? FAM_COPY.show3d(D.size3d) : FAM_COPY.show3dPlain, run: () => { stateEl.replaceChildren(); emit('fam:want3d', {}); } });
-  }
-}
+// data saver and 2G: the 3D is one tap away, never downloaded unasked (spec 5). The line and its button are in the
+// HTML; this only wires the button.
+stateEl.querySelectorAll<HTMLButtonElement>('[data-line] button').forEach((b) => b.addEventListener('click', () => { stateEl.replaceChildren(); emit('fam:want3d', {}); }));
+if (H.classList.contains('grid')) track('stage_mode', { mode: 'grid', reason: H.dataset.why ?? '' });
 
 // test and staging builds read the store through this hook; production never defines it
 if (import.meta.env.PUBLIC_HERO_HOOKS === '1') (window as unknown as { __fam: unknown }).__fam = { get: () => ({ sel, finish, shade: nnn(sel) }), select: (i: number) => select(i, 'key') };

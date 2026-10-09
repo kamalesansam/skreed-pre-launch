@@ -1,11 +1,13 @@
 ---
 // The body of /shades/<family>/ (docs/specs/family-page.md 2.3, 2.4, 2.6, 3). Phone layout in document order; the wide
 // layout repositions the same elements in CSS (family.css), so reading and focus order are one order on every screen.
-// With FAMILY_3D=off the swatch grid is the stage (2.7); with a 3D build the stage holds the lineup and the grid sits
-// under "The whole family.", moving into the stage when the page lands in swatch grid mode.
+// The swatch grid is in the stage on every build, so swatch grid mode is right at first paint (2.7, 5 "First paint").
+// A 3D build adds the lineup's host to the stage, a second grid under "The whole family." and, in the state line, the
+// data-saver and slow-connection lines with "Show in 3D". CSS picks what shows from the head script's html.m3d,
+// html.grid and data-why, before the page module runs; nothing moves when it does (review iteration 3, item 2).
 import type { Family } from '../../scripts/family/data.ts';
 import { FAMILIES, ordinal2, familyHref } from '../../scripts/family/data.ts';
-import { FAM_COPY } from '../../scripts/family/copy.ts';
+import { FAM_COPY, splitLine } from '../../scripts/family/copy.ts';
 import Wordmark from './Wordmark.astro';
 import Chevron from './Chevron.astro';
 import SwatchGrid from './SwatchGrid.astro';
@@ -17,7 +19,11 @@ const ki = key.index - 1;
 const prevFam = FAMILIES[fam.ordinal - 2];
 const nextFam = FAMILIES[fam.ordinal];
 // size3d: the island plus model download in MB, measured at build once the supplier model ships (FAMILY_3D=on); null before
-const data = { slug: fam.slug, name: fam.name, first: fam.first, key: ki, has3d, size3d: null, names: fam.shades.map((s) => s.name) };
+const size3d: string | null = null;
+const data = { slug: fam.slug, name: fam.name, first: fam.first, key: ki, has3d, size3d, names: fam.shades.map((s) => s.name) };
+// the two state lines that are known before any script runs (spec 3, 5): data-why "savedata" or "slow" shows one
+const whyLines = has3d ? ([['savedata', FAM_COPY.saveData], ['slow', FAM_COPY.slowConnection]] as const).map(([why, line]) => ({ why, part: splitLine(line) })) : [];
+const show3d = size3d ? FAM_COPY.show3d(size3d) : FAM_COPY.show3dPlain;
 // "</" never appears in names, but escape it anyway so the data block can never close its script element early
 const json = JSON.stringify(data).replace(/</g, '\\u003c');
 ---
@@ -31,9 +37,8 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     <h1 translate="no">{fam.name}</h1>
   </div>
   <div class="fp-stage" id="stage">
-    {has3d
-      ? <div class="st3d" id="st3d" role="img" aria-label={FAM_COPY.stage(fam.name, key.name)}></div>
-      : <SwatchGrid fam={fam} />}
+    {has3d && <div class="st3d" id="st3d" role="img" aria-label={FAM_COPY.stage(fam.name, key.name)}></div>}
+    <SwatchGrid fam={fam} />
   </div>
   <div class="fp-ctl">
   <div class="fp-hud" id="hud">
@@ -43,7 +48,7 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     <button class="hud-btn next ring2 press" type="button" id="next" aria-label={FAM_COPY.next} aria-disabled={ki === 23 ? 'true' : undefined}><Chevron dir="right" /></button>
   </div>
   {/* the state line sits directly under the HUD on every layout: HUD, state, scrubber, finish (spec 3) */}
-  <div class="fp-state" id="state" role="status"></div>
+  <div class="fp-state" id="state" role="status">{whyLines.map(({ why, part: [lead, rest] }) => <p data-line={why}><strong>{lead}</strong> {rest}<button type="button" class="ring2 press">{show3d}</button></p>)}</div>
   <div class="fp-scrub">
     <div class="scrub ring2" id="scrub" role="slider" tabindex="0" aria-label={FAM_COPY.scrubber} aria-orientation="horizontal" aria-valuemin="1" aria-valuemax="24" aria-valuenow={key.index} aria-valuetext={FAM_COPY.scrubberText(key)}>
       <span class="dots" aria-hidden="true">{fam.shades.map((s) => <i data-s={s.nnn}></i>)}</span>
