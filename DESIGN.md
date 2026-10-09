@@ -7,7 +7,7 @@ Sources of truth, in order:
 2. `docs/brand/type-system.md`, decided 2026-10-05.
 3. `docs/data/shades-240.json`, the 240 shades.
 4. `docs/brand/brand-guidelines-extract.md`.
-5. The approved hero, `prototypes/hero-v9/` (v9.9), and its port spec `docs/specs/hero.md`.
+5. The approved hero, `prototypes/hero-v9/` (v9.9), and its port spec `docs/specs/hero.md` (revision 2, 2026-10-09).
 
 If this file and a source disagree, the source wins and this file is fixed.
 
@@ -26,25 +26,25 @@ If this file and a source disagree, the source wins and this file is fixed.
 | Token | Hex | Role |
 |---|---|---|
 | `--pearl-whisper` | #F7F6F3 | Page neutral. Text on Urban Slate and on the night scene. Fog colour in the hero. Never pure white (#fff is banned as a page background). |
-| `--urban-slate` | #383F43 | Charcoal bands. Text on Pearl Whisper. The corner logotype once the wipe passes half way. |
+| `--urban-slate` | #383F43 | Charcoal bands. Text on Pearl Whisper. The corner logotype once the wipe passes half way. The inner ring of the two-tone focus ring. |
 | `--ember-luxe` | #FF9900 | The one accent: primary button fill and focus rings. Nothing else. |
 | `--skeleton` | `color-mix(in srgb, var(--urban-slate) 12%, var(--pearl-whisper))` | The only derived neutral: skeleton blocks while data loads. |
-| `--night` | #050506 | Scene only: the loader background and the hero's WebGL background and fog. Never UI chrome on a Pearl page. Approved with the v9.9 hero; Sam has to confirm it as a token (exception E-A2 in `docs/specs/hero.md`). |
+| `--night` | #050506 | Scene only: the loader background, the hero's WebGL background and fog, and the `/` page background under the hero. Never UI chrome on a Pearl page. Approved with the v9.9 hero; Sam has to confirm it as a token (exception E-A2 in `docs/specs/hero.md`). |
 
 **Measured contrast** (type-system.md and the v9.1 hero):
 - Pearl Whisper on Urban Slate: 9.9:1.
-- Urban Slate on Ember Luxe: 5.0:1, so button text uses the literal Urban Slate hex.
-- Pearl Whisper on Ember Luxe: 2.0:1. Never used.
-- Hero countdown on the snow: 5.9:1 numerals, 5.2:1 labels, 6.0:1 eyebrow at 1280 px, on the v9.1 floor. It is re-measured on the locked terrain (`hero.md` AC4).
+- Urban Slate on Ember Luxe: 5.0:1, so button text uses the literal Urban Slate hex, and the two rings of the focus ring separate.
+- Pearl Whisper on Ember Luxe: 2.0:1. Never used for text. It is also why an Ember Luxe ring alone fails on Pearl Whisper (WCAG 1.4.11 needs 3:1), hence the two-tone ring in section 4.
+- Hero countdown on the snow: 5.9:1 numerals, 5.2:1 labels, 6.0:1 eyebrow at 1280 px, on the v9.1 floor. It is re-measured on the locked terrain (`hero.md` AC4.6).
 
-**Pearl Whisper at alpha** is allowed only as light and falloff, never as a fill or a text colour. Every use is written as `rgb(var(--pearl-whisper-rgb) / a)`:
-- loader wordmark rest, 26 percent;
-- the loader's light band and fill-edge gradients;
-- the loader's hairline outline, stroke opacity 0.42;
-- the cue's base line, opacity 0.6;
-- the hero label links, 35 percent.
+**Pearl Whisper at alpha** is allowed only as light and falloff in the hero, never as a fill or a text colour. The uses, all part of the approved hero (exception E-A2):
+- loader wordmark rest: `#F7F6F341`, that is 65/255 or 25.5 percent;
+- the loader's light band and fill-edge stops: the prototype's literal 8-digit Pearl hex values, kept byte for byte so the loader's frames stay identical (hero spec D31);
+- the loader's hairline outline: `stroke-opacity: 0.42`;
+- the cue's base line: `opacity: 0.6`;
+- the hero label links, drawn in the canvas at opacity 0.35.
 
-These are part of the approved hero (exception E-A2). Tune-panel greys (`--panel` #2b3134, `--line` #4a5257, `--muted`) are prototype-only and never ship.
+The prototype's Tune-panel greys (`--panel` #2b3134, `--line` #4a5257, `--muted` at 70 percent, and `#5f676c`) never ship.
 
 ### Creative-only colours (share card and stories, never UI chrome)
 
@@ -56,7 +56,9 @@ These are part of the approved hero (exception E-A2). Tune-panel greys (`--panel
 
 ### The 240 shades
 
-- **Source.** `docs/data/shades-240.json` is the single source. It holds 240 shades in catalog order, 24 per family, each with `id`, `index`, `name`, `shopifyName`, `hex` and `renderStem`. This file references it rather than repeating 240 rows. Code generates what it needs from it at build time (`scripts/hero/gen-shades.mjs`).
+- **Source.** `docs/data/shades-240.json` is the single source. It holds 240 shades in catalog order, 24 per family, each with `id`, `index`, `name`, `shopifyName`, `hex` and `renderStem`. This file references it rather than repeating 240 rows.
+- **CSS tokens.** `scripts/hero/gen-shades.mjs` generates `src/styles/shades.gen.css`: one token per shade, `--shade-<id>`, in catalog order, on `:root`, for example `--shade-frosty-whites-01: #f7f7f7;` and `--shade-blissful-blues-08: #08bcf4;`. All 240 are 7,855 B raw, 1,288 B brotli. The file is generated, never edited by hand, and `Base.astro` imports it on every page. Any DOM use of a shade (swatches, the glitch ghosts) is `var(--shade-<id>)`.
+- **JS constants.** The same script writes `src/config/shades.gen.ts` for the WebGL scene, where shades are render parameters (block glows, the galaxy wash, the interim swatch field).
 - **Keys.** Always key by `id`, never by name. Names repeat across families: Pastel six times, Neon four times, and Royal, Indigo, Classic, Teal, Stone, Midnight, Orchid, Wine and Persian twice each.
 - **Known issue.** Vivid Violets Royal (`vivid-violets-19`) and Midnight (`vivid-violets-20`) share #492376 until the real Royal value arrives.
 
@@ -77,7 +79,7 @@ Index 12 is the family's representative swatch when one is needed: type-system r
 
 **Rules for the shades.**
 - They may appear together as swatches, and as the product, in catalog order.
-- They never colour headings, buttons, borders, backgrounds, icons or UI chrome (rule 24).
+- They never colour headings, buttons, borders, backgrounds, icons or UI chrome (rule 24). The logotype glitch is the one approved exception (E-24).
 - Neon shades (the four Neons, Gumball, Psychedelic) and pastel shades (Chiffon, Ballerina, Pale Violet) appear only as swatches (rules 49 and 50).
 
 ### Shades the hero uses (by id)
@@ -85,25 +87,29 @@ Index 12 is the family's representative swatch when one is needed: type-system r
 | Use | Ids |
 |---|---|
 | Block glows, 'cool' order, blocks 0 to 9 | blushing-corals-04 Mango #ff9f40; stormy-greys-05 Silver #acacac; frosty-whites-07 Snow #f0f4f5; blissful-blues-08 Sky #08bcf4; earthy-browns-07 Cinnamon #ba7237; vivid-violets-07 Amethyst #8554d1; mellow-yellows-01 Sunbeam #fff164; playful-pinks-14 Rouge #f2638f; go-green-12 Lawn #4aa325; roaring-reds-07 Crimson #d20000 |
-| Sky galaxy wash | blissful-blues-23 Space #15284f; vivid-violets-24 Eggplant #4a154d; go-green-22 Forest #084f3d; roaring-reds-23 Wine #4b0923 |
-| Logotype glitch pairs (one per burst) | Sky and Crimson (also the intro burst); Amethyst and Sunbeam; Lawn and Rouge; Sky and Mango. Lightness weights: Sky .74, Mango .78, Amethyst .56, Sunbeam .94, Crimson .54, Lawn .64, Rouge .69 |
+| Sky galaxy wash (exception E-1/21/40) | blissful-blues-23 Space #15284f; vivid-violets-24 Eggplant #4a154d; go-green-22 Forest #084f3d; roaring-reds-23 Wine #4b0923 |
+| Logotype glitch pairs (one per burst; exception E-24) | Sky and Crimson (also the intro burst); Amethyst and Sunbeam; Lawn and Rouge; Sky and Mango. Lightness weights: Sky .74, Mango .78, Amethyst .56, Sunbeam .94, Crimson .54, Lawn .64, Rouge .69 |
 | Section 2's interim frame | all 240, frosty-whites-01 to roaring-reds-24 |
 
-The glitch in shades is an approved exception to rule 24 (E-24).
+The scene's light colours (key light, kicker, environment floor, horizon and sky) are render parameters, not palette colours (exception E-A2b).
 
 ### Token block
 
 ```css
 :root {
   /* colour: two neutrals, one accent, one derived neutral, one scene-only colour */
-  --pearl-whisper: #F7F6F3; --pearl-whisper-rgb: 247 246 243;
-  --urban-slate: #383F43; --ember-luxe: #FF9900;
+  --pearl-whisper: #F7F6F3;
+  --urban-slate: #383F43;
+  --ember-luxe: #FF9900;
   --skeleton: color-mix(in srgb, var(--urban-slate) 12%, var(--pearl-whisper));
-  --night: #050506;                      /* loader and WebGL scene only (E-A2) */
+  --night: #050506;                      /* loader, WebGL scene, and the / page background under the hero (E-A2) */
   /* share card and stories only, never UI chrome */
   --almond-silk: #E9D9CA; --steel-twilight: #577095; --rust-ember: #CD754E;
+  /* the 240 shades: src/styles/shades.gen.css, --shade-<id> */
 }
 ```
+
+There is no page-wide `color-scheme`. The prototype's `:root{color-scheme:dark}` is dropped, so later Pearl sections get light scrollbars and form controls (hero spec D24).
 
 ## 3. Typography Rules
 
@@ -211,6 +217,11 @@ Source Serif 4 Fallback 600: size-adjust 106.14%; ascent-override 97.61%; descen
 
 ## 4. Component Stylings
 
+### Focus ring (every focusable element)
+
+- **Default.** `outline: 2px solid var(--ember-luxe); outline-offset: 2px` on `:focus-visible` (CHECKLIST E3).
+- **Two-tone where the background can be light.** A 2 px Urban Slate ring drawn by `::before` (`position: absolute; border: 2px solid var(--urban-slate)`) inside the Ember Luxe outline. Ember Luxe carries the ring on dark grounds, Urban Slate carries it on Pearl Whisper (9.9:1), and the two rings differ by 5.0:1. No `box-shadow` (rule 25). The hero uses it on the logotype and on the countdown's link (hero spec D21); every Pearl section uses it on every control.
+
 ### Corner logotype (`a.site-logo`, every page)
 
 - **Placement.** Fixed top left at `--inset` (plus `env(safe-area-inset-top)`).
@@ -218,27 +229,28 @@ Source Serif 4 Fallback 600: size-adjust 106.14%; ascent-override 97.61%; descen
 - **Size.** 96 px wide; 136 px from 1024 px.
 - **Hit area.** An `::after` with `inset: -11px -8px` gives 112 x 45 px at 96 px.
 - **Colour.** Pearl Whisper. `data-tone="light"` switches it to Urban Slate (the hero sets this once the wipe passes half way).
-- **Focus.** 2 px Ember Luxe outline, offset 6 px.
-- **States.** It is a control, so it has hover and press states: the glitch burst, 0.25 s on pointer enter, touch press and `:focus-visible`. The intro burst is 0.5 s. An idle twitch runs every 8 to 16 s. There are 48 clip slabs (8 rows by 6 segments). The colour split uses the shade pairs in section 2.
-- **Reduced motion.** The glitch is off.
+- **Focus.** The two-tone ring: Ember Luxe outline at a 6 px offset, Urban Slate ring 2 to 4 px outside the box.
+- **States.** It is a control, so it has hover and press states: the glitch burst, 0.25 s on pointer enter, touch press and `:focus-visible`. The intro burst is 0.5 s: at the loader's cut on the 3D path, 0.75 s after install on the poster path, never after a failure. There is no idle twitch in production (WCAG 2.2.2, hero spec D20). There are 48 clip slabs (8 rows by 6 segments). The colour split uses the shade pairs in section 2, filled with `var(--shade-<id>)`.
+- **Reduced motion.** The glitch is off. It checks the setting live before every burst.
 - **Link.** `href="/"`, `aria-label="Skreed, home"`.
 
 ### Countdown (hero)
 
-- **Placement.** Bottom left at `--inset`. Below 1100 px it sits 84 px higher, so the cue has its own row.
+- **Placement.** Bottom left at `--inset`. Below 1100 px it sits 84 px higher, so the cue has its own row. On the poster path it sits in the first screen and scrolls away with it.
 - **Eyebrow.** "Launch in", Open Sans 600 at 14 px.
 - **Groups.** Four columns (days, hours, minutes, seconds) with gap `clamp(var(--s3), 4vw, 44px)`. Each holds a numeral at `--fs-hero-countdown`, 600, tabular, always two digits, `min-width: 2ch`, with a unit label 600 at 14 px under it, `gap: var(--s1)`. All Pearl Whisper.
 - **Semantics.** `role="timer"`, `aria-label="Time until launch"`.
 - **First tick.** The numerals stay hidden until the first tick, which runs in the same task.
-- **At zero.** The eyebrow reads "Skreed is live. skreed.com" and the numerals hide.
+- **At zero.** The eyebrow reads "Skreed is live. skreed.com", with "skreed.com" a real link: Pearl Whisper, underlined, `pointer-events: auto`, a hit box at least 44 px tall, the two-tone focus ring. The numerals are not displayed (`.count[hidden]{display:none}`).
+- **No JavaScript.** One line, "Launching 1 November 2026", with the date in a `<time>`; the eyebrow and the numerals are not displayed.
 - **Reduced motion.** The seconds group is hidden.
 
 ### Scroll cue (hero)
 
 - **Placement.** Bottom centre at `--inset`, 64 px wide.
 - **Parts.** "Scroll" in Open Sans 600 at 12 px, 22 px above a 9 px Pearl Whisper ball, over a 26 x 1 px line at opacity 0.6.
-- **Animation.** A 1.5 s loop. The ball drops 22 px on `--ease-gravity`, squashes to 1.38 x 0.62 on landing, stretches to 0.9 x 1.14 on the rebound, and returns. The line widens to 1.12 and dips 1 px under it.
-- **Hiding.** It fades in 0.4 s (`--ease-standard`) once `scrollY` passes 8 px, during the wipe and while loading.
+- **Animation.** Three bounces, then rest. Each 1.5 s cycle: the ball drops 22 px on `--ease-gravity`, squashes to 1.38 x 0.62 on landing, stretches to 0.9 x 1.14 on the rebound, and returns; the line widens to 1.12 and dips 1 px under it. The animation runs 2.44 cycles (3.66 s) and ends on a landing, so the ball rests on its line. It starts when the cue becomes visible, and again each time it returns.
+- **Hiding.** It fades out in 0.4 s (`--ease-standard`) once `scrollY` passes 8 px, during the wipe and while loading. It is hidden when there is nothing below to scroll to, and without JavaScript.
 - **Reduced motion.** It is still.
 - **Not an arrow.** Rule 45 bans animated arrows.
 
@@ -246,13 +258,14 @@ Source Serif 4 Fallback 600: size-adjust 106.14%; ascent-override 97.61%; descen
 
 - **Layout.** Full screen on `--night`, with the wordmark centred at `min(47.6svh, 72vw, 600px)`.
 - **Layers.** A CSS mask over three layers:
-  - the rest, Pearl Whisper at 26 percent;
+  - the rest, Pearl Whisper `#F7F6F341` (25.5 percent);
   - the fill, Pearl Whisper behind a soft edge 0.22 of the width;
   - the light band, about 0.3 of the width, tilted 5 degrees.
 - **Exit.** A hairline outline (stroke Pearl Whisper at 0.42) appears.
 - **Percent.** Bottom centre at `clamp(40px, 9svh, 88px)`, `--fs-loader-pct`.
-- **Status line.** Above the percent, `--fs-loader-status`.
-- **Semantics.** `role="progressbar"` with `aria-valuenow`, removed in its poster state.
+- **Status line.** Above the percent, `--fs-loader-status`, Pearl Whisper.
+- **Poster state.** On a stall or offline the loader becomes a transparent overlay over the poster image, showing only the status line ("You are offline. The countdown still runs." when offline, nothing on a stall).
+- **Semantics.** `role="progressbar"` with `aria-valuenow`, removed in its poster state. Everything behind it is `inert` while it shows.
 - **Compositor only.** Everything moves by transform and opacity through Web Animations.
 
 ### Block labels (hero canvas overlay)
@@ -263,9 +276,10 @@ Source Serif 4 Fallback 600: size-adjust 106.14%; ascent-override 97.61%; descen
 
 ### Poster (hero)
 
-- **Layout.** A `<picture>` fixed at inset 0 with `object-fit: cover` under the canvas: AVIF, then WebP, then `<img>`.
-- **Classes.** Split at aspect 0.9: phone 488 x 1056, desktop 1920 x 1200. Each is at most 120 KB.
-- **Loading.** `fetchpriority="high"`, never lazy.
+- **Markup.** One `<picture>` with four `<source>` elements (wide AVIF and WebP for `(min-aspect-ratio: 9/10)`, portrait AVIF and WebP for the rest), each with `width` and `height`, and one `<img>`. One request per page view.
+- **Classes.** Phone 488 x 1056, desktop 1920 x 1200. Each is at most 120 KB.
+- **Layout.** On the 3D path, fixed at inset 0 with `object-fit: cover` under the canvas, hidden from the lift on. On the poster path, positioned in the first 100svh, so it scrolls away with the first screen.
+- **Loading.** `fetchpriority="high"`, never lazy, AVIF preloaded per class with the same media strings.
 - **Alt.** A short description of the mark on the snowfield.
 
 ### Primary button (later sections; type-system note 7)
@@ -274,7 +288,7 @@ Source Serif 4 Fallback 600: size-adjust 106.14%; ascent-override 97.61%; descen
 - **Type.** Open Sans 600 at 16 px.
 - **Size.** Minimum height 48 px, padding from the spacing scale, square corners.
 - **States.** Hover `translateY(-1px)`; press `scale(0.98)`; both 150 ms on `--ease-standard`. No opacity change, no darker orange.
-- **Focus.** 2 px Ember Luxe ring, offset 2 px.
+- **Focus.** The two-tone ring, because the Ember Luxe outline sits on the page around the button, and on Pearl Whisper it alone measures 2.0:1.
 
 ### Skeleton (later sections)
 
@@ -284,6 +298,7 @@ Source Serif 4 Fallback 600: size-adjust 106.14%; ascent-override 97.61%; descen
 ### Swatches
 
 - **Shape.** Circles, in a 6 x 4 grid per family (the catalog's language), or flat squares where the Wall spec says so.
+- **Fill.** `var(--shade-<id>)`.
 - **Labels.** Names sit outside the swatch, in Urban Slate or Pearl Whisper by swatch luminance, never in the shade.
 
 ## 5. Layout Principles
@@ -304,7 +319,9 @@ One scale, used through `gap` on flex and grid, not per-element margins (rule 15
   - the cue (64, 26, 22 and 9 px);
   - the countdown lift (84 px);
   - the countdown group gap cap (44 px);
-  - the label offset (-1.5, -6) px.
+  - the label offset (-1.5, -6) px;
+  - the hit-area insets of the logotype (-11, -8) and of the countdown link (-13, -8), which exist to reach 44 px;
+  - the focus ring offsets (2 px; 6 px on the logotype).
 
 ### Grid and gutters
 
@@ -315,8 +332,8 @@ One scale, used through `gap` on flex and grid, not per-element margins (rule 15
 
 - A fixed full-screen canvas over a 460svh scroll track (pull-back 1.5 screens, wipe 1 screen).
 - DOM riders (countdown, cue, logotype) are fixed and move only by transform and clip-path.
-- On the poster path the track is 100svh and the countdown sits in the flow.
-- Slots follow the track: section 2's riders, then section 3, the Wall.
+- On the poster path the track is 100svh, and the poster and the countdown sit in that first screen.
+- Slots follow the track: section 2's riders, then `<main>` with section 3, the Wall.
 
 ### Whitespace
 
@@ -325,7 +342,7 @@ One idea per screen. No feature grids, no bento, no three-up cards, no badge abo
 ## 6. Depth & Elevation
 
 - **No `box-shadow` anywhere** (rule 25). No glass, no `backdrop-filter`, no blur panels (rules 6 and 28). No glow blobs or orbs, no dot grids, no grain over gradients.
-- **Depth** comes from the renders and from colour. In the hero it comes from the WebGL scene: lighting, fog and bloom are part of the approved canvas, judged visually (rules 1, 21 and 42 as excepted in E-13/42).
+- **Depth** comes from the renders and from colour. In the hero it comes from the WebGL scene: lighting, fog and bloom are part of the approved canvas, judged visually under the hero exceptions (E-13/42, E-1/21/40, E-A2b).
 - **Hero z-order:**
 
   | Layer | z-index |
@@ -355,12 +372,14 @@ One idea per screen. No feature grids, no bento, no three-up cards, no badge abo
 
 ### Do
 
-- Take colours only from this file: the neutrals, the accent, the shades by id, and `--night` in the scene.
+- Take colours only from this file: the neutrals, the accent, the shades by id through `--shade-<id>`, and `--night` in the scene.
 - Use one family per job, sentence case, tabular numerals for anything that ticks.
 - Show the real product (case renders, swatches, shades) in every section.
 - Design every state: empty, loading (skeleton), error, offline, slow network, no results, permission denied, validation, success.
 - Build and screenshot at 390 px before 1280 px.
 - Honour reduced motion everywhere.
+- Give anything that moves on its own for more than 5 s a way to stop, or keep it under 5 s (WCAG 2.2.2). The hero's scene and countdown are pending Sam's exception E-2.2.2.
+- Use the two-tone focus ring wherever the background can be light.
 - Write short, specific sentences in the first person.
 
 ### Don't (CLAUDE.md rules, in brief)
@@ -395,18 +414,23 @@ One idea per screen. No feature grids, no bento, no three-up cards, no badge abo
 
 ### Approved hero exceptions
 
-These are pending codification in CLAUDE.md and the checklist (`docs/specs/hero.md` section 10):
-- the full-screen loader on the 3D path;
-- no CTA on the fold;
-- the WebGL island in sections 1 and 2;
-- the hero's ambient motion;
-- the block glow and bloom;
-- the logotype colour split and the loader outline;
-- `--night` and the Pearl alpha light;
-- the hero type sizes;
-- reduced motion through `matchMedia` while the hero loads no GSAP.
+The full list, with ids, rules and reasons, is `docs/specs/hero.md` section 10. In brief:
+- E-H1: the full-screen loader on the 3D path, and its status line over the poster;
+- E-G2: no CTA on the fold;
+- E-C3: the WebGL island in sections 1 and 2;
+- E-C3b: the countdown's clip-path ride and the glitch's SVG attribute animation;
+- E-12: the hero canvas, the loader, the cue's three bounces and the logotype's bursts;
+- E-13/42: the block glow and bloom;
+- E-1/21/40: the sky's faint galaxy wash (pending);
+- E-24: the logotype colour split and the loader outline;
+- E-A2: `--night` and the Pearl alpha light;
+- E-A2b: the scene's light colours as render parameters (pending);
+- E-A3: the hero type sizes;
+- E-GSAP: reduced motion through `matchMedia` while the hero loads no GSAP (pending);
+- E-C4: Lighthouse graded on the poster tier, the 3D path traced on a real phone (pending);
+- E-2.2.2: the scene's ambient motion and the ticking countdown without a pause control (pending).
 
-Nothing else is excepted.
+Anything not on that list is not excepted.
 
 ## 8. Responsive Behavior
 
@@ -414,12 +438,12 @@ Nothing else is excepted.
 - **Breakpoints in use:**
   - 1024 px: the logotype goes from 96 to 136 px;
   - 1100 px: the countdown lift is removed;
-  - aspect 0.9: portrait framing in the hero (camera zoom `min(1, aspect * 1.25)`, sky crop class, poster class, section 2 swatch columns 24 to 12).
+  - aspect 0.9: portrait framing in the hero (camera zoom `min(1, aspect * 1.25)`, sky crop class, poster class, section 2 swatch columns 24 to 12). In CSS, wide is `(min-aspect-ratio: 9/10)` and portrait is its complement, which matches the scene's `aspect < 0.9` exactly.
 - **Viewport units.** `svh` for layout heights. Nothing is animated in `dvh`. Safe areas use `env(safe-area-inset-*)`.
 - **Tap targets.** At least 44 px. Inputs are 16 px so iOS never zooms.
 - **Canvas pixel ratio.** Capped at 1.25 on touch and 1.5 elsewhere.
 - **Hero tiers:**
-  - poster for no WebGL2, Save-Data, 2g, `deviceMemory` 2 or less, reduced motion (default) and no JavaScript;
+  - poster for no WebGL2, no hardware WebGL2 (software renderers such as SwiftShader), no `DecompressionStream`, Save-Data, 2g, `deviceMemory` 2 or less, reduced motion (default) and no JavaScript;
   - WebGL otherwise;
   - any failure falls back to the poster.
 - **No reliance on `localStorage`** (Instagram's in-app browser).
@@ -432,9 +456,10 @@ Nothing else is excepted.
 Page:            --pearl-whisper #F7F6F3   (text on it: --urban-slate #383F43)
 Charcoal band:   --urban-slate #383F43     (text on it: --pearl-whisper)
 Accent:          --ember-luxe #FF9900      (primary button fill and focus rings only)
+Focus:           Ember Luxe 2 px outline, plus a 2 px Urban Slate ring wherever the ground can be light
 Skeleton:        --skeleton                (the only derived neutral)
 Hero scene only: --night #050506
-Shades:          docs/data/shades-240.json, by id, swatches and product only
+Shades:          --shade-<id> from src/styles/shades.gen.css (source docs/data/shades-240.json), swatches and product only
 Type:            Poppins 700 voice / Source Serif 4 400-600 letter (first person) / Open Sans 400-600 fittings and numerals
 Spacing:         --s1 8, --s2 12, --s3 16, --inset clamp(16px, 3.5vw, 56px)
 Radius:          0, or 50% for circles
@@ -443,9 +468,9 @@ Ease:            --ease-standard cubic-bezier(0.2, 0, 0, 1), 150 ms for press, 4
 
 ### Prompts that work
 
-- "Build the section at 390 px first with the tokens in DESIGN.md. Pearl Whisper ground, Urban Slate text, Poppins 700 sentence-case headline, Open Sans for every label and number. Swatches are circles from shades-240.json by id. No shadows, no radius except circles, gaps from --s1 to --s3."
+- "Build the section at 390 px first with the tokens in DESIGN.md. Pearl Whisper ground, Urban Slate text, Poppins 700 sentence-case headline, Open Sans for every label and number. Swatches are circles filled with var(--shade-<id>). No shadows, no radius except circles, gaps from --s1 to --s3."
 - "Add the loading state as a skeleton of the same size in --skeleton. Add the error state as one Open Sans 400 line at 14 px with a 600 lead word, keeping the user's input."
-- "Hover and press only on controls: translateY(-1px) and scale(0.98) over 150 ms on --ease-standard. No opacity change."
+- "Hover and press only on controls: translateY(-1px) and scale(0.98) over 150 ms on --ease-standard. No opacity change. Focus is the two-tone ring."
 
 ### Before handing off
 
@@ -457,7 +482,7 @@ Ease:            --ease-standard cubic-bezier(0.2, 0, 0, 1), 150 ms for press, 4
 
 ## 10. Motion
 
-Motion is reserved for the hero canvas, the Wall, the tilt card and the manifesto, each choreographed once. Everything honours `prefers-reduced-motion`. Sections are visible at rest.
+Motion is reserved for the hero canvas, the Wall, the tilt card and the manifesto, each choreographed once. Everything honours `prefers-reduced-motion`. Sections are visible at rest. Nothing moves on its own for more than 5 s without a way to stop it, except what E-2.2.2 lists while it is pending.
 
 ### UI tokens
 
@@ -471,7 +496,8 @@ Motion is reserved for the hero canvas, the Wall, the tilt card and the manifest
   --dur-press: 150ms;                             /* button hover and press */
   --dur-fade: 400ms;                              /* cue fade; loader percent fade; loader lift under reduced motion */
   --dur-lift: 600ms;                              /* loader lift */
-  --dur-cue: 1.5s;                                /* cue loop */
+  --dur-cue: 1.5s;                                /* one cue cycle */
+  --cue-cycles: 2.44;                             /* three bounces, ending on a landing (3.66 s) */
 }
 ```
 
@@ -488,20 +514,21 @@ Motion is reserved for the hero canvas, the Wall, the tilt card and the manifest
 | Camera shake | 0.01 rad scale, sine noise | |
 | Breath | `0.4 x (two sines) x (0.5 + 1.5 rand) x 0.5 x 0.3` | sine |
 | Hover push | full within 1 unit, none beyond 3; followers 0.06; pointer 0.05 | frame-rate independent damping `a + (b - a)(1 - (1 - k)^ratio)` |
+| Camera parallax | toward any active pointer, touch included while down; eased at 0.035 | damping |
 | Labels | in 0.1 s, out 0.06 s | linear |
-| Ghost sweep | after 2.5 s idle, touch only | `sin(0.45t), sin(0.31t + 1)` |
+| Ghost sweep | touch only; once the life ramp is complete, and 2.5 s after the last input | `sin(0.45t), sin(0.31t + 1)` |
 | Scroll followers | 0.075 then 0.15 | damping |
 | Pull-back | 1.5 screens | ease-in-out cubic |
 | Wipe | 1 screen | diagonal ice-shard mask; DOM copy rides `0.4 tp^3` |
-| Logotype glitch | 0.25 s bursts, 0.5 s intro, idle every 8 to 16 s, 3 patterns per burst | flicker `0.85 + 0.15 sin(30p)` |
-| Cue | 1.5 s loop, 22 px drop | gravity, land, rebound |
+| Logotype glitch | 0.25 s bursts on hover, tap and focus; 0.5 s intro; no idle twitch in production; 3 patterns per burst | flicker `0.85 + 0.15 sin(30p)` |
+| Cue | 2.44 cycles of 1.5 s, 22 px drop, then rest | gravity, land, rebound |
 
 ### Reduced motion
 
-- **Hero.** It renders the poster: no loader, no canvas.
+- **Hero.** It renders the poster: no loader, no canvas. The scene, when Sam picks the `still3d` option, reads the setting once at start.
 - **Cue.** It holds still.
 - **Countdown.** It hides the seconds.
-- **Glitch.** Off.
+- **Glitch.** Off. It reads the setting live before every burst, so turning it on after load stops new bursts.
 - **Smooth scroll** becomes instant.
 - **Option.** Sam may choose the prototype's still-3D variant instead (`REDUCED_MOTION_TIER`).
 - **Later sections** wrap all GSAP in `gsap.matchMedia()`, and `src/scripts/motion.ts` stays the one source of the flag.

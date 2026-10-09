@@ -28,6 +28,21 @@ Sam asked for the hero copy to go: no headline, no sub-line, no button, plain an
 - **From the review (three lenses, each finding verified):** days are padded to two digits and the numeral carries the 2ch reservation, so the row never jumps; ticks are aligned to the wall-clock second; the numerals stay hidden until the first tick and a `<noscript>` line gives the date; at zero the countdown stops and the eyebrow reads "Skreed is live. skreed.com"; the seconds group is hidden under reduced motion; the eyebrow and labels are Open Sans 600 at 14 px; spacing uses the `--s` tokens; below 1100 px the countdown lifts so the cue has its own row.
 - Not changed on purpose: there is no call to action on the fold. Sam chose the plain countdown; the reserve flow lives in the later sections.
 
+## v9.10: terrain and fog values locked by Sam (2026-10-09)
+Sam set the terrain in the Tune panel and asked for these numbers in the real build; the prototype now opens with them too, and Reset returns to them. Fog was already at Sam's values.
+
+| Tune label | param | v9.9 | v9.10 |
+|---|---|---|---|
+| Ground exposure | gExp | 0.45 | 0.20 |
+| Ground contrast | gGamma | 0.70 | 0.87 |
+| Near ground | gNear | 0.68 | 0.54 |
+| Shadow floor | gToe | 0.03 | 0.02 |
+| Crumb grain contrast | crumb | 0.35 | 0.53 |
+| Crumb grain size | crumbSize | 0.03 | 0.07 |
+| Ground mist | mist | 0.55 | 0.20 |
+| Ground mist speed | mistSpeed | 1.00 | 0.55 |
+| Fog amount, brightness, drift, wisp size, ground hug | fog, fogBright, fogSpeed, fogSize, fogHug | 1, 0.4, 0.15, 1, 1.6 | unchanged |
+
 ## v9.9: loading screen, the wordmark's shine (2026-10-09, artifact version 25)
 Sam asked for ciao energy's loading screen, the light passing over the logo in the middle of the screen, made for the Skreed wordmark. ciao's is a 7 s video of their logo. Ours re-creates the light in code on the Skreed logotype, measured from that loop frame by frame (176 frames at 25 fps; no ciao code or footage is in this repo):
 - **Rest and light:** the wordmark rests at Pearl Whisper 26 percent on the night. Every 1.6 s a soft band (Gaussian, about 0.3 of the wordmark's width at half height, tilted 5 degrees) runs from the s to the d in 0.7 s, slowing and brightening as it goes, flares on the d and fades there.

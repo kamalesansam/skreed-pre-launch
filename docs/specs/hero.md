@@ -220,7 +220,7 @@ There is no idle twitch in production (D20). The prototype's every-8-to-16-s twi
 The scene reads the setting once at start, as the prototype does. The glitch checks it live before every burst, as the prototype does (`reducedMQ.matches`), so turning reduced motion on after load stops new bursts.
 
 `REDUCED_MOTION_TIER` in `src/config/hero.ts` switches to `still3d`, which is the prototype's own reduced-motion behaviour. That is the open question for Sam. Under `still3d`:
-- the loader has no light passes, fills at twice the pace and fades in 0.4 s;
+- the loader has no light passes, fills at twice the pace and lifts in 0.4 s;
 - the hero has no bob, shake, breath, pull-back or ghost sweep, and its shader time is frozen at 0;
 - the wipe runs calm, with no parallax, displacement or chromatic aberration;
 - hover push still works, because it is an interaction.
@@ -367,7 +367,7 @@ The rendering setups used below:
 3. **Semantics and no JavaScript.** `role="timer"` and `aria-label` `cd.aria`. With JavaScript disabled, `#cdEyebrow` and `#count` are not displayed, the cue is not displayed, and the noscript line shows `cd.noscript` with its `<time datetime="2026-11-01T00:00+05:30">`.
 4. **Independence.** It runs with WebGL2 removed and with the hero chunk blocked.
 5. **Reduced motion.** The seconds group is hidden.
-6. **Contrast.** At the rest frame with the locked terrain, the eyebrow, the unit labels and the cue label measure at least 4.5:1 against the pixels behind them, and the numerals at least 3:1 (large text), at both viewports.
+6. **Contrast.** At the rest frame with the locked terrain, the eyebrow, the unit labels and the cue label measure at least 4.5:1 against the pixels behind them, and the numerals at least 3:1 (large text), at both viewports. At zero, the link's two-tone focus ring meets the rule of AC5.3 against the snow behind it.
 7. **v10 hooks.** `#count[data-hold]` stops digit writes and `__skreedCountV` carries the four strings.
 
 **AC5. Scroll cue and corner logotype.** Ties to D4, B2 and E3, and exceptions E-12 and E-24.
