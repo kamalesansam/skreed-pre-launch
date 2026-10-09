@@ -13,12 +13,13 @@ import HeroPosterPreload from '../components/hero/HeroPosterPreload.astro';
 import Countdown from '../components/hero/Countdown.astro';
 import ScrollCue from '../components/hero/ScrollCue.astro';
 import { COPY } from '../config/copy.ts';
+import { NIGHT } from '../config/tokens.ts';
 // Dev-only components are imported only when their flag is set, so production carries neither their markup nor their
 // scripts and styles (Astro bundles the scripts of every imported component, rendered or not).
 const AfterTrackFiller = import.meta.env.PUBLIC_HERO_HOOKS === '1' ? (await import('../components/dev/AfterTrackFiller.astro')).default : null;
 const Tune = import.meta.env.PUBLIC_TUNE === '1' ? (await import('../components/dev/Tune.astro')).default : null;
 ---
-<Base title={COPY.page.title} description={COPY.page.description} path="/" preloadFonts={['/fonts/open-sans-400-600-latin.woff2']}>
+<Base title={COPY.page.title} description={COPY.page.description} path="/" preloadFonts={['/fonts/open-sans-400-600-latin.woff2']} themeColor={NIGHT}>
   <Gate slot="head-first" />
   <HeroPosterPreload slot="head" />
   <HeroStage>

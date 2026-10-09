@@ -4,8 +4,11 @@ Each item is PASS or FAIL with a one-line reason. A section ships only when ever
 
 ## A. Brand and design (from CLAUDE.md)
 A1. Zero violations of rules 1–50 in CLAUDE.md. List any violation by rule number.
+   Approved exception (Sam, 2026-10-09; hero only): rule 12 (E-12), rules 13 and 42 (E-13/42), rules 1, 21 and 40 (E-1/21/40), rule 24 (E-24). See `docs/specs/hero.md` section 10.
 A2. Colours used come only from `docs/data/shades-240.json`, Pearl Whisper, Urban Slate and Ember Luxe, as CSS tokens. No invented greys; the only derived neutral is `--skeleton`.
+   Approved exception (Sam, 2026-10-09; hero only): `--night` and Pearl Whisper at alpha as light (E-A2); the scene's light colours as render parameters (E-A2b).
 A3. Type follows `docs/brand/type-system.md`: Poppins 700 sentence-case headlines, Source Serif 4 roman for first-person prose only, Open Sans for UI, numerals (tabular) and legal prose. Only the four shipped files; no italic; no digits inside h1, h2 or the manifesto; no face under 12 px.
+   Approved exception (Sam, 2026-10-09; hero only): the hero's countdown, loader and label sizes (E-A3).
 A4. Copy: Skreed voice (confident, minimal, short sentences), no buzzwords, no em dashes, no emojis, real shade names, no invented facts or counts.
 A5. The section shows the real product (case render, shades or swatches), not an abstract stand-in.
 
@@ -19,18 +22,25 @@ B4. Uses `svh`/`dvh` correctly; nothing animated in `dvh`.
 C1. Critical JS ≤ 60 KB gz for the page; this section adds no more than its budget line in the plan.
 C2. Images: AVIF with WebP fallback, sizes set, lazy below the fold, hero ≤ 120 KB.
 C3. No WebGL in a spine section. No layout thrash: animations use transform/opacity only.
+   Approved exception (Sam, 2026-10-09; hero only): the hero canvas is the one WebGL island (E-C3); the countdown's clip-path ride and the glitch's SVG attribute animation (E-C3b).
 C4. Lighthouse mobile ≥ 90 performance on the page after this section is added (run it; paste the number).
+   Pending Sam (E-C4): the hero's graded run is the poster tier that headless Chromium gets; the 3D path is recorded, and traced on a real phone on staging (hero.md D23, section 11).
 
 ## D. Motion and states
 D1. Visible at rest: nothing waits at opacity 0 for an observer.
+   Approved exception (Sam, 2026-10-09; hero only): the hero's loader on the 3D path (E-H1).
 D2. `prefers-reduced-motion` honoured; the section still makes sense with motion off.
+   Approved exception (Sam, 2026-10-09; hero only): the hero honours it through `matchMedia` and CSS because it loads no GSAP (E-GSAP). Pending Sam: which tier reduced motion gets (default: the poster).
 D3. Every UI state designed where data or input exists: empty, loading (skeleton), error, offline, no results, permission denied, validation, success.
 D4. Hover and press states exist only on interactive elements and are choreographed once.
 
 ## E. Quality gates
 E1. `/web-design-guidelines` run on the section's files; zero findings left, or each remaining finding justified in one line.
+   Pending: if the skill cannot be installed in the build environment, the review records E1 as blocked with the reason, never PASS.
 E2. `visual-critique:critique-screen` run on the 390 px screenshot; its findings addressed or justified.
+   Pending: as E1.
 E3. Accessibility: semantic HTML, labelled controls, visible focus, AA contrast on both neutrals.
+   Pending Sam (E-2.2.2): the hero's ambient scene motion and ticking countdown run without a pause control; the OS reduced-motion setting turns both off. If declined, hero.md section 10 specifies the control.
 E4. For anything that writes data: the relevant rows of `docs/research/08-prelaunch-security-checklist.md` pass.
 E5. Database audit (run once the schema exists, re-run after any migration). Each of the five must be answered with evidence from the code, not assumed:
   - N+1 queries: the counters endpoint reads all shade counts in one query (`select shade_id, count from shade_counts`), never one query per tile.
@@ -42,6 +52,7 @@ E5. Database audit (run once the schema exists, re-run after any migration). Eac
 ## G. Real-site essentials (page-level; graded once before launch and re-checked at cutover)
 G1. Custom 404 page in the brand (off-white, one line, link back to the Wall).
 G2. Primary CTA ("Reserve my shade" or the quiz) visible above the fold at 390 px without scrolling.
+   Approved exception (Sam, 2026-10-09; hero only): no CTA on the hero's fold (E-G2); the reserve flow starts in later sections.
 G3. Unique `<title>` per page (index, /r/<code>, /privacy, /terms, /thanks, 404).
 G4. Unique meta description per page.
 G5. Open Graph image: default 1200×630 plus the per-shade variants for /r/<code>; verified with a WhatsApp preview.
@@ -87,6 +98,7 @@ Each row is reviewed by the CHECKER before a section is marked done. "n/a" must 
 
 Rules that fall out of the table:
 - H1. No full-page loaders anywhere. Loading is always local to the thing that is loading.
+   Approved exception (Sam, 2026-10-09; hero only): the hero's full-screen loader on the 3D path (E-H1). The "1 Splitter hero" column above predates the decision; `docs/specs/hero.md` section 5 replaces it for the hero.
 - H2. Every error keeps the user's input and offers one next action.
 - H3. Offline is a first-class state for the reserve form: queue, retry, confirm. Tested with the network throttled to offline in Playwright.
 - H4. Validation runs on blur and on submit, never on every keystroke; success states are 2 s and reversible.

@@ -5,7 +5,7 @@ html,body{background:var(--night)}
 body{color:var(--pearl-whisper);font-family:var(--font-ui);margin:0;font-synthesis:none}
 #stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:pan-y}
 .track{position:relative;height:460svh;pointer-events:none}
-.copy{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:flex-end;gap:var(--s2);padding:0 var(--inset) calc(var(--inset) + env(safe-area-inset-bottom,0px));pointer-events:none;will-change:transform,clip-path}
+.copy{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:flex-end;gap:var(--s2);padding:0 calc(var(--inset) + env(safe-area-inset-right,0px)) calc(var(--inset) + env(safe-area-inset-bottom,0px)) calc(var(--inset) + env(safe-area-inset-left,0px));pointer-events:none;will-change:transform,clip-path}   /* side safe areas added for landscape phones (web interface guidelines); 0 elsewhere */
 /* hero: plain and simple, a countdown to launch. Open Sans with tabular figures for every live numeral (type system), never Poppins. */
 .copy .eyebrow{font-family:var(--font-ui);font-size:.875rem;font-weight:600;color:var(--pearl-whisper);margin:0;max-width:30ch}   /* Pearl Whisper at 600: the small text sits on pale snow and must hold AA */
 .count{display:flex;gap:clamp(var(--s3),4vw,44px);font-family:var(--font-ui);font-variant-numeric:tabular-nums;color:var(--pearl-whisper)}
@@ -30,7 +30,7 @@ body{color:var(--pearl-whisper);font-family:var(--font-ui);margin:0;font-synthes
 .labels{position:fixed;inset:0;pointer-events:none;z-index:1}
 .lab{position:absolute;left:0;top:0;font-family:var(--font-ui);font-weight:600;font-size:12px;line-height:1;letter-spacing:.04em;font-variant-numeric:tabular-nums;color:var(--pearl-whisper);will-change:transform,opacity;display:flex;align-items:center;gap:6px}
 .lab i{display:block;width:3px;height:3px;background:var(--pearl-whisper)}
-.site-logo{position:fixed;top:calc(var(--inset) + env(safe-area-inset-top,0px));left:var(--inset);z-index:4;display:block;line-height:0;color:var(--pearl-whisper)}
+.site-logo{position:fixed;top:calc(var(--inset) + env(safe-area-inset-top,0px));left:calc(var(--inset) + env(safe-area-inset-left,0px));z-index:4;display:block;line-height:0;color:var(--pearl-whisper);-webkit-tap-highlight-color:transparent}   /* its press state is the glitch burst */
 .site-logo[data-tone="light"]{color:var(--urban-slate)}
 .site-logo::after{content:"";position:absolute;inset:-11px -8px}
 .site-logo svg{display:block;width:96px;height:auto;overflow:visible}

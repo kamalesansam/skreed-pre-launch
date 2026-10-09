@@ -15,8 +15,11 @@ interface Props {
   path?: string;
   /** /fonts/ files to preload (the hero preloads Open Sans; a page with a Poppins headline preloads Poppins) */
   preloadFonts?: string[];
+  /** the browser UI colour, matching the page's first background (a token value from config/tokens.ts) */
+  themeColor?: string;
 }
-const { title, description, path = '/', preloadFonts = [] } = Astro.props;
+import { PEARL_WHISPER } from '../config/tokens.ts';
+const { title, description, path = '/', preloadFonts = [], themeColor = PEARL_WHISPER } = Astro.props;
 const canonical = new URL(path, SITE_URL).href;
 const staging = import.meta.env.PUBLIC_STAGING === '1';
 ---
@@ -26,6 +29,7 @@ const staging = import.meta.env.PUBLIC_STAGING === '1';
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <slot name="head-first" />
+<meta name="theme-color" content={themeColor}>
 {preloadFonts.map((href) => <link rel="preload" as="font" type="font/woff2" crossorigin href={href}>)}
 <slot name="head" />
 <title>{title}</title>

@@ -29,7 +29,7 @@ If this file and a source disagree, the source wins and this file is fixed.
 | `--urban-slate` | #383F43 | Charcoal bands. Text on Pearl Whisper. The corner logotype once the wipe passes half way. The inner ring of the two-tone focus ring. |
 | `--ember-luxe` | #FF9900 | The one accent: primary button fill and focus rings. Nothing else. |
 | `--skeleton` | `color-mix(in srgb, var(--urban-slate) 12%, var(--pearl-whisper))` | The only derived neutral: skeleton blocks while data loads. |
-| `--night` | #050506 | Scene only: the loader background, the hero's WebGL background and fog, and the `/` page background under the hero. Never UI chrome on a Pearl page. Approved with the v9.9 hero; Sam has to confirm it as a token (exception E-A2 in `docs/specs/hero.md`). |
+| `--night` | #050506 | Scene only: the loader background, the hero's WebGL background and fog, and the `/` page background under the hero. Never UI chrome on a Pearl page. Its use is approved (exception E-A2, 2026-10-09); the token name is pending Sam (`docs/specs/hero.md` section 11, P5). |
 
 **Measured contrast** (type-system.md and the v9.1 hero):
 - Pearl Whisper on Urban Slate: 9.9:1.
@@ -414,21 +414,21 @@ One idea per screen. No feature grids, no bento, no three-up cards, no badge abo
 
 ### Approved hero exceptions
 
-The full list, with ids, rules and reasons, is `docs/specs/hero.md` section 10. In brief:
+The full list, with ids, rules and reasons, is `docs/specs/hero.md` section 10; the approved ones are also in `CLAUDE.md` ("Approved exceptions", 2026-10-09). In brief:
 - E-H1: the full-screen loader on the 3D path, and its status line over the poster;
 - E-G2: no CTA on the fold;
 - E-C3: the WebGL island in sections 1 and 2;
 - E-C3b: the countdown's clip-path ride and the glitch's SVG attribute animation;
 - E-12: the hero canvas, the loader, the cue's three bounces and the logotype's bursts;
 - E-13/42: the block glow and bloom;
-- E-1/21/40: the sky's faint galaxy wash (pending);
+- E-1/21/40: the sky's faint galaxy wash;
 - E-24: the logotype colour split and the loader outline;
 - E-A2: `--night` and the Pearl alpha light;
-- E-A2b: the scene's light colours as render parameters (pending);
+- E-A2b: the scene's light colours as render parameters;
 - E-A3: the hero type sizes;
-- E-GSAP: reduced motion through `matchMedia` while the hero loads no GSAP (pending);
-- E-C4: Lighthouse graded on the poster tier, the 3D path traced on a real phone (pending);
-- E-2.2.2: the scene's ambient motion and the ticking countdown without a pause control (pending).
+- E-GSAP: reduced motion through `matchMedia` while the hero loads no GSAP;
+- E-C4: Lighthouse graded on the poster tier, the 3D path traced on a real phone (pending, `hero.md` section 11);
+- E-2.2.2: the scene's ambient motion and the ticking countdown without a pause control (pending, `hero.md` section 11).
 
 Anything not on that list is not excepted.
 

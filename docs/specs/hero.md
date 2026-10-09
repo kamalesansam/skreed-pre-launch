@@ -492,9 +492,9 @@ Each decision says what changed from the prototype or the docs, and why. Every o
 | D30 | All 240 shades are CSS tokens, `--shade-<id>`, generated into `src/styles/shades.gen.css` from `docs/data/shades-240.json` (7,855 B raw, 1,288 B br). The glitch ghost fills use them. | CLAUDE.md and A2: colours as CSS tokens on `:root`. |
 | D31 | The loader's Pearl Whisper alpha stops stay the prototype's literal 8-digit hex values (`#F7F6F341` and the stops of `#ldFill` and `#ldBand`). | Writing them as `rgb(... / 0.26)` would round 65/255 to 66/255 and break AC3.1's pixel-identical frames. |
 
-## 10. Approved exceptions the review must apply (to be written into CLAUDE.md and CHECKLIST by Sam)
+## 10. Approved exceptions the review must apply
 
-Sam approved the v9.9 hero as built. Each item below is a property of that approved hero, or of this port, that a written rule still forbids. Until Sam writes them into `CLAUDE.md` and `docs/CHECKLIST.md`, the reviewer grades them as listed here, not as FAIL. Items marked "pending" are new and need Sam's yes. If Sam declines one, it becomes a FAIL item for the next build iteration. Anything not listed here is not excepted.
+Sam approved the hero as built on 2026-10-09 ("I'm good with whatever we've built so far"). Each item below is a property of that approved hero, or of this port, that a written rule still forbids. The approved items are written into `CLAUDE.md` ("Approved exceptions") and annotated on the affected `docs/CHECKLIST.md` items, and the reviewer grades them as listed here, not as FAIL. Items marked "pending" still need Sam's yes; section 11 lists them with the default the build ships. If Sam declines one, it becomes a FAIL item for the next build iteration. Anything not listed here is not excepted.
 
 | Id | Rule or check | What the hero does | Approved in |
 |---|---|---|---|
@@ -504,12 +504,12 @@ Sam approved the v9.9 hero as built. Each item below is a property of that appro
 | E-C3b | CHECKLIST C3 "animations use transform/opacity only" | The countdown ride sets `clip-path` per frame, and the glitch animates SVG clip rects and attributes. Both repaint without layout. | v9.2, v9 |
 | E-12 | Rule 12 motion list ("the hero splitter") | The hero canvas, the loader, the cue's three bounces and the logotype's bursts move without being asked | v9.1 to v9.9 |
 | E-13/42 | Rule 13 (no cursor-following glow), rule 42 (no glow blobs) | Blocks glow in their shade where the pointer pushes them; bloom at strength 0.5 on the canvas | v9 to v9.4 |
-| E-1/21/40 | Rules 1, 21 and 40 (no purple-to-blue, no harsh gradients, no purple and black) | The sky's faint galaxy wash in Space #15284f, Eggplant #4a154d, Forest #084f3d and Wine #4b0923 over the night sky, masked to the dark sky above the horizon | v9.x, pending written yes |
+| E-1/21/40 | Rules 1, 21 and 40 (no purple-to-blue, no harsh gradients, no purple and black) | The sky's faint galaxy wash in Space #15284f, Eggplant #4a154d, Forest #084f3d and Wine #4b0923 over the night sky, masked to the dark sky above the horizon | v9.x; approved 2026-10-09 |
 | E-24 | Rule 24 (shades never colour UI chrome); brand guide "no outlines, shadows, effects" on the logo | The logotype glitch splits in shade pairs; the loader shows a hairline outline of the wordmark | v9, v9.9 |
 | E-A2 | A2, palette only | `--night` #050506 as the loader background, the scene background and fog, and the `/` page background under the hero (never UI chrome on Pearl pages); Pearl Whisper at alpha for light falloff (loader rest `#F7F6F341` and its band and fill stops, outline stroke 0.42, cue line 0.6, label links 0.35) | v9.4, v9.9 |
-| E-A2b | A2, palette only | The scene's light colours are render parameters, not palette colours: key light (1.0, 0.96, 0.90), kicker (0.80, 0.88, 1.0), environment floor (0.86, 0.90, 1.0), horizon (0.92, 0.93, 1.0) and sky (0.60, 0.45, 0.90) | v9 to v9.9, pending written yes |
+| E-A2b | A2, palette only | The scene's light colours are render parameters, not palette colours: key light (1.0, 0.96, 0.90), kicker (0.80, 0.88, 1.0), environment floor (0.86, 0.90, 1.0), horizon (0.92, 0.93, 1.0) and sky (0.60, 0.45, 0.90) | v9 to v9.9; approved 2026-10-09 |
 | E-A3 | type-system `--fs-countdown` 32 to 48 px; role 10 "everything that ticks is 600"; eyebrow 12 to 13 px | Countdown numerals `clamp(2.3rem, 7vw, 4.8rem)`; loader percent Open Sans 400; eyebrow and labels 14 px 600; label readouts tracked 0.04em | v9.1, v9.2, v9.9 |
-| E-GSAP | CLAUDE.md "honour reduced motion via `gsap.matchMedia()`" | The hero honours it through `matchMedia` and CSS, because it loads no GSAP (D6) | this spec, pending |
+| E-GSAP | CLAUDE.md "honour reduced motion via `gsap.matchMedia()`" | The hero honours it through `matchMedia` and CSS, because it loads no GSAP (D6) | this spec; approved 2026-10-09 |
 | E-C4 | CHECKLIST C4, Lighthouse mobile at least 90 "on the page" | The graded run is the poster tier, which is what Lighthouse's headless Chromium gets; the 3D path is recorded under SwiftShader and traced on a real phone on staging (D23) | this spec, pending |
 | E-2.2.2 | E3 accessibility, WCAG 2.2.2 pause, stop, hide (Level A) | The scene's ambient motion (fog drift, bob, breath, shake) and the ticking countdown run without a page control to pause them; the OS reduced-motion setting turns both off (poster, no seconds) | this spec, pending |
 
@@ -519,3 +519,17 @@ Sam approved the v9.9 hero as built. Each item below is a property of that appro
 - It is a control, so its hover and press states follow the button rule in `DESIGN.md` (no opacity fade).
 
 **If Sam declines E-C4**, the TBT levers of `hero-architecture.md` section 16 run in their order, each gated by AC1 and a weights re-measure, until the 3D path passes AC10.1 on a GPU machine.
+
+## 11. Flagged decisions pending Sam (the build ships the default)
+
+Recorded 2026-10-09 when the build started (architecture section 17, steps 1 to 4). Each row is open until Sam answers. The build implements the default in the last column and keeps the alternative one switch away, so an answer costs one edit and a re-run of the named checks.
+
+| # | Decision | Default the build ships | Where it lives | If Sam chooses otherwise |
+|---|---|---|---|---|
+| P1 | E-C4: Lighthouse graded on the poster tier (D23) | The graded run is the production build in headless Chromium, which takes the poster tier; the 3D path is recorded under SwiftShader and traced on a real phone on staging | `scripts/lighthouse.mjs` (build step 13) | The TBT levers of architecture section 16 run in order, each gated by AC1 and a weights re-measure |
+| P2 | E-2.2.2: the scene's ambient motion and the ticking countdown without a pause control (D20) | No pause control. The cue stops after three bounces (2.44 cycles) and there is no idle twitch (`logoIdle` 0) | `src/styles/shell.css`, `src/config/params.ts` | The "Pause motion" control of section 10 is built |
+| P3 | Reduced-motion tier (D2) | `poster`: no island bytes, poster, no seconds, still cue, no glitch | `REDUCED_MOTION_TIER` in `src/config/hero.ts` | `still3d`: the prototype's frozen 3D (no bob, shake, breath, pull-back or sweep; calm wipe) |
+| P4 | Copy marked "new" in section 3: `h1`, `title`, `description`, `poster.alt` | The strings proposed in section 3, unchanged | `src/config/copy.ts` | Edit `copy.ts`; the CSP hashes and the tests follow on the next build |
+| P5 | `--night` #050506 as a named token (E-A2 approves its use; the token name is Sam's call) | `--night` in `src/styles/tokens.css` and `NIGHT` in `src/config/tokens.ts`, used only for the scene, the loader and the `/` background under the hero | `DESIGN.md` section 2, `src/styles/tokens.css` | Rename in both files; `tests/unit/tokens.test.ts` checks them against `DESIGN.md` |
+| P6 | Where the lossless texture masters live (26.5 MB) | Gitignored in `assets-src/hero/masters/`, with `SHA256SUMS` committed; a fresh clone cannot re-encode stage 2 until Sam picks a home | `.gitignore`, `assets-src/hero/masters/SHA256SUMS` | Git LFS in this repo, or a Dropbox folder named in this row |
+| P7 | Review tools E1 (`/web-design-guidelines`) and E2 (`visual-critique`) (AC10.7) | Run if installed; otherwise the review records E1 and E2 as blocked with the reason, never PASS | review log | Install them in the build environment |

@@ -8,5 +8,5 @@ import WT from '../../config/loader-weights.json';
 import { inlineScript } from './inlineScript.ts';
 const code = inlineScript('loader.js', { POSE, WT, COPY: { offline: COPY.ld.offline } }, loader);
 ---
-<div class="intro" id="intro" role="progressbar" aria-label={COPY.ld.aria} aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="ld-w"><div class="ld-m" id="ldM"><div class="ld-g" id="ldG"><i id="ldBase"></i><i id="ldFill"></i></div><div class="ld-s" id="ldS"><i id="ldBand"></i></div></div><svg class="ld-line" id="ldLine" viewBox="0 0 1209.46 292.9" aria-hidden="true" focusable="false"><use href="#skreed-wordmark"/></svg></div><p class="ld-p"><span id="ldSt"></span><span id="ldPct"><span id="ldN">0</span>%</span></p></div>
+<div class="intro" id="intro" role="progressbar" aria-label={COPY.ld.aria} aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="ld-w"><div class="ld-m" id="ldM"><div class="ld-g" id="ldG"><i id="ldBase"></i><i id="ldFill"></i></div><div class="ld-s" id="ldS"><i id="ldBand"></i></div></div><svg class="ld-line" id="ldLine" viewBox="0 0 1209.46 292.9" aria-hidden="true" focusable="false"><use href="#skreed-wordmark"/></svg></div><p class="ld-p"><span id="ldSt" aria-live="polite"></span><span id="ldPct"><span id="ldN">0</span>%</span></p></div>
 <script is:inline set:html={code}></script>
