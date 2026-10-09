@@ -936,8 +936,7 @@ function layoutWall(portrait) {
 await yieldFrame();
 let savePass = null;
 function makeComposer(scene, cam, withBloom) {
-  // multisampled targets: without them every terrain silhouette and block edge is stair-stepped (the canvas MSAA does not apply to render targets)
-  const c = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: touch ? 2 : 4 })); c.renderToScreen = false;
+  const c = new EffectComposer(renderer); c.renderToScreen = false;   // no multisampling: multisampled half-float targets drew stray horizontal lines on some GPUs (v9.6, reported by Sam)
   c.addPass(new RenderPass(scene, cam));
   let b = null;
   if (withBloom) {

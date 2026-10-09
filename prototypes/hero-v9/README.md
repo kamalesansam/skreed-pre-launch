@@ -1,6 +1,6 @@
 # Hero prototype v9 (2026-10-08)
 
-Live: https://claude.ai/artifact/QDXUhF32ZLd7L9a5ccDnq8 (version 23). Builds on v8.2 (`../hero-v8`).
+Live: https://claude.ai/artifact/QDXUhF32ZLd7L9a5ccDnq8 (version 24). Builds on v8.2 (`../hero-v8`).
 
 ## The floor, re-created from igloo.inc's snow
 Sam asked for the floor to look exactly like igloo's. Three Blender variants were built from the hero camera and judged against four igloo screenshots by three reviews (surface, shape, tone): variant a won on composition (flank knolls, open centre, foreground mounds), with b's tone and stone scatter and c's measurement harness grafted on. The integrated floor (`blender/floor_final.py`, post curve `blender/floor_final_post.py`, LUT `blender/floor_lut.json`, checks `blender/floor_judge.py` and `blender/verify_bake.py`) adds:
@@ -28,8 +28,11 @@ Sam asked for the hero copy to go: no headline, no sub-line, no button, plain an
 - **From the review (three lenses, each finding verified):** days are padded to two digits and the numeral carries the 2ch reservation, so the row never jumps; ticks are aligned to the wall-clock second; the numerals stay hidden until the first tick and a `<noscript>` line gives the date; at zero the countdown stops and the eyebrow reads "Skreed is live. skreed.com"; the seconds group is hidden under reduced motion; the eyebrow and labels are Open Sans 600 at 14 px; spacing uses the `--s` tokens; below 1100 px the countdown lifts so the cue has its own row.
 - Not changed on purpose: there is no call to action on the fold. Sam chose the plain countdown; the reserve flow lives in the later sections.
 
+## v9.8: stray lines removed (2026-10-09)
+Sam saw thin horizontal lines across the sky and snow behind the logo ("looks like my screen is broken"). They do not appear under the software renderer at any size, so they come from the GPU path, and the only rendering change in that build was v9.6's multisampled composer targets (half-float MSAA renderbuffers, whose support and resolve behaviour vary by GPU and driver). The multisampling is removed; the ground toe from v9.6 stays. If the lines persist on Sam's machine the next suspects are GPU precision in the procedural fog tile's sine hash and the far terrain slivers; see the session notes.
+
 ## v9.7 reverted (2026-10-09)
-Sam preferred the v9.6 floor; the round 6 floor is withdrawn and v9.6 is live again (version 23). Floor work is stopped. The round 6 bake and its scripts stay in the session scratch only.
+Sam preferred the v9.6 floor; the round 6 floor is withdrawn and v9.6 is live again (version 24). Floor work is stopped. The round 6 bake and its scripts stay in the session scratch only.
 
 ## v9.6: snow floor round 5, smooth edges, no black holes (2026-10-09)
 - **Round 5 bake:** the LUT refit on a v5 preview fixed the near field; a lateral haze on the far masses, a gain on the left dome and a relief boost on the right swell; wind streaks on the right foreground and visible pits; clustered crust on the left crest.
