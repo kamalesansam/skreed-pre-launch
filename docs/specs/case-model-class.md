@@ -283,3 +283,8 @@ Steps 1 to 4 belong to run 1 of family-page.md 11 (behind a dev flag, never in t
 8. Lifecycle, context loss, disposal; T9 and T10.
 9. Production guards: the build fails on a stand-in manifest, on a model that requires a decoder, and on embedded images.
 10. When the zip arrives: section 15, then T12 on devices.
+
+## Amendments (2026-10-09, after the real model's pipeline and its independent verification)
+1. **Decoder.** Section 4's "no decoder" is replaced: GLTFLoader with `setMeshoptDecoder` given meshoptimizer's pure-JS `meshopt_decoder_reference.js` (0.22.0, 1,398 B Brotli, no WebAssembly, zero CSP violations measured). Never import three's `MeshoptDecoder` (it compiles WebAssembly and fails under the site CSP). The production build rejects models requiring Draco or Basis; meshopt is allowed. Triangle caps follow the measured real model: LOD0 about 20k, LOD1 about 10k (see family-page.md decision 16 for bytes).
+2. **Picking.** `pick()` must raycast every part of the promoted front case (shell, trim and logo), not the shell alone: the verifier measured 87% of trim pixels (camera-bar ring, side walls, buttons) returning -1. Add to T14: hits on trim pixels of the front case.
+3. **The real model (Cobalt.fbx) facts.** It is a stylised iPhone 17 Pro Max style case, not to scale (cavity 1.16x tall, 1.28x wide, 2.1x thick against the real phone); normalised to height 1 it reads correctly on screen. There is no phone body: the camera window shows through, so the Device part is added in code. The Skreed S on the back is a flat translucent inlay; draw it opaque at 0.84 x the instance colour. 36% of the source triangles were never visible and are removed. UVs are dropped (none needed).
