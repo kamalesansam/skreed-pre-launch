@@ -1,0 +1,115 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>case lineup</title>
+<style>html,body{margin:0;background:#F7F6F3;overflow:hidden}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"}}</script>
+</head><body>
+<script type="module">
+// Study page: one case GLB -> one InstancedMesh per primitive, 24 instances, per-instance shade colour.
+// ?model=<url>&shades=<url to shades json>&family=<id>&layout=row|grid|views|calib&finish=matte|gloss
+//  &tone=neutral|aces|agx|none&frames=<n timing frames>&dark=0|1
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+const q = new URLSearchParams(location.search);
+const layout = q.get('layout') || 'row', finish = q.get('finish') || 'matte', tone = q.get('tone') || 'neutral';
+window.__status = 'loading';
+try {
+  const W = innerWidth, H = innerHeight;
+  const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setSize(W, H);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = { neutral: THREE.NeutralToneMapping, aces: THREE.ACESFilmicToneMapping, agx: THREE.AgXToneMapping, none: THREE.NoToneMapping }[tone];
+  const bg = q.get('dark') === '1' ? 0x383F43 : 0xF7F6F3;
+  renderer.setClearColor(bg, 1);
+  document.body.appendChild(renderer.domElement);
+  const scene = new THREE.Scene();
+  const pm = new THREE.PMREMGenerator(renderer);
+  if (layout === 'calib') {
+    // uniform white environment of radiance 1: a Lambertian surface should come out at its base colour
+    const s = new THREE.Scene(); s.background = new THREE.Color(1, 1, 1);
+    scene.environment = pm.fromScene(s, 0).texture;
+  } else {
+    scene.environment = pm.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+    const key = new THREE.DirectionalLight(0xffffff, 1.0); key.position.set(-2, 3, 4); scene.add(key);
+  }
+  const shadesData = await (await fetch(q.get('shades'))).json();
+  const fam = shadesData.families.find((f) => f.id === (q.get('family') || 'blissful-blues'));
+  const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).setDRACOLoader(new DRACOLoader().setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/libs/draco/gltf/')).loadAsync(q.get('model'));
+  const parts = [];
+  gltf.scene.updateMatrixWorld(true);
+  gltf.scene.traverse((o) => { if (o.isMesh) parts.push(o); });
+  const N = layout === 'views' ? 3 : 24;
+  const bodyMat = finish === 'glossstd' ? new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.16, metalness: 0 })
+    : finish === 'gloss'
+    ? new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.32, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.06 })
+    : new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.62, metalness: 0 });
+  // body = the part named by ?body=, else a part named body/shell/shade, else the part with the most triangles
+  const triCount = (o) => (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3;
+  const bodyName = q.get('body');
+  let bodyPart = parts.find((o) => bodyName && o.name === bodyName) || parts.find((o) => /body|shell|shade/i.test(o.name) || /shade/i.test(o.material.name)) || [...parts].sort((a, b) => triCount(b) - triCount(a))[0];
+  const inst = parts.map((o) => {
+    const isBody = o === bodyPart;
+    const mat = isBody ? bodyMat : o.material;
+    const g = o.geometry.clone().applyMatrix4(o.matrixWorld);
+    const im = new THREE.InstancedMesh(g, mat, N); im.name = o.name; im.userData.isBody = isBody;
+    scene.add(im); return im;
+  });
+  const box = new THREE.Box3().setFromObject(gltf.scene); const size = box.getSize(new THREE.Vector3());
+  const m = new THREE.Matrix4(), qt = new THREE.Quaternion(), e = new THREE.Euler(), p = new THREE.Vector3(), sc = new THREE.Vector3(1, 1, 1);
+  const portrait = H > W;
+  let cam;
+  const place = (i, x, y, z, rx, ry, rz) => { e.set(rx, ry, rz); qt.setFromEuler(e); p.set(x, y, z); m.compose(p, qt, sc); inst.forEach((im) => im.setMatrixAt(i, m)); };
+  if (layout === 'row') {
+    // ciao-style line-up: a gently waving diagonal row, each case turned to show its back three-quarter
+    const gap = size.x * 1.25;
+    for (let i = 0; i < N; i++) { const t = i - (N - 1) / 2; place(i, t * gap, -t * gap * 0.18 + Math.sin(i * 0.9) * size.y * 0.04, 0, -0.12, -0.5 + Math.sin(i * 0.7) * 0.08, 0.1); }
+    cam = new THREE.PerspectiveCamera(20, W / H, 0.01, 100);
+    const visW = portrait ? size.x * 1.25 * 3.4 : size.x * 1.25 * 10.5; // ~3-4 cases across a phone, ~10 on a laptop
+    const dist = visW / 2 / Math.tan(THREE.MathUtils.degToRad(10)) / (W / H);
+    cam.position.set(0, 0, dist); cam.lookAt(0, 0, 0);
+  } else if (layout === 'grid' || layout === 'calib') {
+    const cols = portrait ? 4 : 6, rows = Math.ceil(N / cols), gx = size.x * 1.22, gy = size.y * 1.12;
+    for (let i = 0; i < N; i++) { const c = i % cols, r = Math.floor(i / cols); place(i, (c - (cols - 1) / 2) * gx, ((rows - 1) / 2 - r) * gy, 0, 0, layout === 'calib' ? 0 : -0.35, 0); }
+    const halfW = cols * gx / 2 * 1.04, halfH = rows * gy / 2 * 1.04;
+    const aspect = W / H; const hh = Math.max(halfH, halfW / aspect);
+    if (layout === 'calib') { cam = new THREE.OrthographicCamera(-hh * aspect, hh * aspect, hh, -hh, 0.01, 100); cam.position.set(0, 0, 1); }
+    else { cam = new THREE.PerspectiveCamera(20, aspect, 0.01, 100); cam.position.set(0, 0, hh / Math.tan(THREE.MathUtils.degToRad(10))); }
+    cam.lookAt(0, 0, 0);
+  } else { // views: back, three-quarter, side
+    const gx = size.x * 1.9;
+    place(0, -gx, 0, 0, 0, 0, 0); place(1, 0, 0, 0, 0.25, -0.7, 0); place(2, gx, 0, 0, 0, -Math.PI / 2, 0);
+    cam = new THREE.PerspectiveCamera(20, W / H, 0.01, 100);
+    const hh = Math.max(size.y * 0.62, gx * 1.6 / (W / H)); cam.position.set(0, 0, hh / Math.tan(THREE.MathUtils.degToRad(10))); cam.lookAt(0, 0, 0);
+  }
+  const col = new THREE.Color();
+  inst.forEach((im) => { if (im.userData.isBody) { for (let i = 0; i < N; i++) { col.setStyle(fam.shades[i % fam.shades.length].hex); im.setColorAt(i, col); } im.instanceColor.needsUpdate = true; } im.instanceMatrix.needsUpdate = true; });
+  renderer.render(scene, cam);
+  const info = { calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, programs: renderer.info.programs.length, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, family: fam.name, size: size.toArray().map((v) => +v.toFixed(4)), dpr: renderer.getPixelRatio(), canvas: [renderer.domElement.width, renderer.domElement.height] };
+  if (layout === 'calib') {
+    // sample each instance's back plate (lower third of the case, centred, away from the camera ring)
+    const gl = renderer.getContext(); const px = new Uint8Array(4 * 9);
+    const v = new THREE.Vector3(); const samples = [];
+    for (let i = 0; i < N; i++) {
+      inst[0].getMatrixAt(i, m); v.set(0, -size.y * 0.25, size.z / 2).applyMatrix4(m).project(cam);
+      const sx = Math.round((v.x + 1) / 2 * renderer.domElement.width), sy = Math.round((v.y + 1) / 2 * renderer.domElement.height);
+      gl.readPixels(sx - 1, sy - 1, 3, 3, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      let r = 0, g = 0, b = 0; for (let k = 0; k < 9; k++) { r += px[k * 4]; g += px[k * 4 + 1]; b += px[k * 4 + 2]; }
+      samples.push({ name: fam.shades[i].name, hex: fam.shades[i].hex, rgb: [r / 9, g / 9, b / 9].map((x) => +x.toFixed(1)) });
+    }
+    info.samples = samples;
+  }
+  const frames = +(q.get('frames') || 0);
+  if (frames) {
+    const gl = renderer.getContext(); const one = new Uint8Array(4); const t = [];
+    for (let f = 0; f < frames; f++) {
+      inst.forEach((im) => { im.rotation.y = f * 0.01; });
+      const t0 = performance.now(); renderer.render(scene, cam); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, one); t.push(performance.now() - t0);
+    }
+    t.sort((a, b) => a - b); info.frameMsMedian = +t[Math.floor(t.length / 2)].toFixed(1); info.frameMsP90 = +t[Math.floor(t.length * 0.9)].toFixed(1);
+    inst.forEach((im) => { im.rotation.y = 0; }); renderer.render(scene, cam);
+  }
+  window.__info = info; window.__status = 'done';
+} catch (err) { window.__status = 'error ' + err.message; console.error(err); }
+</script></body></html>

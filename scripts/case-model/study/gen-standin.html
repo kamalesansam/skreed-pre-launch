@@ -1,0 +1,71 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>standin gen</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"}}</script>
+</head><body>
+<script type="module">
+// TEST FIXTURE ONLY. A procedural, generic phone-case-shaped GLB that follows the proposed asset contract
+// (metres, +Y up, back faces +Z, origin at bbox centre, named nodes Case_Body / Case_CameraRing, materials
+// "Shade" and "Ring", one UV set in 0..1). It is not a Skreed product model and must never ship.
+// ?seg=<curveSegments>&bevel=<bevelSegments>
+import * as THREE from 'three';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import * as BGU from 'three/addons/utils/BufferGeometryUtils.js';
+const q = new URLSearchParams(location.search);
+const seg = +(q.get('seg') || 10), bev = +(q.get('bevel') || 3);
+window.__status = 'loading';
+// generic large-phone case, mm
+const W = 77, H = 163, D = 11.2, R = 12, wall = 1.6, back = 1.3;
+const cam = { x: -W / 2 + 7, y: H / 2 - 7, w: 40, h: 40, r: 10 }; // top-left (viewed from the back: +Z), cut-out
+const rr = (path, x, y, w, h, r) => { // rounded rect, CCW, (x,y)=min corner
+  path.moveTo(x + r, y); path.lineTo(x + w - r, y); path.absarc(x + w - r, y + r, r, -Math.PI / 2, 0, false);
+  path.lineTo(x + w, y + h - r); path.absarc(x + w - r, y + h - r, r, 0, Math.PI / 2, false);
+  path.lineTo(x + r, y + h); path.absarc(x + r, y + h - r, r, Math.PI / 2, Math.PI, false);
+  path.lineTo(x, y + r); path.absarc(x + r, y + r, r, Math.PI, 1.5 * Math.PI, false); return path; };
+const camRect = (grow) => [cam.x - grow, cam.y - cam.h - grow, cam.w + 2 * grow, cam.h + 2 * grow, cam.r + grow];
+// back plate with camera hole
+const backShape = rr(new THREE.Shape(), -W / 2, -H / 2, W, H, R);
+backShape.holes.push(rr(new THREE.Path(), ...camRect(0)));
+const backGeo = new THREE.ExtrudeGeometry(backShape, { depth: back - 1.2, bevelEnabled: true, bevelThickness: 0.6, bevelSize: 0.6, bevelOffset: -0.6, bevelSegments: bev, curveSegments: seg });
+backGeo.translate(0, 0, D / 2 - back + 0.6);
+// side walls: outer outline minus the phone cavity, full depth, with a lip
+const wallShape = rr(new THREE.Shape(), -W / 2, -H / 2, W, H, R);
+wallShape.holes.push(rr(new THREE.Path(), -W / 2 + wall, -H / 2 + wall, W - 2 * wall, H - 2 * wall, R - wall));
+const wallGeo = new THREE.ExtrudeGeometry(wallShape, { depth: D - 1.6, bevelEnabled: true, bevelThickness: 0.8, bevelSize: 0.6, bevelOffset: -0.6, bevelSegments: bev, curveSegments: seg });
+wallGeo.translate(0, 0, -D / 2 + 0.8);
+// camera ring (separate part, separate material slot)
+const ringShape = rr(new THREE.Shape(), ...camRect(1.6));
+ringShape.holes.push(rr(new THREE.Path(), ...camRect(0)));
+const ringGeo = new THREE.ExtrudeGeometry(ringShape, { depth: 1.2, bevelEnabled: true, bevelThickness: 0.3, bevelSize: 0.3, bevelOffset: -0.3, bevelSegments: 2, curveSegments: seg });
+ringGeo.translate(0, 0, D / 2 - 0.4);
+const finish = (g) => { g.deleteAttribute('uv'); const m = BGU.mergeVertices(g, 1e-4); m.computeVertexNormals(); return m; };
+// planar UVs from the back, normalised to the case bbox (0..1); good enough for a fixture
+const planarUV = (g) => { const p = g.attributes.position, uv = new Float32Array(p.count * 2);
+  for (let i = 0; i < p.count; i++) { uv[i * 2] = (p.getX(i) + W / 2) / W; uv[i * 2 + 1] = (p.getY(i) + H / 2) / H; }
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); return g; };
+const toNonIndexedForMerge = (g) => g.index ? g.toNonIndexed() : g;
+let body = BGU.mergeGeometries([toNonIndexedForMerge(backGeo), toNonIndexedForMerge(wallGeo)]);
+body.deleteAttribute('normal');
+body = finish(body);
+// crease-preserving normals: recompute with angle threshold so flat back stays flat and bevels stay soft
+body = BGU.toCreasedNormals(body.toNonIndexed(), THREE.MathUtils.degToRad(35));
+body = BGU.mergeVertices(body, 1e-4);
+planarUV(body);
+let ring = ringGeo.toNonIndexed(); ring.deleteAttribute('uv'); ring.deleteAttribute('normal');
+ring = BGU.toCreasedNormals(ring, THREE.MathUtils.degToRad(35)); ring = BGU.mergeVertices(ring, 1e-4); planarUV(ring);
+[body, ring].forEach((g) => g.scale(0.001, 0.001, 0.001)); // to metres
+const shade = new THREE.MeshStandardMaterial({ name: 'Shade', color: 0xffffff, roughness: 0.6, metalness: 0 });
+const ringMat = new THREE.MeshStandardMaterial({ name: 'Ring', color: 0x2b2b2b, roughness: 0.3, metalness: 1 });
+const root = new THREE.Group(); root.name = 'Case';
+const mb = new THREE.Mesh(body, shade); mb.name = 'Case_Body';
+const mr = new THREE.Mesh(ring, ringMat); mr.name = 'Case_CameraRing';
+root.add(mb, mr);
+// centre on bbox
+const bb = new THREE.Box3().setFromObject(root); const c = bb.getCenter(new THREE.Vector3());
+body.translate(-c.x, -c.y, -c.z); ring.translate(-c.x, -c.y, -c.z);
+const scene = new THREE.Scene(); scene.add(root);
+const glb = await new GLTFExporter().parseAsync(scene, { binary: true });
+const u8 = new Uint8Array(glb); let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+window.__b64 = btoa(s);
+window.__info = { bytes: u8.length, bodyTris: body.index.count / 3, ringTris: ring.index.count / 3, bodyVerts: body.attributes.position.count, ringVerts: ring.attributes.position.count };
+window.__status = 'done';
+</script></body></html>

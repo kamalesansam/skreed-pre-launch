@@ -1,0 +1,254 @@
+{
+ "none": {
+  "n": 240,
+  "dE00_median": 2.27,
+  "dE00_p90": 6.83,
+  "dE00_max": 11.59,
+  "share_under_2": 0.467,
+  "share_under_5": 0.812,
+  "dL_median": 1.64,
+  "abs_dhue_median_saturated_deg": 0.76,
+  "abs_dhue_p90_saturated_deg": 3.94,
+  "worst": [
+   [
+    "Roaring Reds/Mahogany",
+    "#470406",
+    [
+     84,
+     48,
+     48
+    ],
+    11.6
+   ],
+   [
+    "Blissful Blues/Midnight",
+    "#0e1442",
+    [
+     50,
+     52,
+     80
+    ],
+    11.3
+   ],
+   [
+    "Roaring Reds/Wine",
+    "#4b0923",
+    [
+     87,
+     49,
+     59
+    ],
+    10.0
+   ],
+   [
+    "Vivid Violets/Elderberry",
+    "#391265",
+    [
+     74,
+     52,
+     109
+    ],
+    9.0
+   ],
+   [
+    "Blissful Blues/Blueberry",
+    "#1d1968",
+    [
+     56,
+     54,
+     112
+    ],
+    8.8
+   ]
+  ]
+ },
+ "neutral": {
+  "n": 240,
+  "dE00_median": 1.65,
+  "dE00_p90": 2.84,
+  "dE00_max": 3.63,
+  "share_under_2": 0.671,
+  "share_under_5": 1.0,
+  "dL_median": -1.88,
+  "abs_dhue_median_saturated_deg": 0.23,
+  "abs_dhue_p90_saturated_deg": 1.0,
+  "worst": [
+   [
+    "Blushing Corals/Neon",
+    "#ff7901",
+    [
+     240,
+     118,
+     36
+    ],
+    3.6
+   ],
+   [
+    "Go Green/Neon",
+    "#26ff00",
+    [
+     52,
+     240,
+     36
+    ],
+    3.3
+   ],
+   [
+    "Mellow Yellows/Bumblebee",
+    "#ffc239",
+    [
+     240,
+     182,
+     54
+    ],
+    3.2
+   ],
+   [
+    "Blushing Corals/Mango",
+    "#ff9f40",
+    [
+     240,
+     149,
+     60
+    ],
+    3.2
+   ],
+   [
+    "Playful Pinks/Salmon Pink",
+    "#ff6a64",
+    [
+     240,
+     99,
+     94
+    ],
+    3.2
+   ]
+  ]
+ },
+ "agx": {
+  "n": 240,
+  "dE00_median": 10.5,
+  "dE00_p90": 14.44,
+  "dE00_max": 17.33,
+  "share_under_2": 0.017,
+  "share_under_5": 0.046,
+  "dL_median": 1.86,
+  "abs_dhue_median_saturated_deg": 1.86,
+  "abs_dhue_p90_saturated_deg": 7.18,
+  "worst": [
+   [
+    "Mellow Yellows/Bright",
+    "#fef200",
+    [
+     204,
+     195,
+     123
+    ],
+    17.3
+   ],
+   [
+    "Vivid Violets/Psychedelic",
+    "#ae00ff",
+    [
+     171,
+     119,
+     211
+    ],
+    17.3
+   ],
+   [
+    "Mellow Yellows/Limoncello",
+    "#f4f420",
+    [
+     200,
+     195,
+     125
+    ],
+    17.3
+   ],
+   [
+    "Mellow Yellows/Sunbeam",
+    "#fff164",
+    [
+     203,
+     195,
+     144
+    ],
+    16.6
+   ],
+   [
+    "Blissful Blues/Indigo",
+    "#1919a4",
+    [
+     63,
+     86,
+     174
+    ],
+    16.6
+   ]
+  ]
+ },
+ "aces": {
+  "n": 240,
+  "dE00_median": 6.04,
+  "dE00_p90": 9.39,
+  "dE00_max": 11.48,
+  "share_under_2": 0.0,
+  "share_under_5": 0.333,
+  "dL_median": 4.18,
+  "abs_dhue_median_saturated_deg": 3.2,
+  "abs_dhue_p90_saturated_deg": 9.18,
+  "worst": [
+   [
+    "Blissful Blues/Aquamarine",
+    "#3ef9da",
+    [
+     160,
+     225,
+     214
+    ],
+    11.5
+   ],
+   [
+    "Go Green/Light Green",
+    "#e3f7ba",
+    [
+     218,
+     224,
+     202
+    ],
+    11.3
+   ],
+   [
+    "Blissful Blues/Cyan",
+    "#01ffff",
+    [
+     158,
+     227,
+     226
+    ],
+    11.0
+   ],
+   [
+    "Mellow Yellows/Pale Yellow",
+    "#fbf9c6",
+    [
+     225,
+     225,
+     208
+    ],
+    10.8
+   ],
+   [
+    "Mellow Yellows/Sunbeam",
+    "#fff164",
+    [
+     228,
+     222,
+     152
+    ],
+    10.7
+   ]
+  ]
+ }
+}

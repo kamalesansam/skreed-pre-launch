@@ -1,0 +1,245 @@
+{
+ "status": "done",
+ "info": {
+  "calls": 2,
+  "triangles": 180480,
+  "programs": 3,
+  "geometries": 12,
+  "textures": 2,
+  "family": "Frosty Whites",
+  "size": [
+   0.077,
+   0.163,
+   0.0123
+  ],
+  "dpr": 1,
+  "canvas": [
+   1280,
+   800
+  ],
+  "samples": [
+   {
+    "name": "Pearl",
+    "hex": "#f7f7f7",
+    "rgb": [
+     237,
+     237,
+     237
+    ]
+   },
+   {
+    "name": "Vanilla",
+    "hex": "#f7f7ef",
+    "rgb": [
+     237,
+     237,
+     229
+    ]
+   },
+   {
+    "name": "Cotton",
+    "hex": "#f8efea",
+    "rgb": [
+     237,
+     229,
+     224
+    ]
+   },
+   {
+    "name": "Lace",
+    "hex": "#f5f0ea",
+    "rgb": [
+     236,
+     231,
+     225
+    ]
+   },
+   {
+    "name": "Cream",
+    "hex": "#f3f2ed",
+    "rgb": [
+     235,
+     234,
+     229
+    ]
+   },
+   {
+    "name": "Frost",
+    "hex": "#f2f0e3",
+    "rgb": [
+     234,
+     232,
+     220
+    ]
+   },
+   {
+    "name": "Snow",
+    "hex": "#f0f4f5",
+    "rgb": [
+     231,
+     235,
+     236
+    ]
+   },
+   {
+    "name": "Daisy",
+    "hex": "#eff7f9",
+    "rgb": [
+     228,
+     236,
+     238
+    ]
+   },
+   {
+    "name": "Rice",
+    "hex": "#f0f8ed",
+    "rgb": [
+     229,
+     237,
+     227
+    ]
+   },
+   {
+    "name": "Porcelain",
+    "hex": "#eff1f0",
+    "rgb": [
+     232,
+     234,
+     233
+    ]
+   },
+   {
+    "name": "Ivory",
+    "hex": "#f7f6e4",
+    "rgb": [
+     237,
+     236,
+     218
+    ]
+   },
+   {
+    "name": "Parchment",
+    "hex": "#edeee6",
+    "rgb": [
+     231,
+     232,
+     224
+    ]
+   },
+   {
+    "name": "Coconut",
+    "hex": "#eaeff3",
+    "rgb": [
+     226,
+     231,
+     235
+    ]
+   },
+   {
+    "name": "Alabaster",
+    "hex": "#efece5",
+    "rgb": [
+     233,
+     230,
+     223
+    ]
+   },
+   {
+    "name": "Oyster",
+    "hex": "#efeae6",
+    "rgb": [
+     233,
+     228,
+     224
+    ]
+   },
+   {
+    "name": "Mist",
+    "hex": "#eae9e7",
+    "rgb": [
+     229,
+     228,
+     226
+    ]
+   },
+   {
+    "name": "Off White",
+    "hex": "#eaeaea",
+    "rgb": [
+     229,
+     229,
+     229
+    ]
+   },
+   {
+    "name": "Bone",
+    "hex": "#edebde",
+    "rgb": [
+     231,
+     229,
+     217
+    ]
+   },
+   {
+    "name": "Seashell",
+    "hex": "#f0e8db",
+    "rgb": [
+     233,
+     225,
+     213
+    ]
+   },
+   {
+    "name": "Linen",
+    "hex": "#efe6d5",
+    "rgb": [
+     233,
+     224,
+     207
+    ]
+   },
+   {
+    "name": "Eggshell",
+    "hex": "#eae6da",
+    "rgb": [
+     229,
+     225,
+     213
+    ]
+   },
+   {
+    "name": "Antique",
+    "hex": "#e8e5d6",
+    "rgb": [
+     227,
+     224,
+     210
+    ]
+   },
+   {
+    "name": "Chiffon",
+    "hex": "#e1e5d7",
+    "rgb": [
+     221,
+     225,
+     211
+    ]
+   },
+   {
+    "name": "Oatmeal",
+    "hex": "#e2d6c6",
+    "rgb": [
+     222,
+     210,
+     194
+    ]
+   }
+  ]
+ },
+ "log": [
+  "warning: [.WebGL-0x16bc0011b000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x16bc0011b000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x16bc0011b000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x16bc0011b000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+ ]
+}

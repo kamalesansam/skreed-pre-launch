@@ -1,0 +1,245 @@
+{
+ "status": "done",
+ "info": {
+  "calls": 2,
+  "triangles": 180480,
+  "programs": 3,
+  "geometries": 12,
+  "textures": 2,
+  "family": "Stormy Greys",
+  "size": [
+   0.077,
+   0.163,
+   0.0123
+  ],
+  "dpr": 1,
+  "canvas": [
+   1280,
+   800
+  ],
+  "samples": [
+   {
+    "name": "Pale Grey",
+    "hex": "#bbbab8",
+    "rgb": [
+     183,
+     182,
+     180
+    ]
+   },
+   {
+    "name": "Pastel",
+    "hex": "#b8b8b1",
+    "rgb": [
+     180,
+     180,
+     173
+    ]
+   },
+   {
+    "name": "Pearl Grey",
+    "hex": "#b3bab0",
+    "rgb": [
+     175,
+     182,
+     172
+    ]
+   },
+   {
+    "name": "Harbor",
+    "hex": "#a8a9a3",
+    "rgb": [
+     163,
+     164,
+     158
+    ]
+   },
+   {
+    "name": "Silver",
+    "hex": "#acacac",
+    "rgb": [
+     167,
+     167,
+     167
+    ]
+   },
+   {
+    "name": "Dolphin",
+    "hex": "#9d9d9d",
+    "rgb": [
+     152,
+     152,
+     152
+    ]
+   },
+   {
+    "name": "Dove",
+    "hex": "#9c9c9c",
+    "rgb": [
+     151,
+     151,
+     151
+    ]
+   },
+   {
+    "name": "Steel",
+    "hex": "#929292",
+    "rgb": [
+     141,
+     141,
+     141
+    ]
+   },
+   {
+    "name": "Koala",
+    "hex": "#878685",
+    "rgb": [
+     130,
+     129,
+     128
+    ]
+   },
+   {
+    "name": "Ash",
+    "hex": "#848988",
+    "rgb": [
+     127,
+     132,
+     131
+    ]
+   },
+   {
+    "name": "Rhino",
+    "hex": "#788082",
+    "rgb": [
+     115,
+     123,
+     125
+    ]
+   },
+   {
+    "name": "Fog",
+    "hex": "#797474",
+    "rgb": [
+     116,
+     111,
+     111
+    ]
+   },
+   {
+    "name": "Coal",
+    "hex": "#767b89",
+    "rgb": [
+     113,
+     118,
+     132
+    ]
+   },
+   {
+    "name": "Smoke",
+    "hex": "#7d7d7d",
+    "rgb": [
+     120,
+     120,
+     120
+    ]
+   },
+   {
+    "name": "Warm Grey",
+    "hex": "#7d787b",
+    "rgb": [
+     120,
+     115,
+     118
+    ]
+   },
+   {
+    "name": "Shadow",
+    "hex": "#686b6f",
+    "rgb": [
+     98,
+     101,
+     105
+    ]
+   },
+   {
+    "name": "Mouse",
+    "hex": "#696a6d",
+    "rgb": [
+     99,
+     100,
+     103
+    ]
+   },
+   {
+    "name": "Shark",
+    "hex": "#5b6369",
+    "rgb": [
+     84,
+     93,
+     99
+    ]
+   },
+   {
+    "name": "Lava",
+    "hex": "#5e5d61",
+    "rgb": [
+     88,
+     87,
+     91
+    ]
+   },
+   {
+    "name": "Stone",
+    "hex": "#54524d",
+    "rgb": [
+     77,
+     75,
+     69
+    ]
+   },
+   {
+    "name": "Dark Grey",
+    "hex": "#444444",
+    "rgb": [
+     59,
+     59,
+     59
+    ]
+   },
+   {
+    "name": "Iron",
+    "hex": "#43464c",
+    "rgb": [
+     58,
+     61,
+     68
+    ]
+   },
+   {
+    "name": "Graphite",
+    "hex": "#424548",
+    "rgb": [
+     57,
+     60,
+     64
+    ]
+   },
+   {
+    "name": "Charcoal",
+    "hex": "#393f44",
+    "rgb": [
+     47,
+     54,
+     60
+    ]
+   }
+  ]
+ },
+ "log": [
+  "warning: [.WebGL-0x245c0010f000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x245c0010f000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x245c0010f000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x245c0010f000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+ ]
+}

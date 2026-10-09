@@ -1,0 +1,245 @@
+{
+ "status": "done",
+ "info": {
+  "calls": 2,
+  "triangles": 180480,
+  "programs": 3,
+  "geometries": 12,
+  "textures": 2,
+  "family": "Blissful Blues",
+  "size": [
+   0.077,
+   0.163,
+   0.0123
+  ],
+  "dpr": 1,
+  "canvas": [
+   1280,
+   800
+  ],
+  "samples": [
+   {
+    "name": "Electric",
+    "hex": "#76f2fc",
+    "rgb": [
+     111,
+     229,
+     239
+    ]
+   },
+   {
+    "name": "Baby Blue",
+    "hex": "#8be2fb",
+    "rgb": [
+     131,
+     214,
+     238
+    ]
+   },
+   {
+    "name": "Powder",
+    "hex": "#9adeee",
+    "rgb": [
+     149,
+     216,
+     232
+    ]
+   },
+   {
+    "name": "Turquoise",
+    "hex": "#00e8d9",
+    "rgb": [
+     16,
+     229,
+     215
+    ]
+   },
+   {
+    "name": "Aqua",
+    "hex": "#04dcf7",
+    "rgb": [
+     29,
+     212,
+     238
+    ]
+   },
+   {
+    "name": "Aquamarine",
+    "hex": "#3ef9da",
+    "rgb": [
+     56,
+     238,
+     208
+    ]
+   },
+   {
+    "name": "Cyan",
+    "hex": "#01ffff",
+    "rgb": [
+     36,
+     240,
+     240
+    ]
+   },
+   {
+    "name": "Sky",
+    "hex": "#08bcf4",
+    "rgb": [
+     26,
+     183,
+     236
+    ]
+   },
+   {
+    "name": "Ocean",
+    "hex": "#1494e4",
+    "rgb": [
+     21,
+     146,
+     225
+    ]
+   },
+   {
+    "name": "Azure",
+    "hex": "#007dd3",
+    "rgb": [
+     15,
+     125,
+     209
+    ]
+   },
+   {
+    "name": "Cobalt",
+    "hex": "#1040ca",
+    "rgb": [
+     20,
+     64,
+     200
+    ]
+   },
+   {
+    "name": "Royal",
+    "hex": "#0040c1",
+    "rgb": [
+     15,
+     66,
+     191
+    ]
+   },
+   {
+    "name": "Egyptian",
+    "hex": "#0036ac",
+    "rgb": [
+     15,
+     57,
+     171
+    ]
+   },
+   {
+    "name": "Indigo",
+    "hex": "#1919a4",
+    "rgb": [
+     23,
+     23,
+     162
+    ]
+   },
+   {
+    "name": "Sapphire",
+    "hex": "#002c84",
+    "rgb": [
+     15,
+     48,
+     132
+    ]
+   },
+   {
+    "name": "Blueberry",
+    "hex": "#1d1968",
+    "rgb": [
+     27,
+     23,
+     102
+    ]
+   },
+   {
+    "name": "Classic",
+    "hex": "#074882",
+    "rgb": [
+     17,
+     73,
+     129
+    ]
+   },
+   {
+    "name": "Teal",
+    "hex": "#00818e",
+    "rgb": [
+     15,
+     129,
+     141
+    ]
+   },
+   {
+    "name": "Pigeon",
+    "hex": "#5c6f92",
+    "rgb": [
+     85,
+     105,
+     141
+    ]
+   },
+   {
+    "name": "Stone",
+    "hex": "#608592",
+    "rgb": [
+     90,
+     128,
+     141
+    ]
+   },
+   {
+    "name": "Prussian",
+    "hex": "#2f3f5c",
+    "rgb": [
+     38,
+     56,
+     87
+    ]
+   },
+   {
+    "name": "Navy",
+    "hex": "#0e305b",
+    "rgb": [
+     19,
+     49,
+     91
+    ]
+   },
+   {
+    "name": "Space",
+    "hex": "#15284f",
+    "rgb": [
+     21,
+     40,
+     78
+    ]
+   },
+   {
+    "name": "Midnight",
+    "hex": "#0e1442",
+    "rgb": [
+     19,
+     24,
+     66
+    ]
+   }
+  ]
+ },
+ "log": [
+  "warning: [.WebGL-0x25440013b000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x25440013b000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x25440013b000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x25440013b000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+ ]
+}

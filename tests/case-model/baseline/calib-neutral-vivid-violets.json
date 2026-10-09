@@ -1,0 +1,245 @@
+{
+ "status": "done",
+ "info": {
+  "calls": 2,
+  "triangles": 180480,
+  "programs": 3,
+  "geometries": 12,
+  "textures": 2,
+  "family": "Vivid Violets",
+  "size": [
+   0.077,
+   0.163,
+   0.0123
+  ],
+  "dpr": 1,
+  "canvas": [
+   1280,
+   800
+  ],
+  "samples": [
+   {
+    "name": "Light Violet",
+    "hex": "#f5e3fb",
+    "rgb": [
+     233,
+     215,
+     238
+    ]
+   },
+   {
+    "name": "Pale Violet",
+    "hex": "#ecd0f9",
+    "rgb": [
+     225,
+     198,
+     238
+    ]
+   },
+   {
+    "name": "Mauve",
+    "hex": "#dfa4f8",
+    "rgb": [
+     213,
+     156,
+     237
+    ]
+   },
+   {
+    "name": "Pastel",
+    "hex": "#d7b9ed",
+    "rgb": [
+     210,
+     180,
+     231
+    ]
+   },
+   {
+    "name": "Lilac",
+    "hex": "#c988c8",
+    "rgb": [
+     197,
+     131,
+     196
+    ]
+   },
+   {
+    "name": "Lavender",
+    "hex": "#986db5",
+    "rgb": [
+     147,
+     103,
+     177
+    ]
+   },
+   {
+    "name": "Amethyst",
+    "hex": "#8554d1",
+    "rgb": [
+     128,
+     77,
+     205
+    ]
+   },
+   {
+    "name": "Iris",
+    "hex": "#6947d1",
+    "rgb": [
+     99,
+     63,
+     205
+    ]
+   },
+   {
+    "name": "Psychedelic",
+    "hex": "#ae00ff",
+    "rgb": [
+     166,
+     36,
+     240
+    ]
+   },
+   {
+    "name": "Bright Violet",
+    "hex": "#b944ea",
+    "rgb": [
+     180,
+     59,
+     229
+    ]
+   },
+   {
+    "name": "Classic Violet",
+    "hex": "#9010bf",
+    "rgb": [
+     143,
+     20,
+     189
+    ]
+   },
+   {
+    "name": "Orchid",
+    "hex": "#911489",
+    "rgb": [
+     143,
+     21,
+     135
+    ]
+   },
+   {
+    "name": "Wildberry",
+    "hex": "#a04d95",
+    "rgb": [
+     155,
+     69,
+     144
+    ]
+   },
+   {
+    "name": "Mulberry",
+    "hex": "#742665",
+    "rgb": [
+     113,
+     31,
+     98
+    ]
+   },
+   {
+    "name": "Grape",
+    "hex": "#5f114f",
+    "rgb": [
+     94,
+     20,
+     79
+    ]
+   },
+   {
+    "name": "Fig",
+    "hex": "#671e67",
+    "rgb": [
+     101,
+     26,
+     101
+    ]
+   },
+   {
+    "name": "Ultra Violet",
+    "hex": "#4a108b",
+    "rgb": [
+     74,
+     20,
+     138
+    ]
+   },
+   {
+    "name": "Indigo",
+    "hex": "#39178f",
+    "rgb": [
+     56,
+     22,
+     141
+    ]
+   },
+   {
+    "name": "Royal",
+    "hex": "#492376",
+    "rgb": [
+     70,
+     29,
+     115
+    ]
+   },
+   {
+    "name": "Midnight",
+    "hex": "#492376",
+    "rgb": [
+     70,
+     29,
+     115
+    ]
+   },
+   {
+    "name": "Elderberry",
+    "hex": "#391265",
+    "rgb": [
+     57,
+     20,
+     100
+    ]
+   },
+   {
+    "name": "Plum",
+    "hex": "#4e0973",
+    "rgb": [
+     79,
+     17,
+     114
+    ]
+   },
+   {
+    "name": "Wine",
+    "hex": "#572048",
+    "rgb": [
+     84,
+     27,
+     69
+    ]
+   },
+   {
+    "name": "Eggplant",
+    "hex": "#4a154d",
+    "rgb": [
+     73,
+     21,
+     76
+    ]
+   }
+  ]
+ },
+ "log": [
+  "warning: [.WebGL-0x364400127000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x364400127000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x364400127000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x364400127000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+ ]
+}

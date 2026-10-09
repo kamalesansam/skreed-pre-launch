@@ -1,0 +1,245 @@
+{
+ "status": "done",
+ "info": {
+  "calls": 2,
+  "triangles": 180480,
+  "programs": 3,
+  "geometries": 12,
+  "textures": 2,
+  "family": "Playful Pinks",
+  "size": [
+   0.077,
+   0.163,
+   0.0123
+  ],
+  "dpr": 1,
+  "canvas": [
+   1280,
+   800
+  ],
+  "samples": [
+   {
+    "name": "Light Pink",
+    "hex": "#ffd2e9",
+    "rgb": [
+     240,
+     197,
+     219
+    ]
+   },
+   {
+    "name": "Pastel",
+    "hex": "#f2bdcd",
+    "rgb": [
+     234,
+     182,
+     198
+    ]
+   },
+   {
+    "name": "Blush",
+    "hex": "#f4b6bb",
+    "rgb": [
+     235,
+     175,
+     180
+    ]
+   },
+   {
+    "name": "Peachy",
+    "hex": "#ffbcac",
+    "rgb": [
+     240,
+     177,
+     162
+    ]
+   },
+   {
+    "name": "Baby Pink",
+    "hex": "#ffacd0",
+    "rgb": [
+     240,
+     162,
+     195
+    ]
+   },
+   {
+    "name": "Ballerina",
+    "hex": "#efa3af",
+    "rgb": [
+     233,
+     157,
+     169
+    ]
+   },
+   {
+    "name": "Rose Pink",
+    "hex": "#f5a2b4",
+    "rgb": [
+     236,
+     155,
+     173
+    ]
+   },
+   {
+    "name": "Flamingo",
+    "hex": "#fc92b6",
+    "rgb": [
+     239,
+     138,
+     172
+    ]
+   },
+   {
+    "name": "Bubblegum",
+    "hex": "#f086c6",
+    "rgb": [
+     233,
+     128,
+     192
+    ]
+   },
+   {
+    "name": "Orchid",
+    "hex": "#e881b9",
+    "rgb": [
+     227,
+     124,
+     180
+    ]
+   },
+   {
+    "name": "Crepe",
+    "hex": "#cf91a8",
+    "rgb": [
+     203,
+     140,
+     163
+    ]
+   },
+   {
+    "name": "Salmon Pink",
+    "hex": "#ff6a64",
+    "rgb": [
+     240,
+     99,
+     94
+    ]
+   },
+   {
+    "name": "Berry",
+    "hex": "#ff6090",
+    "rgb": [
+     240,
+     90,
+     135
+    ]
+   },
+   {
+    "name": "Rouge",
+    "hex": "#f2638f",
+    "rgb": [
+     234,
+     93,
+     137
+    ]
+   },
+   {
+    "name": "Punch",
+    "hex": "#ef4b7e",
+    "rgb": [
+     233,
+     67,
+     120
+    ]
+   },
+   {
+    "name": "Doll",
+    "hex": "#e64c95",
+    "rgb": [
+     226,
+     68,
+     144
+    ]
+   },
+   {
+    "name": "Gumball",
+    "hex": "#ff5fff",
+    "rgb": [
+     240,
+     89,
+     240
+    ]
+   },
+   {
+    "name": "Neon",
+    "hex": "#ee27fe",
+    "rgb": [
+     225,
+     43,
+     240
+    ]
+   },
+   {
+    "name": "Peony",
+    "hex": "#ea0eac",
+    "rgb": [
+     231,
+     20,
+     170
+    ]
+   },
+   {
+    "name": "Bright Pink",
+    "hex": "#fe0094",
+    "rgb": [
+     240,
+     35,
+     142
+    ]
+   },
+   {
+    "name": "Watermelon",
+    "hex": "#fa465f",
+    "rgb": [
+     238,
+     64,
+     89
+    ]
+   },
+   {
+    "name": "Camellia",
+    "hex": "#e02693",
+    "rgb": [
+     221,
+     31,
+     144
+    ]
+   },
+   {
+    "name": "Magenta",
+    "hex": "#ed008c",
+    "rgb": [
+     233,
+     19,
+     139
+    ]
+   },
+   {
+    "name": "Fuchsia",
+    "hex": "#e0028d",
+    "rgb": [
+     222,
+     16,
+     140
+    ]
+   }
+  ]
+ },
+ "log": [
+  "warning: [.WebGL-0x2b040010f000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x2b040010f000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x2b040010f000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x2b040010f000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+ ]
+}

@@ -1,0 +1,245 @@
+{
+ "status": "done",
+ "info": {
+  "calls": 2,
+  "triangles": 180480,
+  "programs": 3,
+  "geometries": 12,
+  "textures": 2,
+  "family": "Mellow Yellows",
+  "size": [
+   0.077,
+   0.163,
+   0.0123
+  ],
+  "dpr": 1,
+  "canvas": [
+   1280,
+   800
+  ],
+  "samples": [
+   {
+    "name": "Sunbeam",
+    "hex": "#fff164",
+    "rgb": [
+     240,
+     227,
+     94
+    ]
+   },
+   {
+    "name": "Pale Yellow",
+    "hex": "#fbf9c6",
+    "rgb": [
+     238,
+     236,
+     188
+    ]
+   },
+   {
+    "name": "Lemonade",
+    "hex": "#f4ef94",
+    "rgb": [
+     235,
+     231,
+     141
+    ]
+   },
+   {
+    "name": "Pastel",
+    "hex": "#f5eda5",
+    "rgb": [
+     236,
+     228,
+     158
+    ]
+   },
+   {
+    "name": "Custard",
+    "hex": "#edd87b",
+    "rgb": [
+     231,
+     211,
+     117
+    ]
+   },
+   {
+    "name": "Buttercup",
+    "hex": "#f4dc6e",
+    "rgb": [
+     235,
+     212,
+     104
+    ]
+   },
+   {
+    "name": "Chamomile",
+    "hex": "#f0d979",
+    "rgb": [
+     233,
+     211,
+     115
+    ]
+   },
+   {
+    "name": "Canary",
+    "hex": "#f4e125",
+    "rgb": [
+     236,
+     217,
+     35
+    ]
+   },
+   {
+    "name": "Limoncello",
+    "hex": "#f4f420",
+    "rgb": [
+     236,
+     236,
+     33
+    ]
+   },
+   {
+    "name": "Daffodil",
+    "hex": "#f5d914",
+    "rgb": [
+     237,
+     210,
+     30
+    ]
+   },
+   {
+    "name": "Sunflower",
+    "hex": "#f4d41d",
+    "rgb": [
+     236,
+     205,
+     32
+    ]
+   },
+   {
+    "name": "Dandelion",
+    "hex": "#f5d71d",
+    "rgb": [
+     236,
+     208,
+     32
+    ]
+   },
+   {
+    "name": "Bright",
+    "hex": "#fef200",
+    "rgb": [
+     240,
+     229,
+     35
+    ]
+   },
+   {
+    "name": "Lemon",
+    "hex": "#f4ef55",
+    "rgb": [
+     235,
+     231,
+     78
+    ]
+   },
+   {
+    "name": "Mimosa",
+    "hex": "#f2d031",
+    "rgb": [
+     235,
+     201,
+     42
+    ]
+   },
+   {
+    "name": "Sunshine",
+    "hex": "#fdce4c",
+    "rgb": [
+     239,
+     194,
+     71
+    ]
+   },
+   {
+    "name": "Tuscany",
+    "hex": "#f9c83d",
+    "rgb": [
+     238,
+     191,
+     55
+    ]
+   },
+   {
+    "name": "Golden",
+    "hex": "#f7bc34",
+    "rgb": [
+     237,
+     180,
+     47
+    ]
+   },
+   {
+    "name": "Banana",
+    "hex": "#f0c529",
+    "rgb": [
+     234,
+     192,
+     36
+    ]
+   },
+   {
+    "name": "Bumblebee",
+    "hex": "#ffc239",
+    "rgb": [
+     240,
+     182,
+     54
+    ]
+   },
+   {
+    "name": "Mustard",
+    "hex": "#eaa927",
+    "rgb": [
+     230,
+     165,
+     32
+    ]
+   },
+   {
+    "name": "Citrine",
+    "hex": "#dccc53",
+    "rgb": [
+     216,
+     200,
+     76
+    ]
+   },
+   {
+    "name": "Neon",
+    "hex": "#d6f430",
+    "rgb": [
+     206,
+     236,
+     42
+    ]
+   },
+   {
+    "name": "Dijon",
+    "hex": "#cea146",
+    "rgb": [
+     202,
+     156,
+     61
+    ]
+   }
+  ]
+ },
+ "log": [
+  "warning: [.WebGL-0x14b400117000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x14b400117000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x14b400117000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x14b400117000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+ ]
+}

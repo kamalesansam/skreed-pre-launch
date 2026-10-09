@@ -1,0 +1,65 @@
+{
+  "_about": "Contract for the one phone case model behind the ten family pages (24 cases per page, 240 shades). Read with docs/specs/case-model-class.md section 15. scripts/case-model/study/verify-case.mjs enforces the 'check' items (thresholds in its T object; the port changes listed in case-model-class.md section 2 bring B14 and --optimise in line with this file). Revised 2026-10-09 from the study's proposal: compression is KHR_mesh_quantization only, because the site CSP (hero-architecture.md 12.3) allows no 'wasm-unsafe-eval' and the meshopt and Draco decoders compile WebAssembly.",
+  "deliverable": {
+    "preferred": "one .glb (glTF 2.0 binary), plus the source file (.blend or .fbx) for later fixes, plus the licence for web use",
+    "accepted": "glTF with .bin and textures; FBX, OBJ, USDZ or STEP are converted in Blender before intake (the verifier fails them with a note)",
+    "check": "A1-A4"
+  },
+  "space": {
+    "units": "metres, real size (a 6.3 in phone case is about 0.077 x 0.163 x 0.012)",
+    "up": "+Y is the long axis, thickness on Z, the back (camera side) faces +Z, camera cut-out at the top left when you look at the back",
+    "origin": "bounding-box centre",
+    "transforms": "applied (identity on mesh nodes), no negative or non-uniform scale",
+    "check": "B2-B5"
+  },
+  "parts": {
+    "Case_Body": { "material": "Shade", "role": "everything that takes the shade: back, walls, lip, buttons. One primitive", "required": true },
+    "Case_Accent": { "material": "Accent", "role": "camera ring or lens surround, MagSafe ring on MagTough; one fixed colour unless the real product matches the shade", "required": false },
+    "Device": { "material": "Device", "role": "a simplified phone: dark glass back visible through the cut-out and the lens bumps, as one primitive (lenses included, no separate lens material)", "required": "strongly recommended", "triangles": "<= 2,000" },
+    "max": 4,
+    "check": "B6, B6b",
+    "why": "each part is one InstancedMesh per LOD, so all 24 cases cost 2 draw calls per part. Measured on the stand-in: 2 parts x 24 instances = 2 draw calls, against ciao's 28 (desktop) and 13 (phone)"
+  },
+  "triangles": {
+    "lod0": "8,000 to 10,000 per case (the front case at full height)",
+    "lod1": "2,500 to 3,800 per case (the 24-up row); generated with meshopt's simplifier at intake if not supplied",
+    "silhouette": "outline corner (about 10 to 12 mm radius): 24 to 32 segments per 90 degrees at LOD0, 8 at LOD1; edge round profile 6 to 8 segments at LOD0, 3 to 4 at LOD1, within the triangle caps above",
+    "check": "B7 (pass <= 20,000, warn <= 60,000, fail above); the caps above are the shipping targets",
+    "why": "the caps follow from the raw byte budgets in 'size': quantised without UVs the stand-in costs about 15.3 B per triangle at LOD0 (7,520 triangles, 114,912 B) and 15.6 B at LOD1 (3,770 triangles, 58,724 B), tests/case-model/baseline/model-size-standin.txt"
+  },
+  "materials": {
+    "Shade": "pbrMetallicRoughness, baseColorFactor 1,1,1, no baseColorTexture, no COLOR_0, metallic 0, roughness about 0.6, alphaMode OPAQUE, doubleSided false. The shade is applied in code per instance (InstancedMesh.setColorAt from the hex in shades-240.json)",
+    "finishes": "not in the file. Matte = MeshStandardMaterial roughness 0.55 to 0.7; gloss = roughness 0.12 to 0.2 (low tier) or MeshPhysicalMaterial clearcoat 1, clearcoatRoughness 0.03 to 0.08 (high tier). Calibrated against the real case in daylight before launch",
+    "Sylvr": "same body, metalness 1 and a lower roughness; a parameter, not a file (out of scope for v1)",
+    "check": "B8",
+    "why": "a baked colour or AO in baseColor multiplies the hex and breaks the 240-shade match. Under Neutral tone mapping a matte body reproduced all 240 catalog hexes at median dE00 1.65, max 3.63 (ACES median 6.04, max 11.48; AgX median 10.5). tests/case-model/baseline/calib-summary.json"
+  },
+  "uv": {
+    "sets": "one (TEXCOORD_0), 0 to 1, non-overlapping on every visible outer surface, back plate the largest island (>= 40% of the square), uniform texel density",
+    "check": "B9 (warns on > 5% overlapping texels or values outside 0 to 1)",
+    "why": "needed only for the optional shared maps; the intake drops TEXCOORD_0 from the shipped LODs when no map is used, but the supplier still delivers clean UVs so maps can be added without a remodel"
+  },
+  "topology": {
+    "rules": "closed solid shell (no single-sided planes), outward normals consistent with winding, hard edges split where the product has a crisp edge (cut-out lips), smooth elsewhere, no degenerate triangles, no long slivers on curved areas",
+    "check": "B10 (fail on missing normals or > 5% winding and normal disagreement; warn on open, non-manifold or degenerate edges)"
+  },
+  "textures": {
+    "colour": "none, ever. 240 shades = 240 hex strings",
+    "optional shared maps": "at most one ORM (occlusion, roughness, metal) and one normal map at 1024 px or less, WebP or AVIF, 150 KB or less together, used by every shade",
+    "notEmbedded": "maps ship as separate files loaded by our code, never embedded in the GLB: GLTFLoader decodes embedded images through blob: URLs, which the site CSP (img-src 'self' data:, connect-src 'self') blocks",
+    "notKtx2": "KTX2 needs the Basis transcoder: 245 KB gzip wasm plus 15.7 KB js in three r165, more than the whole model budget, and wasm is blocked by the CSP",
+    "check": "B12"
+  },
+  "compression": {
+    "use": "KHR_mesh_quantization only (position 14 bit, normal 10 bit, uv 12 bit), read natively by three's GLTFLoader with no decoder",
+    "notMeshopt": "EXT_meshopt_compression needs MeshoptDecoder, which compiles WebAssembly; the site CSP has no 'wasm-unsafe-eval', so every load would fail. Measured cost of the choice on the stand-in: LOD0 114,912 B raw against 48,624 B with meshopt (36,145 B against 26,651 B brotli)",
+    "notDraco": "Draco's three r165 glTF decoder is 63 KB gzip wasm plus 11.5 KB wrapper plus 4.2 KB DRACOLoader, also wasm",
+    "check": "B14 (port: pass when LOD0 <= 150 KB raw and LOD1 <= 60 KB raw after quantisation)"
+  },
+  "size": {
+    "targets": "LOD0 <= 150 KB raw, LOD1 <= 60 KB raw, optional maps <= 150 KB, environment 0 KB (RoomEnvironment). Budgeted as raw bytes until a deploy shows a Content-Encoding header on .glb responses; if Cloudflare compresses model/gltf-binary (by default or through a Compression Rule) the brotli figures apply and the triangle caps can return to the study's 15,000 and 5,000",
+    "standin": "7,520 triangles: float 148,572 B, quantised 114,912 B (64,443 B gzip, 36,145 B brotli); LOD1 3,770 triangles quantised 58,724 B (35,288 B gzip, 23,011 B brotli); all without UVs"
+  },
+  "strip": "animations, skins, morph targets, cameras, lights, unused UV sets, vertex colours, hidden helper objects, embedded images",
+  "check13": "B13"
+}

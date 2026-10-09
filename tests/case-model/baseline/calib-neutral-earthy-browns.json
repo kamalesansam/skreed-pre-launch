@@ -1,0 +1,245 @@
+{
+ "status": "done",
+ "info": {
+  "calls": 2,
+  "triangles": 180480,
+  "programs": 3,
+  "geometries": 12,
+  "textures": 2,
+  "family": "Earthy Browns",
+  "size": [
+   0.077,
+   0.163,
+   0.0123
+  ],
+  "dpr": 1,
+  "canvas": [
+   1280,
+   800
+  ],
+  "samples": [
+   {
+    "name": "Almond",
+    "hex": "#e8d2bd",
+    "rgb": [
+     227,
+     206,
+     184
+    ]
+   },
+   {
+    "name": "Sand",
+    "hex": "#e1c39f",
+    "rgb": [
+     221,
+     191,
+     154
+    ]
+   },
+   {
+    "name": "Beige",
+    "hex": "#EAD8AB",
+    "rgb": [
+     229,
+     211,
+     166
+    ]
+   },
+   {
+    "name": "Desert",
+    "hex": "#c6a884",
+    "rgb": [
+     194,
+     163,
+     127
+    ]
+   },
+   {
+    "name": "Rosy",
+    "hex": "#c29995",
+    "rgb": [
+     190,
+     148,
+     144
+    ]
+   },
+   {
+    "name": "Light Brown",
+    "hex": "#c3a082",
+    "rgb": [
+     191,
+     155,
+     125
+    ]
+   },
+   {
+    "name": "Cinnamon",
+    "hex": "#ba7237",
+    "rgb": [
+     182,
+     109,
+     45
+    ]
+   },
+   {
+    "name": "Peanut",
+    "hex": "#c88737",
+    "rgb": [
+     196,
+     130,
+     45
+    ]
+   },
+   {
+    "name": "Peru",
+    "hex": "#d08647",
+    "rgb": [
+     204,
+     129,
+     63
+    ]
+   },
+   {
+    "name": "Cider",
+    "hex": "#b37840",
+    "rgb": [
+     175,
+     115,
+     55
+    ]
+   },
+   {
+    "name": "Bronze",
+    "hex": "#a95c26",
+    "rgb": [
+     166,
+     89,
+     31
+    ]
+   },
+   {
+    "name": "Cocoa",
+    "hex": "#81553a",
+    "rgb": [
+     124,
+     78,
+     48
+    ]
+   },
+   {
+    "name": "Coffee",
+    "hex": "#7a583f",
+    "rgb": [
+     117,
+     81,
+     54
+    ]
+   },
+   {
+    "name": "Wood",
+    "hex": "#7d5d44",
+    "rgb": [
+     120,
+     87,
+     59
+    ]
+   },
+   {
+    "name": "Chocolate",
+    "hex": "#7f5229",
+    "rgb": [
+     124,
+     78,
+     33
+    ]
+   },
+   {
+    "name": "Brick",
+    "hex": "#7c2b18",
+    "rgb": [
+     122,
+     42,
+     23
+    ]
+   },
+   {
+    "name": "Russet",
+    "hex": "#74421f",
+    "rgb": [
+     114,
+     63,
+     26
+    ]
+   },
+   {
+    "name": "Taupe",
+    "hex": "#896950",
+    "rgb": [
+     132,
+     99,
+     73
+    ]
+   },
+   {
+    "name": "Wenge",
+    "hex": "#5c4d4a",
+    "rgb": [
+     85,
+     69,
+     66
+    ]
+   },
+   {
+    "name": "Chestnut",
+    "hex": "#5d2b24",
+    "rgb": [
+     90,
+     38,
+     30
+    ]
+   },
+   {
+    "name": "Walnut",
+    "hex": "#59402c",
+    "rgb": [
+     85,
+     58,
+     35
+    ]
+   },
+   {
+    "name": "Brunette",
+    "hex": "#543733",
+    "rgb": [
+     78,
+     46,
+     41
+    ]
+   },
+   {
+    "name": "Dark Chocolate",
+    "hex": "#4d301e",
+    "rgb": [
+     75,
+     45,
+     26
+    ]
+   },
+   {
+    "name": "Umber",
+    "hex": "#662917",
+    "rgb": [
+     101,
+     40,
+     22
+    ]
+   }
+  ]
+ },
+ "log": [
+  "warning: [.WebGL-0x397c00113000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x397c00113000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x397c00113000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x397c00113000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+ ]
+}

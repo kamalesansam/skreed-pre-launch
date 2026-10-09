@@ -1,0 +1,245 @@
+{
+ "status": "done",
+ "info": {
+  "calls": 2,
+  "triangles": 180480,
+  "programs": 3,
+  "geometries": 12,
+  "textures": 2,
+  "family": "Blushing Corals",
+  "size": [
+   0.077,
+   0.163,
+   0.0123
+  ],
+  "dpr": 1,
+  "canvas": [
+   1280,
+   800
+  ],
+  "samples": [
+   {
+    "name": "Bellini",
+    "hex": "#ffb98a",
+    "rgb": [
+     240,
+     174,
+     130
+    ]
+   },
+   {
+    "name": "Apricot",
+    "hex": "#faab6f",
+    "rgb": [
+     238,
+     162,
+     104
+    ]
+   },
+   {
+    "name": "Melon",
+    "hex": "#fb934b",
+    "rgb": [
+     238,
+     139,
+     69
+    ]
+   },
+   {
+    "name": "Mango",
+    "hex": "#ff9f40",
+    "rgb": [
+     240,
+     149,
+     60
+    ]
+   },
+   {
+    "name": "Bright Coral",
+    "hex": "#ff961a",
+    "rgb": [
+     240,
+     143,
+     39
+    ]
+   },
+   {
+    "name": "True Coral",
+    "hex": "#ff815e",
+    "rgb": [
+     240,
+     121,
+     88
+    ]
+   },
+   {
+    "name": "Fire",
+    "hex": "#ff7c22",
+    "rgb": [
+     240,
+     119,
+     42
+    ]
+   },
+   {
+    "name": "Neon",
+    "hex": "#ff7901",
+    "rgb": [
+     240,
+     118,
+     36
+    ]
+   },
+   {
+    "name": "Clementine",
+    "hex": "#f78628",
+    "rgb": [
+     237,
+     129,
+     39
+    ]
+   },
+   {
+    "name": "Orange Peel",
+    "hex": "#f1891f",
+    "rgb": [
+     234,
+     133,
+     31
+    ]
+   },
+   {
+    "name": "Sunset",
+    "hex": "#ef9721",
+    "rgb": [
+     233,
+     147,
+     30
+    ]
+   },
+   {
+    "name": "Tangerine",
+    "hex": "#ea821a",
+    "rgb": [
+     230,
+     128,
+     25
+    ]
+   },
+   {
+    "name": "Amber",
+    "hex": "#fcb627",
+    "rgb": [
+     239,
+     173,
+     42
+    ]
+   },
+   {
+    "name": "Honey",
+    "hex": "#e5811f",
+    "rgb": [
+     226,
+     127,
+     26
+    ]
+   },
+   {
+    "name": "Tangelo",
+    "hex": "#f67622",
+    "rgb": [
+     237,
+     114,
+     35
+    ]
+   },
+   {
+    "name": "Pumpkin",
+    "hex": "#f0652f",
+    "rgb": [
+     234,
+     96,
+     40
+    ]
+   },
+   {
+    "name": "Marmalade",
+    "hex": "#e85728",
+    "rgb": [
+     228,
+     83,
+     33
+    ]
+   },
+   {
+    "name": "Saffron",
+    "hex": "#e67300",
+    "rgb": [
+     228,
+     115,
+     15
+    ]
+   },
+   {
+    "name": "Autumn",
+    "hex": "#e56228",
+    "rgb": [
+     225,
+     94,
+     32
+    ]
+   },
+   {
+    "name": "Persian",
+    "hex": "#d48c5b",
+    "rgb": [
+     208,
+     135,
+     84
+    ]
+   },
+   {
+    "name": "Clay",
+    "hex": "#c17956",
+    "rgb": [
+     189,
+     116,
+     79
+    ]
+   },
+   {
+    "name": "Maple",
+    "hex": "#bd5816",
+    "rgb": [
+     187,
+     87,
+     22
+    ]
+   },
+   {
+    "name": "Ginger",
+    "hex": "#b04a18",
+    "rgb": [
+     174,
+     73,
+     23
+    ]
+   },
+   {
+    "name": "Rust",
+    "hex": "#af410b",
+    "rgb": [
+     173,
+     66,
+     18
+    ]
+   }
+  ]
+ },
+ "log": [
+  "warning: [.WebGL-0x16c400117000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x16c400117000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x16c400117000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x16c400117000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+ ]
+}

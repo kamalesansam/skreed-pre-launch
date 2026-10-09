@@ -1,0 +1,24 @@
+prune: Removed types... Accessor (2)
+lod0 float (as exported)                 {"bytes":148572,"gzip":87648,"brotli":52595,"triangles":7520,"extensions":[]}
+prune: Removed types... Accessor (6)
+prune: Removed types... Accessor (2)
+lod0 quantise only                       {"bytes":114912,"gzip":64443,"brotli":36145,"triangles":7520,"extensions":["KHR_mesh_quantization"]}
+prune: Removed types... Accessor (6)
+lod0 quantise only, no uv                {"bytes":114912,"gzip":64443,"brotli":36145,"triangles":7520,"extensions":["KHR_mesh_quantization"]}
+prune: Removed types... Accessor (8)
+prune: Removed types... Accessor (6)
+prune: Removed types... Accessor (8)
+prune: Removed types... Accessor (6)
+prune: Removed types... Accessor (2)
+lod0 meshopt                             {"bytes":48624,"gzip":28936,"brotli":26651,"triangles":7520,"extensions":["KHR_mesh_quantization","EXT_meshopt_compression"]}
+prune: Removed types... Accessor (6)
+prune: Removed types... Accessor (2)
+lod1 (ratio 0.5) quantise only           {"bytes":58724,"gzip":35288,"brotli":23011,"triangles":3770,"extensions":["KHR_mesh_quantization"]}
+prune: Removed types... Accessor (6)
+lod1 (ratio 0.5) quantise only, no uv    {"bytes":58724,"gzip":35288,"brotli":23011,"triangles":3770,"extensions":["KHR_mesh_quantization"]}
+prune: Removed types... Accessor (8)
+prune: Removed types... Accessor (6)
+prune: Removed types... Accessor (8)
+prune: Removed types... Accessor (6)
+prune: Removed types... Accessor (2)
+lod1 (ratio 0.5) meshopt                 {"bytes":28780,"gzip":21851,"brotli":19835,"triangles":3770,"extensions":["KHR_mesh_quantization","EXT_meshopt_compression"]}

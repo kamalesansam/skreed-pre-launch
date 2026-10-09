@@ -1,0 +1,245 @@
+{
+ "status": "done",
+ "info": {
+  "calls": 2,
+  "triangles": 180480,
+  "programs": 3,
+  "geometries": 12,
+  "textures": 2,
+  "family": "Go Green",
+  "size": [
+   0.077,
+   0.163,
+   0.0123
+  ],
+  "dpr": 1,
+  "canvas": [
+   1280,
+   800
+  ],
+  "samples": [
+   {
+    "name": "Light Green",
+    "hex": "#e3f7ba",
+    "rgb": [
+     217,
+     237,
+     178
+    ]
+   },
+   {
+    "name": "Green Tea",
+    "hex": "#caed91",
+    "rgb": [
+     197,
+     231,
+     140
+    ]
+   },
+   {
+    "name": "Pear",
+    "hex": "#c7dd4a",
+    "rgb": [
+     195,
+     217,
+     66
+    ]
+   },
+   {
+    "name": "Pastel",
+    "hex": "#baeaa0",
+    "rgb": [
+     181,
+     229,
+     155
+    ]
+   },
+   {
+    "name": "Mint",
+    "hex": "#6be5b4",
+    "rgb": [
+     101,
+     225,
+     176
+    ]
+   },
+   {
+    "name": "Neon",
+    "hex": "#26ff00",
+    "rgb": [
+     52,
+     240,
+     36
+    ]
+   },
+   {
+    "name": "Pistachio",
+    "hex": "#96cc76",
+    "rgb": [
+     145,
+     200,
+     113
+    ]
+   },
+   {
+    "name": "Jade",
+    "hex": "#8ab269",
+    "rgb": [
+     133,
+     174,
+     99
+    ]
+   },
+   {
+    "name": "Sage",
+    "hex": "#96a880",
+    "rgb": [
+     145,
+     163,
+     123
+    ]
+   },
+   {
+    "name": "Lime",
+    "hex": "#6bbc3b",
+    "rgb": [
+     101,
+     184,
+     49
+    ]
+   },
+   {
+    "name": "Green Apple",
+    "hex": "#91b521",
+    "rgb": [
+     142,
+     178,
+     28
+    ]
+   },
+   {
+    "name": "Lawn",
+    "hex": "#4aa325",
+    "rgb": [
+     70,
+     160,
+     30
+    ]
+   },
+   {
+    "name": "Olive",
+    "hex": "#83841e",
+    "rgb": [
+     129,
+     130,
+     26
+    ]
+   },
+   {
+    "name": "Fern",
+    "hex": "#335a01",
+    "rgb": [
+     54,
+     91,
+     15
+    ]
+   },
+   {
+    "name": "Basil",
+    "hex": "#476d3e",
+    "rgb": [
+     63,
+     103,
+     52
+    ]
+   },
+   {
+    "name": "Thyme",
+    "hex": "#717d67",
+    "rgb": [
+     107,
+     120,
+     97
+    ]
+   },
+   {
+    "name": "Khaki",
+    "hex": "#666046",
+    "rgb": [
+     96,
+     90,
+     61
+    ]
+   },
+   {
+    "name": "Persian",
+    "hex": "#19a598",
+    "rgb": [
+     23,
+     163,
+     150
+    ]
+   },
+   {
+    "name": "Teal",
+    "hex": "#05877d",
+    "rgb": [
+     16,
+     134,
+     124
+    ]
+   },
+   {
+    "name": "Emerald",
+    "hex": "#006d48",
+    "rgb": [
+     15,
+     109,
+     74
+    ]
+   },
+   {
+    "name": "Pine",
+    "hex": "#004c16",
+    "rgb": [
+     15,
+     77,
+     30
+    ]
+   },
+   {
+    "name": "Forest",
+    "hex": "#084f3d",
+    "rgb": [
+     17,
+     80,
+     62
+    ]
+   },
+   {
+    "name": "Hunter",
+    "hex": "#063f1e",
+    "rgb": [
+     17,
+     64,
+     34
+    ]
+   },
+   {
+    "name": "Army",
+    "hex": "#434714",
+    "rgb": [
+     66,
+     70,
+     21
+    ]
+   }
+  ]
+ },
+ "log": [
+  "warning: [.WebGL-0x154c0010b000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x154c0010b000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x154c0010b000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+  "warning: [.WebGL-0x154c0010b000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+ ]
+}
