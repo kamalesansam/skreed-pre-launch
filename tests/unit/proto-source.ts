@@ -1,10 +1,13 @@
-// Reads source fragments out of the approved prototype (prototypes/hero-v9/template.html, read-only) for the parity unit
-// tests: the raw text of every GLSL string literal the hero uses, and the source of makeScrollTexture. The port must
-// produce the same strings and the same wipe texture (hero-architecture.md 5.1, "Port rules that keep pixels identical").
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+// Reads source fragments out of the approved prototype, pinned at v9.10 (tests/fixtures/hero-v9.10/template.html,
+// hash-checked by tests/harness/reference.ts), for the parity unit tests and scripts/hero/gen-glsl.mjs: the raw text of
+// every GLSL string literal the hero uses, and the source of makeScrollTexture. The port must produce the same strings
+// and the same wipe texture (hero-architecture.md 5.1, "Port rules that keep pixels identical").
+import { readReferenceText } from '../harness/reference.ts';
 
-export const TEMPLATE = readFileSync(fileURLToPath(new URL('../../prototypes/hero-v9/template.html', import.meta.url)), 'utf8');
+/** template.html of prototype v9.10, the stage 1 reference. */
+export const TEMPLATE = readReferenceText('template.html');
+/** index.html of prototype v9.10 (the built page, data inlined). */
+export const INDEX = readReferenceText('index.html');
 
 /** Reads one JS string or template literal starting at src[i] (a quote or backtick). Returns its raw source text. */
 export function readLiteral(src: string, i: number): string {

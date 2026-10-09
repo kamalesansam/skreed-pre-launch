@@ -6,12 +6,14 @@
 // only if its frames are identical too. REVIEW_SHOTS=1 copies the normal-motion prototype frames and x8 diff maps to
 // docs/specs/screenshots/ (hero-<w>-proto.png, hero-<w>-diff.png).
 // PROTO_CACHE=<dir> keeps the prototype's frame per viewport and mode and reuses it: noise-floor.spec.ts shows the
-// prototype renders the identical frame every time, so one render serves every port run.
+// prototype renders the identical frame every time, so one render serves every port run. The cached file is keyed by the
+// pinned reference's hash (tests/harness/reference.ts), so a frame of any other prototype build is never reused.
 import { test, expect, type Browser } from '@playwright/test';
 import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { SETUPS, launch } from '../harness/browser.ts';
 import { servePrototype, PROTO_URL } from '../harness/prototype.ts';
+import { REF_SHA256 } from '../harness/reference.ts';
 import { freezeBeforeLoad } from '../harness/settle.ts';
 import { captureStage } from '../harness/canvas.ts';
 import { compare } from '../harness/compare.ts';
@@ -45,7 +47,7 @@ for (const vp of VIEWPORTS) for (const mode of MODES) {
     const dir = info.outputPath(); mkdirSync(dir, { recursive: true });
     const reduced = mode !== 'normal';
     const pp = `${dir}/proto.png`;
-    const cache = process.env.PROTO_CACHE ? `${process.env.PROTO_CACHE}/proto-${vp}-${mode}.png` : null;
+    const cache = process.env.PROTO_CACHE ? `${process.env.PROTO_CACHE}/proto-${REF_SHA256['index.html'].slice(0, 12)}-${vp}-${mode}.png` : null;
     if (cache && existsSync(cache)) copyFileSync(cache, pp);
     else {
       expect(await frame(PROTO_URL, setup, reduced, true, pp)).toEqual([]);

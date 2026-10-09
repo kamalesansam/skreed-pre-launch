@@ -1,0 +1,179 @@
+{
+  "about": "Written by scripts/case-model/calibrate.mjs (case-model-class.md 10), never by hand. E, K and the even fill (ambientIntensity) from calibration B on the supplier model, searched so the front case and the fanned row both read at their swatch colours; frozen with the model hash; any change to lighting, materials or model must pass again.",
+  "model": {
+    "lod0": "e4e48720def91f3479a8b133ca0f2da35a07b059a3d10790a94d2aed4a288c6a",
+    "lod1": "462e2dc8e5f7d1cc58f7c61746b56d54468aefc21657a3e62aec3bcda5f12550"
+  },
+  "three": "0.165.0",
+  "environmentIntensity": 0.3,
+  "keyIntensity": 0.25,
+  "ambientIntensity": 2.4,
+  "keyPosition": [
+    -2,
+    3,
+    4
+  ],
+  "matte": {
+    "roughness": 0.62
+  },
+  "glossLow": {
+    "roughness": 0.16
+  },
+  "glossHigh": {
+    "roughness": 0.32,
+    "clearcoatRoughness": 0.06
+  },
+  "measured": {
+    "date": "2026-10-09",
+    "renderer": "Chromium SwiftShader (Playwright 1.56.1)",
+    "A": {
+      "n": 240,
+      "median": 1.63,
+      "p90": 2.8,
+      "max": 3.63,
+      "under2": 0.671,
+      "under5": 1
+    },
+    "B": {
+      "n": 240,
+      "median": 2.47,
+      "p90": 4.16,
+      "max": 5.11,
+      "under2": 0.392,
+      "under5": 0.996
+    },
+    "Bgloss": {
+      "n": 240,
+      "median": 2.05,
+      "p90": 3.93,
+      "max": 6.48,
+      "under2": 0.475,
+      "under5": 0.979
+    },
+    "Bphone": {
+      "n": 240,
+      "median": 2.47,
+      "p90": 4.16,
+      "max": 5.11,
+      "under2": 0.392,
+      "under5": 0.996
+    },
+    "rowLeft": {
+      "n": 240,
+      "median": 2.07,
+      "p90": 3.91,
+      "max": 6.05,
+      "under2": 0.475,
+      "under5": 0.975
+    },
+    "rowRight": {
+      "n": 240,
+      "median": 2.07,
+      "p90": 4.36,
+      "max": 7.15,
+      "under2": 0.483,
+      "under5": 0.933
+    },
+    "glossPeak": 0.685,
+    "rowPredicted": {
+      "1": {
+        "n": 240,
+        "median": 2.07,
+        "p90": 4.36,
+        "max": 7.15,
+        "under2": 0.483,
+        "under5": 0.933
+      },
+      "3": {
+        "n": 240,
+        "median": 2.07,
+        "p90": 4.36,
+        "max": 7.15,
+        "under2": 0.483,
+        "under5": 0.933
+      },
+      "-3": {
+        "n": 240,
+        "median": 2.07,
+        "p90": 3.91,
+        "max": 6.05,
+        "under2": 0.475,
+        "under5": 0.975
+      },
+      "-1": {
+        "n": 240,
+        "median": 2.07,
+        "p90": 3.91,
+        "max": 6.05,
+        "under2": 0.475,
+        "under5": 0.975
+      }
+    },
+    "search": [
+      {
+        "E": 0.3,
+        "K": 0.25,
+        "A": 2.4,
+        "front": 2.5,
+        "frontMax": 5.11,
+        "rowLeft": 2.08,
+        "rowRight": 2.09,
+        "score": 2.49722962967384,
+        "glossPeak": 0.685
+      },
+      {
+        "E": 0.35,
+        "K": 0.25,
+        "A": 2.2,
+        "front": 2.5,
+        "frontMax": 5.46,
+        "rowLeft": 2.37,
+        "rowRight": 2.38,
+        "score": 2.4979461178551583
+      },
+      {
+        "E": 0.3,
+        "K": 0.25,
+        "A": 2.3,
+        "front": 2.24,
+        "frontMax": 4.97,
+        "rowLeft": 2.56,
+        "rowRight": 2.46,
+        "score": 2.5639310966857174
+      },
+      {
+        "E": 0.3,
+        "K": 0.375,
+        "A": 2.3,
+        "front": 2.42,
+        "frontMax": 5.27,
+        "rowLeft": 2.56,
+        "rowRight": 2.14,
+        "score": 2.5639310966857174
+      },
+      {
+        "E": 0.35,
+        "K": 0.375,
+        "A": 2.2,
+        "front": 2.72,
+        "frontMax": 5.94,
+        "rowLeft": 2.37,
+        "rowRight": 2.08,
+        "score": 2.7184510487798073
+      }
+    ],
+    "specGridBest": {
+      "E": 0.6,
+      "K": 0.75,
+      "n": 240,
+      "median": 1.01,
+      "p90": 2.11,
+      "max": 3.8,
+      "under2": 0.871,
+      "under5": 1,
+      "guardMax": 2.64,
+      "rowLeft": 18.45,
+      "rowRight": 14.73
+    }
+  }
+}

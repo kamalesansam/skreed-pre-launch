@@ -36,7 +36,8 @@
     "lod1": "2,500 to 3,800 per case (the 24-up row); generated with meshopt's simplifier at intake if not supplied",
     "silhouette": "outline corner (about 10 to 12 mm radius): 24 to 32 segments per 90 degrees at LOD0, 8 at LOD1; edge round profile 6 to 8 segments at LOD0, 3 to 4 at LOD1, within the triangle caps above",
     "check": "B7 (pass <= 20,000, warn <= 60,000, fail above); the caps above are the shipping targets",
-    "why": "the caps follow from the raw byte budgets in 'size': quantised without UVs the stand-in costs about 15.3 B per triangle at LOD0 (7,520 triangles, 114,912 B) and 15.6 B at LOD1 (3,770 triangles, 58,724 B), tests/case-model/baseline/model-size-standin.txt"
+    "why": "the caps follow from the raw byte budgets in 'size': quantised without UVs the stand-in costs about 15.3 B per triangle at LOD0 (7,520 triangles, 114,912 B) and 15.6 B at LOD1 (3,770 triangles, 58,724 B), tests/case-model/baseline/model-size-standin.txt",
+    "amended": "2026-10-09 (amendment 1): the supplier model ships LOD0 20,348 and LOD1 9,811 triangles; the intake caps are LOD0 24,000 and LOD1 12,000 (C8), with the raw byte budgets unchanged (C9: 150,000 and 60,000 B)."
   },
   "materials": {
     "Shade": "pbrMetallicRoughness, baseColorFactor 1,1,1, no baseColorTexture, no COLOR_0, metallic 0, roughness about 0.6, alphaMode OPAQUE, doubleSided false. The shade is applied in code per instance (InstancedMesh.setColorAt from the hex in shades-240.json)",
@@ -65,7 +66,8 @@
     "use": "KHR_mesh_quantization only (position 14 bit, normal 10 bit, uv 12 bit), read natively by three's GLTFLoader with no decoder",
     "notMeshopt": "EXT_meshopt_compression needs MeshoptDecoder, which compiles WebAssembly; the site CSP has no 'wasm-unsafe-eval', so every load would fail. Measured cost of the choice on the stand-in: LOD0 114,912 B raw against 48,624 B with meshopt (36,145 B against 26,651 B brotli)",
     "notDraco": "Draco's three r165 glTF decoder is 63 KB gzip wasm plus 11.5 KB wrapper plus 4.2 KB DRACOLoader, also wasm",
-    "check": "B14 (port: pass when LOD0 <= 150 KB raw and LOD1 <= 60 KB raw after quantisation)"
+    "check": "B14 (port: pass when LOD0 <= 150 KB raw and LOD1 <= 60 KB raw after quantisation)",
+    "amended": "2026-10-09 (family-page.md decision 16, case-model-class.md amendment 1): EXT_meshopt_compression plus KHR_mesh_quantization is accepted, decoded by meshoptimizer 0.22.0's pure-JS reference decoder vendored at src/scripts/family/three/vendor/ (no WebAssembly, zero CSP violations, T16). Draco and Basis stay out. scripts/case-model/intake.mjs enforces this (C2)."
   },
   "size": {
     "targets": "LOD0 <= 150 KB raw, LOD1 <= 60 KB raw, optional maps <= 150 KB, environment 0 KB (RoomEnvironment). Budgeted as raw bytes until a deploy shows a Content-Encoding header on .glb responses; if Cloudflare compresses model/gltf-binary (by default or through a Compression Rule) the brotli figures apply and the triangle caps can return to the study's 15,000 and 5,000",

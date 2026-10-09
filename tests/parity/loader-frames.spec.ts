@@ -61,8 +61,10 @@ for (const vp of VIEWPORTS) {
       writeFileSync(pa, a.png[i]); writeFileSync(pb, b.png[i]);
       const same = a.png[i].equals(b.png[i]);
       const r = same ? null : compare(pa, pb, {}, `${dir}/diff-${t}.png`);
-      if (r && r.diff_px > 0) bad++;
-      rows.push(`t=${t}: ${same ? 'identical bytes' : r!.diff_px ? `differs ${r!.diff_px} px, max ${r!.max_diff}, bbox ${r!.bbox}` : 'identical pixels'}`);
+      // compare.py reports a size mismatch as {error: 'shape'} with no diff_px: that is a failure, never "identical pixels"
+      const failed = r !== null && (Boolean(r.error) || r.diff_px !== 0);
+      if (failed) bad++;
+      rows.push(`t=${t}: ${same ? 'identical bytes' : r!.error ? `compare error ${r!.error} (${JSON.stringify(r)})` : r!.diff_px ? `differs ${r!.diff_px} px, max ${r!.max_diff}, bbox ${r!.bbox}` : 'identical pixels'}`);
     });
     info.annotations.push({ type: 'frames', description: rows.join('; ') });
     console.log(`[AC3.1 ${vp.name}] ` + rows.join('; '));

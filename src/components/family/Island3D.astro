@@ -1,9 +1,12 @@
 ---
 // The family page's 3D island entry (FAMILY_3D=dev or on; docs/specs/family-page.md 2.5, case-model-class.md 11).
 // Imported by the route only in 3D builds, so an off build carries none of it. boot.ts is small: it waits for the load
-// event and idle time, then imports the stage chunk (three.js, the case model) behind the page's grid fallback.
+// event and idle time, then imports the stage chunk (three.js, the case model) behind the page's grid fallback. In a
+// supplier build (on) the data block also names the LOD1 file, so boot.ts starts its download with the chunk's.
+import manifest from '../../data/case-model.json';
 interface Props { mode: 'dev' | 'on' }
 const { mode } = Astro.props;
+const data = mode === 'on' ? { mode, lod1: manifest.lod1 } : { mode };
 ---
-<script type="application/json" id="fam-3d" is:inline set:html={JSON.stringify({ mode })}></script>
+<script type="application/json" id="fam-3d" is:inline set:html={JSON.stringify(data)}></script>
 <script>import '../../scripts/family/three/boot.ts';</script>

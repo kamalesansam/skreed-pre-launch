@@ -10,21 +10,44 @@ export interface LineupParams {
   fan: number; yawFront: number; leanFront: number; lift: number; S: number; kz: number; pitchK: number;
   fov: number; phi: number; psi: number; rho: number;
   pxuPhone: number; frontFrac: number; frontMin: number; frontMax: number; hudBand: number; gutPhone: number; gutWide: number;
+  /** the front case's scale on the phone layout (S is the wide layout's; the spec's single S for the stand-in) */
+  Sphone: number;
+  /** how far the two halves of the line part in the poster pose (G 0); 0 for the stand-in, whose middle pair clears */
+  posterGap: number;
+  /** air between the front case and its neighbours, in normalised units (the spec's 0.02) */
+  air: number;
 }
 
 /** The spec constants; w and d come from the model's normalised box (the contract case: 77 x 163 x 12.3 mm). */
 export const LINEUP: LineupParams = {
   w: 77 / 163, d: 12.3 / 163, fan: 62, yawFront: -15, leanFront: 3, lift: 0.3, S: 1.4, kz: 0.1, pitchK: 0.9,
   fov: 20, phi: 4, psi: 4, rho: -8, pxuPhone: 170, frontFrac: 0.385, frontMin: 240, frontMax: 340, hudBand: 224, gutPhone: 16, gutWide: 48,
+  Sphone: 1.4, posterGap: 0, air: 0.02,
 };
 
+/**
+ * The supplier case (Cobalt: w 0.533, d 0.135 of its height, wider and twice as thick as the stand-in), tuned against
+ * the screen targets of family-page.md 7 as 2.5 asks (run 2 notes, section 18; tests/case-model/baseline/lineup-fit-supplier.json):
+ * fan 72 keeps the phone strips at 44.8 px with pitch 0.9 x strip (62 would make them 56.6 px and push the second
+ * neighbours out of a 390 px frame); the front case is scaled 1.33 on the phone layout (measured on the rendered
+ * silhouette: 247 to 253 px tall from 375 to 430 px wide, with two full neighbours a side), 1.4 on the wide one;
+ * frontMax 330 keeps all 24 in frame at 1920 x 1080 for selections 06 to 18; posterGap parts the poster's two halves.
+ */
+export const SUPPLIER_TUNING: Partial<LineupParams> = { fan: 72, Sphone: 1.33, frontMax: 330, posterGap: 0.06 };
+
+/** The lineup constants for one model and layout class: the model's w and d, and the layout's front-case scale. */
+export function lineupFor(dims: { w: number; d: number }, layout: Layout, tuning: Partial<LineupParams> = {}): LineupParams {
+  const p = { ...LINEUP, ...tuning, w: dims.w, d: dims.d };
+  return layout === 'phone' ? { ...p, S: p.Sphone } : p;
+}
+
 export interface Derived { strip: number; frontW: number; pitch: number; gap: number }
-/** pitch = 0.9 (w cos fan + d sin fan); gap keeps the promoted front case clear of its neighbours plus 0.02 air. */
+/** pitch = 0.9 (w cos fan + d sin fan); gap keeps the promoted front case clear of its neighbours plus air (0.02). */
 export function derive(p: LineupParams): Derived {
   const strip = p.w * Math.cos(p.fan * D2R) + p.d * Math.sin(p.fan * D2R);
   const frontW = p.w * Math.cos(p.yawFront * D2R) + p.d * Math.sin(Math.abs(p.yawFront) * D2R);
   const pitch = p.pitchK * strip;
-  const gap = 0.5 * (p.S * frontW + strip) - pitch + 0.02;
+  const gap = 0.5 * (p.S * frontW + strip) - pitch + p.air;
   return { strip, frontW, pitch, gap };
 }
 
@@ -42,8 +65,11 @@ export function pose(i: number, s: number, G: number, p: LineupParams, k: Derive
   // c opens the gap around the front case. The spec's clamp(x, -1, 1) let the two half-promoted cases of a move
   // (x = -0.5 and +0.5) intersect in 3D (T5); clamp(2x, -1, 1) opens the gap twice as fast, which is identical at every
   // whole selection and keeps both cases clear through the move.
-  const pr = G * Math.max(0, 1 - ax), c = Math.max(-1, Math.min(1, 2 * x));
-  const X = x * k.pitch + c * k.gap * G;
+  // posterGap parts the two halves of the line in the poster pose (G 0), where the two middle cases stand at the full
+  // fan angle facing each other; at G 1 it is gone, so every live pose is unchanged.
+  // The gap opens ahead of the promotion (Gg = 1 - (1 - G)^2), so no pair touches while the entrance converges.
+  const pr = G * Math.max(0, 1 - ax), c = Math.max(-1, Math.min(1, 2 * x)), Gg = 1 - (1 - G) * (1 - G);
+  const X = x * k.pitch + c * (k.gap * Gg + p.posterGap * (1 - Gg));
   const Z = p.lift * pr - G * p.kz * Math.min(ax, 3);
   const yaw = (-p.fan * c * (1 - pr) + p.yawFront * pr + fx.yaw * pr) * D2R;
   const lean = p.leanFront * pr * D2R;

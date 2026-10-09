@@ -15,9 +15,9 @@ for (const c of CASES) {
     const ctx = await browser.newContext({ viewport: c.viewport, deviceScaleFactor: c.deviceScaleFactor });
     const page = await ctx.newPage();
     const errors: string[] = [], seen: number[] = [];
-    // The browser's own /favicon.ico request is not a page request (no favicon yet: site essentials, hero.md section 8);
-    // its 404 reaches the console only. Every page request that fails is caught by the response listener below.
-    page.on('console', (m) => { if (m.type() === 'error' && !/^Failed to load resource: the server responded with a status of 404/.test(m.text())) errors.push(m.text()); });
+    // Zero console errors, literally: nothing is filtered (public/favicon.ico ships, so the browser's own icon request is
+    // a 200). Failing page requests are also caught by status through the response listener below.
+    page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
     page.on('pageerror', (e) => errors.push(String(e)));
     page.on('response', (r) => { if (r.status() >= 400) errors.push(`${r.status()} ${new URL(r.url()).pathname}`); });
     await page.goto(new URL('/?tier=hero3d', baseURL).href);

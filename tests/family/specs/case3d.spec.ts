@@ -1,5 +1,6 @@
-// The 3D lineup in a PUBLIC_FAMILY_3D=dev test build with the stand-in (case-model-class.md 14: T4, T14, T15; the
-// selection rules of family-page.md acceptance 5 that run 1 can grade). SwiftShader is allowed with ?render=force.
+// The 3D lineup in a test build, the stand-in (PUBLIC_FAMILY_3D=dev) or the supplier model (on) (case-model-class.md
+// 14: T4, T14, T15; the selection rules of family-page.md acceptance 5). SwiftShader is allowed with ?render=force, and
+// ?tier=high skips the tier probe so the counts are deterministic (the probe has its own rows in supplier3d.spec.ts).
 // Skipped on a build without the island (the default production build is swatch grid mode).
 import { test, expect, type Page } from '@playwright/test';
 import { PHONE, WIDE, watch, cspViolations, shade } from './util.ts';
@@ -14,11 +15,12 @@ async function settled(p: Page) {
   await p.waitForFunction(() => { const s = (window as unknown as { __famStage?: { state(): St } }).__famStage?.state(); return !!s && Math.abs(s.s - s.target) < 0.001 && s.G > 0.999 && !s.running; }, null, { timeout: 90_000, polling: 250 });
 }
 async function open(p: Page, slug: string, q = '') {
-  await p.goto(`/shades/${slug}/?render=force${q}`);
+  await p.goto(`/shades/${slug}/?render=force&tier=high${q}`);
   const has = await p.evaluate(() => !!document.getElementById('fam-3d'));
   test.skip(!has, 'this build has no 3D island (PUBLIC_FAMILY_3D=off)');
   await p.waitForFunction(() => document.querySelector('#st3d canvas.on'), null, { timeout: 90_000 });
   await settled(p);
+  await p.waitForFunction(() => (window as unknown as { __famStage: { state(): { detail: string } } }).__famStage.state().detail !== 'loading', null, { timeout: 90_000 });
 }
 /** A point on the visible strip of slot k: scan the row through its centre for pixels the pick gives to k. */
 async function pointOn(p: Page, k: number): Promise<{ x: number; y: number } | null> {
@@ -37,11 +39,12 @@ test('T4 renderer counts after the PMREM disposal and the warm-up, at 390 and 12
     await open(page, 'blissful-blues');
     await page.waitForFunction(() => (window as unknown as { __famStage: { info(): Info } }).__famStage.info().warmPrograms > 0, null, { timeout: 60_000 });
     const i = await info(page);
+    const supplier = await page.evaluate(() => (window as unknown as { __famStage: { source: string } }).__famStage.source === 'supplier');
     expect(i.calls).toBeLessThanOrEqual(6);
-    expect(i.programs).toBe(3);                   // body matte, body gloss (warmed), accent; no device (case only)
-    expect(i.geometries).toBe(4);                 // body and accent at two LODs
+    expect(i.programs).toBe(3);                   // shade matte, shade gloss (warmed), accent; the logo shares the shade programs; no device
+    expect(i.geometries).toBe(supplier ? 6 : 4);  // body, accent (and the supplier's logo) at two LODs
     expect(i.textures).toBe(1);                   // the PMREM target only
-    expect(i.triangles).toBeLessThanOrEqual(24 * 1800 + 2 * 7520);
+    expect(i.triangles).toBeLessThanOrEqual(supplier ? 24 * 9811 + 2 * 20348 : 24 * 1800 + 2 * 7520);
     const f0 = (await info(page)).frame;
     await page.waitForTimeout(2000);
     expect((await info(page)).frame).toBe(f0);    // render on demand: 0 frames while nothing changes

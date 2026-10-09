@@ -5,7 +5,7 @@
 // PUBLIC_FAMILY_3D=dev. The stand-in is not the product (CLAUDE.md rule 38) and never ships (decision 15).
 import { ExtrudeGeometry, MathUtils, Matrix4, MeshStandardMaterial, Path, Shape, type BufferGeometry } from 'three';
 import { mergeGeometries, mergeVertices, toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
-import { normalising, type CaseAsset, type CasePart, type RawPart } from './case-asset.ts';
+import { normalising, withBase, type CaseAsset, type RawPart } from './case-asset.ts';
 import { URBAN_SLATE } from '../../../config/tokens.ts';
 
 // millimetres: a generic large-phone case
@@ -66,11 +66,13 @@ export function buildStandInAsset(): CaseAsset {
   const r0 = raw(10, 3), r1 = raw(4, 1);
   // one normalisation for both levels (from LOD0), so the front case swaps LOD without any change in size or position
   const n = normalising(r0);
-  const parts = (r: RawPart[]): CasePart[] => r.map((p) => ({ name: p.name, geometry: p.geometry, base: n.matrix.clone().multiply(p.nodeWorld), material: p.material, followsShade: p.followsShade }));
   const s = n.size;
+  const lod0 = withBase(r0, n.matrix);
   return {
     source: 'standin',
-    lods: [parts(r0), parts(r1)],
+    lods: [lod0, withBase(r1, n.matrix)],
+    detail: 'loaded',
+    loadDetail: () => Promise.resolve(lod0),
     dims: n.dims,
     sizeMm: [+s.x.toFixed(2), +s.y.toFixed(2), +s.z.toFixed(2)],
     maps: {},

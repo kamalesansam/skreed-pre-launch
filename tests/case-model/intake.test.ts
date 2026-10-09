@@ -5,7 +5,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
-// @ts-expect-error: a plain .mjs script without types
 import { checkLod, checkPair, readGlb } from '../../scripts/case-model/intake.mjs';
 
 const root = new URL('../../', import.meta.url);

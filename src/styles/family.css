@@ -184,12 +184,23 @@ html:not(.m3d) .whole { display: none; }
 .st3d { position: absolute; inset: 0; }
 .st3d canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity var(--dur-canvas) linear; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
 .st3d canvas.on { opacity: 1; }
+/* the skeleton and the poster: under the canvas until its fade is done (.live), back at once on a context loss */
+.st-poster { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.st-poster > * { position: absolute; }
+.st-poster img { inset: 0; width: 100%; height: 100%; object-fit: none; object-position: 50% 50%; }
+.skel { fill: var(--skeleton); }
+.skel-phone { left: 50%; top: 50%; translate: -50% -50%; }
+.skel-wide { display: none; inset: 0; width: 100%; height: 100%; }
+.st3d.live .st-poster { visibility: hidden; }
 html:not(.m3d) .st3d { display: none; }
 html.m3d .fp-stage > .sgrid { display: none; }
 
 /* ---- wide layout (2.4, 2.7): the controls are one grid, the HUD centred, the finish and Reserve at the right ---- */
 @media (min-width: 900px) and (min-height: 600px) {
   :root { --fh: 72px; }
+  .st-poster img { object-fit: cover; }
+  .skel-phone { display: none; }
+  .skel-wide { display: block; }
   html { scroll-padding-bottom: 0; }
   body { padding-bottom: 0; }
   .fh-logo svg { width: 136px; }

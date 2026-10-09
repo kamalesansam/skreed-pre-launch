@@ -3,13 +3,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { TEMPLATE } from './proto-source.ts';
 
 const root = new URL('../../', import.meta.url);
 const read = (p: string) => readFileSync(new URL(p, root), 'utf8');
 
 test('six paths, identical to the prototype sprite, in the same order', () => {
   const brand = [...read('docs/brand/logo/skreed-logotype.svg').matchAll(/<path[^>]*\sd="([^"]+)"/g)].map((m) => m[1]);
-  const t = read('prototypes/hero-v9/template.html');
+  const t = TEMPLATE;
   const g = t.slice(t.indexOf('<g id="skreed-wordmark"'), t.indexOf('</g></defs></svg>'));
   const proto = [...g.matchAll(/<path d="([^"]+)"/g)].map((m) => m[1]);
   assert.equal(brand.length, 6);

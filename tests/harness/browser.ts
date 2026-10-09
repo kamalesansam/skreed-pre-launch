@@ -21,5 +21,8 @@ export function launch(extraArgs: string[] = []): Promise<Browser> {
   return chromium.launch({ executablePath: CHROME_PATH, args: [...GL_ARGS, ...extraArgs] });
 }
 
+/** The local wrangler dev port. Workflows on one machine set their own (SKREED_PORT) so no run shares a server. */
+export const PORT = Number(process.env.SKREED_PORT || 8787);
+
 /** The port: the test build served by wrangler dev (playwright.config.ts starts it). */
-export const PORT_URL = process.env.BASE_URL || 'http://127.0.0.1:8787/';
+export const PORT_URL = process.env.BASE_URL || `http://127.0.0.1:${PORT}/`;

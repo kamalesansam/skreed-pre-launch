@@ -221,6 +221,7 @@ test.describe('5. selection in grid mode (DOM inputs)', () => {
     const ctx = await browser.newContext(PHONE);
     const page = await ctx.newPage();
     await page.goto(url('stormy-greys'));
+    await page.waitForFunction(() => !document.documentElement.classList.contains('m3d'), null, { timeout: 30_000 });
     // a 3D build has a second copy of the grid under "The whole family."; CSS shows one per mode, so work on the shown one
     await page.locator('.gsw[data-i="0"]:visible').click();
     expect(await shade(page)).toBe('169');
@@ -393,6 +394,8 @@ test.describe('10. accessibility and layout', () => {
       const page = await ctx.newPage();
       for (const slug of ['blissful-blues', 'earthy-browns', 'frosty-whites']) {
         await page.goto(url(slug));
+        // on a 3D build headless Chromium's software renderer turns the page to grid mode once the island's gate runs
+        await page.waitForFunction(() => !document.documentElement.classList.contains('m3d'), null, { timeout: 30_000 });
         await page.evaluate(() => document.fonts.ready);
         const r = await page.evaluate(() => {
           const box = (e: Element) => e.getBoundingClientRect();

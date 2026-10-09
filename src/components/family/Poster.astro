@@ -1,0 +1,37 @@
+---
+// The stage's first paint in 3D builds (docs/specs/family-page.md 5 "First paint", rule 41): bottom to top, the 24
+// case silhouettes at the poster pose in --skeleton (inline SVG, drawn at build by skeleton.ts from the lineup's own
+// pose and camera rule) and, in a supplier build, the poster <picture> (frame 0 rendered from the real model by
+// scripts/case-model/posters.mjs: AVIF with a WebP fallback, the phone one at 2x shown with object-fit: none, the wide
+// one with object-fit: cover). The canvas, appended later by the island, covers both; once it is live the poster hides.
+// Imported by the route only in 3D builds (the same folded test as Island3D), so an off build carries none of it.
+import manifest from '../../data/case-model.json';
+import { LINEUP, SUPPLIER_TUNING } from '../../scripts/family/three/pose.ts';
+import { skeleton } from '../../scripts/family/skeleton.ts';
+
+interface Props { slug: string; mode: 'dev' | 'on' }
+const { slug, mode } = Astro.props;
+const supplier = mode === 'on';
+const [w, h, d] = manifest.sizeMm;
+const dims = supplier ? { w: w / h, d: d / h } : { w: LINEUP.w, d: LINEUP.d };
+const tuning = supplier ? SUPPLIER_TUNING : {};
+const phone = skeleton(dims, 'phone', 430, 520, tuning);
+const wide = skeleton(dims, 'wide', 1280, 728, tuning);
+const files = import.meta.glob<string>('./posters/*.{avif,webp}', { eager: true, query: '?url', import: 'default' });
+const url = (layout: string, ext: string) => files[`./posters/${slug}-${layout}.${ext}`];
+const poster = supplier && url('phone', 'avif') && url('phone', 'webp') && url('wide', 'avif') && url('wide', 'webp');
+if (supplier && !poster) throw new Error(`no poster for ${slug}: run scripts/case-model/posters.mjs (src/components/family/posters/)`);
+const WIDE = '(min-width: 900px) and (min-height: 600px)';
+---
+<div class="st-poster" aria-hidden="true">
+  <svg class="skel skel-phone" viewBox="0 0 430 520" width="430" height="520" focusable="false">{phone.map((p) => <polygon points={p} />)}</svg>
+  <svg class="skel skel-wide" viewBox="0 0 1280 728" preserveAspectRatio="xMidYMid slice" focusable="false">{wide.map((p) => <polygon points={p} />)}</svg>
+  {poster && (
+    <picture>
+      <source media={WIDE} type="image/avif" srcset={`${url('wide', 'avif')} 1.5x`} />
+      <source media={WIDE} type="image/webp" srcset={`${url('wide', 'webp')} 1.5x`} />
+      <source type="image/avif" srcset={`${url('phone', 'avif')} 2x`} />
+      <img src={url('phone', 'webp')} srcset={`${url('phone', 'webp')} 2x`} alt="" width="430" height="520" fetchpriority="high" decoding="async" />
+    </picture>
+  )}
+</div>

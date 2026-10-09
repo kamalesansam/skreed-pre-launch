@@ -75,7 +75,7 @@ test('T3: one sRGB to linear conversion: #ffffff is 1, #0040c1 follows the trans
   const b = new Color().setStyle('#0040c1');
   for (const [got, want] of [[b.r, lin(0)], [b.g, lin(0x40)], [b.b, lin(0xc1)]]) assert.ok(Math.abs(got - want) < 1e-6, `${got} vs ${want}`);
   const dir = new URL('../../src/scripts/family/three/', import.meta.url);
-  for (const f of readdirSync(dir)) assert.doesNotMatch(readFileSync(new URL(f, dir), 'utf8'), /convertSRGBToLinear|SRGBToLinear\(/, f);
+  for (const f of readdirSync(dir, { withFileTypes: true }).filter((e) => e.isFile()).map((e) => e.name)) assert.doesNotMatch(readFileSync(new URL(f, dir), 'utf8'), /convertSRGBToLinear|SRGBToLinear\(/, f);
 });
 
 test('the stand-in: body and accent only, contract size, both LODs normalised alike, triangle counts', () => {

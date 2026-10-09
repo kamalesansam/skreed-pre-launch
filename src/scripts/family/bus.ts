@@ -17,6 +17,8 @@ export interface BusMap {
   'fam:want3d': Record<string, never>;
   /** island to page: the first live frame is up */
   'fam:live': Record<string, never>;
+  /** island to page: LOD0 (the close-up detail) did not load; the front case stays at LOD1 */
+  'fam:detail': { ok: boolean };
 }
 export function emit<K extends keyof BusMap>(type: K, detail: BusMap[K]): void {
   document.dispatchEvent(new CustomEvent(type, { detail }));

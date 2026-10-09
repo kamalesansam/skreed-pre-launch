@@ -3,6 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { TEMPLATE } from './proto-source.ts';
 
 const root = new URL('../../', import.meta.url);
 const read = (p: string) => readFileSync(new URL(p, root), 'utf8');
@@ -31,7 +32,7 @@ test('the loader is the prototype loader plus the seven deviations, nothing else
     assert.equal(port.split(now).length - 1, 1, `deviation text not found exactly once: ${now.slice(0, 60)}`);
     port = port.replace(now, was);
   }
-  const t = read('prototypes/hero-v9/template.html');
+  const t = TEMPLATE;
   const start = t.indexOf('<script>/* Skreed loader') + '<script>'.length;
   const proto = t.slice(t.indexOf('(function(){', start), t.indexOf('</script><!--LOADER-END-->'));
   assert.equal(port.trimEnd(), proto.trimEnd());

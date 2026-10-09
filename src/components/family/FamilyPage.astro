@@ -11,15 +11,17 @@ import { FAM_COPY, splitLine } from '../../scripts/family/copy.ts';
 import Wordmark from './Wordmark.astro';
 import Chevron from './Chevron.astro';
 import SwatchGrid from './SwatchGrid.astro';
+import manifest from '../../data/case-model.json';
+import { size3dMb } from '../../scripts/family/size3d.ts';
 
-interface Props { fam: Family; has3d: boolean }
-const { fam, has3d } = Astro.props;
+interface Props { fam: Family; has3d: boolean; supplier?: boolean }
+const { fam, has3d, supplier = false } = Astro.props;
 const key = fam.key;
 const ki = key.index - 1;
 const prevFam = FAMILIES[fam.ordinal - 2];
 const nextFam = FAMILIES[fam.ordinal];
-// size3d: the island plus model download in MB, measured at build once the supplier model ships (FAMILY_3D=on); null before
-const size3d: string | null = null;
+// size3d: the island plus model download in MB for "Show in 3D" (supplier builds); the stand-in has none to state
+const size3d: string | null = has3d && supplier ? size3dMb(manifest.bytes) : null;
 const data = { slug: fam.slug, name: fam.name, first: fam.first, key: ki, has3d, size3d, names: fam.shades.map((s) => s.name) };
 // the two state lines that are known before any script runs (spec 3, 5): data-why "savedata" or "slow" shows one
 const whyLines = has3d ? ([['savedata', FAM_COPY.saveData], ['slow', FAM_COPY.slowConnection]] as const).map(([why, line]) => ({ why, part: splitLine(line) })) : [];
@@ -37,7 +39,7 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     <h1 translate="no">{fam.name}</h1>
   </div>
   <div class="fp-stage" id="stage">
-    {has3d && <div class="st3d" id="st3d" role="img" aria-label={FAM_COPY.stage(fam.name, key.name)}></div>}
+    {has3d && <div class="st3d" id="st3d" role="img" aria-label={FAM_COPY.stage(fam.name, key.name)}><slot name="poster" /></div>}
     <SwatchGrid fam={fam} />
   </div>
   <div class="fp-ctl">

@@ -4,6 +4,8 @@ Slug `hero`. Written 2026-10-09 by the plan step. Revision 2 (same day) fixes ev
 
 The thing being ported is `prototypes/hero-v9/template.html` (v9.9, artifact version 25, documented in `prototypes/hero-v9/README.md`). Sam approved it on 2026-10-09: "I'm good with whatever we've built so far." Every behaviour, string and number below comes from that file, its README, the four reader reports of 2026-10-09 (3D inventory, shell inventory, stack facts, asset and bundle probe), the critics' measurements of the same day, or the binding docs. Nothing under `prototypes/` is changed by this work.
 
+**Stage 1 reference (pinned, 2026-10-09).** Parity is graded against prototype v9.10: v9.9 with Sam's locked values as its defaults, commit ccce3fb. At 17:26 that day the v10 igloo-intro build replaced `prototypes/hero-v9/index.html` and `template.html` in place (commit 2038bef), so that path no longer holds the reference. The two v9.10 files are pinned, byte for byte, in `tests/fixtures/hero-v9.10/` (README there: provenance, git blobs, SHA-256), with the v9.10 asset hashes in `assets.SHA256SUMS`. Every unit test, parity spec, harness and generator reads the reference from there through `tests/harness/reference.ts`, which checks each file's hash on every read. v10 joins the port later through the intro slot (`hero-architecture.md` 11.1), with its own pinned reference and its own gate. Stage 1 parity stays on v9.10.
+
 ## 0. Locked values (Sam, 2026-10-09)
 
 These are binding for the real build. They come from Sam's two Tune screenshots, recorded in the session file `LOCKED_VALUES.md` (copied to `docs/specs/evidence/LOCKED_VALUES.md` in build step 1).
@@ -313,14 +315,14 @@ The rendering setups used below:
 - **Phone canvas captures:** 390 x 844 at deviceScaleFactor 1.25. The drawing buffer is 487 x 1055 (three floors 487.5); the element screenshot is 488 x 1055 device pixels. Both pages go through the same scaling, so the comparison is like for like. This is the setup the asset probe measured.
 - **Phone behaviour tests:** 390 x 844, `isMobile`, `hasTouch`, deviceScaleFactor 2.
 - **Desktop:** 1280 x 800, deviceScaleFactor 1.5. Drawing buffer and screenshot are both 1920 x 1200.
-- **Prototype:** `prototypes/hero-v9/index.html`, served by the harness with three 0.165.0 from the port's own `node_modules`, the locked values and `logoIdle=0` as URL overrides.
+- **Prototype:** v9.10, pinned at `tests/fixtures/hero-v9.10/index.html` (taken from git at ccce3fb; not `prototypes/hero-v9/`, which now holds v10), served by the harness with three 0.165.0 from the port's own `node_modules`, the locked values and `logoIdle=0` as URL overrides.
 - **Port:** the test build (`npm run build:test`) under `wrangler dev`, with `?tier=hero3d` or `?tier=still3d` wherever the 3D path is needed, because headless Chromium only has software WebGL (D3). AC8.1 and AC10.1 use the production build.
 - **Filler:** test builds render a 100svh Pearl Whisper block in the after-track slot, so the track can leave the viewport (AC2.4, AC3.9, AC8.2). Production renders nothing there in this section.
 
 **AC1. Locked values and visual parity at rest.** Ties to F1, A5 and A1.
 1. The test build's `__skreedParams()` returns exactly the 13 locked values in section 0, and `logoIdle` 0.
 2. **Canvas-only rest frames.** Settings: `__skreedFreeze` set before load, so scene time stays at 0; at least 3 frames after the loader's `ready`; DOM overlays and the poster hidden. The frames are taken in two setups: normal motion, and emulated reduced motion with the port on `?tier=still3d`. Compared with the prototype:
-   - **Stage 1** (asset files byte-identical to `prototypes/hero-v9/assets`): identical frames, PSNR 99, which is the noise floor measured for the prototype against itself.
+   - **Stage 1** (asset files byte-identical to the v9.10 assets, `tests/fixtures/hero-v9.10/assets.SHA256SUMS`): identical frames, PSNR 99, which is the noise floor measured for the prototype against itself.
    - **Shipping build** (stage 2 encodes):
 
      | Viewport | PSNR | SSIM | Sky band (top 40%) SSIM | Ground band (bottom 35%) SSIM |

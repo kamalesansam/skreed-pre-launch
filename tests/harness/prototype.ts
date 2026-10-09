@@ -1,9 +1,11 @@
-// Serves the approved prototype (prototypes/hero-v9/index.html, read-only) to a browser context, with three 0.165.0
-// from the port's own node_modules and Open Sans from the port's own file, so both pages draw with the same bytes.
-// Everything else the prototype asks for is aborted. (hero-architecture.md 13.1, servePrototype)
+// Serves the approved prototype, pinned at v9.10 (tests/fixtures/hero-v9.10/index.html, hash-checked by reference.ts),
+// to a browser context, with three 0.165.0 from the port's own node_modules and Open Sans from the port's own file, so
+// both pages draw with the same bytes. Everything else the prototype asks for is aborted. Stage 1 parity targets v9.10,
+// never prototypes/hero-v9/, which later prototype builds replace in place. (hero-architecture.md 13.1, servePrototype)
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { BrowserContext } from '@playwright/test';
+import { readReference } from './reference.ts';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 export const PROTO_ORIGIN = 'https://proto.test';
@@ -22,10 +24,11 @@ export interface ServeOptions {
 
 export async function servePrototype(ctx: BrowserContext, opts: ServeOptions = {}): Promise<void> {
   const three = opts.three !== false;
+  const html = readReference('index.html');
   await ctx.route(() => true, async (route) => {
     const u = new URL(route.request().url());
     if (u.origin === PROTO_ORIGIN && u.pathname === '/') {
-      return route.fulfill({ body: readFileSync(ROOT + 'prototypes/hero-v9/index.html'), headers: { 'content-type': 'text/html; charset=utf-8' } });
+      return route.fulfill({ body: html, headers: { 'content-type': 'text/html; charset=utf-8' } });
     }
     if (u.origin === PROTO_ORIGIN && u.pathname === '/fonts/open-sans-400-600-latin.woff2') {
       return route.fulfill({ body: readFileSync(ROOT + 'public/fonts/open-sans-400-600-latin.woff2'), headers: { 'content-type': 'font/woff2', 'access-control-allow-origin': '*' } });

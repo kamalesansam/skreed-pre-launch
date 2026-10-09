@@ -3,6 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { TEMPLATE } from './proto-source.ts';
 import { HERO_PARAMS, LOCKED, heroParams } from '../../src/config/params.ts';
 
 const root = new URL('../../', import.meta.url);
@@ -10,7 +11,7 @@ const read = (p: string) => readFileSync(new URL(p, root), 'utf8');
 
 // The prototype's P table (template.html line 305), evaluated with reduce false.
 function prototypeP(): Record<string, number> {
-  const src = read('prototypes/hero-v9/template.html');
+  const src = TEMPLATE;
   const m = src.match(/^const P = (\{[\s\S]*?\});/m);
   assert.ok(m, 'prototype P not found');
   return new Function('reduce', 'return ' + m[1])(false);

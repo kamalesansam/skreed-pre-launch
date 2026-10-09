@@ -1,15 +1,12 @@
 // AC6.4 (table part): the port's block shades, in block order, equal the prototype's 'cool' order resolved through the
-// prototype's own FAMILIES (inlined in prototypes/hero-v9/index.html), and assignBlockColours writes them by block.
+// prototype's own FAMILIES (inlined in the pinned v9.10 index.html, tests/fixtures/hero-v9.10/), and assignBlockColours
+// writes them by block.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { Color } from 'three';
 import { BLOCK_SHADES } from '../../src/config/shades.gen.ts';
 import { assignBlockColours } from '../../src/scripts/hero/logo/uniforms.ts';
-import { constSource } from './proto-source.ts';
-
-const INDEX = readFileSync(fileURLToPath(new URL('../../prototypes/hero-v9/index.html', import.meta.url)), 'utf8');
+import { constSource, INDEX } from './proto-source.ts';
 
 test('the cool order resolved through the prototype FAMILIES equals BLOCK_SHADES', () => {
   const m = /const FAMILIES = (\[.*?\]);\n/s.exec(INDEX);

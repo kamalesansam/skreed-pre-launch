@@ -194,7 +194,8 @@ test.describe('9. first paint in swatch grid mode (PUBLIC_FAMILY_3D=dev build, t
         expect(cls, `layout-shift total ${cls.toFixed(4)} (${m.shifts.map((v) => v.toFixed(4)).join(', ')})`).toBeLessThan(0.01);
         for (const k of ['stage', 'hud', 'scrub', 'finish'] as const) expect(after[k], `${k} box (top, height) before and after the module`).toEqual(b![k]);
         expect(b!.gridInStage, 'the grid is in the stage before the module runs').toBe(true);
-        expect(b!.lines, "the row's state line is there before the module runs").toEqual(r.line ? [`${r.line}Show in 3D`] : []);
+        // a supplier build states the download: "Show in 3D, 0.3 MB" (dev builds: "Show in 3D")
+        expect(b!.lines.map((l) => l && l.replace(/Show in 3D, [\d.]+\u00a0MB$/, 'Show in 3D')), "the row's state line is there before the module runs").toEqual(r.line ? [`${r.line}Show in 3D`] : []);
         expect(after.lines, 'and the same line after it').toEqual(b!.lines);
         await ctx.close();
       });

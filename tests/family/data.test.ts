@@ -2,7 +2,9 @@
 //   node --test tests/family/*.test.ts
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { FAMILIES, buildFamilies, pageCss, contrast, nnn, familyOf, type RawData, type RawKey } from '../../src/scripts/family/data.ts';
 import { FAM_COPY } from '../../src/scripts/family/copy.ts';
@@ -146,7 +148,12 @@ test('FAMILY_3D: off by default in a build, dev under astro dev, on refuses a mi
   assert.equal(family3dMode(undefined, true), 'dev');
   assert.equal(family3dMode('off', true), 'off');
   assert.equal(family3dMode('dev', false), 'dev');
-  assert.throws(() => family3dMode('on', false), /needs the supplier case model|stand-in never ships/);
+  // on: the intake's supplier manifest passes; a missing manifest or one naming the stand-in fails the build
+  assert.equal(family3dMode('on', false), 'on');
+  assert.throws(() => family3dMode('on', false, '/nonexistent/case-model.json'), /needs the supplier case model/);
+  const tmp = join(mkdtempSync(join(tmpdir(), 'fam-')), 'case-model.json');
+  writeFileSync(tmp, JSON.stringify({ source: 'standin' }));
+  assert.throws(() => family3dMode('on', false, tmp), /stand-in never ships/);
   assert.throws(() => family3dMode('maybe', false), /must be off, dev or on/);
 });
 
