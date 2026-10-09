@@ -13,9 +13,20 @@
     "check": "B2-B5"
   },
   "parts": {
-    "Case_Body": { "material": "Shade", "role": "everything that takes the shade: back, walls, lip, buttons. One primitive", "required": true },
-    "Case_Accent": { "material": "Accent", "role": "camera ring or lens surround, MagSafe ring on MagTough; one fixed colour unless the real product matches the shade", "required": false },
-    "Device": { "material": "Device", "role": "a simplified phone: dark glass back visible through the cut-out and the lens bumps, as one primitive (lenses included, no separate lens material)", "required": "strongly recommended", "triangles": "<= 2,000" },
+    "Case_Body": {
+      "material": "Shade",
+      "role": "everything that takes the shade: back, walls, lip, buttons. One primitive",
+      "required": true
+    },
+    "Case_Accent": {
+      "material": "Accent",
+      "role": "camera ring or lens surround, MagSafe ring on MagTough; one fixed colour unless the real product matches the shade",
+      "required": false
+    },
+    "Device": {
+      "required": "never",
+      "note": "Sam, 2026-10-09: the case only. No phone, device, glass or lens parts; a model that has them has them stripped at intake."
+    },
     "max": 4,
     "check": "B6, B6b",
     "why": "each part is one InstancedMesh per LOD, so all 24 cases cost 2 draw calls per part. Measured on the stand-in: 2 parts x 24 instances = 2 draw calls, against ciao's 28 (desktop) and 13 (phone)"

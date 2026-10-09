@@ -12,6 +12,8 @@ This repo is the skreed.in pre-launch teaser (live until Oct 31 2026, then skree
 - Voice (brand guide): first person, short sentences, active voice, sensory colour words. "We believe in the power of color."
 
 
+- Family pages (`/shades/<family>/`, 24 cases per family from one model, `docs/specs/family-page.md`): show the case only. Never draw a phone, device body, screen glass or lenses inside or behind a case; the camera window shows the page through (Sam, 2026-10-09).
+
 ## Never do these (the site must not look vibe-coded)
 1. No purple-to-blue gradients. No gradient as a brand device at all; the brand's colour comes from the 240 shades themselves.
 2. No gradient-filled hero text.
@@ -74,6 +76,23 @@ This repo is the skreed.in pre-launch teaser (live until Oct 31 2026, then skree
 - Colours only from `shades-240.json`, the two page neutrals (Pearl Whisper, Urban Slate) and the one accent (Ember Luxe). Almond Silk, Steel Twilight and Rust Ember are available for the share card and stories, never for UI chrome. Define them as CSS tokens on `:root`.
 - Real content only. Never lorem ipsum, never invented shade names, never fake counts.
 - Run `/web-design-guidelines` and the security checklist in `docs/research/08-prelaunch-security-checklist.md` before any push to main.
+
+## Approved exceptions (Sam, 2026-10-09)
+Sam approved the hero prototype as built ("I'm good with whatever we've built so far", 2026-10-09). These properties of that hero are exceptions to the rules above and to `docs/CHECKLIST.md`. They apply to the hero (sections 1 and 2's canvas) only. Full wording and reasons: `docs/specs/hero.md` section 10.
+- E-H1: the full-screen wordmark loader on the 3D path (CHECKLIST H1, D1); the poster path never shows it.
+- E-G2: no CTA on the fold (CHECKLIST G2); reserving starts in later sections.
+- E-C3: the hero canvas is the one WebGL island (CHECKLIST C3, "no WebGL in a spine section").
+- E-C3b: the countdown's clip-path ride and the logotype glitch's SVG attribute animation (CHECKLIST C3, "transform/opacity only").
+- E-12: the hero canvas, the loader, the cue's three bounces and the logotype bursts move on their own (rule 12).
+- E-13/42: the block glow under the pointer and the canvas bloom (rules 13 and 42).
+- E-1/21/40: the sky's faint galaxy wash in Space, Eggplant, Forest and Wine over the night sky (rules 1, 21 and 40).
+- E-24: the logotype glitch splits in shade pairs, and the loader draws a hairline outline of the wordmark (rule 24; the brand guide's "no outlines" on the logo).
+- E-A2: `--night` #050506 as the scene and `/` background under the hero, and Pearl Whisper at alpha as light in the hero (CHECKLIST A2).
+- E-A2b: the scene's light colours are render parameters, not palette colours (CHECKLIST A2).
+- E-A3: the hero's type sizes (countdown numerals, loader percent at 400, eyebrow and labels at 14 px 600; CHECKLIST A3, type-system).
+- E-GSAP: the hero honours reduced motion through `matchMedia` and CSS, because it loads no GSAP ("Always do": `gsap.matchMedia()`).
+
+Still pending Sam (the build ships the plan's default and flags it; list in `docs/specs/hero.md` section 11): E-C4 (Lighthouse graded on the poster tier), E-2.2.2 (scene and countdown without a pause control), the reduced-motion tier, the four proposed strings, the `--night` token name, where the texture masters live, and the review tools E1 and E2.
 
 ## Stack (decided; do not swap without asking)
 Astro 7 static on Cloudflare Workers + Static Assets. GSAP (ScrollTrigger, SplitText, Flip) for motion; CSS scroll-driven animations where supported; Motion mini only inside React islands; Lenis on desktop only. Supabase for leads via one Worker endpoint with Turnstile; Shopify customer mirror; PostHog + Cloudflare Web Analytics. Details in `docs/research/01-stack-and-hosting.md`.
