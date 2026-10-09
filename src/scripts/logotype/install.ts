@@ -4,7 +4,7 @@
 // chose) the intro runs 0.75 s after install, the prototype's no-loader timing. A page whose loader already went to its
 // poster state (offline at load) gets no extra burst.
 import { createLogoGlitch } from './glitch.ts';
-import { HERO_PARAMS } from '../../config/params.ts';
+import { LOGO_IDLE, LOGO_SPLIT } from '../../config/glitch.ts';
 import { reducedMQ } from '../motion.ts';
 
 type QueuedCall = [method: 'burst' | 'intro' | 'setTone', ...args: unknown[]];
@@ -16,7 +16,7 @@ const w = window as unknown as {
 
 const link = document.getElementById('siteLogo');
 if (link instanceof HTMLAnchorElement && !w.__skreedLogo) {
-  const logo = createLogoGlitch(link, { split: HERO_PARAMS.logoSplit, idle: HERO_PARAMS.logoIdle });
+  const logo = createLogoGlitch(link, { split: LOGO_SPLIT, idle: LOGO_IDLE });
   w.__skreedLogo = logo;
   for (const [m, ...a] of w.__skreedLogoQ?.splice(0) ?? []) (logo[m] as (...x: unknown[]) => void)(...a);
   if (!w.__skreedLoader) logo.intro(0.75);

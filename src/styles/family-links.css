@@ -1,8 +1,8 @@
-/* Section 2's family links (src/components/family/FamilyLinks.astro; docs/specs/family-page.md 2.2). By default (the
-   poster path, no script, and the 3D path until the section 2 island places them) a visible grid of ten circle swatches
-   with family-name captions on the night ground, in flow where the component is mounted. Once the island calls
-   placeLinkBoxes (nav[data-placed], 3D path only) they become transparent boxes over the gems, visible only as a focus
-   ring. The ten swatch rules follow src/data/family-keys.json (tests/family/rock-links.test.ts checks them). */
+/* Section 2's family links (src/components/family/FamilyLinksNav.astro, mounted through FamilyLinks.astro;
+   docs/specs/family-page.md 2.2). By default (the poster path, no script, and the 3D path until the section 2 island
+   places them) a visible grid of ten circle swatches with family-name captions on the night ground, in flow where the
+   component is mounted. Once the island calls placeLinkBoxes (nav[data-placed], 3D path only) they become transparent
+   boxes over the gems, visible only as a focus ring. The ten swatch rules follow src/data/family-keys.json (tests/family/rock-links.test.ts checks them). */
 .fl { position: relative; z-index: 1; padding: calc(3 * var(--s3)) var(--inset); background: var(--night); }   /* 48 px, the --s6 step (family.css is not on the landing) */
 .fl ol { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--s3) var(--s1); margin: 0; padding: 0; list-style: none; }
 .fl a { display: flex; flex-direction: column; align-items: center; gap: var(--s1); min-height: var(--hit, 44px); color: var(--pearl-whisper); text-decoration: none;

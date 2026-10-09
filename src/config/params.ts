@@ -3,13 +3,15 @@
 // except logoIdle: 0 here, 1 in the prototype. The idle twitch is off in production for WCAG 2.2.2 (spec D20).
 // tests/unit/params.test.ts asserts the locked values, logoIdle and every other key against the prototype.
 
+import { LOGO_IDLE, LOGO_SPLIT } from './glitch.ts';
+
 export const HERO_PARAMS = Object.freeze({
   // hover (igloo's own numbers)
   push: 0.5, wob: 0.3, r0: 1, r1: 3, follow: 0.06, mouse: 0.05, breath: 0.3, lift: 1.6,
   // look
   glow: 2.4, rest: 0.06, tint: 0.035, grad: 0.7,
   // logotype glitch
-  logoIdle: 0, logoSplit: 0.4,
+  logoIdle: LOGO_IDLE, logoSplit: LOGO_SPLIT,
   clear: 0.2,
   // sky
   skyGain: 1, hue: 0.8, hueScale: 2.2,

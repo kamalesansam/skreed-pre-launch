@@ -1,6 +1,7 @@
 // Section 2 to the family pages: the integration contract of docs/specs/family-page.md 2.2, as code. Two parts:
 //  - installFamilyLinks(nav): the ten links' own behaviour (focus prefetch, the return path, family_open, the scoped
-//    view transition). FamilyLinks.astro runs it on every path, so mounting the component is all the poster path needs.
+//    view transition). FamilyLinksNav.astro (mounted through FamilyLinks.astro) runs it on every path, so mounting the
+//    component is all the poster path needs.
 //  - installRockNav, placeLinkBoxes, clearLinkBoxes, isReturnVisit: what the section 2 island calls on the 3D path. The
 //    island supplies a pick function (which gem is under a point) and the gems' projected boxes; nothing here touches
 //    WebGL. CLAUDE.md (Sam, 2026-10-09): every gem is a link to its family page by click, tap and keyboard.
@@ -58,7 +59,7 @@ export const FAMILY_FOCUS_EVENT = 'skreed:family-focus';
 const plain = (e: MouseEvent) => e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
 
 /**
- * The links' own behaviour, on every path (FamilyLinks.astro runs it once): focus prefetches the family page and tells
+ * The links' own behaviour, on every path (FamilyLinksNav.astro runs it once): focus prefetches the family page and tells
  * the section 2 island which gem to bring to rest (FAMILY_FOCUS_EVENT); a plain click leaves /#families behind, logs
  * family_open ('rock_grid' on the poster path, 'rock' on the 3D path) and navigates; modified clicks keep the browser's
  * own behaviour. Also scopes the landing's view transition to /shades/ links.
@@ -88,7 +89,7 @@ export interface RockNavOptions {
   canvas: HTMLElement;
   /** the gem under a client point, as its shade index (0 to 9), or null */
   pick: (clientX: number, clientY: number) => number | null;
-  /** the nav#families element rendered by FamilyLinks.astro; its links' focus calls onFocusGem */
+  /** the nav#families element rendered by FamilyLinksNav.astro; its links' focus calls onFocusGem */
   nav?: HTMLElement | null;
   /** is section 2 live (its gems on screen and pickable)? clicks outside it do nothing */
   active?: () => boolean;
@@ -101,7 +102,7 @@ export interface RockNavOptions {
 /**
  * Wires the section 2 canvas (3D path). Returns a function that removes every listener. The click rule (2.2): native
  * click, event.target is the canvas itself, the pointer moved 10 px or less since pointerdown, no time limit. The links
- * themselves are wired by installFamilyLinks (FamilyLinks.astro); here their focus only reaches onFocusGem.
+ * themselves are wired by installFamilyLinks (FamilyLinksNav.astro); here their focus only reaches onFocusGem.
  */
 export function installRockNav(o: RockNavOptions): () => void {
   let downX = 0, downY = 0, down = false, hoverIdx: number | null = null, hoverT = 0, raf = 0, lastMove: PointerEvent | null = null;

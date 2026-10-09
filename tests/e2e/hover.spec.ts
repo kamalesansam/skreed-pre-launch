@@ -109,7 +109,7 @@ test('AC6.5 parallax: the settled theta and phi series equal the prototype for m
     await Promise.all(pages.map((p) => p.waitForFunction(() => window.__skreedState!().live >= 1, null, { timeout: 600_000 })));
     for (const [fx, fy] of SCRIPT) {
       const got = await Promise.all(pages.map(async (p) => { await p.mouse.move(400 * fx, 250 * fy); return settledAngles(p); }));
-      rows.push(`mouse ${fx},${fy}: proto ${got[0].map((v) => v.toFixed(4))} port ${got[1].map((v) => v.toFixed(4))}`);
+      rows.push(`mouse ${fx},${fy}: proto ${got[0].map((v) => v.toFixed(4))} port ${got[1].map((v) => v.toFixed(4))}`); console.log('[AC6.5] ' + rows[rows.length - 1]);
       expect(got[1].map((v) => v.toFixed(4))).toEqual(got[0].map((v) => v.toFixed(4)));
     }
     for (const p of pages) await p.context().close();
@@ -127,11 +127,11 @@ test('AC6.5 parallax: the settled theta and phi series equal the prototype for m
         await p.evaluate(() => dispatchEvent(new PointerEvent('pointerup', { pointerType: 'touch', isPrimary: true })));
         return settledAngles(p);
       }));
-      rows.push(`touch ${fx},${fy} held: proto ${down[0].map((v) => v.toFixed(4))} port ${down[1].map((v) => v.toFixed(4))}; lifted: proto ${up[0].map((v) => v.toFixed(4))} port ${up[1].map((v) => v.toFixed(4))}`);
+      rows.push(`touch ${fx},${fy} held: proto ${down[0].map((v) => v.toFixed(4))} port ${down[1].map((v) => v.toFixed(4))}; lifted: proto ${up[0].map((v) => v.toFixed(4))} port ${up[1].map((v) => v.toFixed(4))}`); console.log('[AC6.5] ' + rows[rows.length - 1]);
       expect(down[1].map((v) => v.toFixed(4))).toEqual(down[0].map((v) => v.toFixed(4)));
       expect(Math.abs(down[1][0])).toBeGreaterThan(0);
       expect(up[1].map((v) => v.toFixed(4))).toEqual(up[0].map((v) => v.toFixed(4)));
-      expect(up[1].map((v) => +v.toFixed(4))).toEqual([0, 0]);
+      expect(up[1].every((v) => Math.abs(v) < 5e-5), 'the camera returns when the finger lifts').toBe(true);   // -0 and 0 both
     }
     for (const p of pages) await p.context().close();
   }

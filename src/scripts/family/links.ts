@@ -1,5 +1,6 @@
-// FamilyLinks.astro's script: wires nav#families on the page that mounts it (the landing's section 2). Runs on every
-// path, poster and 3D; the section 2 island adds the canvas part with installRockNav and placeLinkBoxes.
+// FamilyLinksNav.astro's script (mounted through FamilyLinks.astro): wires nav#families on the page that mounts it (the
+// landing's section 2). Runs on every path, poster and 3D; the section 2 island adds the canvas part with installRockNav
+// and placeLinkBoxes.
 import { installFamilyLinks, isReturnVisit } from './rock-links.ts';
 
 const nav = document.getElementById('families');

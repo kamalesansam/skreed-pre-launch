@@ -88,8 +88,10 @@ let glCpu: Browser;
 test.beforeAll(async () => { glCpu = await chromium.launch({ executablePath: CHROME_PATH, args: [...GL_ARGS, '--disable-gpu-rasterization'] }); });
 test.afterAll(async () => { await glCpu?.close(); });
 
+// Device scale 1 here (OVERLAY3D_DSF overrides): the pages must render WebGL up to the lift, which SwiftShader does far
+// faster on small buffers; the DOM comparison is the same at any scale.
 async function shoot3d(base: string, vp: (typeof VIEWPORTS)[number], proto: boolean) {
-  const ctx = await glCpu.newContext({ viewport: vp.viewport, deviceScaleFactor: vp.deviceScaleFactor, bypassCSP: true });
+  const ctx = await glCpu.newContext({ viewport: vp.viewport, deviceScaleFactor: +(process.env.OVERLAY3D_DSF || 1), bypassCSP: true });
   await pinRandom(ctx);
   if (proto) await servePrototype(ctx);
   const page = await ctx.newPage();
@@ -109,9 +111,8 @@ async function shoot3d(base: string, vp: (typeof VIEWPORTS)[number], proto: bool
 
 for (const vp of VIEWPORTS) {
   test(`AC1.3 overlay at rest on the 3D path is identical to the prototype at ${vp.name}`, async ({ baseURL }, info) => {
-    test.setTimeout(2_400_000);
-    const a = await shoot3d(baseURL!, vp, true);
-    const b = await shoot3d(baseURL!, vp, false);
+    test.setTimeout(5_400_000);
+    const [a, b] = await Promise.all([shoot3d(baseURL!, vp, true), shoot3d(baseURL!, vp, false)]);
     const dir = info.outputPath();
     mkdirSync(dir, { recursive: true });
     writeFileSync(`${dir}/proto-3d.png`, a.png);
