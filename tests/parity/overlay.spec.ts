@@ -97,6 +97,10 @@ async function shoot3d(base: string, vp: (typeof VIEWPORTS)[number], proto: bool
   await page.goto(proto ? PROTO_URL : new URL('/?tier=hero3d', base).href, { timeout: 300_000 });
   await page.waitForFunction(() => !document.getElementById('intro') && (window as unknown as { __heroStarted?: boolean }).__heroStarted, null, { timeout: 900_000, polling: 500 });
   const ride = await page.evaluate(() => { const c = document.getElementById('heroCopy')!, s = getComputedStyle(c); return [s.position, s.transform, s.clipPath, document.getElementById('siteLogo')!.dataset.tone].join(' '); });
+  // D20: the port's cue bounces three times after the lift and rests, so its animation has usually finished by now and
+  // there is nothing to pause at 0. Its own .cue.is-off rule removes the animation; toggling it restarts the bounce, and
+  // settle() then pauses both pages at 0 (AC1.3). The prototype's cue loops forever and is unaffected.
+  if (!proto) await page.evaluate(() => { const c = document.getElementById('cue')!; c.classList.add('is-off'); void c.offsetWidth; c.classList.remove('is-off'); });
   await settle(page);
   const png = await page.screenshot({ timeout: 600_000 });
   await ctx.close();

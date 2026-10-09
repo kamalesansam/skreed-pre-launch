@@ -42,6 +42,8 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     <p class="hud-meta"><span class="family" translate="no">{fam.name}</span><span class="counter swap" id="hudNum" aria-hidden="true"><span>{FAM_COPY.number(key)}</span></span><span class="sr" id="hudNumSr">{FAM_COPY.numberSr(key)}</span></p>
     <button class="hud-btn next ring2 press" type="button" id="next" aria-label={FAM_COPY.next} aria-disabled={ki === 23 ? 'true' : undefined}><Chevron dir="right" /></button>
   </div>
+  {/* the state line sits directly under the HUD on every layout: HUD, state, scrubber, finish (spec 3) */}
+  <div class="fp-state" id="state" role="status"></div>
   <div class="fp-scrub">
     <div class="scrub ring2" id="scrub" role="slider" tabindex="0" aria-label={FAM_COPY.scrubber} aria-orientation="horizontal" aria-valuemin="1" aria-valuemax="24" aria-valuenow={key.index} aria-valuetext={FAM_COPY.scrubberText(key)}>
       <span class="dots" aria-hidden="true">{fam.shades.map((s) => <i data-s={s.nnn}></i>)}</span>
@@ -58,7 +60,6 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
       <a class="btn-primary ring2 press" id="reserve" href={FAM_COPY.reserveHref(key, 'matte')} aria-label={FAM_COPY.reserveAria(key.name)}>{FAM_COPY.reserve}</a>
     </div>
   </div>
-  <div class="fp-state" id="state" role="status"></div>
   </div>
 </main>
 {has3d && (

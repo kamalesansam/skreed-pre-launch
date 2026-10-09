@@ -1,17 +1,15 @@
 ---
-// The ten family links of section 2 (docs/specs/family-page.md 2.2): one set of real links in every mode, catalog order,
-// whatever the gems' screen order. On the poster path they are section 2's visible fallback: ten circle swatches, each
-// captioned with its family name (CLAUDE.md, Sam 2026-10-09: a small family-name label beside each gem). On the 3D path
-// the island places each link's box over its gem with placeLinkBoxes() (rock-links.ts); the boxes are transparent and
-// serve the keyboard and screen readers, while the canvas owns pointer input. Mounted by the hero owner in section 2.
-import { ROCK_LINKS } from '../../scripts/family/rock-links.ts';
-import { FAM_COPY } from '../../scripts/family/copy.ts';
-import '../../styles/family-links.css';
+// Section 2's family links, the mount point for the hero owner (docs/specs/family-page.md 2.2 and 13, step 1:
+// `<FamilyLinks slot="riders" />` in src/pages/index.astro). The nav, family-links.css and links.ts live in
+// FamilyLinksNav.astro. With FAMILY_PAGES off (the production default until Reserve and the Wall exist, G21) this
+// component imports nothing, so the landing gets no dead links, no @view-transition rule and no script chunk (review
+// iteration 2, item 3). The condition must fold at build time (Astro bundles the scripts and styles of every imported
+// component, rendered or not), so it reads the PUBLIC_ variables, which Vite replaces statically, as the route does for
+// Island3D; familyPagesOn() (mode.ts) is the same rule with its input checks, and the build fails if the two disagree.
+import { familyPagesOn } from '../../scripts/family/mode.ts';
+const Nav = import.meta.env.PUBLIC_FAMILY_PAGES === 'on' || (import.meta.env.PUBLIC_FAMILY_PAGES !== 'off'
+  && (import.meta.env.DEV || import.meta.env.PUBLIC_STAGING === '1' || import.meta.env.PUBLIC_HERO_HOOKS === '1'))
+  ? (await import('./FamilyLinksNav.astro')).default : null;
+if ((Nav !== null) !== familyPagesOn()) throw new Error(`FamilyLinks: the folded FAMILY_PAGES test (${Nav !== null}) disagrees with familyPagesOn() (mode.ts); PUBLIC_FAMILY_PAGES must be exactly on or off`);
 ---
-<nav id="families" class="fl" aria-label="Colour families">
-  <ol>
-    {ROCK_LINKS.map((l, i) => (
-      <li><a href={l.href} data-shade-index={i} data-family={l.slug} aria-label={FAM_COPY.familyLink(l.family)}><span class="fl-sw" aria-hidden="true"></span><span class="fl-cap" aria-hidden="true">{l.family}</span></a></li>
-    ))}
-  </ol>
-</nav>
+{Nav && <Nav />}

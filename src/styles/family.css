@@ -3,12 +3,10 @@
    <style> (src/scripts/family/data.ts pageCss), Ember Luxe only on the primary button and focus rings, shades only
    as swatches through --sw (one rule per data-s) and --shade (the selection, on html). Flat colour only (CLAUDE.md
    rules 1, 6, 18, 25). Motion tokens and the larger spacing steps are registered in DESIGN.md ("Family pages"). */
-@property --shade { syntax: '<color>'; inherits: true; initial-value: transparent; }
-
 :root {
   --dur-swap: 400ms;                            /* name and number swap, scrubber marker */
   --ease-swap: cubic-bezier(0.25, 1, 0.5, 1);   /* the CSS form of power3.out */
-  --dur-shade: 600ms;                           /* the sticky bar's --shade cross-fade */
+  --dur-shade: 600ms;                           /* the sticky bar's swatch cross-fade (opacity, page.ts) */
   --dur-turn: 600ms;                            /* the front case's turn (3D) */
   --ease-turn: cubic-bezier(0.45, 0, 0.55, 1);
   --dur-canvas: 200ms;                          /* poster to canvas (3D) */
@@ -16,6 +14,11 @@
   --fh: 56px;                                   /* header height (component dimension) */
   --band: 224px;                                /* wide layout: the HUD band at the bottom of the stage */
   --hit: 44px;                                  /* minimum tap target (CHECKLIST B2) */
+  --sw-wide: 80px;                              /* wide layout: grid circle (spec 2.6) */
+  --cell-w: 112px;                              /* wide layout: grid column, the circle plus its caption */
+  --side-w: 190px;                              /* wide layout: the finish and Reserve column */
+  --scrub-w: 664px;                             /* wide layout: the scrubber and the HUD column, at most */
+  --name-w: 318px;                              /* wide layout: the shade name between Prev and Next */
 }
 
 html { background: var(--bg); color: var(--fg); scroll-padding-top: var(--fh); scroll-padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
@@ -115,7 +118,9 @@ html[data-deeplink] :is(#hudName, #hudNum, #barName) > span { color: transparent
   display: flex; align-items: center; justify-content: space-between; gap: var(--s2); background: var(--bg); border-top: 1px solid var(--fg);
   padding: var(--s2) calc(var(--inset) + env(safe-area-inset-right, 0px)) calc(var(--s2) + env(safe-area-inset-bottom, 0px)) calc(var(--inset) + env(safe-area-inset-left, 0px)); }
 .bar-shade { display: flex; align-items: center; gap: var(--s2); min-width: 0; }
-.bar-sw { flex: none; width: 24px; height: 24px; box-sizing: border-box; border-radius: var(--radius-round); background: var(--shade); border: 1px solid var(--ring, transparent); transition: --shade var(--dur-shade) linear; }
+.bar-sw { position: relative; flex: none; width: 24px; height: 24px; box-sizing: border-box; border-radius: var(--radius-round); background: var(--shade); border: 1px solid var(--ring, transparent); }
+/* the cross-fade (spec 4, C3): the new shade is the swatch itself at once; the old one is a copy on top that fades out by opacity */
+.bar-sw i { position: absolute; inset: -1px; box-sizing: border-box; border-radius: var(--radius-round); background: var(--sw); border: 1px solid var(--swr, transparent); }
 .bar-name { font-size: var(--fs-label); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .btn-primary { flex: none; display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 var(--s3); box-sizing: border-box;
   background: var(--ember-luxe); color: var(--urban-slate); font-family: var(--font-ui); font-size: var(--fs-button); font-weight: 600; line-height: 1; text-decoration: none; white-space: nowrap; }
@@ -134,7 +139,7 @@ html[data-deeplink] :is(#hudName, #hudNum, #barName) > span { color: transparent
 
 /* family navigation */
 .famnav { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--s2); padding: var(--s6) var(--inset); }
-.famnav a { display: flex; flex-direction: column; justify-content: center; gap: 2px; min-height: var(--hit); text-decoration: none; font-size: var(--fs-label); line-height: var(--lh-ui); }
+.famnav a { display: flex; flex-direction: column; justify-content: center; min-height: var(--hit); text-decoration: none; font-size: var(--fs-label); line-height: var(--lh-ui); }
 .famnav .fn-l { font-weight: 600; }
 .famnav .fn-all { font-weight: 600; text-decoration: underline; text-underline-offset: 3px; text-align: center; }
 .famnav .fn-next { text-align: right; align-items: flex-end; }
@@ -173,45 +178,63 @@ html[data-deeplink] :is(#hudName, #hudNum, #barName) > span { color: transparent
 html.grid .st3d { display: none; }
 html.m3d .fp-stage > .sgrid { display: none; }
 
-/* ---- wide layout (2.4): the stage spans the viewport, the HUD sits in its bottom band ---- */
+/* ---- wide layout (2.4, 2.7): the controls are one grid, the HUD centred, the finish and Reserve at the right ---- */
 @media (min-width: 900px) and (min-height: 600px) {
   :root { --fh: 72px; }
   html { scroll-padding-bottom: 0; }
   body { padding-bottom: 0; }
   .fh-logo svg { width: 136px; }
-  .fp { position: relative; display: block; height: clamp(480px, calc(100svh - 72px), 900px); }
-  .fp-ctl { display: contents; }
-  .fp-title { position: absolute; z-index: 1; top: var(--s4); left: 0; }
-  .fp-stage { position: absolute; inset: 0; height: auto; }
-  html:not(.m3d) .fp-stage { inset: 140px 0 calc(var(--band) + var(--s3)); }
-  .fp-stage > .sgrid { --c: min(calc((100cqh - 3 * var(--s2) - 4 * var(--s4)) / 4), 80px); grid-template-columns: repeat(6, 112px); row-gap: var(--s2); column-gap: var(--s1); }
-  .gsw { gap: 6px; }
-  .gsw .cap { display: block; max-width: 112px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .fp-hud { position: absolute; z-index: 1; left: 50%; top: calc(100% - var(--band) + var(--s4)); transform: translateX(-50%); padding: 0;
-    grid-template-columns: var(--hit) 318px var(--hit); grid-template-areas: "prev name next" "meta meta meta"; column-gap: 0; }
+  .fp-ctl { display: grid; grid-template-columns: minmax(var(--side-w), 1fr) minmax(0, var(--scrub-w)) minmax(var(--side-w), 1fr);
+    grid-template-areas: ". hud side" ". scrub side" ". . side"; align-content: start; column-gap: var(--s3); row-gap: var(--s2); padding: 0 var(--inset); }
+  /* a state line takes the row under the HUD (spec 3), so the screen order is the reading order: HUD, state, scrubber */
+  .fp-ctl:has(> .fp-state:not(:empty)) { grid-template-areas: ". hud side" ". state side" ". scrub side"; }
+  .fp-hud { grid-area: hud; justify-self: center; padding: 0; grid-template-columns: var(--hit) var(--name-w) var(--hit); grid-template-areas: "prev name next" "meta meta meta"; column-gap: 0; }
   .hud-btn.prev, .hud-btn.next { justify-self: center; }
-  .fp-scrub { position: absolute; z-index: 1; left: 50%; width: 664px; top: calc(100% - var(--band) + 134px); transform: translateX(-50%); padding: 0; }
-  .fp-side { position: absolute; z-index: 1; right: var(--inset); top: calc(100% - var(--band) + var(--s4)); width: 190px; display: flex; flex-direction: column; gap: var(--s2); }
+  .fp-scrub { grid-area: scrub; padding: 0; }
+  .fp-side { grid-area: side; justify-self: end; align-self: start; width: var(--side-w); display: flex; flex-direction: column; gap: var(--s2); }
   .finish { padding: 0; }
   .bar { position: static; min-height: 0; padding: 0; border: 0; background: none; z-index: auto; }
   .bar-shade { display: none; }
   .btn-primary { width: 100%; }
-  .fp-state { position: absolute; z-index: 1; left: 50%; top: calc(100% - var(--band) + 186px); transform: translateX(-50%); width: 664px; padding: 0; }
-  .whole .sgrid { --c: 80px; grid-template-columns: repeat(6, 112px); row-gap: var(--s4); }
+  .fp-state { grid-area: state; padding: 0; }
+  .gsw .cap { display: block; max-width: var(--cell-w); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .whole .sgrid { --c: var(--sw-wide); grid-template-columns: repeat(6, var(--cell-w)); row-gap: var(--s4); }
   .whole-cap { display: none; }
   .sw { inset: var(--fh) var(--inset) auto auto; width: 320px; max-height: calc(100svh - var(--fh) - var(--s3)); border: 1px solid var(--fg); }
   .sw-in { padding: var(--s3); }
   .famnav { padding: var(--s6) var(--inset); }
+
+  /* swatch grid mode, and no script: title, the 80 px grid, then the controls, in flow. The block grows with its
+     content and the page scrolls, so a short laptop screen never shrinks the circles or stacks the grid on the HUD. */
+  html:not(.m3d) .fp { gap: var(--s3); padding-top: var(--s4); }
+  html:not(.m3d) .fp-stage { height: auto; container-type: normal; }
+  html:not(.m3d) .fp-stage > .sgrid { --c: var(--sw-wide); grid-template-columns: repeat(6, var(--cell-w)); gap: var(--s1); }
+
+  /* 3D mode: the stage spans the viewport under the header, the title over its top left, the controls in its bottom band */
+  html.m3d .fp { position: relative; display: block; height: clamp(480px, calc(100svh - var(--fh)), 900px); }
+  html.m3d .fp-title { position: absolute; z-index: 1; top: var(--s4); left: 0; }
+  html.m3d .fp-stage { position: absolute; inset: 0; height: auto; }
+  html.m3d .fp-ctl { position: absolute; z-index: 1; left: 0; right: 0; bottom: 0; height: var(--band); box-sizing: border-box; padding-top: var(--s4); row-gap: var(--s5); pointer-events: none; }
+  html.m3d .fp-ctl > * { pointer-events: auto; }
+  html.m3d .fp-ctl:has(> .fp-state:not(:empty)) { row-gap: var(--s2); }   /* HUD, state line and scrubber stay inside the band */
 }
-/* phone layout only: HUD, scrubber, finish and state are one column under the stage; the bar is fixed to the bottom */
+/* phone layout only: HUD, state line, scrubber and finish are one column under the stage; the bar is fixed to the bottom */
 @media not ((min-width: 900px) and (min-height: 600px)) {
   .fp-ctl { display: flex; flex-direction: column; gap: var(--s2); }
   .fp-side { display: contents; }
+  /* With a state line under the HUD (spec 3) the stage gives up the line's height, so the line, the scrubber and the
+     finish stay above the sticky bar as they do at rest (2.3): the block fills the screen from the header to 12 px
+     above the bar, and the stage takes what the title and the controls leave, between its floor and 520 px. The 3D
+     stage keeps its floor (320 px, the landscape rule's height under 500 px tall); in swatch grid mode the floor is the
+     height at which the circles reach 44 px. */
+  .fp:has(.fp-state:not(:empty)) { min-height: calc(100svh - var(--fh) - 72px - env(safe-area-inset-bottom, 0px) - var(--s2)); }
+  .fp:has(.fp-state:not(:empty)) .fp-stage { flex: 1 1 0; height: auto; min-height: min(320px, max(220px, calc(100svh - 128px))); max-height: 520px; }
+  html.grid .fp:has(.fp-state:not(:empty)) .fp-stage { min-height: calc(4 * var(--hit) + 3 * var(--s1) + var(--s5)); }
 }
 
 @view-transition { navigation: auto; }
 @media (prefers-reduced-motion: reduce) {
   @view-transition { navigation: none; }
-  .press, .gsw .dot, .scrub .mark, .bar-sw, .finish button { transition: none; }
+  .press, .gsw .dot, .scrub .mark, .finish button { transition: none; }
   .st3d canvas { transition: none; }
 }

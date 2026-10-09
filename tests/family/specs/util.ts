@@ -18,3 +18,9 @@ export async function watch(ctx: BrowserContext): Promise<void> {
 export const cspViolations = (p: Page) => p.evaluate(() => (window as unknown as { __csp: string[] }).__csp);
 export const events = (p: Page) => p.evaluate(() => (window as unknown as { __events: { event: string; props: Record<string, unknown> }[] }).__events);
 export const shade = (p: Page) => p.evaluate(() => document.documentElement.dataset.shade);
+
+/** Requests that belong to the 3D island: any /_astro/ script outside the grid-mode set (the page module and its small
+ * shared chunks, the island's boot stub), and any model file. Rollup names shared chunks after their first module (three
+ * lands in a chunk named after a config module), so an allowlist is the reliable test, not a name pattern. */
+export const islandRequests = (paths: string[]) => paths.filter((u) => /\.glb$/.test(u) ||
+  (/^\/_astro\/.*\.js$/.test(u) && !/^\/_astro\/((FamilyPage|FamilyLinksNav|Island3D)\.astro_astro_type_script_[^/]+|(bus|motion|timing|track|preload-helper)\.[\w-]+\.js)$/.test(u)));

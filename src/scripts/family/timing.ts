@@ -1,7 +1,8 @@
 // Family page timings (docs/specs/family-page.md 2.5, 4; registered in DESIGN.md "Family pages"). The CSS twins of
-// SWAP_MS and SWAP_EASE are --dur-swap and --ease-swap in family.css; tests/family/data.test.ts keeps them equal.
+// SWAP_MS, SWAP_EASE and SHADE_MS are --dur-swap, --ease-swap and --dur-shade in family.css; tests/family/data.test.ts keeps them equal.
 export const SWAP_MS = 400;                                  // name and number swap
 export const SWAP_EASE = 'cubic-bezier(0.25, 1, 0.5, 1)';    // power3.out in CSS form
+export const SHADE_MS = 600;                                 // the sticky bar swatch's cross-fade (--dur-shade)
 export const URL_DEBOUNCE_MS = 300;                          // ?shade= rewrite with replaceState
 export const SETTLE_MS = 600;                                // shade_selected once the selection is stable
 export const DRAG_HUD_MS = 150;                              // HUD refresh while a finger is down

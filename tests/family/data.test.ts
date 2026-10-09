@@ -6,8 +6,9 @@ import { readFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import { FAMILIES, buildFamilies, pageCss, contrast, nnn, familyOf, type RawData, type RawKey } from '../../src/scripts/family/data.ts';
 import { FAM_COPY } from '../../src/scripts/family/copy.ts';
-import { SWAP_MS, SWAP_EASE } from '../../src/scripts/family/timing.ts';
-import { family3dMode } from '../../src/scripts/family/mode.ts';
+import { SWAP_MS, SWAP_EASE, SHADE_MS } from '../../src/scripts/family/timing.ts';
+import { family3dMode, familyPagesOn } from '../../src/scripts/family/mode.ts';
+import { SITE_COPY } from '../../src/scripts/family/site-copy.ts';
 
 const root = new URL('../../', import.meta.url);
 const read = (p: string) => readFileSync(new URL(p, root), 'utf8');
@@ -118,6 +119,26 @@ test('motion timings in code equal the CSS tokens (DESIGN.md "Family pages")', (
   const css = read('src/styles/family.css');
   assert.equal(css.match(/--dur-swap:\s*(\d+)ms/)?.[1], String(SWAP_MS));
   assert.equal(css.match(/--ease-swap:\s*(cubic-bezier\([^)]*\))/)?.[1], SWAP_EASE);
+  assert.equal(css.match(/--dur-shade:\s*(\d+)ms/)?.[1], String(SHADE_MS));
+});
+
+test('C3: the family CSS transitions transform, opacity and press colours only, never a custom property or a shade', () => {
+  const css = read('src/styles/family.css');
+  assert.doesNotMatch(css, /@property/);
+  for (const m of css.matchAll(/transition:\s*([^;}]+)/g)) {
+    for (const part of m[1].split(',')) {
+      const prop = part.trim().split(/\s+/)[0];
+      assert.ok(['transform', 'opacity', 'none', 'background-color', 'color'].includes(prop), `transition on ${prop}`);
+    }
+  }
+});
+
+test('rule 15: family CSS gaps and paddings come from the spacing scale, and the wide layout has no raw offsets', () => {
+  const css = read('src/styles/family.css');
+  for (const m of css.matchAll(/(?:^|[;{\s])(gap|row-gap|column-gap):\s*([^;}]+)/g)) {
+    for (const v of m[2].trim().split(/\s+/)) assert.match(v, /^var\(--(s\d|inset)\)$|^0$/, `${m[1]}: ${m[2]}`);
+  }
+  assert.doesNotMatch(css, /\b(140|134|186)px\b/);
 });
 
 test('FAMILY_3D: off by default in a build, dev under astro dev, on refuses a missing or stand-in manifest', () => {
@@ -129,10 +150,48 @@ test('FAMILY_3D: off by default in a build, dev under astro dev, on refuses a mi
   assert.throws(() => family3dMode('maybe', false), /must be off, dev or on/);
 });
 
+test('FAMILY_PAGES (G21): off in the production build until Reserve and the Wall exist, on in dev, test and staging builds', () => {
+  const prod = { dev: false, staging: false, hooks: false };
+  assert.equal(familyPagesOn(undefined, prod), false);
+  assert.equal(familyPagesOn(undefined, { ...prod, dev: true }), true);
+  assert.equal(familyPagesOn(undefined, { ...prod, hooks: true }), true);
+  assert.equal(familyPagesOn(undefined, { ...prod, staging: true }), true);
+  assert.equal(familyPagesOn('on', prod), true);
+  assert.equal(familyPagesOn('off', { dev: true, staging: true, hooks: true }), false);
+  assert.throws(() => familyPagesOn('yes', prod), /must be on or off/);
+});
+
+test('FAMILY_PAGES off: the landing mount carries no family-links.css and no script (review iteration 2, item 3)', () => {
+  // FamilyLinks.astro is what index.astro imports; it must import neither the stylesheet (with its @view-transition rule)
+  // nor links.ts statically, and reach FamilyLinksNav.astro only through a dynamic import under a condition Vite folds.
+  // The built proof (production plus the mount: no nav, no rule, no chunk) is in the spec's iteration 3 notes.
+  const wrap = read('src/components/family/FamilyLinks.astro').split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');   // code only
+  const front = wrap.split('---')[1];
+  assert.doesNotMatch(wrap, /family-links\.css|links\.ts|<script/);
+  assert.doesNotMatch(front, /^import .*FamilyLinksNav/m);
+  assert.match(front, /import\.meta\.env\.PUBLIC_FAMILY_PAGES === 'on'[\s\S]*\? \(await import\('\.\/FamilyLinksNav\.astro'\)\)\.default : null/);
+  const nav = read('src/components/family/FamilyLinksNav.astro');
+  assert.match(nav, /import '\.\.\/\.\.\/styles\/family-links\.css'/);
+  assert.match(nav, /<script>import '\.\.\/\.\.\/scripts\/family\/links\.ts';<\/script>/);
+});
+
+test('the 404 copy and the structured data facts: no em dash, no emoji, digits only in the h404 headline', () => {
+  const c = SITE_COPY.notFound;
+  for (const v of [c.title, c.description, c.h1, c.line, c.button, ...Object.values(SITE_COPY.org)]) {
+    assert.doesNotMatch(v, /\u2014|\u2013/);
+    assert.doesNotMatch(v, /\p{Extended_Pictographic}/u);
+  }
+  assert.match(c.h1, /^404\. /);
+  assert.ok(FAMILIES.some((f) => f.shades.some((s) => s.id === c.swatch)), 'the 404 swatch is a real shade');
+  assert.equal(SITE_COPY.org.email, FAM_COPY.email);
+  assert.equal(SITE_COPY.org.instagram, FAM_COPY.instagramHref);
+});
+
 test('guards on the family sources: no box-shadow, backdrop-filter, gradient, blur( or italic; no em dash; no inline style attribute', () => {
-  const files = ['src/styles/family.css', 'src/scripts/family/page.ts', 'src/scripts/family/copy.ts', 'src/scripts/family/head.inline.js',
+  const files = ['src/styles/family.css', 'src/styles/family-links.css', 'src/scripts/family/page.ts', 'src/scripts/family/copy.ts', 'src/scripts/family/head.inline.js',
+    'src/scripts/family/rock-links.ts', 'src/scripts/family/links.ts', 'src/scripts/family/site-copy.ts',
     'src/components/family/FamilyPage.astro', 'src/components/family/SwatchGrid.astro', 'src/components/family/FamilyHeadFirst.astro',
-    'src/components/family/FamilyLinks.astro', 'src/pages/shades/[family].astro'];
+    'src/components/family/FamilyLinks.astro', 'src/components/family/FamilyLinksNav.astro', 'src/pages/shades/[family].astro', 'src/pages/404.astro', 'src/pages/sitemap.xml.ts', 'src/pages/robots.txt.ts'];
   for (const f of files) {
     const s = read(f);
     assert.doesNotMatch(s, /box-shadow|backdrop-filter|gradient|blur\(|italic|font-style:\s*oblique/i, f);

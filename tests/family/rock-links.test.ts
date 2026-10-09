@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { ROCK_LINKS, linkForShade, installRockNav, TAP_SLOP_PX } from '../../src/scripts/family/rock-links.ts';
+import { ROCK_LINKS, linkForShade, installRockNav, installFamilyLinks, placeLinkBoxes, clearLinkBoxes, FAMILY_FOCUS_EVENT, TAP_SLOP_PX } from '../../src/scripts/family/rock-links.ts';
 import { REGION, BLOCK_ORDER } from '../../src/config/shades.gen.ts';
 
 // spec 2.2, the table for today's default "cool" order: block, holds, opens
@@ -106,4 +106,82 @@ test('a drag, a click off the canvas, a modified click or a miss never navigates
   miss.fire('click', { clientX: 1, clientY: 1 });
   assert.equal(miss.calls.assign, undefined, 'no gem under the pointer');
   miss.off();
+});
+
+// --- the links themselves (installFamilyLinks, placeLinkBoxes), with a fake nav of ten anchors ---
+class FakeEl extends EventTarget {
+  attrs = new Map<string, string>();
+  style = { props: new Map<string, string>(), setProperty(k: string, v: string) { this.props.set(k, v); }, removeProperty(k: string) { this.props.delete(k); } };
+  dataset: Record<string, string> = {};
+  children: FakeEl[];
+  constructor(children: FakeEl[] = []) { super(); this.children = children; }
+  setAttribute(k: string, v: string) { this.attrs.set(k, v); }
+  removeAttribute(k: string) { this.attrs.delete(k); }
+  hasAttribute(k: string) { return this.attrs.has(k); }
+  querySelectorAll() { return this.children; }
+}
+function linksHarness() {
+  const calls: { assign?: string; replaceState?: string; events: { event: string; props: Record<string, unknown> }[]; prefetch: string[] } = { events: [], prefetch: [] };
+  const g = globalThis as Record<string, unknown>;
+  g.history = { state: null, replaceState: (_s: unknown, _t: string, u: string) => { calls.replaceState = u; } };
+  g.location = { assign: (u: string) => { calls.assign = u; }, hash: '' };
+  g.dispatchEvent = (e: CustomEvent) => { calls.events.push(e.detail); return true; };
+  g.addEventListener = () => {};
+  g.removeEventListener = () => {};
+  g.document = { head: { append: (l: { href: string }) => calls.prefetch.push(l.href) }, createElement: () => ({}) };
+  const anchors = ROCK_LINKS.map((_, i) => { const a = new FakeEl(); a.dataset.shadeIndex = String(i); return a; });
+  const nav = new FakeEl(anchors) as unknown as HTMLElement;
+  const click = (i: number, mods: Partial<MouseEvent> = {}) => {
+    const ev = new Event('click', { cancelable: true });
+    for (const [k, v] of Object.entries({ button: 0, metaKey: false, ctrlKey: false, shiftKey: false, altKey: false, ...mods })) Object.defineProperty(ev, k, { value: v });
+    anchors[i].dispatchEvent(ev);
+    return ev;
+  };
+  return { calls, anchors, nav, click };
+}
+
+test('a link click leaves /#families behind, logs family_open (rock_grid until the boxes are placed, then rock) and navigates', () => {
+  const h = linksHarness();
+  const off = installFamilyLinks(h.nav);
+  const ev = h.click(1);
+  assert.equal(ev.defaultPrevented, true);
+  assert.equal(h.calls.replaceState, '#families');
+  assert.equal(h.calls.assign, '/shades/blissful-blues/?shade=032');
+  assert.deepEqual(h.calls.events.at(-1), { event: 'family_open', props: { family: 'blissful-blues', from: 'rock_grid' } });
+  placeLinkBoxes(h.nav, ROCK_LINKS.map((_, i) => ({ x: 100 * i, y: 50, w: 20, h: 60 })));
+  h.click(9);
+  assert.deepEqual(h.calls.events.at(-1), { event: 'family_open', props: { family: 'roaring-reds', from: 'rock' } });
+  h.calls.assign = undefined;
+  const mod = h.click(4, { metaKey: true });
+  assert.equal(mod.defaultPrevented, false, 'cmd-click keeps the browser behaviour');
+  assert.equal(h.calls.assign, undefined);
+  off();
+});
+
+test('focus prefetches the family page once and brings the gem to rest through installRockNav onFocusGem', () => {
+  const h = linksHarness();
+  const off = installFamilyLinks(h.nav);
+  const focused: number[] = [];
+  const offNav = installRockNav({ canvas: new EventTarget() as unknown as HTMLElement, pick: () => null, nav: h.nav, onFocusGem: (i) => focused.push(i) });
+  h.anchors[5].dispatchEvent(new Event('focus'));
+  h.anchors[5].dispatchEvent(new Event('focus'));
+  assert.deepEqual(focused, [5, 5]);
+  assert.deepEqual(h.calls.prefetch, ['/shades/earthy-browns/']);
+  assert.equal(FAMILY_FOCUS_EVENT, 'skreed:family-focus');
+  offNav(); off();
+});
+
+test('placeLinkBoxes marks the nav placed and keeps every box 44 px or larger, centred on its gem; clearLinkBoxes undoes it', () => {
+  const h = linksHarness();
+  assert.equal(h.nav.hasAttribute('data-placed'), false, 'unplaced: the visible fallback layout (no stacking at the top left)');
+  placeLinkBoxes(h.nav, ROCK_LINKS.map((_, i) => (i === 2 ? null : { x: 10 * i, y: 200, w: 20, h: 90 })));
+  assert.equal(h.nav.hasAttribute('data-placed'), true);
+  const st = (i: number) => (h.anchors[i].style as unknown as { props: Map<string, string> }).props;
+  assert.equal(st(0).get('width'), '44px');
+  assert.equal(st(0).get('height'), '90px');
+  assert.equal(st(0).get('transform'), 'translate3d(-12px, 200px, 0)');
+  assert.equal(st(2).size, 0, 'a null box stays where it was');
+  clearLinkBoxes(h.nav);
+  assert.equal(h.nav.hasAttribute('data-placed'), false);
+  assert.equal(st(0).size, 0);
 });

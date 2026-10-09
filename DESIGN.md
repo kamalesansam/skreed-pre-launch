@@ -338,8 +338,9 @@ One scale, used through `gap` on flex and grid, not per-element margins (rule 15
 ### The family pages' layout (`/shades/<family>/`, `docs/specs/family-page.md` 2.3, 2.4, 2.8)
 
 - **Spacing steps added for the family pages** (defined in `src/styles/family.css`, used through `gap` and padding): `--s4: 24px` (title offset over the stage, the HUD band's top padding, the switcher's bottom padding), `--s5: 32px` (the swatch grid's height allowance in the stage), `--s6: 48px` (section padding: "The whole family.", the family navigation row, the footer).
-- **Component dimensions, not spacing:** the header (56 px phone, 72 px wide), the HUD band (224 px, `--band`), the tap minimum (44 px, `--hit`), the sticky bar (72 px plus the safe area), the scrubber marker (24 px), the switcher rows (56 px), the Prev and Next chevron (16 px in a 44 px box), the grid swatch's selected ring (2 px at a 3 px offset) and focus outline (6 px offset).
+- **Component dimensions, not spacing:** the header (56 px phone, 72 px wide, `--fh`), the HUD band (224 px, `--band`, 3D mode), the tap minimum (44 px, `--hit`), the wide layout's grid circle (80 px, `--sw-wide`, spec 2.6) and grid column (112 px, `--cell-w`), its finish and Reserve column (190 px, `--side-w`), its HUD and scrubber column (at most 664 px, `--scrub-w`) and the shade name between Prev and Next (318 px, `--name-w`), the sticky bar (72 px plus the safe area), the scrubber marker (24 px), the switcher rows (56 px), the Prev and Next chevron (16 px in a 44 px box), the grid swatch's selected ring (2 px at a 3 px offset) and focus outline (6 px offset).
 - **One breakpoint:** the wide layout at 900 px wide and 600 px tall or more; everything else is the phone layout.
+- **Wide layout, swatch grid mode:** title, the 80 px grid and the controls stack in flow and the page scrolls, so a short laptop screen (1280 x 609, 1366 x 657, 1024 x 600, 900 x 600) never shrinks the circles or lays the grid over the controls. Only 3D mode pins the controls into the stage's bottom band.
 
 ### Whitespace
 
@@ -537,7 +538,7 @@ Tokens in `src/styles/family.css`; the script twins in `src/scripts/family/timin
 :root {
   --dur-swap: 400ms;                              /* name and number swap, scrubber marker */
   --ease-swap: cubic-bezier(0.25, 1, 0.5, 1);     /* power3.out in CSS form */
-  --dur-shade: 600ms;                             /* the sticky bar's --shade cross-fade (@property --shade, <color>) */
+  --dur-shade: 600ms;                             /* the sticky bar swatch's cross-fade: the old swatch fades out by opacity over the new */
   --dur-turn: 600ms;                              /* the front case's turn */
   --ease-turn: cubic-bezier(0.45, 0, 0.55, 1);
   --dur-canvas: 200ms;                            /* poster to canvas */
@@ -551,7 +552,7 @@ Tokens in `src/styles/family.css`; the script twins in `src/scripts/family/timin
 | Front-case turn (finish press, tap on the front case) | 10 degrees toward the tapped side and back, 600 ms | `--ease-turn` |
 | Name and number swap | old and new lines together, 400 ms, never an empty slot | `--ease-swap` |
 | Scrubber marker | to its slot, 400 ms | `--ease-swap` |
-| Sticky bar swatch | colour cross-fade, 600 ms | linear |
+| Sticky bar swatch | cross-fade by opacity (the new shade under, a copy of the old one fading out on top), 600 ms; no colour is animated (C3) | linear |
 | Poster to canvas | opacity, 200 ms | linear |
 | Buttons and swatches | hover `translateY(-1px)`, press `scale(0.98)`, 150 ms | `--ease-standard` |
 | Between family pages and back to `/` | the browser's cross-document view transition (root cross-fade) | browser default |

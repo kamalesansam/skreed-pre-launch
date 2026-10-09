@@ -35,14 +35,19 @@ async function hoverRoutine(page: Page, W: number, H: number, onStep?: () => Pro
 test('AC6.1 and AC6.2 push, floor clearance and labels on both pages (desktop mouse)', async ({ baseURL }) => {
   test.setTimeout(3_000_000);
   const pages = await Promise.all([open(PROTO_URL, true, DESK), open(port(baseURL!), false, DESK)]);
+  // the push and the labels scale with live, which takes 2 s of scene time (24 frames or more at the 1/12 s cap)
+  await Promise.all(pages.map((p) => p.waitForFunction(() => window.__skreedState!().live >= 1, null, { timeout: 900_000, polling: 500 })));
   for (const [i, page] of pages.entries()) {
     const who = i ? 'port' : 'prototype';
     let maxLabels = 0; const readouts = new Set<string>();
-    await hoverRoutine(page, 1280, 800, async () => {
+    const sample = async () => {
       const r = await page.evaluate(() => [...document.querySelectorAll('#labels .lab')].map((l) => (l.lastChild as HTMLElement).textContent || ''));
       maxLabels = Math.max(maxLabels, r.length); r.forEach((x) => readouts.add(x));
-    });
-    await page.waitForTimeout(800);
+    };
+    await hoverRoutine(page, 1280, 800, sample);
+    // SwiftShader draws a few frames a second here: let the followers run 30 frames with the pointer at its last spot
+    const f0 = await page.evaluate(() => window.__skreedFrame ?? 0);
+    while ((await page.evaluate(() => window.__skreedFrame ?? 0)) < f0 + 30) { await sample(); await page.waitForTimeout(250); }
     const d = await page.evaluate(() => window.__skreedState!().d);
     expect(d.some((x) => x > 0.1), `${who}: a block pushed past 0.1`).toBe(true);
     const fc = await page.evaluate(() => window.__skreedFloorCheck!());
@@ -75,16 +80,24 @@ test('AC6.4 block glows: each block carries its cool-order shade by id; __skreed
   await page.context().close();
 });
 
-/** Waits until theta and phi stop moving, then returns them. */
+/** Waits until theta and phi stop moving across rendered frames (at least 3 new frames between equal samples). */
 async function settledAngles(page: Page): Promise<[number, number]> {
-  let prev = [NaN, NaN];
-  for (let i = 0; i < 2000; i++) {
-    const s = await page.evaluate(() => { const x = window.__skreedState!(); return [x.th, x.ph]; });
-    if (Math.abs(s[0] - prev[0]) < 1e-12 && Math.abs(s[1] - prev[1]) < 1e-12) return [s[0], s[1]];
-    prev = s; await page.waitForTimeout(150);
+  let prev = [NaN, NaN, -1];
+  for (let i = 0; i < 8000; i++) {
+    const s = await page.evaluate(() => { const x = window.__skreedState!(); return [x.th, x.ph, window.__skreedFrame ?? 0]; });
+    if (s[2] >= prev[2] + 3) {
+      if (Math.abs(s[0] - prev[0]) < 1e-7 && Math.abs(s[1] - prev[1]) < 1e-7) return [s[0], s[1]];   // residue under 3e-7, far below the 4-decimal comparison
+      prev = s;
+    }
+    await page.waitForTimeout(150);
   }
   throw new Error('angles never settled');
 }
+
+// The angles depend only on the pointer in normalised device coordinates and on the pointer type, so the scripts run in a
+// small mouse window and a small touch phone: SwiftShader needs about 85 frames per settle (follower 0.035 at ratio 5).
+const PDESK: BrowserContextOptions = { viewport: { width: 400, height: 250 }, deviceScaleFactor: 1 };
+const PPHONE: BrowserContextOptions = { viewport: { width: 260, height: 563 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true };
 
 test('AC6.5 parallax: the settled theta and phi series equal the prototype for mouse moves (desktop) and a held touch (phone)', async ({ baseURL }, info) => {
   test.setTimeout(3_000_000);
@@ -92,10 +105,10 @@ test('AC6.5 parallax: the settled theta and phi series equal the prototype for m
   const rows: string[] = [];
   // desktop: real mouse moves; the camera turns toward the pointer anywhere in the viewport
   {
-    const pages = await Promise.all([open(PROTO_URL, true, DESK), open(port(baseURL!), false, DESK)]);
+    const pages = await Promise.all([open(PROTO_URL, true, PDESK), open(port(baseURL!), false, PDESK)]);
     await Promise.all(pages.map((p) => p.waitForFunction(() => window.__skreedState!().live >= 1, null, { timeout: 600_000 })));
     for (const [fx, fy] of SCRIPT) {
-      const got = await Promise.all(pages.map(async (p) => { await p.mouse.move(1280 * fx, 800 * fy); return settledAngles(p); }));
+      const got = await Promise.all(pages.map(async (p) => { await p.mouse.move(400 * fx, 250 * fy); return settledAngles(p); }));
       rows.push(`mouse ${fx},${fy}: proto ${got[0].map((v) => v.toFixed(4))} port ${got[1].map((v) => v.toFixed(4))}`);
       expect(got[1].map((v) => v.toFixed(4))).toEqual(got[0].map((v) => v.toFixed(4)));
     }
@@ -103,11 +116,11 @@ test('AC6.5 parallax: the settled theta and phi series equal the prototype for m
   }
   // phone: a held touch turns the camera while the finger is down, and it returns when the finger lifts
   {
-    const pages = await Promise.all([open(PROTO_URL, true, PHONE), open(port(baseURL!), false, PHONE)]);
+    const pages = await Promise.all([open(PROTO_URL, true, PPHONE), open(port(baseURL!), false, PPHONE)]);
     await Promise.all(pages.map((p) => p.waitForFunction(() => window.__skreedState!().live >= 1, null, { timeout: 600_000 })));
     for (const [fx, fy] of SCRIPT.slice(0, 2)) {
       const down = await Promise.all(pages.map(async (p) => {
-        await p.evaluate(([x, y]) => dispatchEvent(new PointerEvent('pointerdown', { clientX: x, clientY: y, pointerType: 'touch', isPrimary: true })), [390 * fx, 844 * fy]);
+        await p.evaluate(([x, y]) => dispatchEvent(new PointerEvent('pointerdown', { clientX: x, clientY: y, pointerType: 'touch', isPrimary: true })), [260 * fx, 563 * fy]);
         return settledAngles(p);
       }));
       const up = await Promise.all(pages.map(async (p) => {

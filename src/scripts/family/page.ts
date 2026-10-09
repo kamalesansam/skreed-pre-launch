@@ -7,7 +7,7 @@ import { reducedMQ } from '../motion.ts';
 import { FAM_COPY, type CopyShade } from './copy.ts';
 import { track } from './track.ts';
 import { emit, on, type Finish, type Input } from './bus.ts';
-import { SWAP_MS, SWAP_EASE, URL_DEBOUNCE_MS, SETTLE_MS, DRAG_HUD_MS, LIVE_MS } from './timing.ts';
+import { SWAP_MS, SWAP_EASE, SHADE_MS, URL_DEBOUNCE_MS, SETTLE_MS, DRAG_HUD_MS, LIVE_MS } from './timing.ts';
 
 interface PageData { slug: string; name: string; first: number; key: number; has3d: boolean; size3d: string | null; names: string[] }
 
@@ -47,6 +47,19 @@ function swap(box: HTMLElement, text: string, instant: boolean): void {
     nu.animate([{ transform: 'translateY(110%)' }, { transform: 'translateY(0)' }], o)];
   running.set(box, a);
   a[1].onfinish = () => { if (running.get(box) === a) { running.delete(box); old.remove(); } };
+}
+
+// ---- the sticky bar's swatch (spec 4, C3): it takes the new shade at once from html[data-shade]; a copy of the old
+// shade on top fades out by opacity. A newer copy goes under the ones still fading, so quick changes blend smoothly ----
+const barSw = document.querySelector<HTMLElement>('.bar-sw');
+function fadeBar(from: string | undefined, instant: boolean): void {
+  if (!barSw) return;
+  if (!from || instant || reduced() || typeof barSw.animate !== 'function') { barSw.replaceChildren(); return; }
+  const old = document.createElement('i');
+  old.dataset.s = from;
+  barSw.prepend(old);
+  while (barSw.children.length > 6) barSw.lastElementChild!.remove();
+  old.animate([{ opacity: 1 }, { opacity: 0 }], { duration: SHADE_MS, easing: 'linear', fill: 'forwards' }).onfinish = () => old.remove();
 }
 
 // ---- writing a selection into the page ----
@@ -109,7 +122,9 @@ function select(i: number, input: Input, opts: { instant?: boolean; dragging?: b
   if (i === sel) return;
   sel = i;
   lastInput = input;
+  const from = H.dataset.shade;
   H.dataset.shade = nnn(i);
+  fadeBar(from, !!opts.instant);
   writeControls(i);
   if (opts.dragging) {
     hudPending = i;

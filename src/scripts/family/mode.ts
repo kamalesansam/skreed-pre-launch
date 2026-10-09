@@ -20,3 +20,26 @@ export function family3dMode(env: string | undefined = import.meta.env?.PUBLIC_F
   }
   return v;
 }
+
+/**
+ * FAMILY_PAGES (the environment variable PUBLIC_FAMILY_PAGES: on or off), whether the build emits /shades/<family>/ and
+ * the landing's family links (review iteration 1, G21; spec 11: the pages must not reach production while their Reserve
+ * and "All 240 shades" links would land on a landing with no #reserve and no #wall). Default: off in the production
+ * build (`npm run build`: not dev, not staging, no test hooks), on in dev, test and staging builds. Grade or preview the
+ * production bundle with PUBLIC_FAMILY_PAGES=on. Flip the production default when the Reserve section reads ?shade= and
+ * finish= and the Wall exists.
+ */
+export function familyPagesOn(
+  env: string | undefined = import.meta.env?.PUBLIC_FAMILY_PAGES ?? process.env.PUBLIC_FAMILY_PAGES,
+  build: { dev: boolean; staging: boolean; hooks: boolean } = {
+    dev: import.meta.env?.DEV === true,
+    staging: (import.meta.env?.PUBLIC_STAGING ?? process.env.PUBLIC_STAGING) === '1',
+    hooks: (import.meta.env?.PUBLIC_HERO_HOOKS ?? process.env.PUBLIC_HERO_HOOKS) === '1',
+  },
+): boolean {
+  const v = env?.trim().toLowerCase();
+  if (v === 'on') return true;
+  if (v === 'off') return false;
+  if (v) throw new Error(`PUBLIC_FAMILY_PAGES must be on or off, not "${env}"`);
+  return build.dev || build.staging || build.hooks;
+}

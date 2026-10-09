@@ -4,11 +4,15 @@
 // none; the bitmap is closed once uploaded), 'image' is the prototype's TextureLoader. D8 keeps 'bitmap' only if the
 // stage 1 rest frames are identical to the 'image' path (decided in build step 8; config/hero.ts TEXTURE_PATH).
 import { ImageBitmapLoader, Texture, TextureLoader } from 'three';
+import { TEXTURE_PATH } from '../../../config/hero.ts';
 
 export type TexturePath = 'bitmap' | 'image';
 
 export function loadTexture(url: string, path: TexturePath, onLoad: () => void, onError: (e: unknown) => void): Texture {
-  if (path === 'image') return new TextureLoader().load(url, () => onLoad(), undefined, onError);
+  // production takes TEXTURE_PATH only (folded at build time, so the unused loader is not shipped); test and staging
+  // builds can force either path with ?texpath= (boot.ts)
+  const p = import.meta.env.PUBLIC_HERO_HOOKS === '1' ? path : TEXTURE_PATH;
+  if (p === 'image') return new TextureLoader().load(url, () => onLoad(), undefined, onError);
   const tex = new Texture();
   tex.flipY = false;   // the bitmap is decoded already flipped; WebGL ignores UNPACK_FLIP_Y for ImageBitmap sources
   const loader = new ImageBitmapLoader();

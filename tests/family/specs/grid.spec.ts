@@ -1,6 +1,6 @@
 // Family pages in swatch grid mode (docs/specs/family-page.md 7, run 1: acceptance 1, 2 (links), 6, 9 (grid rows), 10).
 import { test, expect, type Page } from '@playwright/test';
-import { FAMILIES, NAMES, PHONE, WIDE, watch, cspViolations, events, shade } from './util.ts';
+import { FAMILIES, NAMES, PHONE, WIDE, watch, cspViolations, events, shade, islandRequests } from './util.ts';
 
 const url = (slug: string, q = '') => `/shades/${slug}/${q}`;
 
@@ -22,7 +22,23 @@ test.describe('1. routes, titles and links', () => {
       if (i > 0) await expect(prev).toHaveAttribute('href', `/shades/${FAMILIES[i - 1]}/`); else await expect(prev).toHaveCount(0);
       if (i < 9) await expect(next).toHaveAttribute('href', `/shades/${FAMILIES[i + 1]}/`); else await expect(next).toHaveCount(0);
     }
-    expect((await request.get('/shades/blue/')).status()).toBe(404);
+    const nf = await request.get('/shades/blue/');
+    expect(nf.status()).toBe(404);
+    expect(await nf.text()).toContain('<h1 class="h404">404. This shade does not exist.</h1>');   // the site 404, not an empty body
+  });
+
+  test('the sitemap lists the landing and the ten pages; robots.txt names it; the favicon set and the OG and JSON-LD facts ship', async ({ request }) => {
+    const sm = await (await request.get('/sitemap.xml')).text();
+    const locs = [...sm.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+    expect(locs).toEqual(['https://skreed.in/', ...FAMILIES.map((f) => `https://skreed.in/shades/${f}/`)]);
+    expect(await (await request.get('/robots.txt')).text()).toContain('Sitemap: https://skreed.in/sitemap.xml');
+    for (const f of ['/favicon.ico', '/icon.svg', '/apple-touch-icon.png', '/icon-192.png', '/icon-512.png', '/manifest.webmanifest']) expect((await request.get(f)).status(), f).toBe(200);
+    const html = await (await request.get(url('go-green'))).text();
+    expect(html).toContain('<meta property="og:title" content="Go Green, all 24 shades. Skreed">');
+    expect(html).toContain('<meta property="og:url" content="https://skreed.in/shades/go-green/">');
+    const ld = JSON.parse(html.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)![1]);
+    expect(ld['@graph'][0]).toMatchObject({ '@type': 'Organization', email: 'collab@skreed.in', sameAs: ['https://www.instagram.com/skreedofficial/'] });
+    expect(ld['@graph'][1].itemListElement[1]).toMatchObject({ name: 'Go Green', item: 'https://skreed.in/shades/go-green/' });
   });
 
   test('the switcher opens with JavaScript off (popover), lists the ten families and closes', async ({ browser }) => {
@@ -233,6 +249,30 @@ test.describe('5. selection in grid mode (DOM inputs)', () => {
   });
 });
 
+test.describe('C3. the sticky-bar swatch', () => {
+  test('cross-fades by opacity only: the new shade at once, a copy of the old fading out on top; none under reduced motion', async ({ browser }) => {
+    for (const reduced of [false, true]) {
+      const ctx = await browser.newContext({ ...PHONE, reducedMotion: reduced ? 'reduce' : 'no-preference' });
+      const page = await ctx.newPage();
+      await page.goto(url('blissful-blues'));
+      await page.locator('#next').click();
+      const m = await page.evaluate(() => {
+        const sw = document.querySelector('.bar-sw')!;
+        const kids = [...sw.querySelectorAll('i')].map((i) => (i as HTMLElement).dataset.s);
+        const props = sw.getAnimations({ subtree: true }).flatMap((a) => (a.effect as KeyframeEffect).getKeyframes().flatMap((k) => Object.keys(k).filter((x) => !['offset', 'easing', 'composite', 'computedOffset'].includes(x))));
+        return { kids, props: [...new Set(props)], bg: getComputedStyle(sw).backgroundColor, dur: getComputedStyle(sw).transitionDuration };
+      });
+      expect(m.bg).toBe('rgb(20, 148, 228)');          // Ocean (#1494e4), the new shade, at once
+      expect(m.dur).toBe('0s');                        // no transition on the swatch, so no colour animates
+      if (reduced) { expect(m.kids).toEqual([]); expect(m.props).toEqual([]); }
+      else { expect(m.kids).toEqual(['032']); expect(m.props).toEqual(['opacity']); }
+      await page.waitForTimeout(800);
+      expect(await page.evaluate(() => document.querySelectorAll('.bar-sw i').length)).toBe(0);
+      await ctx.close();
+    }
+  });
+});
+
 test.describe('9. states in grid mode', () => {
   test('?shade=999: the key shade, the URL cleaned', async ({ page }) => {
     await page.goto(url('blissful-blues', '?shade=999'));
@@ -259,13 +299,13 @@ test.describe('9. states in grid mode', () => {
       if (init) await ctx.addInitScript(init);
       const page = await ctx.newPage();
       const requests: string[] = [];
-      page.on('request', (r) => requests.push(r.url()));
+      page.on('request', (r) => requests.push(new URL(r.url()).pathname));
       await page.goto(url('earthy-browns'));
       await page.waitForTimeout(800);
       await expect(page.locator('html')).toHaveClass(/\bgrid\b/);
       await expect(page.locator('#stage .sgrid')).toBeVisible();
       if (!(await page.evaluate(() => JSON.parse(document.getElementById('fam-data')!.textContent!).has3d))) await expect(page.locator('#state')).toBeEmpty();
-      expect(requests.filter((u) => /three|stage|\.glb/.test(u)), name).toEqual([]);
+      expect(islandRequests(requests), name).toEqual([]);
       expect(await cspViolations(page)).toEqual([]);
       await ctx.close();
     }
@@ -339,6 +379,36 @@ test.describe('10. accessibility and layout', () => {
       });
       expect(r.sw).toBeLessThanOrEqual(r.vw);
       expect(r.small).toEqual([]);
+      await ctx.close();
+    });
+  }
+
+  // review iteration 1, FAIL 2: short laptop screens. Grid mode keeps the spec's 80 px circles (2.6) and lets the page
+  // scroll; no swatch box ever meets the HUD, the finish control, Reserve or the scrubber.
+  for (const [w, h] of [[1280, 609], [1366, 657], [1536, 753], [1024, 600], [900, 600], [1280, 800], [1366, 768], [1920, 1080]] as const) {
+    test(`wide swatch grid at ${w} x ${h}: 80 px circles, nothing over the controls, the HUD centred`, async ({ browser }) => {
+      const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+      const page = await ctx.newPage();
+      for (const slug of ['blissful-blues', 'earthy-browns', 'frosty-whites']) {
+        await page.goto(url(slug));
+        await page.evaluate(() => document.fonts.ready);
+        const r = await page.evaluate(() => {
+          const box = (e: Element) => e.getBoundingClientRect();
+          const dots = [...document.querySelectorAll('#stage .gsw .dot')].map((d) => Math.round(box(d).width));
+          const ctl = ['#hud', '#finish', '#reserve', '#scrub'].map((s) => [s, box(document.querySelector(s)!)] as const);
+          const hits: string[] = [];
+          for (const g of document.querySelectorAll('#stage .gsw')) {
+            const a = box(g);
+            for (const [s, c] of ctl) if (a.left < c.right && a.right > c.left && a.top < c.bottom && a.bottom > c.top) hits.push(`${(g as HTMLElement).dataset.s} ${s}`);
+          }
+          const name = box(document.querySelector('#hudName > span')!), stage = box(document.querySelector('#stage')!);
+          return { dots: [...new Set(dots)], hits, sw: document.documentElement.scrollWidth, vw: innerWidth, dx: Math.abs(name.left + name.width / 2 - (stage.left + stage.width / 2)) };
+        });
+        expect(r.dots, slug).toEqual([80]);
+        expect(r.hits, slug).toEqual([]);
+        expect(r.sw).toBeLessThanOrEqual(r.vw);
+        expect(r.dx).toBeLessThanOrEqual(8);
+      }
       await ctx.close();
     });
   }
