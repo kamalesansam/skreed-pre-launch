@@ -1,0 +1,17 @@
+---
+// The ten family links of section 2 (docs/specs/family-page.md 2.2): one set of real links in every mode, catalog order,
+// whatever the gems' screen order. On the poster path they are section 2's visible fallback: ten circle swatches, each
+// captioned with its family name (CLAUDE.md, Sam 2026-10-09: a small family-name label beside each gem). On the 3D path
+// the island places each link's box over its gem with placeLinkBoxes() (rock-links.ts); the boxes are transparent and
+// serve the keyboard and screen readers, while the canvas owns pointer input. Mounted by the hero owner in section 2.
+import { ROCK_LINKS } from '../../scripts/family/rock-links.ts';
+import { FAM_COPY } from '../../scripts/family/copy.ts';
+import '../../styles/family-links.css';
+---
+<nav id="families" class="fl" aria-label="Colour families">
+  <ol>
+    {ROCK_LINKS.map((l, i) => (
+      <li><a href={l.href} data-shade-index={i} data-family={l.slug} aria-label={FAM_COPY.familyLink(l.family)}><span class="fl-sw" aria-hidden="true"></span><span class="fl-cap" aria-hidden="true">{l.family}</span></a></li>
+    ))}
+  </ol>
+</nav>

@@ -36,3 +36,10 @@ export const SOFTWARE_GL = /SwiftShader|llvmpipe|softpipe|Software|Basic Render/
 
 /** The poster's aspect classes (architecture 4.5): wide is aspect 0.9 or more, portrait is the complement. */
 export const POSTER_MEDIA = { wide: '(min-aspect-ratio: 9/10)', portrait: 'not all and (min-aspect-ratio: 9/10)' } as const;
+
+/**
+ * How the island decodes its textures (spec D8): 'bitmap' (ImageBitmapLoader, off the main thread) is kept only if the
+ * stage 1 rest frames are identical to 'image' (the prototype's TextureLoader). Decided in build step 8; test and
+ * staging builds can force either with ?texpath=image|bitmap.
+ */
+export const TEXTURE_PATH: 'bitmap' | 'image' = 'bitmap';

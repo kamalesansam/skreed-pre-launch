@@ -3,8 +3,13 @@ import type { Page } from '@playwright/test';
 
 export const OVERLAYS = '#intro,.site-logo,.copy,.cue,.tune,.labels,.fallback,.hero-poster';
 
+/**
+ * Hides the overlays and paints one background under both pages. At dsf 1.25 a 390 px canvas is 487.5 device pixels
+ * wide, so the screenshot's last column is half canvas, half page background, and the backgrounds differ by design
+ * (D24: the prototype's body is Urban Slate, the port's is night).
+ */
 export async function hideOverlays(page: Page): Promise<void> {
-  await page.addStyleTag({ content: `${OVERLAYS}{display:none!important}` });
+  await page.addStyleTag({ content: `${OVERLAYS}{display:none!important}html,body{background:#000!important}` });
 }
 
 /** Waits for the loader's ready and more than 3 rendered frames (settle.waitReady), then 3 more frames after hiding. */

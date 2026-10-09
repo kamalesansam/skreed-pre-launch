@@ -1,0 +1,96 @@
+---
+// The body of /shades/<family>/ (docs/specs/family-page.md 2.3, 2.4, 2.6, 3). Phone layout in document order; the wide
+// layout repositions the same elements in CSS (family.css), so reading and focus order are one order on every screen.
+// With FAMILY_3D=off the swatch grid is the stage (2.7); with a 3D build the stage holds the lineup and the grid sits
+// under "The whole family.", moving into the stage when the page lands in swatch grid mode.
+import type { Family } from '../../scripts/family/data.ts';
+import { FAMILIES, ordinal2, familyHref } from '../../scripts/family/data.ts';
+import { FAM_COPY } from '../../scripts/family/copy.ts';
+import Wordmark from './Wordmark.astro';
+import Chevron from './Chevron.astro';
+import SwatchGrid from './SwatchGrid.astro';
+
+interface Props { fam: Family; has3d: boolean }
+const { fam, has3d } = Astro.props;
+const key = fam.key;
+const ki = key.index - 1;
+const prevFam = FAMILIES[fam.ordinal - 2];
+const nextFam = FAMILIES[fam.ordinal];
+// size3d: the island plus model download in MB, measured at build once the supplier model ships (FAMILY_3D=on); null before
+const data = { slug: fam.slug, name: fam.name, first: fam.first, key: ki, has3d, size3d: null, names: fam.shades.map((s) => s.name) };
+// "</" never appears in names, but escape it anyway so the data block can never close its script element early
+const json = JSON.stringify(data).replace(/</g, '\\u003c');
+---
+<header class="fh" id="fh">
+  <a class="fh-logo ring2" href="/" aria-label={FAM_COPY.home}><Wordmark /></a>
+  <button class="fh-fam ring2 press" type="button" id="famBtn" popovertarget="family-switcher">{FAM_COPY.families}</button>
+</header>
+<main id="main" class="fp">
+  <div class="fp-title">
+    <p class="eyebrow"><span class="idx">{ordinal2(fam)}</span> / 10 Families</p>
+    <h1 translate="no">{fam.name}</h1>
+  </div>
+  <div class="fp-stage" id="stage">
+    {has3d
+      ? <div class="st3d" id="st3d" role="img" aria-label={FAM_COPY.stage(fam.name, key.name)}></div>
+      : <SwatchGrid fam={fam} />}
+  </div>
+  <div class="fp-ctl">
+  <div class="fp-hud" id="hud">
+    <p class="hud-name" translate="no"><span class="swap" id="hudName"><span>{key.name}</span></span></p>
+    <button class="hud-btn prev ring2 press" type="button" id="prev" aria-label={FAM_COPY.prev} aria-disabled={ki === 0 ? 'true' : undefined}><Chevron dir="left" /></button>
+    <p class="hud-meta"><span class="family" translate="no">{fam.name}</span><span class="counter swap" id="hudNum" aria-hidden="true"><span>{FAM_COPY.number(key)}</span></span><span class="sr" id="hudNumSr">{FAM_COPY.numberSr(key)}</span></p>
+    <button class="hud-btn next ring2 press" type="button" id="next" aria-label={FAM_COPY.next} aria-disabled={ki === 23 ? 'true' : undefined}><Chevron dir="right" /></button>
+  </div>
+  <div class="fp-scrub">
+    <div class="scrub ring2" id="scrub" role="slider" tabindex="0" aria-label={FAM_COPY.scrubber} aria-orientation="horizontal" aria-valuemin="1" aria-valuemax="24" aria-valuenow={key.index} aria-valuetext={FAM_COPY.scrubberText(key)}>
+      <span class="dots" aria-hidden="true">{fam.shades.map((s) => <i data-s={s.nnn}></i>)}</span>
+      <span class="mark" aria-hidden="true"></span>
+    </div>
+  </div>
+  <div class="fp-side">
+    <div class="finish" id="finish" role="group" aria-label={FAM_COPY.finish}>
+      <button type="button" class="ring2" data-finish="matte" aria-pressed="true">{FAM_COPY.matte}</button>
+      <button type="button" class="ring2" data-finish="gloss" aria-pressed="false">{FAM_COPY.gloss}</button>
+    </div>
+    <div class="bar" id="bar">
+      <span class="bar-shade"><span class="bar-sw" aria-hidden="true"></span><span class="bar-name swap" id="barName" translate="no"><span>{key.name}</span></span></span>
+      <a class="btn-primary ring2 press" id="reserve" href={FAM_COPY.reserveHref(key, 'matte')} aria-label={FAM_COPY.reserveAria(key.name)}>{FAM_COPY.reserve}</a>
+    </div>
+  </div>
+  <div class="fp-state" id="state" role="status"></div>
+  </div>
+</main>
+{has3d && (
+  <section class="whole" id="whole" aria-labelledby="whole-h">
+    <h2 id="whole-h">{FAM_COPY.h2}</h2>
+    <SwatchGrid fam={fam} labelledby="whole-h" />
+    <p class="whole-cap" id="wholeCap">{FAM_COPY.caption(key, fam.name)}</p>
+  </section>
+)}
+<nav class="famnav" aria-label={FAM_COPY.otherFamilies}>
+  {prevFam ? <a class="fn-prev ring2" href={familyHref(prevFam)}><span class="fn-l">{FAM_COPY.prevFamily}</span><span class="fn-n" translate="no">{prevFam.name}</span></a> : <span class="fn-prev"></span>}
+  <a class="fn-all ring2" href={FAM_COPY.allShadesHref(fam.slug)}>{FAM_COPY.allShades}</a>
+  {nextFam ? <a class="fn-next ring2" href={familyHref(nextFam)}><span class="fn-l">{FAM_COPY.nextFamily}</span><span class="fn-n" translate="no">{nextFam.name}</span></a> : <span class="fn-next"></span>}
+</nav>
+<div id="family-switcher" class="sw" popover>
+  <nav class="sw-in" aria-labelledby="sw-h">
+    <p class="sw-h" id="sw-h">{FAM_COPY.families}</p>
+    <ol class="sw-list">
+      {FAMILIES.map((g) => (
+        <li><a class="ring2" href={familyHref(g)} aria-current={g.slug === fam.slug ? 'page' : undefined}><span class="sw-dot" data-s={g.key.nnn} aria-hidden="true"></span><span translate="no">{g.name}</span></a></li>
+      ))}
+    </ol>
+    <a class="sw-all ring2" href={FAM_COPY.allShadesHref(fam.slug)}>{FAM_COPY.allShades}</a>
+    <button class="sw-close ring2 press" type="button" popovertarget="family-switcher" popovertargetaction="hide">{FAM_COPY.switcherClose}</button>
+  </nav>
+</div>
+<footer class="ff">
+  <p><a class="ring2" href={`mailto:${FAM_COPY.email}`}>{FAM_COPY.email}</a></p>
+  <p>{FAM_COPY.place}</p>
+  <p>{FAM_COPY.reply}</p>
+  <p><a class="ring2" href={FAM_COPY.instagramHref} rel="noopener">{FAM_COPY.instagram}</a></p>
+</footer>
+<p class="sr" id="live" aria-live="polite"></p>
+<script type="application/json" id="fam-data" is:inline set:html={json}></script>
+<script>import '../../scripts/family/page.ts';</script>

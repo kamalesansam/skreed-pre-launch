@@ -4,7 +4,8 @@
 // through named slots so the order lives in one place.
 //   1 h1  2 poster  3 canvas  4 sprite  5 loader  6 logotype  7 labels  8 track  9 countdown  10 cue
 //   11 riders (section 2's DOM copy)  12 main around the after-track slot (rendered only when it has content)
-//   13 dev (Tune)  14 the boot script (build step 6)  15 last (the countdown and cue script)
+//   13 dev (Tune)  14 the boot script (processed, type=module, after the SiteLogo script in document order)
+//   15 last (the countdown and cue script)
 import { COPY } from '../../config/copy.ts';
 // main is rendered only when the after-track slot renders something (a conditional slot still counts for slots.has)
 const after = Astro.slots.has('after-track') ? (await Astro.slots.render('after-track')).trim() : '';
@@ -22,4 +23,5 @@ const after = Astro.slots.has('after-track') ? (await Astro.slots.render('after-
 <slot name="riders" />
 {after && <main id="main" set:html={after} />}
 <slot name="dev" />
+<script>import '../../scripts/boot.ts';</script>
 <slot name="last" />

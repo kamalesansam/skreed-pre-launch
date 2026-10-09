@@ -1,0 +1,27 @@
+/* Section 2's family links (src/components/family/FamilyLinks.astro; docs/specs/family-page.md 2.2). On the poster path
+   (html.poster, and with no script) a visible grid of ten circle swatches with family-name captions on the night
+   ground; on the 3D path (html.hero3d) transparent boxes the section 2 island places over the gems, visible only as a
+   focus ring. The ten swatch rules follow src/data/family-keys.json (tests/family/rock-links.test.ts checks them). */
+.fl ol { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--s3) var(--s1); margin: 0; padding: 0; list-style: none; }
+.fl a { display: flex; flex-direction: column; align-items: center; gap: var(--s1); min-height: 44px; color: var(--pearl-whisper); text-decoration: none;
+  font-family: var(--font-ui); font-size: var(--fs-tile-caption); font-weight: 600; line-height: 1.3; text-align: center; -webkit-tap-highlight-color: transparent; }
+.fl-sw { display: block; width: 44px; height: 44px; border-radius: var(--radius-round); }
+.fl a:focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }
+@media (hover: hover) { .fl a .fl-sw { transition: transform var(--dur-press) var(--ease-standard); } .fl a:hover .fl-sw { transform: translateY(-1px); } }
+.fl a:active .fl-sw { transform: scale(0.98); }
+@media (min-width: 900px) { .fl ol { grid-template-columns: repeat(10, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { .fl a .fl-sw { transition: none; } }
+html.hero3d .fl { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+html.hero3d .fl ol { display: block; }
+html.hero3d .fl a { position: absolute; left: 0; top: 0; width: 44px; height: 44px; padding: 0; pointer-events: none; color: transparent; }   /* transparent, never hidden: always in the tab order */
+html.hero3d .fl-sw, html.hero3d .fl-cap { display: none; }
+.fl a[data-family="frosty-whites"] .fl-sw { background: var(--shade-frosty-whites-07); }
+.fl a[data-family="blissful-blues"] .fl-sw { background: var(--shade-blissful-blues-08); }
+.fl a[data-family="playful-pinks"] .fl-sw { background: var(--shade-playful-pinks-14); }
+.fl a[data-family="vivid-violets"] .fl-sw { background: var(--shade-vivid-violets-07); }
+.fl a[data-family="mellow-yellows"] .fl-sw { background: var(--shade-mellow-yellows-01); }
+.fl a[data-family="earthy-browns"] .fl-sw { background: var(--shade-earthy-browns-07); }
+.fl a[data-family="blushing-corals"] .fl-sw { background: var(--shade-blushing-corals-04); }
+.fl a[data-family="stormy-greys"] .fl-sw { background: var(--shade-stormy-greys-05); }
+.fl a[data-family="go-green"] .fl-sw { background: var(--shade-go-green-12); }
+.fl a[data-family="roaring-reds"] .fl-sw { background: var(--shade-roaring-reds-07); }

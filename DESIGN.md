@@ -335,6 +335,12 @@ One scale, used through `gap` on flex and grid, not per-element margins (rule 15
 - On the poster path the track is 100svh, and the poster and the countdown sit in that first screen.
 - Slots follow the track: section 2's riders, then `<main>` with section 3, the Wall.
 
+### The family pages' layout (`/shades/<family>/`, `docs/specs/family-page.md` 2.3, 2.4, 2.8)
+
+- **Spacing steps added for the family pages** (defined in `src/styles/family.css`, used through `gap` and padding): `--s4: 24px` (title offset over the stage, the HUD band's top padding, the switcher's bottom padding), `--s5: 32px` (the swatch grid's height allowance in the stage), `--s6: 48px` (section padding: "The whole family.", the family navigation row, the footer).
+- **Component dimensions, not spacing:** the header (56 px phone, 72 px wide), the HUD band (224 px, `--band`), the tap minimum (44 px, `--hit`), the sticky bar (72 px plus the safe area), the scrubber marker (24 px), the switcher rows (56 px), the Prev and Next chevron (16 px in a 44 px box), the grid swatch's selected ring (2 px at a 3 px offset) and focus outline (6 px offset).
+- **One breakpoint:** the wide layout at 900 px wide and 600 px tall or more; everything else is the phone layout.
+
 ### Whitespace
 
 One idea per screen. No feature grids, no bento, no three-up cards, no badge above a headline.
@@ -522,6 +528,35 @@ Motion is reserved for the hero canvas, the Wall, the tilt card and the manifest
 | Wipe | 1 screen | diagonal ice-shard mask; DOM copy rides `0.4 tp^3` |
 | Logotype glitch | 0.25 s bursts on hover, tap and focus; 0.5 s intro; no idle twitch in production; 3 patterns per burst | flicker `0.85 + 0.15 sin(30p)` |
 | Cue | 2.44 cycles of 1.5 s, 22 px drop, then rest | gravity, land, rebound |
+
+### Family pages (`/shades/<family>/`; `docs/specs/family-page.md` 4, R5, R13)
+
+Tokens in `src/styles/family.css`; the script twins in `src/scripts/family/timing.ts` (a unit test keeps them equal). No GSAP on these pages: CSS transitions, the Web Animations API and the lineup's own loop.
+
+```css
+:root {
+  --dur-swap: 400ms;                              /* name and number swap, scrubber marker */
+  --ease-swap: cubic-bezier(0.25, 1, 0.5, 1);     /* power3.out in CSS form */
+  --dur-shade: 600ms;                             /* the sticky bar's --shade cross-fade (@property --shade, <color>) */
+  --dur-turn: 600ms;                              /* the front case's turn */
+  --ease-turn: cubic-bezier(0.45, 0, 0.55, 1);
+  --dur-canvas: 200ms;                            /* poster to canvas */
+}
+```
+
+| Moment | Duration or rate | Curve |
+|---|---|---|
+| Lineup selection, drag release, entrance converge | exponential approach at 10.94 per second, frame-rate independent (50% at 63 ms, 90% at 210 ms, 99% at 421 ms); drag 1:1; fling carries 0.2 s of velocity; 35% rubber band past the ends | `1 - e^(-10.94 dt)` |
+| Front-case pointer tilt (fine pointers) | up to 5 degrees of yaw and 3 of tilt, at the lineup's rate | as above |
+| Front-case turn (finish press, tap on the front case) | 10 degrees toward the tapped side and back, 600 ms | `--ease-turn` |
+| Name and number swap | old and new lines together, 400 ms, never an empty slot | `--ease-swap` |
+| Scrubber marker | to its slot, 400 ms | `--ease-swap` |
+| Sticky bar swatch | colour cross-fade, 600 ms | linear |
+| Poster to canvas | opacity, 200 ms | linear |
+| Buttons and swatches | hover `translateY(-1px)`, press `scale(0.98)`, 150 ms | `--ease-standard` |
+| Between family pages and back to `/` | the browser's cross-document view transition (root cross-fade) | browser default |
+
+Reduced motion: swatch grid mode by default (no island; `REDUCED_MOTION_TIER`), every DOM move instant, the view transition off; under `still3d` the lineup jumps, with no entrance, tilt or turn.
 
 ### Reduced motion
 

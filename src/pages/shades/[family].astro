@@ -1,0 +1,37 @@
+---
+// /shades/<family>/: one static page per colour family (docs/specs/family-page.md). The ten paths come from
+// docs/data/shades-240.json; data.ts fails the build on anything but 10 families of 24. FAMILY_3D (mode.ts) decides
+// whether the 3D island is built at all; the default build is swatch grid mode.
+import Base from '../../layouts/Base.astro';
+import '../../styles/family.css';
+import FamilyHeadFirst from '../../components/family/FamilyHeadFirst.astro';
+import FamilyPage from '../../components/family/FamilyPage.astro';
+import { FAMILIES, NEUTRAL_HEX, pageCss, type Family } from '../../scripts/family/data.ts';
+import { FAM_COPY } from '../../scripts/family/copy.ts';
+import { family3dMode } from '../../scripts/family/mode.ts';
+
+export function getStaticPaths() {
+  return FAMILIES.map((fam) => ({ params: { family: fam.slug }, props: { fam } }));
+}
+interface Props { fam: Family }
+const { fam } = Astro.props;
+const mode = family3dMode();
+const has3d = mode !== 'off';
+// The island is a separate component, imported only in 3D builds, so an off build carries none of its scripts. The
+// condition must fold at build time (Astro bundles the scripts of every imported component, rendered or not), so it
+// reads PUBLIC_FAMILY_3D, which Vite replaces statically; mode.ts checks the same variable and its guards.
+const Island = import.meta.env.PUBLIC_FAMILY_3D === 'dev' || import.meta.env.PUBLIC_FAMILY_3D === 'on' || (import.meta.env.DEV && import.meta.env.PUBLIC_FAMILY_3D !== 'off')
+  ? (await import('../../components/family/Island3D.astro')).default : null;
+---
+<Base
+  title={FAM_COPY.title(fam.name)}
+  description={FAM_COPY.description(fam.name, fam.shades[0].name, fam.shades[23].name)}
+  path={`/shades/${fam.slug}/`}
+  preloadFonts={['/fonts/poppins-700-latin.woff2', '/fonts/open-sans-400-600-latin.woff2']}
+  themeColor={NEUTRAL_HEX[fam.neutral]}
+>
+  <FamilyHeadFirst slot="head-first" fam={fam} has3d={has3d} />
+  <style slot="head" is:inline set:html={pageCss(fam)}></style>
+  <FamilyPage fam={fam} has3d={has3d} />
+  {Island && <Island mode={mode === 'on' ? 'on' : 'dev'} />}
+</Base>

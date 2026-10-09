@@ -128,7 +128,7 @@ export function pageCss(f: Family, all: readonly Family[] = FAMILIES): string {
   const slate = f.neutral === 'slate';
   const out: string[] = [];
   // html:root outranks the :root rules of tokens.css, which the bundle emits after this <style>
-  out.push(`html:root{--bg:var(${slate ? '--urban-slate' : '--pearl-whisper'});--fg:var(${slate ? '--pearl-whisper' : '--urban-slate'});` +
+  out.push(`html:root{color-scheme:${slate ? 'dark' : 'light'};--bg:var(${slate ? '--urban-slate' : '--pearl-whisper'});--fg:var(${slate ? '--pearl-whisper' : '--urban-slate'});` +
     (slate ? '--skeleton:color-mix(in srgb,var(--pearl-whisper) 12%,var(--urban-slate));' : '') +
     `--k:${f.key.index - 1};--shade:${shadeVar(f.key)};--ring:${f.key.low ? 'var(--fg)' : 'transparent'}}`);
   const seen = new Set<string>();

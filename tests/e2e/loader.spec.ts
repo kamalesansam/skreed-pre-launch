@@ -42,12 +42,17 @@ test.describe('AC3.10 behind the loader', () => {
     expect(await page.evaluate(() => document.activeElement?.id)).toBe('siteLogo');
   });
 
-  test('after a soft poster no element is inert', async ({ page }) => {
+  test('after a soft poster (offline before ready) no element is inert', async ({ page, context }) => {
+    // fail('') is the Gate's module load-error path, a hard failure once boot.ts runs (architecture 7.3); the loader's own
+    // offline rule is the quick soft poster
     await page.goto('/?tier=hero3d');
-    await page.evaluate(() => window.__skreedLoader!.fail(''));
+    await expect(page.locator('html')).toHaveClass(/loading/);
+    await context.setOffline(true);
     await expect(page.locator('html')).toHaveClass(/poster/);
     await expect(page.locator('#intro')).toHaveClass(/po/);
+    expect(await page.locator('#ldSt').textContent()).toBe('You are offline. The countdown still runs.');
     expect(await page.locator('[inert]').count()).toBe(0);
+    await context.setOffline(false);
   });
 
   test('after an abort no element is inert and the loader is gone', async ({ page }) => {

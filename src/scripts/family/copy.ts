@@ -27,6 +27,7 @@ export const FAM_COPY = {
   gridGroup: (family: string) => `${family}, 24 shades`,
   swatch: (s: CopyShade, family: string) => `${s.name}, ${family}, ${s.index} of 24`,
   caption: (s: CopyShade, family: string) => `${s.name}, ${family}`,
+  otherFamilies: 'Other families',
   prevFamily: 'Previous family',
   nextFamily: 'Next family',
   allShades: 'All 240 shades',
@@ -39,7 +40,8 @@ export const FAM_COPY = {
   slow: 'Still loading the 3D cases.',
   saveData: 'Data saver is on. Showing the swatches.',
   slowConnection: 'Slow connection. Showing the swatches.',
-  show3d: (mb: string) => `Show in 3D, ${mb} MB`,
+  show3d: (mb: string) => `Show in 3D, ${mb}\u00a0MB`,
+  show3dPlain: 'Show in 3D',   // dev builds only: the stand-in has no measured download size
   tryAgain: 'Try again',
   reload: 'Reload',
   familyLink: (family: string) => `${family}, all 24 shades`,

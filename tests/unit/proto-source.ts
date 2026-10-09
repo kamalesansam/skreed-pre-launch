@@ -83,3 +83,17 @@ export function functionSource(decl: string): string {
   }
   throw new Error('unbalanced: ' + decl);
 }
+
+/** The source of `const NAME = ...;` in the prototype's module, up to the statement's end (depth-0 semicolon). */
+export function constSource(name: string): string {
+  const a = TEMPLATE.indexOf(`const ${name} = `);
+  if (a < 0) throw new Error('const not found: ' + name);
+  let depth = 0;
+  for (let i = a; i < TEMPLATE.length; i++) {
+    const c = TEMPLATE[i];
+    if (c === '(' || c === '{' || c === '[') depth++;
+    else if (c === ')' || c === '}' || c === ']') depth--;
+    else if (c === ';' && depth === 0) return TEMPLATE.slice(a, i + 1);
+  }
+  throw new Error('unterminated: ' + name);
+}

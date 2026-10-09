@@ -1,12 +1,15 @@
 // Every string the hero renders (docs/specs/hero.md section 3), by id. Inline scripts receive the ones they need as JSON.
 // Status as in the spec: the h1, title, description and poster alt are proposed and wait for Sam's yes (hero.md 11).
+/** The loader's strings. boot.ts imports only these, so the critical boot chunk carries no other copy. */
+export const COPY_LD = {
+  aria: 'Loading Skreed',
+  slow: 'Slow connection',
+  still: 'Still loading',
+  offline: 'You are offline. The countdown still runs.',
+} as const;
+
 export const COPY = {
-  ld: {
-    aria: 'Loading Skreed',
-    slow: 'Slow connection',
-    still: 'Still loading',
-    offline: 'You are offline. The countdown still runs.',
-  },
+  ld: COPY_LD,
   cd: {
     eyebrow: 'Launch in',
     units: ['days', 'hours', 'minutes', 'seconds'],

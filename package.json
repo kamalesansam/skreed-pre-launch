@@ -19,6 +19,8 @@
     "test:unit": "node --test \"tests/unit/**/*.test.ts\"",
     "test:e2e": "playwright test --project e2e",
     "test:parity": "playwright test --project parity",
+    "test:family": "node --test \"tests/family/*.test.ts\" \"tests/case-model/*.test.ts\"",
+    "test:family:e2e": "playwright test -c tests/family/playwright.config.ts",
     "deploy:dry": "wrangler deploy --env=\"\" --dry-run --outdir .wrangler/dry-run"
   },
   "repository": {

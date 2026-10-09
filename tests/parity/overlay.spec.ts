@@ -7,7 +7,8 @@ import { test, expect, chromium, type Browser, type Page } from '@playwright/tes
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { servePrototype, PROTO_URL } from '../harness/prototype.ts';
-import { CHROME_PATH } from '../harness/browser.ts';
+import { CHROME_PATH, GL_ARGS } from '../harness/browser.ts';
+import { compare } from '../harness/compare.ts';
 import { pinRandom, sameBackground, pauseCue, fontsReady } from '../harness/settle.ts';
 
 const NOW = new Date('2026-10-09T09:00:00+05:30');
@@ -77,5 +78,45 @@ print('identical pixels' if not len(ys) else 'differing px %d max %d box %s' % (
     }
     info.annotations.push({ type: 'overlay', description: report });
     expect(['identical bytes', 'identical pixels']).toContain(report);
+  });
+}
+
+// The 3D path: both pages lifted into the live hero (the prototype with its module and three.js), canvas and poster
+// hidden, the DOM ride at rest (tp 0: transform 0, clip none, tone dark), the intro bursts over. CPU raster for the DOM,
+// SwiftShader for the WebGL the pages need to reach the lift.
+let glCpu: Browser;
+test.beforeAll(async () => { glCpu = await chromium.launch({ executablePath: CHROME_PATH, args: [...GL_ARGS, '--disable-gpu-rasterization'] }); });
+test.afterAll(async () => { await glCpu?.close(); });
+
+async function shoot3d(base: string, vp: (typeof VIEWPORTS)[number], proto: boolean) {
+  const ctx = await glCpu.newContext({ viewport: vp.viewport, deviceScaleFactor: vp.deviceScaleFactor, bypassCSP: true });
+  await pinRandom(ctx);
+  if (proto) await servePrototype(ctx);
+  const page = await ctx.newPage();
+  await page.clock.setFixedTime(NOW);
+  await page.goto(proto ? PROTO_URL : new URL('/?tier=hero3d', base).href, { timeout: 300_000 });
+  await page.waitForFunction(() => !document.getElementById('intro') && (window as unknown as { __heroStarted?: boolean }).__heroStarted, null, { timeout: 900_000, polling: 500 });
+  const ride = await page.evaluate(() => { const c = document.getElementById('heroCopy')!, s = getComputedStyle(c); return [s.position, s.transform, s.clipPath, document.getElementById('siteLogo')!.dataset.tone].join(' '); });
+  await settle(page);
+  const png = await page.screenshot({ timeout: 600_000 });
+  await ctx.close();
+  return { png, ride };
+}
+
+for (const vp of VIEWPORTS) {
+  test(`AC1.3 overlay at rest on the 3D path is identical to the prototype at ${vp.name}`, async ({ baseURL }, info) => {
+    test.setTimeout(2_400_000);
+    const a = await shoot3d(baseURL!, vp, true);
+    const b = await shoot3d(baseURL!, vp, false);
+    const dir = info.outputPath();
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(`${dir}/proto-3d.png`, a.png);
+    writeFileSync(`${dir}/port-3d.png`, b.png);
+    const r = a.png.equals(b.png) ? { diff_px: 0 } : compare(`${dir}/proto-3d.png`, `${dir}/port-3d.png`, {}, `${dir}/diff-3d.png`);
+    const note = `ride proto [${a.ride}] port [${b.ride}]; ${JSON.stringify(r)}`;
+    console.log(`[AC1.3 3D ${vp.name}] ${note}`);
+    info.annotations.push({ type: 'overlay-3d', description: note });
+    expect(b.ride).toBe(a.ride);
+    expect(r.diff_px).toBe(0);
   });
 }

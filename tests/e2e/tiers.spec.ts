@@ -31,8 +31,31 @@ for (const [name, setup] of Object.entries(GATE_CASES)) {
 }
 
 test('the Gate picks hero3d with WebGL2 and DecompressionStream and no data saver (headless defaults)', async ({ page }) => {
+  // the Gate's own decision, read when parsing ends (readyState 'interactive' comes before any module script runs);
+  // boot.ts then finds SwiftShader and moves the page to the poster (spec D3)
+  await page.addInitScript(() => {
+    document.addEventListener('readystatechange', () => {
+      if (document.readyState === 'interactive') (window as unknown as { __gateClasses: string }).__gateClasses = document.documentElement.className;
+    });
+  });
   await page.goto('/');
-  await expect(page.locator('html')).toHaveClass('js hero3d loading');
+  expect(await page.evaluate(() => (window as unknown as { __gateClasses: string }).__gateClasses)).toBe('js hero3d loading');
+});
+
+test('AC8.1 (test build, no override): boot.ts finds the software renderer and lands on the poster with no island bytes', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext();
+  const reqs: string[] = [];
+  ctx.on('request', (r) => reqs.push(r.url()));
+  const page = await ctx.newPage();
+  const logs: string[] = [];
+  page.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
+  await page.goto(baseURL!);
+  await expect(page.locator('html')).toHaveClass('js poster');
+  await expect(page.locator('#intro')).toHaveCount(0);
+  expect(await page.locator('[inert]').count()).toBe(0);
+  expect(reqs.filter((u) => /hero\.|three|pieces|\.bin|sky\.|ground/.test(new URL(u).pathname))).toEqual([]);
+  expect(logs.filter((l) => !/Failed to load resource/.test(l))).toEqual(['warning: [hero] no hardware WebGL2']);
+  await ctx.close();
 });
 
 test('AC7 reduced motion: poster tier, no loader, no seconds, still cue, no island bytes', async ({ browser, baseURL }) => {

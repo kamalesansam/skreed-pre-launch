@@ -1,0 +1,7 @@
+---
+// The SKREED wordmark from docs/brand/logo/skreed-logotype.svg, drawn in currentColor (DESIGN.md 4, corner logotype).
+import svg from '../../../docs/brand/logo/skreed-logotype.svg?raw';
+const paths = [...svg.matchAll(/<path[^>]*\sd="([^"]+)"/g)].map((m) => m[1]);
+if (paths.length !== 6) throw new Error(`skreed-logotype.svg: expected 6 paths, found ${paths.length}`);
+---
+<svg viewBox="0 0 1209.46 292.9" aria-hidden="true" focusable="false">{paths.map((d) => <path fill="currentColor" d={d} />)}</svg>

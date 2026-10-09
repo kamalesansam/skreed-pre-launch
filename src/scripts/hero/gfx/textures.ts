@@ -15,7 +15,8 @@ export function loadTexture(url: string, path: TexturePath, onLoad: () => void, 
   loader.setOptions({ imageOrientation: 'flipY', premultiplyAlpha: 'none' });
   loader.load(url, (bmp) => {
     tex.image = bmp;
-    tex.onUpdate = () => { bmp.close(); tex.onUpdate = null; };   // uploaded: the GPU copy is the only one needed
+    let closed = false;
+    tex.onUpdate = () => { if (!closed) { closed = true; bmp.close(); } };   // uploaded: the GPU copy is the only one needed
     tex.needsUpdate = true;
     onLoad();
   }, undefined, onError);

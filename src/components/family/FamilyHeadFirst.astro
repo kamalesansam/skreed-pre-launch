@@ -1,0 +1,15 @@
+---
+// The family page's first head items (docs/specs/family-page.md 2.7, 5 "First paint"): the page's facts as a meta tag,
+// then the head script, which must run before any CSS applies. The script's bytes are identical on all ten pages
+// (one CSP hash): CFG is the same for the whole build and the per-page facts are read from the meta tag.
+import head from '../../scripts/family/head.inline.js?raw';
+import { inlineScript } from '../shell/inlineScript.ts';
+import { headCfg } from '../../scripts/family/head.ts';
+import type { Family } from '../../scripts/family/data.ts';
+
+interface Props { fam: Family; has3d: boolean }
+const { fam, has3d } = Astro.props;
+const code = inlineScript('family-head.js', { CFG: headCfg(has3d) }, head);
+---
+<meta name="skreed-family" content={`${fam.slug} ${String(fam.first).padStart(3, '0')} ${fam.key.nnn}`}>
+<script is:inline set:html={code}></script>
