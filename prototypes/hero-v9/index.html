@@ -61,122 +61,107 @@ body{background:var(--slate);color:var(--pearl);font-family:'Open Sans',Arial,sa
 .fallback{position:fixed;left:var(--inset);right:var(--inset);top:45%;text-align:center;color:var(--muted)}
 :focus-visible{outline:2px solid var(--ember);outline-offset:2px}
 /*LOADER-CSS*/
-:root{--night:#050506;--skeleton:#f7f6f340}
+:root{--night:#050506}
+html.loading,html.loading body{overflow:hidden}
 html.loading .cue{opacity:0}
-.intro{position:fixed;inset:0;background:var(--night);will-change:clip-path;contain:strict}
-.intro.fade{transition:opacity .4s cubic-bezier(.2,0,0,1)}
-.intro svg{width:100%;height:100%;display:block;overflow:visible}
-#seams path{fill:none;stroke:var(--pearl);stroke-opacity:.45;stroke-width:1}
-.po #seams path{fill:#0c0c0d;stroke-opacity:.28}
-.wb{fill:none;stroke:var(--pearl);stroke-opacity:.16;stroke-width:1;opacity:0}
-#ticks rect{fill:var(--pearl);opacity:0}
-#head{stroke:var(--pearl);stroke-width:1;stroke-opacity:.9}
-#labs .lab{opacity:0}
-#pct{opacity:1;right:0;flex-direction:column;gap:var(--s1)}
-#pct .r{display:flex;align-items:center;gap:6px}
-#pct b{display:block;width:40px;height:3px;background:var(--skeleton)}
-#pct b[hidden]{visibility:hidden}
-#pctSt{font-weight:400;text-align:center;line-height:1.4;max-width:calc(100% - 32px)}
+.intro{position:fixed;inset:0;z-index:6;background:var(--night);display:grid;place-items:center;contain:strict}
+.intro.po{z-index:0}
+.ld-w{position:relative;width:min(47.6vh,72vw,600px);width:min(47.6svh,72vw,600px);aspect-ratio:1209.46/292.9}
+.ld-m{position:absolute;inset:0;overflow:hidden;-webkit-mask:no-repeat 0 0/100% 100%;mask:no-repeat 0 0/100% 100%;visibility:hidden}
+.ld-m.on{visibility:visible}
+.ld-g,.ld-s{position:absolute;inset:0}
+.ld-m i{position:absolute;top:0;left:0;width:100%;height:100%;display:block}
+#ldBase{background:#F7F6F341}
+#ldFill{width:122%;opacity:0;will-change:transform,opacity;background:linear-gradient(90deg,#F7F6F3 81.97%,#F7F6F3F4 84.22%,#F7F6F3D7 86.48%,#F7F6F3AE 88.73%,#F7F6F380 90.98%,#F7F6F351 93.24%,#F7F6F328 95.49%,#F7F6F30B 97.75%,#F7F6F300)}
+#ldBand{opacity:0;will-change:transform,opacity;background:linear-gradient(90deg,#F7F6F300,#F7F6F303 9.5%,#F7F6F30A 16.25%,#F7F6F320 23%,#F7F6F34E 29.75%,#F7F6F391 36.5%,#F7F6F3D3 43.25%,#F7F6F3EF 50%,#F7F6F3D3 56.75%,#F7F6F391 63.5%,#F7F6F34E 70.25%,#F7F6F320 77%,#F7F6F30A 83.75%,#F7F6F303 90.5%,#F7F6F300)}
+.ld-line{position:absolute;inset:0;width:100%;height:100%;overflow:visible;opacity:0}
+.ld-line use{color:transparent;stroke:var(--pearl);stroke-opacity:.42;stroke-linejoin:round}
+.ld-p{position:absolute;left:0;right:0;bottom:calc(clamp(40px,9svh,88px) + env(safe-area-inset-bottom,0px));margin:0;display:grid;justify-items:center;gap:var(--s1);font-family:'Open Sans',Arial,sans-serif;color:var(--pearl);text-align:center}
+#ldPct{font-size:.875rem;font-weight:400;line-height:1;letter-spacing:1.1em;margin-right:-1.1em;font-variant-numeric:tabular-nums}
+#ldSt{font-size:.75rem;line-height:1.4;color:var(--muted);max-width:calc(100vw - 32px)}
+#ldSt:empty{display:none}
 /*LOADER-CSS-END*/
 </style>
 <canvas id="stage" aria-hidden="true"></canvas>
-<div class="intro" id="intro" aria-hidden="true"><svg id="plot"><defs><clipPath id="scanClip"><rect id="sr"/></clipPath></defs><g id="backs"></g><g id="seams" clip-path="url(#scanClip)"></g><g id="ticks"></g><g class="head" id="head"><line id="hl"/><path id="ht"/></g></svg><div id="labs"></div><div class="lab pct" id="pct"><span class="r"><i></i><span id="pn">000 / 240</span><b id="pctBar"></b></span><span class="st" id="pctSt"></span></div></div><noscript><style>.intro{display:none}</style></noscript>
-<script>/* Skreed intro loader: plot, scan, cut. Inline, no network. */
+<svg class="sprite" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><g id="skreed-wordmark" fill="currentColor"><path d="M43.09,287c-12.35-3.43-21.83-7.07-28.44-10.92-6.61-3.86-11.49-7.07-14.65-9.64,1.72-7.14,4.67-13.71,8.83-19.7,4.17-6,8.69-10.57,13.57-13.71,10.63,7.71,21.04,12.99,31.24,15.85,10.2,2.86,20.76,4.28,31.67,4.28,13.5,0,23.41-2.21,29.73-6.64,6.32-4.43,9.48-10.35,9.48-17.78,0-6.85-3.66-12.42-10.99-16.71-7.33-4.28-19.75-7.71-37.27-10.28-24.42-3.71-42.3-10.64-53.65-20.77-11.35-10.14-17.02-23.77-17.02-40.91,0-18.85,7.9-34.12,23.7-45.83,15.8-11.71,36.48-17.56,62.05-17.56,16.66,0,31.74,1.93,45.25,5.78,13.5,3.86,23.99,8.5,31.46,13.92-2.3,15.13-8.47,26.7-18.53,34.7-18.1-10.28-38.06-15.42-59.9-15.42-12.35,0-21.62,1.86-27.79,5.57-6.18,3.71-9.26,8.85-9.26,15.42s3.09,11.78,9.26,15.63c6.18,3.86,17.74,7.07,34.69,9.64,27.87,4.28,47.62,11.57,59.25,21.84,11.63,10.28,17.45,23.7,17.45,40.26,0,21.13-7.83,37.77-23.48,49.9-15.66,12.14-37.42,18.2-65.28,18.2-15.23,0-29.02-1.71-41.37-5.14Z"/><path d="M393.46,288.95c-10.92,2.63-22.69,3.95-35.33,3.95-8.9,0-17.09-.44-24.56-1.32l-68.52-79.48-16.8,10.1v68.07c-6.32,1.46-14.36,2.2-24.13,2.2-9.19,0-17.38-.73-24.56-2.2V2.2c6.89-1.46,14.94-2.2,24.13-2.2s17.67.73,24.56,2.2v167.75c34.19-22.25,60.76-51.09,79.72-86.51,5.75-.88,13.93-1.32,24.56-1.32,11.49,0,21.4,1.02,29.73,3.07-21.55,38.94-47.83,71.87-78.86,98.8l90.06,104.95Z"/><path d="M551.53,86.93c0,7.47-1.15,15.08-3.45,22.84s-5.46,14.22-9.48,19.39c-3.73-.86-8.83-1.72-15.3-2.59s-11.71-1.29-15.73-1.29c-7.47,0-14.65.72-21.55,2.15s-12.5,3.45-16.81,6.03v156.85c-6.32,1.44-14.51,2.15-24.56,2.15-9.48,0-17.67-.72-24.56-2.15V109.77c8.62-7.76,20.68-14.58,36.2-20.47,15.51-5.89,32.18-8.83,49.99-8.83s33.47,2.15,45.25,6.46Z"/><path d="M977.98,196.99h-144.36c1.44,12.35,5.24,22.91,11.42,31.67,6.18,8.76,13.65,14.72,22.41,17.88,8.76,3.16,17.02,4.74,24.78,4.74,6.61,0,14.72-1.01,24.35-3.02,9.62-2.01,21.62-8.04,35.98-18.1,4.88,3.16,9.41,7.97,13.57,14.44,4.17,6.46,6.68,12.71,7.54,18.74-24.13,19.25-52.43,28.87-84.89,28.87-14.94,0-28.87-2.44-41.8-7.32-12.93-4.88-24.13-11.99-33.61-21.33-9.48-9.34-16.81-20.76-21.98-34.26-5.17-13.5-7.76-28.3-7.76-44.38,0-15.23,2.59-29.59,7.76-43.09,5.17-13.5,12.42-25.14,21.76-34.9,9.34-9.77,20.32-17.38,32.96-22.84,12.64-5.46,26-8.19,40.07-8.19,13.22,0,25.64,2.23,37.27,6.68,11.63,4.45,21.62,10.77,29.95,18.96,8.33,8.19,14.79,18.03,19.39,29.52,4.6,11.49,6.89,23.84,6.89,37.06,0,9.19-.57,18.82-1.72,28.87ZM931.87,164.67c0-13.21-3.81-24.63-11.42-34.26-7.61-9.62-19.03-14.58-34.26-14.87-14.65,0-26.57,4.6-35.77,13.79s-14.65,20.97-16.37,35.33h97.82Z"/><path d="M752.48,196.99h-144.36c1.44,12.35,5.24,22.91,11.42,31.67,6.18,8.76,13.65,14.72,22.41,17.88,8.76,3.16,17.02,4.74,24.78,4.74,6.61,0,14.72-1.01,24.35-3.02s21.62-8.04,35.98-18.1c4.88,3.16,9.41,7.97,13.57,14.44,4.17,6.46,6.68,12.71,7.54,18.74-24.13,19.25-52.43,28.87-84.89,28.87-14.94,0-28.87-2.44-41.8-7.33-12.93-4.88-24.13-11.99-33.61-21.33s-16.81-20.76-21.98-34.26c-5.17-13.5-7.76-28.3-7.76-44.38,0-15.23,2.59-29.59,7.76-43.09,5.17-13.5,12.42-25.14,21.76-34.9,9.34-9.77,20.32-17.38,32.97-22.84,12.64-5.46,26-8.19,40.07-8.19,13.22,0,25.64,2.23,37.27,6.68,11.63,4.45,21.62,10.77,29.95,18.96,8.33,8.19,14.79,18.03,19.39,29.52,4.6,11.49,6.9,23.84,6.9,37.06,0,9.19-.58,18.82-1.72,28.87ZM706.37,164.67c0-13.22-3.81-24.63-11.42-34.26-7.61-9.62-19.03-14.58-34.26-14.87-14.65,0-26.57,4.6-35.77,13.79-9.19,9.19-14.65,20.97-16.37,35.33h97.82Z"/><path d="M1209.46,2.64v269.32c-10.92,5.75-24.42,10.56-40.51,14.44-16.09,3.88-32.03,5.82-47.83,5.82-16.66,0-31.96-2.37-45.89-7.11-13.93-4.74-25.85-11.63-35.77-20.68-9.91-9.05-17.6-20.32-23.05-33.83-5.46-13.5-8.19-28.58-8.19-45.25s2.87-30.95,8.62-44.6c5.75-13.65,13.72-25.28,23.92-34.9,10.2-9.62,22.12-16.95,35.77-21.98,13.65-5.03,27.94-7.54,42.88-7.54,16.37,0,30.16,2.15,41.37,6.46V2.64c6.61-1.44,14.65-2.15,24.13-2.15s17.67.72,24.56,2.15ZM1160.77,243.09v-114.62c-9.48-6.03-22.69-9.05-39.64-9.05-11.2,0-21.4,2.37-30.59,7.11-9.19,4.74-16.95,11.99-23.27,21.76-6.32,9.77-9.48,21.83-9.48,36.2,0,19.82,5.75,35.62,17.24,47.4,11.49,11.78,26.57,17.67,45.25,17.67,14.08.29,27.58-1.87,40.51-6.46Z"/></g></defs></svg>
+<div class="intro" id="intro" role="progressbar" aria-label="Loading Skreed" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="ld-w"><div class="ld-m" id="ldM"><div class="ld-g" id="ldG"><i id="ldBase"></i><i id="ldFill"></i></div><div class="ld-s" id="ldS"><i id="ldBand"></i></div></div><svg class="ld-line" id="ldLine" viewBox="0 0 1209.46 292.9" aria-hidden="true" focusable="false"><use href="#skreed-wordmark"/></svg></div><p class="ld-p"><span id="ldSt"></span><span id="ldPct"><span id="ldN">0</span>%</span></p></div><noscript><style>.intro{display:none}html.loading,html.loading body{overflow:auto}</style></noscript>
+<script>/* Skreed loader: light passes, the wordmark fills with the load, dims to an outline, lifts. */
 (function(){
-var G={"vw":1207.63,"vh":1312.81,"s":"0mo0qg0q60og0qi0o70qp0nz0qu0nn0qu0me0wl0j30xj0jn0xh0ob0xc0pb0x10q80wm0r30vu0s80vd0sr0ui0tk0tf0uc|0000gu0020c60080b600i0a900r09p01409201x07z02f07g03106x03m06h0450650av0a108f0bf07e0c10720ca06v0ci06q0cu06q0e200z0he|0ed0lb0pe0ex0wl0j30qu0me0qu0mc0q50lx0ml0jw0h90mz|00z0he06q0e206q0e50ay0gl0ga0di0j60f50860lk|0hi0tf0mo0qg0tf0uc0mg0ya0m40yi0jn0zv0iw1060i010e0hi10g|0450650b30260dx00m0ed00e0ey0070g10010g10720av0a1|08t0p90gc0tk0go0tn0gz0tn0h70tl0hi0tf0hi10g0gk10g0fo10d0ep1050dt0zt08t0wz|0g10010gz0000hw0040iv00c0jr00n0oq03i0oq0b80h806w0gv06t0gl06u0gc06w0g1072|0000k608t0p908t0wz08g0ws0340to02m0tb0260sx01g0s200z0r800m0qg00b0pl0030on0000o0|0oq03i0q604b0ug06s0uy0750vr07z0w308f0wl0980wy0a10x90aw0xh0bu0xk0cg0xk0gb0oq0b8","a":"0tg0p00440bh0o20j609i0ha0m10v50bi05b0d20vf0kh05204l0qj0sz09y"},POSE={cam:[0,-2.5,24],tgt:[0,-1,0],fov:30,lw:5.6,z:.475};window.SKREED_POSE=POSE;
+var POSE={cam:[0,-2.5,24],tgt:[0,-1,0],fov:30,lw:5.6,z:.475};window.SKREED_POSE=POSE;
 var WT={"import":.06,"b1":.04,"b2":.02,"b3":.02,"b4":.02,"b5":.02,"b6":.02,"b7":.02,"b8":.03,"b9":.02,"b10":.02,"sky":.02,"ground":.03,"scene":.02,"c1":.04,"c2":.09,"c3":.13,"c4":.15,"c5":.01,"c6":.03,"compile":.17,"frame1":.01,"frame2":.01};
-var D=document,HT=D.documentElement,NS='http://www.w3.org/2000/svg',$=function(i){return D.getElementById(i)};
+var D=document,HT=D.documentElement,$=function(i){return D.getElementById(i)},T0=performance.now();
 var reduce=matchMedia('(prefers-reduced-motion:reduce)').matches,OFF='You are offline. The countdown still runs.';
-var intro=$('intro'),seams=$('seams'),backs=$('backs'),ticks=$('ticks'),labs=$('labs'),pct=$('pct'),pn=$('pn'),bar=$('pctBar'),st=$('pctSt'),sr=$('sr'),hl=$('hl'),ht=$('ht'),head=$('head');
-var W,H,box=[0,0,0,0],blk=[],tk=[],lab=[],L0,L1,hx=-1e4,hold=-1;
-var p=0,pm=0,pd=0,ready=false,phase='plot',mode='',manual=false,got={},lastP=performance.now(),last=-1,rush=0,cutT=0,shown=0,raf=0;
-function sa(e,a){for(var k in a)e.setAttribute(k,a[k]);return e}
-function r(x){return+x.toFixed(1)}
-function dec(w){for(var o=[],i=0;i<w.length;i+=3)o.push(parseInt(w.substr(i,3),36));return o}
-var PC=G.s.split('|').map(dec),AN=dec(G.a);
-function el(n,a,q){return q.appendChild(sa(D.createElementNS(NS,n),a))}
-function pend(){for(var k in WT)if(!got[k])return k}
-function projector(){var asp=W/H,zoom=Math.min(1,asp*1.25),f=zoom/Math.tan(POSE.fov*Math.PI/360),c=POSE.cam,t=POSE.tgt;
-  var z=[c[0]-t[0],c[1]-t[1],c[2]-t[2]],L=Math.hypot(z[0],z[1],z[2]);z=[z[0]/L,z[1]/L,z[2]/L];
-  var x=[z[2],0,-z[0]];L=Math.hypot(x[0],x[1],x[2]);x=[x[0]/L,x[1]/L,x[2]/L];
-  var y=[z[1]*x[2]-z[2]*x[1],z[2]*x[0]-z[0]*x[2],z[0]*x[1]-z[1]*x[0]];
-  return function(wx,wy,wz){var dx=wx-c[0],dy=wy-c[1],dz=wz-c[2],vz=dx*z[0]+dy*z[1]+dz*z[2];
-    return[(f*(dx*x[0]+dy*x[1]+dz*x[2])/-vz/asp*.5+.5)*W,(-f*(dx*y[0]+dy*y[1]+dz*y[2])/-vz*.5+.5)*H]}}
-function hd(x,full){hx=x;var a=full?0:box[1]-24,b=full?H:box[3]+24;
-  sa(hl,{x1:x,x2:x,y1:a,y2:b});ht.setAttribute('d','M'+(x-4)+' '+a+'h8M'+(x-4)+' '+b+'h8')}
-function build(){
-  W=innerWidth;H=innerHeight;if(!W||!H)return;
-  $('plot').setAttribute('viewBox','0 0 '+W+' '+H);
-  var P=projector(),S=POSE.lw/G.vw,x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,i,j;
-  seams.textContent=backs.textContent=ticks.textContent=labs.textContent='';blk=[];tk=[];lab=[];
-  for(i=0;i<PC.length;i++){
-    var q=PC[i],n=q.length/2,cx=(AN[2*i]-G.vw/2)*S,cy=-(AN[2*i+1]-G.vh/2)*S,df='',db='',pf=[],pb=[],mx=-1e9,mn=1e9,g=el('g',{class:'wb'},backs);
-    for(j=0;j<n;j++){var wx=cx+((q[2*j]-G.vw/2)*S-cx)*.992,wy=cy+(-(q[2*j+1]-G.vh/2)*S-cy)*.992,f=P(wx,wy,POSE.z),b=P(wx,wy,-POSE.z);
-      pf.push(f);pb.push(b);df+=(j?'L':'M')+r(f[0])+' '+r(f[1]);db+=(j?'L':'M')+r(b[0])+' '+r(b[1]);
-      if(f[0]<x0)x0=f[0];if(f[0]>x1)x1=f[0];if(f[1]<y0)y0=f[1];if(f[1]>y1)y1=f[1];if(f[0]>mx)mx=f[0];if(f[0]<mn)mn=f[0]}
-    for(j=0;j<n;j++){var a=2*((j+n-1)%n),k=2*((j+1)%n),ux=q[2*j]-q[a],uy=q[2*j+1]-q[a+1],vx=q[k]-q[2*j],vy=q[k+1]-q[2*j+1];
-      if(Math.abs(Math.atan2(ux*vy-uy*vx,ux*vx+uy*vy))>.4363){
-        tk.push({el:el('rect',{x:r(pf[j][0]-1.5),y:r(pf[j][1]-1.5),width:3,height:3},ticks),x:pf[j][0],t:-1});
-        el('line',{x1:r(pf[j][0]),y1:r(pf[j][1]),x2:r(pb[j][0]),y2:r(pb[j][1])},g)}}
-    el('path',{d:db+'Z'},g);
-    blk.push({p:el('path',{d:df+'Z',pathLength:1},seams),g:g,mx:mx,mn:mn,f:pf,b:pb,a:0})}
-  box=[x0,y0,x1,y1];L0=x0-24;L1=x1+24;
-  sa(sr,{x:x0-30,y:y0-30,height:y1-y0+60});
-  for(i=0;i<PC.length;i++){var an=P((AN[2*i]-G.vw/2)*S,-(AN[2*i+1]-G.vh/2)*S,POSE.z),e=D.createElement('div');e.className='lab';
-    e.innerHTML='<i></i><span>'+(i<9?'0':'')+(i+1)+'</span>';e.style.transform='translate3d('+r(an[0]-1.5)+'px,'+r(an[1]-6)+'px,0)';
-    labs.appendChild(e);lab.push({el:e,x:an[0],a:0})}
-  pct.style.top=r(y1+28)+'px';
-  hd(hx,phase==='cut');if(mode)still()}
-function still(){sr.setAttribute('width',W+60);head.style.display='none';ticks.textContent='';var i,sk=mode==='skip',po=mode==='poster';intro.classList.toggle('po',po);
-  for(i=0;i<blk.length;i++){var b=blk[i];b.a=1;b.g.style.opacity=sk?0:1;b.p.style.opacity=sk?0:''}
-  for(i=0;i<lab.length;i++)lab[i].el.style.opacity=sk||po?0:1;
-  if(po)pct.firstChild.style.display='none'}
-function setMode(m,msg){if(phase!=='plot'||mode===m)return;mode=m;still();if(msg)st.textContent=msg}
-function count(){var n=Math.max(0,Math.min(240,Math.floor(pd*240+1e-6)));if(!manual&&!got.frame1)n=Math.min(n,216);if(n!==shown){shown=n;pn.textContent=('00'+n).slice(-3)+' / 240'}}
-function ease(x){return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2}
-function tickFrame(now){
-  raf=requestAnimationFrame(tickFrame);
-  if(last<0)last=now;var dt=Math.max(0,Math.min(.5,(now-last)/1000)),i,x,nx=pend();last=now;if(dt>.12)rush=1;
-  if(!mode&&scrollY>H*.12)setMode('skip');
-  if(phase==='plot'){
+var intro=$('intro'),M=$('ldM'),GL=$('ldG'),FL=$('ldFill'),SG=$('ldS'),BD=$('ldBand'),LN=$('ldLine'),PN=$('ldN'),PC=$('ldPct'),ST=$('ldSt'),i;
+if('scrollRestoration'in history)history.scrollRestoration='manual';scrollTo(0,0);
+/* mask: the page's one wordmark */
+var ps=$('skreed-wordmark').children,sv='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1209.46 292.9">';
+for(i=0;i<ps.length;i++)sv+='<path d="'+ps[i].getAttribute('d')+'"/>';
+M.style.webkitMaskImage=M.style.maskImage='url("data:image/svg+xml,'+encodeURIComponent(sv+'</svg>')+'")';M.classList.add('on');
+function lw(){LN.firstChild.style.strokeWidth=(1209.46/Math.max(1,M.clientWidth)).toFixed(3)}lw();addEventListener('resize',lw);
+/* measured: FF fill front, FO fill opacity, SW a pass (t,centre,strength), DM dim, SD last pass dim */
+var FF=[1.64,.07,2.08,.1,2.24,.13,2.4,.15,2.56,.17,2.72,.19,2.88,.22,3.04,.26,3.2,.29,3.36,.33,3.52,.37,3.76,.43,4,.49,4.24,.54,4.48,.61,4.72,.67,4.96,.73,5.04,.75,5.12,.77,5.2,.78],
+FO=[1.64,0,1.8,.19,1.92,.23,2,.35,2.08,.43,2.2,.55,2.4,.77,2.56,.86,2.72,.91,2.88,.96,3.04,1],
+SW=[0,.03,0,.04,.03,14,.08,.05,32,.12,.1,45,.16,.21,50,.2,.31,61,.24,.39,70,.28,.46,79,.32,.52,86,.36,.57,94,.4,.63,100,.44,.67,106,.48,.71,111,.52,.76,116,.56,.79,120,.6,.84,126,.64,.88,137,.68,.94,161,.72,.98,176,.76,.99,172,.8,1,166,.84,1.01,159,.88,1.02,149,.92,1.02,138,.96,1.04,127,1,1.04,115,1.04,1.06,104,1.08,1.06,87,1.12,1.06,76,1.16,1.07,56,1.2,1.07,44,1.24,1.08,24,1.28,1.08,10,1.32,1.08,0],
+DM=[0,1,.04,.99,.08,.96,.16,.89,.24,.82,.32,.7,.4,.58,.48,.48,.56,.38,.64,.28,.72,.18,.8,.12,.88,.07,.96,.04,1.04,.01,1.12,.01,1.24,0],
+SD=[0,1,.68,1,.8,.575,.96,.267,1.12,.12,1.28,.05,1.44,0],
+CYC=1.6,DEL=.2,LEAD=.04,FULL=4.96,END=7.05,EIN='cubic-bezier(.55,.085,.68,.53)';
+function at(a,x){if(x<=a[0])return a[1];for(var j=2;j<a.length;j+=2)if(x<=a[j])return a[j-1]+(a[j+1]-a[j-1])*(x-a[j-2])/(a[j]-a[j-2]);return a[a.length-1]}
+function op(a,d){for(var o=[],j=0;j<a.length;j+=2)o.push({offset:a[j]/d,opacity:a[j+1]});return o}
+function tx(c){return'translateX('+((c-.5)*100).toFixed(2)+'%) skewX(-5deg)'}
+var swA=null;
+if(!reduce){var k=[];for(i=0;i<SW.length;i+=3)k.push({offset:SW[i]/CYC,transform:tx(SW[i+1]),opacity:+(SW[i+2]/176).toFixed(3)});
+  k.push({offset:1,transform:tx(SW[1]),opacity:0});swA=BD.animate(k,{duration:CYC*1e3,delay:DEL*1e3,iterations:Infinity})}
+function fk(t,d,t0){return{offset:Math.min(1,(t-t0)/d),transform:'translateX('+((at(FF,t)-1.11)/1.22*100).toFixed(2)+'%) skewX(-5deg)',opacity:+at(FO,t).toFixed(3)}}
+var ts=[0];for(i=0;i<FF.length;i+=2)if(FF[i]<=FULL)ts.push(FF[i]);for(i=0;i<FO.length;i+=2)ts.push(FO[i]);
+ts.sort(function(a,b){return a-b});var fA=FL.animate(ts.map(function(t){return fk(t,FULL,0)}),{duration:FULL*1e3,fill:'forwards'});
+var p=0,pm=0,ready=false,manual=false,got={},lastP=T0,ph='load',mode='',tl=0,last=-1,E=0,n=-1,raf=0,XA=[];
+function pend(){for(var q in WT)if(!got[q])return q}
+function show(v){v=Math.max(0,Math.min(100,Math.floor(v)));if(v!==n){n=v;PN.textContent=v;intro.setAttribute('aria-valuenow',v)}}
+/* the dim starts with the next pass */
+function sched(now){var w=0;if(swA&&swA.currentTime!=null){var c=(swA.currentTime/1e3-DEL)%CYC;w=c<.06?-(c+LEAD):CYC-LEAD-c}exit(now+w*1e3)}
+function exit(e){ph='exit';E=e;if(reduce){enter();return}
+  XA=[GL.animate(op(DM,1.24),{duration:1240,fill:'forwards'}),SG.animate(op(SD,1.44),{duration:1440,fill:'forwards'}),
+  LN.animate([{opacity:0},{opacity:0,offset:.83},{opacity:1}],{duration:240,fill:'forwards'}),
+  FL.animate([4.96,5.04,5.12,5.2].map(function(t){return fk(t,.24,FULL)}),{duration:240,fill:'forwards'})];
+  XA.forEach(function(a){a.startTime=e})}
+function enter(){ph='enter';setTimeout(function(){show(100)},reduce?0:120);
+  PC.animate([{opacity:1},{opacity:0}],{duration:400,delay:300,easing:EIN,fill:'forwards'});setTimeout(lift,reduce?0:500)}
+function lift(){if(ph==='done')return;ph='lift';intro.style.pointerEvents='none';HT.classList.remove('loading');if(window.__introDone)window.__introDone();
+  intro.animate([{opacity:1},{opacity:0}],{duration:reduce?400:600,easing:EIN,fill:'forwards'}).onfinish=done}
+function done(){cancelAnimationFrame(raf);ph='done';if(swA)swA.cancel();intro.remove()}
+function poster(msg){if(mode==='poster'||ph!=='load')return;mode='poster';if(swA)swA.cancel();
+  GL.animate([{opacity:1},{opacity:0}],{duration:400,fill:'forwards'});LN.animate([{opacity:0},{opacity:1}],{duration:400,fill:'forwards'});
+  PC.hidden=true;ST.textContent=msg||'';intro.classList.add('po');intro.removeAttribute('role');HT.classList.remove('loading')}
+function tick(now){raf=requestAnimationFrame(tick);
+  if(last<0){if((swA||fA).startTime==null)return;last=now}
+  var dt=Math.max(0,Math.min(.25,(now-last)/1e3));last=now;
+  if(ph==='load'){var nx=pend();
     if(!manual&&nx&&!ready)p=Math.max(p,Math.min(pm+.9*WT[nx],p+.02*dt));
-    pd=mode||reduce?Math.min(p,1):Math.min(p,pd+(rush?2.2:1.1)*dt);if(pd>=p)rush=0;
-    x=L0+(L1-L0)*pd;
-    if(!mode){
-      sr.setAttribute('width',Math.max(0,x-(box[0]-30)));hd(x);
-      for(i=0;i<tk.length;i++){var k=tk[i];if(k.t<0&&k.x<=x)k.t=now;if(k.t>=0){var a=(now-k.t)/1000;k.el.style.opacity=a<.12?a/.12:a<.7?1:Math.max(0,1-(a-.7)/.4)}}
-      for(i=0;i<blk.length;i++){var b=blk[i];if(b.mx<=x&&b.a<1){b.a=Math.min(1,b.a+dt/.3);b.g.style.opacity=b.a}}
-      for(i=0;i<lab.length;i++){var l=lab[i];if(l.x+28<=x&&l.a<1){l.a=Math.min(1,l.a+dt/.1);l.el.style.opacity=l.a}}}
-    count();
-    if(!manual&&mode!=='poster'){var sl=p<1&&now-lastP>4000?/[tyd]$/.test(nx)?'Slow connection':'Still loading':'';if(sl!==st.textContent)st.textContent=sl;
-      if(!ready&&now-lastP>(got.scene?12e3:2e4)){var fb=$('fallback');setMode('poster',got.scene?fb&&fb.textContent:'')}}
-    if(pd>=1&&ready){phase='cut';cutT=now;if(mode!=='poster')st.textContent='';
-      if(mode||reduce){intro.classList.add('fade');intro.style.opacity='0';setTimeout(done,420);phase='fade'}}
-  }else if(phase==='cut'){
-    var u=hold<0?(now-cutT)/1000:.15+.7*hold;
-    if(u<.15)hd(L1+(W-L1)*(u/.15),true);
-    else{var v=Math.min(1,(u-.15)/.7),x2=W*(1-ease(v));hd(x2-.5,true);intro.style.clipPath='inset(0 '+r(W-x2)+'px 0 0)';
-      for(i=0;i<blk.length;i++){var q=blk[i],f=Math.min(1,Math.max(0,(q.mx+6-x2)/(q.mx-q.mn+12)));
-        q.p.style.strokeDasharray='1';q.p.style.strokeDashoffset=f;q.g.style.opacity=q.a*(1-f)}
-      for(i=0;i<lab.length;i++){var l2=lab[i];if(l2.x>=x2)l2.a=Math.max(0,l2.a-dt/.12);l2.el.style.opacity=l2.a}
-      pct.style.opacity=Math.max(0,1-v*3);
-      if(v>=1)done()}}}
-function done(){cancelAnimationFrame(raf);phase='done';intro.remove();HT.classList.remove('loading');if(window.__introDone)window.__introDone()}
+    tl=(fA.currentTime||0)/1e3;
+    if(mode==='poster'){if(ready){ph='enter';lift()}return}
+    var sl=!ready&&now-lastP>4e3?/[tyd]$/.test(nx||'')?'Slow connection':'Still loading':'';if(sl!==ST.textContent)ST.textContent=sl;
+    if(!manual&&!ready&&now-lastP>(got.scene?12e3:2e4)){var fb=$('fallback');poster(got.scene?fb&&fb.textContent:'');return}
+    if(tl>=1.64+(FULL-1.64)*Math.min(1,p)-.001){if(fA.playState==='running')fA.pause()}
+    else{var sp=reduce||swA&&swA.currentTime/1e3-tl>.15?2:1;if(fA.playbackRate!==sp)fA.updatePlaybackRate(sp);if(fA.playState==='paused')fA.play()}
+    if(ready&&tl>=FULL-.001)sched(now)}
+  else if(ph==='exit'){tl=Math.max(FULL,Math.min(END,FULL+(now-E)/1e3));if(tl>=END)enter()}
+  if(ph==='load'||ph==='exit')show(tl/END*99)}
 window.__skreedLoaderReport=function(m){if(manual||!WT[m]||got[m])return;got[m]=1;lastP=performance.now();
-  pm=Math.min(1,pm+WT[m]);p=Math.max(p,pm);if(m==='frame1')bar.hidden=true;if(m==='frame2'){ready=true;p=1}};
+  pm=Math.min(1,pm+WT[m]);p=Math.max(p,pm);if(m==='frame2'){ready=true;p=1}};
 window.__skreedLoader={
-  setProgress:function(v){manual=true;p=Math.min(1,Math.max(0,+v||0));if(p>=1)bar.hidden=true},
-  cut:function(v){manual=true;p=pd=1;ready=true;bar.hidden=true;hold=v==null?-1:+v;if(hold<0&&phase==='cut')cutT=performance.now()-150},
-  fail:function(m){setMode('poster',m)},
-  state:function(){return{phase:phase,mode:mode,p:p,pd:pd,n:shown,ready:ready,box:box,head:hx,note:st.textContent,next:pend()}},
-  pts:function(){return blk.map(function(b){return{f:b.f,b:b.b}})}};
-addEventListener('resize',build);build();
-if(reduce)setMode('still');
-if(!navigator.onLine)setMode('poster',OFF);
-addEventListener('offline',function(){if(!ready)setMode('poster',OFF)});
-raf=requestAnimationFrame(tickFrame);
+  setProgress:function(v){manual=true;p=Math.min(1,Math.max(0,+v||0))},
+  ready:function(){manual=true;p=1;ready=true},
+  cut:function(){manual=true;p=1;ready=true;if(ph==='load'){fA.finish();exit(performance.now())}},
+  skip:function(){manual=true;ready=true;if(ph!=='done'&&ph!=='lift'){ph='enter';lift()}},
+  fail:function(m){poster(m)},
+  seek:function(t){manual=ready=true;p=1;cancelAnimationFrame(raf);if(swA){swA.pause();swA.currentTime=t*1e3}fA.pause();fA.currentTime=Math.min(t,FULL)*1e3;
+    if(t>=FULL&&!XA.length)exit(performance.now());XA.forEach(function(a){a.pause();a.currentTime=(t-FULL)*1e3});tl=Math.min(END,t);show(tl/END*99);ph='seek'},
+  state:function(){return{phase:ph,mode:mode,p:p,tl:tl,n:n,ready:ready,note:ST.textContent,next:pend()}}};
+if(!navigator.onLine)poster(OFF);
+addEventListener('offline',function(){if(!ready)poster(OFF)});
+raf=requestAnimationFrame(tick);
 })();</script><!--LOADER-END-->
-<a class="site-logo" id="siteLogo" href="#" aria-label="Skreed, home"><svg viewBox="0 0 1209.46 292.9" aria-hidden="true" focusable="false"><defs><g id="skreed-wordmark" fill="currentColor"><path d="M43.09,287c-12.35-3.43-21.83-7.07-28.44-10.92-6.61-3.86-11.49-7.07-14.65-9.64,1.72-7.14,4.67-13.71,8.83-19.7,4.17-6,8.69-10.57,13.57-13.71,10.63,7.71,21.04,12.99,31.24,15.85,10.2,2.86,20.76,4.28,31.67,4.28,13.5,0,23.41-2.21,29.73-6.64,6.32-4.43,9.48-10.35,9.48-17.78,0-6.85-3.66-12.42-10.99-16.71-7.33-4.28-19.75-7.71-37.27-10.28-24.42-3.71-42.3-10.64-53.65-20.77-11.35-10.14-17.02-23.77-17.02-40.91,0-18.85,7.9-34.12,23.7-45.83,15.8-11.71,36.48-17.56,62.05-17.56,16.66,0,31.74,1.93,45.25,5.78,13.5,3.86,23.99,8.5,31.46,13.92-2.3,15.13-8.47,26.7-18.53,34.7-18.1-10.28-38.06-15.42-59.9-15.42-12.35,0-21.62,1.86-27.79,5.57-6.18,3.71-9.26,8.85-9.26,15.42s3.09,11.78,9.26,15.63c6.18,3.86,17.74,7.07,34.69,9.64,27.87,4.28,47.62,11.57,59.25,21.84,11.63,10.28,17.45,23.7,17.45,40.26,0,21.13-7.83,37.77-23.48,49.9-15.66,12.14-37.42,18.2-65.28,18.2-15.23,0-29.02-1.71-41.37-5.14Z"/><path d="M393.46,288.95c-10.92,2.63-22.69,3.95-35.33,3.95-8.9,0-17.09-.44-24.56-1.32l-68.52-79.48-16.8,10.1v68.07c-6.32,1.46-14.36,2.2-24.13,2.2-9.19,0-17.38-.73-24.56-2.2V2.2c6.89-1.46,14.94-2.2,24.13-2.2s17.67.73,24.56,2.2v167.75c34.19-22.25,60.76-51.09,79.72-86.51,5.75-.88,13.93-1.32,24.56-1.32,11.49,0,21.4,1.02,29.73,3.07-21.55,38.94-47.83,71.87-78.86,98.8l90.06,104.95Z"/><path d="M551.53,86.93c0,7.47-1.15,15.08-3.45,22.84s-5.46,14.22-9.48,19.39c-3.73-.86-8.83-1.72-15.3-2.59s-11.71-1.29-15.73-1.29c-7.47,0-14.65.72-21.55,2.15s-12.5,3.45-16.81,6.03v156.85c-6.32,1.44-14.51,2.15-24.56,2.15-9.48,0-17.67-.72-24.56-2.15V109.77c8.62-7.76,20.68-14.58,36.2-20.47,15.51-5.89,32.18-8.83,49.99-8.83s33.47,2.15,45.25,6.46Z"/><path d="M977.98,196.99h-144.36c1.44,12.35,5.24,22.91,11.42,31.67,6.18,8.76,13.65,14.72,22.41,17.88,8.76,3.16,17.02,4.74,24.78,4.74,6.61,0,14.72-1.01,24.35-3.02,9.62-2.01,21.62-8.04,35.98-18.1,4.88,3.16,9.41,7.97,13.57,14.44,4.17,6.46,6.68,12.71,7.54,18.74-24.13,19.25-52.43,28.87-84.89,28.87-14.94,0-28.87-2.44-41.8-7.32-12.93-4.88-24.13-11.99-33.61-21.33-9.48-9.34-16.81-20.76-21.98-34.26-5.17-13.5-7.76-28.3-7.76-44.38,0-15.23,2.59-29.59,7.76-43.09,5.17-13.5,12.42-25.14,21.76-34.9,9.34-9.77,20.32-17.38,32.96-22.84,12.64-5.46,26-8.19,40.07-8.19,13.22,0,25.64,2.23,37.27,6.68,11.63,4.45,21.62,10.77,29.95,18.96,8.33,8.19,14.79,18.03,19.39,29.52,4.6,11.49,6.89,23.84,6.89,37.06,0,9.19-.57,18.82-1.72,28.87ZM931.87,164.67c0-13.21-3.81-24.63-11.42-34.26-7.61-9.62-19.03-14.58-34.26-14.87-14.65,0-26.57,4.6-35.77,13.79s-14.65,20.97-16.37,35.33h97.82Z"/><path d="M752.48,196.99h-144.36c1.44,12.35,5.24,22.91,11.42,31.67,6.18,8.76,13.65,14.72,22.41,17.88,8.76,3.16,17.02,4.74,24.78,4.74,6.61,0,14.72-1.01,24.35-3.02s21.62-8.04,35.98-18.1c4.88,3.16,9.41,7.97,13.57,14.44,4.17,6.46,6.68,12.71,7.54,18.74-24.13,19.25-52.43,28.87-84.89,28.87-14.94,0-28.87-2.44-41.8-7.33-12.93-4.88-24.13-11.99-33.61-21.33s-16.81-20.76-21.98-34.26c-5.17-13.5-7.76-28.3-7.76-44.38,0-15.23,2.59-29.59,7.76-43.09,5.17-13.5,12.42-25.14,21.76-34.9,9.34-9.77,20.32-17.38,32.97-22.84,12.64-5.46,26-8.19,40.07-8.19,13.22,0,25.64,2.23,37.27,6.68,11.63,4.45,21.62,10.77,29.95,18.96,8.33,8.19,14.79,18.03,19.39,29.52,4.6,11.49,6.9,23.84,6.9,37.06,0,9.19-.58,18.82-1.72,28.87ZM706.37,164.67c0-13.22-3.81-24.63-11.42-34.26-7.61-9.62-19.03-14.58-34.26-14.87-14.65,0-26.57,4.6-35.77,13.79-9.19,9.19-14.65,20.97-16.37,35.33h97.82Z"/><path d="M1209.46,2.64v269.32c-10.92,5.75-24.42,10.56-40.51,14.44-16.09,3.88-32.03,5.82-47.83,5.82-16.66,0-31.96-2.37-45.89-7.11-13.93-4.74-25.85-11.63-35.77-20.68-9.91-9.05-17.6-20.32-23.05-33.83-5.46-13.5-8.19-28.58-8.19-45.25s2.87-30.95,8.62-44.6c5.75-13.65,13.72-25.28,23.92-34.9,10.2-9.62,22.12-16.95,35.77-21.98,13.65-5.03,27.94-7.54,42.88-7.54,16.37,0,30.16,2.15,41.37,6.46V2.64c6.61-1.44,14.65-2.15,24.13-2.15s17.67.72,24.56,2.15ZM1160.77,243.09v-114.62c-9.48-6.03-22.69-9.05-39.64-9.05-11.2,0-21.4,2.37-30.59,7.11-9.19,4.74-16.95,11.99-23.27,21.76-6.32,9.77-9.48,21.83-9.48,36.2,0,19.82,5.75,35.62,17.24,47.4,11.49,11.78,26.57,17.67,45.25,17.67,14.08.29,27.58-1.87,40.51-6.46Z"/></g></defs><use class="logo-base" href="#skreed-wordmark"/><g class="logo-tiles" display="none"></g></svg></a>
+<a class="site-logo" id="siteLogo" href="#" aria-label="Skreed, home"><svg viewBox="0 0 1209.46 292.9" aria-hidden="true" focusable="false"><defs></defs><use class="logo-base" href="#skreed-wordmark"/><g class="logo-tiles" display="none"></g></svg></a>
 <div class="labels" id="labels" aria-hidden="true"></div>
 <div class="track"></div>
 <section class="copy" id="heroCopy">
