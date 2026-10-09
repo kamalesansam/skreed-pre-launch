@@ -28,6 +28,9 @@ Sam asked for the hero copy to go: no headline, no sub-line, no button, plain an
 - **From the review (three lenses, each finding verified):** days are padded to two digits and the numeral carries the 2ch reservation, so the row never jumps; ticks are aligned to the wall-clock second; the numerals stay hidden until the first tick and a `<noscript>` line gives the date; at zero the countdown stops and the eyebrow reads "Skreed is live. skreed.com"; the seconds group is hidden under reduced motion; the eyebrow and labels are Open Sans 600 at 14 px; spacing uses the `--s` tokens; below 1100 px the countdown lifts so the cue has its own row.
 - Not changed on purpose: there is no call to action on the fold. Sam chose the plain countdown; the reserve flow lives in the later sections.
 
+## Artifact version 27: hero and intro preview merged (2026-10-09)
+At Sam's request the main hero link now shows the igloo-style intro build (round 1, still in review) with the v9.10 locked terrain and fog values patched in. The diff against the intro build is exactly the title and the eight terrain values. This folder's index.html and template.html stay at v9.10 until the intro passes review; then the final intro template, with the locked values, replaces them.
+
 ## v9.10: terrain and fog values locked by Sam (2026-10-09)
 Sam set the terrain in the Tune panel and asked for these numbers in the real build; the prototype now opens with them too, and Reset returns to them. Fog was already at Sam's values.
 
