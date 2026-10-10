@@ -1,0 +1,922 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Section 2 gem looks</title>
+<style>
+  @font-face { font-family: 'Open Sans'; src: url(data:font/woff2;base64,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) format('woff2'); font-weight: 400 600; font-style: normal; font-display: block; }
+  :root { --pearl: #F7F6F3; --slate: #383F43; --ember: #FF9900; --fog-mid: #a6abb8; --label-px: 13px; --space-1: 8px; --space-2: 16px; }
+  @media (max-width: 600px) { :root { --label-px: 12px; } }
+  html, body { margin: 0; height: 100%; background: var(--fog-mid); overflow: hidden; font-synthesis: none; }
+  canvas { display: block; position: fixed; inset: 0; width: 100vw; height: 100vh; }
+  #labels { position: fixed; inset: 0; pointer-events: none; }
+  #labels svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .lab { position: absolute; left: 0; top: 0; font: 600 var(--label-px)/1 'Open Sans', sans-serif; color: var(--slate); white-space: nowrap; letter-spacing: 0; }
+  nav { position: fixed; left: var(--space-2); top: var(--space-2); display: flex; gap: var(--space-1); }
+  nav button { font: 600 13px/1 'Open Sans', sans-serif; color: var(--slate); background: var(--pearl); border: 0; border-radius: 0; padding: 10px 14px; cursor: pointer;
+    transition: background-color .22s cubic-bezier(.2, .7, .2, 1), color .22s cubic-bezier(.2, .7, .2, 1); }
+  nav button:hover { background: #e9e7e1; }
+  nav button[aria-pressed="true"] { background: var(--slate); color: var(--pearl); }
+  nav button:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+  body.capture nav { display: none; }
+  body.close #labels { display: none; }
+</style>
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js" } }</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="labels" aria-hidden="true"><svg id="leaders"></svg></div>
+<nav aria-label="Stone look">
+  <button data-look="D">Igloo exact</button><button data-look="A">Gem A</button><button data-look="B">Gem B</button><button data-look="C">Gem C</button>
+</nav>
+<script type="module">
+// Section 2 stone look development. Four looks on one page, our own code throughout (igloo was measured, never copied):
+//  D  igloo exact: crushed ice block (our surface-nets geometry with igloo's measured shape statistics), igloo's measured
+//     pipeline re-written (two-pass screen-space refraction, 3 samples, per-channel IOR split, roughness-scaled mip,
+//     frost roughness and crushed-facet normals, env-only lighting from our fitted overcast sky, our fitted grade, bloom 0.2)
+//  A  polished faceted gem on three's own MeshPhysicalMaterial transmission (ior, thickness, dispersion, clearcoat), emissive core
+//  B  igloo's two-pass refraction adapted to polished gems: back faces with total internal reflection, per-channel IOR, crisp glints
+//  C  faceted gem: screen-space refraction of the background, internal reflections traced against its own facet planes, luminous core
+// Query: look=D|A|B|C  mode=field|close  shade=<name>  t=<s>  capture  dpr=<n>
+import * as THREE from 'three';
+
+const Q = new URLSearchParams(location.search);
+const LOOKS = ['D', 'A', 'B', 'C'];
+const HQ = new URLSearchParams(location.hash.slice(1));
+let LOOK = (Q.get('look') || HQ.get('look') || 'C').toUpperCase(); if (!LOOKS.includes(LOOK)) LOOK = 'C';
+const MODE = Q.get('mode') === 'close' ? 'close' : 'field';
+const CAPTURE = Q.has('capture');
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const T_START = Q.has('t') ? +Q.get('t') : 7.0;
+if (CAPTURE) document.body.classList.add('capture');
+if (MODE === 'close') document.body.classList.add('close');
+document.querySelectorAll('nav button').forEach((b) => {
+  b.setAttribute('aria-pressed', String(b.dataset.look === LOOK));
+  b.addEventListener('click', () => { location.hash = 'look=' + b.dataset.look; location.reload(); });
+});
+
+// ---------------------------------------------------------------- data
+// catalog order j: family, display shade, hex (docs/data/shades-240.json), the hero block it came from
+const FAM = [['Frosty Whites', 'Snow', '#f0f4f5', 2], ['Blissful Blues', 'Sky', '#08bcf4', 3], ['Playful Pinks', 'Rouge', '#f2638f', 7],
+  ['Vivid Violets', 'Amethyst', '#8554d1', 5], ['Mellow Yellows', 'Sunbeam', '#fff164', 6], ['Earthy Browns', 'Cinnamon', '#ba7237', 4],
+  ['Blushing Corals', 'Mango', '#ff9f40', 0], ['Stormy Greys', 'Silver', '#acacac', 1], ['Go Green', 'Lawn', '#4aa325', 8], ['Roaring Reds', 'Crimson', '#d20000', 9]];
+const PIECES = [[[-0.1123,0.2062],[0.3988,0.5],[0.4827,0.4506],[0.4802,0.0728],[0.4654,-0.0531],[0.416,-0.184],[0.3667,-0.2654],[0.3123,-0.3346],[0.2136,-0.4309],[0.1173,-0.5],[-0.4827,-0.1543],[-0.142,0.0457],[-0.1123,0.0951]],[[0.1148,-0.2037],[-0.3963,-0.5],[-0.4827,-0.4506],[-0.4778,-0.0358],[-0.463,0.0531],[-0.416,0.184],[-0.384,0.2407],[-0.3123,0.337],[-0.2136,0.4309],[-0.1148,0.5],[0.4827,0.1543],[0.1444,-0.0457],[0.1148,-0.0951]],[[-0.5,-0.1296],[0.1052,0.221],[0.5,-0.0076],[0.1845,-0.189],[-0.0488,-0.0518],[-0.3415,-0.221]],[[0.5,0.1313],[-0.1046,-0.2214],[-0.5,0.0076],[-0.184,0.1908],[-0.184,0.1863],[0.0481,0.0519],[0.3412,0.2214]],[[-0.0664,0.4196],[0.5,0.0932],[-0.1737,-0.289],[-0.3578,-0.3869],[-0.458,-0.4149],[-0.5,-0.4196],[-0.5,0.1702]],[[0.0654,-0.4206],[-0.5,-0.0935],[0.1729,0.2897],[0.3598,0.3902],[0.4089,0.4065],[0.5,0.4206],[0.5,-0.1706]],[[0.3883,0.1278],[0.3883,-0.5],[0.2246,-0.4926],[0.1377,-0.4727],[0.0583,-0.4429],[-0.3883,-0.1898],[-0.3883,-0.1179],[-0.3883,0.5],[0.2841,0.1154],[0.3412,0.1079]],[[-0.3874,-0.1287],[-0.3874,0.4975],[-0.3032,0.5],[-0.2215,0.4901],[-0.0557,0.4431],[0.3874,0.1881],[0.3874,0.1163],[0.3874,-0.5],[-0.2809,-0.1139],[-0.3379,-0.1089]],[[0.3438,0.103],[0.3438,-0.5],[-0.0748,-0.2592],[-0.1399,-0.2137],[-0.1746,-0.1833],[-0.231,-0.1161],[-0.2679,-0.051],[-0.32,0.077],[-0.3416,0.1746],[-0.3438,0.5]],[[-0.3449,-0.103],[-0.3449,0.5],[0.102,0.244],[0.141,0.2158],[0.2039,0.1508],[0.269,0.0531],[0.321,-0.077],[0.3384,-0.1508],[0.3449,-0.1985],[0.3449,-0.5]]];     // the ten logomark block outlines (ours), simplified, unit size, y up
+const GRADE = {"rows":[[-0.00088,-0.06213,-0.13866,-0.11397,-0.03586,0.03653,0.10249,0.18199,0.24429,0.00098,-0.02426,-0.04597,-0.02083,0.0009,0.02582,0.07746,0.13512,0.06457,0.32741,0.21689,0.20166,0.09738,0.08907,0.07069,0.03029,-0.04836,-0.82006,0.40013,0.11633,0.189],[0.01207,-0.06711,-0.14284,-0.10741,-0.03346,0.0386,0.10067,0.17152,0.24159,-0.00891,-0.02809,-0.0417,-0.01627,0.00573,0.02921,0.07559,0.13889,0.05916,0.5786,0.30524,0.15099,0.12904,0.10242,0.07026,-0.00375,-0.15421,-1.02687,0.20173,0.39018,0.12349],[0.00778,-0.07483,-0.14697,-0.10696,-0.03162,0.04331,0.11037,0.18493,0.24403,-0.00377,-0.0202,-0.0368,-0.01303,0.00844,0.03011,0.07391,0.13222,0.05916,0.51101,0.26024,0.09428,0.07279,0.04248,0.01446,-0.03642,0.08825,-0.87013,0.12504,0.17143,0.41368]]};       // our 90-number grade model fitted to igloo's measured cubes-scene grade (data/grade-fit.json)
+const ENVFIT = {"lat_knots_deg":[90,45,20,5,0,-5,-20,-45,-90],"base":[0.0417,0.0204,0.5875,0.7447,0.6296,0.4477,0.2863,0.1661,0.1366],"sky_glow":{"amp":1.2244,"sigma_rad":0.7792},"lake_glow":{"amp":2.8449,"sigma_rad":0.3044},"halo":{"amp":4.7245,"sigma_rad":0.3076},"sun":{"lon_deg":-11.5,"lat_deg":28.7,"equirect_mean_energy":0.094},"tint_upper":[0.9706,0.9863,1.0431],"tint_lower":[0.9855,0.9887,1.0258],"intensity":0.91,"rotation_y":"PI"};     // our overcast sky parameters fitted to igloo's measured environment (data/env-fit.json)
+
+const CLOSE_SHADE = (Q.get('shade') || 'Crimson').toLowerCase();
+const IDX = MODE === 'close' ? [Math.max(0, FAM.findIndex((f) => f[1].toLowerCase() === CLOSE_SHADE))] : FAM.map((_, j) => j);
+
+// ---------------------------------------------------------------- renderer
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
+const DPR = +(Q.get('dpr') || Math.min(window.devicePixelRatio || 1, 2));
+renderer.setPixelRatio(DPR);
+renderer.setSize(innerWidth, innerHeight, false);
+renderer.autoClear = true;
+const gl = renderer.getContext();
+const W = () => renderer.domElement.width, H = () => renderer.domElement.height;
+const cssW = innerWidth, cssH = innerHeight, ASP = cssW / cssH, PHONE = ASP < 0.9;
+
+// ---------------------------------------------------------------- helpers
+function rng(seed) { let s = (Math.imul(seed | 0, 2654435761) >>> 0) || 1; return () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296); }
+const V3 = THREE.Vector3;
+const sRGBtoLin = (h) => new THREE.Color(h);                // Color() stores linear (ColorManagement on)
+const linArr = (h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; };
+const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+
+// ---------------------------------------------------------------- geometry: polytope by half-space clipping (gems A to C)
+function clipPolys(polys, n, d) {
+  const out = [], cap = [];
+  for (const poly of polys) {
+    const res = [];
+    for (let i = 0; i < poly.length; i++) {
+      const a = poly[i], b = poly[(i + 1) % poly.length];
+      const da = a.dot(n) - d, db = b.dot(n) - d;
+      if (da <= 0) res.push(a);
+      if (da * db < 0) { const p = a.clone().lerp(b, da / (da - db)); res.push(p); cap.push(p); }
+    }
+    if (res.length >= 3) out.push(res);
+  }
+  if (cap.length >= 3) {
+    const c = new V3(); cap.forEach((p) => c.add(p)); c.divideScalar(cap.length);
+    const u = new V3().crossVectors(n, Math.abs(n.y) < 0.9 ? new V3(0, 1, 0) : new V3(1, 0, 0)).normalize();
+    const v = new V3().crossVectors(n, u);
+    const uniq = [];
+    for (const p of cap) if (!uniq.some((o) => o.distanceToSquared(p) < 1e-12)) uniq.push(p);
+    uniq.sort((a, b) => Math.atan2(a.clone().sub(c).dot(v), a.clone().sub(c).dot(u)) - Math.atan2(b.clone().sub(c).dot(v), b.clone().sub(c).dot(u)));
+    if (uniq.length >= 3) out.push(uniq);
+  }
+  return out;
+}
+function boxPolys(s) {
+  const P = (x, y, z) => new V3(x * s, y * s, z * s);
+  return [[P(1, -1, -1), P(1, 1, -1), P(1, 1, 1), P(1, -1, 1)], [P(-1, -1, 1), P(-1, 1, 1), P(-1, 1, -1), P(-1, -1, -1)],
+    [P(-1, 1, -1), P(-1, 1, 1), P(1, 1, 1), P(1, 1, -1)], [P(-1, -1, 1), P(-1, -1, -1), P(1, -1, -1), P(1, -1, 1)],
+    [P(-1, -1, 1), P(1, -1, 1), P(1, 1, 1), P(-1, 1, 1)], [P(1, -1, -1), P(-1, -1, -1), P(-1, 1, -1), P(1, 1, -1)]];
+}
+function polyNormal(p) {
+  const n = new V3();
+  for (let i = 0; i < p.length; i++) { const a = p[i], b = p[(i + 1) % p.length]; n.x += (a.y - b.y) * (a.z + b.z); n.y += (a.z - b.z) * (a.x + b.x); n.z += (a.x - b.x) * (a.y + b.y); }
+  return n.normalize();
+}
+function orient(g) {        // make the winding outward (positive signed volume) so FrontSide and BackSide mean what they say
+  const p = g.attributes.position.array; let vol = 0;
+  if (g.index) { const I = g.index.array, v = (k, c) => p[I[k] * 3 + c];
+    for (let t = 0; t < I.length; t += 3) vol += (v(t, 0) * (v(t + 1, 1) * v(t + 2, 2) - v(t + 1, 2) * v(t + 2, 1)) - v(t, 1) * (v(t + 1, 0) * v(t + 2, 2) - v(t + 1, 2) * v(t + 2, 0)) + v(t, 2) * (v(t + 1, 0) * v(t + 2, 1) - v(t + 1, 1) * v(t + 2, 0))) / 6;
+    if (vol < 0) { for (let t = 0; t < I.length; t += 3) { const a = I[t + 1]; I[t + 1] = I[t + 2]; I[t + 2] = a; } g.index.needsUpdate = true; g.computeVertexNormals(); }
+    g.userData.flipped = vol < 0; return g; }
+  for (let t = 0; t < p.length; t += 9) vol += (p[t] * (p[t + 4] * p[t + 8] - p[t + 5] * p[t + 7]) - p[t + 1] * (p[t + 3] * p[t + 8] - p[t + 5] * p[t + 6]) + p[t + 2] * (p[t + 3] * p[t + 7] - p[t + 4] * p[t + 6])) / 6;
+  if (vol < 0) { for (let t = 0; t < p.length; t += 9) for (let c = 0; c < 3; c++) { const a = p[t + 3 + c]; p[t + 3 + c] = p[t + 6 + c]; p[t + 6 + c] = a; }
+    const cr = g.attributes.aCrush; if (cr) { const a = cr.array; for (let t = 0; t < a.length; t += 3) { const x = a[t + 1]; a[t + 1] = a[t + 2]; a[t + 2] = x; } }
+    g.attributes.position.needsUpdate = true; g.computeVertexNormals(); }
+  g.userData.flipped = vol < 0; return g;
+}
+const LONG = 2.4;   // every stone's longest bounding-box side, world units (igloo's stones are 2.40 to 2.46 tall)
+function gemGeometry(seed) {
+  const r = rng(seed * 7 + 3);
+  const ax = [0.60 + 0.24 * r(), 1.0, 0.50 + 0.22 * r()];                 // tall, flattened front to back, each different
+  const tq = new THREE.Quaternion().setFromEuler(new THREE.Euler((r() - 0.5) * 0.6, (r() - 0.5) * 0.9, (r() - 0.5) * 0.6));
+  const tqi = tq.clone().invert();
+  let polys = boxPolys(3);
+  const planes = [[new V3(1, 0, 0), 3], [new V3(-1, 0, 0), 3], [new V3(0, 1, 0), 3], [new V3(0, -1, 0), 3], [new V3(0, 0, 1), 3], [new V3(0, 0, -1), 3]];
+  const K = 22 + Math.floor(r() * 9);
+  for (let k = 0; k < K; k++) {
+    const t = (k + 0.5) / K, inc = Math.acos(1 - 2 * t), az = Math.PI * (1 + Math.sqrt(5)) * k + r() * 0.6;
+    const n = new V3(Math.sin(inc) * Math.cos(az), Math.cos(inc), Math.sin(inc) * Math.sin(az));
+    n.x += (r() - 0.5) * 0.5; n.y += (r() - 0.5) * 0.5; n.z += (r() - 0.5) * 0.5; n.normalize();
+    const nl = n.clone().applyQuaternion(tqi);
+    const h = Math.hypot(ax[0] * nl.x, ax[1] * nl.y, ax[2] * nl.z);
+    let d = h * (0.84 + 0.16 * r()); if (r() < 0.2) d *= 0.8;               // a few deep cleaves: the deformation
+    polys = clipPolys(polys, n, d); planes.push([n, d]);
+  }
+  // slight bevels: one narrow facet along every edge sharper than 20 deg
+  const key = (p) => `${Math.round(p.x * 1e4)},${Math.round(p.y * 1e4)},${Math.round(p.z * 1e4)}`;
+  const edges = new Map(); const norms = polys.map(polyNormal);
+  polys.forEach((p, i) => { for (let k = 0; k < p.length; k++) { const a = key(p[k]), b = key(p[(k + 1) % p.length]); const e = a < b ? a + '|' + b : b + '|' + a; if (!edges.has(e)) edges.set(e, []); edges.get(e).push(i); } });
+  const allV = polys.flat();
+  const bevel = [];
+  for (const [, f] of edges) {
+    if (f.length !== 2) continue;
+    const n1 = norms[f[0]], n2 = norms[f[1]]; if (n1.dot(n2) > Math.cos(THREE.MathUtils.degToRad(20))) continue;
+    const nb = n1.clone().add(n2).normalize(); let hb = -1e9; for (const v of allV) hb = Math.max(hb, v.dot(nb));
+    bevel.push([nb, hb - 0.012]);
+  }
+  for (const [n, d] of bevel) polys = clipPolys(polys, n, d);
+  // centre and scale to LONG
+  const bb = new THREE.Box3(); polys.forEach((p) => p.forEach((v) => bb.expandByPoint(v)));
+  const C = bb.getCenter(new V3()), sz = bb.getSize(new V3()), S = LONG / Math.max(sz.x, sz.y, sz.z);
+  const pos = [];
+  for (const p of polys) {
+    const n = polyNormal(p), pc = new V3(); p.forEach((v) => pc.add(v)); pc.divideScalar(p.length);
+    const ring = n.dot(pc.clone().sub(C)) < 0 ? [...p].reverse() : p;
+    for (let i = 0; i < ring.length; i++) { const a = ring[i], b = ring[(i + 1) % ring.length];
+      for (const v of [pc, a, b]) pos.push((v.x - C.x) * S, (v.y - C.y) * S, (v.z - C.z) * S); }
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals();
+  g.computeBoundingBox(); g.computeBoundingSphere();
+  // the main cut planes in the final frame (for look C's internal trace); bevels are thin and left out
+  g.userData.planes = planes.map(([n, d]) => [n.x, n.y, n.z, S * (d - n.dot(C))]).filter((p) => p[3] < 3 * S);
+  g.userData.facets = polys.length;
+  return orient(g);
+}
+function coreGeometry(seed, size) {      // a small irregular polytope, the emissive core of gem A
+  const r = rng(seed * 13 + 5); let polys = boxPolys(2);
+  for (let k = 0; k < 10; k++) { const n = new V3(r() - 0.5, r() - 0.5, r() - 0.5).normalize(); polys = clipPolys(polys, n, 0.75 + 0.25 * r()); }
+  const pos = [];
+  for (const p of polys) { const pc = new V3(); p.forEach((v) => pc.add(v)); pc.divideScalar(p.length);
+    const n = polyNormal(p); const ring = n.dot(pc) < 0 ? [...p].reverse() : p;
+    for (let i = 0; i < ring.length; i++) for (const v of [pc, ring[i], ring[(i + 1) % ring.length]]) pos.push(v.x * size, v.y * size, v.z * size); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals(); return orient(g);
+}
+
+// ---------------------------------------------------------------- geometry: crushed ice block by surface nets (look D)
+// Shape statistics measured on igloo's three stones: one watertight shell; 4 to 6 large flat cleavage planes tilted 10 to 30 deg
+// off a box's axes; 40 to 50 percent of the area crushed into small facets on the edges and corners; volume 0.43 to 0.55 of the
+// bounding box; extents (2.03, 2.40, 1.57), (2.14, 2.13, 1.73), (1.58, 2.46, 1.43). Our signed distance: max of the tilted
+// planes, carved by a noisy crush term near every edge (where the two nearest planes meet); meshed by surface nets.
+function hash3(x, y, z) { let h = Math.imul(x | 0, 374761393) ^ Math.imul(y | 0, 668265263) ^ Math.imul(z | 0, 2147483647); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+function vnoise3(x, y, z) {
+  const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z); let fx = x - xi, fy = y - yi, fz = z - zi;
+  fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy); fz = fz * fz * (3 - 2 * fz);
+  const L = (a, b, t) => a + (b - a) * t;
+  return L(L(L(hash3(xi, yi, zi), hash3(xi + 1, yi, zi), fx), L(hash3(xi, yi + 1, zi), hash3(xi + 1, yi + 1, zi), fx), fy),
+           L(L(hash3(xi, yi, zi + 1), hash3(xi + 1, yi, zi + 1), fx), L(hash3(xi, yi + 1, zi + 1), hash3(xi + 1, yi + 1, zi + 1), fx), fy), fz);
+}
+function worley(x, y, z) {
+  const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z); let d1 = 9, d2 = 9;
+  for (let k = -1; k <= 1; k++) for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) {
+    const cx = xi + i, cy = yi + j, cz = zi + k;
+    const px = cx + hash3(cx, cy, cz), py = cy + hash3(cx + 71, cy, cz), pz = cz + hash3(cx, cy + 37, cz);
+    const d = (px - x) ** 2 + (py - y) ** 2 + (pz - z) ** 2; if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d;
+  }
+  return Math.sqrt(d2) - Math.sqrt(d1);
+}
+const ICE_PROTO = [[1.58, 2.46, 1.43], [2.03, 2.40, 1.57], [2.14, 2.13, 1.73]];   // shard, slab, near cube
+function iceGeometry(seed, proto) {
+  const r = rng(seed * 31 + 7);
+  const T = ICE_PROTO[proto], he = T.map((v) => v * 0.5 * 1.06);
+  const planes = [];
+  const AX = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
+  for (let i = 0; i < 6; i++) {
+    const n = new V3(...AX[i]);
+    const perp = new V3(r() - 0.5, r() - 0.5, r() - 0.5); perp.sub(n.clone().multiplyScalar(perp.dot(n))).normalize();
+    n.applyAxisAngle(perp, THREE.MathUtils.degToRad(10 + 14 * r()));
+    planes.push([n, he[i >> 1] * (0.93 + 0.12 * r())]);
+  }
+  const nc = 2 + (r() < 0.5 ? 1 : 0);
+  for (let i = 0; i < nc; i++) {
+    const s = () => (r() < 0.5 ? -1 : 1);
+    const n = new V3(s() * (0.5 + 0.5 * r()), s() * (0.5 + 0.5 * r()), s() * (0.5 + 0.5 * r())).normalize();
+    const sup = Math.abs(n.x) * he[0] + Math.abs(n.y) * he[1] + Math.abs(n.z) * he[2];
+    planes.push([n, sup * (0.72 + 0.10 * r())]);
+  }
+  const PL = planes.map(([n, d]) => [n.x, n.y, n.z, d]);
+  const o1 = r() * 100, o2 = r() * 100, o3 = r() * 100;
+  const E = 0.28, A0 = 0.04, A1 = 0.10, A2 = 0.06;   // edge band (u), crush depth terms (u)
+  function field(x, y, z) {
+    let d1 = -1e9, d2 = -1e9;
+    for (const p of PL) { const d = p[0] * x + p[1] * y + p[2] * z - p[3]; if (d > d1) { d2 = d1; d1 = d; } else if (d > d2) d2 = d; }
+    const gap = d1 - d2;
+    const edgeN = vnoise3(x * 2.2 + o1, y * 2.2, z * 2.2);                 // irregular slab outline
+    const band = E * (0.55 + 0.9 * edgeN);
+    const w = 1 - smooth(band * 0.75, band, gap);                           // 1 in the crushed zone, 0 on a slab
+    const chips = Math.min(1, worley(x * 4.6 + o2, y * 4.6, z * 4.6) * 1.6);
+    const lumps = vnoise3(x * 3.3 + o3, y * 3.3, z * 3.3);
+    return [d1 + w * (A0 + A1 * lumps + A2 * chips), w];
+  }
+  const h = 0.065, pad = 3 * h;
+  let poly = boxPolys(6); for (const [n, d] of planes) poly = clipPolys(poly, n, d);
+  const pb = new THREE.Box3(); poly.forEach((p) => p.forEach((v) => pb.expandByPoint(v)));
+  const lo = [pb.min.x - pad, pb.min.y - pad, pb.min.z - pad], n3 = [pb.max.x - pb.min.x, pb.max.y - pb.min.y, pb.max.z - pb.min.z].map((v) => Math.ceil((v + 2 * pad) / h) + 1);
+  const [NX, NY, NZ] = n3; const F = new Float32Array(NX * NY * NZ); const Wm = new Float32Array(NX * NY * NZ);
+  const id = (i, j, k) => i + NX * (j + NY * k);
+  for (let k = 0; k < NZ; k++) for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) {
+    const [f, w] = field(lo[0] + i * h, lo[1] + j * h, lo[2] + k * h); F[id(i, j, k)] = f; Wm[id(i, j, k)] = w;
+  }
+  // surface nets: one vertex per sign-changing cell at the mean of its edge crossings
+  const vid = new Int32Array((NX - 1) * (NY - 1) * (NZ - 1)).fill(-1); const VP = [], VW = [];
+  const cid = (i, j, k) => i + (NX - 1) * (j + (NY - 1) * k);
+  const CE = [[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [1, 3], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [3, 7]];
+  for (let k = 0; k < NZ - 1; k++) for (let j = 0; j < NY - 1; j++) for (let i = 0; i < NX - 1; i++) {
+    const c = [], cw = [];
+    for (let m = 0; m < 8; m++) { const q = id(i + (m & 1), j + ((m >> 1) & 1), k + ((m >> 2) & 1)); c.push(F[q]); cw.push(Wm[q]); }
+    let mask = 0; for (let m = 0; m < 8; m++) if (c[m] < 0) mask |= 1 << m;
+    if (mask === 0 || mask === 255) continue;
+    let sx = 0, sy = 0, sz = 0, sw = 0, cnt = 0;
+    for (const [a, b] of CE) {
+      if ((c[a] < 0) === (c[b] < 0)) continue;
+      const t = c[a] / (c[a] - c[b]);
+      const ax = a & 1, ay = (a >> 1) & 1, az = (a >> 2) & 1, bx = b & 1, by = (b >> 1) & 1, bz = (b >> 2) & 1;
+      sx += ax + (bx - ax) * t; sy += ay + (by - ay) * t; sz += az + (bz - az) * t; sw += cw[a] + (cw[b] - cw[a]) * t; cnt++;
+    }
+    vid[cid(i, j, k)] = VP.length / 3;
+    VP.push(lo[0] + (i + sx / cnt) * h, lo[1] + (j + sy / cnt) * h, lo[2] + (k + sz / cnt) * h); VW.push(sw / cnt);
+  }
+  const tris = [];
+  const quad = (a, b, c, d, flip) => { if (a < 0 || b < 0 || c < 0 || d < 0) return; if (flip) tris.push(a, c, b, a, d, c); else tris.push(a, b, c, a, c, d); };
+  for (let k = 1; k < NZ - 1; k++) for (let j = 1; j < NY - 1; j++) for (let i = 1; i < NX - 1; i++) {
+    const f0 = F[id(i, j, k)] < 0;
+    if (i < NX - 1 && f0 !== (F[id(i + 1, j, k)] < 0)) quad(vid[cid(i, j - 1, k - 1)], vid[cid(i, j, k - 1)], vid[cid(i, j, k)], vid[cid(i, j - 1, k)], !f0);
+    if (j < NY - 1 && f0 !== (F[id(i, j + 1, k)] < 0)) quad(vid[cid(i - 1, j, k - 1)], vid[cid(i - 1, j, k)], vid[cid(i, j, k)], vid[cid(i, j, k - 1)], !f0);
+    if (k < NZ - 1 && f0 !== (F[id(i, j, k + 1)] < 0)) quad(vid[cid(i - 1, j - 1, k)], vid[cid(i, j - 1, k)], vid[cid(i, j, k)], vid[cid(i - 1, j, k)], !f0);
+  }
+  { const par = new Int32Array(VP.length / 3).map((_, i) => i); const fnd = (a) => { while (par[a] !== a) { par[a] = par[par[a]]; a = par[a]; } return a; };
+    for (let t = 0; t < tris.length; t += 3) { const a = fnd(tris[t]), b = fnd(tris[t + 1]), c = fnd(tris[t + 2]); par[b] = a; par[fnd(c)] = a; }
+    const cnt = new Map(); for (let t = 0; t < tris.length; t += 3) { const r0 = fnd(tris[t]); cnt.set(r0, (cnt.get(r0) || 0) + 1); }
+    let best = -1, bn = 0; for (const [k, v] of cnt) if (v > bn) { bn = v; best = k; }
+    const keep = []; for (let t = 0; t < tris.length; t += 3) if (fnd(tris[t]) === best) keep.push(tris[t], tris[t + 1], tris[t + 2]);
+    tris.length = 0; for (let q = 0; q < keep.length; q++) tris.push(keep[q]); }
+  // centre, scale the longest side to LONG; indexed so crushed zones get smooth vertex normals (igloo's are split only along facet edges)
+  const bb = new THREE.Box3(); for (let q = 0; q < VP.length; q += 3) bb.expandByPoint(new V3(VP[q], VP[q + 1], VP[q + 2]));
+  const C = bb.getCenter(new V3()), sz = bb.getSize(new V3()), S = LONG / Math.max(sz.x, sz.y, sz.z);
+  const pos = new Float32Array(VP.length); for (let q = 0; q < VP.length; q += 3) { pos[q] = (VP[q] - C.x) * S; pos[q + 1] = (VP[q + 1] - C.y) * S; pos[q + 2] = (VP[q + 2] - C.z) * S; }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('aCrush', new THREE.BufferAttribute(new Float32Array(VW), 1));
+  g.setIndex(tris); g.computeVertexNormals(); g.computeBoundingBox(); g.computeBoundingSphere();
+  g.userData.tris = tris.length / 3; g.userData.size = sz.clone().multiplyScalar(S);
+  let aC = 0, aT = 0, vol = 0; const A = new V3(), B = new V3(), Cc = new V3(), e1 = new V3(), e2 = new V3();
+  for (let t = 0; t < tris.length; t += 3) { A.fromArray(pos, tris[t] * 3); B.fromArray(pos, tris[t + 1] * 3); Cc.fromArray(pos, tris[t + 2] * 3);
+    const ar = e1.subVectors(B, A).cross(e2.subVectors(Cc, A)).length() / 2; const wv = (VW[tris[t]] + VW[tris[t + 1]] + VW[tris[t + 2]]) / 3;
+    aT += ar; aC += ar * (wv > 0.5 ? 1 : 0); vol += A.dot(new V3().crossVectors(B, Cc)) / 6; }
+  const s2 = g.userData.size; g.userData.stats = { tris: tris.length / 3, crushedArea: +(aC / aT).toFixed(3), fill: +(Math.abs(vol) / (s2.x * s2.y * s2.z)).toFixed(3), size: s2.toArray().map((v) => +v.toFixed(3)) };
+  return orient(g);
+}
+function blockGeometry(blockId, sx, sy) {   // the logomark block this stone came from, extruded: look D's frozen inner object
+  const pts = PIECES[blockId]; const shape = new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y)));
+  const g = new THREE.ExtrudeGeometry(shape, { depth: 0.22, bevelEnabled: false, curveSegments: 1 });
+  g.translate(0, 0, -0.11); g.computeBoundingBox();
+  const bs = g.boundingBox.getSize(new V3()), bc = g.boundingBox.getCenter(new V3());
+  g.translate(-bc.x, -bc.y, -bc.z); const s = Math.min(sx / bs.x, sy / bs.y); g.scale(s, s, s); return g;
+}
+
+// ---------------------------------------------------------------- environments (procedural, no files)
+function equirect(Wd, Hd, fn) {
+  const data = new Uint16Array(Wd * Hd * 4); const toH = THREE.DataUtils.toHalfFloat;
+  for (let y = 0; y < Hd; y++) for (let x = 0; x < Wd; x++) {
+    const c = fn(x, y, Wd, Hd), o = (y * Wd + x) * 4; data[o] = toH(c[0]); data[o + 1] = toH(c[1]); data[o + 2] = toH(c[2]); data[o + 3] = toH(1);
+  }
+  const t = new THREE.DataTexture(data, Wd, Hd, THREE.RGBAFormat, THREE.HalfFloatType);
+  t.mapping = THREE.EquirectangularReflectionMapping; t.magFilter = t.minFilter = THREE.LinearFilter; t.needsUpdate = true; return t;
+}
+// D: overcast sky over a frozen lake, hazy sun at lon -11.5, lat 28.7 with 10.45 percent of the energy (fit in data/env-fit.json)
+function overcastFn(x, y, Wd, Hd) {
+  const P = ENVFIT; const lon = ((x + 0.5) / Wd) * 2 * Math.PI - Math.PI, lat = ((y + 0.5) / Hd) * Math.PI - Math.PI / 2;
+  const dir = (lo, la) => [Math.cos(la) * Math.sin(lo), Math.sin(la), Math.cos(la) * Math.cos(lo)];
+  const d = dir(lon, lat), sl = THREE.MathUtils.degToRad(P.sun.lon_deg), sa = THREE.MathUtils.degToRad(P.sun.lat_deg);
+  const s = dir(sl, sa), rr = dir(sl, -sa);
+  const ang = (a, b) => Math.acos(Math.max(-1, Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2])));
+  const ts = ang(d, s), tr = ang(d, rr);
+  const K = P.lat_knots_deg.map((v) => THREE.MathUtils.degToRad(v));
+  let base = P.base[P.base.length - 1];
+  for (let i = 0; i < K.length - 1; i++) if (lat <= K[i] && lat >= K[i + 1]) { const t = (lat - K[i + 1]) / (K[i] - K[i + 1]); base = P.base[i + 1] + (P.base[i] - P.base[i + 1]) * t; }
+  const g = base + P.sky_glow.amp * Math.exp(-ts * ts / (2 * P.sky_glow.sigma_rad ** 2)) + P.lake_glow.amp * Math.exp(-tr * tr / (2 * P.lake_glow.sigma_rad ** 2))
+    + P.halo.amp * Math.exp(-ts * ts / (2 * P.halo.sigma_rad ** 2));
+  const sig = 0.012, peak = P.sun.equirect_mean_energy * Math.PI * Math.cos(sa) / (sig * sig);
+  const sun = peak * Math.exp(-ts * ts / (2 * sig * sig));
+  const tint = lat >= 0 ? P.tint_upper : P.tint_lower;
+  return [g * tint[0] + sun, g * tint[1] + sun * 0.98, g * tint[2] + sun * 0.95];
+}
+// A to C: a cool grey studio that belongs to the fog, a dark floor for deep facet darks, sharp softboxes and pin lights for glints
+function studioFn(x, y, Wd, Hd) {
+  const lon = ((x + 0.5) / Wd - 0.5) * 2 * Math.PI, lat = ((y + 0.5) / Hd - 0.5) * Math.PI;
+  const d = new V3(Math.cos(lat) * Math.cos(lon), Math.sin(lat), Math.cos(lat) * Math.sin(lon));
+  let c = d.y > 0 ? 0.30 + 0.30 * Math.pow(d.y, 0.6) : 0.30 - 0.27 * Math.pow(-d.y, 0.45);
+  const box = (axis, sw, sh, e) => {
+    const a = axis.clone().normalize(), z = d.dot(a); if (z <= 0) return 0;
+    const u = new V3().crossVectors(a, new V3(0, 1, 0.001)).normalize(), v = new V3().crossVectors(u, a);
+    const px = d.dot(u) / z, py = d.dot(v) / z;
+    return e * (1 - smooth(sw * 0.9, sw, Math.abs(px))) * (1 - smooth(sh * 0.9, sh, Math.abs(py)));
+  };
+  c += box(new V3(-0.55, 0.62, 0.70), 0.32, 0.16, 16);
+  c += box(new V3(0.80, 0.18, 0.55), 0.06, 0.40, 9);
+  c += box(new V3(0.10, 0.95, 0.20), 0.25, 0.25, 6);
+  c += box(new V3(0.25, 0.35, -0.90), 0.45, 0.10, 4);
+  const pins = [[-0.2, 0.75, 0.62], [0.55, 0.55, 0.62], [-0.75, 0.30, 0.58], [0.30, 0.85, -0.42], [-0.45, 0.20, -0.87], [0.85, 0.45, -0.25]];
+  for (const p of pins) { const a = new V3(...p).normalize(); const th = Math.acos(Math.min(1, d.dot(a))); c += 60 * Math.exp(-th * th / (2 * 0.009 * 0.009)); }
+  return [c * 0.96, c * 0.99, c * 1.04];
+}
+
+// ---------------------------------------------------------------- GLSL shared
+const GLSL_NOISE = /* glsl */`
+  vec3 h33(vec3 p) { p = fract(p * vec3(0.1031, 0.1030, 0.0973)); p += dot(p, p.yxz + 33.33); return fract((p.xxy + p.yxx) * p.zyx); }
+  float h13(vec3 p) { p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
+  float vn3(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(mix(h13(i), h13(i + vec3(1, 0, 0)), f.x), mix(h13(i + vec3(0, 1, 0)), h13(i + vec3(1, 1, 0)), f.x), f.y),
+               mix(mix(h13(i + vec3(0, 0, 1)), h13(i + vec3(1, 0, 1)), f.x), mix(h13(i + vec3(0, 1, 1)), h13(i + vec3(1, 1, 1)), f.x), f.y), f.z); }
+  float fbm3(vec3 p) { float a = 0.5, s = 0.0; for (int i = 0; i < 4; i++) { s += a * vn3(p); p = p * 2.03 + 17.1; a *= 0.5; } return s / 0.9375; }
+  vec4 cell3(vec3 p) { vec3 i = floor(p), f = fract(p); float d1 = 9.0; vec3 id = i;
+    for (int z = -1; z <= 1; z++) for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) {
+      vec3 g = vec3(x, y, z); vec3 r = g + h33(i + g) - f; float d = dot(r, r); if (d < d1) { d1 = d; id = i + g; } }
+    return vec4(h33(id + 3.7), sqrt(d1)); }
+  vec3 encSRGB(vec3 l) { l = clamp(l, 0.0, 1.0); return mix(l * 12.92, 1.055 * pow(l, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, l)); }
+  vec3 decSRGB(vec3 c) { return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }
+  float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
+  // Khronos PBR Neutral tone curve (published formula), written out
+  vec3 neutralTone(vec3 c) { float x = min(c.r, min(c.g, c.b)); float off = x < 0.08 ? x - 6.25 * x * x : 0.04; c -= off;
+    float pk = max(c.r, max(c.g, c.b)); if (pk < 0.76) return c; float d = 0.24; float np = 1.0 - d * d / (pk + d - 0.76);
+    c *= np / pk; float g = 1.0 - 1.0 / (0.15 * (pk - np) + 1.0); return mix(c, vec3(np), g); }
+`;
+function gradeGLSL() {    // our grade model, sRGB in and out: per channel 9 hats on the channel, 9 on the mean, 9 x (c - mean), 3 linear
+  const f = (a) => a.map((v) => v.toFixed(5)).join(', ');
+  return /* glsl */`
+  const float GR[30] = float[30](${f(GRADE.rows[0])}); const float GG[30] = float[30](${f(GRADE.rows[1])}); const float GB[30] = float[30](${f(GRADE.rows[2])});
+  float gradeCh(float c, float L, vec3 v, int ch) { float s = 0.0;
+    for (int k = 0; k < 9; k++) { float hc = max(0.0, 1.0 - abs(c * 8.0 - float(k))), hl = max(0.0, 1.0 - abs(L * 8.0 - float(k)));
+      float a = ch == 0 ? GR[k] : (ch == 1 ? GG[k] : GB[k]); float b = ch == 0 ? GR[9 + k] : (ch == 1 ? GG[9 + k] : GB[9 + k]); float q = ch == 0 ? GR[18 + k] : (ch == 1 ? GG[18 + k] : GB[18 + k]);
+      s += a * hc + b * hl + q * hl * (c - L); }
+    vec3 m = ch == 0 ? vec3(GR[27], GR[28], GR[29]) : (ch == 1 ? vec3(GG[27], GG[28], GG[29]) : vec3(GB[27], GB[28], GB[29]));
+    return clamp(s + dot(m, v), 0.0, 1.0); }
+  vec3 iglooGrade(vec3 lin) { vec3 v = encSRGB(lin); float L = (v.r + v.g + v.b) / 3.0;
+    return decSRGB(vec3(gradeCh(v.r, L, v, 0), gradeCh(v.g, L, v, 1), gradeCh(v.b, L, v, 2))); }`;
+}
+
+// ---------------------------------------------------------------- background (the background area's recipe, in our code)
+function fogNoise64(seed = 249) {
+  const AMP = { 1: 0.01499, 1.414: 0.02238, 2: 0.02556, 2.236: 0.02357, 2.828: 0.02694, 3: 0.01788, 3.162: 0.02118, 3.606: 0.00736, 4: 0.00495, 4.123: 0.00612, 4.243: 0.00562, 4.472: 0.00355 };
+  let s = seed >>> 0; const rnd = () => ((s = (Math.imul(1664525, s) + 1013904223) >>> 0) / 4294967296);
+  const modes = [];
+  for (let ky = 0; ky <= 4; ky++) for (let kx = -4; kx <= 4; kx++) { if (ky === 0 && kx <= 0) continue; const r = Math.round(Math.hypot(kx, ky) * 1000) / 1000; if (!(r in AMP)) continue; modes.push([kx, ky, 2 * AMP[r], rnd() * 2 * Math.PI]); }
+  const f = new Float64Array(4096);
+  for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) { let v = 0; for (const [kx, ky, a, ph] of modes) v += a * Math.cos(2 * Math.PI * (kx * x + ky * y) / 64 + ph); f[y * 64 + x] = v; }
+  let m = 0; for (const v of f) m += v; m /= 4096; let q = 0; for (const v of f) q += (v - m) ** 2; const sd = Math.sqrt(q / 4096);
+  const out = new Uint8Array(4096); for (let i = 0; i < 4096; i++) out[i] = Math.max(0, Math.min(255, Math.round(255 * (0.5 + (f[i] - m) * (0.1373 / sd))))); return out;
+}
+function lcg(seed) { let s = seed >>> 0; return () => ((s = (Math.imul(1664525, s) + 1013904223) >>> 0) / 4294967296); }
+function gemAtlas() {
+  const C = 256, cv = document.createElement('canvas'); cv.width = C * 3; cv.height = C; const g = cv.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, cv.width, cv.height);
+  [{ seed: 11, blur: 2.5, n: 7 }, { seed: 29, blur: 2.5, n: 9 }, { seed: 47, blur: 10, n: 8 }].forEach((cell, ci) => {
+    const r = lcg(cell.seed), n = cell.n, pts = []; const tw = 0.55 + 0.1 * r(), ch = 0.35 + 0.1 * r(), pd = 0.75 + 0.2 * r();
+    for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2 + 0.2 * (r() - 0.5); pts.push([tw * Math.cos(a), ch, tw * Math.sin(a)]); }
+    for (let i = 0; i < n; i++) { const a = ((i + 0.5) / n) * Math.PI * 2 + 0.2 * (r() - 0.5); const k = 0.9 + 0.2 * r(); pts.push([k * Math.cos(a), 0, k * Math.sin(a)]); }
+    pts.push([0.05 * (r() - 0.5), -pd, 0.05 * (r() - 0.5)]);
+    const edges = []; for (let i = 0; i < n; i++) edges.push([i, (i + 1) % n], [n + i, n + (i + 1) % n], [i, n + i], [(i + 1) % n, n + i], [n + i, 2 * n]);
+    for (let i = 0; i < n; i += 2) edges.push([i, (i + Math.floor(n / 2)) % n]);
+    const ax = 0.5 + 0.6 * r(), ay = r() * 6.28, az = 0.3 * (r() - 0.5);
+    const rot = ([x, y, z]) => { let c = Math.cos(ay), s = Math.sin(ay); [x, z] = [c * x + s * z, -s * x + c * z]; c = Math.cos(ax); s = Math.sin(ax); [y, z] = [c * y - s * z, s * y + c * z]; c = Math.cos(az); s = Math.sin(az); [x, y] = [c * x - s * y, s * x + c * y]; return [x, y]; };
+    const P = pts.map(rot).map(([x, y]) => [ci * C + C / 2 + x * C * 0.36, C / 2 - y * C * 0.36]);
+    g.save(); g.beginPath(); g.rect(ci * C, 0, C, C); g.clip(); g.filter = `blur(${cell.blur}px)`; g.strokeStyle = 'rgba(255,255,255,0.85)'; g.lineWidth = 2.4; g.lineCap = 'round';
+    g.beginPath(); for (const [a, b] of edges) { g.moveTo(P[a][0], P[a][1]); g.lineTo(P[b][0], P[b][1]); } g.stroke();
+    g.fillStyle = 'rgba(255,255,255,0.6)'; for (let i = 0; i < 4; i++) { const p = P[Math.floor(r() * P.length)]; g.beginPath(); g.arc(p[0] + 14 * (r() - 0.5), p[1] + 14 * (r() - 0.5), 3, 0, 6.283); g.fill(); }
+    g.restore();
+  });
+  return cv;
+}
+const SHAPES = [[-4.7, 4.6, -3.1, 1.15, 0.74, 0], [-1.6, 1.9, -3.7, 1.40, 0.21, 1], [1.9, 6.4, -2.9, 0.85, 0.57, 2], [2.6, -0.4, -6.9, 1.20, 0.33, 0], [4.4, 3.4, -4.4, 1.05, 0.88, 2], [-3.2, -5.6, -5.2, 1.10, 0.46, 1]];
+const bgUniforms = {
+  uRes: { value: new THREE.Vector2() }, uTime: { value: 0 }, uScroll: { value: 2.15 }, uFrame: { value: 0 }, uPre: { value: 0 },
+  tNoise: { value: null }, tShapes: { value: null }, uS: { value: new Float32Array(24) }, uSB: { value: new Float32Array(24) },
+  uLab: { value: new Float32Array(40) }, uLabN: { value: 0 }, uLabFeather: { value: 10 },
+};
+{
+  const nt = new THREE.DataTexture(fogNoise64(249), 64, 64, THREE.RedFormat, THREE.UnsignedByteType);
+  nt.wrapS = nt.wrapT = THREE.RepeatWrapping; nt.magFilter = nt.minFilter = THREE.LinearFilter; nt.needsUpdate = true; bgUniforms.tNoise.value = nt;
+  const st = new THREE.CanvasTexture(gemAtlas()); st.flipY = false; st.minFilter = st.magFilter = THREE.LinearFilter; st.generateMipmaps = false; st.colorSpace = THREE.NoColorSpace; bgUniforms.tShapes.value = st;
+}
+const FS_VERT = /* glsl */`void main() { gl_Position = vec4(position.xy, 0.0, 1.0); }`;
+const bgMaterial = new THREE.ShaderMaterial({
+  uniforms: bgUniforms, depthTest: false, depthWrite: false, vertexShader: FS_VERT,
+  fragmentShader: /* glsl */`
+  precision highp float;
+  uniform vec2 uRes; uniform float uTime, uScroll, uFrame, uPre, uLabN, uLabFeather; uniform sampler2D tNoise, tShapes;
+  uniform vec4 uS[6]; uniform vec4 uSB[6]; uniform vec4 uLab[10];
+  const vec3 R[21] = vec3[21](vec3(237,239,244), vec3(230,232,241), vec3(223,226,238), vec3(216,219,231), vec3(208,212,223), vec3(201,205,216), vec3(193,197,209),
+    vec3(184,189,201), vec3(175,181,192), vec3(166,171,184), vec3(157,161,175), vec3(147,152,165), vec3(136,142,154), vec3(122,128,140),
+    vec3(107,113,126), vec3(97,103,116), vec3(86,92,105), vec3(76,81,94), vec3(63,68,81), vec3(51,57,69), vec3(35,41,54));
+  vec3 lin(vec3 c) { c /= 255.0; return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }
+  vec3 enc(vec3 l) { l = clamp(l, 0.0, 1.0); return mix(l * 12.92, 1.055 * pow(l, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, l)); }
+  vec3 dec(vec3 c) { c = clamp(c, 0.0, 1.0); return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }
+  vec3 ramp(float p) { float x = clamp(p, 0.0, 1.0) * 20.0; int i = min(int(x), 19); return mix(lin(R[i]), lin(R[i + 1]), x - float(i)); }
+  uint hu(uvec3 v) { v = v * 1664525u + 1013904223u; v.x += v.y * v.z; v.y += v.z * v.x; v.z += v.x * v.y; v ^= v >> 16u; v.x += v.y * v.z; v.y += v.z * v.x; v.z += v.x * v.y; return v.x ^ v.y ^ v.z; }
+  float h1(vec2 c, float s) { return float(hu(uvec3(ivec3(int(floor(c.x)) + 4096, int(floor(c.y)) + 4096, int(s)))) & 0xffffffu) / 16777216.0; }
+  void main() {
+    vec2 px = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y); vec2 uv = gl_FragCoord.xy / uRes; float asp = uRes.x / uRes.y;
+    vec2 s = vec2(uv.x * asp, uv.y) * 0.3; float t = uTime * 0.075;
+    float p = 0.5 * (texture(tNoise, s + vec2(-t, 0.25 * t - 0.1625 * uScroll)).r + texture(tNoise, s * 0.5 + vec2(t, -0.5 * t)).r);
+    // final on-screen ramp (grade and bloom folded in), or the pre-grade fog that igloo's stones refract (look D's pass A)
+    vec3 col = uPre > 0.5 ? mix(lin(vec3(201.0, 208.0, 223.0)), lin(vec3(84.0, 91.0, 107.0)), p) : ramp(p);
+    vec2 du = vec2(uv.x * asp, uv.y) * 13.5 + vec2(0.0, -2.5 * uScroll); vec2 cell = floor(du), f = fract(du);
+    vec2 at = 0.12 + 0.76 * vec2(h1(cell, 7.0), h1(cell, 13.0));                     // jittered dots (rule 43)
+    float cpx = uRes.y / 13.5, tx = cpx / 64.0, txe = max(tx, 1.0); vec2 d = abs(f - at) * cpx;
+    float tent = max(0.0, 1.0 - d.x / txe) * max(0.0, 1.0 - d.y / txe) * (tx * tx) / (txe * txe);
+    float tw = 1.0 - abs(fract(h1(cell, 3.0) + uTime * 0.1) - 0.5) * 2.0;
+    col += 0.5 * (tx * tx / 0.857) * tent * tw;
+    for (int i = 0; i < 6; i++) {
+      vec2 q = px - uS[i].xy; float c = cos(uS[i].w), sn = sin(uS[i].w); q = mat2(c, sn, -sn, c) * q / (2.0 * uS[i].z) + 0.5;
+      if (any(lessThan(q, vec2(0.0))) || any(greaterThan(q, vec2(1.0)))) continue;
+      float a = texture(tShapes, vec2((uSB[i].x + q.x) / 3.0, q.y)).r; vec2 w = uSB[i].zw + (q - 0.5) * 2.4;
+      float idle = (sin((w.x + w.y) * 5.0 + uTime * 3.0) * 0.5 + 0.5) * (cos(w.y * 10.0 + a * 3.0 + uTime * 2.0) * 0.5 + 0.5) * (sin(w.y * 2.0 + uTime * 2.0) * 0.5 + 0.5);
+      col += uSB[i].y * a * (0.1 + 0.9 * idle);
+    }
+    vec3 srgb = enc(col);
+    // label plates: the fog under each label lifted to at least Y 168 (Urban Slate text then holds 4.5:1)
+    if (uPre < 0.5) { float m = 0.0;
+      for (int i = 0; i < 10; i++) { if (float(i) >= uLabN) break; vec4 r = uLab[i];
+        vec2 dd = max(r.xy - px, px - r.zw); float e = length(max(dd, 0.0)) + min(max(dd.x, dd.y), 0.0); m = max(m, 1.0 - smoothstep(0.0, uLabFeather, e)); }
+      float Y = dot(srgb, vec3(0.2126, 0.7152, 0.0722)); srgb += m * max(0.0, 168.0 / 255.0 - Y); }
+    vec2 g = gl_FragCoord.xy; float fr = uFrame;
+    srgb += ((h1(g, fr * 4.0) - 0.5) * 4.0 + (vec3(h1(g, fr * 4.0 + 1.0), h1(g, fr * 4.0 + 2.0), h1(g, fr * 4.0 + 3.0)) - 0.5) * 2.7) / 255.0;
+    gl_FragColor = vec4(dec(srgb), 0.0);      // alpha 0: background, never blooms
+  }`,
+});
+function bgLayout(time) {
+  const Wd = W(), Hd = H(), asp = Wd / Hd, zoom = Math.min(1, 1.25 * asp), th = Math.tan(Math.PI / 8), scroll = bgUniforms.uScroll.value;
+  const S = bgUniforms.uS.value, SB = bgUniforms.uSB.value;
+  SHAPES.forEach(([x, y, z, rad, rnd, cell], i) => {
+    const X = x * Math.min(1, Math.max(0.65, asp * 0.5)), Y = y - 2.5 + 2.5 * scroll, zv = z - 5;
+    const ndcX = X / (-zv * th * asp) * zoom, ndcY = Y / (-zv * th) * zoom;
+    S.set([(ndcX * 0.5 + 0.5) * Wd, (0.5 - ndcY * 0.5) * Hd, rad / (-zv * th) * zoom * 0.5 * Hd, 0.2 * rnd * time + 1.25 * scroll * (0.1 + 0.4 * rnd)], i * 4);
+    SB.set([cell, 0.27 * 0.65, x, y], i * 4);
+  });
+}
+
+// ---------------------------------------------------------------- render targets and full-screen passes
+const fsGeo = new THREE.BufferGeometry(); fsGeo.setAttribute('position', new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
+const fsCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+function fsMesh(mat) { const m = new THREE.Mesh(fsGeo, mat); m.frustumCulled = false; return m; }
+function fsScene(mat) { const s = new THREE.Scene(); s.add(fsMesh(mat)); return s; }
+const RT = (w, h, o = {}) => new THREE.WebGLRenderTarget(w, h, { type: THREE.HalfFloatType, format: THREE.RGBAFormat, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: true, ...o });
+let rtMain, rtA, rtBG, bloomRTs = [];
+function makeTargets() {
+  const w = W(), h = H();
+  rtMain = RT(w, h, { samples: 4 });
+  rtA = RT(w, h, { minFilter: THREE.LinearMipmapLinearFilter, generateMipmaps: true, samples: 0 });
+  rtBG = RT(w, h, { minFilter: THREE.LinearMipmapLinearFilter, generateMipmaps: true, depthBuffer: false });
+  bloomRTs = []; let bw = Math.max(1, w >> 1), bh = Math.max(1, h >> 1);
+  for (let i = 0; i < 6; i++) { bloomRTs.push({ down: RT(bw, bh, { depthBuffer: false }), up: RT(bw, bh, { depthBuffer: false }) }); bw = Math.max(1, bw >> 1); bh = Math.max(1, bh >> 1); }
+}
+
+// bloom (our own): prefilter (stones only, alpha = 1), 4-tap box down chain, tent up chain mixed by radius
+const bloomPre = new THREE.ShaderMaterial({ depthTest: false, depthWrite: false, vertexShader: FS_VERT,
+  uniforms: { tSrc: { value: null }, uTexel: { value: new THREE.Vector2() }, uThr: { value: 0.2 }, uKnee: { value: 0.025 } },
+  fragmentShader: /* glsl */`precision highp float; uniform sampler2D tSrc; uniform vec2 uTexel; uniform float uThr, uKnee;
+    void main() { vec2 uv = gl_FragCoord.xy * uTexel; vec4 a = texture(tSrc, uv); vec3 c = a.rgb * a.a;
+      float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); gl_FragColor = vec4(c * smoothstep(uThr - uKnee, uThr + uKnee, l), 1.0); }` });
+const bloomDown = new THREE.ShaderMaterial({ depthTest: false, depthWrite: false, vertexShader: FS_VERT,
+  uniforms: { tSrc: { value: null }, uTexel: { value: new THREE.Vector2() }, uSrcTexel: { value: new THREE.Vector2() } },
+  fragmentShader: /* glsl */`precision highp float; uniform sampler2D tSrc; uniform vec2 uTexel, uSrcTexel;
+    void main() { vec2 uv = gl_FragCoord.xy * uTexel; vec2 o = uSrcTexel;
+      vec3 c = texture(tSrc, uv + vec2(-o.x, -o.y)).rgb + texture(tSrc, uv + vec2(o.x, -o.y)).rgb + texture(tSrc, uv + vec2(-o.x, o.y)).rgb + texture(tSrc, uv + vec2(o.x, o.y)).rgb;
+      c = 0.5 * c / 4.0 + 0.5 * texture(tSrc, uv).rgb; gl_FragColor = vec4(c, 1.0); }` });
+const bloomUp = new THREE.ShaderMaterial({ depthTest: false, depthWrite: false, vertexShader: FS_VERT,
+  uniforms: { tSmall: { value: null }, tSupport: { value: null }, uTexel: { value: new THREE.Vector2() }, uSmallTexel: { value: new THREE.Vector2() }, uRadius: { value: 0.85 } },
+  fragmentShader: /* glsl */`precision highp float; uniform sampler2D tSmall, tSupport; uniform vec2 uTexel, uSmallTexel; uniform float uRadius;
+    void main() { vec2 uv = gl_FragCoord.xy * uTexel; vec2 o = uSmallTexel;
+      vec3 c = texture(tSmall, uv).rgb * 4.0;
+      c += (texture(tSmall, uv + vec2(o.x, 0)).rgb + texture(tSmall, uv - vec2(o.x, 0)).rgb + texture(tSmall, uv + vec2(0, o.y)).rgb + texture(tSmall, uv - vec2(0, o.y)).rgb) * 2.0;
+      c += texture(tSmall, uv + o).rgb + texture(tSmall, uv - o).rgb + texture(tSmall, uv + vec2(o.x, -o.y)).rgb + texture(tSmall, uv + vec2(-o.x, o.y)).rgb;
+      c /= 16.0; gl_FragColor = vec4(mix(texture(tSupport, uv).rgb, c, uRadius), 1.0); }` });
+const composite = new THREE.ShaderMaterial({ depthTest: false, depthWrite: false, vertexShader: FS_VERT,
+  uniforms: { tMain: { value: null }, tBloom: { value: null }, uTexel: { value: new THREE.Vector2() }, uIntensity: { value: 1 }, uScreen: { value: 1 }, uMask: { value: 0 } },
+  fragmentShader: /* glsl */`precision highp float; uniform sampler2D tMain, tBloom; uniform vec2 uTexel; uniform float uIntensity, uScreen, uMask;
+    vec3 enc(vec3 l) { l = clamp(l, 0.0, 1.0); return mix(l * 12.92, 1.055 * pow(l, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, l)); }
+    void main() { vec2 uv = gl_FragCoord.xy * uTexel; vec3 a = texture(tMain, uv).rgb; vec3 b = texture(tBloom, uv).rgb * uIntensity;
+      vec3 c = uScreen > 0.5 ? a + b - a * b : a + b; if (uMask > 0.5) c = vec3(texture(tMain, uv).a); gl_FragColor = vec4(enc(c), 1.0); }` });
+const S_pre = fsScene(bloomPre), S_down = fsScene(bloomDown), S_up = fsScene(bloomUp), S_comp = fsScene(composite);
+const BLOOM = { D: { thr: 0.2, knee: 0.025, radius: 0.85, intensity: 1, screen: 1 }, A: { thr: 0.9, knee: 0.25, radius: 0.7, intensity: 0.55, screen: 0 },
+  B: { thr: 0.9, knee: 0.25, radius: 0.7, intensity: 0.55, screen: 0 }, C: { thr: 0.75, knee: 0.25, radius: 0.75, intensity: 0.7, screen: 0 } }[LOOK];
+function runBloomAndComposite() {
+  const w = W(), h = H(), b0 = bloomRTs[0].down;
+  bloomPre.uniforms.tSrc.value = rtMain.texture; bloomPre.uniforms.uTexel.value.set(1 / b0.width, 1 / b0.height);
+  bloomPre.uniforms.uThr.value = BLOOM.thr; bloomPre.uniforms.uKnee.value = BLOOM.knee;
+  renderer.setRenderTarget(b0); renderer.render(S_pre, fsCam);
+  for (let i = 1; i < bloomRTs.length; i++) { const src = bloomRTs[i - 1].down, dst = bloomRTs[i].down;
+    bloomDown.uniforms.tSrc.value = src.texture; bloomDown.uniforms.uTexel.value.set(1 / dst.width, 1 / dst.height); bloomDown.uniforms.uSrcTexel.value.set(1 / src.width, 1 / src.height);
+    renderer.setRenderTarget(dst); renderer.render(S_down, fsCam); }
+  let small = bloomRTs[bloomRTs.length - 1].down;
+  for (let i = bloomRTs.length - 2; i >= 0; i--) { const dst = bloomRTs[i].up;
+    bloomUp.uniforms.tSmall.value = small.texture; bloomUp.uniforms.tSupport.value = bloomRTs[i].down.texture; bloomUp.uniforms.uRadius.value = BLOOM.radius;
+    bloomUp.uniforms.uTexel.value.set(1 / dst.width, 1 / dst.height); bloomUp.uniforms.uSmallTexel.value.set(1 / small.width, 1 / small.height);
+    renderer.setRenderTarget(dst); renderer.render(S_up, fsCam); small = dst; }
+  const DBG = Q.get('dbg');
+  composite.uniforms.tMain.value = DBG === 'a' ? rtA.texture : DBG === 'bg' ? rtBG.texture : rtMain.texture; composite.uniforms.uMask.value = DBG === 'mask' ? 1 : 0; composite.uniforms.tBloom.value = small.texture; composite.uniforms.uTexel.value.set(1 / w, 1 / h);
+  composite.uniforms.uIntensity.value = Q.get('dbg') ? 0 : BLOOM.intensity; composite.uniforms.uScreen.value = BLOOM.screen;
+  renderer.setRenderTarget(null); renderer.render(S_comp, fsCam);
+}
+
+// ---------------------------------------------------------------- scene, camera, layout
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(30, ASP, 0.1, 400);
+camera.zoom = MODE === 'close' ? 1 : Math.min(1, 1.25 * ASP); camera.updateProjectionMatrix();
+const fpx = (cssH / 2) / Math.tan(THREE.MathUtils.degToRad(15)) * camera.zoom;      // css px per unit at unit depth
+const bgMesh = fsMesh(bgMaterial); bgMesh.renderOrder = -100; scene.add(bgMesh);
+function slots() {
+  const out = [];
+  if (MODE === 'close') { out.push({ u: 0.5, v: 0.5, s: 0.62 * cssH, side: 'none' }); return out; }
+  if (!PHONE) {
+    const p = Math.min(cssW / 5.6, 0.33 * cssH);
+    for (let j = 0; j < 10; j++) { const row = j < 5 ? 0 : 1, k = j % 5;
+      const x = cssW / 2 + (k - 2.25 + 0.5 * row) * p, y = cssH / 2 + (row ? 1 : -1) * 0.433 * p;
+      let side = row ? 'dr' : 'ur'; if (x + 0.6 * p > cssW - 16) side = row ? 'ul' : 'dl';
+      out.push({ u: x / cssW, v: y / cssH, s: 0.65 * p, side }); }
+  } else {
+    const p = Math.min(0.169 * cssH, (cssW - 32) / 1.446);
+    for (let j = 0; j < 10; j++) { const x = cssW / 2 + (j % 2 ? 1 : -1) * 0.433 * p, y = cssH / 2 + (j - 4.5) * p / 2;
+      out.push({ u: x / cssW, v: y / cssH, s: 0.58 * p, side: j % 2 ? 'l' : 'r' }); }
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------- materials per look
+const blueTex = (() => {     // high-passed white noise, rank-normalised: blue-ish noise without clumps (64 x 64, 4 channels)
+  const N = 64, r = rng(91), d = new Uint8Array(N * N * 4);
+  for (let c = 0; c < 4; c++) {
+    const w = new Float32Array(N * N).map(() => r()); const b = new Float32Array(N * N); const K = [0.0545, 0.2442, 0.4026, 0.2442, 0.0545];
+    const tmp = new Float32Array(N * N);
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { let s = 0; for (let k = -2; k <= 2; k++) s += K[k + 2] * w[y * N + ((x + k + N) % N)]; tmp[y * N + x] = s; }
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { let s = 0; for (let k = -2; k <= 2; k++) s += K[k + 2] * tmp[((y + k + N) % N) * N + x]; b[y * N + x] = s; }
+    const hp = w.map((v, i) => v - b[i]); const idx = [...hp.keys()].sort((a, q) => hp[a] - hp[q]);
+    idx.forEach((i, rank) => { d[i * 4 + c] = Math.floor((rank + 0.5) / (N * N) * 256); });
+  }
+  const t = new THREE.DataTexture(d, N, N, THREE.RGBAFormat); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.magFilter = t.minFilter = THREE.NearestFilter; t.needsUpdate = true; return t; })();
+const pmrem = new THREE.PMREMGenerator(renderer);
+let envTex = null;
+const ENV_D_ROT = new THREE.Euler(0, Math.PI, 0);
+
+// patch helper: add our uniforms and code to a MeshPhysicalMaterial
+function patch(mat, U, { vert = '', vmain = '', pars = '', replace = {} } = {}) {
+  mat.userData.U = U;
+  mat.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, U);
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\n varying vec3 vObj; varying vec3 vWPos;\n' + vert)
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\n vObj = position; vWPos = (modelMatrix * vec4(position, 1.0)).xyz;\n' + vmain);
+    let fs = sh.fragmentShader.replace('#include <common>', '#include <common>\n varying vec3 vObj; varying vec3 vWPos;\n uniform mat4 modelMatrix; uniform mat4 projectionMatrix; uniform mat3 normalMatrix;\n' + GLSL_NOISE + pars);
+    for (const [k, v] of Object.entries(replace)) fs = fs.replace(k, v);
+    sh.fragmentShader = fs;
+  };
+  mat.customProgramCacheKey = () => LOOK + (mat.side === THREE.BackSide ? 'b' : 'f') + (mat.userData.kind || '');
+  return mat;
+}
+const REFRACT_PARS = /* glsl */`
+  uniform sampler2D tTrans; uniform sampler2D tBlue; uniform vec2 uRes; uniform float uFrame; uniform vec3 uFlat; uniform float uUseFlat;
+  uniform float uIor, uTh0, uTh1, uSplitG, uSplitB, uJitter, uLodK; uniform vec3 uAbsorb; uniform float uAbsorbK;
+  vec2 projUV(vec3 w) { vec4 c = projectionMatrix * viewMatrix * vec4(w, 1.0); return c.xy / c.w * 0.5 + 0.5; }
+  float ign(vec2 p) { return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715)))); }
+  vec3 modelScale() { return vec3(length(modelMatrix[0].xyz), length(modelMatrix[1].xyz), length(modelMatrix[2].xyz)); }
+`;
+// igloo-style screen-space refraction, written from the measured behaviour: 3 samples, thickness grows with roughness,
+// per-channel IOR split (green +10 %, blue +20 % at most), sample normal jittered by roughness^2, mip level from roughness
+const REFRACT_MAIN = /* glsl */`
+  vec3 nW = inverseTransformDirection(normal, viewMatrix); vec3 vW = normalize(cameraPosition - vWPos);
+  float rgh = clamp(roughnessFactor, 0.0525, 1.0); vec2 gq = gl_FragCoord.xy + uFrame * vec2(5.588, 3.239);
+  vec3 bn = texture(tBlue, (gl_FragCoord.xy + floor(uFrame * vec2(23.0, 37.0))) / 64.0).rgb;
+  vec3 acc = vec3(0.0);
+  float lod = log2(uRes.x) * rgh * clamp(2.0 * uIor - 2.0, 0.0, 1.0) * uLodK;
+  for (int i = 0; i < 3; i++) {
+    float fi = float(i);
+    float th = uTh0 + uTh1 * pow(rgh, 0.33) * (fi + bn.x) / 3.0;
+    vec3 ns = normalize(nW + rgh * rgh * uJitter * normalize(bn - 0.5 + 1e-4));
+    float iR = uIor, iG = uIor * (1.0 + uSplitG * (fi + bn.y) / 3.0), iB = uIor * (1.0 + uSplitB * (fi + bn.z) / 3.0);
+    vec3 ms = modelScale();
+    vec3 eR = vWPos + normalize(refract(-vW, ns, 1.0 / iR)) * th * ms, eG = vWPos + normalize(refract(-vW, ns, 1.0 / iG)) * th * ms, eB = vWPos + normalize(refract(-vW, ns, 1.0 / iB)) * th * ms;
+    if (uUseFlat > 0.5) acc += uFlat;
+    else acc += vec3(textureLod(tTrans, projUV(eR), lod).r, textureLod(tTrans, projUV(eG), lod).g, textureLod(tTrans, projUV(eB), lod).b);
+  }
+  vec3 transmitted = acc / 3.0;
+  vec3 Fr = EnvironmentBRDF(nW, vW, material.specularColor, material.specularF90, material.roughness);
+  vec3 absorb = exp(-uAbsorb * uAbsorbK);
+  totalDiffuse = (1.0 - Fr) * diffuseColor.rgb * transmitted * absorb;
+`;
+function matD(shadeHex, back) {
+  const U = { tTrans: { value: null }, tBlue: { value: blueTex }, uRes: { value: new THREE.Vector2() }, uFrame: { value: 0 },
+    uFlat: { value: new THREE.Vector3(...linArr('#a6abb7')).multiplyScalar(+(Q.get('flat') || 1)) }, uUseFlat: { value: back ? 1 : 0 },
+    uIor: { value: 1.2727 }, uTh0: { value: 2.0 }, uTh1: { value: 2.0 }, uSplitG: { value: 0.1 }, uSplitB: { value: 0.2 }, uJitter: { value: +(Q.get('jit') || 1.4) }, uLodK: { value: 1.0 },
+    uAbsorb: { value: new THREE.Vector3() }, uAbsorbK: { value: 0 }, uGradeOn: { value: back ? 0 : 1 }, uTint: { value: new THREE.Vector3(...linArr(shadeHex)) }, uTintK: { value: +(Q.get('tint') || 0.7) } };
+  const m = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(shadeHex), roughness: 0.65, metalness: 0, ior: 1.2727, specularIntensity: 1, transmission: 0,
+    envMap: envTex, envMapIntensity: 0.91, envMapRotation: ENV_D_ROT, side: back ? THREE.BackSide : THREE.FrontSide, flatShading: false });
+  m.color.set('#e0e8ef');               // igloo's base colour in both passes; our shade comes in as a luminance-keeping tint after the grade
+  m.userData.kind = 'D';
+  return patch(m, U, {
+    vert: 'attribute float aCrush; varying float vCrush;', vmain: 'vCrush = aCrush;',
+    pars: 'varying float vCrush; uniform float uGradeOn, uTintK; uniform vec3 uTint;' + REFRACT_PARS + gradeGLSL() + /* glsl */`
+      vec3 tintKeepY(vec3 o, vec3 sh, float k) { float Y = luma(o); vec3 c = sh / max(luma(sh), 1e-3) * Y; float t = 1.0;
+        for (int i = 0; i < 3; i++) if (c[i] > 1.0) t = min(t, (1.0 - Y) / max(c[i] - Y, 1e-4));
+        c = mix(vec3(Y), c, clamp(t, 0.0, 1.0)); return mix(o, c, k * (1.0 - smoothstep(0.8, 1.0, Y))); }
+      float footK(vec3 o, float cellSize) { float fp = length(fwidth(o)); return 1.0 - smoothstep(0.35 * cellSize, 1.1 * cellSize, fp); }
+      // frost roughness map, procedural: glossy slabs (mean about 0.27) with a few dark smudges, matte crushed zones (about 0.56),
+      // ridged dendritic frost over both; final roughness = 0.65 x map (igloo's measured factor)
+      float frostMap(vec3 o, float cr) {
+        float blot = fbm3(o * 1.3 + 3.1); float dend = mix(0.12, pow(1.0 - abs(2.0 * fbm3(o * 13.0 + 11.0) - 1.0), 4.0), footK(o, 0.06));
+        float smudge = smoothstep(0.58, 0.74, fbm3(o * 0.9 + 5.7));
+        float slab = (0.16 + 0.55 * dend + 0.18 * (blot - 0.5)) * (1.0 - 0.9 * smudge);
+        float crushed = 0.50 + 0.22 * dend + 0.14 * (blot - 0.5);
+        return clamp(mix(slab, crushed, cr), 0.0, 1.0); }
+      // crushed-facet normal mosaic (cells of about 0.02 u, tilts of 13 to 26 deg) and fine parallel striations on the slabs
+      // filtered by the pixel footprint (as a mip-mapped normal map would be): detail below a pixel turns into roughness
+      vec3 icePert(vec3 o, float cr) { vec4 c = cell3(o * 48.0); vec3 crushed = (c.xyz * 2.0 - 1.0) * 0.30 * footK(o, 1.0 / 48.0);
+        vec3 sd = normalize(vec3(0.7, 0.2, 0.68)); float st = sin(dot(o, sd) * 240.0 + 6.0 * vn3(o * 8.0));
+        return mix(sd * st * 0.035 * footK(o, 1.0 / 38.0), crushed, cr); }`,
+    replace: {
+      '#include <roughnessmap_fragment>': 'float roughnessFactor = roughness * frostMap(vObj, vCrush) + 0.18 * vCrush * (1.0 - footK(vObj, 1.0 / 48.0));',
+      '#include <normal_fragment_maps>': 'vec3 fN = normalize(cross(dFdx(vViewPosition), dFdy(vViewPosition))); normal = normalize(mix(normal, fN, 0.7 * smoothstep(0.3, 0.8, vCrush) * footK(vObj, 0.09))); normal = normalize(normal + normalMatrix * icePert(vObj, vCrush) * (gl_FrontFacing ? 1.0 : -1.0));',
+      '#include <transmission_fragment>': REFRACT_MAIN,
+      '#include <opaque_fragment>': 'vec3 o_ = clamp(outgoingLight, 0.0, 1.0); if (uGradeOn > 0.5) { o_ = iglooGrade(o_); o_ = tintKeepY(o_, uTint, uTintK); } gl_FragColor = vec4(o_, 1.0);',
+    },
+  });
+}
+function matB(shadeHex, back) {
+  const sh = new THREE.Color(shadeHex); const ab = new THREE.Vector3(-Math.log(Math.max(sh.r, 0.02)), -Math.log(Math.max(sh.g, 0.02)), -Math.log(Math.max(sh.b, 0.02)));
+  const U = { tTrans: { value: null }, tBG: { value: null }, tBlue: { value: blueTex }, uRes: { value: new THREE.Vector2() }, uFrame: { value: 0 }, uFlat: { value: new THREE.Vector3() }, uUseFlat: { value: 0 },
+    uIor: { value: 1.62 }, uTh0: { value: 1.2 }, uTh1: { value: 0.0 }, uSplitG: { value: 0.06 }, uSplitB: { value: 0.12 }, uJitter: { value: 0.0 }, uLodK: { value: 0.0 },
+    uAbsorb: { value: ab }, uAbsorbK: { value: back ? 0.30 : 0.18 } };
+  const m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.02, metalness: 0, ior: 1.62, specularIntensity: 1, transmission: 0,
+    envMap: envTex, envMapIntensity: 1.0, side: back ? THREE.BackSide : THREE.FrontSide, flatShading: true });
+  m.userData.kind = 'B';
+  // back faces: we are inside the stone looking out through this facet. Refract out if we can and see the fog behind;
+  // otherwise total internal reflection throws a sharp piece of the studio back at us. Both coloured by the shade's absorption.
+  const BACK = /* glsl */`
+    vec3 nW = inverseTransformDirection(normal, viewMatrix);         // facing the viewer, i.e. into the stone
+    vec3 dIn = normalize(vWPos - cameraPosition);
+    vec3 tOut = refract(dIn, nW, uIor);
+    vec3 refl = reflect(dIn, nW);
+    vec3 envR = textureCubeUV(envMap, envMapRotation * refl, 0.02).rgb * envMapIntensity;
+    vec3 col;
+    if (dot(tOut, tOut) < 1e-5) col = envR * 1.15;
+    else { float c = clamp(dot(-dIn, nW), 0.0, 1.0); float f0 = pow((uIor - 1.0) / (uIor + 1.0), 2.0); float Fs = f0 + (1.0 - f0) * pow(1.0 - c, 5.0);
+      vec2 uvE = projUV(vWPos + normalize(tOut) * 1.5); col = (1.0 - Fs) * texture(tBG, uvE).rgb + Fs * envR; }
+    totalDiffuse = col * exp(-uAbsorb * uAbsorbK * 2.0); totalSpecular = vec3(0.0);
+  `;
+  return patch(m, U, {
+    pars: 'uniform sampler2D tBG;' + REFRACT_PARS,
+    replace: { '#include <transmission_fragment>': back ? BACK : REFRACT_MAIN,
+      '#include <opaque_fragment>': 'gl_FragColor = vec4(neutralTone(max(outgoingLight, 0.0)), 1.0);' },
+  });
+}
+function matC(shadeHex, planes) {
+  const sh = new THREE.Color(shadeHex);
+  const ab = new THREE.Vector3(-Math.log(Math.max(sh.r, 0.03)), -Math.log(Math.max(sh.g, 0.03)), -Math.log(Math.max(sh.b, 0.03)));
+  const P = new Float32Array(32 * 4); planes.slice(0, 32).forEach((p, i) => P.set(p, i * 4));
+  const glow = new THREE.Vector3(sh.r, sh.g, sh.b).multiplyScalar(1.0 / Math.max(0.35, Math.pow(Math.max(sh.r, sh.g, sh.b), 0.5)));
+  const U = { tBG: { value: null }, uRes: { value: new THREE.Vector2() }, uIor: { value: 1.70 }, uPlanes: { value: P }, uNP: { value: Math.min(32, planes.length) },
+    uAbsorb: { value: ab }, uAbsorbK: { value: 0.45 }, uGlow: { value: glow }, uCore: { value: 1.5 }, uCoreR: { value: 0.32 } };
+  const m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.03, metalness: 0, ior: 1.70, specularIntensity: 1, transmission: 0,
+    clearcoat: 0.0, envMap: envTex, envMapIntensity: 1.0, side: THREE.FrontSide, flatShading: true });
+  m.userData.kind = 'C';
+  const MAIN = /* glsl */`
+    vec3 nW = inverseTransformDirection(normal, viewMatrix); vec3 vW = normalize(cameraPosition - vWPos);
+    mat3 Rm = mat3(normalize(modelMatrix[0].xyz), normalize(modelMatrix[1].xyz), normalize(modelMatrix[2].xyz)); float sc = length(modelMatrix[0].xyz);
+    vec3 rW = refract(-vW, nW, 1.0 / uIor); vec3 r = transpose(Rm) * rW; vec3 o = vObj;
+    // bounce 1: where the ray leaves the convex stone (nearest plane ahead)
+    float t1 = 1e3; vec3 n1 = vec3(0, 1, 0);
+    for (int i = 0; i < 32; i++) { if (float(i) >= uNP) break; vec4 p = uPlanes[i]; float dn = dot(r, p.xyz); if (dn <= 1e-4) continue;
+      float t = (p.w - dot(o, p.xyz)) / dn; if (t > 1e-4 && t < t1) { t1 = t; n1 = p.xyz; } }
+    vec3 p1 = o + r * t1; vec3 col = vec3(0.0);
+    vec3 outR = refract(r, -n1, uIor * 0.985), outG = refract(r, -n1, uIor), outB = refract(r, -n1, uIor * 1.03);
+    vec3 r2 = reflect(r, -n1);
+    float t2 = 1e3; vec3 n2 = vec3(0, 1, 0);
+    for (int i = 0; i < 32; i++) { if (float(i) >= uNP) break; vec4 p = uPlanes[i]; float dn = dot(r2, p.xyz); if (dn <= 1e-4) continue;
+      float t = (p.w - dot(p1, p.xyz)) / dn; if (t > 1e-4 && t < t2) { t2 = t; n2 = p.xyz; } }
+    vec3 out2 = refract(r2, -n2, uIor); if (dot(out2, out2) < 1e-5) out2 = reflect(r2, -n2);
+    vec3 bounce2 = textureCubeUV(envMap, envMapRotation * (Rm * normalize(out2)), 0.03).rgb * envMapIntensity * exp(-uAbsorb * uAbsorbK * (t1 + t2) * sc);
+    if (dot(outG, outG) < 1e-5) { col = bounce2; }
+    else {
+      float c = clamp(dot(r, n1), 0.0, 1.0); float f0 = pow((uIor - 1.0) / (uIor + 1.0), 2.0); float Fs = f0 + (1.0 - f0) * pow(1.0 - c, 5.0);
+      vec3 pw = vWPos + Rm * (p1 - o) * sc;
+      vec3 bg = vec3(texture(tBG, projUV(pw + Rm * normalize(outR) * 1.6)).r, texture(tBG, projUV(pw + Rm * normalize(outG) * 1.6)).g, texture(tBG, projUV(pw + Rm * normalize(outB) * 1.6)).b);
+      col = (1.0 - Fs) * bg * exp(-uAbsorb * uAbsorbK * t1 * sc) + Fs * bounce2; }
+    // luminous core: a soft emitter at the centre, integrated along the first segment of the ray
+    float tc = clamp(dot(-o, r), 0.0, t1); vec3 pc = o + r * tc; float d2 = dot(pc, pc) / (uCoreR * uCoreR * 1.44 * 1.44);
+    col += uGlow * uCore * exp(-d2 * 1.8) * min(1.0, t1 / 1.2);
+    vec3 Fr = EnvironmentBRDF(nW, vW, material.specularColor, material.specularF90, material.roughness);
+    totalDiffuse = (1.0 - Fr) * col;
+  `;
+  return patch(m, U, {
+    pars: 'uniform sampler2D tBG; uniform vec2 uRes; uniform float uIor, uNP, uAbsorbK, uCore, uCoreR; uniform vec4 uPlanes[32]; uniform vec3 uAbsorb, uGlow;\n' +
+      'vec2 projUV(vec3 w) { vec4 c = projectionMatrix * viewMatrix * vec4(w, 1.0); return c.xy / c.w * 0.5 + 0.5; }',
+    replace: { '#include <transmission_fragment>': MAIN, '#include <opaque_fragment>': 'gl_FragColor = vec4(neutralTone(max(outgoingLight, 0.0)), 1.0);' },
+  });
+}
+function matA(shadeHex) {
+  const sh = new THREE.Color(shadeHex);
+  const m = new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: 0.03, transmission: 1, ior: 1.62, thickness: 1.4, dispersion: 4,
+    attenuationColor: sh, attenuationDistance: 0.9, clearcoat: 1, clearcoatRoughness: 0.02, specularIntensity: 1, envMap: envTex, envMapIntensity: 1.0, flatShading: true });
+  m.userData.kind = 'A';
+  m.onBeforeCompile = (s) => { s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\n' + GLSL_NOISE)
+    .replace('#include <opaque_fragment>', 'gl_FragColor = vec4(neutralTone(max(outgoingLight, 0.0)), 1.0);'); };
+  m.customProgramCacheKey = () => 'A';
+  return m;
+}
+
+// ---------------------------------------------------------------- build the stones
+const stones = [];
+const coreMats = [];
+const smokeMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  uniforms: { uTime: { value: 0 }, uSeed: { value: 0 } },
+  vertexShader: 'out vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: /* glsl */`precision highp float; in vec2 vUv; uniform float uTime, uSeed; ${GLSL_NOISE}
+    void main() { vec2 p = vUv - vec2(0.5, 0.28); float fall = exp(-dot(p * vec2(2.2, 2.6), p * vec2(2.2, 2.6)) * 4.0);
+      float n = fbm3(vec3(vUv * vec2(2.0, 3.0) + vec2(0.0, uTime * 0.05), uSeed)) * fbm3(vec3(vUv * vec2(3.1, 2.2) - vec2(uTime * 0.04, 0.0), uSeed + 4.0));
+      gl_FragColor = vec4(vec3(1.0), fall * smoothstep(0.15, 0.6, n) * 0.10); }` });
+async function buildStones(onProgress) {
+  envTex = pmrem.fromEquirectangular(LOOK === 'D' ? equirect(512, 256, overcastFn) : equirect(1024, 512, studioFn)).texture;
+  const SL = slots();
+  for (let q = 0; q < IDX.length; q++) {
+    const j = IDX[q], [fam, shade, hex, block] = FAM[j], sl = SL[q];
+    const geo = LOOK === 'D' ? iceGeometry(101 + j * 17, j % 3) : gemGeometry(201 + j * 23);
+    const group = new THREE.Group(); scene.add(group);
+    const mesh = new THREE.Mesh(geo); group.add(mesh);
+    const st = { j, fam, shade, hex, block, group, mesh, geo, slot: sl, mats: {}, extra: [] };
+    if (LOOK === 'D') {
+      st.mats.A = matD(hex, true); st.mats.B = matD(hex, false); mesh.material = st.mats.B;
+      const sz = geo.userData.size; const core = new THREE.Mesh(blockGeometry(block, sz.x * 0.72, sz.y * 0.72));
+      const cc = new THREE.Color('#b4b8c2').lerp(new THREE.Color(hex), 0.2); core.material = new THREE.MeshBasicMaterial({ color: cc });
+      core.renderOrder = 10; group.add(core); st.core = core; st.coreFace = true;
+      const smoke = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 3.5), smokeMat.clone()); smoke.material.uniforms.uSeed.value = j * 3.1; smoke.position.set(0, -0.35, 0.2); smoke.renderOrder = 20;
+      group.add(smoke); st.smoke = smoke;
+    } else if (LOOK === 'B') { st.mats.A = matB(hex, true); st.mats.B = matB(hex, false); mesh.material = st.mats.B; }
+    else if (LOOK === 'C') { st.mats.B = matC(hex, geo.userData.planes); mesh.material = st.mats.B; }
+    else { mesh.material = matA(hex);
+      const core = new THREE.Mesh(coreGeometry(j + 5, 0.26), new THREE.MeshBasicMaterial({ color: new THREE.Color(hex).multiplyScalar(1.8) })); group.add(core); st.core = core; }
+    // rest pose and float: igloo's measured wobble, 0.1 rad on each axis about the centre, 0.3 rad/s (each stone within +-10 %)
+    const r = rng(500 + j * 11);
+    st.rest = new THREE.Quaternion().setFromEuler(new THREE.Euler((r() - 0.5) * 0.7, r() * Math.PI * 2, (r() - 0.5) * 0.6));
+    st.s = r(); st.sig = st.s >= 0.5 ? 1 : -1; st.w = 0.3 * (1 + 0.1 * (2 * r() - 1));
+    // place: view position for (u, v) at the depth that makes the longest side s css px
+    const d = LONG * fpx / sl.s, th = Math.tan(THREE.MathUtils.degToRad(15));
+    st.base = new V3((2 * sl.u - 1) * d * th * ASP / camera.zoom, (1 - 2 * sl.v) * d * th / camera.zoom, -d);
+    if (st.coreFace) st.core.quaternion.copy(st.rest.clone().invert());
+    stones.push(st);
+    if (onProgress) onProgress(q + 1, IDX.length);
+    await new Promise((res) => setTimeout(res, 0));
+  }
+}
+const KW = [42.987, 12.423, 2.53];
+const NOISE_W = [0.1234, 0.4221, -0.1375, -0.04566, -0.1450, -0.2123];
+const BY = [1.123, 0.816, 4.134, 0.646, 2.856, 3.490], BP = [3.106, 1.580, 0.048, 6.167, 3.416, 5.394], BR = [2.470, 0.762, 5.662, 3.994, 4.968, 5.251];
+const n6 = (t, b) => { let s = 0; for (let i = 0; i < 6; i++) s += Math.sin(NOISE_W[i] * t + b[i]); return s / 6; };
+function pose(t) {
+  const a = REDUCE ? 0 : 0.1, sh = REDUCE ? 0 : 0.0129;
+  camera.position.set(0, 0, 0); camera.up.set(0, 1, 0);
+  const yaw = sh * n6(t, BY), pitch = sh * n6(t, BP), roll = sh * n6(t, BR);
+  camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, roll, 'YXZ')); camera.updateMatrixWorld();
+  for (const st of stones) {
+    const e = new THREE.Euler(a * st.sig * Math.sin(st.w * t + KW[0] * st.s), a * st.sig * Math.sin(st.w * t + KW[1] * st.s), a * st.sig * Math.sin(st.w * t + KW[2] * st.s));
+    st.group.quaternion.copy(new THREE.Quaternion().setFromEuler(e).multiply(st.rest));
+    st.group.position.copy(st.base); st.group.updateMatrixWorld(true);
+    if (st.smoke) st.smoke.quaternion.copy(st.group.quaternion.clone().invert().multiply(camera.quaternion));
+  }
+}
+
+// ---------------------------------------------------------------- labels (DOM, Open Sans 600, Urban Slate on a lifted fog plate)
+const labLayer = document.getElementById('labels'), svg = document.getElementById('leaders');
+const labEls = [];
+function buildLabels() {
+  for (const st of stones) { const el = document.createElement('div'); el.className = 'lab'; el.textContent = st.fam; labLayer.appendChild(el);
+    const pl = document.createElementNS('http://www.w3.org/2000/svg', 'polyline'); pl.setAttribute('fill', 'none'); pl.setAttribute('stroke', '#383F43'); pl.setAttribute('stroke-width', '1');
+    svg.appendChild(pl); labEls.push({ el, pl, w: 0 }); }
+}
+function placeLabels() {
+  if (MODE === 'close') { bgUniforms.uLabN.value = 0; return; }
+  const v = new V3(), px = (p) => { v.copy(p).project(camera); return [(v.x * 0.5 + 0.5) * cssW, (0.5 - v.y * 0.5) * cssH]; };
+  const L = bgUniforms.uLab.value; const k = DPR;
+  const boxes = stones.map((st) => { const bb = st.geo.boundingBox, r = [1e9, 1e9, -1e9, -1e9];
+    for (let c = 0; c < 8; c++) { const p = new V3(c & 1 ? bb.max.x : bb.min.x, c & 2 ? bb.max.y : bb.min.y, c & 4 ? bb.max.z : bb.min.z).applyMatrix4(st.mesh.matrixWorld);
+      const [x, y] = px(p); r[0] = Math.min(r[0], x); r[1] = Math.min(r[1], y); r[2] = Math.max(r[2], x); r[3] = Math.max(r[3], y); }
+    const sh = 0.12 * (r[2] - r[0]), sv = 0.12 * (r[3] - r[1]); return [r[0] + sh, r[1] + sv, r[2] - sh, r[3] - sv]; });   // bbox corners overshoot the hull
+  const hit = (a, b) => a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1]; const placed = [];
+  const place = (st, i, side) => {
+    const S = st.slot.s;
+    const sx = side.includes('l') ? -1 : 1, sy = side.includes('u') ? 1 : side.includes('d') ? -1 : 0;
+    // leader starts on the stone's edge (its projected centre follows the float), igloo's two segments scaled to our stone size;
+    // on the phone it runs straight out at the stone's own height
+    const [cx, cy] = px(st.group.position);
+    const x0 = cx + sx * (sy ? 0.30 : 0.40) * S, y0 = cy - sy * 0.30 * S;
+    const a = sy ? 0.16 * S : 0.0, b = sy ? 0.22 * S : 0.30 * S;
+    const x1 = x0 + sx * a, y1 = y0 - sy * a, x2 = x1 + sx * b, y2 = y1;
+    const fs = PHONE ? 12 : 13; const w = labEls[i].el.getBoundingClientRect().width;
+    const tx = sx > 0 ? x2 + (sy ? 0 : 6) : x2 - w - (sy ? 0 : 6), ty = sy > 0 ? y2 - 0.85 * fs - fs * 0.78 : sy < 0 ? y2 + 0.45 * fs : y2 - 0.62 * fs;
+    const rect = [tx - 4, ty - 4, tx + w + 4, ty + fs + 4];
+    const bad = rect[0] < 16 || rect[2] > cssW - 16 || boxes.some((b, q) => q !== i && hit(rect, b)) || placed.some((b) => hit(rect, b));
+    return { x0, y0, x1, y1, x2, y2, tx, ty, w, fs, bad, rect };
+  };
+  const flip = (sd) => sd.includes('r') ? sd.replace('r', 'l') : sd.replace('l', 'r');
+  stones.forEach((st, i) => {
+    const sd0 = st.slot.side, vflip = (sd) => sd.includes('u') ? sd.replace('u', 'd') : sd.replace('d', 'u');
+    let P = place(st, i, sd0);
+    for (const sd of [flip(sd0), vflip(sd0), flip(vflip(sd0))]) { if (!P.bad) break; const Q2 = place(st, i, sd); if (!Q2.bad) P = Q2; }
+    const { x0, y0, x1, y1, x2, y2, tx, ty, w, fs } = P; placed.push(P.rect);
+    const e = labEls[i]; e.pl.setAttribute('points', `${x0.toFixed(1)},${y0.toFixed(1)} ${x1.toFixed(1)},${y1.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`);
+    e.el.style.transform = `translate3d(${tx.toFixed(2)}px, ${ty.toFixed(2)}px, 0)`;
+    const pad = 4; L.set([(tx - pad) * k, (ty - pad) * k, (tx + w + pad) * k, (ty + fs + pad) * k], i * 4);
+  });
+  bgUniforms.uLabN.value = stones.length; bgUniforms.uLabFeather.value = 12 * k;
+}
+
+// ---------------------------------------------------------------- frame
+let frameNo = 0;
+function setRes(U) { if (U && U.uRes) U.uRes.value.set(W(), H()); if (U && U.uFrame) U.uFrame.value = frameNo % 64; }
+function render(t) {
+  pose(t); placeLabels();
+  bgUniforms.uRes.value.set(W(), H()); bgUniforms.uTime.value = t; bgUniforms.uFrame.value = frameNo % 4096; bgLayout(t);
+  for (const st of stones) { setRes(st.mats.A && st.mats.A.userData.U); setRes(st.mats.B && st.mats.B.userData.U); if (st.smoke) st.smoke.material.uniforms.uTime.value = t; }
+  renderer.setClearColor(0x000000, 0);
+  if (LOOK === 'D') {
+    // pass A: pre-grade fog, the frozen blocks, every stone's back faces lit by a flat backdrop (igloo's measured pass A)
+    bgUniforms.uPre.value = 1; for (const st of stones) { st.mesh.material = st.mats.A; st.core.visible = true; st.smoke.visible = false; }
+    renderer.setRenderTarget(rtA); renderer.render(scene, camera);
+    // pass B: final fog, front faces refracting pass A, blocks hidden (seen only through the ice), graded, smoke over
+    bgUniforms.uPre.value = 0; for (const st of stones) { st.mesh.material = st.mats.B; st.mats.B.userData.U.tTrans.value = rtA.texture; st.core.visible = false; st.smoke.visible = true; }
+    renderer.setRenderTarget(rtMain); renderer.render(scene, camera);
+  } else if (LOOK === 'B') {
+    bgUniforms.uPre.value = 0; for (const st of stones) st.group.visible = false;
+    renderer.setRenderTarget(rtBG); renderer.render(scene, camera);
+    for (const st of stones) { st.group.visible = true; st.mesh.material = st.mats.A; st.mats.A.userData.U.tBG.value = rtBG.texture; }
+    renderer.setRenderTarget(rtA); renderer.render(scene, camera);
+    for (const st of stones) { st.mesh.material = st.mats.B; st.mats.B.userData.U.tTrans.value = rtA.texture; }
+    renderer.setRenderTarget(rtMain); renderer.render(scene, camera);
+  } else if (LOOK === 'C') {
+    bgUniforms.uPre.value = 0; for (const st of stones) st.group.visible = false;
+    renderer.setRenderTarget(rtBG); renderer.render(scene, camera);
+    for (const st of stones) { st.group.visible = true; st.mats.B.userData.U.tBG.value = rtBG.texture; }
+    renderer.setRenderTarget(rtMain); renderer.render(scene, camera);
+  } else {
+    bgUniforms.uPre.value = 0; renderer.setRenderTarget(rtMain); renderer.render(scene, camera);
+  }
+  runBloomAndComposite();
+  frameNo++;
+}
+
+// ---------------------------------------------------------------- boot
+const info = { look: LOOK, mode: MODE, w: 0, h: 0, stones: [] };
+(async () => {
+  await document.fonts.load('600 13px "Open Sans"').catch(() => 0);
+  const t0 = performance.now();
+  await buildStones();
+  info.buildMs = Math.round(performance.now() - t0);
+  info.w = W(); info.h = H();
+  info.stones = stones.map((s) => ({ shade: s.shade, tris: s.geo.index ? s.geo.index.count / 3 : s.geo.attributes.position.count / 3, facets: s.geo.userData.facets, stats: s.geo.userData.stats }));
+  makeTargets(); buildLabels();
+  window.__renderAt = (t) => { render(t); return true; };
+  window.__bench = (n = 5, t = T_START) => { const px = new Uint8Array(4), ms = [];
+    for (let i = 0; i < n; i++) { const a = performance.now(); render(t + i / 60); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); ms.push(performance.now() - a); }
+    ms.sort((x, y) => x - y); return { median: +ms[Math.floor(n / 2)].toFixed(1), min: +ms[0].toFixed(1), max: +ms[n - 1].toFixed(1), all: ms.map((x) => +x.toFixed(1)) }; };
+  // where each stone lands on screen (for crops): centre and longest side, css px
+  window.__slots = () => stones.map((s) => ({ shade: s.shade, fam: s.fam, u: s.slot.u, v: s.slot.v, s: s.slot.s }));
+  window.__info = info;
+  render(T_START);
+  window.__ready = true;
+  if (!CAPTURE) { const s0 = performance.now(); const loop = () => { render(REDUCE ? T_START : T_START + (performance.now() - s0) / 1000); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
+})().catch((e) => { window.__error = String(e && e.stack || e); console.error(e); });
+</script>
+</body>
+</html>
