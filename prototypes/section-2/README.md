@@ -1,9 +1,9 @@
 # Section 2 prototype: the gem field (2026-10-10)
 
-Live: https://claude.ai/artifact/ArbU2rDdfmjuFMBVbmAWfn (round 1). Spec: `docs/specs/section-2.md`.
+Live: https://claude.ai/artifact/ArbU2rDdfmjuFMBVbmAWfn (version 2). In the scroll sequence: the hero link, v11 (`prototypes/hero-v9`). Spec: `docs/specs/section-2.md`.
 
 The ten gems in the **Gem C** look Sam picked (`gem-looks.html` is the four-look comparison, live at https://claude.ai/artifact/DfDgwjkrx5TQ4krsyW1NSB), standing still in their final slots, with:
-- **igloo's labels** (Sam: "add the same text and font"): three per gem in IBM Plex Mono Medium, uppercase, Pearl Whisper. `FAMILY_nn` over the family on every gem; on the active gem (pointer or keyboard focus) the key shade with its catalog number and hex, and `24 SHADES` over `CLICK TO EXPLORE`. igloo's reveal: leader 0.2 s, alpha wipe 0.4 s, glyph roll 0.75 s; hide 0.2 s.
+- **igloo's labels** (Sam: "add the same text and font"; wording revised by Sam the same day): IBM Plex Mono Medium, uppercase, Pearl Whisper. The family's name in the singular on every gem (FROSTY WHITE ... BASIC BROWN ... ROARING RED); on the active gem (pointer or keyboard focus) `24 SHADES` over `CLICK TO EXPLORE`. igloo's reveal: leader 0.2 s, alpha wipe 0.4 s, glyph roll 0.75 s; hide 0.2 s. igloo's contrast on the fog, approved by Sam.
 - **igloo's plexus** on the active gem.
 - **igloo's hover**: a frost buffer per gem stepped at 60 Hz (flow advect, 4-neighbour dilation, capsule splat sized by pointer speed, decay 0.985), drawn as a rim in igloo's #83a1c5 plus our own triangle lattice, so the crackle, the spreading rings and the triangle web follow the pointer and fade within about 4 s. Pointer parallax turns each gem in place.
 - **Links**: each gem is a real link (`#/shades/<family>/` here; `/shades/<family>/` on the site), keyboard reachable with an Ember focus ring.
@@ -14,4 +14,4 @@ Build: `assemble.py <dir>` patches `gem-looks.html` (Gem C only, labels, hover, 
 
 Checked (SwiftShader, strict CSP): no console errors; IBM Plex Mono loaded; label reveal frames; hover and decay at 1280; phone layout at 390 (zig-zag, labels on the inner side). Shots: `shot-1280.png`, `shot-390.png`, `shot-hover-1280.png`, `shot-reveal-1280.png`.
 
-Open for Sam: label contrast (igloo's white on the fog is about 2.5:1, below AA; dark plates behind the labels pass AA but read as grey boxes) and the label content mapping.
+Decided by Sam: igloo's contrast stays; the singular names. Open: whether the singular names replace the catalog's family names everywhere.

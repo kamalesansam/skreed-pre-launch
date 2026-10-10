@@ -30,9 +30,9 @@ Same scroll map. The logo rides up to v 0.26 at 0.313 H. Two rows of five in rea
 
 ## 3. Content
 - Copy: none. The only strings are igloo's three labels per gem, carrying our facts (uppercase, as igloo):
-  - Title (always shown): `FAMILY_01` over `FROSTY WHITES`, and so on to `FAMILY_10` over `ROARING REDS` (igloo: `PORTFOLIO_CO_01` over `PUDGY PENGUINS`). Family names spelled as in `docs/data/shades-240.json`.
-  - Shade (igloo's "temp" slot): the key shade's name and catalog number over its hex, e.g. `SNOW 007` over `#F0F4F5` (igloo: `TEMP 32.00` over `+00.00`). Real data, no drift.
-  - Call to action (igloo's date slot): `24 SHADES` over `CLICK TO EXPLORE` (`TAP TO EXPLORE` on touch) (igloo: `D 01.02.2020` over `CLICK TO EXPLORE`).
+  - Title (always shown): the family's name in the singular, uppercase (Sam, 2026-10-10: "not reds, it's red"; Earthy Browns is Basic Brown): `FROSTY WHITE`, `BLISSFUL BLUE`, `PLAYFUL PINK`, `VIVID VIOLET`, `MELLOW YELLOW`, `BASIC BROWN`, `BLUSHING CORAL`, `STORMY GREY`, `GO GREEN`, `ROARING RED`. No `FAMILY_nn` line.
+  - (Removed by Sam, 2026-10-10: no shade name, number or hex on hover.)
+  - Call to action (igloo's date slot), on the active gem only: `24 SHADES` over `CLICK TO EXPLORE` (`TAP TO EXPLORE` on touch) (igloo: `D 01.02.2020` over `CLICK TO EXPLORE`).
 - Accessible names (not visible): each link reads "<Family>, 24 shades", e.g. "Blissful Blues, 24 shades". The section's landmark is labelled "Colour families".
 - Gems, slot j = catalog order, each in its family's key shade (the hero block's colour):
 
@@ -64,8 +64,8 @@ Same scroll map. The logo rides up to v 0.26 at 0.313 H. Two rows of five in rea
 ## 5. Motion plan
 Everything lives in the hero's one WebGL island (CLAUDE.md "Always do", E-C3). No GSAP; the hero loads none (E-GSAP). Reduced motion through `matchMedia` and CSS.
 
-- **Scroll map (screens of 100svh, S is the lagged scroll):** PULL 0 to 1.5 (unchanged), WIPE 1 1.5 to 2.5 (unchanged), CASCADE 2.0 to 6.1, RE-FRAME 6.1 to 6.8 (q = inOut3), REST 6.8 to 7.1, WIPE 2 7.1 to 8.1. Track 910svh (was 460svh).
-- **Per block j:** lift-off at S = 2.0 + 0.4 j, landing at 2.5 + 0.4 j. K = (S - 2.0) / 0.4, L_j = clamp((K - j) / 1.25, 0, 1), e = inOut3(L) with inOut3 = cubic-bezier(0.6, 0, 0, 1). Path from its logo position to its slot with an outward bow of 0.10 x distance x sin(pi e); swell to 1.12x at mid-flight; rotation slerps from the logo pose to the settle pose plus a tumble of 4e(1 - e) x 0.5 x (2.5, 3.0, 1.2) rad with seeded signs. The next block lifts off at L 0.8 of the current one, so at most one block is visibly travelling.
+- **Scroll map (screens of 100svh, S is the lagged scroll; Sam, 2026-10-10: a longer scene move, nothing flies up, a long slow flight):** PULL 0 to 2.6, the camera backing away along a level S-curve round the logo (heights within a metre, over the ground's measured heights; points in degrees, distance, height: (0, 24, -2.5), (-9, 26.5, -2.15), (5, 29, -1.95), (24, 32, -1.85), (35, 34, -1.8), then on past the pull-back, where only the logo is seen, (44, 38, -1.7), (40, 44, -1.5), (28, 50, -1.3), (15, 56, -1.1)). WIPE 1 2.6 to 3.6: igloo's cut, the hero layer held still (no slide) and the logo kept over section 2 through a mask, behind anything section 2 draws in front of it. CASCADE from 3.1: block j lifts off at 3.1 + 0.8 j and lands 1.8 screens later; the last lands at 12.1. REST 12.1 to 12.8. WIPE 2 12.8 to 13.8 into the Wall. Track 1580svh. Built in v11 (`prototypes/hero-v9/`, live on the hero link).
+- **Per block j:** L_j = clamp((S - 3.1 - 0.8 j) / 1.8, 0, 1), e = cubic-bezier(0.42, 0, 0.12, 1) of L (a slow lift, a long glide, a long settle). The block's copy (its own triangles, matte black) starts at the block's exact view-space pose in the receding logo and follows a cubic curve that lifts and swings out to one side (0.38 of the distance), then comes in from above and in front to its slot; it tumbles mid-flight and its edges warm to its shade, folds into a point (L 0.42 to 0.62) as the gem grows out of it (0.50 to 0.78) and its core lights (0.5 to 0.85); the gem eases into its resting pose and igloo's float fades in over the last 15 percent.
 - **Followers and speed limit:** igloo's two followers (0.075 then 0.15 per frame) with a cap of 0.075 screens per frame on the first; K moves at most 3 blocks per second.
 - **Holds:** re-frame and wipe 2 read min(S, 6.1) until every block has landed (K = 10.25); wipe 1 reads max(S, 2.0) until the logo is whole again (K = 0).
 - **Auto-settle (igloo's 1.4 s rule):** wheel and keys only, never on touch or under reduced motion. In the cascade it goes to the nearest K in {0..9, 10.25}; duration clamp(6 |dS|, 1.6, 2.4) s, inOut3.
@@ -120,7 +120,7 @@ Everything lives in the hero's one WebGL island (CLAUDE.md "Always do", E-C3). N
 - E-A2 / E-A2b extend to the fog ramp (#edeff4 to #232936) as a background-only render ramp and the frost rim colour as a render light.
 - E-24: the ten key shades appear together in the gem field, in catalog order, as product (the gems are the shades), never as chrome.
 - E-S2-font (Sam, 2026-10-10, "add the same text and font"): IBM Plex Mono Medium for the section 2 labels only, uppercase, numerals included (rules 4 and 19, CHECKLIST A3). A fifth self-hosted WOFF2, subset to A to Z, 0 to 9, `_ # /` and space.
-- Pending: E-S2-contrast, the labels at igloo's contrast (about 2.5:1 on the fog, below AA; CHECKLIST E3). The links carry the same names for assistive technology.
+- E-S2-contrast (approved, Sam, 2026-10-10: "dont change anything, this is perfect"): the labels at igloo's contrast, about 2.5:1 on the fog (CHECKLIST E3). The links carry the same names for assistive technology.
 
 ## 11. Out of scope
 - The Wall (section 3) and wipe 2's far side beyond the existing placeholder.
@@ -130,8 +130,8 @@ Everything lives in the hero's one WebGL island (CLAUDE.md "Always do", E-C3). N
 - Real-device traces (recorded as pending, as for the hero).
 
 ## 12. Open for Sam
-1. Pace: keep 0.4 screens per gem, or slower?
+1. Pace: decided (Sam, 2026-10-10): slower; built at 0.8 screens between lift-offs and 1.8 screens per flight.
 2. Per-gem float speed varied by up to 10 percent (default yes).
-3. Label contrast: igloo's white straight on the fog (built; below AA), or a darkened plate behind each label (passes AA; tested, reads as grey boxes).
-5. Label content: the mapping in section 3 (FAMILY_nn, the key shade with its number and hex, 24 SHADES over CLICK TO EXPLORE).
+3. Label contrast: decided, igloo's look (approved).
+5. Label content: decided, the singular family name; the call to action on hover. Pending: whether the singular names (and Basic Brown) replace the catalog family names everywhere, in `docs/data/shades-240.json` and the family page URLs.
 4. Reduced motion: this fade-based 3D tier, or the poster (hero.md section 11).

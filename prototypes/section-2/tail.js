@@ -1,13 +1,13 @@
 // test clock: ?vclock runs every timer on a virtual clock advanced by window.__tick(ms) (frame-exact captures)
 const VCLOCK = Q.has('vclock'); let vNow = 0; const nowMs = () => (VCLOCK ? vNow : performance.now()); window.__tick = (ms) => { vNow += ms; return vNow; };
 // ---------------------------------------------------------------- labels: igloo's three labels per stone, igloo's face and reveal
-// Sam, 2026-10-10: igloo's text and font. igloo's three slots carry our facts: the title FAMILY_nn over the family, the
-// "temp" slot the key shade's name, catalog number and hex, the date slot the shade count over the call to action.
+// Sam, 2026-10-10: igloo's text and font. Each gem carries its family's name in the singular (Sam: "not reds, it's red";
+// Earthy Browns is Basic Brown); the active gem adds igloo's date slot as the shade count over the call to action.
 // IBM Plex Mono Medium (SIL OFL), uppercase, Pearl Whisper. Reveal measured on igloo: leader 0.2 s, left-to-right alpha
 // wipe 0.4 s, glyph roll 0.75 s (each letter counts down through the five glyphs after it in its 8-glyph block); hide
 // 0.2 s, leader retracting horizontal segment first, alpha wiping right to left.
 const FAM_ID = ['frosty-whites', 'blissful-blues', 'playful-pinks', 'vivid-violets', 'mellow-yellows', 'earthy-browns', 'blushing-corals', 'stormy-greys', 'go-green', 'roaring-reds'];
-const KEYNO = [7, 32, 62, 79, 97, 127, 148, 173, 204, 223];
+const NAME = ['Frosty White', 'Blissful Blue', 'Playful Pink', 'Vivid Violet', 'Mellow Yellow', 'Basic Brown', 'Blushing Coral', 'Stormy Grey', 'Go Green', 'Roaring Red'];
 const LAB_PX = PHONE ? 12 : 13;
 // igloo draws its white labels straight on the fog (about 2.5:1); darkened plates read as grey boxes, so they are off (Sam to sign off the contrast)
 const PLATES = false;
@@ -71,7 +71,8 @@ function labelGeo(st, L, side) {
   const s = side === 'l' ? -1 : 1, A = projA(st, s > 0 ? 'cta' : 'ctaL'), len = w + 0.3 * em, P2 = [A[0] + s * len, A[1]];
   return { pts: [A, [(A[0] + P2[0]) / 2, A[1]], P2], x: s > 0 ? P2[0] - w : P2[0], y: A[1] - 0.25 * em - h, right: s > 0 };
 }
-const rectOf = (g, L) => [g.x - 4, g.y - 4, g.x + L.w + 4, g.y + L.h + 4];
+// collision boxes keep about two characters of air round each label, so two names never read as one line
+const rectOf = (g, L) => [g.x - 1.2 * LAB_PX, g.y - 6, g.x + L.w + 1.2 * LAB_PX, g.y + L.h + 6];
 const overlap = (a, b) => Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0])) * Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
 function gemBox(st) {
   const bb = st.geo.boundingBox, r = [1e9, 1e9, -1e9, -1e9];
@@ -114,9 +115,8 @@ function drawLeader(L, g) {
 }
 function buildLabels() {
   for (const st of stones) {
-    const j = st.j, sh = st.shade.toUpperCase(), hx = st.hex.toUpperCase();
-    st.labs = { title: makeLabel([`FAMILY_${pad(j + 1, 2)}`, st.fam.toUpperCase()], 'title'),
-      temp: makeLabel([`${sh} ${pad(KEYNO[j], 3)}`, hx], 'temp'),
+    const j = st.j;
+    st.labs = { title: makeLabel([NAME[j].toUpperCase()], 'title'),
       cta: makeLabel(['24 SHADES', PHONE ? 'TAP TO EXPLORE' : 'CLICK TO EXPLORE'], 'cta') };
     for (const L of Object.values(st.labs)) { const r = L.el.getBoundingClientRect(); L.w = r.width; L.h = r.height; }
     const p = []; st.geo.attributes.position.array.forEach((v, i, a) => { if (i % 3 === 0) p.push(new V3(a[i], a[i + 1], a[i + 2]).applyQuaternion(st.rest)); });
@@ -143,7 +143,7 @@ function updateLabels(now) {
 // ---------------------------------------------------------------- links (one real link per stone, over its projected box)
 function buildLinks() {
   stones.forEach((st, j) => {
-    const a = document.createElement('a'); a.className = 'gem-link'; a.href = `#/shades/${FAM_ID[st.j]}/`; a.setAttribute('aria-label', `${st.fam}, 24 shades`);
+    const a = document.createElement('a'); a.className = 'gem-link'; a.href = `#/shades/${FAM_ID[st.j]}/`; a.setAttribute('aria-label', `${NAME[st.j]}, 24 shades`);
     a.addEventListener('focus', () => { if (a.matches(':focus-visible')) setActive(j, 'focus'); });
     a.addEventListener('blur', () => { if (activeBy === 'focus') setActive(-1, ''); });
     linkLayer.appendChild(a); st.link = a;
@@ -154,17 +154,17 @@ function placeLinks() {
     st.link.style.width = `${w.toFixed(1)}px`; st.link.style.height = `${h.toFixed(1)}px`; st.link.style.transform = `translate3d(${(cx - w / 2).toFixed(1)}px, ${(cy - h / 2).toFixed(1)}px, 0)`; }
 }
 
-// ---------------------------------------------------------------- the active stone: igloo shows the date and temp labels and the plexus
+// ---------------------------------------------------------------- the active stone: igloo shows its date label and the plexus
 // on the stone in the centre band; with ten stones on one screen, the stone under the pointer (or with keyboard focus) is that stone
 let active = -1, activeBy = '';
 function setActive(j, by) {
   if (j === active) { activeBy = by; return; }
   const now = nowMs();
-  if (active >= 0) { const st = stones[active]; setOn(st.labs.temp, false, now); setOn(st.labs.cta, false, now); plexusOff(st, now); }
+  if (active >= 0) { const st = stones[active]; setOn(st.labs.cta, false, now); plexusOff(st, now); }
   active = j; activeBy = by;
   if (j >= 0) { const st = stones[j];
-    st.labs.temp.side = sideFor(st, st.labs.temp); st.labs.cta.side = sideFor(st, st.labs.cta);
-    setOn(st.labs.temp, true, now); setOn(st.labs.cta, true, now); if (!PHONE && !REDUCE) plexusOn(st, now); }
+    st.labs.cta.side = sideFor(st, st.labs.cta);
+    setOn(st.labs.cta, true, now); if (!PHONE && !REDUCE) plexusOn(st, now); }
 }
 
 // ---------------------------------------------------------------- plexus (igloo's: 18 points on a cylinder round the stone, links to up to 3

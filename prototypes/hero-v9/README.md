@@ -1,6 +1,6 @@
 # Hero prototype v9 (2026-10-08)
 
-Live: https://claude.ai/artifact/QDXUhF32ZLd7L9a5ccDnq8 (version 28, v10). Builds on v8.2 (`../hero-v8`).
+Live: https://claude.ai/artifact/QDXUhF32ZLd7L9a5ccDnq8 (version 29, v11). Builds on v8.2 (`../hero-v8`).
 
 ## The floor, re-created from igloo.inc's snow
 Sam asked for the floor to look exactly like igloo's. Three Blender variants were built from the hero camera and judged against four igloo screenshots by three reviews (surface, shape, tone): variant a won on composition (flank knolls, open centre, foreground mounds), with b's tone and stone scatter and c's measurement harness grafted on. The integrated floor (`blender/floor_final.py`, post curve `blender/floor_final_post.py`, LUT `blender/floor_lut.json`, checks `blender/floor_judge.py` and `blender/verify_bake.py`) adds:
@@ -27,6 +27,16 @@ Sam asked for the hero copy to go: no headline, no sub-line, no button, plain an
 - **Tune: Reset to defaults** restores every slider, toggle and the block colour order.
 - **From the review (three lenses, each finding verified):** days are padded to two digits and the numeral carries the 2ch reservation, so the row never jumps; ticks are aligned to the wall-clock second; the numerals stay hidden until the first tick and a `<noscript>` line gives the date; at zero the countdown stops and the eyebrow reads "Skreed is live. skreed.com"; the seconds group is hidden under reduced motion; the eyebrow and labels are Open Sans 600 at 14 px; spacing uses the `--s` tokens; below 1100 px the countdown lifts so the cue has its own row.
 - Not changed on purpose: there is no call to action on the fold. Sam chose the plain countdown; the reserve flow lives in the later sections.
+
+## v11: the scene move and section 2, the gems (2026-10-10, artifact version 29)
+The hero, the intro and section 2 in one page. Spec: `docs/specs/section-2.md`.
+- **The scene move (Sam: "extend it more, it shouldn't fly up, it should horizontally move backwards in a curvy path"):** the pull-back is 2.6 screens (was 1.5) and the camera no longer cranes up: it backs away along a level S-curve round the logo, a little left, then round to the right, within a metre of height, kept over the ground's measured heights (the bake's ground stops 30 units in front of the logo, so the curve gains its distance sideways).
+- **The hand-off:** igloo's wipe brings in the section 2 fog; the hero layer no longer slides up and the logo is never cut. It stays over the fog through a mask (behind anything section 2 draws in front of it) and keeps receding with the camera.
+- **The flights (Sam: "it should travel for a while, and it should be slow"):** from mid-wipe a block leaves the logo every 0.8 screens and lands 1.8 screens later, the last at 12.1 screens. Each copy starts at the block's exact place in the logo, lifts and swings out on a long curve, tumbles, warms to its shade at the edges, folds into a point of light as its gem grows, and comes in from above and in front with a long, slow settle. Its title draws as it lands. Then a short rest, and the second wipe to the Wall. Track 1580svh.
+- **Section 2** is the approved gem page (`prototypes/section-2`) in its own scope and its own render targets: Gem C, igloo's labels (singular names, IBM Plex Mono), plexus and frost hover, links.
+- **Build:** `s2/build_chunk.py` builds the section 2 module from the gem page; `s2/patch_v11.py` wires it into `template_v10.html` (the approved v10) as `template.html`; `SHIP=1 python build_v11.py <bake dir> template.html index.html`. Module 43.6 KB gzipped (v10: 25.9 KB); section 2 adds 17.7 KB, over the spec's 7 KB line (the frost, lattice and plexus are most of it): to trim.
+- **Checked:** the sequence at 13 scroll points at 1280 and 7 at 390 under the strict CSP (`shot-v11-sequence-1280.png`, `-390.png`), no console errors; the ship build: hooks stripped, locked values present, only jsdelivr, Google Fonts and the SVG namespace, no fetch, eval or WebAssembly, every script parses, the loader lifts on its own.
+- **Not yet:** an independent review (no agents in use, at Sam's request), the poster and reduced-motion tiers of section 2, real-device traces, and the frame cost while both the hero and section 2 render during the flights.
 
 ## v10: the intro, after igloo's (2026-10-09, artifact version 28)
 The loader lifts straight into an intro re-created from a frame-by-frame study of igloo.inc's opening. All code and data are ours; no igloo code, models, textures or strings ship. Spec, timeline, page plan, budget and risks: `docs/specs/hero-intro/`.
