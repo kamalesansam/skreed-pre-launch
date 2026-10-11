@@ -10,7 +10,7 @@
   var ids = ['frosty-whites', 'blissful-blues', 'playful-pinks', 'vivid-violets', 'mellow-yellows', 'earthy-browns', 'blushing-corals', 'stormy-greys', 'go-green', 'roaring-reds'];
   var h = decodeURIComponent(location.hash.replace(/^#/, '')), m = h.match(/^\/?(?:shades\/)?([a-z-]+)/), fi = m ? ids.indexOf(m[1]) : (h ? -1 : 1);
   r.setAttribute('data-route', h === '/' || (h && fi < 0) ? 'index' : 'family');
-  r.setAttribute('data-neutral', fi >= 0 && fi % 2 === 0 ? 'slate' : 'pearl');
+  r.setAttribute('data-neutral', 'night');
   var c = navigator.connection || {}, why = '';
   if (!('WebGL2RenderingContext' in window)) why = 'webgl';
   else if (c.saveData) why = 'saveData';
@@ -27,15 +27,21 @@
 </script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"}}</script>
 <style>
-/* Layout: one family per page. A full-bleed stage holds the 24-case lineup; the HUD sits centred under the
-   front case; chrome is the page neutral and its ink only, Ember Luxe for Reserve and focus. */
+/* Layout: one family per page, after ciao's opening carousel (Sam, 2026-10-11: "check out exactly how the background
+   is, how the lighting is in the ciao energy site, and just replace the 3d can with the 3d phone case"). The stage fills
+   the first screen over ciao's studio backdrop (a fixed grey-to-night ramp and a fade over the bottom of the first
+   screen, measured from ciao's stylesheet); the HUD sits over it as ciao's does: the arrows either side of the front
+   case, the name under it, the scrubber under the name. Chrome is Pearl Whisper on the night, Ember Luxe for Reserve
+   and focus. Exception E-F1 (family-page.md 19). */
 :root {
   --pearl-whisper: #F7F6F3;
   --urban-slate: #383F43;
   --ember-luxe: #FF9900;
-  --bg: var(--pearl-whisper);
-  --fg: var(--urban-slate);
-  --skeleton: color-mix(in srgb, var(--urban-slate) 12%, var(--pearl-whisper));
+  --night: #050506;      /* the hero's night (E-A2), for ciao's black */
+  --studio: #959492;     /* ciao's backdrop grey, measured (E-F1) */
+  --bg: var(--night);
+  --fg: var(--pearl-whisper);
+  --skeleton: color-mix(in srgb, var(--pearl-whisper) 12%, var(--night));
   /*@SHADE_TOKENS@*/
   --font-display: "Poppins", "Poppins Fallback", Arial, sans-serif;
   --font-ui: "Open Sans", "Open Sans Fallback", Arial, sans-serif;
@@ -53,11 +59,14 @@
   --gutter: 16px;
   --header-h: 56px;
   --hud-band: 224px;
-  /* a visible state line takes its height (plus the row gap) from the stage, so the controls stay above the sticky bar.
-     388 px is the chrome around the phone stage less 6 px: at rest the family-nav rule then sits under the fixed bar
-     (about 5 px down) instead of 1 to 2 px above the bar's own rule, so the bar never shows a double hairline */
   --line-h: 0px;
-  --stage-h: clamp(320px, calc(100svh - 388px - var(--line-h)), 520px);
+  /* the stage is the first screen; the HUD rows are placed from its bottom (phone: above the fixed bar) */
+  --stage-h: max(560px, 100svh);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --name-top: calc(100% - 262px - var(--sab));
+  --scrub-top: calc(100% - 192px - var(--sab));
+  --ctl-top: calc(100% - 136px - var(--sab));
+  --case-y: 42%; --case-hw: 120px;
   /* motion tokens (family-page.md R13) */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --dur-press: 150ms;
@@ -66,29 +75,21 @@
   --dur-shade: 600ms;
   --dur-canvas: 200ms;
   --radius-round: 50%;
-  color-scheme: light;
-}
-:root[data-neutral="slate"] {
-  --bg: var(--urban-slate);
-  --fg: var(--pearl-whisper);
-  --skeleton: color-mix(in srgb, var(--pearl-whisper) 12%, var(--urban-slate));
   color-scheme: dark;
 }
-@media (max-height: 499px) {
-  /* 56 px header + 73 px sticky bar (72 + its 1 px hairline) + 1 */
-  :root { --stage-h: max(220px, min(clamp(320px, calc(100svh - 388px - var(--line-h)), 520px), calc(100svh - 130px))); }
-}
 @media (min-width: 900px) and (min-height: 600px) {
-  :root { --gutter: 48px; --header-h: 72px; --stage-h: clamp(480px, calc(100svh - 72px), 900px); }
+  :root { --gutter: 48px; --header-h: 72px; --stage-h: 100svh; --name-top: calc(100% - 176px); --scrub-top: calc(100% - 92px); }
 }
 @font-face { font-family: "Poppins Fallback"; src: local("Arial"); size-adjust: 106.70%; ascent-override: 98.41%; descent-override: 32.80%; line-gap-override: 9.37%; }
 @font-face { font-family: "Open Sans Fallback"; src: local("Arial"); size-adjust: 104.30%; ascent-override: 102.47%; descent-override: 28.09%; line-gap-override: 0%; }
 /*@SHADE_RULES@*/
 
-html { font-synthesis: none; -webkit-text-size-adjust: 100%; background: var(--bg); scroll-padding-top: calc(var(--header-h) + var(--s2)); }
+html { font-synthesis: none; -webkit-text-size-adjust: 100%; background: var(--night); scroll-padding-top: calc(var(--header-h) + var(--s2)); }
+/* ciao's studio backdrop (E-F1): fixed behind everything, light at the bottom left, night from two thirds up */
+body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(9.02deg, var(--pearl-whisper) -30%, var(--studio) 15%, var(--night) 65%); } /*E-F1*/
 /* WCAG 2.4.11: a focused control never sits under the header or the fixed bar (73 px: 72 + its hairline) */
 :root[data-route="family"] { scroll-padding-bottom: calc(73px + env(safe-area-inset-bottom, 0px) + var(--s2)); }
-body { margin: 0; background: var(--bg); color: var(--fg); font: 400 1rem/var(--lh-ui) var(--font-ui); }
+body { margin: 0; background: transparent; color: var(--fg); font: 400 1rem/var(--lh-ui) var(--font-ui); }
 * { box-sizing: border-box; }
 h1, h2 { font-family: var(--font-display); font-weight: 700; margin: 0; text-wrap: balance; }
 h1 { font-size: var(--fs-h2); line-height: var(--lh-h2); letter-spacing: var(--ls-h2); }
@@ -103,7 +104,6 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
 /* focus: Ember Luxe outline; on Pearl pages an Urban Slate ring inside it (DESIGN.md 4) */
 :focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }
 .fr { position: relative; }
-:root[data-neutral="pearl"] .fr:focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; border-radius: inherit; }
 
 /* controls: hover lifts, press scales, 150 ms, no opacity change */
 .press { transition: transform var(--dur-press) var(--ease-standard), background-color var(--dur-press) var(--ease-standard), color var(--dur-press) var(--ease-standard); }
@@ -117,12 +117,15 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
 .mark svg { width: 72px; height: auto; display: block; fill: currentColor; }
 .txtbtn { font: 600 var(--fs-button)/1 var(--font-ui); min-height: 44px; padding-inline: var(--s2); display: inline-flex; align-items: center; margin-right: calc(var(--s2) * -1); }
 
-/* the lineup: phone layout first */
-.lineup { position: relative; display: grid; }
-.intro { padding: var(--s1) var(--gutter) 0; display: grid; gap: var(--s0); }
+/* the lineup: the first screen, under the header (phone first); every HUD row sits over the stage */
+.lineup { position: relative; height: var(--stage-h); margin-top: calc(-1 * var(--header-h) - env(safe-area-inset-top, 0px)); }
+.intro { position: absolute; z-index: 2; left: var(--gutter); right: var(--gutter); top: calc(var(--header-h) + env(safe-area-inset-top, 0px) + var(--s1)); display: grid; gap: var(--s0); pointer-events: none; }
+/* ciao's fade over the bottom of the first screen (its overlay: 120% of the screen from -10%, clear to 70%,
+   night at 95%, so on the screen clear to 74% and night at 104%), over the cases and under the HUD */
+.fade { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(180deg, transparent 74%, var(--night) 104%); } /*E-F1*/
 .eyebrow { font: 600 var(--fs-eyebrow)/1.2 var(--font-ui); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
 .viewbtn { font: 600 var(--fs-label)/1 var(--font-ui); min-height: 44px; padding-inline: var(--s2); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
-.stage { position: relative; height: var(--stage-h); overflow: hidden; }
+.stage { position: absolute; inset: 0; overflow: hidden; }
 .stage3d { position: absolute; inset: 0; touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .stage3d canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity var(--dur-canvas) linear; touch-action: pan-y; }
 .skel { position: absolute; inset: 0; width: 100%; height: 100%; display: block; transition: visibility 0s linear var(--dur-canvas); }
@@ -130,15 +133,18 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
 :root[data-stage="live"] .stage3d canvas { opacity: 1; }
 :root[data-stage="live"] .skel { visibility: hidden; }
 :root[data-mode="grid"] .stage3d { display: none; }
-.grid-slot { position: absolute; inset: 0; display: none; place-content: center; }
+.grid-slot { position: absolute; inset: calc(var(--header-h) + 96px) 0 calc(100% - var(--name-top) + var(--s3)) 0; display: none; place-content: center; }
 :root[data-mode="grid"] .grid-slot { display: grid; }
 :root[data-mode="grid"] .family-sec { display: none; }
 
-.below { display: grid; gap: var(--s2); padding-bottom: var(--s2); }
-.hud { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; grid-template-areas: "name name name" "prev meta next"; align-items: center; padding-inline: var(--gutter); row-gap: var(--s0); }
-.name { grid-area: name; font: 700 var(--fs-tile-name)/var(--lh-tile) var(--font-display); letter-spacing: var(--ls-tile); text-align: center; height: calc(var(--lh-tile) * 1em); }
-.prev { grid-area: prev; } .next { grid-area: next; }
-.meta { grid-area: meta; display: flex; justify-content: center; align-items: baseline; gap: var(--s2); min-width: 0; }
+.below { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.hud { display: contents; }
+.below .name, .below .meta, .below .arrow, .below .state, .below .scrub, .below .controls { position: absolute; pointer-events: auto; }
+.name { left: var(--gutter); right: var(--gutter); top: var(--name-top); font: 700 var(--fs-tile-name)/var(--lh-tile) var(--font-display); letter-spacing: var(--ls-tile); text-align: center; height: calc(var(--lh-tile) * 1em); }
+/* ciao's arrows: either side of the front case, at its middle */
+.prev { top: calc(var(--case-y) - 22px); left: max(calc(var(--gutter) - 10px), calc(50% - var(--case-hw) - 64px)); }
+.next { top: calc(var(--case-y) - 22px); right: max(calc(var(--gutter) - 10px), calc(50% - var(--case-hw) - 64px)); }
+.meta { left: var(--gutter); right: var(--gutter); top: calc(var(--name-top) + var(--lh-tile) * var(--fs-tile-name) + var(--s0)); display: flex; justify-content: center; align-items: baseline; gap: var(--s2); min-width: 0; }
 .fam { font: 400 var(--fs-family)/1.3 var(--font-ui); white-space: nowrap; }
 .num { font: 600 var(--fs-counter)/1.3 var(--font-ui); font-variant-numeric: tabular-nums; height: 1.3em; min-width: 5.2em; }
 .mask { position: relative; overflow: hidden; display: block; }
@@ -149,18 +155,18 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
 .arrow svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: square; }
 .arrow[aria-disabled="true"] { color: var(--skeleton); cursor: default; transform: none; }
 
-.state { padding-inline: var(--gutter); font: 400 0.875rem/1.45 var(--font-ui); font-variant-numeric: tabular-nums; text-align: center; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: var(--s2); row-gap: var(--s0); }
+.state { left: var(--gutter); right: var(--gutter); top: calc(var(--header-h) + 92px); font: 400 0.875rem/1.45 var(--font-ui); font-variant-numeric: tabular-nums; text-align: center; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: var(--s2); row-gap: var(--s0); }
 .state b { font-weight: 600; }
 .state button { font: 600 0.875rem/1 var(--font-ui); font-variant-numeric: tabular-nums; min-height: 44px; padding-inline: var(--s2); text-decoration: underline; text-underline-offset: 3px; }
 
-.scrub { position: relative; height: 44px; margin-inline: var(--gutter); touch-action: pan-y; cursor: pointer; }
+.scrub { left: 50%; top: var(--scrub-top); width: min(664px, calc(100% - 2 * var(--gutter))); transform: translateX(-50%); height: 44px; touch-action: pan-y; cursor: pointer; }
 .cells { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); align-items: center; justify-items: center; pointer-events: none; }
 .cells span { width: min(12px, calc(100% - 3px)); aspect-ratio: 1; border-radius: var(--radius-round); background: var(--sw); }
 .cells span[data-ring] { border: 1px solid var(--fg); }
 .marker { position: absolute; top: 0; bottom: 0; left: 0; width: calc(100% / 24); display: grid; place-items: center; transform: translateX(calc(var(--i, 0) * 100%)); transition: transform var(--dur-swap) var(--ease-swap); pointer-events: none; }
 .marker span { width: 16px; height: 16px; flex: none; border-radius: var(--radius-round); background: var(--sw); outline: 2px solid var(--fg); outline-offset: 2px; }
 
-.controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--s2); padding-inline: var(--gutter); }
+.controls { left: var(--gutter); right: var(--gutter); top: var(--ctl-top); display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--s2); }
 .seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--fg); height: 44px; }
 .seg button { font: 600 var(--fs-label)/1 var(--font-ui); }
 .seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
@@ -230,16 +236,12 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
 /* the wide layout (family-page.md 2.4): one breakpoint, 900 x 600 */
 @media (min-width: 900px) and (min-height: 600px) {
   .mark svg { width: 72px; }
-  .lineup { display: block; height: var(--stage-h); }
-  .intro { position: absolute; z-index: 2; left: var(--gutter); right: var(--gutter); top: var(--s3); padding: 0; pointer-events: none; gap: var(--s0); }
-  .stage { position: absolute; inset: 0; height: auto; }
-  .below { display: contents; }
-  .hud { position: absolute; z-index: 2; left: 0; right: 0; top: calc(var(--stage-h) - var(--hud-band) + var(--s2)); grid-template-columns: 44px minmax(0, 318px) 44px; grid-template-areas: "prev name next" ". meta ."; justify-content: center; padding: 0; row-gap: var(--s0); }
-  .state { position: absolute; z-index: 2; left: var(--gutter); top: calc(var(--stage-h) - var(--hud-band) + var(--s3)); width: min(300px, calc(50vw - 260px)); padding: 0; text-align: left; justify-content: flex-start; }
-  .scrub { position: absolute; z-index: 2; left: 50%; width: 664px; margin: 0; transform: translateX(-50%); top: calc(var(--stage-h) - 90px); }
+  .intro { top: calc(var(--header-h) + var(--s1)); }
+  .state { left: var(--gutter); right: auto; top: calc(100% - var(--hud-band) + var(--s3)); width: min(300px, calc(50vw - 260px)); text-align: left; justify-content: flex-start; }
+  .scrub { width: min(664px, calc(100% - 520px)); }
   .cells span { width: min(16px, calc(100% - 4px)); }
   .marker span { width: 22px; height: 22px; }
-  .controls { position: absolute; z-index: 2; right: var(--gutter); width: 190px; top: calc(var(--stage-h) - var(--hud-band) + var(--s3)); padding: 0; grid-template-columns: 1fr; row-gap: var(--s2); }
+  .controls { left: auto; right: var(--gutter); width: 190px; top: calc(100% - var(--hud-band) + var(--s3)); grid-template-columns: 1fr; row-gap: var(--s2); }
   .viewbtn { justify-self: start; padding-inline: 0; }
   .reserve-wide { display: inline-flex; }
   .sticky { display: none; }
@@ -277,6 +279,7 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
       <p class="eyebrow" id="eyebrow">02 / 10 Families</p>
       <h1 id="fam-title">Blissful Blues</h1>
     </div>
+    <div class="fade" aria-hidden="true"></div>
     <div class="stage" id="stage">
       <div class="stage3d" id="stage3d" role="img" aria-label="24 Blissful Blues cases in a row. Sky is in front.">
         <svg class="skel" id="skel" aria-hidden="true" focusable="false"></svg>
@@ -380,52 +383,39 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
   var mqFine = matchMedia('(pointer: fine)');
   var mqCoarse = matchMedia('(pointer: coarse)');
 
-  /* ---------------------------------------------------------------- lineup geometry (family-page.md 2.5) */
-  /* tuned for the real case (w 0.532, d 0.135 of its height, wider and thicker than the stand-in): fan 72 keeps the strips at
-     44.8 px on phones; the front case is scaled 1.3 on the phone layout (two full neighbours a side from 375 px) and 1.4 on the wide one */
-  var CFG = { fan: 72, yawFront: -15, leanFront: 3, lift: 0.3, S: 1.4, Sphone: 1.3, kz: 0.1, pitchK: 0.9, fov: 20, phi: 4, psi: 4, rho: -8,
-    pxuPhone: 170, frontFrac: 0.385, frontMin: 240, frontMax: 340, hudBand: 224, tiltYaw: 5, tiltPitch: 3, turn: 10, rate: 10.94, posterGap: 0.06, posterRamp: 0.5, gapRamp: 0.7, gRate: 2, trimOffset: 1, dprCap: 0, aa: 1 };
+  /* ---------------------------------------------------------------- lineup geometry: ciao's carousel (family-page.md 19) */
+  /* ciao's opening carousel, measured from its module (research/ciao-landing/source/ciao-3d-params.json), in ciao's world
+     units: one slot every 3.5 units; slot x sits at (x, sin(x * wave), -|x| - 0.2) with wave = 0.25 x clamp(1440 / width,
+     1, 2.4); every item is tipped back 20 degrees, turned (x * 0.5 rad - 20 degrees) and leaned 11.25 degrees (Euler XYZ);
+     the camera is at z 29, FOV 20, unrotated, only its aspect follows the screen. The can is 4.07 units tall at scale 1.2
+     there, so the case is scaled to 4.884 (the case is 163 mm tall, ciao's 250 ml can 168 mm). A can is round and its
+     turn only spins the label; a flat case would show its edge or its inside, so each case spins about its own long
+     axis against the slot's turn (face 1: every back shows like the front case's). */
+  var CFG = { sp: 3.5, cs: 4.884, camZ: 29, fov: 20, rx: -20, ry: -20, rz: 11.25, face: 1, slotPx: 175, phoneTop: 132, phoneBottom: 262,
+    tiltYaw: 5, tiltPitch: 3, turn: 10, rate: 10.94, gRate: 2, spot: 50, env: 1, spec: 0.2, specLow: 0.5, tm: 0, cal: 1, trimOffset: 1, dprCap: 0, aa: 1 };
   // every value can be overridden from the query for verification (dprCap and aa exist only for that: a higher pixel
   // ratio cap and multisampling off, used to tell SwiftShader's multisampling seams from real geometry)
   Object.keys(CFG).forEach(function (k) { if (q.has(k) && isFinite(+q.get(k))) CFG[k] = +q.get(k); });
-  var P = {};
-  function derive(dims, cls) {
-    var fan = CFG.fan * DEG, yf = Math.abs(CFG.yawFront) * DEG;
-    P.w = dims.w; P.d = dims.d;
-    P.cls = cls || layoutClass();
-    P.S = P.cls === 'wide' ? CFG.S : CFG.Sphone;
-    P.strip = dims.w * Math.cos(fan) + dims.d * Math.sin(fan);
-    P.pitch = CFG.pitchK * P.strip;
-    P.gap = 0.5 * (P.S * (dims.w * Math.cos(yf) + dims.d * Math.sin(yf)) + P.strip) - P.pitch + 0.02;
-  }
+  var P = { vw: 1280 };
+  function derive(dims, cls) { P.w = dims.w; P.d = dims.d; P.cls = cls || layoutClass(); }
   derive(D.dims);
 
-  /* Clearance (T5, tools/clearance.mjs): at G = 0 (the poster) every case stands at the full fan angle and the two
-     halves part by posterGap; on the line the gap around the front slot opens over 0.7 of a slot (gapRamp), so two
-     half-promoted cases never pass through each other mid-step; on entry the promotion G eases twice as fast as the
-     slide (gRate). Integer selections are unchanged. */
-  function poseOf(i, s, G, fx) {
-    var x = i - s, ax = Math.abs(x), p = G * Math.max(0, 1 - ax), ramp = G + (1 - G) * CFG.posterRamp, c = Math.max(-1, Math.min(1, x / ramp));
-    var cg = Math.max(-1, Math.min(1, x / (G * CFG.gapRamp + (1 - G) * CFG.posterRamp)));
-    return { p: p, X: x * P.pitch + cg * (P.gap * G + CFG.posterGap * (1 - G)), Z: CFG.lift * p - G * CFG.kz * Math.min(ax, 3),
-      yaw: (-CFG.fan * c * (1 - p) + CFG.yawFront * p + (fx ? fx.yaw * p : 0)) * DEG,
-      tilt: (fx ? fx.tilt * p : 0) * DEG, lean: CFG.leanFront * p * DEG, sc: 1 + (P.S - 1) * p };
+  function poseOf(i, s, fx) {
+    var x = (i - s) * CFG.sp, p = Math.max(0, 1 - Math.abs(x) / CFG.sp), wave = Math.max(1, Math.min(2.4, 1440 / P.vw)) * 0.25;
+    return { p: p, X: x, Y: Math.sin(x * wave), Z: -Math.abs(x) - 0.2,
+      rx: (CFG.rx + (fx ? fx.tilt * p : 0)) * DEG, ry: x * 0.5 + (CFG.ry + (fx ? fx.yaw * p : 0)) * DEG, rz: CFG.rz * DEG,
+      spin: -CFG.face * x * 0.5, sc: CFG.cs };
   }
+  // the pose applied to a local point: scale, the spin about the case's own long axis, then Euler XYZ (z, y, x), then move
   function xform(o, v) {
     var x = v[0] * o.sc, y = v[1] * o.sc, z = v[2] * o.sc, c, s, t;
-    c = Math.cos(o.lean); s = Math.sin(o.lean); t = x * c - y * s; y = x * s + y * c; x = t;
-    c = Math.cos(o.tilt); s = Math.sin(o.tilt); t = y * c - z * s; z = y * s + z * c; y = t;
-    c = Math.cos(o.yaw); s = Math.sin(o.yaw); t = x * c + z * s; z = -x * s + z * c; x = t;
-    return [x + o.X, y, z + o.Z];
+    c = Math.cos(o.spin); s = Math.sin(o.spin); t = x * c + z * s; z = -x * s + z * c; x = t;
+    c = Math.cos(o.rz); s = Math.sin(o.rz); t = x * c - y * s; y = x * s + y * c; x = t;
+    c = Math.cos(o.ry); s = Math.sin(o.ry); t = x * c + z * s; z = -x * s + z * c; x = t;
+    c = Math.cos(o.rx); s = Math.sin(o.rx); t = y * c - z * s; z = y * s + z * c; y = t;
+    return [x + o.X, y + o.Y, z + o.Z];
   }
-  function norm(v) { var l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; }
-  function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
-  function camBasis(Dist) {
-    var ph = CFG.phi * DEG, ps = CFG.psi * DEG, r = CFG.rho * DEG;
-    var C = [-Dist * Math.cos(ph) * Math.sin(ps), -Dist * Math.sin(ph), Dist * Math.cos(ph) * Math.cos(ps)];
-    var z = norm(C), x = norm(cross([0, 1, 0], z)), y = cross(z, x), c = Math.cos(r), s = Math.sin(r);
-    return { C: C, z: z, x: [x[0] * c + y[0] * s, x[1] * c + y[1] * s, x[2] * c + y[2] * s], y: [-x[0] * s + y[0] * c, -x[1] * s + y[1] * c, -x[2] * s + y[2] * c] };
-  }
+  function camBasis() { return { C: [0, 0, CFG.camZ], z: [0, 0, 1], x: [1, 0, 0], y: [0, 1, 0] }; }
   function project(pt, cam, W, H, shift) {
     var v = [pt[0] - cam.C[0], pt[1] - cam.C[1], pt[2] - cam.C[2]];
     var xc = v[0] * cam.x[0] + v[1] * cam.x[1] + v[2] * cam.x[2], yc = v[0] * cam.y[0] + v[1] * cam.y[1] + v[2] * cam.y[2], zc = v[0] * cam.z[0] + v[1] * cam.z[1] + v[2] * cam.z[2];
@@ -438,33 +428,21 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
     for (var a = -1; a <= 1; a += 2) for (var b = -1; b <= 1; b += 2) for (var c = -1; c <= 1; c += 2) CORNERS.push([a * P.w / 2, b * 0.5, c * P.d / 2]);
   }
   corners();
-  function caseBox(cam, W, H, i, s, G, shift) {
-    var o = poseOf(i, s, G), x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  function caseBox(cam, W, H, i, s, shift) {
+    var o = poseOf(i, s), x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
     for (var k = 0; k < 8; k++) { var q2 = project(xform(o, CORNERS[k]), cam, W, H, shift); if (q2[0] < x0) x0 = q2[0]; if (q2[0] > x1) x1 = q2[0]; if (q2[1] < y0) y0 = q2[1]; if (q2[1] > y1) y1 = q2[1]; }
     return { x0: x0, x1: x1, y0: y0, y1: y1, h: y1 - y0 };
   }
   function layoutClass() { return mqWide.matches ? 'wide' : 'phone'; }
-  /* camera fit by layout class: phone 170 px per unit; wide: front case 0.385 x stage height; vertical framing by view offset */
+  /* ciao's camera never reframes; on the phone layout the scene moves up (a view offset) so the front case sits between
+     the title and the name, which ciao's single column does not have to fit */
   function solve(W, H, cls) {
     if (P.cls !== cls) derive({ w: P.w, d: P.d }, cls);
-    var f = 1 / Math.tan(CFG.fov / 2 * DEG), Dist, s, i, b, cam;
-    var column = function (Dd) {
-      var c = camBasis(Dd), lo = 1e9, hi = -1e9;
-      for (s = 0; s <= 23; s += 0.5) for (i = 0; i < 24; i++) { b = caseBox(c, W, H, i, s, 1, 0); if (b.x1 > 0 && b.x0 < W) { lo = Math.min(lo, b.y0); hi = Math.max(hi, b.y1); } }
-      return [lo, hi];
-    };
-    if (cls === 'phone') {
-      var pxu = CFG.pxuPhone; Dist = (H / 2) * f / pxu;
-      for (var it = 0; it < 6; it++) { var ch = column(Dist); var col = ch[1] - ch[0]; if (col <= H - 24 + 0.5) break; pxu = pxu * (H - 24) / col; Dist = (H / 2) * f / pxu; }
-    } else {
-      var target = Math.min(CFG.frontMax, Math.max(CFG.frontMin, CFG.frontFrac * H)), lo2 = 1, hi2 = 80;
-      for (var k = 0; k < 50; k++) { var mid = (lo2 + hi2) / 2; if (caseBox(camBasis(mid), W, H, 11, 11, 1, 0).h > target) lo2 = mid; else hi2 = mid; }
-      Dist = (lo2 + hi2) / 2;
-    }
-    var e = column(Dist);
-    var shift = cls === 'phone' ? H / 2 - (e[0] + e[1]) / 2 : (H - CFG.hudBand - 16) - e[1];
-    var pxuAt = (H / 2) * f / Dist;
-    return { W: W, H: H, cls: cls, D: Dist, shiftY: shift, pxu: pxuAt, stripPx: P.pitch * pxuAt, caseTop: e[0] + shift, caseBottom: e[1] + shift };
+    P.vw = W;
+    var cam = camBasis(), b = caseBox(cam, W, H, 0, 0, 0), shift = 0;
+    if (cls === 'phone') shift = Math.min(0, (CFG.phoneTop + (H - CFG.phoneBottom)) / 2 - (b.y0 + b.y1) / 2);
+    var f = 1 / Math.tan(CFG.fov / 2 * DEG), pxu = (H / 2) * f / CFG.camZ;
+    return { W: W, H: H, cls: cls, D: CFG.camZ, shiftY: shift, pxu: pxu, stripPx: CFG.slotPx, caseTop: b.y0 + shift, caseBottom: b.y1 + shift, caseY: (b.y0 + b.y1) / 2 + shift, caseHW: (b.x1 - b.x0) / 2 };
   }
 
   /* ---------------------------------------------------------------- the skeleton: 24 case silhouettes at the poster pose */
@@ -481,12 +459,13 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
     if (root.dataset.mode !== '3d' || root.dataset.route !== 'family') return;
     var W = host.clientWidth, H = host.clientHeight;
     if (!W || !H) return;
-    var key = W + 'x' + H + layoutClass();
+    var key = W + 'x' + H + layoutClass() + ':' + S.target;
     if (key === skelKey) return;
     skelKey = key;
-    var fit = solve(W, H, layoutClass()), cam = camBasis(fit.D), out = [];
+    var fit = solve(W, H, layoutClass()), cam = camBasis(), out = [], s0 = Math.max(0, S.target);
+    var lu = $('lineup'); lu.style.setProperty('--case-y', fit.caseY.toFixed(1) + 'px'); lu.style.setProperty('--case-hw', fit.caseHW.toFixed(1) + 'px');
     for (var i = 0; i < 24; i++) {
-      var o = poseOf(i, 11.5, 0), pts = CORNERS.map(function (c) { return project(xform(o, c), cam, W, H, fit.shiftY); });
+      var o = poseOf(i, s0), pts = CORNERS.map(function (c) { return project(xform(o, c), cam, W, H, fit.shiftY); });
       if (Math.max.apply(null, pts.map(function (p) { return p[0]; })) < -20 || Math.min.apply(null, pts.map(function (p) { return p[0]; })) > W + 20) continue;
       out.push('<polygon points="' + hull(pts).map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ') + '"/>');
     }
@@ -504,7 +483,7 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
 
   function lum(hex) { var c = [1, 3, 5].map(function (k) { var v = parseInt(hex.slice(k, k + 2), 16) / 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; }
   function contrast(a, b) { var la = lum(a), lb = lum(b); return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05); }
-  function neutralHex(f) { return f.neutral === 'slate' ? '#383f43' : '#f7f6f3'; }
+  function neutralHex() { return '#050506'; }
   function ring(el, hex, f) { if (contrast(hex, neutralHex(f)) < 1.5) el.setAttribute('data-ring', ''); else el.removeAttribute('data-ring'); }
 
   /* ---------------------------------------------------------------- text swaps (Web Animations, 400 ms, old and new together) */
@@ -552,6 +531,7 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
     $('prev').setAttribute('aria-disabled', i === 0 ? 'true' : 'false');
     $('next').setAttribute('aria-disabled', i === 23 ? 'true' : 'false');
     if (S.lastLine === 'reserve') stateLine(null);
+    if (root.dataset.stage !== 'live') drawSkel();
   }
   /* the sticky-bar swatch (spec 4, C3): the new shade at once; a copy of the old one on top fades out by opacity over
      600 ms, and a newer copy goes under the ones still fading. No colour is animated; reduced motion makes no copy. */
@@ -629,7 +609,7 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
   function renderFamily(fi) {
     var f = FL[fi];
     S.fi = fi; S.shown = -1; S.sel = -1;
-    root.dataset.neutral = f.neutral;
+    root.dataset.neutral = 'night';
     root.dataset.route = 'family';
     document.title = f.name + ', all 24 shades. Skreed';
     $('eyebrow').textContent = pad(f.ord, 2) + ' / 10 Families';
@@ -698,7 +678,7 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
     var r = parseHash(), my = ++S.rt;
     stateLine(null);
     if (r.view === 'index') {
-      root.dataset.route = 'index'; root.dataset.neutral = 'pearl';
+      root.dataset.route = 'index'; root.dataset.neutral = 'night';
       document.title = 'Colour families. Skreed';
       if (SK.stage) SK.stage.pause();
       if (r.bad) stateLine('nofamily');
@@ -860,22 +840,77 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
 const SK = window.SK;
 const root = document.documentElement;
 const DEG = Math.PI / 180;
-const CAL = { environmentIntensity: 0.575, keyIntensity: 1.4, matte: 0.62, gloss: { roughness: 0.62, clearcoat: 1, clearcoatRoughness: 0.03 }, glossLow: 0.25, trim: 0.55, keyPosition: [0, 3, 4] };
-/* Gloss reads from three softbox strips that only the gloss materials see: a second PMREM of the same studio plus
-   the strips, baked with a light blur (sigma 0.006, about one cube texel, so a diagonal strip has no stair steps), and
-   a polished clearcoat (roughness 0.03, from CaseModel's 0.06), so the matte calibration is untouched and the streaks
-   stay crisp. At rest the front case's back reflects about az -26, el 4 to 5, the studio's dark flag (the back below
-   the camera window spans about az -28.7 to -23 and el -1 to 6; tools/dotprobe.mjs maps it). Strip A crosses the
-   right part of the back there as a diagonal streak, clear of the colour sample point (back-plate local (0, -0.25));
-   B and C wait 12 degrees either side, so the 10 degree turn sweeps a streak across the back whichever side is
-   tapped, and so does the pointer tilt (5 degrees of yaw, 3 of pitch). Each strip runs from a to b ([az, el] in
-   degrees, scene frame: +Y up, camera on +Z), w degrees wide, at radiance L. Tuned on the darkest shades
-   (tools/gtune.mjs, tools/gq.mjs): the strips add at most 3 levels at the sample point. */
-const GLOSS = { sigma: 0.006, scale: 1, strips: [
-  { a: [-26.64, 12], b: [-19.97, -7], w: 1, L: 15 },
-  { a: [-38.59, 11], b: [-32.62, -6], w: 1, L: 9 },
-  { a: [-14.59, 11], b: [-8.62, -6], w: 1, L: 9 },
-] };
+/* The case's materials as calibrated (case-model-class.md); the light is now ciao's (family-page.md 19). */
+const CAL = { matte: 0.62, gloss: { roughness: 0.62, clearcoat: 1, clearcoatRoughness: 0.03 }, glossLow: 0.25, trim: 0.55 };
+/* Colour under ciao's light: the front case's back at the sample point (back-plate (0, -0.25)) has linear radiance
+   a x albedo + b per channel, measured with api.calibrate() (tools/ciaocal.mjs). The albedo given to every case is the
+   one that makes that point read the catalog shade through the tone mapping, fitted in albedo space (0..1).
+   Tone mapping: Neutral by default. ciao renders with ACES, but ACES pulls strong colours toward white: no albedo makes
+   Sky (#08bcf4) read better than (123, 188, 244) through it, while Neutral reaches the catalog. ?tm=1 shows ACES. */
+const CALV = { matte: { a: 4.3596, b: 0.02164 }, gloss: { a: 4.1827, b: 0.0222 } };
+// three's tone maps (r165), forward, on linear RGB at exposure 1; inverted per shade by Newton steps
+const TONE = {
+  neutral(c) {
+    const x = Math.min(c[0], c[1], c[2]), off = x < 0.08 ? x - 6.25 * x * x : 0.04;
+    let v = c.map((k) => k - off); const peak = Math.max(v[0], v[1], v[2]);
+    if (peak < 0.76) return v;
+    const d = 0.24, np = 1 - d * d / (peak + d - 0.76); v = v.map((k) => k * np / peak);
+    const g = 1 - 1 / (0.15 * (peak - np) + 1); return v.map((k) => k + (np - k) * g);
+  },
+  aces(c) {
+    const M = (m, u) => [0, 1, 2].map((i) => m[i][0] * u[0] + m[i][1] * u[1] + m[i][2] * u[2]);
+    const u = M([[0.59719, 0.35458, 0.04823], [0.076, 0.90834, 0.01566], [0.0284, 0.13383, 0.83777]], c.map((k) => k / 0.6))
+      .map((v) => (v * (v + 0.0245786) - 0.000090537) / (v * (0.983729 * v + 0.432951) + 0.238081));
+    return M([[1.60475, -0.53108, -0.07367], [-0.10208, 1.10813, -0.00605], [-0.00327, -0.07276, 1.07602]], u).map((k) => Math.min(1, Math.max(0, k)));
+  },
+};
+function toneInverse(y, f) {
+  // damped Newton on the full 3 x 3 Jacobian (the highlight roll-off mixes the channels), never below 0
+  const err = (o) => Math.hypot(y[0] - o[0], y[1] - o[1], y[2] - o[2]);
+  let c = y.slice(), o = f(c), e = err(o);
+  for (let it = 0; it < 60 && e > 1e-6; it++) {
+    const J = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+    for (let k = 0; k < 3; k++) { const h = 1e-4 + c[k] * 1e-3, cp = c.slice(); cp[k] += h; const q = f(cp); for (let i = 0; i < 3; i++) J[i][k] = (q[i] - o[i]) / h; }
+    const [[a, b, cc], [d, ee, ff], [g, hh, ii]] = J, A = ee * ii - ff * hh, B = ff * g - d * ii, C = d * hh - ee * g, det = a * A + b * B + cc * C;
+    if (Math.abs(det) < 1e-12) break;
+    const inv = [[A, cc * hh - b * ii, b * ff - cc * ee], [B, a * ii - cc * g, cc * d - a * ff], [C, b * g - a * hh, a * ee - b * d]];
+    const r = [y[0] - o[0], y[1] - o[1], y[2] - o[2]], dx = [0, 1, 2].map((i) => (inv[i][0] * r[0] + inv[i][1] * r[1] + inv[i][2] * r[2]) / det);
+    let t = 1, nc, no, ne;
+    for (let ls = 0; ls < 20; ls++, t /= 2) { nc = c.map((v, i) => Math.max(0, Math.min(1e3, v + t * dx[i]))); no = f(nc); ne = err(no); if (ne < e) break; }
+    if (!(ne < e)) break;
+    c = nc; o = no; e = ne;
+  }
+  return c;
+}
+// the albedo fit (simulated over all 240 shades with Neutral: dE00 median 0, p90 1.4, max 4.5, 227 under 2): minimise the sRGB-encoded error of F(a x albedo + b) against the shade, albedo in [0, 1] (projected
+// Gauss-Newton with a line search; starts from the clamped analytic guess and from mid grey, keeps the better)
+const enc1 = (v) => (v <= 0.0031308 ? v * 12.92 : 1.055 * Math.max(0, v) ** (1 / 2.4) - 0.055);
+function albedoFit(y, f, a, b, guess) {
+  const ye = y.map(enc1), E = (al) => { const o = f(al.map((v) => v * a + b)).map(enc1); return [o, o.map((v, i) => v - ye[i])]; };
+  const run = (s0) => {
+    let x = s0.map((v) => Math.min(1, Math.max(0, v))), [o, r] = E(x), e = Math.hypot(...r);
+    for (let it = 0; it < 50 && e > 1e-5; it++) {
+      const J = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+      for (let k = 0; k < 3; k++) { const h = 1e-4, xp = x.slice(); xp[k] = x[k] + (x[k] + h > 1 ? -h : h); const [op] = E(xp), s = xp[k] - x[k]; for (let i = 0; i < 3; i++) J[i][k] = (op[i] - o[i]) / s; }
+      // normal equations (J^T J + mu I) d = -J^T r
+      const JT = [0, 1, 2].map((k) => [0, 1, 2].map((i) => J[i][k])), mu = 1e-6;
+      const A = [0, 1, 2].map((p) => [0, 1, 2].map((q) => JT[p].reduce((s, v, i) => s + v * J[i][q], 0) + (p === q ? mu : 0)));
+      const g = [0, 1, 2].map((p) => -JT[p].reduce((s, v, i) => s + v * r[i], 0));
+      const [[a1, b1, c1], [d1, e1, f1], [g1, h1, i1]] = A, AA = e1 * i1 - f1 * h1, BB = f1 * g1 - d1 * i1, CC = d1 * h1 - e1 * g1, det = a1 * AA + b1 * BB + c1 * CC;
+      if (Math.abs(det) < 1e-18) break;
+      const inv = [[AA, c1 * h1 - b1 * i1, b1 * f1 - c1 * e1], [BB, a1 * i1 - c1 * g1, c1 * d1 - a1 * f1], [CC, b1 * g1 - a1 * h1, a1 * e1 - b1 * d1]];
+      const dx = [0, 1, 2].map((p) => (inv[p][0] * g[0] + inv[p][1] * g[1] + inv[p][2] * g[2]) / det);
+      let t = 1, nx, no, nr, ne;
+      for (let ls = 0; ls < 25; ls++, t /= 2) { nx = x.map((v, i) => Math.min(1, Math.max(0, v + t * dx[i]))); [no, nr] = E(nx); ne = Math.hypot(...nr); if (ne < e) break; }
+      if (!(ne < e)) break;
+      x = nx; o = no; r = nr; e = ne;
+    }
+    return [x, e];
+  };
+  let best = null;
+  for (const s0 of [guess, [0.5, 0.5, 0.5], y.map((v) => v / a), guess.map((v) => v * 0.5)]) { const R = run(s0); if (!best || R[1] < best[1]) best = R; }
+  return best[0];
+}
 let booting = null, failures = 0;
 
 const nextFrame = () => new Promise((r) => requestAnimationFrame(r));
@@ -922,57 +957,43 @@ async function boot(why) {
   } finally { clearTimeout(slow); if (SK.S.lastLine === 'slow') SK.stateLine(null); }
 }
 
-/* ---------------------------------------------------------------- the studio (from CaseModel.js, calibrated for r165) */
-function makeStudio(THREE, strips, scale = 1) {
-  const { BackSide, BufferAttribute, DoubleSide, MathUtils, Mesh, MeshBasicMaterial, MeshLambertMaterial, PlaneGeometry, Scene, SphereGeometry, Vector3 } = THREE;
-  const scene = new Scene();
-  const o = { floor: 0.2, horizon: 0.9, ceiling: 1.15, floorFrom: -35, floorTo: 0, back: 0.3, backFrom: 95, backTo: 135 };
-  const panels = [
-    { dir: [0.95, 0.05, 0.3], w: 50, h: 60, L: 3.0, r: 40 },
-    { dir: [-0.95, 0.05, 0.3], w: 50, h: 60, L: 2.6, r: 40 },
-    { dir: [-0.4045, 0.5878, 0.7006], w: 30, h: 12, L: 10, r: 38 },
-    { dir: [-0.4957, 0.1323, 0.8586], w: 36, h: 24, L: 0.2, r: 38 },
-    { dir: [0.9, 0.15, 0.45], w: 6, h: 50, L: 6, r: 36 },
-  ];
-  const dome = new SphereGeometry(50, 64, 32);
-  const pos = dome.attributes.position, col = new Float32Array(pos.count * 3);
-  const ss = (t) => t * t * (3 - 2 * t);
-  for (let i = 0; i < pos.count; i++) {
-    const el = Math.asin(MathUtils.clamp(pos.getY(i) / 50, -1, 1)) / MathUtils.DEG2RAD;
-    const az = Math.abs(Math.atan2(pos.getX(i), pos.getZ(i))) / MathUtils.DEG2RAD;
-    let L = o.floor + (o.horizon - o.floor) * ss(MathUtils.clamp((el - o.floorFrom) / (o.floorTo - o.floorFrom), 0, 1)) + (o.ceiling - o.horizon) * MathUtils.clamp((el - 20) / 70, 0, 1);
-    const band = MathUtils.clamp(1 - (el - 20) / 70, 0, 1) * MathUtils.clamp((el + 35) / 35, 0, 1);
-    L *= 1 - ss(MathUtils.clamp((az - o.backFrom) / (o.backTo - o.backFrom), 0, 1)) * (1 - o.back) * band;
-    col.set([L * scale, L * scale, L * scale], i * 3);
+/* ---------------------------------------------------------------- ciao's studio, re-created by measurement */
+/* ciao lights its cans with a photo-studio HDRI (1024 x 512). We ship none of it: research/ciao-landing measured it
+   (ciaofam/hdrmeasure.py) and this rebuilds the light it gives as an equirectangular map of our own, in three's frame
+   (longitude atan2(z, x), latitude up). Measured: a quilted softbox overhead (about 20 panels), long across the set, its
+   edge down to latitude 45 on the right and 55 on the left but 66 front and back, mean 0.6 at latitude 70 rising to
+   9.8 at 85; walls about 0.03; the floor 0.14 under the camera falling to 0.03 by latitude -25; an umbrella at
+   latitude 15, longitude 160 (left, toward the camera), 14 degrees across, core 2.6, hot spot 42; behind the camera
+   0.01. Fitted (ciaofam/fitmap.py): irradiance on nine normals within 15% of the measured map's. */
+const BANDS = [[-90, 0.172], [-75, 0.164], [-65, 0.121], [-55, 0.09], [-45, 0.062], [-35, 0.037], [-25, 0.03], [-15, 0.03], [-5, 0.034], [5, 0.038], [15, 0.034], [25, 0.032], [35, 0.031], [45, 0.039], [55, 0.044], [60, 0.047]];
+const CAP = [[60, 0.2], [64, 0.35], [67, 0.45], [70, 0.5], [72, 0.8], [75, 1.2], [80, 4.6], [85, 10.5], [90, 12]];
+function lerpTab(t, v) { if (v <= t[0][0]) return t[0][1]; for (let i = 1; i < t.length; i++) if (v <= t[i][0]) { const [a, x] = t[i - 1], [b, y] = t[i]; return x + (y - x) * (v - a) / (b - a); } return t[t.length - 1][1]; }
+function studioMap(THREE) {
+  const W = 512, H = 256, data = new Uint16Array(W * H * 4), h = THREE.DataUtils.toHalfFloat;
+  const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const uLat = 15 * DEG, uLon = 160 * DEG, ux = Math.cos(uLat) * Math.cos(uLon), uy = Math.sin(uLat), uz = Math.cos(uLat) * Math.sin(uLon);
+  for (let y = 0; y < H; y++) {
+    const lat = 90 - (y + 0.5) / H * 180, cl = Math.cos(lat * DEG), sl = Math.sin(lat * DEG);
+    for (let x = 0; x < W; x++) {
+      const lon = (x + 0.5) / W * 360 - 180;
+      let L = lerpTab(BANDS, Math.min(lat, 60));
+      // the softbox: its edge lower along the set (x), quilted panels with dark seams every 18 degrees of longitude and
+      // every 6 of latitude
+      const co = Math.cos(lon * DEG), le = lat + 10 * co * co * (co > 0 ? 1.45 : 0.8) * Math.min(1, (90 - lat) / 30);
+      if (le > 60) {
+        const seamLon = Math.abs(((lon % 18) + 18) % 18 - 9) > 8.2, seamLat = lat < 86 && Math.abs(((lat - 66) % 6 + 6) % 6 - 3) > 2.6;
+        L = Math.max(L, lerpTab(CAP, le) * sm(60, 64, le) * (seamLon || seamLat ? 0.04 : 1));
+      }
+      const d = Math.acos(Math.min(1, cl * co * ux + sl * uy + cl * Math.sin(lon * DEG) * uz)) / DEG;
+      if (d < 15) L += 0.8 * sm(15, 11, d) + 1.6 * sm(6, 3, d) + 40 * Math.exp(-((d / 1.1) ** 2));
+      const k = ((H - 1 - y) * W + x) * 4, v = h(L);   // rows bottom up (flipY false)
+      data[k] = data[k + 1] = data[k + 2] = v; data[k + 3] = h(1);
+    }
   }
-  dome.setAttribute('color', new BufferAttribute(col, 3));
-  scene.add(new Mesh(dome, new MeshBasicMaterial({ vertexColors: true, side: BackSide })));
-  const plane = new PlaneGeometry(1, 1);
-  const panel = (d, r, w, h, L, rot) => {
-    const m = new Mesh(plane, new MeshLambertMaterial({ color: 0x000000, emissive: 0xffffff, emissiveIntensity: L, side: DoubleSide }));
-    m.position.copy(d).multiplyScalar(r);
-    m.scale.set(2 * r * Math.tan(w / 2 * DEG), 2 * r * Math.tan(h / 2 * DEG), 1);
-    m.lookAt(0, 0, 0);
-    if (rot) m.rotateZ(rot * DEG);
-    scene.add(m);
-  };
-  for (const q of panels) panel(new Vector3(...q.dir).normalize(), q.r, q.w, q.h, q.L * scale, 0);
-  // gloss strips sit in front of the flag (smaller radius), so they win where they overlap it; each is a plane at the
-  // middle of its arc, as long as the arc, turned in its own plane so its long side follows the arc
-  const dir = ([az, el]) => new Vector3(Math.cos(el * DEG) * Math.sin(az * DEG), Math.sin(el * DEG), Math.cos(el * DEG) * Math.cos(az * DEG));
-  for (const q of strips || []) {
-    const a = dir(q.a), b = dir(q.b), mid = a.clone().add(b).normalize(), r = 34;
-    const m = new Mesh(plane, new MeshLambertMaterial({ color: 0x000000, emissive: 0xffffff, emissiveIntensity: q.L, side: DoubleSide }));
-    m.position.copy(mid).multiplyScalar(r);
-    m.scale.set(2 * r * Math.tan(q.w / 2 * DEG), 2 * r * Math.tan(a.angleTo(b) / 2), 1);
-    m.lookAt(0, 0, 0);
-    const y = new Vector3(0, 1, 0).applyQuaternion(m.quaternion), n = new Vector3(0, 0, 1).applyQuaternion(m.quaternion);
-    const t = b.clone().sub(a); t.sub(mid.clone().multiplyScalar(mid.dot(t))).normalize();
-    m.rotateZ(Math.atan2(new Vector3().crossVectors(y, t).dot(n), y.dot(t)));
-    scene.add(m);
-  }
-  scene.dispose = () => { const r = new Set(); scene.traverse((x) => x.isMesh && r.add(x.geometry).add(x.material)); for (const x of r) x.dispose(); };
-  return scene;
+  const t = new THREE.DataTexture(data, W, H, THREE.RGBAFormat, THREE.HalfFloatType);
+  t.mapping = THREE.EquirectangularReflectionMapping; t.colorSpace = THREE.LinearSRGBColorSpace;
+  t.magFilter = t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.needsUpdate = true;
+  return t;
 }
 
 function b64buf(id) {
@@ -1024,7 +1045,7 @@ async function createStage(THREE, GLTFLoader, why) {
   try {
   renderer.setClearColor(0x000000, 0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.NeutralToneMapping;
+  renderer.toneMapping = SK.CFG.tm ? THREE.ACESFilmicToneMapping : THREE.NeutralToneMapping;   // see CALV
   renderer.toneMappingExposure = 1;
   host.appendChild(canvas);
   const gl = renderer.getContext();
@@ -1046,44 +1067,46 @@ async function createStage(THREE, GLTFLoader, why) {
   const base1 = { shell: baseOf(L1.shell), trim: baseOf(L1.trim), logo: L1.logo ? baseOf(L1.logo) : null };
   let base0 = { shell: base1.shell, trim: base1.trim };
 
-  // studio: PMREMs of the procedural studio (one for every material, one with the gloss strips for the gloss
-  // materials), then the generator and the studio scenes are disposed
+  // studio: one PMREM of the re-created studio for every material; the map and the generator are disposed
   const scene = new THREE.Scene();
-  let envTarget = null, glossTarget = null, gloss = GLOSS;
-  const bake = (pm, list, sigma, scale) => { const st = makeStudio(THREE, list, scale); const t = pm.fromScene(st, sigma); st.dispose(); return t; };
+  let envTarget = null;
   const makeEnv = (keepOld) => {
-    const pm = new THREE.PMREMGenerator(renderer);
-    const t = bake(pm, null, 0.04, 1), g = bake(pm, gloss.strips, gloss.sigma, gloss.scale);
-    pm.dispose();
-    if (!keepOld) { envTarget?.dispose(); glossTarget?.dispose(); }
-    envTarget = t; glossTarget = g;
+    const pm = new THREE.PMREMGenerator(renderer), map = studioMap(THREE);
+    const t = pm.fromEquirectangular(map);
+    pm.dispose(); map.dispose();
+    if (!keepOld) envTarget?.dispose();
+    envTarget = t;
     scene.environment = t.texture;
-    if (M.gloss) { M.gloss.envMap = M.logoGloss.envMap = g.texture; }
   };
-  undo.push(() => { envTarget?.dispose(); glossTarget?.dispose(); scene.environment = null; });
-  scene.environmentIntensity = CAL.environmentIntensity;
-  const key = new THREE.DirectionalLight(0xffffff, CAL.keyIntensity);
-  key.position.set(...CAL.keyPosition);
-  scene.add(key);
+  undo.push(() => { envTarget?.dispose(); scene.environment = null; });
+  scene.environmentIntensity = SK.CFG.env;
+  // ciao's two spotlights, white, 50 cd, 8 units, a 45 degree cone with full penumbra, decay 0.1: one above aimed at
+  // the front slot, one below and in front of it; together they light the front case and leave the others in the dark
+  const spots = [[[0, 3.5, 0], [0, 0, 1]], [[0, -3, 2], [0, 0, 1.8]]].map(([p, t]) => {
+    const l = new THREE.SpotLight(0xffffff, SK.CFG.spot, 8, Math.PI / 4, 1, 0.1);
+    l.position.set(...p); l.target.position.set(...t); scene.add(l, l.target); return l;
+  });
 
   // materials: one per finish for the shell; the shade arrives per instance
   let tier = 'high';
   const logoColor = L1.logo ? L1.logo.color.clone() : new THREE.Color(1, 1, 1);
   const M = {
-    matte: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: CAL.matte, metalness: 0 }),
+    // under ciao's spotlights a rough dielectric's broad specular lays a white sheen over the whole back (0.108 of
+    // radiance at the sample point, a grey of 92 through ACES, so a dark or saturated shade cannot read); a matte case
+    // has little sheen, so the base layer's specular is cut to SK.CFG.spec of a plastic's (family-page.md 19)
+    matte: new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: CAL.matte, metalness: 0, specularIntensity: SK.CFG.spec }),
     // the liner's faces coincide with the shell's along the outline and the button cut-outs; pushed back a hair in
     // depth so the shell wins there (no dark speckle at DPR 1)
     trim: new THREE.MeshStandardMaterial({ color: L1.trim.color.clone(), roughness: CAL.trim, metalness: 0, polygonOffset: SK.CFG.trimOffset > 0, polygonOffsetFactor: SK.CFG.trimOffset, polygonOffsetUnits: SK.CFG.trimOffset }),
-    logoMatte: new THREE.MeshStandardMaterial({ color: logoColor, roughness: CAL.matte, metalness: 0, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
+    logoMatte: new THREE.MeshPhysicalMaterial({ color: logoColor, roughness: CAL.matte, metalness: 0, specularIntensity: SK.CFG.spec, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
   };
   undo.push(() => { for (const m of Object.values(M)) m.dispose?.(); });
   makeEnv(false);
   await yieldMain();
   const glossFor = (t) => {
     const m = t === 'high'
-      ? new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, ...CAL.gloss })
-      : new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0, roughness: CAL.glossLow });
-    m.envMap = glossTarget.texture; m.envMapIntensity = CAL.environmentIntensity;
+      ? new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, ...CAL.gloss, specularIntensity: SK.CFG.spec })   // the gloss is the clearcoat's
+      : new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: CAL.glossLow, specularIntensity: SK.CFG.specLow });
     return m;
   };
   const logoGlossFor = (t) => { const m = glossFor(t); m.color.copy(logoColor); m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -1; return m; };
@@ -1102,11 +1125,26 @@ async function createStage(THREE, GLTFLoader, why) {
   const col = new THREE.Color();
   let hexes = SK.shadesOf(SK.S.fi >= 0 ? SK.S.fi : 1);
   let front = [], order = [...Array(24).keys()];
-  const colourRow = () => { for (let k = 0; k < 24; k++) { col.setStyle(hexes[order[k]]); rowShell.setColorAt(k, col); } rowShell.instanceColor.needsUpdate = true; };
-  const colourFront = () => { for (let j = 0; j < 2; j++) { col.setStyle(hexes[front[j] ?? 0]); frontShell.setColorAt(j, col); } frontShell.instanceColor.needsUpdate = true; };
+  // the albedo for a shade (CALV above); the catalog colour itself when there is no calibration
+  let calv = SK.CFG.cal === 0 ? null : CALV;
+  const invCache = new Map();
+  const albedo = (hex) => {
+    col.setStyle(hex);
+    const k = calv && calv[SK.S.finish === 'gloss' ? 'gloss' : 'matte'];
+    if (!k) return col;
+    const key = (SK.CFG.tm ? 'a' : 'n') + hex + (SK.S.finish === 'gloss' ? 'g' : 'm');
+    let x = invCache.get(key);
+    if (!x) {
+      const f = SK.CFG.tm ? TONE.aces : TONE.neutral, y = [col.r, col.g, col.b];
+      x = albedoFit(y, f, k.a, k.b, toneInverse(y, f).map((v) => (v - k.b) / k.a)); invCache.set(key, x);
+    }
+    return col.setRGB(x[0], x[1], x[2]);
+  };
+  const colourRow = () => { for (let k = 0; k < 24; k++) rowShell.setColorAt(k, albedo(hexes[order[k]])); rowShell.instanceColor.needsUpdate = true; };
+  const colourFront = () => { for (let j = 0; j < 2; j++) frontShell.setColorAt(j, albedo(hexes[front[j] ?? 0])); frontShell.instanceColor.needsUpdate = true; };
   const colourAll = () => {
     colourRow();
-    if (logo) { for (let i = 0; i < 24; i++) { col.setStyle(hexes[i]); logo.setColorAt(i, col); } logo.instanceColor.needsUpdate = true; }
+    if (logo) { for (let i = 0; i < 24; i++) logo.setColorAt(i, albedo(hexes[i])); logo.instanceColor.needsUpdate = true; }
     colourFront();
   };
   colourAll();
@@ -1114,10 +1152,12 @@ async function createStage(THREE, GLTFLoader, why) {
   // poses
   const mTmp = new THREE.Matrix4(), poseM = Array.from({ length: 24 }, () => new THREE.Matrix4());
   const qv = new THREE.Quaternion(), eu = new THREE.Euler(), vp = new THREE.Vector3(), vs = new THREE.Vector3();
-  const poseMatrix = (i, s, G, fx, out) => {
-    const o = SK.poseOf(i, s, G, fx);
-    eu.set(o.tilt, o.yaw, o.lean, 'YXZ');
-    return out.compose(vp.set(o.X, 0, o.Z), qv.setFromEuler(eu), vs.set(o.sc, o.sc, o.sc));
+  const qs = new THREE.Quaternion(), YAX = new THREE.Vector3(0, 1, 0);
+  const poseMatrix = (i, s, fx, out) => {
+    const o = SK.poseOf(i, s, fx);
+    eu.set(o.rx, o.ry, o.rz, 'XYZ');
+    qv.setFromEuler(eu).multiply(qs.setFromAxisAngle(YAX, o.spin));
+    return out.compose(vp.set(o.X, o.Y, o.Z), qv, vs.set(o.sc, o.sc, o.sc));
   };
   const update = (s, G, fx) => {
     const a = Math.max(0, Math.min(23, Math.round(s))), nf = [a];
@@ -1130,7 +1170,8 @@ async function createStage(THREE, GLTFLoader, why) {
       rowShell.count = rowTrim.count = 24 - front.length;
       colourRow(); colourFront();
     }
-    for (let i = 0; i < 24; i++) poseMatrix(i, s, G, fx, poseM[i]);
+    for (let i = 0; i < 24; i++) poseMatrix(i, s, fx, poseM[i]);
+    for (const l of spots) l.intensity = SK.CFG.spot * G;   // ciao's entrance: the light comes up
     for (let k = 0; k < rowShell.count; k++) {
       const pm = poseM[order[k]];
       rowShell.setMatrixAt(k, mTmp.multiplyMatrices(pm, base1.shell));
@@ -1145,19 +1186,14 @@ async function createStage(THREE, GLTFLoader, why) {
     for (const m of all) { m.instanceMatrix.needsUpdate = true; m.boundingSphere = null; }
   };
 
-  // camera: FOV 20, 4 degrees below and 4 to the left, rolled -8 degrees; framing by view offset. The clip planes
-  // hug the line (every case lies within 1 unit of the origin in depth), which keeps the depth buffer precise
-  // where the shell and the liner meet at grazing angles.
-  const cam = new THREE.PerspectiveCamera(SK.CFG.fov, 1, 0.1, 60);
+  // camera: ciao's, at z 29, FOV 20, unrotated; on phones a view offset lifts the scene (SK.solve). The clip planes
+  // hug the line (every case in view lies between z +3 and -40), so the depth buffer stays precise where the shell
+  // and the liner meet at grazing angles.
+  const cam = new THREE.PerspectiveCamera(SK.CFG.fov, 1, 20, 75);
   let fit = null, W = 0, H = 0;
   const place = () => {
-    const c = SK.CFG, Dd = fit.D, ph = c.phi * DEG, ps = c.psi * DEG;
     cam.aspect = W / H;
-    cam.near = Math.max(0.1, Dd - 3); cam.far = Dd + 6;
-    cam.position.set(-Dd * Math.cos(ph) * Math.sin(ps), -Dd * Math.sin(ph), Dd * Math.cos(ph) * Math.cos(ps));
-    cam.up.set(0, 1, 0);
-    cam.lookAt(0, 0, 0);
-    cam.rotateZ(c.rho * DEG);
+    cam.position.set(0, 0, fit.D); cam.rotation.set(0, 0, 0);
     cam.setViewOffset(W, H, 0, -fit.shiftY, W, H);
     cam.updateProjectionMatrix();
     cam.updateMatrixWorld();
@@ -1176,7 +1212,7 @@ async function createStage(THREE, GLTFLoader, why) {
   resize();
 
   // the motion state (one store; the HUD follows round(target))
-  const st = { s: 11.5, target: 11.5, G: 0, Gt: 1, tilt: { yaw: 0, pitch: 0 }, tiltT: { yaw: 0, pitch: 0 }, turn: null, drag: null, input: 'deeplink', reported: -1, lastFollow: 0 };
+  const st = { s: 0, target: 0, G: 0, Gt: 1, tilt: { yaw: 0, pitch: 0 }, tiltT: { yaw: 0, pitch: 0 }, turn: null, drag: null, input: 'deeplink', reported: -1, lastFollow: 0 };
   let running = false, visible = true, raf = 0, lastT = 0, tail = 0, frameMs = [], live = false, losses = 0, disposed = false, dirty = 0, renders = 0;
   const instant = () => SK.reduced();
   const renderNow = () => { const t0 = performance.now(); renderer.render(scene, cam); return performance.now() - t0; };
@@ -1321,7 +1357,7 @@ async function createStage(THREE, GLTFLoader, why) {
     const frontSlot = Math.round(st.s);
     if (slot === frontSlot && slot === st.target) {
       if (instant()) return;
-      const v = new THREE.Vector3(0, 0, 0).applyMatrix4(poseMatrix(slot, st.s, st.G, null, mTmp)).project(cam);
+      const v = new THREE.Vector3(0, 0, 0).applyMatrix4(poseMatrix(slot, st.s, null, mTmp)).project(cam);
       const r = canvas.getBoundingClientRect();
       const side = e.clientX >= r.left + (v.x + 1) / 2 * r.width ? 1 : -1;
       st.turn = { t0: performance.now(), side };
@@ -1388,7 +1424,8 @@ async function createStage(THREE, GLTFLoader, why) {
   });
 
   // tier probe: the display period from 10 frames, then 20 forced renders (family-page.md 2.5)
-  update(11.5, 0, null);
+  st.s = st.target = Math.max(0, SK.S.target);
+  update(st.s, 1, null);
   await compile(scene, cam);
   const probe = async () => {
     let last = await nextFrame(); const iv = [];
@@ -1436,6 +1473,7 @@ async function createStage(THREE, GLTFLoader, why) {
     const g = f === 'gloss';
     rowShell.material = frontShell.material = g ? M.gloss : M.matte;
     if (logo) logo.material = g ? M.logoGloss : M.logoMatte;
+    colourAll();   // the calibrated albedo depends on the finish
   };
   const turnPose = (phase, side, extra) => ({ yaw: (extra?.yaw || 0) + side * SK.CFG.turn * bump(phase), tilt: extra?.tilt || 0 });
   const api = {
@@ -1451,7 +1489,7 @@ async function createStage(THREE, GLTFLoader, why) {
       front = [];
       colourAll();
       st.target = sel; st.reported = -1; st.input = 'deeplink';
-      if (instant()) { st.s = sel; st.G = 1; } else { st.s = 11.5; st.G = 0; }
+      st.s = sel; st.G = instant() ? 1 : 0;
       st.Gt = 1; st.turn = null;
       if (running) { update(st.s, st.G, null); renderNow(); }
       kick();
@@ -1464,7 +1502,7 @@ async function createStage(THREE, GLTFLoader, why) {
       for (const m of all) { m.dispose(); scene.remove(m); }
       for (const g of geos) g.dispose();
       for (const m of Object.values(M)) m.dispose?.();
-      envTarget?.dispose(); glossTarget?.dispose(); scene.environment = null;
+      envTarget?.dispose(); scene.environment = null;
       renderer.dispose(); if (!gl.isContextLost()) renderer.forceContextLoss(); canvas.remove();
       root.dataset.stage = 'boot';
     },
@@ -1484,7 +1522,7 @@ async function createStage(THREE, GLTFLoader, why) {
       local = local || [0, -0.25, sampleZ];
       update(st.s, st.G, fx || null);
       renderNow();
-      const v = new THREE.Vector3(...local).applyMatrix4(poseMatrix(slot, st.s, st.G, fx || null, new THREE.Matrix4())).project(cam);
+      const v = new THREE.Vector3(...local).applyMatrix4(poseMatrix(slot, st.s, fx || null, new THREE.Matrix4())).project(cam);
       const dpr = renderer.getPixelRatio();
       const px = Math.round((v.x + 1) / 2 * W * dpr), py = Math.round((v.y + 1) / 2 * H * dpr);
       const buf = new Uint8Array(36);
@@ -1493,6 +1531,26 @@ async function createStage(THREE, GLTFLoader, why) {
       return { rgb, alpha: Math.max(...[0, 1, 2, 3, 4, 5, 6, 7, 8].map((j) => buf[j * 4 + 3])), px: [px / dpr, H - py / dpr], hex: hexes[slot] };
     },
     sampleZ: () => sampleZ,
+    // verification: a and b of the colour calibration (CALV), read in linear light (a float target, no tone mapping)
+    calibrate() {
+      const rt = new THREE.WebGLRenderTarget(canvas.width, canvas.height, { type: THREE.FloatType });
+      const slot = Math.round(st.s), dpr = renderer.getPixelRatio();
+      update(st.s, 1, null);
+      const v = new THREE.Vector3(0, -0.25, sampleZ).applyMatrix4(poseMatrix(slot, st.s, null, new THREE.Matrix4())).project(cam);
+      const px = Math.round((v.x + 1) / 2 * W * dpr), py = Math.round((v.y + 1) / 2 * H * dpr), j = front.indexOf(slot), res = {};
+      const read = (a) => {
+        frontShell.setColorAt(j, col.setRGB(a, a, a)); frontShell.instanceColor.needsUpdate = true;
+        renderer.setRenderTarget(rt); renderer.render(scene, cam); renderer.setRenderTarget(null);
+        const buf = new Float32Array(36); renderer.readRenderTargetPixels(rt, px - 1, py - 1, 3, 3, buf);
+        return [0, 1, 2].map((c) => { let t = 0; for (let k = 0; k < 9; k++) t += buf[k * 4 + c]; return t / 9; });
+      };
+      const keep = SK.S.finish;
+      for (const f of ['matte', 'gloss']) { SK.S.finish = f; applyFinish(f); const w = read(1), k0 = read(0); res[f] = { a: w.map((x, c) => +(x - k0[c]).toFixed(5)), b: k0.map((x) => +x.toFixed(5)) }; }
+      SK.S.finish = keep; applyFinish(keep); rt.dispose();
+      update(st.s, st.G, null); renderNow();
+      return { tier, px: [px, py], res };
+    },
+    setCal(v) { calv = v && v.matte && Array.isArray(v.matte.a) ? { matte: { a: v.matte.a[1], b: v.matte.b[1] }, gloss: { a: v.gloss.a[1], b: v.gloss.b[1] } } : v; colourAll(); update(st.s, st.G, null); renderNow(); },
     // verification: flat false colours per part (shell red, trim green, logo blue), or back to the real materials
     debugFlat(on) {
       if (on && !this._dbg) { const f = (c) => new THREE.MeshBasicMaterial({ color: c }); this._dbg = [rowShell.material, rowTrim.material, frontShell.material, frontTrim.material, logo && logo.material]; this._flat = [f(0xff0000), f(0x00ff00), f(0x0000ff)]; rowShell.material = frontShell.material = this._flat[0]; rowTrim.material = frontTrim.material = this._flat[1]; if (logo) logo.material = this._flat[2]; }
@@ -1506,14 +1564,14 @@ async function createStage(THREE, GLTFLoader, why) {
       ray.setFromCamera(ndc, cam);
       return ray.intersectObjects(all, false).slice(0, 6).map((h) => ({ o: h.object.name, slot: h.object === frontShell || h.object === frontTrim ? front[h.instanceId] : h.object.name === 'logo' ? h.instanceId : order[h.instanceId], d: +h.distance.toFixed(6), f: h.faceIndex, n: h.face ? h.face.normal.toArray().map((v) => +v.toFixed(2)) : null }));
     },
-    project(slot, local) { const v = new THREE.Vector3(...(local || [0, 0, 0])).applyMatrix4(poseMatrix(slot, st.s, st.G, null, new THREE.Matrix4())).project(cam); return [(v.x + 1) / 2 * W, (1 - v.y) / 2 * H]; },
+    project(slot, local) { const v = new THREE.Vector3(...(local || [0, 0, 0])).applyMatrix4(poseMatrix(slot, st.s, null, new THREE.Matrix4())).project(cam); return [(v.x + 1) / 2 * W, (1 - v.y) / 2 * H]; },
     loseContext() { const x = gl.getExtension('WEBGL_lose_context'); x.loseContext(); setTimeout(() => { if (!disposed) x.restoreContext(); }, 400); },
     // verification: the front case at a phase of the 600 ms turn (a virtual clock: the same pose the loop draws at
     // that time), or with a pointer tilt; one render, no animation state touched
     renderTurn(phase, side, extra) { const fx = turnPose(phase, side, extra); update(st.s, st.G, fx); renderNow(); update(st.s, st.G, null); return fx; },
     // verification: where the front case's back reflects the studio (azimuth and elevation in degrees) for local points
     reflect(points, fx) {
-      const slot = Math.round(st.s), m = poseMatrix(slot, st.s, st.G, fx || null, new THREE.Matrix4());
+      const slot = Math.round(st.s), m = poseMatrix(slot, st.s, fx || null, new THREE.Matrix4());
       const n = new THREE.Vector3(0, 0, 1).transformDirection(m), cp = cam.getWorldPosition(new THREE.Vector3());
       return points.map((p) => {
         const w = new THREE.Vector3(...p).applyMatrix4(m), d = w.clone().sub(cp).normalize();
@@ -1521,8 +1579,6 @@ async function createStage(THREE, GLTFLoader, why) {
         return [+(Math.atan2(r.x, r.z) / DEG).toFixed(2), +(Math.asin(r.y) / DEG).toFixed(2)];
       });
     },
-    // verification: rebuild the gloss studio with other strips
-    setGloss(g) { gloss = { ...gloss, ...g }; const old = glossTarget; const pm = new THREE.PMREMGenerator(renderer); glossTarget = bake(pm, gloss.strips, gloss.sigma, gloss.scale); pm.dispose(); old.dispose(); M.gloss.envMap = M.logoGloss.envMap = glossTarget.texture; if (g.intensity) M.gloss.envMapIntensity = M.logoGloss.envMapIntensity = g.intensity; if (g.ccr != null && M.gloss.isMeshPhysicalMaterial) M.gloss.clearcoatRoughness = M.logoGloss.clearcoatRoughness = g.ccr; update(st.s, st.G, null); renderNow(); },
   };
   window.__stage = api;
 
@@ -1532,8 +1588,7 @@ async function createStage(THREE, GLTFLoader, why) {
   front = [];
   colourAll();
   applyFinish(SK.S.finish);
-  st.s = 11.5; st.G = 0; st.target = Math.max(0, SK.S.target); st.Gt = 1; st.turn = null; st.reported = -1;
-  if (instant()) { st.s = st.target; st.G = 1; }
+  st.target = Math.max(0, SK.S.target); st.s = st.target; st.G = instant() ? 1 : 0; st.Gt = 1; st.turn = null; st.reported = -1;
   running = root.dataset.mode === '3d' && root.dataset.route === 'family';
   update(st.s, st.G, null);
   renderNow();

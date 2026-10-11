@@ -142,7 +142,7 @@ sub("    if (tp < 1 || keep) A.c.render(dt);", "    if (curveOn) moon.visible = 
 # 4) the family pages: a gem's link opens its family's page over the scene; the Skreed mark there, or Back, returns
 sub("<div id=\"s2labels\" aria-hidden=\"true\">", "<div id=\"famOverlay\" role=\"dialog\" aria-modal=\"true\" aria-label=\"Shade family\" hidden></div>\n<div id=\"s2labels\" aria-hidden=\"true\">")
 sub("#s2labels{position:fixed;inset:0;pointer-events:none;z-index:3;visibility:hidden}",
-    "#famOverlay{position:fixed;inset:0;z-index:20;background:var(--pearl)}#famOverlay[hidden]{display:none}#famOverlay iframe{border:0;width:100%;height:100%;display:block}html.fam-open,html.fam-open body{overflow:hidden}\n#s2labels{position:fixed;inset:0;pointer-events:none;z-index:3;visibility:hidden}")
+    "#famOverlay{position:fixed;inset:0;z-index:20;background:var(--night)}#famOverlay[hidden]{display:none}#famOverlay iframe{border:0;width:100%;height:100%;display:block}html.fam-open,html.fam-open body{overflow:hidden}\n#s2labels{position:fixed;inset:0;pointer-events:none;z-index:3;visibility:hidden}")
 sub("function frame() { requestAnimationFrame(frame); /*TEST*/if (window.__skreedHold) return;/*TEST-END*/ step(); }",
     "function frame() { requestAnimationFrame(frame); /*TEST*/if (window.__skreedHold) return;/*TEST-END*/ if (HT.classList.contains('fam-open')) return; step(); }   // a family page over the scene: the scene rests")
 fam = r"""

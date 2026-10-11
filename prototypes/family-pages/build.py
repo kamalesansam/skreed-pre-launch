@@ -84,6 +84,9 @@ assert '@LOD' not in src and '/*@' not in src
 
 # copy guards (CLAUDE.md): no em dash, no emoji-range characters, no box-shadow, no gradient, no backdrop-filter, no italic
 code = re.sub(r'<script type="application/octet-stream"[^>]*>[^<]*</script>', '', src)
+# the one approved exception (E-F1, Sam 2026-10-11): ciao's studio backdrop and fade, each line marked /*E-F1*/
+code = '\n'.join(l for l in code.split('\n') if '/*E-F1*/' not in l)
+assert src.count('/*E-F1*/') == 2, 'E-F1 lines'
 for bad in ['—', 'box-shadow', 'gradient', 'backdrop-filter', 'italic', 'Inter,', 'blur(']:
     assert bad not in code, 'guard: ' + repr(bad)
 assert not re.search('[\U0001F300-\U0001FAFF☀-➿]', code), 'emoji'
