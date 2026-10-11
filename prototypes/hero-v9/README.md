@@ -1,6 +1,6 @@
 # Hero prototype v9 (2026-10-08)
 
-Live: https://claude.ai/artifact/QDXUhF32ZLd7L9a5ccDnq8 (version 29, v11). Builds on v8.2 (`../hero-v8`).
+Live: https://claude.ai/artifact/QDXUhF32ZLd7L9a5ccDnq8 (version 30, v11.1). Builds on v8.2 (`../hero-v8`).
 
 ## The floor, re-created from igloo.inc's snow
 Sam asked for the floor to look exactly like igloo's. Three Blender variants were built from the hero camera and judged against four igloo screenshots by three reviews (surface, shape, tone): variant a won on composition (flank knolls, open centre, foreground mounds), with b's tone and stone scatter and c's measurement harness grafted on. The integrated floor (`blender/floor_final.py`, post curve `blender/floor_final_post.py`, LUT `blender/floor_lut.json`, checks `blender/floor_judge.py` and `blender/verify_bake.py`) adds:
@@ -27,6 +27,13 @@ Sam asked for the hero copy to go: no headline, no sub-line, no button, plain an
 - **Tune: Reset to defaults** restores every slider, toggle and the block colour order.
 - **From the review (three lenses, each finding verified):** days are padded to two digits and the numeral carries the 2ch reservation, so the row never jumps; ticks are aligned to the wall-clock second; the numerals stay hidden until the first tick and a `<noscript>` line gives the date; at zero the countdown stops and the eyebrow reads "Skreed is live. skreed.com"; the seconds group is hidden under reduced motion; the eyebrow and labels are Open Sans 600 at 14 px; spacing uses the `--s` tokens; below 1100 px the countdown lifts so the cue has its own row.
 - Not changed on purpose: there is no call to action on the fold. Sam chose the plain countdown; the reserve flow lives in the later sections.
+
+## v11.1: a straight, weaving pull-back, and the family pages (2026-10-11, artifact version 30)
+- **The path (Sam: "drift more to the left, and sweep to the right for the equal distance, and then slowly sweep back to the left again, it should look like a straight path but curvy, not circling around the logo"):** the camera now backs straight away (24 to 44 units over the pull-back) while weaving: 8 units left, 8 right, then slowly back to 4 left; it looks half-way between straight ahead and the logo, so the logo drifts across the frame and never turns. A 0.75 rise over the first third, then level, clears every dune. `shot-v11-path-1280.png`.
+- **The ground** used to stop 30 units in front of the logo; past that edge it is now the near ground mirrored (an apron of 100 rows to 80 units), so a level camera can back away without seeing the end of the world. Once the first wipe has covered the scene only the logo is drawn from it (the ground and sky are skipped).
+- **The family pages (Sam: "how do i see the shade family pages when i click them?"):** a gem's link opens its family's page (the family-pages prototype, `prototypes/family-pages`) over the scene in a frame of its own; the Skreed mark there, or the browser's Back, returns to the gems with the focus on the gem. The scene rests while a family page is open. The page is embedded in the build (`s2/embed_family.py`, 0.96 MB of base64); the frame gets a document skeleton and `<base href="about:srcdoc">` so its own links stay inside it. `shot-v11-family-1280.png`.
+- **Checked:** under the strict CSP, the path at six points, a gem click opening Blissful Blues with its 24 cases, the mark closing it (hash cleared), no console errors; the ship build: 8 hooks stripped, hosts jsdelivr and Google Fonts only (the family page too), no fetch, eval or WebAssembly, scripts parse, the loader lifts on its own; page 4.45 MB.
+- **Note:** the family pages carry their round-4 fixes, checked by me but not yet by an independent reviewer (no agents in use).
 
 ## v11: the scene move and section 2, the gems (2026-10-10, artifact version 29)
 The hero, the intro and section 2 in one page. Spec: `docs/specs/section-2.md`.

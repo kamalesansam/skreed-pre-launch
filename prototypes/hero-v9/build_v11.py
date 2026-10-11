@@ -90,7 +90,7 @@ import os; from jsstrip import strip_page
 # /*TEST*/ and /*TEST-END*/ markers in the template and is cut before stripping and minifying.
 if os.environ.get('SHIP') == '1':
     n0 = len(t); t, k = re.subn(r'/\*TEST\*/.*?/\*TEST-END\*/', '', t, flags=re.S)
-    assert k == 7 and '__skreedHold' not in t and '__skreedIntro' not in t and '__skreedSetT' not in t, k
+    assert k == 8 and '__skreedHold' not in t and '__skreedIntro' not in t and '__skreedSetT' not in t, k
     print('SHIP: %d test blocks cut (%d B of template source)' % (k, n0 - len(t)))
 # LOCKED=1: Sam's locked terrain values (proto/PENDING_MERGE.txt) as the P defaults, for the build that replaces the hero artifact
 if os.environ.get('LOCKED') == '1':

@@ -135,3 +135,8 @@ Everything lives in the hero's one WebGL island (CLAUDE.md "Always do", E-C3). N
 3. Label contrast: decided, igloo's look (approved).
 5. Label content: decided, the singular family name; the call to action on hover. Pending: whether the singular names (and Basic Brown) replace the catalog family names everywhere, in `docs/data/shades-240.json` and the family page URLs.
 4. Reduced motion: this fade-based 3D tier, or the poster (hero.md section 11).
+
+## 13. Changes on 2026-10-11 (Sam)
+- The pull-back path: straight back (24 to 44 units) with a weave, 8 left, 8 right, then slowly 4 left, looking half-way between ahead and the logo (never orbiting it); level after a 0.75 rise; the ground mirrored past its baked edge so it never ends in view. This replaces the curve in section 5.
+- Clicking a gem opens its family page over the scene (the family-pages prototype embedded); the Skreed mark there, or Back, returns.
+

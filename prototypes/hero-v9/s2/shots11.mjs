@@ -37,5 +37,19 @@ for (const S of pts) {
   await page.screenshot({ path: `${outDir}/S${String(S).replace('.', '_').padStart(4, '0')}.png`, timeout: 180000 });
   log.push(`S ${S}: ` + JSON.stringify(await page.evaluate(() => window.__s2 && window.__s2())));
 }
+if (process.env.FAMTEST) {
+  await page.evaluate((v) => { scrollTo(0, innerHeight * v); window.__skreedSnap(v); }, 12.6);
+  await page.waitForTimeout(8000);
+  await page.click('#s2links a[href="#/shades/blissful-blues/"]', { force: true, timeout: 60000 });
+  await page.waitForTimeout(4000); log.push('after click ' + JSON.stringify(await page.evaluate(() => ({ fam: window.__family(), hash: location.hash }))));
+  await page.screenshot({ path: `${outDir}/fam-open-a.png`, timeout: 180000 });
+  const fr = page.frameLocator('#famOverlay iframe');
+  try { await fr.locator('#fam-title').waitFor({ timeout: 120000 }); log.push('family title ' + await fr.locator('#fam-title').textContent()); } catch (e) { log.push('no title ' + e.message.slice(0, 120)); }
+  await page.waitForTimeout(30000);
+  await page.screenshot({ path: `${outDir}/fam-open-b.png`, timeout: 180000 });
+  await fr.locator('a.mark').click({ timeout: 60000 });
+  await page.waitForTimeout(4000); log.push('after mark ' + JSON.stringify(await page.evaluate(() => ({ fam: window.__family(), hash: location.hash }))));
+  await page.screenshot({ path: `${outDir}/fam-closed.png`, timeout: 180000 });
+}
 console.log(JSON.stringify({ secs: Math.round((Date.now() - t0) / 1000), log }, null, 1));
 await b.close();

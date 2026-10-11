@@ -47,13 +47,19 @@ s2t = """
 const PULL = 2.6, WIPE = 1.0;
 const S2T = { CAS0: PULL + 0.5, GAP: 0.8, FLY: 1.8, W1END: PULL + WIPE };
 S2T.LAND = S2T.CAS0 + 9 * S2T.GAP + S2T.FLY; S2T.W2 = S2T.LAND + 0.7;
-// the curve: (degrees round the logo, distance, height), level within a metre, over the ground's measured heights; the first
-// point is the hero pose; past the pull-back only the logo is seen (the rest is wiped), so the camera can keep going
-const CURVE_PTS = [[0, 24, -2.5], [-9, 26.5, -2.15], [5, 29, -1.95], [24, 32, -1.85], [35, 34, -1.8], [44, 38, -1.7], [40, 44, -1.5], [28, 50, -1.3], [15, 56, -1.1]];
-let camCurveObj = null;
+// the path (Sam, 2026-10-11): straight back, weaving like a road: further left, the same distance right, then slowly back
+// left; the camera keeps looking ahead (half-way to the logo), so it never circles the logo. v runs 0..1 over the pull-back
+// and 1..2 after it, when only the logo is seen. Height: a 0.75 rise over the first third, then level (clears every dune).
+const CAMX = [[0, 0], [0.25, -8], [0.6, 8], [1.0, -4], [1.5, -7], [2.0, -2]];
+function camX(v) {
+  for (let i = 1; i < CAMX.length; i++) if (v <= CAMX[i][0]) { const [v0, x0] = CAMX[i - 1], [v1, x1] = CAMX[i], t = (v - v0) / (v1 - v0);
+    return x0 + (x1 - x0) * t * t * t * (t * (t * 6 - 15) + 10); }
+  return CAMX[CAMX.length - 1][1];
+}
 function camCurve(s, u2, outP, outT) {
-  if (!camCurveObj) camCurveObj = new THREE.CatmullRomCurve3(CURVE_PTS.map(([th, R, y]) => new THREE.Vector3(R * Math.sin(th * Math.PI / 180), y, R * Math.cos(th * Math.PI / 180))), false, 'centripetal');
-  camCurveObj.getPoint(Math.min(1, 0.5 * s + 0.5 * u2), outP); outT.copy(tgtFrom);
+  const v = s + u2, x = camX(v), z = 24 + 20 * Math.min(v, 1) + 16 * Math.max(0, v - 1);
+  const k = Math.min(1, v / 0.3), y = -2.5 + 0.75 * k * k * (3 - 2 * k);
+  outP.set(x, y, z); outT.set(0.45 * x, tgtFrom.y, 0);
 }
 const rtMask = new THREE.WebGLRenderTarget(1, 1), _cc = new THREE.Color();
 const blackT = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1, THREE.RGBAFormat); blackT.needsUpdate = true;
@@ -92,6 +98,86 @@ sub("""    if (tp < 1) A.c.render(dt);
     else { C.tA.value = A.c.readBuffer.texture; C.tB.value = s2on ? S2.out : B.c.readBuffer.texture; C.uProgress.value = tp; C.uParA.value = s2on ? 0 : 1; }
     C.tH.value = A.c.readBuffer.texture; C.tM.value = rtMask.texture; C.tS.value = s2on ? S2.out : blackT; C.uKeep.value = keep ? 1 : 0;
     C.uNoiseOff.value.set(Math.random(), Math.random());""")
+
+sub("""  const pos = new Float32Array(nr * nc * 3), uv = new Float32Array(nr * nc * 2), idx = new Uint32Array((nr - 1) * (nc - 1) * 6);
+  for (let r = 0; r < nr; r++) {
+    const PY = -30 + 450 * Math.pow(1 - r / (nr - 1), 2.2), halfW = 34 + 1.25 * (PY + 30);
+    for (let c = 0; c < nc; c++) {
+      const k = r * nc + c;
+      pos[k * 3] = (-1 + 2 * c / (nc - 1)) * halfW; pos[k * 3 + 1] = zmin + hq[k] / 65535 * (zmax - zmin); pos[k * 3 + 2] = -PY;
+      uv[k * 2] = c / (nc - 1); uv[k * 2 + 1] = 1 - r / (nr - 1);
+    }
+  }
+  let j = 0;
+  for (let r = 0; r < nr - 1; r++) for (let c = 0; c < nc - 1; c++) {""",
+"""  // the apron (2026-10-11): the bake stops 30 units in front of the logo; past it the near ground is mirrored about that edge,
+  // so the level camera can back away without ever seeing the end of the world
+  const NA = 100, DZ = 0.5, NT = nr + NA, Hq = (r, c) => zmin + hq[r * nc + c] / 65535 * (zmax - zmin);
+  const pos = new Float32Array(NT * nc * 3), uv = new Float32Array(NT * nc * 2), idx = new Uint32Array((NT - 1) * (nc - 1) * 6);
+  for (let r = 0; r < NT; r++) {
+    if (r >= nr) {
+      const z = 30 + (r - nr + 1) * DZ, PYm = z - 60, rr = (1 - Math.pow((PYm + 30) / 450, 1 / 2.2)) * (nr - 1), r0 = Math.min(nr - 2, Math.floor(rr)), fr = rr - r0, halfWm = 34 + 1.25 * (PYm + 30);
+      for (let c = 0; c < nc; c++) {
+        const k = r * nc + c, x = (-1 + 2 * c / (nc - 1)) * 34, cc = Math.min(nc - 1, Math.max(0, (x / halfWm + 1) / 2 * (nc - 1))), c0 = Math.min(nc - 2, Math.floor(cc)), fc = cc - c0;
+        pos[k * 3] = x; pos[k * 3 + 1] = (Hq(r0, c0) * (1 - fc) + Hq(r0, c0 + 1) * fc) * (1 - fr) + (Hq(r0 + 1, c0) * (1 - fc) + Hq(r0 + 1, c0 + 1) * fc) * fr; pos[k * 3 + 2] = z;
+        uv[k * 2] = cc / (nc - 1); uv[k * 2 + 1] = 1 - rr / (nr - 1);
+      }
+      continue;
+    }
+    const PY = -30 + 450 * Math.pow(1 - r / (nr - 1), 2.2), halfW = 34 + 1.25 * (PY + 30);
+    for (let c = 0; c < nc; c++) {
+      const k = r * nc + c;
+      pos[k * 3] = (-1 + 2 * c / (nc - 1)) * halfW; pos[k * 3 + 1] = zmin + hq[k] / 65535 * (zmax - zmin); pos[k * 3 + 2] = -PY;
+      uv[k * 2] = c / (nc - 1); uv[k * 2 + 1] = 1 - r / (nr - 1);
+    }
+  }
+  let j = 0;
+  for (let r = 0; r < NT - 1; r++) for (let c = 0; c < nc - 1; c++) {""")
+sub("    const PY = Math.max(-30, -z), rr = (1 - Math.pow((PY + 30) / 450, 1 / 2.2)) * (nr - 1);",
+    "    const PY = Math.max(-30, -(z > 30 ? 60 - z : z)), rr = (1 - Math.pow((PY + 30) / 450, 1 / 2.2)) * (nr - 1);   // the apron mirrors past z 30")
+# 3) once the first wipe has covered the scene only the logo is seen: the ground and sky are skipped (no dune can cover the logo)
+sub("    if (tp < 1 || keep) A.c.render(dt);", "    if (curveOn) moon.visible = tp < 1;\n    if (tp < 1 || keep) A.c.render(dt);")
+# 4) the family pages: a gem's link opens its family's page over the scene; the Skreed mark there, or Back, returns
+sub("<div id=\"s2labels\" aria-hidden=\"true\">", "<div id=\"famOverlay\" role=\"dialog\" aria-modal=\"true\" aria-label=\"Shade family\" hidden></div>\n<div id=\"s2labels\" aria-hidden=\"true\">")
+sub("#s2labels{position:fixed;inset:0;pointer-events:none;z-index:3;visibility:hidden}",
+    "#famOverlay{position:fixed;inset:0;z-index:20;background:var(--pearl)}#famOverlay[hidden]{display:none}#famOverlay iframe{border:0;width:100%;height:100%;display:block}html.fam-open,html.fam-open body{overflow:hidden}\n#s2labels{position:fixed;inset:0;pointer-events:none;z-index:3;visibility:hidden}")
+sub("function frame() { requestAnimationFrame(frame); /*TEST*/if (window.__skreedHold) return;/*TEST-END*/ step(); }",
+    "function frame() { requestAnimationFrame(frame); /*TEST*/if (window.__skreedHold) return;/*TEST-END*/ if (HT.classList.contains('fam-open')) return; step(); }   // a family page over the scene: the scene rests")
+fam = r"""
+// =====================================================================
+// The family pages (prototype, prototypes/family-pages): a gem's link (#/shades/<family>/) opens its family's page over the
+// scene, in a frame of its own; the Skreed mark there (or Back) returns to the gems. The page arrives embedded (familyDoc).
+// =====================================================================
+const FAMILY = (() => {
+  const box = document.getElementById('famOverlay'); let frm = null, back = null, html = null;
+  const doc = () => { if (html) return html; const el = document.getElementById('familyDoc'); if (!el) return null;
+    const bin = atob(el.textContent.trim()), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    return (html = new TextDecoder().decode(u)); };
+  const parse = () => { const m = location.hash.match(/^#\/shades\/([a-z-]+)\/?/); return m ? m[1] : null; };
+  function open(id) {
+    const h = doc(); if (!h) return;
+    back = document.activeElement;
+    const boot = '<script>try{history.replaceState(null,"","#/shades/' + id + '/")}catch(e){location.hash="/shades/' + id + '/"}' +
+      'addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("a");if(!a)return;var h=a.getAttribute("href")||"";' +
+      'if(a.classList.contains("mark")||h.charAt(0)==="/"){e.preventDefault();e.stopPropagation();parent.postMessage({skreed:"close-family"},"*")}},true)<\/script>';
+    if (frm) frm.remove();
+    frm = document.createElement('iframe'); frm.title = 'Shade family';
+    // a full document (the page is stored the way artifacts are, without a skeleton) whose links resolve inside the frame
+    frm.srcdoc = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><base href="about:srcdoc">' + boot + h;
+    box.appendChild(frm); box.hidden = false; HT.classList.add('fam-open'); frm.focus();
+  }
+  function close() { if (!frm) return; frm.remove(); frm = null; box.hidden = true; HT.classList.remove('fam-open'); if (back && back.focus) back.focus({ preventScroll: true }); }
+  const sync = () => { if (parse()) { if (!frm) open(parse()); } else close(); };
+  addEventListener('hashchange', sync);
+  addEventListener('message', (e) => { if (e.data && e.data.skreed === 'close-family') { if (parse()) history.back(); else close(); } });
+  if (parse()) setTimeout(sync, 0);
+  /*TEST*/window.__family = () => ({ open: !!frm, id: parse() });/*TEST-END*/
+  return { open, close };
+})();
+"""
+fam_js = fam
+sub("const blackT = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1, THREE.RGBAFormat); blackT.needsUpdate = true;\n",
+    "const blackT = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1, THREE.RGBAFormat); blackT.needsUpdate = true;\n" + fam_js)
 
 # the DOM copy: the hero copy no longer slides up in the first wipe (the hero layer holds still, Sam: nothing flies up);
 # the Wall's copy belongs to the second wipe now
