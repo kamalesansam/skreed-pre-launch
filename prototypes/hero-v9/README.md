@@ -1,6 +1,6 @@
 # Hero prototype v9 (2026-10-08)
 
-Live: https://claude.ai/artifact/QDXUhF32ZLd7L9a5ccDnq8 (version 30, v11.1). Builds on v8.2 (`../hero-v8`).
+Live: https://claude.ai/artifact/QDXUhF32ZLd7L9a5ccDnq8 (version 31, v11.2). Builds on v8.2 (`../hero-v8`).
 
 ## The floor, re-created from igloo.inc's snow
 Sam asked for the floor to look exactly like igloo's. Three Blender variants were built from the hero camera and judged against four igloo screenshots by three reviews (surface, shape, tone): variant a won on composition (flank knolls, open centre, foreground mounds), with b's tone and stone scatter and c's measurement harness grafted on. The integrated floor (`blender/floor_final.py`, post curve `blender/floor_final_post.py`, LUT `blender/floor_lut.json`, checks `blender/floor_judge.py` and `blender/verify_bake.py`) adds:
@@ -27,6 +27,10 @@ Sam asked for the hero copy to go: no headline, no sub-line, no button, plain an
 - **Tune: Reset to defaults** restores every slider, toggle and the block colour order.
 - **From the review (three lenses, each finding verified):** days are padded to two digits and the numeral carries the 2ch reservation, so the row never jumps; ticks are aligned to the wall-clock second; the numerals stay hidden until the first tick and a `<noscript>` line gives the date; at zero the countdown stops and the eyebrow reads "Skreed is live. skreed.com"; the seconds group is hidden under reduced motion; the eyebrow and labels are Open Sans 600 at 14 px; spacing uses the `--s` tokens; below 1100 px the countdown lifts so the cue has its own row.
 - Not changed on purpose: there is no call to action on the fold. Sam chose the plain countdown; the reserve flow lives in the later sections.
+
+## v11.2: a slower pull-back (2026-10-11, artifact version 31)
+- **Sam: "the scene is moving so fast with less scroll, make it more scroll, less scene movement."** The pull-back takes 5 screens of scroll instead of 2.6, on a gentle ease (smoothstep, so the middle no longer rushes), and the weave is 6 units each way instead of 8. The logo's peak drift across the frame is about 4.6 times slower (0.56 of the screen width per screen of scroll, from 2.6) and the camera's peak speed fell from 92 to 20 units per screen. Clearance over the ground: at least 0.47 units (0.37 before). The cascade, the rest and the wipe to the Wall each start 2.4 screens later; track 1820svh. `shot-v11-path-slow-1280.png` (scroll 0, 1.25, 2.5, 3.75, 5, 5.6, 9, 14.5).
+- **Checked:** the diff against version 30 is only the track height, `PULL`, the weave keyframes and the ease (plus minifier renames); the ship build strips its 8 test hooks; the frames above under the strict CSP, no console errors.
 
 ## v11.1: a straight, weaving pull-back, and the family pages (2026-10-11, artifact version 30)
 - **The path (Sam: "drift more to the left, and sweep to the right for the equal distance, and then slowly sweep back to the left again, it should look like a straight path but curvy, not circling around the logo"):** the camera now backs straight away (24 to 44 units over the pull-back) while weaving: 8 units left, 8 right, then slowly back to 4 left; it looks half-way between straight ahead and the logo, so the logo drifts across the frame and never turns. A 0.75 rise over the first third, then level, clears every dune. `shot-v11-path-1280.png`.

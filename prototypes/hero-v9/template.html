@@ -10,7 +10,7 @@
 :root{--slate:#383F43;--pearl:#F7F6F3;--ember:#FF9900;--panel:#2b3134;--line:#4a5257;--muted:rgba(247,246,243,.7);--s1:8px;--s2:12px;--s3:16px;--inset:clamp(16px,3.5vw,56px);color-scheme:dark}   /* one corner inset for the logo, the hint, the countdown and the cue: equal from the left and from the bottom, scaling with the viewport */
 body{background:var(--slate);color:var(--pearl);font-family:'Open Sans',Arial,sans-serif;margin:0;font-synthesis:none}
 #stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:pan-y}
-.track{position:relative;height:1580svh;pointer-events:none}
+.track{position:relative;height:1820svh;pointer-events:none}
 #famOverlay{position:fixed;inset:0;z-index:20;background:var(--pearl)}#famOverlay[hidden]{display:none}#famOverlay iframe{border:0;width:100%;height:100%;display:block}html.fam-open,html.fam-open body{overflow:hidden}
 #s2labels{position:fixed;inset:0;pointer-events:none;z-index:3;visibility:hidden}#s2labels svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .s2lab{position:absolute;left:0;top:0;font:500 13px/1.08 'IBM Plex Mono',ui-monospace,monospace;color:var(--pearl);white-space:pre;letter-spacing:0;text-transform:none;font-synthesis:none;will-change:transform}.s2lab.r{text-align:right}
@@ -1445,16 +1445,18 @@ const composite = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.Shader
 }));
 const screenScene = new THREE.Scene(); screenScene.add(composite);
 
-// scroll map, in screens (Sam, 2026-10-10: a longer scene move, then a long slow flight per block):
+// scroll map, in screens (Sam, 2026-10-10: a longer scene move, then a long slow flight per block; 2026-10-11: more scroll,
+// less scene movement, so the pull-back is 5 screens on a gentle ease):
 // 0 to PULL the camera backs away along a level curve; PULL to PULL + 1 the wipe into section 2 (the logo stays);
 // from mid-wipe a block leaves every GAP screens and lands FLY screens later; a short rest; then the wipe to the Wall.
-const PULL = 2.6, WIPE = 1.0;
+const PULL = 5.0, WIPE = 1.0;
 const S2T = { CAS0: PULL + 0.5, GAP: 0.8, FLY: 1.8, W1END: PULL + WIPE };
 S2T.LAND = S2T.CAS0 + 9 * S2T.GAP + S2T.FLY; S2T.W2 = S2T.LAND + 0.7;
 // the path (Sam, 2026-10-11): straight back, weaving like a road: further left, the same distance right, then slowly back
 // left; the camera keeps looking ahead (half-way to the logo), so it never circles the logo. v runs 0..1 over the pull-back
 // and 1..2 after it, when only the logo is seen. Height: a 0.75 rise over the first third, then level (clears every dune).
-const CAMX = [[0, 0], [0.25, -8], [0.6, 8], [1.0, -4], [1.5, -7], [2.0, -2]];
+// The weave is 6 units each way (was 8; Sam: less scene movement).
+const CAMX = [[0, 0], [0.25, -6], [0.6, 6], [1.0, -3], [1.5, -5.25], [2.0, -1.5]];
 function camX(v) {
   for (let i = 1; i < CAMX.length; i++) if (v <= CAMX[i][0]) { const [v0, x0] = CAMX[i - 1], [v1, x1] = CAMX[i], t = (v - v0) / (v1 - v0);
     return x0 + (x1 - x0) * t * t * t * (t * (t * 6 - 15) + 10); }
@@ -2805,7 +2807,7 @@ function step() {
   labLayer.style.visibility = tp > 0 ? 'hidden' : 'visible';
 
   // camera: base pose from scroll, then igloo's parallax (0.07, 0.025 of 90 degrees, 3.5% a frame) and 0.01 shake
-  if (curveOn && !reduce) camCurve(s, clamp01((scroll.b - PULL) / (S2T.LAND - PULL)), basePos, baseTgt);
+  if (curveOn && !reduce) { const sc = clamp01(scroll.b / PULL); camCurve(sc * sc * (3 - 2 * sc), clamp01((scroll.b - PULL) / (S2T.LAND - PULL)), basePos, baseTgt); }   // a gentle ease: no rush mid-way
   else { basePos.lerpVectors(camFrom, camTo, s); baseTgt.lerpVectors(tgtFrom, tgtTo, s); }
   if (IN.w < 1) { basePos.lerpVectors(IP0, basePos, IN.w); baseTgt.lerpVectors(IT0, baseTgt, IN.w); }   // the crane down from igloo's start pose
   const tx = pointerActive && !reduce ? target.x * live : 0, ty = pointerActive && !reduce ? target.y * live : 0;

@@ -7,7 +7,7 @@ def sub(a, b, n=1):
     global s; c = s.count(a); assert c == n, (a[:90], c); s = s.replace(a, b)
 # page: a longer track (Sam: slower, a longer scene move, a long flight), igloo's label face, the section 2 layers
 sub('.track{position:relative;height:460svh;pointer-events:none}',
-    '.track{position:relative;height:1580svh;pointer-events:none}\n'
+    '.track{position:relative;height:1820svh;pointer-events:none}\n'
     '#s2labels{position:fixed;inset:0;pointer-events:none;z-index:3;visibility:hidden}#s2labels svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}\n'
     ".s2lab{position:absolute;left:0;top:0;font:500 13px/1.08 'IBM Plex Mono',ui-monospace,monospace;color:var(--pearl);white-space:pre;letter-spacing:0;text-transform:none;font-synthesis:none;will-change:transform}.s2lab.r{text-align:right}\n"
     '@media (max-aspect-ratio:9/10){.s2lab{font-size:12px}}\n'
@@ -41,16 +41,18 @@ sub("    void main(){ gl_FragColor = vec4(mix(uFlat, wipe(), uIntro), 1.0); }`,"
 sub("// scroll map, in screens: 0 to 1.5 pull back, 1.5 to 2.5 the wipe (igloo's one-unit overlap), then the Wall\nconst PULL = 1.5, WIPE = 1.0;\n",
     "// scroll map, in screens: see S2T (declared with section 2)\n")
 s2t = """
-// scroll map, in screens (Sam, 2026-10-10: a longer scene move, then a long slow flight per block):
+// scroll map, in screens (Sam, 2026-10-10: a longer scene move, then a long slow flight per block; 2026-10-11: more scroll,
+// less scene movement, so the pull-back is 5 screens on a gentle ease):
 // 0 to PULL the camera backs away along a level curve; PULL to PULL + 1 the wipe into section 2 (the logo stays);
 // from mid-wipe a block leaves every GAP screens and lands FLY screens later; a short rest; then the wipe to the Wall.
-const PULL = 2.6, WIPE = 1.0;
+const PULL = 5.0, WIPE = 1.0;
 const S2T = { CAS0: PULL + 0.5, GAP: 0.8, FLY: 1.8, W1END: PULL + WIPE };
 S2T.LAND = S2T.CAS0 + 9 * S2T.GAP + S2T.FLY; S2T.W2 = S2T.LAND + 0.7;
 // the path (Sam, 2026-10-11): straight back, weaving like a road: further left, the same distance right, then slowly back
 // left; the camera keeps looking ahead (half-way to the logo), so it never circles the logo. v runs 0..1 over the pull-back
 // and 1..2 after it, when only the logo is seen. Height: a 0.75 rise over the first third, then level (clears every dune).
-const CAMX = [[0, 0], [0.25, -8], [0.6, 8], [1.0, -4], [1.5, -7], [2.0, -2]];
+// The weave is 6 units each way (was 8; Sam: less scene movement).
+const CAMX = [[0, 0], [0.25, -6], [0.6, 6], [1.0, -3], [1.5, -5.25], [2.0, -1.5]];
 function camX(v) {
   for (let i = 1; i < CAMX.length; i++) if (v <= CAMX[i][0]) { const [v0, x0] = CAMX[i - 1], [v1, x1] = CAMX[i], t = (v - v0) / (v1 - v0);
     return x0 + (x1 - x0) * t * t * t * (t * (t * 6 - 15) + 10); }
@@ -80,7 +82,7 @@ sub("  const tp = clamp01((scroll.b - PULL) / WIPE);\n", "  const tp = clamp01((
 # a block that has left for section 2 is gone from the logo
 sub("  logo.updateMatrixWorld();\n  updateLabels(dt,", "  for (let i = 0; i < blocks.length; i++) if (S2.hidden(i, scroll.b)) U.uOff.value[i].set(0, -500, 0);\n  logo.updateMatrixWorld();\n  updateLabels(dt,")
 sub("  basePos.lerpVectors(camFrom, camTo, s); baseTgt.lerpVectors(tgtFrom, tgtTo, s);\n",
-    "  if (curveOn && !reduce) camCurve(s, clamp01((scroll.b - PULL) / (S2T.LAND - PULL)), basePos, baseTgt);\n  else { basePos.lerpVectors(camFrom, camTo, s); baseTgt.lerpVectors(tgtFrom, tgtTo, s); }\n")
+    "  if (curveOn && !reduce) { const sc = clamp01(scroll.b / PULL); camCurve(sc * sc * (3 - 2 * sc), clamp01((scroll.b - PULL) / (S2T.LAND - PULL)), basePos, baseTgt); }   // a gentle ease: no rush mid-way\n  else { basePos.lerpVectors(camFrom, camTo, s); baseTgt.lerpVectors(tgtFrom, tgtTo, s); }\n")
 sub("  camA.lookAt(camA.position.clone().add(look));\n", "  camA.lookAt(camA.position.clone().add(look)); camA.updateMatrixWorld();\n  S2.update(scroll.b, tp, tp2, t, dt);\n")
 sub("  camB.position.y = -(clamp01((scroll.b - PULL - WIPE) / 1.5)) * 0.8;", "  camB.position.y = -(clamp01((scroll.b - S2T.W2 - WIPE) / 1.5)) * 0.8;")
 sub("""    if (tp < 1) A.c.render(dt);
