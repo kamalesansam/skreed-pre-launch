@@ -144,28 +144,28 @@ Block glows, the 'cool' order, by block index 0 to 9:
 
 | Block | Id | Name | Hex |
 |---|---|---|---|
-| 0 | blushing-corals-04 | Mango | #ff9f40 |
-| 1 | stormy-greys-05 | Silver | #acacac |
-| 2 | frosty-whites-07 | Snow | #f0f4f5 |
-| 3 | blissful-blues-08 | Sky | #08bcf4 |
-| 4 | earthy-browns-07 | Cinnamon | #ba7237 |
-| 5 | vivid-violets-07 | Amethyst | #8554d1 |
-| 6 | mellow-yellows-01 | Sunbeam | #fff164 |
-| 7 | playful-pinks-14 | Rouge | #f2638f |
+| 0 | blushing-coral-04 | Mango | #ff9f40 |
+| 1 | stormy-grey-05 | Silver | #acacac |
+| 2 | frosty-white-07 | Snow | #f0f4f5 |
+| 3 | blissful-blue-08 | Sky | #08bcf4 |
+| 4 | basic-brown-07 | Cinnamon | #ba7237 |
+| 5 | vivid-violet-07 | Amethyst | #8554d1 |
+| 6 | mellow-yellow-01 | Sunbeam | #fff164 |
+| 7 | playful-pink-14 | Rouge | #f2638f |
 | 8 | go-green-12 | Lawn | #4aa325 |
-| 9 | roaring-reds-07 | Crimson | #d20000 |
+| 9 | roaring-red-07 | Crimson | #d20000 |
 
-Sky galaxy wash: blissful-blues-23 Space #15284f, vivid-violets-24 Eggplant #4a154d, go-green-22 Forest #084f3d, roaring-reds-23 Wine #4b0923. The other Wine, vivid-violets-23, is a different colour; this is why the generator looks shades up by id.
+Sky galaxy wash: blissful-blue-23 Space #15284f, vivid-violet-24 Eggplant #4a154d, go-green-22 Forest #084f3d, roaring-red-23 Wine #4b0923. The other Wine, vivid-violet-23, is a different colour; this is why the generator looks shades up by id.
 
 Logotype glitch pairs (one pair per burst; the intro burst forces the first):
-- blissful-blues-08 Sky with roaring-reds-07 Crimson;
-- vivid-violets-07 Amethyst with mellow-yellows-01 Sunbeam;
-- go-green-12 Lawn with playful-pinks-14 Rouge;
-- blissful-blues-08 Sky with blushing-corals-04 Mango.
+- blissful-blue-08 Sky with roaring-red-07 Crimson;
+- vivid-violet-07 Amethyst with mellow-yellow-01 Sunbeam;
+- go-green-12 Lawn with playful-pink-14 Rouge;
+- blissful-blue-08 Sky with blushing-coral-04 Mango.
 
 Lightness weights for the glitch: Sky .74, Mango .78, Amethyst .56, Sunbeam .94, Crimson .54, Lawn .64, Rouge .69. The ghost fills are written as `var(--shade-<id>)` from the generated shade tokens (D30).
 
-Section 2's interim frame: all 240 shades in catalog order, frosty-whites-01 to roaring-reds-24.
+Section 2's interim frame: all 240 shades in catalog order, frosty-white-01 to roaring-red-24.
 
 ### Renders and data
 

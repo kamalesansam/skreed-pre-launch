@@ -4,7 +4,7 @@ Study of 2026-10-09, revision 2 (same day: mechanisms behind the camera angle, t
 
 | | |
 |---|---|
-| What was asked | Sam (2026-10-09): each of the ten section 2 rocks opens a family page, one per family, modelled on ciao's landing page, where drink cans stand lined up in 3D. On ours the cans become phone cases: the Blissful Blues page shows 24 cases, one per shade. One case model arrives as a zip; it must be one model class instanced in all 240 shades, never 240 assets |
+| What was asked | Sam (2026-10-09): each of the ten section 2 rocks opens a family page, one per family, modelled on ciao's landing page, where drink cans stand lined up in 3D. On ours the cans become phone cases: the Blissful Blue page shows 24 cases, one per shade. One case model arrives as a zip; it must be one model class instanced in all 240 shades, never 240 assets |
 | Source | Local mirror of www.ciaoenergy.com (captured 2026-10-06, site published 2026-09-17): page HTML, Webflow CSS and JS, three r161 with addons, `can.glb`, `base.glb`, `hdri2.hdr`, label and mask AVIFs, the loader video. Served by Playwright route interception, everything else blocked. No mirror file was edited; probes were injected in flight only |
 | Method | Four parallel studies: source (every line of the inline 3D module and DOM script, plus live probes of the scene objects at 1280x800 DPR 1, 1280x800 DPR 2 and 390x844 DPR 3 iOS), runtime (42 input sequences, about 1,000 frames, one virtual clock driving rAF, timers and CSS transitions, at 1280x800 DPR 1 and 390x844 DPR 2 Android), assets (the GLBs, HDR and textures measured and rendered, plus our own stand-in case tests), layout (DOM, type and HUD measured at nine widths, a Skreed wireframe built from the shipped fonts and the real shade data) |
 | Rendering caveat | Headless Chromium uses SwiftShader. Geometry, state, counts and timings are exact; shading is approximate and every frame-time number is meaningless for a phone GPU |
@@ -147,11 +147,11 @@ Two registered CSS colour properties (primary and secondary) with a 0.6 s transi
 
 A procedural stand-in case (77 x 163 x 12.3 mm, camera cut-out, two parts, 7,520 triangles) was built as a test fixture to try the Skreed approach. It is not a product and never ships. Its recipe is `scripts/case-model/study/gen-standin.html`.
 
-- **Instancing.** One InstancedMesh per part, 24 instances, per-instance shade colour: 2 draw calls and 180,480 triangles for a 24-case Blissful Blues grid, at 390 x 844 DPR 2 and at 1280 x 800. ciao spends 28 calls on desktop and 13 on phones. In a 4 x 6 phone grid each case is about 55 x 120 CSS px. Frames: `SCR/assets/renders/sheet-standin-instancing.png`, `standin-row-gloss-1280.png`, `standin-grid-matte-390.png`, `finish-compare-390.png`.
+- **Instancing.** One InstancedMesh per part, 24 instances, per-instance shade colour: 2 draw calls and 180,480 triangles for a 24-case Blissful Blue grid, at 390 x 844 DPR 2 and at 1280 x 800. ciao spends 28 calls on desktop and 13 on phones. In a 4 x 6 phone grid each case is about 55 x 120 CSS px. Frames: `SCR/assets/renders/sheet-standin-instancing.png`, `standin-row-gloss-1280.png`, `standin-grid-matte-390.png`, `finish-compare-390.png`.
 - **Camera cut-out.** Without a phone part the cut-out shows the page through the case; the model needs a Device part or a filled lens plate.
 - **LOD.** meshopt's simplifier took the stand-in from 7,520 to 3,820 triangles; at the 390 px grid it differed from the full model on 2.1% of pixels, all on silhouettes (`SCR/assets/renders/lod1-vs-raw-crop.png`). Quantisation alone differed on 0.72%.
 - **Compression, and what the site CSP allows.** On ciao's can: quantised only 54.7 KB brotli, meshopt plus quantise 47.4 KB, Draco 22.4 KB. The site CSP (`hero-architecture.md` 12.3) has no `'wasm-unsafe-eval'`, so the meshopt, Draco and KTX2 decoders, which all compile WebAssembly, cannot run on the site; only `KHR_mesh_quantization`, which GLTFLoader reads with no decoder, is usable. Measured on the stand-in without UVs (`tests/case-model/baseline/model-size-standin.txt`): LOD0 float 148,572 B; quantised 114,912 B raw, 64,443 B gzip, 36,145 B brotli; meshopt 48,624 B raw, 26,651 B brotli. LOD1 (3,770 triangles) quantised 58,724 B raw, 23,011 B brotli; meshopt 28,780 B raw. Decoder sizes for the record: meshopt 6.5 KB gzip; Draco 63 KB gzip wasm plus 11.5 KB wrapper plus 4.2 KB loader; Basis 245 KB gzip wasm plus 15.7 KB. RoomEnvironment (a procedural studio, no download) is 1.2 KB; GLTFLoader 23.5 KB (three r165, gzip). Pitfall: gltf-transform's default prune deletes UVs when the file's own materials have no textures.
-- **Colour.** Matte case, roughness 0.62, under a uniform white environment of radiance 1, all 240 hexes, error measured as CIEDE2000 on a 3 x 3 px back-plate sample (`tests/case-model/baseline/calib-summary.json`, per-shade samples `tests/case-model/baseline/calib-neutral-<family>.json`, sheet `SCR/assets/calib/calib-neutral-blissful-blues.png`):
+- **Colour.** Matte case, roughness 0.62, under a uniform white environment of radiance 1, all 240 hexes, error measured as CIEDE2000 on a 3 x 3 px back-plate sample (`tests/case-model/baseline/calib-summary.json`, per-shade samples `tests/case-model/baseline/calib-neutral-<family>.json`, sheet `SCR/assets/calib/calib-neutral-blissful-blue.png`):
 
 | Tone mapping | Median | 90th percentile | Worst | Under 2 | Under 5 |
 |---|---|---|---|---|---|
@@ -160,7 +160,7 @@ A procedural stand-in case (77 x 163 x 12.3 mm, camera cut-out, two parts, 7,520
 | ACES (ciao's) | 6.04 | 9.39 | 11.48 | 0% | 33% |
 | AgX | 10.5 | 14.44 | 17.33 | 2% | 5% |
 
-  With no tone mapping the darkest shades lift (Mahogany #470406 renders as 84, 48, 48). Under ACES the median hue shift on saturated shades is 3.2 degrees against 0.23 under Neutral. Neutral's worst cases are the brightest saturated shades, whose peak channel compresses to 240 (Neon in Blushing Corals, #ff7901, rendered 240, 118, 36).
+  With no tone mapping the darkest shades lift (Mahogany #470406 renders as 84, 48, 48). Under ACES the median hue shift on saturated shades is 3.2 degrees against 0.23 under Neutral. Neutral's worst cases are the brightest saturated shades, whose peak channel compresses to 240 (Neon in Blushing Coral, #ff7901, rendered 240, 118, 36).
 - **Intake.** `scripts/case-model/study/intake.sh <zip|glb|folder> [family] [lod1 tris]` checks the user's zip in about 60 s (zip safety, glTF validity, units, orientation, parts, triangles, baked colour, UVs, topology, textures, size), optionally writes LOD0 and LOD1, and renders three views, the phone grid, the 1280 row, the Neutral colour grid and the LOD1 grid. It still points at this session's scratch toolchain; `case-model-class.md` section 2 lists the port. The contract it checks is `docs/specs/case-asset-contract.json`.
 
 ## 11. Stage neutral per family (layout study)
@@ -169,16 +169,16 @@ WCAG contrast of every shade against the two page neutrals; the family's stage t
 
 | Family | Stage | Median on Pearl | Median on Slate | Under 1.5:1 on the chosen stage |
 |---|---|---|---|---|
-| Frosty Whites | Urban Slate | 1.08 | 9.25 | 0 (all 24 are under 1.5:1 on Pearl) |
-| Blissful Blues | Pearl Whisper | 4.69 | 2.31 | 6 |
-| Playful Pinks | Urban Slate | 2.59 | 4.22 | 0 |
-| Vivid Violets | Pearl Whisper | 7.29 | 1.54 | 2 |
-| Mellow Yellows | Urban Slate | 1.32 | 7.56 | 0 |
-| Earthy Browns | Pearl Whisper | 5.52 | 2.14 | 2 |
-| Blushing Corals | Urban Slate | 2.52 | 4.07 | 0 |
-| Stormy Greys | Pearl Whisper | 3.91 | 2.60 | 0 |
+| Frosty White | Urban Slate | 1.08 | 9.25 | 0 (all 24 are under 1.5:1 on Pearl) |
+| Blissful Blue | Pearl Whisper | 4.69 | 2.31 | 6 |
+| Playful Pink | Urban Slate | 2.59 | 4.22 | 0 |
+| Vivid Violet | Pearl Whisper | 7.29 | 1.54 | 2 |
+| Mellow Yellow | Urban Slate | 1.32 | 7.56 | 0 |
+| Basic Brown | Pearl Whisper | 5.52 | 2.14 | 2 |
+| Blushing Coral | Urban Slate | 2.52 | 4.07 | 0 |
+| Stormy Grey | Pearl Whisper | 3.91 | 2.60 | 0 |
 | Go Green | Urban Slate | 2.96 | 3.51 | 5 |
-| Roaring Reds | Pearl Whisper | 6.14 | 1.63 | 0 |
+| Roaring Red | Pearl Whisper | 6.14 | 1.63 | 0 |
 
 The wireframe built on this (`SCR/layout/sheets/wire-phone.png`, `wire-laptop.png`, metrics in `SCR/layout/data/wireframe-metrics.json`) fits at 360, 390 and 1280 with no horizontal scroll. The widest shade names in Poppins 700: Dark Chocolate 229 px at 28 px and 286 px at 36 px; Classic Violet 196 and 253. A 24-swatch scrubber at 390 has a pitch of 14.91 px (13.59 at 360, 27.66 at 1280).
 

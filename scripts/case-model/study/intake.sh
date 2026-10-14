@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One-command intake for the phone case model the user will upload.
-#   bash intake.sh <path to the zip|glb|folder> [family id, default blissful-blues] [lod1 triangles, default 4000]
+#   bash intake.sh <path to the zip|glb|folder> [family id, default blissful-blue] [lod1 triangles, default 4000]
 # 1. verify-case.mjs: safety, inventory, contract checks, shipped-size estimate, writes LOD0/LOD1 (meshopt)
 # 2. renders: three views + the 24-up grid in one family, matte and gloss, at 390 px (DPR 2) and 1280 px,
 #    for the raw model and the LOD1, plus a calibration grid under Neutral tone mapping
@@ -8,7 +8,7 @@
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
-IN="$(realpath "$1")"; FAM="${2:-blissful-blues}"; LOD1="${3:-4000}"
+IN="$(realpath "$1")"; FAM="${2:-blissful-blue}"; LOD1="${3:-4000}"
 OUT="$ROOT/intake-$(date +%Y%m%d-%H%M%S)"; mkdir -p "$OUT/files" "$OUT/renders"
 export PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
 cd "$ROOT"

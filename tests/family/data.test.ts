@@ -20,16 +20,16 @@ const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
 
 // spec 2.1, the table: slug, key shade, in family, catalog, stage neutral, first to last
 const TABLE: [string, string, number, string, 'slate' | 'pearl', string, string][] = [
-  ['frosty-whites', 'Snow', 7, '007', 'slate', 'Pearl', 'Oatmeal'],
-  ['blissful-blues', 'Sky', 8, '032', 'pearl', 'Electric', 'Midnight'],
-  ['playful-pinks', 'Rouge', 14, '062', 'slate', 'Light Pink', 'Fuchsia'],
-  ['vivid-violets', 'Amethyst', 7, '079', 'pearl', 'Light Violet', 'Eggplant'],
-  ['mellow-yellows', 'Sunbeam', 1, '097', 'slate', 'Sunbeam', 'Dijon'],
-  ['earthy-browns', 'Cinnamon', 7, '127', 'pearl', 'Almond', 'Umber'],
-  ['blushing-corals', 'Mango', 4, '148', 'slate', 'Bellini', 'Rust'],
-  ['stormy-greys', 'Silver', 5, '173', 'pearl', 'Pale Grey', 'Charcoal'],
+  ['frosty-white', 'Snow', 7, '007', 'slate', 'Pearl', 'Oatmeal'],
+  ['blissful-blue', 'Sky', 8, '032', 'pearl', 'Electric', 'Midnight'],
+  ['playful-pink', 'Rouge', 14, '062', 'slate', 'Light Pink', 'Fuchsia'],
+  ['vivid-violet', 'Amethyst', 7, '079', 'pearl', 'Light Violet', 'Eggplant'],
+  ['mellow-yellow', 'Sunbeam', 1, '097', 'slate', 'Sunbeam', 'Dijon'],
+  ['basic-brown', 'Cinnamon', 7, '127', 'pearl', 'Almond', 'Umber'],
+  ['blushing-coral', 'Mango', 4, '148', 'slate', 'Bellini', 'Rust'],
+  ['stormy-grey', 'Silver', 5, '173', 'pearl', 'Pale Grey', 'Charcoal'],
   ['go-green', 'Lawn', 12, '204', 'slate', 'Light Green', 'Army'],
-  ['roaring-reds', 'Crimson', 7, '223', 'pearl', 'Pastel', 'Mahogany'],
+  ['roaring-red', 'Crimson', 7, '223', 'pearl', 'Pastel', 'Mahogany'],
 ];
 
 test('ten families in catalog order, each with the key shade, catalog number and neutral of the spec table', () => {
@@ -52,25 +52,25 @@ test('ten families in catalog order, each with the key shade, catalog number and
   FAMILIES.forEach((f, i) => assert.equal(f.neutral, i % 2 ? 'pearl' : 'slate'));
 });
 
-test('swatches under 1.5:1 against their neutral get the ring: Blissful Blues 6, Go Green 5, Vivid Violets 2, Earthy Browns 2, others 0', () => {
-  const want: Record<string, number> = { 'blissful-blues': 6, 'go-green': 5, 'vivid-violets': 2, 'earthy-browns': 2 };
+test('swatches under 1.5:1 against their neutral get the ring: Blissful Blue 6, Go Green 5, Vivid Violet 2, Basic Brown 2, others 0', () => {
+  const want: Record<string, number> = { 'blissful-blue': 6, 'go-green': 5, 'vivid-violet': 2, 'basic-brown': 2 };
   for (const f of FAMILIES) assert.equal(f.shades.filter((s) => s.low).length, want[f.slug] ?? 0, f.slug);
   assert.ok(Math.abs(contrast('#F7F6F3', '#383F43') - 9.9) < 0.1, 'Pearl on Slate is 9.9:1');
 });
 
 test('catalog numbers map back to their family (the head script and the reserve link use them)', () => {
-  assert.equal(familyOf(1).slug, 'frosty-whites');
-  assert.equal(familyOf(24).slug, 'frosty-whites');
-  assert.equal(familyOf(25).slug, 'blissful-blues');
-  assert.equal(familyOf(240).slug, 'roaring-reds');
+  assert.equal(familyOf(1).slug, 'frosty-white');
+  assert.equal(familyOf(24).slug, 'frosty-white');
+  assert.equal(familyOf(25).slug, 'blissful-blue');
+  assert.equal(familyOf(240).slug, 'roaring-red');
 });
 
 test('the build fails on bad data: 23 shades, 9 families, a repeated name, an unsafe slug, a bad hex, a stale key', () => {
   const cases: [string, (d: { families: { id: string; name: string; shades: { name: string; hex: string; id: string; index: number }[] }[] }, k: RawKey[]) => void, RegExp][] = [
-    ['23 shades', (d) => { d.families[3].shades.pop(); }, /vivid-violets has 23 shades/],
+    ['23 shades', (d) => { d.families[3].shades.pop(); }, /vivid-violet has 23 shades/],
     ['9 families', (d) => { d.families.pop(); }, /expected 10 families/],
-    ['repeated name', (d) => { d.families[0].shades[5].name = d.families[0].shades[4].name; }, /repeats inside frosty-whites/],
-    ['unsafe slug', (d, k) => { d.families[1].id = 'Blissful Blues'; k[1] = { ...k[1], family: 'Blissful Blues' }; }, /not URL-safe/],
+    ['repeated name', (d) => { d.families[0].shades[5].name = d.families[0].shades[4].name; }, /repeats inside frosty-white/],
+    ['unsafe slug', (d, k) => { d.families[1].id = 'Blissful Blue'; k[1] = { ...k[1], family: 'Blissful Blue' }; }, /not URL-safe/],
     ['bad hex', (d) => { d.families[2].shades[0].hex = '#ffff'; }, /hex is not #rrggbb/],
     ['stale key', (_d, k) => { k[4] = { ...k[4], name: 'Lemon' }; }, /disagrees with the data/],
   ];
@@ -103,7 +103,7 @@ test('copy: sentence case strings with no em dash, no emoji, real names; the res
   const s0 = { name: 'Sky', index: 8, n: 32, nnn: '032' };
   for (const v of Object.values(FAM_COPY)) {
     if (typeof v === 'string') strings.push(v);
-    else strings.push(String((v as (...a: unknown[]) => string)(s0 as never, 'Blissful Blues' as never)));
+    else strings.push(String((v as (...a: unknown[]) => string)(s0 as never, 'Blissful Blue' as never)));
   }
   for (const s of strings) {
     assert.doesNotMatch(s, /\u2014|\u2013/, `no em or en dash: ${s}`);
@@ -111,9 +111,9 @@ test('copy: sentence case strings with no em dash, no emoji, real names; the res
     assert.doesNotMatch(s, /seamless|elevate|unleash|next-level|revolutionary/i);
   }
   assert.equal(FAM_COPY.reserveHref(s0, 'gloss'), '/?shade=032&finish=gloss#reserve');
-  assert.equal(FAM_COPY.title('Blissful Blues'), 'Blissful Blues, all 24 shades. Skreed');
-  assert.equal(FAM_COPY.description('Blissful Blues', 'Electric', 'Midnight'), 'All 24 Blissful Blues shades, from Electric to Midnight, on a Skreed case in matte or gloss. Doors open Nov 1.');
-  assert.equal(FAM_COPY.live(s0, 'Blissful Blues'), 'Sky. Blissful Blues. Shade 32 of 240.');
+  assert.equal(FAM_COPY.title('Blissful Blue'), 'Blissful Blue, all 24 shades. Skreed');
+  assert.equal(FAM_COPY.description('Blissful Blue', 'Electric', 'Midnight'), 'All 24 Blissful Blue shades, from Electric to Midnight, on a Skreed case in matte or gloss. Doors open Nov 1.');
+  assert.equal(FAM_COPY.live(s0, 'Blissful Blue'), 'Sky. Blissful Blue. Shade 32 of 240.');
   assert.equal(FAM_COPY.scrubberText(s0), 'Sky, 8 of 24');
 });
 

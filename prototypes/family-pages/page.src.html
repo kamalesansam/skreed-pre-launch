@@ -7,7 +7,7 @@
 (function () {
   var r = document.documentElement, q = new URLSearchParams(location.search);
   r.lang = 'en-IN';
-  var ids = ['frosty-whites', 'blissful-blues', 'playful-pinks', 'vivid-violets', 'mellow-yellows', 'earthy-browns', 'blushing-corals', 'stormy-greys', 'go-green', 'roaring-reds'];
+  var ids = ['frosty-white', 'blissful-blue', 'playful-pink', 'vivid-violet', 'mellow-yellow', 'basic-brown', 'blushing-coral', 'stormy-grey', 'go-green', 'roaring-red'];
   var h = decodeURIComponent(location.hash.replace(/^#/, '')), m = h.match(/^\/?(?:shades\/)?([a-z-]+)/), fi = m ? ids.indexOf(m[1]) : (h ? -1 : 1);
   r.setAttribute('data-route', h === '/' || (h && fi < 0) ? 'index' : 'family');
   r.setAttribute('data-neutral', 'night');
@@ -20,6 +20,7 @@
   if (q.get('mode') === 'grid') why = 'query';
   if (q.get('mode') === '3d') why = '';
   r.setAttribute('data-mode', why ? 'grid' : '3d');
+  if (!why && r.getAttribute('data-route') === 'family') r.className += ' loading';
   r.setAttribute('data-gate', why);
   r.setAttribute('data-stage', 'boot');
   r.setAttribute('data-boot', '');
@@ -117,15 +118,29 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
 .mark svg { width: 72px; height: auto; display: block; fill: currentColor; }
 .txtbtn { font: 600 var(--fs-button)/1 var(--font-ui); min-height: 44px; padding-inline: var(--s2); display: inline-flex; align-items: center; margin-right: calc(var(--s2) * -1); }
 
+/* the side scroll cue, after ciao's (measured, ciaofam/research/scrollicon.md): three chevrons of five dots drawn top down,
+   held, wiped top down, 2.5 s a cycle; 17.5 x 73 px, centred 4 percent plus 3.5 px from each edge, 172.75 px up */
+.scrollcue { position: absolute; z-index: 2; bottom: 172.75px; width: 17.5px; color: #fff; pointer-events: none; transition: opacity 0.5s cubic-bezier(0.333, 0, 0.667, 1), visibility 0s 0.5s; }
+.scrollcue.is-left { left: calc(4% + 3.5px); transform: translateX(-50%); }
+.scrollcue.is-right { right: calc(4% + 3.5px); transform: translateX(50%); }
+.scrollcue svg { display: block; width: 100%; height: auto; }
+.scrollcue.is-hidden, :root[data-scrolled] .scrollcue { opacity: 0; visibility: hidden; }
+.chev { transform-box: fill-box; transform-origin: 50% 50%; opacity: 0; animation: 2.5s linear infinite both; }
+.chev-top { animation-name: cue-top; } .chev-mid { animation-name: cue-mid; } .chev-bottom { animation-name: cue-bottom; }
+@keyframes cue-top { 0% { opacity: 0; transform: translateY(100px) scale(0); animation-timing-function: cubic-bezier(0.333, 1, 0.667, 1); } 24% { opacity: 1; transform: none; animation-timing-function: linear; } 52% { opacity: 1; transform: none; animation-timing-function: cubic-bezier(0.333, 0, 0.667, 0); } 68% { opacity: 0; transform: none; animation-timing-function: linear; } 100% { opacity: 0; transform: none; } }
+@keyframes cue-mid { 0% { opacity: 0; transform: scale(0); animation-timing-function: linear; } 8% { opacity: 0; transform: scale(0); animation-timing-function: cubic-bezier(0.333, 1, 0.667, 1); } 32% { opacity: 1; transform: none; animation-timing-function: linear; } 62% { opacity: 1; transform: none; animation-timing-function: cubic-bezier(0.333, 0, 0.667, 0); } 78% { opacity: 0; transform: none; animation-timing-function: linear; } 100% { opacity: 0; transform: none; } }
+@keyframes cue-bottom { 0% { opacity: 0; transform: translateY(-100px) scale(0); animation-timing-function: linear; } 16% { opacity: 0; transform: translateY(-100px) scale(0); animation-timing-function: cubic-bezier(0.333, 1, 0.667, 1); } 40% { opacity: 1; transform: none; animation-timing-function: linear; } 72% { opacity: 1; transform: none; animation-timing-function: cubic-bezier(0.333, 0, 0.667, 0); } 88% { opacity: 0; transform: none; animation-timing-function: linear; } 100% { opacity: 0; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .chev { animation: none; opacity: 1; transform: none; } }
 /* the lineup: the first screen, under the header (phone first); every HUD row sits over the stage */
 .lineup { position: relative; height: var(--stage-h); margin-top: calc(-1 * var(--header-h) - env(safe-area-inset-top, 0px)); }
 .intro { position: absolute; z-index: 2; left: var(--gutter); right: var(--gutter); top: calc(var(--header-h) + env(safe-area-inset-top, 0px) + var(--s1)); display: grid; gap: var(--s0); pointer-events: none; }
 /* ciao's fade over the bottom of the first screen (its overlay: 120% of the screen from -10%, clear to 70%,
    night at 95%, so on the screen clear to 74% and night at 104%), over the cases and under the HUD */
-.fade { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(180deg, transparent 74%, var(--night) 104%); } /*E-F1*/
+.fade { position: fixed; inset: 0; z-index: 2; pointer-events: none; transition: opacity 0.6s linear; background: linear-gradient(180deg, transparent 74%, var(--night) 104%); } /*E-F1*/
+html.beats-on .fade { opacity: 0; }
 .eyebrow { font: 600 var(--fs-eyebrow)/1.2 var(--font-ui); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
 .viewbtn { font: 600 var(--fs-label)/1 var(--font-ui); min-height: 44px; padding-inline: var(--s2); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
-.stage { position: absolute; inset: 0; overflow: hidden; }
+.stage { position: fixed; inset: 0; z-index: 1; overflow: hidden; }
 .stage3d { position: absolute; inset: 0; touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .stage3d canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity var(--dur-canvas) linear; touch-action: pan-y; }
 .skel { position: absolute; inset: 0; width: 100%; height: 100%; display: block; transition: visibility 0s linear var(--dur-canvas); }
@@ -137,7 +152,31 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
 :root[data-mode="grid"] .grid-slot { display: grid; }
 :root[data-mode="grid"] .family-sec { display: none; }
 
-.below { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.below { position: fixed; inset: 0; z-index: 4; pointer-events: none; transition: opacity 0.5s cubic-bezier(0.333, 0, 0.667, 1), visibility 0s; }
+html.hud-off .below { opacity: 0; visibility: hidden; transition: opacity 0.5s cubic-bezier(0.333, 0, 0.667, 1), visibility 0s 0.5s; }
+/* ciao's profile and benefits (family-page.md 20): the page scrolls on past the carousel; the canvas is fixed behind it;
+   the selected case zooms in, the background takes its shade (E-F2, Sam 2026-10-14), four case types read beside it
+   with ciao's text block (28rem, left), then the carousel returns in the last screen */
+#tint { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 0.6s linear; background: radial-gradient(88.85% 121.19% at 43.49% 112.49%, var(--tint2) 4.96%, var(--tint1) 54.38%, var(--night) 93.49%); } /*E-F2*/
+html.tint-on #tint { opacity: 1; }
+.beats { position: relative; z-index: 3; }
+.beat { height: 100svh; position: relative; }
+.beat-in { position: fixed; inset: 0; display: grid; align-content: end; padding: 0 var(--gutter) calc(104px + var(--sab)); pointer-events: none; visibility: hidden; transition: visibility 0s 0.8s; }
+.beat.on .beat-in { visibility: visible; transition: visibility 0s; }
+.beat-txt { max-width: 28rem; display: grid; gap: var(--s2); pointer-events: auto; }
+.beat-eyebrow { font: 600 var(--fs-eyebrow)/1.2 var(--font-ui); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+.beat-h { font: 700 clamp(2rem, 3vw, 3rem)/1.05 var(--font-display); letter-spacing: -0.015em; margin: 0; }
+.beat-p { font: 400 1.125rem/1.5 var(--font-ui); }
+.beat-txt > * { overflow: hidden; }
+.beat-txt > * > span { display: block; transform: translateY(110%); transition: transform 0.7s cubic-bezier(0.2, 0, 0, 1); }
+.beat.on .beat-txt > * > span { transform: none; }
+.beat.on .beat-txt > :nth-child(2) > span { transition-delay: 0.06s; }
+.beat.on .beat-txt > :nth-child(3) > span { transition-delay: 0.12s; }
+.beatnav { position: fixed; right: var(--s2); top: 50%; transform: translateY(-50%); z-index: 4; display: grid; gap: var(--s2); margin: 0; padding: 0; opacity: 0; visibility: hidden; transition: opacity 0.5s cubic-bezier(0.333, 0, 0.667, 1), visibility 0s 0.5s; }
+html.beats-on .beatnav { opacity: 1; visibility: visible; transition: opacity 0.5s cubic-bezier(0.333, 0, 0.667, 1), visibility 0s; }
+.beatnav button { width: 36px; height: 36px; border-radius: var(--radius-round); border: 1.5px solid color-mix(in srgb, var(--pearl-whisper) 50%, transparent); display: grid; place-items: center; font: 600 0.8125rem/1 var(--font-ui); font-variant-numeric: tabular-nums; color: var(--pearl-whisper); transition: background-color var(--dur-press) var(--ease-standard), color var(--dur-press) var(--ease-standard), border-color var(--dur-press) var(--ease-standard); }
+.beatnav button[aria-current="true"] { background: var(--pearl-whisper); color: var(--night); border-color: var(--pearl-whisper); }
+:root[data-route="index"] .beats, :root[data-route="index"] .beatnav, :root[data-route="index"] #tint { display: none; }
 .hud { display: contents; }
 .below .name, .below .meta, .below .arrow, .below .state, .below .scrub, .below .controls { position: absolute; pointer-events: auto; }
 .name { left: var(--gutter); right: var(--gutter); top: var(--name-top); font: 700 var(--fs-tile-name)/var(--lh-tile) var(--font-display); letter-spacing: var(--ls-tile); text-align: center; height: calc(var(--lh-tile) * 1em); }
@@ -230,13 +269,16 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
 .strip span[data-ring] { border: 1px solid var(--fg); }
 .index-note { font: 400 var(--fs-small)/1.5 var(--font-ui); }
 
-:root[data-route="index"] .lineup, :root[data-route="index"] .family-sec, :root[data-route="index"] .famnav, :root[data-route="index"] .sticky { display: none; }
+:root[data-route="index"] .lineup, :root[data-route="index"] .sticky { display: none; }
 :root[data-route="family"] .index { display: none; }
 
 /* the wide layout (family-page.md 2.4): one breakpoint, 900 x 600 */
 @media (min-width: 900px) and (min-height: 600px) {
   .mark svg { width: 72px; }
   .intro { top: calc(var(--header-h) + var(--s1)); }
+  .beat-in { align-content: center; padding: 0 var(--gutter) 0 max(var(--gutter), 10%); }
+  .beatnav { right: var(--gutter); }
+  .beatnav button { width: 44px; height: 44px; font-size: 0.875rem; }
   .state { left: var(--gutter); right: auto; top: calc(100% - var(--hud-band) + var(--s3)); width: min(300px, calc(50vw - 260px)); text-align: left; justify-content: flex-start; }
   .scrub { width: min(664px, calc(100% - 520px)); }
   .cells span { width: min(16px, calc(100% - 4px)); }
@@ -264,10 +306,32 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
   .fam-index { grid-template-columns: 1fr 1fr; column-gap: var(--s6); row-gap: var(--s5); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .marker, .press, .stage3d canvas { transition-duration: 0s; }
+  .marker, .press, .stage3d canvas, .beat-txt > * > span, .below, .beatnav, #tint, .fade { transition-duration: 0s; }
 }
+/* the loader: the hero's 0-100 screen, our own copy (family-page.md 20) */
+html.loading,html.loading body{overflow:hidden}
+.ldr[hidden]{display:none}
+html.loading .scrollcue{visibility:hidden}
+.ldr{position:fixed;inset:0;z-index:40;background:var(--night);display:grid;place-items:center;contain:strict}
+.ld-w{position:relative;width:min(47.6vh,72vw,600px);width:min(47.6svh,72vw,600px);aspect-ratio:1209.46/292.9}
+.ld-m{position:absolute;inset:0;overflow:hidden;-webkit-mask:no-repeat 0 0/100% 100%;mask:no-repeat 0 0/100% 100%;visibility:hidden}
+.ld-m.on{visibility:visible}
+.ld-g,.ld-s{position:absolute;inset:0}
+.ld-m i{position:absolute;top:0;left:0;width:100%;height:100%;display:block}
+#ldBase{background:#F7F6F341}
+#ldFill{/*E-H1*/width:122%;opacity:0;will-change:transform,opacity;background:linear-gradient(90deg,#F7F6F3 81.97%,#F7F6F3F4 84.22%,#F7F6F3D7 86.48%,#F7F6F3AE 88.73%,#F7F6F380 90.98%,#F7F6F351 93.24%,#F7F6F328 95.49%,#F7F6F30B 97.75%,#F7F6F300)}
+#ldBand{/*E-H1*/opacity:0;will-change:transform,opacity;background:linear-gradient(90deg,#F7F6F300,#F7F6F303 9.5%,#F7F6F30A 16.25%,#F7F6F320 23%,#F7F6F34E 29.75%,#F7F6F391 36.5%,#F7F6F3D3 43.25%,#F7F6F3EF 50%,#F7F6F3D3 56.75%,#F7F6F391 63.5%,#F7F6F34E 70.25%,#F7F6F320 77%,#F7F6F30A 83.75%,#F7F6F303 90.5%,#F7F6F300)}
+.ld-line{position:absolute;inset:0;width:100%;height:100%;overflow:visible;opacity:0}
+.ld-line use{color:transparent;stroke:var(--pearl);stroke-opacity:.42;stroke-linejoin:round}
+.ld-p{position:absolute;left:0;right:0;bottom:calc(clamp(40px,9svh,88px) + env(safe-area-inset-bottom,0px));margin:0;display:grid;justify-items:center;gap:var(--s1);font-family:'Open Sans',Arial,sans-serif;color:var(--pearl);text-align:center}
+#ldPct{font-size:.875rem;font-weight:400;line-height:1;letter-spacing:1.1em;margin-right:-1.1em;font-variant-numeric:tabular-nums}
+#ldSt{font-size:.75rem;line-height:1.4;color:var(--muted);max-width:calc(100vw - 32px)}
+#ldSt:empty{display:none}
+
 </style>
 
+<svg class="sprite" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><g id="skreed-wordmark" fill="currentColor">@LOGO_PATHS@</g></defs></svg>
+<div class="ldr" id="ldr" role="progressbar" aria-label="Loading Skreed" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="ld-w"><div class="ld-m" id="ldM"><div class="ld-g" id="ldG"><i id="ldBase"></i><i id="ldFill"></i></div><div class="ld-s" id="ldS"><i id="ldBand"></i></div></div><svg class="ld-line" id="ldLine" viewBox="0 0 1209.46 292.9" aria-hidden="true" focusable="false"><use href="#skreed-wordmark"/></svg></div><p class="ld-p"><span id="ldSt"></span><span id="ldPct"><span id="ldN">0</span>%</span></p></div>
 <header class="hdr" id="hdr">
   <a class="mark fr" href="#/" aria-label="Skreed home"><svg viewBox="0 0 1209.46 292.9" aria-hidden="true" focusable="false">@LOGO_PATHS@</svg></a>
   <button class="txtbtn fr press" id="families-btn" type="button" popovertarget="family-switcher">Families</button>
@@ -277,11 +341,57 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
   <section class="lineup" id="lineup" aria-labelledby="fam-title">
     <div class="intro">
       <p class="eyebrow" id="eyebrow">02 / 10 Families</p>
-      <h1 id="fam-title">Blissful Blues</h1>
+      <h1 id="fam-title">Blissful Blue</h1>
     </div>
     <div class="fade" aria-hidden="true"></div>
+    <div class="scrollcue is-left" aria-hidden="true"><svg viewBox="0 0 35 146" width="100%" xmlns="http://www.w3.org/2000/svg">
+    <g class="chev chev-top">
+      <circle cx="2.4"  cy="2.4"  r="2.4" fill="currentColor" fill-opacity="0.3"/>
+      <circle cx="10"   cy="9.1"  r="2.4" fill="currentColor" fill-opacity="0.6"/>
+      <circle cx="17.5" cy="15.7" r="2.4" fill="currentColor"/>
+      <circle cx="25"   cy="9.1"  r="2.4" fill="currentColor" fill-opacity="0.6"/>
+      <circle cx="32.6" cy="2.4"  r="2.4" fill="currentColor" fill-opacity="0.3"/>
+    </g>
+    <g class="chev chev-mid">
+      <circle cx="2.4"  cy="66.4" r="2.4" fill="currentColor" fill-opacity="0.3"/>
+      <circle cx="10"   cy="73"   r="2.4" fill="currentColor" fill-opacity="0.6"/>
+      <circle cx="17.5" cy="79.7" r="2.4" fill="currentColor"/>
+      <circle cx="25"   cy="73"   r="2.4" fill="currentColor" fill-opacity="0.6"/>
+      <circle cx="32.6" cy="66.4" r="2.4" fill="currentColor" fill-opacity="0.3"/>
+    </g>
+    <g class="chev chev-bottom">
+      <circle cx="2.4"  cy="130.3" r="2.4" fill="currentColor" fill-opacity="0.3"/>
+      <circle cx="10"   cy="137"   r="2.4" fill="currentColor" fill-opacity="0.6"/>
+      <circle cx="17.5" cy="143.7" r="2.4" fill="currentColor"/>
+      <circle cx="25"   cy="137"   r="2.4" fill="currentColor" fill-opacity="0.6"/>
+      <circle cx="32.6" cy="130.3" r="2.4" fill="currentColor" fill-opacity="0.3"/>
+    </g>
+  </svg></div>
+    <div class="scrollcue is-right" aria-hidden="true"><svg viewBox="0 0 35 146" width="100%" xmlns="http://www.w3.org/2000/svg">
+    <g class="chev chev-top">
+      <circle cx="2.4"  cy="2.4"  r="2.4" fill="currentColor" fill-opacity="0.3"/>
+      <circle cx="10"   cy="9.1"  r="2.4" fill="currentColor" fill-opacity="0.6"/>
+      <circle cx="17.5" cy="15.7" r="2.4" fill="currentColor"/>
+      <circle cx="25"   cy="9.1"  r="2.4" fill="currentColor" fill-opacity="0.6"/>
+      <circle cx="32.6" cy="2.4"  r="2.4" fill="currentColor" fill-opacity="0.3"/>
+    </g>
+    <g class="chev chev-mid">
+      <circle cx="2.4"  cy="66.4" r="2.4" fill="currentColor" fill-opacity="0.3"/>
+      <circle cx="10"   cy="73"   r="2.4" fill="currentColor" fill-opacity="0.6"/>
+      <circle cx="17.5" cy="79.7" r="2.4" fill="currentColor"/>
+      <circle cx="25"   cy="73"   r="2.4" fill="currentColor" fill-opacity="0.6"/>
+      <circle cx="32.6" cy="66.4" r="2.4" fill="currentColor" fill-opacity="0.3"/>
+    </g>
+    <g class="chev chev-bottom">
+      <circle cx="2.4"  cy="130.3" r="2.4" fill="currentColor" fill-opacity="0.3"/>
+      <circle cx="10"   cy="137"   r="2.4" fill="currentColor" fill-opacity="0.6"/>
+      <circle cx="17.5" cy="143.7" r="2.4" fill="currentColor"/>
+      <circle cx="25"   cy="137"   r="2.4" fill="currentColor" fill-opacity="0.6"/>
+      <circle cx="32.6" cy="130.3" r="2.4" fill="currentColor" fill-opacity="0.3"/>
+    </g>
+  </svg></div>
     <div class="stage" id="stage">
-      <div class="stage3d" id="stage3d" role="img" aria-label="24 Blissful Blues cases in a row. Sky is in front.">
+      <div class="stage3d" id="stage3d" role="img" aria-label="24 Blissful Blue cases in a row. Sky is in front.">
         <svg class="skel" id="skel" aria-hidden="true" focusable="false"></svg>
       </div>
       <div class="grid-slot" id="grid-slot"></div>
@@ -290,7 +400,7 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
       <div class="hud" id="hud">
         <div class="name mask" id="hud-name"><span>Sky</span></div>
         <button class="arrow prev fr press" id="prev" type="button" aria-label="Previous shade"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 4.5 7.5 12l7.5 7.5"/></svg></button>
-        <p class="meta"><span class="fam" id="hud-fam">Blissful Blues</span><span class="num mask" id="hud-num" aria-hidden="true"><span>032 / 240</span></span><span class="vh" id="hud-num-sr">Shade 32 of 240</span></p>
+        <p class="meta"><span class="fam" id="hud-fam">Blissful Blue</span><span class="num mask" id="hud-num" aria-hidden="true"><span>032 / 240</span></span><span class="vh" id="hud-num-sr">Shade 32 of 240</span></p>
         <button class="arrow next fr press" id="next" type="button" aria-label="Next shade"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 4.5 16.5 12 9 19.5"/></svg></button>
       </div>
       <p class="state" id="state" hidden></p>
@@ -309,19 +419,43 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
     </div>
   </section>
 
-  <section class="family-sec" id="family-sec" aria-labelledby="whole-h">
-    <h2 id="whole-h">The whole family.</h2>
-    <div class="grid-home" id="grid-home">
-      <div class="grid" id="grid" role="group" aria-label="Blissful Blues shades"></div>
-      <p class="grid-cap" id="grid-cap">Sky, Blissful Blues</p>
-    </div>
-  </section>
+  <div id="tint" aria-hidden="true"></div>
+  <div class="beats" id="beats">
+    <section class="beat" data-beat="z" aria-labelledby="bz-h"><div class="beat-in"><div class="beat-txt">
+      <p class="beat-eyebrow"><span id="bz-eyebrow">Blissful Blue, 032 / 240</span></p>
+      <h2 class="beat-h" id="bz-h"><span id="bz-name">Sky</span></h2>
+      <p class="beat-p"><span>Available in 240 shades, matte and gloss.</span></p>
+    </div></div></section>
+    <section class="beat" data-beat="1" id="beat-1" aria-labelledby="b1-h"><div class="beat-in"><div class="beat-txt">
+      <p class="beat-eyebrow"><span>Case 1 of 4</span></p>
+      <h2 class="beat-h" id="b1-h"><span>Tough</span></h2>
+      <p class="beat-p"><span>A durable polycarbonate shell over a shock-absorbing TPU layer, for everyday bumps, drops and scratches. Precision cutouts keep the camera, port and controls clear.</span></p>
+    </div></div></section>
+    <section class="beat" data-beat="2" id="beat-2" aria-labelledby="b2-h"><div class="beat-in"><div class="beat-txt">
+      <p class="beat-eyebrow"><span>Case 2 of 4</span></p>
+      <h2 class="beat-h" id="b2-h"><span>MagTough</span></h2>
+      <p class="beat-p"><span>The Tough case with a built-in magnetic ring. Works with every magnetic phone accessory.</span></p>
+    </div></div></section>
+    <section class="beat" data-beat="3" id="beat-3" aria-labelledby="b3-h"><div class="beat-in"><div class="beat-txt">
+      <p class="beat-eyebrow"><span>Case 3 of 4</span></p>
+      <h2 class="beat-h" id="b3-h"><span>Snap</span></h2>
+      <p class="beat-p"><span>Light everyday protection that keeps the slim profile of your phone. Precision cutouts keep the camera, port and controls clear.</span></p>
+    </div></div></section>
+    <section class="beat" data-beat="4" id="beat-4" aria-labelledby="b4-h"><div class="beat-in"><div class="beat-txt">
+      <p class="beat-eyebrow"><span>Case 4 of 4</span></p>
+      <h2 class="beat-h" id="b4-h"><span>Armor</span></h2>
+      <p class="beat-p"><span>Built for everyday impact. Reinforced edges and raised protection around the camera, with a built-in magnetic ring for magnetic accessories.</span></p>
+    </div></div></section>
+    <section class="beat" data-beat="last" aria-label="The family again"><div class="beat-in"></div></section>
+  </div>
+  <div class="beatnav" id="beatnav" role="group" aria-label="Case types">
+    <button type="button" class="fr" data-beat="1" aria-label="Tough">1</button><button type="button" class="fr" data-beat="2" aria-label="MagTough">2</button><button type="button" class="fr" data-beat="3" aria-label="Snap">3</button><button type="button" class="fr" data-beat="4" aria-label="Armor">4</button>
+  </div>
 
-  <nav class="famnav" id="famnav" aria-label="Neighbouring families">
-    <a class="pf fr" id="prev-fam" href="#/shades/frosty-whites/"><span class="lbl">Previous family</span><span class="nm">Frosty Whites</span></a>
-    <a class="nf fr" id="next-fam" href="#/shades/playful-pinks/"><span class="lbl">Next family</span><span class="nm">Playful Pinks</span></a>
-    <a class="all fr" href="#/">All 240 shades</a>
-  </nav>
+  <div class="grid-home" id="grid-home" hidden>
+    <div class="grid" id="grid" role="group" aria-label="Blissful Blue shades"></div>
+    <p class="grid-cap" id="grid-cap">Sky, Blissful Blue</p>
+  </div>
 
   <section class="index" id="index" aria-labelledby="index-h">
     <div class="index-intro">
@@ -343,11 +477,6 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
   <a class="sw-all fr" href="#/">All 240 shades</a>
 </div>
 
-<footer class="foot">
-  <p class="line">Tech Essentials That Go Beyond Basic.</p>
-  <p>colour is personal.</p>
-  <p>Prototype of the Skreed family pages. Reserve, privacy and terms are not wired up here.</p>
-</footer>
 
 <div class="sticky" id="sticky">
   <span class="sdot" id="sticky-dot" aria-hidden="true"><span class="sd"></span></span>
@@ -359,7 +488,85 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
 
 <script type="application/octet-stream" id="glb-lod1">@LOD1@</script>
 <script type="application/octet-stream" id="glb-lod0">@LOD0@</script>
+<script type="application/octet-stream" id="glb-mt-lod1">@MT1@</script>
+<script type="application/octet-stream" id="glb-mt-lod0">@MT0@</script>
 
+<script>/* Skreed loader: light passes, the wordmark fills with the load, dims to an outline, lifts. */
+(function(){
+var WT={import:.42,lod1:.1,env:.08,compile:.22,lod0:.1,frame:.08};   /* milestone weights: measured shares of a cold load */
+var D=document,HT=D.documentElement,$=function(i){return D.getElementById(i)},T0=performance.now();
+var reduce=matchMedia('(prefers-reduced-motion:reduce)').matches,OFF='You are offline. The countdown still runs.';
+var intro=$('ldr'),M=$('ldM'),GL=$('ldG'),FL=$('ldFill'),SG=$('ldS'),BD=$('ldBand'),LN=$('ldLine'),PN=$('ldN'),PC=$('ldPct'),ST=$('ldSt'),i;
+if(!HT.classList.contains('loading')){intro.remove();return}
+/* mask: the page's one wordmark */
+var ps=$('skreed-wordmark').children,sv='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1209.46 292.9">';
+for(i=0;i<ps.length;i++)sv+='<path d="'+ps[i].getAttribute('d')+'"/>';
+M.style.webkitMaskImage=M.style.maskImage='url("data:image/svg+xml,'+encodeURIComponent(sv+'</svg>')+'")';M.classList.add('on');
+function lw(){LN.firstChild.style.strokeWidth=(1209.46/Math.max(1,M.clientWidth)).toFixed(3)}lw();addEventListener('resize',lw);
+/* measured: FF fill front, FO fill opacity, SW a pass (t,centre,strength), DM dim, SD last pass dim */
+var FF=[1.64,.07,2.08,.1,2.24,.13,2.4,.15,2.56,.17,2.72,.19,2.88,.22,3.04,.26,3.2,.29,3.36,.33,3.52,.37,3.76,.43,4,.49,4.24,.54,4.48,.61,4.72,.67,4.96,.73,5.04,.75,5.12,.77,5.2,.78],
+FO=[1.64,0,1.8,.19,1.92,.23,2,.35,2.08,.43,2.2,.55,2.4,.77,2.56,.86,2.72,.91,2.88,.96,3.04,1],
+SW=[0,.03,0,.04,.03,14,.08,.05,32,.12,.1,45,.16,.21,50,.2,.31,61,.24,.39,70,.28,.46,79,.32,.52,86,.36,.57,94,.4,.63,100,.44,.67,106,.48,.71,111,.52,.76,116,.56,.79,120,.6,.84,126,.64,.88,137,.68,.94,161,.72,.98,176,.76,.99,172,.8,1,166,.84,1.01,159,.88,1.02,149,.92,1.02,138,.96,1.04,127,1,1.04,115,1.04,1.06,104,1.08,1.06,87,1.12,1.06,76,1.16,1.07,56,1.2,1.07,44,1.24,1.08,24,1.28,1.08,10,1.32,1.08,0],
+DM=[0,1,.04,.99,.08,.96,.16,.89,.24,.82,.32,.7,.4,.58,.48,.48,.56,.38,.64,.28,.72,.18,.8,.12,.88,.07,.96,.04,1.04,.01,1.12,.01,1.24,0],
+SD=[0,1,.68,1,.8,.575,.96,.267,1.12,.12,1.28,.05,1.44,0],
+CYC=1.6,DEL=.2,LEAD=.04,FULL=4.96,END=7.05,EIN='cubic-bezier(.55,.085,.68,.53)';
+function at(a,x){if(x<=a[0])return a[1];for(var j=2;j<a.length;j+=2)if(x<=a[j])return a[j-1]+(a[j+1]-a[j-1])*(x-a[j-2])/(a[j]-a[j-2]);return a[a.length-1]}
+function op(a,d){for(var o=[],j=0;j<a.length;j+=2)o.push({offset:a[j]/d,opacity:a[j+1]});return o}
+function tx(c){return'translateX('+((c-.5)*100).toFixed(2)+'%) skewX(-5deg)'}
+var swA=null;
+var k=[];if(!reduce){for(i=0;i<SW.length;i+=3)k.push({offset:SW[i]/CYC,transform:tx(SW[i+1]),opacity:+(SW[i+2]/176).toFixed(3)});
+  k.push({offset:1,transform:tx(SW[1]),opacity:0});swA=BD.animate(k,{duration:CYC*1e3,delay:DEL*1e3,iterations:Infinity})}
+function fk(t,d,t0){return{offset:Math.min(1,(t-t0)/d),transform:'translateX('+((at(FF,t)-1.11)/1.22*100).toFixed(2)+'%) skewX(-5deg)',opacity:+at(FO,t).toFixed(3)}}
+var ts=[0];for(i=0;i<FF.length;i+=2)if(FF[i]<=FULL)ts.push(FF[i]);for(i=0;i<FO.length;i+=2)ts.push(FO[i]);
+ts.sort(function(a,b){return a-b});var fA=FL.animate(ts.map(function(t){return fk(t,FULL,0)}),{duration:FULL*1e3,fill:'forwards'});
+var p=0,pm=0,ready=false,manual=false,got={},lastP=T0,ph='load',mode='',tl=0,last=-1,E=0,n=-1,raf=0,XA=[],fast=1;
+function pend(){for(var q in WT)if(!got[q])return q}
+function show(v){v=Math.max(0,Math.min(100,Math.floor(v)));if(v!==n){n=v;PN.textContent=v;intro.setAttribute('aria-valuenow',v)}}
+/* the dim starts with the next pass */
+function sched(now){exit(now)}
+function exit(e){ph='exit';E=e;if(reduce){enter();return}
+  XA=[GL.animate(op(DM,1.24),{duration:1240,fill:'forwards'}),SG.animate(op(SD,1.44),{duration:1440,fill:'forwards'}),
+  LN.animate([{opacity:0},{opacity:0,offset:.83},{opacity:1}],{duration:240,fill:'forwards'}),
+  FL.animate([4.96,5.04,5.12,5.2].map(function(t){return fk(t,.24,FULL)}),{duration:240,fill:'forwards'})];
+  XA.forEach(function(a){a.startTime=e;a.playbackRate=fast})}
+function enter(){ph='enter';setTimeout(function(){show(100)},reduce?0:120);
+  PC.animate([{opacity:1},{opacity:0}],{duration:400,delay:300,easing:EIN,fill:'forwards'});setTimeout(lift,reduce?0:500)}
+function lift(){if(ph==='done')return;ph='lift';intro.style.pointerEvents='none';HT.classList.remove('loading');
+  intro.animate([{opacity:1},{opacity:0}],{duration:reduce?400:600,easing:EIN,fill:'forwards'}).onfinish=done}
+function done(){cancelAnimationFrame(raf);ph='done';if(swA)swA.cancel();intro.hidden=true}
+function poster(msg){if(mode==='poster'||ph!=='load')return;mode='poster';if(swA)swA.cancel();
+  GL.animate([{opacity:1},{opacity:0}],{duration:400,fill:'forwards'});LN.animate([{opacity:0},{opacity:1}],{duration:400,fill:'forwards'});
+  PC.hidden=true;ST.textContent=msg||'';intro.classList.add('po');intro.removeAttribute('role');HT.classList.remove('loading','intro','uh1','uh2','uh3','uh4')}
+function tick(now){raf=requestAnimationFrame(tick);
+  if(last<0){if((swA||fA).startTime==null)return;last=now}
+  var g=now-last,dt=Math.max(0,Math.min(.25,g/1e3));if(g>500)lastP=Math.min(now,lastP+g);last=now;
+  if(ph==='load'){var nx=pend();
+    if(!manual&&nx&&!ready)p=Math.max(p,Math.min(pm+.9*WT[nx],p+.02*dt));
+    tl=(fA.currentTime||0)/1e3;
+    if(mode==='poster'){if(ready){ph='enter';lift()}return}
+    var sl=!ready&&now-lastP>4e3?/[tyd]$/.test(nx||'')?'Slow connection':'Still loading':'';if(sl!==ST.textContent)ST.textContent=sl;
+    if(!manual&&!ready&&now-lastP>3e4){ready=true;p=1}
+    if(tl>=1.64+(FULL-1.64)*Math.min(1,p)-.001){if(fA.playState==='running')fA.pause()}
+    else{var sp=ready?4:reduce||swA&&swA.currentTime/1e3-tl>.15?2:1;if(fA.playbackRate!==sp)fA.updatePlaybackRate(sp);if(fA.playState==='paused')fA.play()}
+    if(ready&&tl>=FULL-.001)sched(now)}
+  else if(ph==='exit'){tl=Math.max(FULL,Math.min(END,FULL+(now-E)/1e3*fast));if(tl>=END)enter()}
+  if(ph==='load'||ph==='exit')show(tl/END*99)}
+window.__famLoaderReport=function(m){if(manual||!WT[m]||got[m])return;got[m]=1;lastP=performance.now();
+  pm=Math.min(1,pm+WT[m]);p=Math.max(p,pm);if(m==='frame'){ready=true;p=1;fast=2.5}};
+window.__famLoader={
+  setProgress:function(v){manual=true;p=Math.min(1,Math.max(0,+v||0))},
+  ready:function(){manual=true;p=1;ready=true},
+  cut:function(){manual=true;p=1;ready=true;if(ph==='load'){fA.finish();exit(performance.now())}},
+  skip:function(){manual=true;ready=true;if(ph!=='done'&&ph!=='lift'){ph='enter';lift()}},
+  fail:function(){manual=true;ready=true;if(ph!=='done'&&ph!=='lift'){ph='enter';lift()}},
+  again:function(){if(ph!=='done')return;intro.hidden=false;intro.style.pointerEvents='';HT.classList.add('loading');[GL,SG,LN,FL,PC,intro].forEach(function(e){e.getAnimations().forEach(function(a){a.cancel()})});XA=[];
+    p=pm=0;got={};for(var q in WT)if(q!=='frame'){got[q]=1;pm+=WT[q]}p=pm;ready=manual=false;fast=1;T0=lastP=performance.now();ph='load';mode='';tl=0;last=-1;n=-1;ST.textContent='';show(0);
+    fA=FL.animate(ts.map(function(t){return fk(t,FULL,0)}),{duration:FULL*1e3,fill:'forwards'});if(swA)swA=BD.animate(k,{duration:CYC*1e3,delay:DEL*1e3,iterations:Infinity});raf=requestAnimationFrame(tick)},
+  seek:function(t){manual=ready=true;p=1;cancelAnimationFrame(raf);if(swA){swA.pause();swA.currentTime=t*1e3}fA.pause();fA.currentTime=Math.min(t,FULL)*1e3;
+    if(t>=FULL&&!XA.length)exit(performance.now());XA.forEach(function(a){a.pause();a.currentTime=(t-FULL)*1e3});tl=Math.min(END,t);show(tl/END*99);ph='seek'},
+  state:function(){return{phase:ph,mode:mode,p:p,tl:tl,n:n,ready:ready,note:ST.textContent,next:pend()}}};
+raf=requestAnimationFrame(tick);
+})();</script>
 <script>
 /* Page controller: data, routes, selection, HUD, scrubber, grid, finish, states, skeleton, camera fit. */
 (function () {
@@ -392,10 +599,11 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
      turn only spins the label; a flat case would show its edge or its inside, so each case spins about its own long
      axis against the slot's turn (face 1: every back shows like the front case's). */
   var CFG = { sp: 3.5, cs: 4.884, camZ: 29, fov: 20, rx: -20, ry: -20, rz: 11.25, face: 1, slotPx: 175, phoneTop: 132, phoneBottom: 262,
-    tiltYaw: 5, tiltPitch: 3, turn: 10, rate: 10.94, gRate: 2, spot: 50, env: 1, spec: 0.2, specLow: 0.5, tm: 0, cal: 1, trimOffset: 1, dprCap: 0, aa: 1 };
+    tiltYaw: 5, tiltPitch: 3, turn: 10, rate: 10.94, gRate: 2, spot: 50, tm: 0, cal: 1, trimOffset: 1, dprCap: 0, aa: 1, envRot: -40 };
   // every value can be overridden from the query for verification (dprCap and aa exist only for that: a higher pixel
   // ratio cap and multisampling off, used to tell SwiftShader's multisampling seams from real geometry)
   Object.keys(CFG).forEach(function (k) { if (q.has(k) && isFinite(+q.get(k))) CFG[k] = +q.get(k); });
+  CFG.fin = q.get('fin') === 'A' ? 'A' : 'B';   // the finish's environment: B the studio (default), A the ciao map
   var P = { vw: 1280 };
   function derive(dims, cls) { P.w = dims.w; P.d = dims.d; P.cls = cls || layoutClass(); }
   derive(D.dims);
@@ -505,6 +713,28 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
   }
 
   /* ---------------------------------------------------------------- the HUD follows round(target) */
+  /* the per-shade background (E-F2): ciao's radial wash in the selected shade and a lighter, softer tint of it
+     (OKLCH: lightness raised to 0.72 or by 0.3, chroma x 0.9) */
+  function hexToOklab(hex) {
+    var c = [1, 3, 5].map(function (k) { var v = parseInt(hex.slice(k, k + 2), 16) / 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    var l = Math.cbrt(0.4122214708 * c[0] + 0.5363325363 * c[1] + 0.0514459929 * c[2]), m = Math.cbrt(0.2119034982 * c[0] + 0.6806995451 * c[1] + 0.1073969566 * c[2]), s2 = Math.cbrt(0.0883024619 * c[0] + 0.2817188376 * c[1] + 0.6299787005 * c[2]);
+    return [0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s2, 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s2, 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s2];
+  }
+  function oklabToHex(L, a, b) {
+    var l = Math.pow(L + 0.3963377774 * a + 0.2158037573 * b, 3), m = Math.pow(L - 0.1055613458 * a - 0.0638541728 * b, 3), s2 = Math.pow(L - 0.0894841775 * a - 1.291485548 * b, 3);
+    var rgb = [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s2, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s2, -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s2];
+    return '#' + rgb.map(function (v) { v = Math.max(0, Math.min(1, v)); v = v <= 0.0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - 0.055; return ('0' + Math.round(v * 255).toString(16)).slice(-2); }).join('');
+  }
+  function tintOf(hex) {
+    var o = hexToOklab(hex), C = Math.hypot(o[1], o[2]), h = Math.atan2(o[2], o[1]);
+    var L1 = Math.min(o[0], 0.38), C1 = Math.min(C, 0.12), L2 = Math.max(o[0], 0.62), C2 = C * 0.9;
+    return [oklabToHex(L1, C1 * Math.cos(h), C1 * Math.sin(h)), oklabToHex(L2, C2 * Math.cos(h), C2 * Math.sin(h))];
+  }
+  function setTint(sh, f) {
+    var t = tintOf(sh.hex);
+    root.style.setProperty('--tint1', t[0]); root.style.setProperty('--tint2', t[1]);
+    $('bz-name').textContent = sh.name; $('bz-eyebrow').textContent = f.name + ', ' + sh.num + ' / 240';
+  }
   function follow(i, input, opts) {
     if (S.fi < 0) return;
     i = Math.max(0, Math.min(23, i));
@@ -524,6 +754,7 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
     setRoving(i, false);
     $('grid-cap').textContent = sh.name + ', ' + f.name;
     $('sticky-name').textContent = sh.name;
+    setTint(sh, f);
     fadeBar(sh, f, animate);
     var href = '/?shade=' + sh.num + '&finish=' + S.finish + '#reserve';
     document.querySelectorAll('.reserve').forEach(function (a) { a.setAttribute('href', href); a.setAttribute('aria-label', 'Reserve my shade, ' + sh.name); });
@@ -625,11 +856,6 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
       var cap = el('span', 'cap', { 'aria-hidden': 'true' }); cap.textContent = sh.name;
       b.appendChild(d); b.appendChild(cap); grid.appendChild(b);
     });
-    var pf = FL[fi - 1], nf = FL[fi + 1];
-    var pa = $('prev-fam'), na = $('next-fam');
-    pa.classList.toggle('empty', !pf); na.classList.toggle('empty', !nf);
-    if (pf) { pa.href = '#/shades/' + pf.id + '/'; pa.querySelector('.nm').textContent = pf.name; pa.removeAttribute('aria-hidden'); pa.removeAttribute('tabindex'); } else { pa.setAttribute('aria-hidden', 'true'); pa.setAttribute('tabindex', '-1'); }
-    if (nf) { na.href = '#/shades/' + nf.id + '/'; na.querySelector('.nm').textContent = nf.name; na.removeAttribute('aria-hidden'); na.removeAttribute('tabindex'); } else { na.setAttribute('aria-hidden', 'true'); na.setAttribute('tabindex', '-1'); }
     $('sw-list').querySelectorAll('a').forEach(function (a, k) { if (k === fi) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); ring(a.querySelector('.dot'), FL[k].list[FL[k].keyI].hex, f); });
     skelKey = '';
   }
@@ -685,6 +911,7 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
       lineH();
       if (!initial) scrollTo(0, 0);
       hidePopover();
+      onScroll();
       return;
     }
     if (r.redirect) { location.replace(r.redirect); return; }
@@ -701,6 +928,7 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
         settle(sel, 'deeplink');
         setModeDom();
         drawSkel();
+        if (SK.stage && root.dataset.mode === '3d' && window.__famLoader) window.__famLoader.again();
         if (SK.stage) { if (root.dataset.mode === '3d') SK.stage.resume(); SK.stage.setFamily(r.fi, sel); }
         track('family_open', { family: FL[r.fi].id, from: initial ? 'link' : 'switcher' });
         if (!initial && SK.start) SK.start();
@@ -718,8 +946,7 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
   function setModeDom() {
     var m = root.dataset.mode;
     var home = $('grid-home');
-    if (m === 'grid' && home.parentNode !== $('grid-slot')) $('grid-slot').appendChild(home);
-    if (m !== 'grid' && home.parentNode !== $('family-sec')) $('family-sec').appendChild(home);
+    if (home.parentNode !== $('grid-slot')) { $('grid-slot').appendChild(home); home.hidden = false; }
     $('view-btn').textContent = m === 'grid' ? 'Show in 3D' : 'Show swatches';
     viewW();
   }
@@ -736,6 +963,7 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
   if (document.fonts) document.fonts.ready.then(viewW);
   function setMode(m, why) {
     root.dataset.mode = m;
+    if (m !== '3d' && window.__famLoader) window.__famLoader.fail();
     S.why = why;
     setModeDom();
     track('stage_mode', { mode: m, reason: why });
@@ -801,7 +1029,28 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
     else if (document.activeElement === document.body || sw.contains(document.activeElement)) $('families-btn').focus();
   });
 
-  addEventListener('scroll', function () { if (scrollY > 0) root.setAttribute('data-scrolled', ''); else root.removeAttribute('data-scrolled'); }, { passive: true });
+  /* the scroll in screens: 0 to 1 the carousel, 1 to 2 the zoom, 2 to 6 the four case types, 6 to 7 the carousel again.
+     The stage lags it (10 per second); the DOM switches at the same points ciao's triggers fire */
+  var beatEls = document.querySelectorAll('.beat'), navBtns = document.querySelectorAll('.beatnav button');
+  function onScroll() {
+    var sv = innerHeight > 0 ? scrollY / innerHeight : 0;
+    if (scrollY > 0) root.setAttribute('data-scrolled', ''); else root.removeAttribute('data-scrolled');
+    root.classList.toggle('hud-off', sv > 0.5 && sv < 6.5);
+    root.classList.toggle('beats-on', sv > 1.6 && sv < 5.9);
+    root.classList.toggle('tint-on', sv > 1.1 && sv < 6.4);
+    var active = sv > 0.6 && sv < 1.9 ? 'z' : sv < 5.9 ? String(Math.max(1, Math.min(4, Math.floor(sv - 0.6)))) : 'none';
+    beatEls.forEach(function (b) { b.classList.toggle('on', b.dataset.beat === active); });
+    navBtns.forEach(function (b) { b.setAttribute('aria-current', b.dataset.beat === active ? 'true' : 'false'); });
+    S.sv = sv;
+    if (window.SK && window.SK.stage) window.SK.stage.scroll(sv);   // SK is assigned after this first call
+  }
+  addEventListener('scroll', onScroll, { passive: true });
+  addEventListener('resize', onScroll);
+  onScroll();
+  $('beatnav').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-beat]'); if (!b) return;
+    $('beat-' + b.dataset.beat).scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' });
+  });
   /* WCAG 2.4.11 backstop for scroll-padding: after the browser's own focus scroll, a keyboard-focused control (with its
      4 px ring) is moved clear of the sticky header and of the fixed bar on phones */
   document.addEventListener('focusin', function (e) {
@@ -840,14 +1089,32 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
 const SK = window.SK;
 const root = document.documentElement;
 const DEG = Math.PI / 180;
-/* The case's materials as calibrated (case-model-class.md); the light is now ciao's (family-page.md 19). */
-const CAL = { matte: 0.62, gloss: { roughness: 0.62, clearcoat: 1, clearcoatRoughness: 0.03 }, glossLow: 0.25, trim: 0.55 };
+/* The case's materials as calibrated (case-model-class.md): the previous finish, back by Sam's word (2026-10-14: the ciao
+   studio map made the case read metallic; the light's direction and intensity stay ciao's). The environment is the
+   procedural studio of the 2026-10-09 build at its calibrated intensity; the gloss reads the same studio with its three
+   softbox strips. ?fin=A puts the ciao studio map back for comparison. */
+const CAL = { environmentIntensity: 0.575, matte: 0.62, gloss: { roughness: 0.62, clearcoat: 1, clearcoatRoughness: 0.03 }, glossLow: 0.25, trim: 0.55 };
+/* Gloss reads from three softbox strips that only the gloss materials see: a second PMREM of the same studio plus
+   the strips, baked with a light blur (sigma 0.006, about one cube texel, so a diagonal strip has no stair steps), and
+   a polished clearcoat (roughness 0.03, from CaseModel's 0.06), so the matte calibration is untouched and the streaks
+   stay crisp. At rest the front case's back reflects about az -26, el 4 to 5, the studio's dark flag (the back below
+   the camera window spans about az -28.7 to -23 and el -1 to 6; tools/dotprobe.mjs maps it). Strip A crosses the
+   right part of the back there as a diagonal streak, clear of the colour sample point (back-plate local (0, -0.25));
+   B and C wait 12 degrees either side, so the 10 degree turn sweeps a streak across the back whichever side is
+   tapped, and so does the pointer tilt (5 degrees of yaw, 3 of pitch). Each strip runs from a to b ([az, el] in
+   degrees, scene frame: +Y up, camera on +Z), w degrees wide, at radiance L. Tuned on the darkest shades
+   (tools/gtune.mjs, tools/gq.mjs): the strips add at most 3 levels at the sample point. */
+const GLOSS = { sigma: 0.006, scale: 1, strips: [
+  { a: [-26.64, 12], b: [-19.97, -7], w: 1, L: 15 },
+  { a: [-38.59, 11], b: [-32.62, -6], w: 1, L: 9 },
+  { a: [-14.59, 11], b: [-8.62, -6], w: 1, L: 9 },
+] };
 /* Colour under ciao's light: the front case's back at the sample point (back-plate (0, -0.25)) has linear radiance
    a x albedo + b per channel, measured with api.calibrate() (tools/ciaocal.mjs). The albedo given to every case is the
    one that makes that point read the catalog shade through the tone mapping, fitted in albedo space (0..1).
    Tone mapping: Neutral by default. ciao renders with ACES, but ACES pulls strong colours toward white: no albedo makes
    Sky (#08bcf4) read better than (123, 188, 244) through it, while Neutral reaches the catalog. ?tm=1 shows ACES. */
-const CALV = { matte: { a: 4.3596, b: 0.02164 }, gloss: { a: 4.1827, b: 0.0222 } };
+const CALV = { matte: { a: 7.92834, b: 0.04113, y: -0.25 }, gloss: { a: 7.60669, b: 0.06543, y: -0.25 } };   // measured 2026-10-14 (tools/ciaocal.mjs)
 // three's tone maps (r165), forward, on linear RGB at exposure 1; inverted per shade by Newton steps
 const TONE = {
   neutral(c) {
@@ -918,6 +1185,8 @@ const yieldMain = () => new Promise((r) => setTimeout(r, 0));
 function idle(fn) { if ('requestIdleCallback' in window) requestIdleCallback(fn, { timeout: 1500 }); else setTimeout(fn, 200); }
 function fail(kind, msg) { const e = new Error(msg || kind); e.kind = kind; return e; }
 const onFamily = () => root.dataset.route === 'family' && SK.S.fi >= 0;
+const report = (m) => { if (window.__famLoaderReport) window.__famLoaderReport(m); };
+const loaderOff = () => { if (window.__famLoader) window.__famLoader.fail(); };
 
 SK.boot3D = (why) => {
   if (!onFamily()) return null; // the index has no stage: route() starts the island when a family first renders
@@ -928,6 +1197,7 @@ SK.retry3D = () => { SK.setMode('3d', 'retry'); };
 SK.onOnline = () => { if (!SK.stage && onFamily() && root.dataset.mode === 'grid' && SK.S.lastLine === 'offline') { SK.stateLine(null); SK.setMode('3d', 'online'); } };
 
 function onFail(err) {
+  loaderOff();
   const kind = err && err.kind;
   console.warn('3D path:', kind, err && err.message);
   SK.track('model_load_failed', { reason: kind || 'error' });
@@ -951,13 +1221,67 @@ async function boot(why) {
     if (navigator.onLine === false) throw fail('offline');
     THREE = await import('three');
     ({ GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js'));
+    report('import');
   } catch (e) { clearTimeout(slow); throw e.kind ? e : fail('import', e.message); }
   try {
     await createStage(THREE, GLTFLoader, why); // assigns SK.stage when it goes live
   } finally { clearTimeout(slow); if (SK.S.lastLine === 'slow') SK.stateLine(null); }
 }
 
-/* ---------------------------------------------------------------- ciao's studio, re-created by measurement */
+/* ---------------------------------------------------------------- the studio (from CaseModel.js, calibrated for r165) */
+function makeStudio(THREE, strips, scale = 1) {
+  const { BackSide, BufferAttribute, DoubleSide, MathUtils, Mesh, MeshBasicMaterial, MeshLambertMaterial, PlaneGeometry, Scene, SphereGeometry, Vector3 } = THREE;
+  const scene = new Scene();
+  const o = { floor: 0.2, horizon: 0.9, ceiling: 1.15, floorFrom: -35, floorTo: 0, back: 0.3, backFrom: 95, backTo: 135 };
+  const panels = [
+    { dir: [0.95, 0.05, 0.3], w: 50, h: 60, L: 3.0, r: 40 },
+    { dir: [-0.95, 0.05, 0.3], w: 50, h: 60, L: 2.6, r: 40 },
+    { dir: [-0.4045, 0.5878, 0.7006], w: 30, h: 12, L: 10, r: 38 },
+    { dir: [-0.4957, 0.1323, 0.8586], w: 36, h: 24, L: 0.2, r: 38 },
+    { dir: [0.9, 0.15, 0.45], w: 6, h: 50, L: 6, r: 36 },
+  ];
+  const dome = new SphereGeometry(50, 64, 32);
+  const pos = dome.attributes.position, col = new Float32Array(pos.count * 3);
+  const ss = (t) => t * t * (3 - 2 * t);
+  for (let i = 0; i < pos.count; i++) {
+    const el = Math.asin(MathUtils.clamp(pos.getY(i) / 50, -1, 1)) / MathUtils.DEG2RAD;
+    const az = Math.abs(Math.atan2(pos.getX(i), pos.getZ(i))) / MathUtils.DEG2RAD;
+    let L = o.floor + (o.horizon - o.floor) * ss(MathUtils.clamp((el - o.floorFrom) / (o.floorTo - o.floorFrom), 0, 1)) + (o.ceiling - o.horizon) * MathUtils.clamp((el - 20) / 70, 0, 1);
+    const band = MathUtils.clamp(1 - (el - 20) / 70, 0, 1) * MathUtils.clamp((el + 35) / 35, 0, 1);
+    L *= 1 - ss(MathUtils.clamp((az - o.backFrom) / (o.backTo - o.backFrom), 0, 1)) * (1 - o.back) * band;
+    col.set([L * scale, L * scale, L * scale], i * 3);
+  }
+  dome.setAttribute('color', new BufferAttribute(col, 3));
+  scene.add(new Mesh(dome, new MeshBasicMaterial({ vertexColors: true, side: BackSide })));
+  const plane = new PlaneGeometry(1, 1);
+  const panel = (d, r, w, h, L, rot) => {
+    const m = new Mesh(plane, new MeshLambertMaterial({ color: 0x000000, emissive: 0xffffff, emissiveIntensity: L, side: DoubleSide }));
+    m.position.copy(d).multiplyScalar(r);
+    m.scale.set(2 * r * Math.tan(w / 2 * DEG), 2 * r * Math.tan(h / 2 * DEG), 1);
+    m.lookAt(0, 0, 0);
+    if (rot) m.rotateZ(rot * DEG);
+    scene.add(m);
+  };
+  for (const q of panels) panel(new Vector3(...q.dir).normalize(), q.r, q.w, q.h, q.L * scale, 0);
+  // gloss strips sit in front of the flag (smaller radius), so they win where they overlap it; each is a plane at the
+  // middle of its arc, as long as the arc, turned in its own plane so its long side follows the arc
+  const dir = ([az, el]) => new Vector3(Math.cos(el * DEG) * Math.sin(az * DEG), Math.sin(el * DEG), Math.cos(el * DEG) * Math.cos(az * DEG));
+  for (const q of strips || []) {
+    const a = dir(q.a), b = dir(q.b), mid = a.clone().add(b).normalize(), r = 34;
+    const m = new Mesh(plane, new MeshLambertMaterial({ color: 0x000000, emissive: 0xffffff, emissiveIntensity: q.L, side: DoubleSide }));
+    m.position.copy(mid).multiplyScalar(r);
+    m.scale.set(2 * r * Math.tan(q.w / 2 * DEG), 2 * r * Math.tan(a.angleTo(b) / 2), 1);
+    m.lookAt(0, 0, 0);
+    const y = new Vector3(0, 1, 0).applyQuaternion(m.quaternion), n = new Vector3(0, 0, 1).applyQuaternion(m.quaternion);
+    const t = b.clone().sub(a); t.sub(mid.clone().multiplyScalar(mid.dot(t))).normalize();
+    m.rotateZ(Math.atan2(new Vector3().crossVectors(y, t).dot(n), y.dot(t)));
+    scene.add(m);
+  }
+  scene.dispose = () => { const r = new Set(); scene.traverse((x) => x.isMesh && r.add(x.geometry).add(x.material)); for (const x of r) x.dispose(); };
+  return scene;
+}
+
+/* ---------------------------------------------------------------- ciao's studio, re-created by measurement (?fin=A) */
 /* ciao lights its cans with a photo-studio HDRI (1024 x 512). We ship none of it: research/ciao-landing measured it
    (ciaofam/hdrmeasure.py) and this rebuilds the light it gives as an equirectangular map of our own, in three's frame
    (longitude atan2(z, x), latitude up). Measured: a quilted softbox overhead (about 20 panels), long across the set, its
@@ -1011,7 +1335,7 @@ async function parseLod(GLTFLoader, id) {
   const found = {};
   gltf.scene.traverse((o) => {
     if (!o.isMesh) return;
-    const n = ['shell', 'trim', 'logo'].find((p) => o.name === p || o.material?.name === p);
+    const n = ['shell', 'trim', 'logo', 'ring'].find((p) => o.name === p || o.material?.name === p);
     if (n) found[n] = { geometry: o.geometry, nodeWorld: o.matrixWorld.clone(), color: o.material.color.clone() };
   });
   gltf.scene.traverse((o) => o.isMesh && o.material?.dispose());
@@ -1054,6 +1378,7 @@ async function createStage(THREE, GLTFLoader, why) {
 
   // model: LOD1 now, LOD0 after a high-tier verdict
   const L1 = await parseLod(GLTFLoader, 'glb-lod1');
+  report('lod1');
   const geos = new Set(Object.values(L1).map((p) => p.geometry));
   undo.push(() => { for (const g of geos) g.dispose(); });
   await yieldMain();
@@ -1067,46 +1392,62 @@ async function createStage(THREE, GLTFLoader, why) {
   const base1 = { shell: baseOf(L1.shell), trim: baseOf(L1.trim), logo: L1.logo ? baseOf(L1.logo) : null };
   let base0 = { shell: base1.shell, trim: base1.trim };
 
-  // studio: one PMREM of the re-created studio for every material; the map and the generator are disposed
+  // studio: PMREMs of the procedural studio (one for every material, one with the gloss strips for the gloss
+  // materials); ?fin=A bakes the ciao studio map instead; the generator and the sources are disposed
   const scene = new THREE.Scene();
-  let envTarget = null;
+  let envTarget = null, glossTarget = null;
+  // the studio is turned 4 degrees about Y: ciao's camera has no yaw where the 2026-10-09 camera had 4, so the gloss back at
+  // rest reflected the key panel's edge (b 0.24) instead of the studio's dark flag
+  const bake = (pm, list, sigma) => { const st = makeStudio(THREE, list, GLOSS.scale); st.rotation.y = SK.CFG.envRot * DEG; st.updateMatrixWorld(true); const t = pm.fromScene(st, sigma); st.dispose(); return t; };
   const makeEnv = (keepOld) => {
-    const pm = new THREE.PMREMGenerator(renderer), map = studioMap(THREE);
-    const t = pm.fromEquirectangular(map);
-    pm.dispose(); map.dispose();
-    if (!keepOld) envTarget?.dispose();
-    envTarget = t;
+    const pm = new THREE.PMREMGenerator(renderer);
+    let t;
+    if (SK.CFG.fin === 'A') { const map = studioMap(THREE); t = pm.fromEquirectangular(map); map.dispose(); } else t = bake(pm, null, 0.04);
+    const g = bake(pm, GLOSS.strips, GLOSS.sigma);
+    pm.dispose();
+    if (!keepOld) { envTarget?.dispose(); glossTarget?.dispose(); }
+    envTarget = t; glossTarget = g;
     scene.environment = t.texture;
+    if (M.gloss) M.gloss.envMap = M.logoGloss.envMap = t.texture;
   };
-  undo.push(() => { envTarget?.dispose(); scene.environment = null; });
-  scene.environmentIntensity = SK.CFG.env;
+  undo.push(() => { envTarget?.dispose(); glossTarget?.dispose(); scene.environment = null; });
+  scene.environmentIntensity = SK.CFG.fin === 'A' ? 1 : CAL.environmentIntensity;
   // ciao's two spotlights, white, 50 cd, 8 units, a 45 degree cone with full penumbra, decay 0.1: one above aimed at
   // the front slot, one below and in front of it; together they light the front case and leave the others in the dark
-  const spots = [[[0, 3.5, 0], [0, 0, 1]], [[0, -3, 2], [0, 0, 1.8]]].map(([p, t]) => {
+  // the top spot sits 1.5 units in front of ciao's place: ciao's skims its cylinder, but on a flat back a skimming spot
+  // reads as a sheen over the whole case through the clearcoat's Fresnel (measured b 0.19 to 0.39 at the sample point)
+  const spots = [[[0, 3.5, 1.5], [0, 0, 1]], [[0, -3, 2], [0, 0, 1.8]]].map(([p, t]) => {
     const l = new THREE.SpotLight(0xffffff, SK.CFG.spot, 8, Math.PI / 4, 1, 0.1);
     l.position.set(...p); l.target.position.set(...t); scene.add(l, l.target); return l;
   });
+  // ciao's profile light: one spot from above the zoomed case (its spotY 2.2 and target 2.5 below, scaled by the case's
+  // height over the can's, 1.2), a 22.5 degree cone with full penumbra in place of its soft mask, 35 cd, range 15
+  const gobo = new THREE.SpotLight(0xffffff, 0, 15, Math.PI / 8, 1, 0.1);
+  gobo.position.set(0, 2.64, 2); gobo.target.position.set(0, -0.36, 0); scene.add(gobo, gobo.target);
 
   // materials: one per finish for the shell; the shade arrives per instance
   let tier = 'high';
   const logoColor = L1.logo ? L1.logo.color.clone() : new THREE.Color(1, 1, 1);
   const M = {
-    // under ciao's spotlights a rough dielectric's broad specular lays a white sheen over the whole back (0.108 of
-    // radiance at the sample point, a grey of 92 through ACES, so a dark or saturated shade cannot read); a matte case
-    // has little sheen, so the base layer's specular is cut to SK.CFG.spec of a plastic's (family-page.md 19)
-    matte: new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: CAL.matte, metalness: 0, specularIntensity: SK.CFG.spec }),
+    // the previous roughness and studio; the base specular is cut to a fifth of a plastic's so ciao's spots, which the
+    // previous light never had, do not lay a grey sheen over dark shades (measured: b 0.136 with full specular, 0.02 cut)
+    matte: new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: CAL.matte, metalness: 0, specularIntensity: 0.2 }),
     // the liner's faces coincide with the shell's along the outline and the button cut-outs; pushed back a hair in
     // depth so the shell wins there (no dark speckle at DPR 1)
     trim: new THREE.MeshStandardMaterial({ color: L1.trim.color.clone(), roughness: CAL.trim, metalness: 0, polygonOffset: SK.CFG.trimOffset > 0, polygonOffsetFactor: SK.CFG.trimOffset, polygonOffsetUnits: SK.CFG.trimOffset }),
-    logoMatte: new THREE.MeshPhysicalMaterial({ color: logoColor, roughness: CAL.matte, metalness: 0, specularIntensity: SK.CFG.spec, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
+    logoMatte: new THREE.MeshPhysicalMaterial({ color: logoColor, roughness: CAL.matte, metalness: 0, specularIntensity: 0.2, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
   };
   undo.push(() => { for (const m of Object.values(M)) m.dispose?.(); });
   makeEnv(false);
+  report('env');
   await yieldMain();
   const glossFor = (t) => {
     const m = t === 'high'
-      ? new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, ...CAL.gloss, specularIntensity: SK.CFG.spec })   // the gloss is the clearcoat's
-      : new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: CAL.glossLow, specularIntensity: SK.CFG.specLow });
+      ? new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, ...CAL.gloss, specularIntensity: 0.2 })
+      : new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: CAL.glossLow, specularIntensity: 0.5 });
+    // the gloss reads the plain studio: the three strips were aimed for the fanned pose of 2026-10-09 and under ciao's
+    // camera they land on the sample point (b 0.39); the spots give the gloss its highlights now
+    m.envMap = envTarget.texture; m.envMapIntensity = scene.environmentIntensity;
     return m;
   };
   const logoGlossFor = (t) => { const m = glossFor(t); m.color.copy(logoColor); m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -1; return m; };
@@ -1121,6 +1462,7 @@ async function createStage(THREE, GLTFLoader, why) {
   const frontTrim = IM(L1.trim.geometry, M.trim, 2, 'trim.front');
   const logo = L1.logo ? IM(L1.logo.geometry, M.logoMatte, 24, 'logo') : null;
   const all = [rowShell, rowTrim, frontShell, frontTrim, logo].filter(Boolean);
+  let mtShell = null, mtTrim = null, mtRing = null;
   undo.push(() => { for (const m of all) { m.dispose(); scene.remove(m); } });
   const col = new THREE.Color();
   let hexes = SK.shadesOf(SK.S.fi >= 0 ? SK.S.fi : 1);
@@ -1141,7 +1483,10 @@ async function createStage(THREE, GLTFLoader, why) {
     return col.setRGB(x[0], x[1], x[2]);
   };
   const colourRow = () => { for (let k = 0; k < 24; k++) rowShell.setColorAt(k, albedo(hexes[order[k]])); rowShell.instanceColor.needsUpdate = true; };
-  const colourFront = () => { for (let j = 0; j < 2; j++) frontShell.setColorAt(j, albedo(hexes[front[j] ?? 0])); frontShell.instanceColor.needsUpdate = true; };
+  const colourFront = () => {
+    for (let j = 0; j < 2; j++) frontShell.setColorAt(j, albedo(hexes[front[j] ?? 0])); frontShell.instanceColor.needsUpdate = true;
+    for (const m of [mtShell, mtRing]) if (m) { m.setColorAt(0, albedo(hexes[front[0] ?? 0])); m.instanceColor.needsUpdate = true; }
+  };
   const colourAll = () => {
     colourRow();
     if (logo) { for (let i = 0; i < 24; i++) logo.setColorAt(i, albedo(hexes[i])); logo.instanceColor.needsUpdate = true; }
@@ -1153,6 +1498,29 @@ async function createStage(THREE, GLTFLoader, why) {
   const mTmp = new THREE.Matrix4(), poseM = Array.from({ length: 24 }, () => new THREE.Matrix4());
   const qv = new THREE.Quaternion(), eu = new THREE.Euler(), vp = new THREE.Vector3(), vs = new THREE.Vector3();
   const qs = new THREE.Quaternion(), YAX = new THREE.Vector3(0, 1, 0);
+  const mTmp2 = new THREE.Matrix4();
+  /* ciao's keyframes after the carousel, in screens of scroll (keyframes-desk.json, scaled by 1.2 where they are in can
+     heights): the zoom over 1 to 2 (camera z 29 to 12, y 0 to -2.4, pitched 10 degrees and rolled -10, the case down to
+     -0.96 and scaled 1 / 1.2), the four beats at 2 to 6 (the case rising to -0.58, 0.02, 0.6; the roll alternating -10 and
+     +5 degrees), then back to the carousel over 6 to 7. Between beats the values ease with ciao's power1.inOut. The model
+     turns over to MagTough across 2.7 to 3 and back to Tough across 6 to 6.3. */
+  const sm = (t) => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
+  const RZ = [0, -0.1745, 0.0873, -0.1745, 0.0873, -0.1745, 0], CY = [0, -0.96, -0.58, 0.02, 0.6, 0.6, 0];
+  const beatPose = (sv) => {
+    const k = sm(sv - 1) * (1 - sm(sv - 6));
+    const j = Math.max(1, Math.min(6, Math.floor(sv))), t = sm(sv - j);
+    const rz = RZ[j - 1] + (RZ[j] - RZ[j - 1]) * t, cy = CY[j - 1] + (CY[j] - CY[j - 1]) * t;
+    const mt = sv < 6 ? sm((sv - 2.7) / 0.3) : 1 - sm((sv - 6) / 0.3);
+    return { k, rz, cy, mt };
+  };
+  // the selected case's matrix in the zoom: its carousel pose blended to ciao's profile pose by B.k, plus a turn (the hand-over)
+  const zoomMatrix = (i, s, B, turn, out) => {
+    const o = SK.poseOf(i, s, null), k = B.k;
+    const X = o.X * (1 - k), Y = o.Y * (1 - k) + B.cy * k, Z = o.Z * (1 - k), sc = o.sc * (1 - k / 6);
+    eu.set(o.rx * (1 - k), o.ry * (1 - k) + (-0.2618) * k + turn, o.rz * (1 - k), 'XYZ');
+    qv.setFromEuler(eu).multiply(qs.setFromAxisAngle(YAX, o.spin * (1 - k)));
+    return out.compose(vp.set(X, Y, Z), qv, vs.set(sc, sc, sc));
+  };
   const poseMatrix = (i, s, fx, out) => {
     const o = SK.poseOf(i, s, fx);
     eu.set(o.rx, o.ry, o.rz, 'XYZ');
@@ -1171,7 +1539,29 @@ async function createStage(THREE, GLTFLoader, why) {
       colourRow(); colourFront();
     }
     for (let i = 0; i < 24; i++) poseMatrix(i, s, fx, poseM[i]);
-    for (const l of spots) l.intensity = SK.CFG.spot * G;   // ciao's entrance: the light comes up
+    const B = beatPose(st.sv);
+    if (B.k > 0) {
+      // the neighbours slide out as ciao's do (its data.spacing 1 to 3.5); the selected case takes ciao's profile pose
+      const fs = Math.round(s), sp = 1 + 2.5 * B.k;
+      for (let i = 0; i < 24; i++) if (i !== fs) { poseM[i].elements[12] *= sp; }
+      zoomMatrix(fs, s, B, 0, poseM[fs]);
+    }
+    for (const l of spots) l.intensity = SK.CFG.spot * G * (1 - B.k);   // ciao's entrance: the light comes up; the zoom hands over to the one spot
+    gobo.intensity = 35 * B.k * G;
+    scene.environmentIntensity = CAL.environmentIntensity * (1 - 0.8 * B.k);
+    if (M.gloss) M.gloss.envMapIntensity = M.logoGloss.envMapIntensity = scene.environmentIntensity;
+    cam.position.set(0, -2.4 * B.k, 29 - 17 * B.k); cam.rotation.set(0.1745 * B.k, 0, B.rz * B.k); cam.updateMatrixWorld();
+    if (mtShell) {
+      // the MagTough case in beats 2 to 4: a turn hands over from the Tough case (edge on at the midpoint, so no frame shows two)
+      const on = B.mt > 0;
+      mtShell.count = on ? 1 : 0; mtTrim.count = on ? 1 : 0; if (mtRing) mtRing.count = on ? 1 : 0;
+      if (on) {
+        const fs2 = Math.round(s);
+        zoomMatrix(fs2, s, B, (1 - B.mt) * -Math.PI / 2, mTmp);
+        mtShell.setMatrixAt(0, mTmp2.multiplyMatrices(mTmp, mtBase.shell)); mtTrim.setMatrixAt(0, mTmp2.multiplyMatrices(mTmp, mtBase.trim));
+        if (mtRing) mtRing.setMatrixAt(0, mTmp2.multiplyMatrices(mTmp, mtBase.ring));
+      }
+    }
     for (let k = 0; k < rowShell.count; k++) {
       const pm = poseM[order[k]];
       rowShell.setMatrixAt(k, mTmp.multiplyMatrices(pm, base1.shell));
@@ -1179,21 +1569,23 @@ async function createStage(THREE, GLTFLoader, why) {
     }
     if (logo) for (let i = 0; i < 24; i++) logo.setMatrixAt(i, mTmp.multiplyMatrices(poseM[i], base1.logo));
     front.forEach((slot, j) => {
+      if (B.mt > 0 && slot === Math.round(s)) { zoomMatrix(slot, s, B, B.mt * Math.PI / 2, mTmp2); mTmp2.multiply(base0.shell); frontShell.setMatrixAt(j, mTmp2); zoomMatrix(slot, s, B, B.mt * Math.PI / 2, mTmp2); frontTrim.setMatrixAt(j, mTmp2.multiply(base0.trim)); return; }
       frontShell.setMatrixAt(j, mTmp.multiplyMatrices(poseM[slot], base0.shell));
       frontTrim.setMatrixAt(j, mTmp.multiplyMatrices(poseM[slot], base0.trim));
     });
     frontShell.count = frontTrim.count = front.length;
+    if (B.mt >= 1) frontShell.count = frontTrim.count = Math.max(0, front.length - 1);   // the Tough case is away while MagTough shows
     for (const m of all) { m.instanceMatrix.needsUpdate = true; m.boundingSphere = null; }
   };
 
   // camera: ciao's, at z 29, FOV 20, unrotated; on phones a view offset lifts the scene (SK.solve). The clip planes
   // hug the line (every case in view lies between z +3 and -40), so the depth buffer stays precise where the shell
   // and the liner meet at grazing angles.
-  const cam = new THREE.PerspectiveCamera(SK.CFG.fov, 1, 20, 75);
+  const cam = new THREE.PerspectiveCamera(SK.CFG.fov, 1, 4, 75);
+  cam.position.set(0, 0, 29);
   let fit = null, W = 0, H = 0;
   const place = () => {
     cam.aspect = W / H;
-    cam.position.set(0, 0, fit.D); cam.rotation.set(0, 0, 0);
     cam.setViewOffset(W, H, 0, -fit.shiftY, W, H);
     cam.updateProjectionMatrix();
     cam.updateMatrixWorld();
@@ -1212,13 +1604,13 @@ async function createStage(THREE, GLTFLoader, why) {
   resize();
 
   // the motion state (one store; the HUD follows round(target))
-  const st = { s: 0, target: 0, G: 0, Gt: 1, tilt: { yaw: 0, pitch: 0 }, tiltT: { yaw: 0, pitch: 0 }, turn: null, drag: null, input: 'deeplink', reported: -1, lastFollow: 0 };
+  const st = { sv: 0, svT: 0, s: 0, target: 0, G: 0, Gt: 1, tilt: { yaw: 0, pitch: 0 }, tiltT: { yaw: 0, pitch: 0 }, turn: null, drag: null, input: 'deeplink', reported: -1, lastFollow: 0 };
   let running = false, visible = true, raf = 0, lastT = 0, tail = 0, frameMs = [], live = false, losses = 0, disposed = false, dirty = 0, renders = 0;
   const instant = () => SK.reduced();
   const renderNow = () => { const t0 = performance.now(); renderer.render(scene, cam); return performance.now() - t0; };
 
   // animating: something moves on its own; a held drag renders only when the finger moves
-  const animating = () => (!st.drag && st.s !== st.target) || st.G !== st.Gt || !!st.turn || Math.abs(st.tilt.yaw - st.tiltT.yaw) > 0.01 || Math.abs(st.tilt.pitch - st.tiltT.pitch) > 0.01;
+  const animating = () => (!st.drag && st.s !== st.target) || st.G !== st.Gt || !!st.turn || Math.abs(st.sv - st.svT) > 1e-3 || Math.abs(st.tilt.yaw - st.tiltT.yaw) > 0.01 || Math.abs(st.tilt.pitch - st.tiltT.pitch) > 0.01;
   const busy = () => !!st.drag || animating();
   let lastSig = '';
   function frame(now) {
@@ -1234,11 +1626,12 @@ async function createStage(THREE, GLTFLoader, why) {
       st.tilt.yaw += (st.tiltT.yaw - st.tilt.yaw) * k;
       st.tilt.pitch += (st.tiltT.pitch - st.tilt.pitch) * k;
     }
+    st.sv += (st.svT - st.sv) * (instant() ? 1 : 1 - Math.exp(-10 * dt)); if (Math.abs(st.svT - st.sv) < 1e-3) st.sv = st.svT;
     if (!st.drag && Math.abs(st.target - st.s) < 0.0005) st.s = st.target;
     if (Math.abs(st.Gt - st.G) < 0.0005) st.G = st.Gt;
     let turnYaw = 0;
     if (st.turn) { const t = (now - st.turn.t0) / 600; if (t >= 1) st.turn = null; else turnYaw = st.turn.side * SK.CFG.turn * bump(Math.max(0, t)); }
-    const sig = [st.s, st.G, st.tilt.yaw + turnYaw, st.tilt.pitch].join();
+    const sig = [st.s, st.G, st.tilt.yaw + turnYaw, st.tilt.pitch, st.sv].join();
     if (sig !== lastSig || dirty) {
       lastSig = sig; dirty = 0;
       update(st.s, st.G, { yaw: st.tilt.yaw + turnYaw, tilt: st.tilt.pitch });
@@ -1284,6 +1677,7 @@ async function createStage(THREE, GLTFLoader, why) {
   // picking: the front pair wins over the row (the row does not draw the front slots)
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   const pick = (cx, cy) => {
+    if (st.svT > 0.5) return null;
     const r = canvas.getBoundingClientRect();
     ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ndc, cam);
@@ -1302,6 +1696,7 @@ async function createStage(THREE, GLTFLoader, why) {
   const stripPx = () => fit.stripPx;
   canvas.addEventListener('pointerdown', (e) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (st.svT > 0.5) return;   // the carousel takes the pointer in the first screen only
     down = { id: e.pointerId, x: e.clientX, y: e.clientY, t: e.timeStamp, lock: null, moved: 0, samples: [{ t: e.timeStamp, x: e.clientX }] };
     lastMoved = 0;
   });
@@ -1427,6 +1822,7 @@ async function createStage(THREE, GLTFLoader, why) {
   st.s = st.target = Math.max(0, SK.S.target);
   update(st.s, 1, null);
   await compile(scene, cam);
+  report('compile');
   const probe = async () => {
     let last = await nextFrame(); const iv = [];
     for (let i = 0; i < 10; i++) { const t = await nextFrame(); iv.push(t - last); last = t; }
@@ -1460,6 +1856,26 @@ async function createStage(THREE, GLTFLoader, why) {
     } catch (e) { SK.track('lod0_failed', { reason: e.kind || 'error' }); }
     await compile(scene, cam);
   }
+  report('lod0');
+  // the MagTough case (Sam, 2026-10-14; tools/intake-magtough.py): the model for beats 2 to 4 (Snap and Armor use it until
+  // their models come), normalised to height 1 by its own LOD1 box; its ring takes the shade like the shell
+  let MT = null, mtBase = null;
+  try {
+    const m1 = await parseLod(GLTFLoader, 'glb-mt-lod1');
+    const mb = new THREE.Box3(), mbb = new THREE.Box3();
+    for (const p of Object.values(m1)) { p.geometry.computeBoundingBox(); mb.union(mbb.copy(p.geometry.boundingBox).applyMatrix4(p.nodeWorld)); }
+    const msz = mb.getSize(new THREE.Vector3()), mc = mb.getCenter(new THREE.Vector3()), mk = 1 / msz.y;
+    const mnorm = new THREE.Matrix4().makeScale(mk, mk, mk).multiply(new THREE.Matrix4().makeTranslation(-mc.x, -mc.y, -mc.z));
+    let parts = m1;
+    if (tier === 'high') { try { const m0 = await parseLod(GLTFLoader, 'glb-mt-lod0'); for (const g of Object.values(m1)) g.geometry.dispose(); parts = m0; } catch (e) { SK.track('mt_lod0_failed', {}); } }
+    MT = parts; mtBase = { shell: mnorm.clone().multiply(parts.shell.nodeWorld), trim: mnorm.clone().multiply(parts.trim.nodeWorld), ring: parts.ring ? mnorm.clone().multiply(parts.ring.nodeWorld) : null };
+    for (const g of Object.values(parts)) geos.add(g.geometry);
+    mtShell = IM(parts.shell.geometry, M.matte, 1, 'mt.shell'); mtTrim = IM(parts.trim.geometry, M.trim, 1, 'mt.trim');
+    mtRing = parts.ring ? IM(parts.ring.geometry, M.matte, 1, 'mt.ring') : null;
+    for (const m of [mtShell, mtTrim, mtRing]) if (m) { m.count = 0; all.push(m); }
+    colourFront();
+    await compile(scene, cam);
+  } catch (e) { SK.track('mt_failed', { reason: e.kind || 'error' }); }
   await yieldMain();
 
   // the back-plate sample point (calibration: (0, -0.25) on the outer back)
@@ -1472,6 +1888,7 @@ async function createStage(THREE, GLTFLoader, why) {
   const applyFinish = (f) => {
     const g = f === 'gloss';
     rowShell.material = frontShell.material = g ? M.gloss : M.matte;
+    for (const m of [mtShell, mtRing]) if (m) m.material = g ? M.gloss : M.matte;
     if (logo) logo.material = g ? M.logoGloss : M.logoMatte;
     colourAll();   // the calibrated albedo depends on the finish
   };
@@ -1479,6 +1896,8 @@ async function createStage(THREE, GLTFLoader, why) {
   const api = {
     live: () => live && running,
     goTo,
+    scroll(v) { st.svT = Math.max(0, v); kick(); },
+    snapScroll(v) { st.sv = st.svT = Math.max(0, v); dirty++; update(st.s, st.G, null); renderNow(); },
     setFinish(f) {
       applyFinish(f);
       if (!instant()) st.turn = { t0: performance.now(), side: 1 };
@@ -1493,6 +1912,7 @@ async function createStage(THREE, GLTFLoader, why) {
       st.Gt = 1; st.turn = null;
       if (running) { update(st.s, st.G, null); renderNow(); }
       kick();
+      report('frame');
     },
     pause() { running = false; cancelAnimationFrame(raf); raf = 0; },
     resume() { if (disposed) return; running = true; resize(); sync(); update(st.s, st.G, null); renderNow(); kick(); },
@@ -1502,7 +1922,7 @@ async function createStage(THREE, GLTFLoader, why) {
       for (const m of all) { m.dispose(); scene.remove(m); }
       for (const g of geos) g.dispose();
       for (const m of Object.values(M)) m.dispose?.();
-      envTarget?.dispose(); scene.environment = null;
+      envTarget?.dispose(); glossTarget?.dispose(); scene.environment = null;
       renderer.dispose(); if (!gl.isContextLost()) renderer.forceContextLoss(); canvas.remove();
       root.dataset.stage = 'boot';
     },
@@ -1532,11 +1952,11 @@ async function createStage(THREE, GLTFLoader, why) {
     },
     sampleZ: () => sampleZ,
     // verification: a and b of the colour calibration (CALV), read in linear light (a float target, no tone mapping)
-    calibrate() {
+    calibrate(ly = -0.25) {
       const rt = new THREE.WebGLRenderTarget(canvas.width, canvas.height, { type: THREE.FloatType });
       const slot = Math.round(st.s), dpr = renderer.getPixelRatio();
       update(st.s, 1, null);
-      const v = new THREE.Vector3(0, -0.25, sampleZ).applyMatrix4(poseMatrix(slot, st.s, null, new THREE.Matrix4())).project(cam);
+      const v = new THREE.Vector3(0, ly, sampleZ).applyMatrix4(poseMatrix(slot, st.s, null, new THREE.Matrix4())).project(cam);
       const px = Math.round((v.x + 1) / 2 * W * dpr), py = Math.round((v.y + 1) / 2 * H * dpr), j = front.indexOf(slot), res = {};
       const read = (a) => {
         frontShell.setColorAt(j, col.setRGB(a, a, a)); frontShell.instanceColor.needsUpdate = true;
@@ -1548,7 +1968,7 @@ async function createStage(THREE, GLTFLoader, why) {
       for (const f of ['matte', 'gloss']) { SK.S.finish = f; applyFinish(f); const w = read(1), k0 = read(0); res[f] = { a: w.map((x, c) => +(x - k0[c]).toFixed(5)), b: k0.map((x) => +x.toFixed(5)) }; }
       SK.S.finish = keep; applyFinish(keep); rt.dispose();
       update(st.s, st.G, null); renderNow();
-      return { tier, px: [px, py], res };
+      return { tier, px: [px, py], ly, res };
     },
     setCal(v) { calv = v && v.matte && Array.isArray(v.matte.a) ? { matte: { a: v.matte.a[1], b: v.matte.b[1] }, gloss: { a: v.gloss.a[1], b: v.gloss.b[1] } } : v; colourAll(); update(st.s, st.G, null); renderNow(); },
     // verification: flat false colours per part (shell red, trim green, logo blue), or back to the real materials
@@ -1590,11 +2010,13 @@ async function createStage(THREE, GLTFLoader, why) {
   applyFinish(SK.S.finish);
   st.target = Math.max(0, SK.S.target); st.s = st.target; st.G = instant() ? 1 : 0; st.Gt = 1; st.turn = null; st.reported = -1;
   running = root.dataset.mode === '3d' && root.dataset.route === 'family';
+  st.sv = st.svT = SK.S.sv || 0;
   update(st.s, st.G, null);
   renderNow();
   live = true;
   SK.stage = api;
   root.dataset.stage = 'live';
+  report('frame');
   SK.track('stage_live', { tier, probes, finish: SK.S.finish, family: SK.FL[SK.S.fi >= 0 ? SK.S.fi : 1].id });
   kick();
 

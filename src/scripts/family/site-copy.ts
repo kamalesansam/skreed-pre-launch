@@ -8,7 +8,7 @@ export const SITE_COPY = {
     description: 'This page is not on skreed.in. Doors open Nov 1.',
     h1: '404. This shade does not exist.',
     line: 'These 240 do.',
-    swatch: 'vivid-violets-03',   // Mauve, the one real swatch (type-system role 16)
+    swatch: 'vivid-violet-03',   // Mauve, the one real swatch (type-system role 16)
     button: 'Back to skreed.in',
   },
   org: {

@@ -1,8 +1,8 @@
 // Shared helpers for the family page specs.
 import type { BrowserContext, Page } from '@playwright/test';
 
-export const FAMILIES = ['frosty-whites', 'blissful-blues', 'playful-pinks', 'vivid-violets', 'mellow-yellows', 'earthy-browns', 'blushing-corals', 'stormy-greys', 'go-green', 'roaring-reds'] as const;
-export const NAMES = ['Frosty Whites', 'Blissful Blues', 'Playful Pinks', 'Vivid Violets', 'Mellow Yellows', 'Earthy Browns', 'Blushing Corals', 'Stormy Greys', 'Go Green', 'Roaring Reds'] as const;
+export const FAMILIES = ['frosty-white', 'blissful-blue', 'playful-pink', 'vivid-violet', 'mellow-yellow', 'basic-brown', 'blushing-coral', 'stormy-grey', 'go-green', 'roaring-red'] as const;
+export const NAMES = ['Frosty White', 'Blissful Blue', 'Playful Pink', 'Vivid Violet', 'Mellow Yellow', 'Basic Brown', 'Blushing Coral', 'Stormy Grey', 'Go Green', 'Roaring Red'] as const;
 export const PHONE = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true };
 export const WIDE = { viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 };
 

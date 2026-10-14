@@ -16,7 +16,7 @@ const build = (has3d: boolean) => inlineScript('family-head.js', { CFG: headCfg(
 
 interface Env { url?: string; slug?: string; has3d?: boolean; webgl2?: boolean; saveData?: boolean; effectiveType?: string; deviceMemory?: number; reduced?: boolean }
 function run(env: Env) {
-  const slug = env.slug ?? 'blissful-blues';
+  const slug = env.slug ?? 'blissful-blue';
   const fam = FAMILIES.find((f) => f.slug === slug)!;
   const url = new URL(env.url ?? `https://skreed.in/shades/${slug}/`);
   const attrs = new Map<string, string>();
@@ -62,40 +62,40 @@ test('no ?shade: the key shade, no deep link, no URL change', () => {
 });
 
 test('a valid ?shade of this family selects it and marks the deep link; the key shade itself is not a deep link', () => {
-  const r = run({ url: 'https://skreed.in/shades/blissful-blues/?shade=025' });
+  const r = run({ url: 'https://skreed.in/shades/blissful-blue/?shade=025' });
   assert.equal(r.attrs.get('data-shade'), '025');
   assert.equal(r.attrs.get('data-deeplink'), '');
-  const k = run({ url: 'https://skreed.in/shades/blissful-blues/?shade=032' });
+  const k = run({ url: 'https://skreed.in/shades/blissful-blue/?shade=032' });
   assert.equal(k.attrs.get('data-shade'), '032');
   assert.ok(!k.attrs.has('data-deeplink'));
-  const end = run({ url: 'https://skreed.in/shades/blissful-blues/?shade=048' });
+  const end = run({ url: 'https://skreed.in/shades/blissful-blue/?shade=048' });
   assert.equal(end.attrs.get('data-shade'), '048');
 });
 
 test('a ?shade of another family replaces the location with that family, same parameters', () => {
-  const r = run({ url: 'https://skreed.in/shades/vivid-violets/?shade=032', slug: 'vivid-violets' });
-  assert.equal(r.calls.replace, '/shades/blissful-blues/?shade=032');
+  const r = run({ url: 'https://skreed.in/shades/vivid-violet/?shade=032', slug: 'vivid-violet' });
+  assert.equal(r.calls.replace, '/shades/blissful-blue/?shade=032');
   assert.ok(r.classes.has('leaving'));
-  assert.equal(run({ url: 'https://skreed.in/shades/blissful-blues/?shade=001&finish=gloss' }).calls.replace, '/shades/frosty-whites/?shade=001&finish=gloss');
-  assert.equal(run({ url: 'https://skreed.in/shades/blissful-blues/?shade=240' }).calls.replace, '/shades/roaring-reds/?shade=240');
+  assert.equal(run({ url: 'https://skreed.in/shades/blissful-blue/?shade=001&finish=gloss' }).calls.replace, '/shades/frosty-white/?shade=001&finish=gloss');
+  assert.equal(run({ url: 'https://skreed.in/shades/blissful-blue/?shade=240' }).calls.replace, '/shades/roaring-red/?shade=240');
 });
 
 test('anything else is removed with replaceState and the key shade stays', () => {
   for (const bad of ['999', '000', '32', 'abc', '', '0320', '-01']) {
-    const r = run({ url: `https://skreed.in/shades/blissful-blues/?shade=${bad}&x=1#families` });
+    const r = run({ url: `https://skreed.in/shades/blissful-blue/?shade=${bad}&x=1#families` });
     assert.equal(r.attrs.get('data-shade'), '032', bad);
-    assert.equal(r.calls.replaceState, '/shades/blissful-blues/?x=1#families', bad);
+    assert.equal(r.calls.replaceState, '/shades/blissful-blue/?x=1#families', bad);
     assert.equal(r.calls.replace, undefined);
   }
-  const only = run({ url: 'https://skreed.in/shades/blissful-blues/?shade=999' });
-  assert.equal(only.calls.replaceState, '/shades/blissful-blues/');
+  const only = run({ url: 'https://skreed.in/shades/blissful-blue/?shade=999' });
+  assert.equal(only.calls.replaceState, '/shades/blissful-blue/');
 });
 
 test('?finish=gloss or matte is kept on html; anything else is removed', () => {
-  assert.equal(run({ url: 'https://skreed.in/shades/blissful-blues/?finish=gloss' }).attrs.get('data-finish'), 'gloss');
-  const r = run({ url: 'https://skreed.in/shades/blissful-blues/?shade=030&finish=shiny' });
+  assert.equal(run({ url: 'https://skreed.in/shades/blissful-blue/?finish=gloss' }).attrs.get('data-finish'), 'gloss');
+  const r = run({ url: 'https://skreed.in/shades/blissful-blue/?shade=030&finish=shiny' });
   assert.equal(r.attrs.get('data-shade'), '030');
-  assert.equal(r.calls.replaceState, '/shades/blissful-blues/?shade=030');
+  assert.equal(r.calls.replaceState, '/shades/blissful-blue/?shade=030');
 });
 
 test('mode: an off build is always swatch grid mode', () => {

@@ -13,7 +13,7 @@ export interface RawKey { readonly family: string; readonly familyName: string; 
 export type Neutral = 'pearl' | 'slate';
 
 export interface FamShade {
-  readonly id: string;        // frosty-whites-07
+  readonly id: string;        // frosty-white-07
   readonly index: number;     // 1 to 24, in the family
   readonly name: string;
   readonly hex: string;

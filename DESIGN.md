@@ -57,23 +57,23 @@ The prototype's Tune-panel greys (`--panel` #2b3134, `--line` #4a5257, `--muted`
 ### The 240 shades
 
 - **Source.** `docs/data/shades-240.json` is the single source. It holds 240 shades in catalog order, 24 per family, each with `id`, `index`, `name`, `shopifyName`, `hex` and `renderStem`. This file references it rather than repeating 240 rows.
-- **CSS tokens.** `scripts/hero/gen-shades.mjs` generates `src/styles/shades.gen.css`: one token per shade, `--shade-<id>`, in catalog order, on `:root`, for example `--shade-frosty-whites-01: #f7f7f7;` and `--shade-blissful-blues-08: #08bcf4;`. All 240 are 7,855 B raw, 1,288 B brotli. The file is generated, never edited by hand, and `Base.astro` imports it on every page. Any DOM use of a shade (swatches, the glitch ghosts) is `var(--shade-<id>)`.
+- **CSS tokens.** `scripts/hero/gen-shades.mjs` generates `src/styles/shades.gen.css`: one token per shade, `--shade-<id>`, in catalog order, on `:root`, for example `--shade-frosty-white-01: #f7f7f7;` and `--shade-blissful-blue-08: #08bcf4;`. All 240 are 7,855 B raw, 1,288 B brotli. The file is generated, never edited by hand, and `Base.astro` imports it on every page. Any DOM use of a shade (swatches, the glitch ghosts) is `var(--shade-<id>)`.
 - **JS constants.** The same script writes `src/config/shades.gen.ts` for the WebGL scene, where shades are render parameters (block glows, the galaxy wash, the interim swatch field).
 - **Keys.** Always key by `id`, never by name. Names repeat across families: Pastel six times, Neon four times, and Royal, Indigo, Classic, Teal, Stone, Midnight, Orchid, Wine and Persian twice each.
-- **Known issue.** Vivid Violets Royal (`vivid-violets-19`) and Midnight (`vivid-violets-20`) share #492376 until the real Royal value arrives.
+- **Known issue.** Vivid Violet Royal (`vivid-violet-19`) and Midnight (`vivid-violet-20`) share #492376 until the real Royal value arrives.
 
 | # | Family (display name) | Id prefix | First | Index 12 | Last |
 |---|---|---|---|---|---|
-| 1 | Frosty Whites | `frosty-whites-` | Pearl | Parchment #edeee6 | Oatmeal |
-| 2 | Blissful Blues | `blissful-blues-` | Electric | Royal #0040c1 | Midnight |
-| 3 | Playful Pinks | `playful-pinks-` | Light Pink | Salmon Pink #ff6a64 | Fuchsia |
-| 4 | Vivid Violets | `vivid-violets-` | Light Violet | Orchid #911489 | Eggplant |
-| 5 | Mellow Yellows | `mellow-yellows-` | Sunbeam | Dandelion #f5d71d | Dijon |
-| 6 | Earthy Browns | `earthy-browns-` | Almond | Cocoa #81553a | Umber |
-| 7 | Blushing Corals | `blushing-corals-` | Bellini | Tangerine #ea821a | Rust |
-| 8 | Stormy Greys | `stormy-greys-` | Pale Grey | Fog #797474 | Charcoal |
+| 1 | Frosty White | `frosty-white-` | Pearl | Parchment #edeee6 | Oatmeal |
+| 2 | Blissful Blue | `blissful-blue-` | Electric | Royal #0040c1 | Midnight |
+| 3 | Playful Pink | `playful-pink-` | Light Pink | Salmon Pink #ff6a64 | Fuchsia |
+| 4 | Vivid Violet | `vivid-violet-` | Light Violet | Orchid #911489 | Eggplant |
+| 5 | Mellow Yellow | `mellow-yellow-` | Sunbeam | Dandelion #f5d71d | Dijon |
+| 6 | Basic Brown | `basic-brown-` | Almond | Cocoa #81553a | Umber |
+| 7 | Blushing Coral | `blushing-coral-` | Bellini | Tangerine #ea821a | Rust |
+| 8 | Stormy Grey | `stormy-grey-` | Pale Grey | Fog #797474 | Charcoal |
 | 9 | Go Green | `go-green-` | Light Green | Lawn #4aa325 | Army |
-| 10 | Roaring Reds | `roaring-reds-` | Pastel | Mars #b84533 | Mahogany |
+| 10 | Roaring Red | `roaring-red-` | Pastel | Mars #b84533 | Mahogany |
 
 Index 12 is the family's representative swatch when one is needed: type-system role note 12, the manifesto's default.
 
@@ -86,10 +86,10 @@ Index 12 is the family's representative swatch when one is needed: type-system r
 
 | Use | Ids |
 |---|---|
-| Block glows, 'cool' order, blocks 0 to 9 | blushing-corals-04 Mango #ff9f40; stormy-greys-05 Silver #acacac; frosty-whites-07 Snow #f0f4f5; blissful-blues-08 Sky #08bcf4; earthy-browns-07 Cinnamon #ba7237; vivid-violets-07 Amethyst #8554d1; mellow-yellows-01 Sunbeam #fff164; playful-pinks-14 Rouge #f2638f; go-green-12 Lawn #4aa325; roaring-reds-07 Crimson #d20000 |
-| Sky galaxy wash (exception E-1/21/40) | blissful-blues-23 Space #15284f; vivid-violets-24 Eggplant #4a154d; go-green-22 Forest #084f3d; roaring-reds-23 Wine #4b0923 |
+| Block glows, 'cool' order, blocks 0 to 9 | blushing-coral-04 Mango #ff9f40; stormy-grey-05 Silver #acacac; frosty-white-07 Snow #f0f4f5; blissful-blue-08 Sky #08bcf4; basic-brown-07 Cinnamon #ba7237; vivid-violet-07 Amethyst #8554d1; mellow-yellow-01 Sunbeam #fff164; playful-pink-14 Rouge #f2638f; go-green-12 Lawn #4aa325; roaring-red-07 Crimson #d20000 |
+| Sky galaxy wash (exception E-1/21/40) | blissful-blue-23 Space #15284f; vivid-violet-24 Eggplant #4a154d; go-green-22 Forest #084f3d; roaring-red-23 Wine #4b0923 |
 | Logotype glitch pairs (one per burst; exception E-24) | Sky and Crimson (also the intro burst); Amethyst and Sunbeam; Lawn and Rouge; Sky and Mango. Lightness weights: Sky .74, Mango .78, Amethyst .56, Sunbeam .94, Crimson .54, Lawn .64, Rouge .69 |
-| Section 2's interim frame | all 240, frosty-whites-01 to roaring-reds-24 |
+| Section 2's interim frame | all 240, frosty-white-01 to roaring-red-24 |
 
 The scene's light colours (key light, kicker, environment floor, horizon and sky) are render parameters, not palette colours (exception E-A2b).
 

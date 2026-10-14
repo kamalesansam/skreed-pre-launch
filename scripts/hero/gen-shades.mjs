@@ -19,14 +19,14 @@ const checkOnly = process.argv.includes('--check');
 // The hero's selections (docs/specs/hero.md section 3). Each entry is [id, expected name]; the generator fails if the
 // data no longer agrees, so a renamed or re-coloured shade can never slip into the scene silently.
 const REGION = [ // one shade per family, in catalog family order (prototype REGION)
-  ['frosty-whites-07', 'Snow'], ['blissful-blues-08', 'Sky'], ['playful-pinks-14', 'Rouge'], ['vivid-violets-07', 'Amethyst'],
-  ['mellow-yellows-01', 'Sunbeam'], ['earthy-browns-07', 'Cinnamon'], ['blushing-corals-04', 'Mango'], ['stormy-greys-05', 'Silver'],
-  ['go-green-12', 'Lawn'], ['roaring-reds-07', 'Crimson'],
+  ['frosty-white-07', 'Snow'], ['blissful-blue-08', 'Sky'], ['playful-pink-14', 'Rouge'], ['vivid-violet-07', 'Amethyst'],
+  ['mellow-yellow-01', 'Sunbeam'], ['basic-brown-07', 'Cinnamon'], ['blushing-coral-04', 'Mango'], ['stormy-grey-05', 'Silver'],
+  ['go-green-12', 'Lawn'], ['roaring-red-07', 'Crimson'],
 ];
 // block glows, the 'cool' order, by block index 0 to 9 (prototype BLOCK_ORDERS.cool)
 const BLOCK_COOL = ['Mango', 'Silver', 'Snow', 'Sky', 'Cinnamon', 'Amethyst', 'Sunbeam', 'Rouge', 'Lawn', 'Crimson'];
 // sky galaxy wash, uC1 to uC4 (prototype line 570)
-const GALAXY = [['blissful-blues-23', 'Space'], ['vivid-violets-24', 'Eggplant'], ['go-green-22', 'Forest'], ['roaring-reds-23', 'Wine']];
+const GALAXY = [['blissful-blue-23', 'Space'], ['vivid-violet-24', 'Eggplant'], ['go-green-22', 'Forest'], ['roaring-red-23', 'Wine']];
 // logotype glitch: pairs (the first is the intro pair) and lightness weights (prototype lines 1180 to 1181)
 const GLITCH_PAIRS = [['Sky', 'Crimson'], ['Amethyst', 'Sunbeam'], ['Lawn', 'Rouge'], ['Sky', 'Mango']];
 const GLITCH_LIGHT = { Sky: 0.74, Mango: 0.78, Amethyst: 0.56, Sunbeam: 0.94, Crimson: 0.54, Lawn: 0.64, Rouge: 0.69 };
@@ -77,7 +77,7 @@ export interface ShadeRef { readonly id: string; readonly name: string; readonly
 /** All 240 shades in catalog order. n is the catalog number, 1 to 240: (family ordinal - 1) x 24 + index. */
 export const SHADES: readonly Shade[] = ${j(all)};
 
-/** The 240 hexes in catalog order, frosty-whites-01 to roaring-reds-24 (section 2's interim swatch field). */
+/** The 240 hexes in catalog order, frosty-white-01 to roaring-red-24 (section 2's interim swatch field). */
 export const SHADE_HEX: readonly string[] = ${j(all.map((s) => s.hex))};
 
 /** One key shade per family, in catalog family order (the prototype's REGION). */

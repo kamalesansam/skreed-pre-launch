@@ -15,9 +15,9 @@ assert len(fams) == 10, 'need 10 families'
 
 # key shade per family (family-page.md 2.1, the rock's shade), in catalog order
 KEYS = {
-    'frosty-whites': ('Snow', 7), 'blissful-blues': ('Sky', 8), 'playful-pinks': ('Rouge', 14),
-    'vivid-violets': ('Amethyst', 7), 'mellow-yellows': ('Sunbeam', 1), 'earthy-browns': ('Cinnamon', 7),
-    'blushing-corals': ('Mango', 4), 'stormy-greys': ('Silver', 5), 'go-green': ('Lawn', 12), 'roaring-reds': ('Crimson', 7),
+    'frosty-white': ('Snow', 7), 'blissful-blue': ('Sky', 8), 'playful-pink': ('Rouge', 14),
+    'vivid-violet': ('Amethyst', 7), 'mellow-yellow': ('Sunbeam', 1), 'basic-brown': ('Cinnamon', 7),
+    'blushing-coral': ('Mango', 4), 'stormy-grey': ('Silver', 5), 'go-green': ('Lawn', 12), 'roaring-red': ('Crimson', 7),
 }
 
 
@@ -58,7 +58,9 @@ assert [f['neutral'] for f in out_fams] == expected, [f['neutral'] for f in out_
 
 lod1 = open(os.path.join(ROOT, 'assets/case-lod1-r3.glb'), 'rb').read()
 lod0 = open(os.path.join(ROOT, 'assets/case-lod0-r3.glb'), 'rb').read()
-for b in (lod0, lod1):
+mt1 = open(os.path.join(ROOT, 'assets/magtough-lod1.glb'), 'rb').read()
+mt0 = open(os.path.join(ROOT, 'assets/magtough-lod0.glb'), 'rb').read()
+for b in (lod0, lod1, mt0, mt1):
     j = json.loads(b[20:20 + int.from_bytes(b[12:16], 'little')])
     assert 'EXT_meshopt_compression' not in j.get('extensionsUsed', []), 'meshopt left in a LOD'
 
@@ -70,7 +72,7 @@ for p in ['build/three.module.min.js', 'examples/jsm/loaders/GLTFLoader.js', 'ex
 size_mb = round(lib / 1e6 + 0.05, 1)
 
 D = {'families': out_fams, 'dims': {'w': 0.5322, 'd': 0.1350}, 'libMB': size_mb,
-     'lodBytes': [len(lod1), len(lod0)]}
+     'lodBytes': [len(lod1), len(lod0), len(mt1), len(mt0)]}
 
 src = open(os.path.join(ROOT, 'src/page.html'), encoding='utf-8').read()
 src = src.replace('/*@SHADE_TOKENS@*/', ''.join(tokens))
@@ -80,13 +82,17 @@ logo = ''.join('<path d="%s"/>' % d for d in open(os.path.join(HERE, 'logo-paths
 src = src.replace('@LOGO_PATHS@', logo)
 src = src.replace('@LOD1@', base64.b64encode(lod1).decode())
 src = src.replace('@LOD0@', base64.b64encode(lod0).decode())
-assert '@LOD' not in src and '/*@' not in src
+src = src.replace('@MT1@', base64.b64encode(mt1).decode())
+src = src.replace('@MT0@', base64.b64encode(mt0).decode())
+assert '@LOD' not in src and '@MT' not in src and '/*@' not in src
 
 # copy guards (CLAUDE.md): no em dash, no emoji-range characters, no box-shadow, no gradient, no backdrop-filter, no italic
 code = re.sub(r'<script type="application/octet-stream"[^>]*>[^<]*</script>', '', src)
 # the one approved exception (E-F1, Sam 2026-10-11): ciao's studio backdrop and fade, each line marked /*E-F1*/
-code = '\n'.join(l for l in code.split('\n') if '/*E-F1*/' not in l)
+code = '\n'.join(l for l in code.split('\n') if '/*E-F1*/' not in l and '/*E-H1*/' not in l and '/*E-F2*/' not in l)
 assert src.count('/*E-F1*/') == 2, 'E-F1 lines'
+assert src.count('/*E-H1*/') == 2, 'E-H1 lines (the loader)'
+assert src.count('/*E-F2*/') == 1, 'E-F2 line (the per-shade background)'
 for bad in ['—', 'box-shadow', 'gradient', 'backdrop-filter', 'italic', 'Inter,', 'blur(']:
     assert bad not in code, 'guard: ' + repr(bad)
 assert not re.search('[\U0001F300-\U0001FAFF☀-➿]', code), 'emoji'

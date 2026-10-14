@@ -44,7 +44,7 @@ test.describe('1. routes, titles and links', () => {
   test('the switcher opens with JavaScript off (popover), lists the ten families and closes', async ({ browser }) => {
     const ctx = await browser.newContext({ ...PHONE, javaScriptEnabled: false });
     const page = await ctx.newPage();
-    await page.goto(url('playful-pinks'));
+    await page.goto(url('playful-pink'));
     await expect(page.locator('#family-switcher')).toBeHidden();
     await page.getByRole('button', { name: 'Families' }).click();
     await expect(page.locator('#family-switcher')).toBeVisible();
@@ -77,7 +77,7 @@ test.describe('6. HUD, type and colour rules', () => {
     test(`type and placement at ${label}`, async ({ browser }) => {
       const ctx = await browser.newContext(opts);
       const page = await ctx.newPage();
-      await page.goto(url('blissful-blues'));
+      await page.goto(url('blissful-blue'));
       await page.evaluate(() => document.fonts.ready);
       const m = await page.evaluate(() => {
         const cs = (s: string) => getComputedStyle(document.querySelector(s)!);
@@ -123,7 +123,7 @@ test.describe('6. HUD, type and colour rules', () => {
       expect(markup).not.toMatch(/#[0-9a-fA-F]{6}\b(?!reserve)/);
       expect(html).not.toMatch(/standin/i);
     }
-    await page.goto(url('blissful-blues'));
+    await page.goto(url('blissful-blue'));
     await expect(page.locator('#reserve')).toHaveAttribute('href', '/?shade=032&finish=matte#reserve');
     await expect(page.locator('#reserve')).toHaveAccessibleName('Reserve my shade, Sky');
     await page.locator('#next').click();
@@ -137,7 +137,7 @@ test.describe('6. HUD, type and colour rules', () => {
     const page = await ctx.newPage();
     // first paint without the module: the HUD is a skeleton, never "Sky" in ink
     await page.route(/\/_astro\/.*\.js$/, (r) => r.abort());
-    await page.goto(url('blissful-blues', '?shade=025'));
+    await page.goto(url('blissful-blue', '?shade=025'));
     const skel = await page.evaluate(() => ({
       deeplink: document.documentElement.hasAttribute('data-deeplink'),
       shade: document.documentElement.dataset.shade,
@@ -153,7 +153,7 @@ test.describe('6. HUD, type and colour rules', () => {
     expect(skel.ring).toBe('rgb(56, 63, 67)');        // the deep-linked swatch carries the selected ring at first paint
     expect(skel.keyRing).toBe('rgba(0, 0, 0, 0)');
     await page.unroute(/\/_astro\/.*\.js$/);
-    await page.goto(url('blissful-blues', '?shade=025'));
+    await page.goto(url('blissful-blue', '?shade=025'));
     await expect(page.locator('#hudName')).toHaveText('Electric');
     await expect(page.locator('#hudNum')).toHaveText('025 / 240');
     await expect(page.locator('html')).not.toHaveAttribute('data-deeplink', '');
@@ -170,7 +170,7 @@ test.describe('5. selection in grid mode (DOM inputs)', () => {
     const ctx = await browser.newContext(PHONE);
     await watch(ctx);
     const page = await ctx.newPage();
-    await page.goto(url('blissful-blues'));
+    await page.goto(url('blissful-blue'));
     const len = await page.evaluate(() => history.length);
     await next3(page);
     expect(await shade(page)).toBe('035');
@@ -180,16 +180,16 @@ test.describe('5. selection in grid mode (DOM inputs)', () => {
     expect(await page.evaluate(() => history.length)).toBe(len);
     await page.waitForTimeout(700);
     const sel = (await events(page)).filter((e) => e.event === 'shade_selected');
-    expect(sel.at(-1)!.props).toEqual({ shade_id: '035', family: 'blissful-blues', input: 'prev_next', finish: 'matte' });
+    expect(sel.at(-1)!.props).toEqual({ shade_id: '035', family: 'blissful-blue', input: 'prev_next', finish: 'matte' });
     await ctx.close();
   });
 
   test('Prev is disabled at 01 and Next at 24; nothing wraps', async ({ page }) => {
-    await page.goto(url('roaring-reds', '?shade=217'));
+    await page.goto(url('roaring-red', '?shade=217'));
     await expect(page.locator('#prev')).toHaveAttribute('aria-disabled', 'true');
     await page.locator('#prev').click({ force: true });   // aria-disabled stays focusable and clickable; the click is a no-op
     expect(await shade(page)).toBe('217');
-    await page.goto(url('roaring-reds', '?shade=240'));
+    await page.goto(url('roaring-red', '?shade=240'));
     await expect(page.locator('#next')).toHaveAttribute('aria-disabled', 'true');
     await page.locator('#next').click({ force: true });
     expect(await shade(page)).toBe('240');
@@ -220,7 +220,7 @@ test.describe('5. selection in grid mode (DOM inputs)', () => {
   test('grid: tap selects; arrows move one, up and down move a row; the page does not scroll', async ({ browser }) => {
     const ctx = await browser.newContext(PHONE);
     const page = await ctx.newPage();
-    await page.goto(url('stormy-greys'));
+    await page.goto(url('stormy-grey'));
     await page.waitForFunction(() => !document.documentElement.classList.contains('m3d'), null, { timeout: 30_000 });
     // a 3D build has a second copy of the grid under "The whole family."; CSS shows one per mode, so work on the shown one
     await page.locator('.gsw[data-i="0"]:visible').click();
@@ -240,7 +240,7 @@ test.describe('5. selection in grid mode (DOM inputs)', () => {
   });
 
   test('finish: Matte and Gloss are a pressed pair; the choice lives in the URL', async ({ page }) => {
-    await page.goto(url('mellow-yellows'));
+    await page.goto(url('mellow-yellow'));
     await page.getByRole('button', { name: 'Gloss' }).click();
     await expect(page.getByRole('button', { name: 'Gloss' })).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByRole('button', { name: 'Matte' })).toHaveAttribute('aria-pressed', 'false');
@@ -256,7 +256,7 @@ test.describe('C3. the sticky-bar swatch', () => {
     for (const reduced of [false, true]) {
       const ctx = await browser.newContext({ ...PHONE, reducedMotion: reduced ? 'reduce' : 'no-preference' });
       const page = await ctx.newPage();
-      await page.goto(url('blissful-blues'));
+      await page.goto(url('blissful-blue'));
       await page.locator('#next').click();
       const m = await page.evaluate(() => {
         const sw = document.querySelector('.bar-sw')!;
@@ -277,16 +277,16 @@ test.describe('C3. the sticky-bar swatch', () => {
 
 test.describe('9. states in grid mode', () => {
   test('?shade=999: the key shade, the URL cleaned', async ({ page }) => {
-    await page.goto(url('blissful-blues', '?shade=999'));
+    await page.goto(url('blissful-blue', '?shade=999'));
     expect(await shade(page)).toBe('032');
-    await expect(page).toHaveURL(/\/shades\/blissful-blues\/$/);
+    await expect(page).toHaveURL(/\/shades\/blissful-blue\/$/);
     await expect(page.locator('#hudName')).toHaveText('Sky');
   });
 
-  test('?shade=032 on the Vivid Violets page lands on Blissful Blues with Sky', async ({ page }) => {
-    await page.goto(url('vivid-violets', '?shade=032'));
-    await page.waitForURL(/\/shades\/blissful-blues\/\?shade=032$/);
-    await expect(page.locator('h1')).toHaveText('Blissful Blues');
+  test('?shade=032 on the Vivid Violet page lands on Blissful Blue with Sky', async ({ page }) => {
+    await page.goto(url('vivid-violet', '?shade=032'));
+    await page.waitForURL(/\/shades\/blissful-blue\/\?shade=032$/);
+    await expect(page.locator('h1')).toHaveText('Blissful Blue');
     await expect(page.locator('#hudName')).toHaveText('Sky');
   });
 
@@ -302,7 +302,7 @@ test.describe('9. states in grid mode', () => {
       const page = await ctx.newPage();
       const requests: string[] = [];
       page.on('request', (r) => requests.push(new URL(r.url()).pathname));
-      await page.goto(url('earthy-browns'));
+      await page.goto(url('basic-brown'));
       await page.waitForTimeout(800);
       await expect(page.locator('html')).toHaveClass(/\bgrid\b/);
       await expect(page.locator('#stage .sgrid')).toBeVisible();
@@ -332,7 +332,7 @@ test.describe('9. states in grid mode', () => {
 
 test.describe('10. accessibility and layout', () => {
   test('the scrubber is a slider with the spec keys and value text', async ({ page }) => {
-    await page.goto(url('blissful-blues'));
+    await page.goto(url('blissful-blue'));
     const s = page.getByRole('slider', { name: 'Shade' });
     await expect(s).toHaveAttribute('aria-valuemin', '1');
     await expect(s).toHaveAttribute('aria-valuemax', '24');
@@ -347,17 +347,17 @@ test.describe('10. accessibility and layout', () => {
   });
 
   test('the live region speaks once for Prev and Next, and stays quiet for the focused slider', async ({ page }) => {
-    await page.goto(url('blissful-blues'));
+    await page.goto(url('blissful-blue'));
     await page.locator('#next').click();
-    await expect(page.locator('#live')).toHaveText('Ocean. Blissful Blues. Shade 33 of 240.');
+    await expect(page.locator('#live')).toHaveText('Ocean. Blissful Blue. Shade 33 of 240.');
     await page.getByRole('slider', { name: 'Shade' }).focus();
     await page.keyboard.press('ArrowRight');
     await page.waitForTimeout(600);
-    await expect(page.locator('#live')).toHaveText('Ocean. Blissful Blues. Shade 33 of 240.');
+    await expect(page.locator('#live')).toHaveText('Ocean. Blissful Blue. Shade 33 of 240.');
   });
 
   test('focus is visible on both neutrals (Ember Luxe outline)', async ({ page }) => {
-    for (const slug of ['frosty-whites', 'blissful-blues']) {
+    for (const slug of ['frosty-white', 'blissful-blue']) {
       await page.goto(url(slug));
       await page.keyboard.press('Tab');
       const o = await page.evaluate(() => { const a = document.activeElement!; const cs = getComputedStyle(a); return [a.className, cs.outlineStyle, cs.outlineColor, cs.outlineWidth]; });
@@ -371,7 +371,7 @@ test.describe('10. accessibility and layout', () => {
     test(`no horizontal scroll, 44 px targets, nothing under the sticky bar at ${w} x ${h}`, async ({ browser }) => {
       const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: w < 900, hasTouch: w < 1100 });
       const page = await ctx.newPage();
-      await page.goto(url('vivid-violets'));
+      await page.goto(url('vivid-violet'));
       await page.evaluate(() => document.fonts.ready);
       const r = await page.evaluate(() => {
         const box = (e: Element) => e.getBoundingClientRect();
@@ -392,7 +392,7 @@ test.describe('10. accessibility and layout', () => {
     test(`wide swatch grid at ${w} x ${h}: 80 px circles, nothing over the controls, the HUD centred`, async ({ browser }) => {
       const ctx = await browser.newContext({ viewport: { width: w, height: h } });
       const page = await ctx.newPage();
-      for (const slug of ['blissful-blues', 'earthy-browns', 'frosty-whites']) {
+      for (const slug of ['blissful-blue', 'basic-brown', 'frosty-white']) {
         await page.goto(url(slug));
         // on a 3D build headless Chromium's software renderer turns the page to grid mode once the island's gate runs
         await page.waitForFunction(() => !document.documentElement.classList.contains('m3d'), null, { timeout: 30_000 });
@@ -421,14 +421,14 @@ test.describe('10. accessibility and layout', () => {
   test('at 390 x 844 every control sits above the sticky bar at rest; at 844 x 390 the stage fits between header and bar once the title scrolls', async ({ browser }) => {
     const ctx = await browser.newContext(PHONE);
     const page = await ctx.newPage();
-    await page.goto(url('blissful-blues'));
+    await page.goto(url('blissful-blue'));
     const r = await page.evaluate(() => ({ finish: document.querySelector('#finish')!.getBoundingClientRect().bottom, bar: document.querySelector('#bar')!.getBoundingClientRect().top, stage: document.querySelector('#stage')!.getBoundingClientRect().height }));
     expect(r.stage).toBe(450);
     expect(r.finish).toBeLessThanOrEqual(r.bar);
     await ctx.close();
     const land = await browser.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
     const p2 = await land.newPage();
-    await p2.goto(url('blissful-blues'));
+    await p2.goto(url('blissful-blue'));
     const t = await p2.evaluate(() => document.querySelector('.fp-title')!.getBoundingClientRect().height);
     await p2.evaluate((y) => scrollTo(0, y), t);
     const s = await p2.evaluate(() => ({ stage: document.querySelector('#stage')!.getBoundingClientRect(), head: document.querySelector('#fh')!.getBoundingClientRect().bottom, bar: document.querySelector('#bar')!.getBoundingClientRect().top }));

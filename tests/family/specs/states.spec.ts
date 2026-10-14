@@ -10,17 +10,17 @@ const conn = (c: Record<string, unknown>) => (ctx: BrowserContext) => ctx.addIni
 
 type Row = { row: string; url: string; setup?: (ctx: BrowserContext) => Promise<void>; opts?: Record<string, unknown>; line: string | null; show3d: boolean; why: string };
 const ROWS: Row[] = [
-  { row: 'data-saver', url: '/shades/earthy-browns/', setup: conn({ saveData: true, effectiveType: '4g' }), line: 'Data saver is on. Showing the swatches.', show3d: true, why: 'savedata' },
-  { row: '2g', url: '/shades/earthy-browns/', setup: conn({ saveData: false, effectiveType: '2g' }), line: 'Slow connection. Showing the swatches.', show3d: true, why: 'slow' },
-  { row: 'slow-2g', url: '/shades/earthy-browns/', setup: conn({ saveData: false, effectiveType: 'slow-2g' }), line: 'Slow connection. Showing the swatches.', show3d: true, why: 'slow' },
-  { row: 'device-memory-2', url: '/shades/earthy-browns/', setup: (ctx) => ctx.addInitScript(() => Object.defineProperty(navigator, 'deviceMemory', { value: 2, configurable: true })), line: null, show3d: false, why: 'memory' },
-  { row: 'reduced-motion', url: '/shades/earthy-browns/', opts: { reducedMotion: 'reduce' }, line: null, show3d: false, why: 'reduced' },
-  { row: 'no-webgl2', url: '/shades/earthy-browns/', setup: (ctx) => ctx.addInitScript(() => { delete (window as unknown as Record<string, unknown>).WebGL2RenderingContext; }), line: null, show3d: false, why: 'webgl' },
+  { row: 'data-saver', url: '/shades/basic-brown/', setup: conn({ saveData: true, effectiveType: '4g' }), line: 'Data saver is on. Showing the swatches.', show3d: true, why: 'savedata' },
+  { row: '2g', url: '/shades/basic-brown/', setup: conn({ saveData: false, effectiveType: '2g' }), line: 'Slow connection. Showing the swatches.', show3d: true, why: 'slow' },
+  { row: 'slow-2g', url: '/shades/basic-brown/', setup: conn({ saveData: false, effectiveType: 'slow-2g' }), line: 'Slow connection. Showing the swatches.', show3d: true, why: 'slow' },
+  { row: 'device-memory-2', url: '/shades/basic-brown/', setup: (ctx) => ctx.addInitScript(() => Object.defineProperty(navigator, 'deviceMemory', { value: 2, configurable: true })), line: null, show3d: false, why: 'memory' },
+  { row: 'reduced-motion', url: '/shades/basic-brown/', opts: { reducedMotion: 'reduce' }, line: null, show3d: false, why: 'reduced' },
+  { row: 'no-webgl2', url: '/shades/basic-brown/', setup: (ctx) => ctx.addInitScript(() => { delete (window as unknown as Record<string, unknown>).WebGL2RenderingContext; }), line: null, show3d: false, why: 'webgl' },
 ];
 
 test.describe('9. states, grid-mode rows (PUBLIC_FAMILY_3D=dev build)', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/shades/earthy-browns/');
+    await page.goto('/shades/basic-brown/');
     const has3d = await page.evaluate(() => JSON.parse(document.getElementById('fam-data')!.textContent!).has3d as boolean);
     expect(has3d, 'these rows need a PUBLIC_FAMILY_3D=dev build').toBe(true);
   });
@@ -30,7 +30,7 @@ test.describe('9. states, grid-mode rows (PUBLIC_FAMILY_3D=dev build)', () => {
     const reqs: string[] = [];
     ctx.on('request', (q) => reqs.push(new URL(q.url()).pathname));
     const page = await ctx.newPage();
-    await page.goto('/shades/earthy-browns/?render=force');
+    await page.goto('/shades/basic-brown/?render=force');
     await expect.poll(() => islandRequests(reqs).length, { timeout: 60_000 }).toBeGreaterThan(0);
     await ctx.close();
   });
@@ -101,7 +101,7 @@ test.describe('9. states, grid-mode rows (PUBLIC_FAMILY_3D=dev build)', () => {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
     await ROWS[0].setup!(ctx);
     const page = await ctx.newPage();
-    await page.goto('/shades/earthy-browns/');
+    await page.goto('/shades/basic-brown/');
     await page.evaluate(() => document.fonts.ready);
     await expect(page.getByRole('button', { name: /^Show in 3D/ })).toBeVisible();
     const m = await page.evaluate(() => { const box = (s: string) => document.querySelector(s)!.getBoundingClientRect().toJSON(); return { hud: box('#hud'), state: box('#state'), scrub: box('#scrub') }; });
@@ -115,9 +115,9 @@ test.describe('9. states, grid-mode rows (PUBLIC_FAMILY_3D=dev build)', () => {
     const ctx = await browser.newContext(PHONE);
     await watch(ctx);
     const page = await ctx.newPage();
-    await page.goto('/shades/blissful-blues/?shade=999');
+    await page.goto('/shades/blissful-blue/?shade=999');
     expect(await shade(page)).toBe('032');
-    await expect(page).toHaveURL(/\/shades\/blissful-blues\/$/);
+    await expect(page).toHaveURL(/\/shades\/blissful-blue\/$/);
     await expect(page.locator('#hudName')).toHaveText('Sky');
     expect(await cspViolations(page)).toEqual([]);
     await page.evaluate(() => document.fonts.ready);
@@ -125,13 +125,13 @@ test.describe('9. states, grid-mode rows (PUBLIC_FAMILY_3D=dev build)', () => {
     await ctx.close();
   });
 
-  test('cross-family: ?shade=032 on Vivid Violets lands on Blissful Blues with Sky', async ({ browser }) => {
+  test('cross-family: ?shade=032 on Vivid Violet lands on Blissful Blue with Sky', async ({ browser }) => {
     const ctx = await browser.newContext(PHONE);
     await watch(ctx);
     const page = await ctx.newPage();
-    await page.goto('/shades/vivid-violets/?shade=032&finish=gloss');
-    await page.waitForURL(/\/shades\/blissful-blues\/\?shade=032&finish=gloss$/);
-    await expect(page.locator('h1')).toHaveText('Blissful Blues');
+    await page.goto('/shades/vivid-violet/?shade=032&finish=gloss');
+    await page.waitForURL(/\/shades\/blissful-blue\/\?shade=032&finish=gloss$/);
+    await expect(page.locator('h1')).toHaveText('Blissful Blue');
     await expect(page.locator('#hudName')).toHaveText('Sky');
     await expect(page.getByRole('button', { name: 'Gloss' })).toHaveAttribute('aria-pressed', 'true');
     expect(await cspViolations(page)).toEqual([]);
@@ -179,7 +179,7 @@ test.describe('9. first paint in swatch grid mode (PUBLIC_FAMILY_3D=dev build, t
           await route.continue();
         });
         const page = await ctx.newPage();
-        await page.goto('/shades/blissful-blues/');
+        await page.goto('/shades/blissful-blue/');
         await page.waitForFunction(() => '__famAt' in window, null, { timeout: 30_000 });
         await page.evaluate(() => document.fonts.ready);
         await page.waitForTimeout(600);

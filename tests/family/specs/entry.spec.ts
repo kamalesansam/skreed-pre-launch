@@ -81,9 +81,9 @@ test.describe('2. entry from the landing, poster path', () => {
       await page.goto('/');
       await nav(page).locator('a').nth(1).scrollIntoViewIfNeeded();
       await nav(page).locator('a').nth(1).click();
-      await page.waitForURL(/\/shades\/blissful-blues\/\?shade=032$/);
+      await page.waitForURL(/\/shades\/blissful-blue\/\?shade=032$/);
       await expect(page.locator('#hudName')).toHaveText('Sky');
-      expect(seen.filter((e) => e.event === 'family_open').at(-1)?.props).toEqual({ family: 'blissful-blues', from: 'rock_grid' });
+      expect(seen.filter((e) => e.event === 'family_open').at(-1)?.props).toEqual({ family: 'blissful-blue', from: 'rock_grid' });
       await page.goBack();
       await page.waitForURL(/\/#families$/);
       await expect(nav(page)).toBeInViewport();
@@ -158,7 +158,7 @@ test.describe('2. entry from the landing, 3D path (needs the section 2 island)',
       const page = await ctx.newPage();
       const b = (await live3d(page))[1];
       await page.mouse.click(b.x + b.w / 2, b.y + b.h / 2);
-      await page.waitForURL(/\/shades\/blissful-blues\//);
+      await page.waitForURL(/\/shades\/blissful-blue\//);
       await page.goBack();
       await page.waitForURL(/\/#families$/);
       await expect(page.locator('html')).toHaveClass(/\bhero3d\b/);

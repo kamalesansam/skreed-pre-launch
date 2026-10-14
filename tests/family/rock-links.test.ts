@@ -8,11 +8,11 @@ import { REGION, BLOCK_ORDER } from '../../src/config/shades.gen.ts';
 
 // spec 2.2, the table for today's default "cool" order: block, holds, opens
 const COOL: [number, string, string][] = [
-  [0, 'Mango', '/shades/blushing-corals/?shade=148'], [1, 'Silver', '/shades/stormy-greys/?shade=173'],
-  [2, 'Snow', '/shades/frosty-whites/?shade=007'], [3, 'Sky', '/shades/blissful-blues/?shade=032'],
-  [4, 'Cinnamon', '/shades/earthy-browns/?shade=127'], [5, 'Amethyst', '/shades/vivid-violets/?shade=079'],
-  [6, 'Sunbeam', '/shades/mellow-yellows/?shade=097'], [7, 'Rouge', '/shades/playful-pinks/?shade=062'],
-  [8, 'Lawn', '/shades/go-green/?shade=204'], [9, 'Crimson', '/shades/roaring-reds/?shade=223'],
+  [0, 'Mango', '/shades/blushing-coral/?shade=148'], [1, 'Silver', '/shades/stormy-grey/?shade=173'],
+  [2, 'Snow', '/shades/frosty-white/?shade=007'], [3, 'Sky', '/shades/blissful-blue/?shade=032'],
+  [4, 'Cinnamon', '/shades/basic-brown/?shade=127'], [5, 'Amethyst', '/shades/vivid-violet/?shade=079'],
+  [6, 'Sunbeam', '/shades/mellow-yellow/?shade=097'], [7, 'Rouge', '/shades/playful-pink/?shade=062'],
+  [8, 'Lawn', '/shades/go-green/?shade=204'], [9, 'Crimson', '/shades/roaring-red/?shade=223'],
 ];
 // the prototype's other orders (prototypes/hero-v9/template.html BLOCK_ORDERS)
 const ORDERS: Record<string, string[]> = {
@@ -22,7 +22,7 @@ const ORDERS: Record<string, string[]> = {
 };
 
 test('ten links in catalog order with the accessible names of 2.2', () => {
-  assert.deepEqual(ROCK_LINKS.map((l) => l.slug), ['frosty-whites', 'blissful-blues', 'playful-pinks', 'vivid-violets', 'mellow-yellows', 'earthy-browns', 'blushing-corals', 'stormy-greys', 'go-green', 'roaring-reds']);
+  assert.deepEqual(ROCK_LINKS.map((l) => l.slug), ['frosty-white', 'blissful-blue', 'playful-pink', 'vivid-violet', 'mellow-yellow', 'basic-brown', 'blushing-coral', 'stormy-grey', 'go-green', 'roaring-red']);
   ROCK_LINKS.forEach((l, i) => assert.equal(l.shade, REGION[i].name));
 });
 
@@ -80,8 +80,8 @@ test('a tap that moved 10 px or less on a gem navigates, with the return path se
   h.fire('pointerdown', { clientX: 100, clientY: 100 });
   h.fire('click', { clientX: 100 + TAP_SLOP_PX * 0.6, clientY: 100 + TAP_SLOP_PX * 0.6 });
   assert.equal(h.calls.replaceState, '#families');
-  assert.equal(h.calls.assign, '/shades/vivid-violets/?shade=079');
-  assert.deepEqual(h.calls.events[0], { event: 'family_open', props: { family: 'vivid-violets', from: 'rock' } });
+  assert.equal(h.calls.assign, '/shades/vivid-violet/?shade=079');
+  assert.deepEqual(h.calls.events[0], { event: 'family_open', props: { family: 'vivid-violet', from: 'rock' } });
   h.off();
 });
 
@@ -146,11 +146,11 @@ test('a link click leaves /#families behind, logs family_open (rock_grid until t
   const ev = h.click(1);
   assert.equal(ev.defaultPrevented, true);
   assert.equal(h.calls.replaceState, '#families');
-  assert.equal(h.calls.assign, '/shades/blissful-blues/?shade=032');
-  assert.deepEqual(h.calls.events.at(-1), { event: 'family_open', props: { family: 'blissful-blues', from: 'rock_grid' } });
+  assert.equal(h.calls.assign, '/shades/blissful-blue/?shade=032');
+  assert.deepEqual(h.calls.events.at(-1), { event: 'family_open', props: { family: 'blissful-blue', from: 'rock_grid' } });
   placeLinkBoxes(h.nav, ROCK_LINKS.map((_, i) => ({ x: 100 * i, y: 50, w: 20, h: 60 })));
   h.click(9);
-  assert.deepEqual(h.calls.events.at(-1), { event: 'family_open', props: { family: 'roaring-reds', from: 'rock' } });
+  assert.deepEqual(h.calls.events.at(-1), { event: 'family_open', props: { family: 'roaring-red', from: 'rock' } });
   h.calls.assign = undefined;
   const mod = h.click(4, { metaKey: true });
   assert.equal(mod.defaultPrevented, false, 'cmd-click keeps the browser behaviour');
@@ -166,7 +166,7 @@ test('focus prefetches the family page once and brings the gem to rest through i
   h.anchors[5].dispatchEvent(new Event('focus'));
   h.anchors[5].dispatchEvent(new Event('focus'));
   assert.deepEqual(focused, [5, 5]);
-  assert.deepEqual(h.calls.prefetch, ['/shades/earthy-browns/']);
+  assert.deepEqual(h.calls.prefetch, ['/shades/basic-brown/']);
   assert.equal(FAMILY_FOCUS_EVENT, 'skreed:family-focus');
   offNav(); off();
 });

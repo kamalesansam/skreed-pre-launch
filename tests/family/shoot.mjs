@@ -16,7 +16,7 @@ const base = process.env.BASE_URL || 'http://127.0.0.1:8790/';
 const sizes = sizesArg.split(',').map((s) => s.split('x').map(Number));
 mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || undefined });
-for (const slug of fams.length ? fams : ['blissful-blues', 'frosty-whites', 'vivid-violets']) {
+for (const slug of fams.length ? fams : ['blissful-blue', 'frosty-white', 'vivid-violet']) {
   for (const [w, h] of sizes) {
     const coarse = w < 900 || h < 600;
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, isMobile: coarse && w < 900, hasTouch: coarse });

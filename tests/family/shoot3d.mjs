@@ -8,7 +8,7 @@ import { join } from 'node:path';
 
 const [out = 'docs/specs/screenshots', ...jobs] = process.argv.slice(2);
 const base = (process.env.BASE_URL || 'http://127.0.0.1:8795/').replace(/\/$/, '');
-const list = jobs.length ? jobs : ['blissful-blues:390x844', 'blissful-blues:1280x800', 'frosty-whites:390x844', 'frosty-whites:1280x800', 'vivid-violets:390x844', 'vivid-violets:1280x800'];
+const list = jobs.length ? jobs : ['blissful-blue:390x844', 'blissful-blue:1280x800', 'frosty-white:390x844', 'frosty-white:1280x800', 'vivid-violet:390x844', 'vivid-violet:1280x800'];
 mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 for (const job of list) {

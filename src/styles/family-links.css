@@ -17,16 +17,16 @@ html.hero3d .fl[data-placed] { position: fixed; inset: 0; padding: 0; background
 html.hero3d .fl[data-placed] ol { display: block; }
 html.hero3d .fl[data-placed] a { position: absolute; left: 0; top: 0; width: var(--hit, 44px); height: var(--hit, 44px); padding: 0; pointer-events: none; color: transparent; }   /* transparent, never hidden: always in the tab order */
 html.hero3d .fl[data-placed] :is(.fl-sw, .fl-cap) { display: none; }
-.fl a[data-family="frosty-whites"] .fl-sw { background: var(--shade-frosty-whites-07); }
-.fl a[data-family="blissful-blues"] .fl-sw { background: var(--shade-blissful-blues-08); }
-.fl a[data-family="playful-pinks"] .fl-sw { background: var(--shade-playful-pinks-14); }
-.fl a[data-family="vivid-violets"] .fl-sw { background: var(--shade-vivid-violets-07); }
-.fl a[data-family="mellow-yellows"] .fl-sw { background: var(--shade-mellow-yellows-01); }
-.fl a[data-family="earthy-browns"] .fl-sw { background: var(--shade-earthy-browns-07); }
-.fl a[data-family="blushing-corals"] .fl-sw { background: var(--shade-blushing-corals-04); }
-.fl a[data-family="stormy-greys"] .fl-sw { background: var(--shade-stormy-greys-05); }
+.fl a[data-family="frosty-white"] .fl-sw { background: var(--shade-frosty-white-07); }
+.fl a[data-family="blissful-blue"] .fl-sw { background: var(--shade-blissful-blue-08); }
+.fl a[data-family="playful-pink"] .fl-sw { background: var(--shade-playful-pink-14); }
+.fl a[data-family="vivid-violet"] .fl-sw { background: var(--shade-vivid-violet-07); }
+.fl a[data-family="mellow-yellow"] .fl-sw { background: var(--shade-mellow-yellow-01); }
+.fl a[data-family="basic-brown"] .fl-sw { background: var(--shade-basic-brown-07); }
+.fl a[data-family="blushing-coral"] .fl-sw { background: var(--shade-blushing-coral-04); }
+.fl a[data-family="stormy-grey"] .fl-sw { background: var(--shade-stormy-grey-05); }
 .fl a[data-family="go-green"] .fl-sw { background: var(--shade-go-green-12); }
-.fl a[data-family="roaring-reds"] .fl-sw { background: var(--shade-roaring-reds-07); }
+.fl a[data-family="roaring-red"] .fl-sw { background: var(--shade-roaring-red-07); }
 
 /* the landing's cross-document view transition (2.2, R14): links into /shades/ only (installViewTransitionScope skips
    every other destination); none under reduced motion */

@@ -33,7 +33,7 @@ test('T16: the 3D path under the site CSP, at 390 and 1280: zero violations, the
     await watch(ctx);
     const urls = track(ctx);
     const page = await ctx.newPage();
-    const res = await page.goto('/shades/blissful-blues/?render=force&tier=high');
+    const res = await page.goto('/shades/blissful-blue/?render=force&tier=high');
     await supplierBuild(page);
     expect(res!.headers()['content-security-policy'] ?? '').not.toMatch(/wasm-unsafe-eval|unsafe-eval/);
     await live(page);
@@ -72,7 +72,7 @@ test('acceptance 3, measured on the rendered silhouettes: at 1280 x 800 the fron
   test.setTimeout(900_000);
   const ctx = await browser.newContext(WIDE);
   const page = await ctx.newPage();
-  await page.goto('/shades/blissful-blues/?render=force&tier=high');
+  await page.goto('/shades/blissful-blue/?render=force&tier=high');
   await supplierBuild(page);
   await live(page);
   const stage = (await page.locator('#stage').boundingBox())!;
@@ -108,7 +108,7 @@ for (const [w, h] of [[390, 844], [430, 932], [375, 667], [360, 780]] as const) 
     test.setTimeout(600_000);
     const ctx = await browser.newContext({ ...PHONE, viewport: { width: w, height: h } });
     const page = await ctx.newPage();
-    await page.goto('/shades/frosty-whites/?render=force&tier=high');
+    await page.goto('/shades/frosty-white/?render=force&tier=high');
     await supplierBuild(page);
     await live(page);
     const stage = (await page.locator('#stage').boundingBox())!;
@@ -138,13 +138,13 @@ test('first paint: the skeleton and the poster sit in the stage; the poster hide
   test.setTimeout(400_000);
   const ctx = await browser.newContext(WIDE);
   const page = await ctx.newPage();
-  await page.goto('/shades/roaring-reds/?render=force&tier=high');
+  await page.goto('/shades/roaring-red/?render=force&tier=high');
   await supplierBuild(page);
   const img = page.locator('#st3d .st-poster img');
   await expect(img).toBeVisible();
   expect(await img.getAttribute('fetchpriority')).toBe('high');
   expect(await page.locator('#st3d .skel-wide polygon').count()).toBeGreaterThanOrEqual(20);
-  expect(await img.evaluate((el: HTMLImageElement) => el.currentSrc)).toMatch(/roaring-reds-wide\.[\w-]+\.avif$/);
+  expect(await img.evaluate((el: HTMLImageElement) => el.currentSrc)).toMatch(/roaring-red-wide\.[\w-]+\.avif$/);
   await live(page);
   await expect(page.locator('#st3d')).toHaveClass(/\blive\b/);
   await expect(page.locator('#st3d .st-poster')).toBeHidden();
@@ -155,7 +155,7 @@ test('T9: a lost context shows the poster at once; after restore the frame retur
   test.setTimeout(500_000);
   const ctx = await browser.newContext(WIDE);
   const page = await ctx.newPage();
-  await page.goto('/shades/stormy-greys/?render=force&tier=high');
+  await page.goto('/shades/stormy-grey/?render=force&tier=high');
   await supplierBuild(page);
   await live(page);
   const before = await pixels(page);
@@ -175,7 +175,7 @@ test('T10: disposal frees every geometry and texture', async ({ browser }) => {
   test.setTimeout(400_000);
   const ctx = await browser.newContext(WIDE);
   const page = await ctx.newPage();
-  await page.goto('/shades/earthy-browns/?render=force&tier=high');
+  await page.goto('/shades/basic-brown/?render=force&tier=high');
   await supplierBuild(page);
   await live(page);
   const m = await page.evaluate(() => { const s = (window as unknown as { __famStage: { info(): { geometries: number; textures: number }; dispose(): void } }).__famStage; const a = s.info(); s.dispose(); const b = s.info(); return { a, b }; });
@@ -193,7 +193,7 @@ test('model failed: a 404 on LOD1 gives grid mode and "Try again", which brings 
   let fail = true;
   await ctx.route(/\/models\/case\.lod1\.[0-9a-f]{8}\.glb$/, (r) => (fail ? r.fulfill({ status: 404, body: '' }) : r.continue()));
   const page = await ctx.newPage();
-  await page.goto('/shades/mellow-yellows/?render=force&tier=high');
+  await page.goto('/shades/mellow-yellow/?render=force&tier=high');
   await supplierBuild(page);
   await expect(page.locator('#state')).toContainText('Could not load the 3D cases.', { timeout: 180_000 });
   await expect(page.locator('html')).toHaveClass(/\bgrid\b/);
@@ -213,7 +213,7 @@ test('island chunk failed: "Try again" re-imports the chunk with ?r=1, a second 
   const urls = track(ctx);
   await ctx.route(/\/_astro\/island\.[\w-]+\.js(\?.*)?$/, (r) => r.fulfill({ status: 404, body: '' }));
   const page = await ctx.newPage();
-  await page.goto('/shades/blushing-corals/?render=force&tier=high');
+  await page.goto('/shades/blushing-coral/?render=force&tier=high');
   await supplierBuild(page);
   await expect(page.locator('#state')).toContainText('Could not load the 3D cases. Showing the swatches.', { timeout: 120_000 });
   await page.getByRole('button', { name: 'Try again' }).click();
@@ -234,7 +234,7 @@ test('offline before the model: the offline line, then the 3D swaps in when the 
     return r.abort('internetdisconnected');
   });
   const page = await ctx.newPage();
-  await page.goto('/shades/playful-pinks/?render=force&tier=high');
+  await page.goto('/shades/playful-pink/?render=force&tier=high');
   await supplierBuild(page);
   await expect(page.locator('#state')).toContainText('You are offline. Showing the swatches.', { timeout: 180_000 });
   await expect(page.locator('html')).toHaveClass(/\bgrid\b/);

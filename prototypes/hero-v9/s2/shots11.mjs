@@ -40,12 +40,14 @@ for (const S of pts) {
 if (process.env.FAMTEST) {
   await page.evaluate((v) => { scrollTo(0, innerHeight * v); window.__skreedSnap(v); }, 12.6);
   await page.waitForTimeout(8000);
-  await page.click('#s2links a[href="#/shades/blissful-blues/"]', { force: true, timeout: 60000 });
+  await page.click('#s2links a[href="#/shades/blissful-blue/"]', { force: true, timeout: 60000 });
   await page.waitForTimeout(4000); log.push('after click ' + JSON.stringify(await page.evaluate(() => ({ fam: window.__family(), hash: location.hash }))));
   await page.screenshot({ path: `${outDir}/fam-open-a.png`, timeout: 180000 });
   const fr = page.frameLocator('#famOverlay iframe');
   try { await fr.locator('#fam-title').waitFor({ timeout: 120000 }); log.push('family title ' + await fr.locator('#fam-title').textContent()); } catch (e) { log.push('no title ' + e.message.slice(0, 120)); }
-  await page.waitForTimeout(30000);
+  // the family page's loader covers the page until its first frame; wait for the lift before the mark can be clicked
+  try { await fr.locator('html:not(.loading)').waitFor({ timeout: 240000 }); log.push('family loader lifted'); } catch (e) { log.push('loader still up ' + e.message.slice(0, 80)); }
+  await page.waitForTimeout(3000);
   await page.screenshot({ path: `${outDir}/fam-open-b.png`, timeout: 180000 });
   await fr.locator('a.mark').click({ timeout: 60000 });
   await page.waitForTimeout(4000); log.push('after mark ' + JSON.stringify(await page.evaluate(() => ({ fam: window.__family(), hash: location.hash }))));

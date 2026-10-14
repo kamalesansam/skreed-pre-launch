@@ -71,7 +71,7 @@ test('AC6.4 block glows: each block carries its cool-order shade by id; __skreed
   test.setTimeout(1_200_000);
   const page = await open(port(baseURL!), false, { viewport: { width: 400, height: 400 } });
   expect(await page.evaluate(() => window.__skreedBlockColours!())).toEqual(BLOCK_SHADES.map((s) => s.hex.toLowerCase()));
-  expect(BLOCK_SHADES.map((s) => s.id)).toEqual(['blushing-corals-04', 'stormy-greys-05', 'frosty-whites-07', 'blissful-blues-08', 'earthy-browns-07', 'vivid-violets-07', 'mellow-yellows-01', 'playful-pinks-14', 'go-green-12', 'roaring-reds-07']);
+  expect(BLOCK_SHADES.map((s) => s.id)).toEqual(['blushing-coral-04', 'stormy-grey-05', 'frosty-white-07', 'blissful-blue-08', 'basic-brown-07', 'vivid-violet-07', 'mellow-yellow-01', 'playful-pink-14', 'go-green-12', 'roaring-red-07']);
   await page.evaluate(() => window.__skreedSolo!(3));
   const solo = await page.evaluate(() => window.__skreedBlockColours!());
   expect(solo).toEqual(solo.map((_c, i) => (i === 3 ? '#ffffff' : '#000000')));

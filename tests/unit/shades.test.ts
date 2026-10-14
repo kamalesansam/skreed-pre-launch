@@ -31,8 +31,8 @@ test('240 shades, 24 per family, catalog order, catalog numbers 1 to 240', () =>
       assert.equal(SHADE_HEX[fi * 24 + si], s.hex);
     });
   });
-  assert.equal(SHADES[0].id, 'frosty-whites-01');
-  assert.equal(SHADES[239].id, 'roaring-reds-24');
+  assert.equal(SHADES[0].id, 'frosty-white-01');
+  assert.equal(SHADES[239].id, 'roaring-red-24');
 });
 
 // hero.md section 3, "Block glows": | Block | Id | Name | Hex |
@@ -80,9 +80,9 @@ test('glitch pairs and lightness equal hero.md section 3, by id', () => {
   assert.deepEqual(got, weights);
 });
 
-test('shades.gen.css carries the 240 tokens, --shade-<id>, in catalog order, 7,855 B raw', () => {
+test('shades.gen.css carries the 240 tokens, --shade-<id>, in catalog order, 7,615 B raw', () => {
   const css = read('src/styles/shades.gen.css');
-  assert.equal(Buffer.byteLength(css), 7855);
+  assert.equal(Buffer.byteLength(css), 7615);
   const toks = [...css.matchAll(/--shade-([a-z-]+-\d\d):(#[0-9a-fA-F]{6});/g)];
   assert.equal(toks.length, 240);
   toks.forEach((m, i) => { assert.equal(m[1], SHADES[i].id); assert.equal(m[2], SHADES[i].hex); });

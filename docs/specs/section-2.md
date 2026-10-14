@@ -26,28 +26,28 @@ The ten blocks of the Skreed mark leave the logo one at a time, fly down into a 
 - **Leave (7.1 to 8.1).** Wipe 2 into the Wall (section 3).
 
 ### 1280 x 800
-Same scroll map. The logo rides up to v 0.26 at 0.313 H. Two rows of five in reading order (families 1 to 5 on top), the second row offset half a pitch, every neighbour exactly p = min(W/5.6, 0.33 H) = 228.6 px apart, gems 149 px (0.186 H). During the cascade the rows sit at v 0.539 and 0.787; the re-frame moves the field up 0.163 H to v 0.376 and 0.624 (top row u 0.098, 0.277, 0.455, 0.634, 0.813; bottom row u 0.188, 0.366, 0.545, 0.723, 0.902). Labels upper-right on the top row and lower-right on the bottom row; Roaring Reds flips to upper-left. Hover paints frost along the pointer.
+Same scroll map. The logo rides up to v 0.26 at 0.313 H. Two rows of five in reading order (families 1 to 5 on top), the second row offset half a pitch, every neighbour exactly p = min(W/5.6, 0.33 H) = 228.6 px apart, gems 149 px (0.186 H). During the cascade the rows sit at v 0.539 and 0.787; the re-frame moves the field up 0.163 H to v 0.376 and 0.624 (top row u 0.098, 0.277, 0.455, 0.634, 0.813; bottom row u 0.188, 0.366, 0.545, 0.723, 0.902). Labels upper-right on the top row and lower-right on the bottom row; Roaring Red flips to upper-left. Hover paints frost along the pointer.
 
 ## 3. Content
 - Copy: none. The only strings are igloo's three labels per gem, carrying our facts (uppercase, as igloo):
-  - Title (always shown): the family's name in the singular, uppercase (Sam, 2026-10-10: "not reds, it's red"; Earthy Browns is Basic Brown): `FROSTY WHITE`, `BLISSFUL BLUE`, `PLAYFUL PINK`, `VIVID VIOLET`, `MELLOW YELLOW`, `BASIC BROWN`, `BLUSHING CORAL`, `STORMY GREY`, `GO GREEN`, `ROARING RED`. No `FAMILY_nn` line.
+  - Title (always shown): the family's name in the singular, uppercase (Sam, 2026-10-10: "not reds, it's red"; Basic Brown is Basic Brown): `FROSTY WHITE`, `BLISSFUL BLUE`, `PLAYFUL PINK`, `VIVID VIOLET`, `MELLOW YELLOW`, `BASIC BROWN`, `BLUSHING CORAL`, `STORMY GREY`, `GO GREEN`, `ROARING RED`. No `FAMILY_nn` line.
   - (Removed by Sam, 2026-10-10: no shade name, number or hex on hover.)
   - Call to action (igloo's date slot), on the active gem only: `24 SHADES` over `CLICK TO EXPLORE` (`TAP TO EXPLORE` on touch) (igloo: `D 01.02.2020` over `CLICK TO EXPLORE`).
-- Accessible names (not visible): each link reads "<Family>, 24 shades", e.g. "Blissful Blues, 24 shades". The section's landmark is labelled "Colour families".
+- Accessible names (not visible): each link reads "<Family>, 24 shades", e.g. "Blissful Blue, 24 shades". The section's landmark is labelled "Colour families".
 - Gems, slot j = catalog order, each in its family's key shade (the hero block's colour):
 
 | j | Family | Key shade | Hex | Hero block id | Link |
 |---|---|---|---|---|---|
-| 0 | Frosty Whites | Snow | #f0f4f5 | 2 | /shades/frosty-whites/ |
-| 1 | Blissful Blues | Sky | #08bcf4 | 3 | /shades/blissful-blues/ |
-| 2 | Playful Pinks | Rouge | #f2638f | 7 | /shades/playful-pinks/ |
-| 3 | Vivid Violets | Amethyst | #8554d1 | 5 | /shades/vivid-violets/ |
-| 4 | Mellow Yellows | Sunbeam | #fff164 | 6 | /shades/mellow-yellows/ |
-| 5 | Earthy Browns | Cinnamon | #ba7237 | 4 | /shades/earthy-browns/ |
-| 6 | Blushing Corals | Mango | #ff9f40 | 0 | /shades/blushing-corals/ |
-| 7 | Stormy Greys | Silver | #acacac | 1 | /shades/stormy-greys/ |
+| 0 | Frosty White | Snow | #f0f4f5 | 2 | /shades/frosty-white/ |
+| 1 | Blissful Blue | Sky | #08bcf4 | 3 | /shades/blissful-blue/ |
+| 2 | Playful Pink | Rouge | #f2638f | 7 | /shades/playful-pink/ |
+| 3 | Vivid Violet | Amethyst | #8554d1 | 5 | /shades/vivid-violet/ |
+| 4 | Mellow Yellow | Sunbeam | #fff164 | 6 | /shades/mellow-yellow/ |
+| 5 | Basic Brown | Cinnamon | #ba7237 | 4 | /shades/basic-brown/ |
+| 6 | Blushing Coral | Mango | #ff9f40 | 0 | /shades/blushing-coral/ |
+| 7 | Stormy Grey | Silver | #acacac | 1 | /shades/stormy-grey/ |
 | 8 | Go Green | Lawn | #4aa325 | 8 | /shades/go-green/ |
-| 9 | Roaring Reds | Crimson | #d20000 | 9 | /shades/roaring-reds/ |
+| 9 | Roaring Red | Crimson | #d20000 | 9 | /shades/roaring-red/ |
 
 - In the single-file prototype the links are in-document routes (`#/shades/<family>/`) into the family-pages prototype merged into the same file; on the site they are real paths (family-page.md 2.2).
 
@@ -69,7 +69,7 @@ Everything lives in the hero's one WebGL island (CLAUDE.md "Always do", E-C3). N
 - **Followers and speed limit:** igloo's two followers (0.075 then 0.15 per frame) with a cap of 0.075 screens per frame on the first; K moves at most 3 blocks per second.
 - **Holds:** re-frame and wipe 2 read min(S, 6.1) until every block has landed (K = 10.25); wipe 1 reads max(S, 2.0) until the logo is whole again (K = 0).
 - **Auto-settle (igloo's 1.4 s rule):** wheel and keys only, never on touch or under reduced motion. In the cascade it goes to the nearest K in {0..9, 10.25}; duration clamp(6 |dS|, 1.6, 2.4) s, inOut3.
-- **Reverse is exact:** scrolling up runs everything backwards; Roaring Reds leaves the field first.
+- **Reverse is exact:** scrolling up runs everything backwards; Roaring Red leaves the field first.
 - **Idle float (igloo's, measured):** gems never translate. Each turns about its centre: rot_a(t) = 0.1 sigma sin(w t + K_a s), K = (42.987, 12.423, 2.53), s a per-gem seed in [0, 1), sigma = sign(s - 0.5), Euler XYZ. w = 0.3 rad/s, varied per gem by up to 10 percent so ten gems on one screen never move in lockstep (Sam to confirm; default on). The camera's look direction drifts by igloo's six-sine noise at 0.0129 rad (scaled for our 30 degree fov), position fixed.
 - **Labels (igloo's text, font and reveal; Sam, 2026-10-10):** IBM Plex Mono Medium (SIL Open Font License, self-hosted on the site), uppercase, Pearl Whisper, 13 px desktop, 12 px phone, line-height 1.08, as DOM text over the canvas (aria-hidden; the links carry the names). igloo's layout per gem: the title on a 1 px two-segment leader (45 degrees from the gem-local anchor (0.35, 0.85, 0.93), then horizontal under the text), the shade pair beside the gem's upper right without a leader, the call to action right-aligned over a rule that runs out from the anchor (0.70, 0.25, 0.95). Anchors are taken in the gem's rest frame and re-projected every frame, so labels ride the float and the parallax. With ten gems on one screen, the title shows on every gem and the shade pair, the call to action and igloo's plexus show on the active gem (pointer over it, or keyboard focus), the way igloo shows them on the stone in its centre band. Titles are placed once per layout: igloo's up-left first, mirrored, then beside the gem (phones: the inner side first), avoiding the 16 px gutters, other gems and other titles. Reveal, igloo's three tracks: leader 0.2 s (segment 1 then 2), text alpha wiping left to right over 0.4 s (per character alpha = clamp(11u - 10x, 0, 1)), glyph roll over 0.75 s (each letter counts down through the five glyphs after it in its 8-glyph code-point block and lands on itself). Hide: leader retracts 0.2 s, horizontal segment first; text wipes out right to left over 0.2 s. In the cascade, a title reveals when its gem's L crosses 0.9 and hides below 0.8 and when wipe 2 starts. No backing plates: igloo sets white text straight on the fog (about 2.5:1); plates read as grey boxes (tested) (see section 12).
 - **Plexus (igloo's, on the active gem):** 18 points on a cylinder at 0.72 to 0.9 of the gem's bounding radius, orbiting at up to 0.25 rad/s on a slow vertical treadmill, links to up to 3 neighbours, "+" crosses of about 6 px, faint grey lines dashed by noise, depth-tested against the gem, growing in over 0.35 s, out over 0.25 s. Desktop only.

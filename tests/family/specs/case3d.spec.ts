@@ -36,7 +36,7 @@ test('T4 renderer counts after the PMREM disposal and the warm-up, at 390 and 12
   for (const opts of [PHONE, WIDE]) {
     const ctx = await browser.newContext(opts);
     const page = await ctx.newPage();
-    await open(page, 'blissful-blues');
+    await open(page, 'blissful-blue');
     await page.waitForFunction(() => (window as unknown as { __famStage: { info(): Info } }).__famStage.info().warmPrograms > 0, null, { timeout: 60_000 });
     const i = await info(page);
     const supplier = await page.evaluate(() => (window as unknown as { __famStage: { source: string } }).__famStage.source === 'supplier');
@@ -56,7 +56,7 @@ test('T15 warm-up: the program count does not change on the first finish toggle;
   const ctx = await browser.newContext(WIDE);
   await watch(ctx);
   const page = await ctx.newPage();
-  await open(page, 'roaring-reds');
+  await open(page, 'roaring-red');
   await page.waitForFunction(() => (window as unknown as { __famStage: { info(): Info } }).__famStage.info().warmPrograms > 0, null, { timeout: 60_000 });
   const before = (await info(page)).programs;
   await page.getByRole('button', { name: 'Gloss' }).click();
@@ -98,7 +98,7 @@ test('T14 picking at 390: after moves to 04 and 20, a tap on every visible case 
   test.setTimeout(600_000);
   const ctx = await browser.newContext(PHONE);
   const page = await ctx.newPage();
-  await open(page, 'blissful-blues');
+  await open(page, 'blissful-blue');
   const sel = (i: number) => page.evaluate((k) => (window as unknown as { __fam: { select(i: number): void } }).__fam.select(k), i);
   for (const base of [3, 19]) {
     await sel(base); await settled(page);
@@ -122,7 +122,7 @@ test('T14 picking at 390: after moves to 04 and 20, a tap on every visible case 
 test('a tap on the front case turns it and changes nothing else; dragging moves the line and settles on a case', async ({ browser }) => {
   const ctx = await browser.newContext(PHONE);
   const page = await ctx.newPage();
-  await open(page, 'earthy-browns');
+  await open(page, 'basic-brown');
   const before = await shade(page);
   const c = await project(page, 6);
   await page.touchscreen.tap(c.x, c.y);
@@ -147,7 +147,7 @@ test('a tap on the front case turns it and changes nothing else; dragging moves 
 test('context loss: the canvas hides and returns on restore; a second loss lands in swatch grid mode', async ({ browser }) => {
   const ctx = await browser.newContext(WIDE);
   const page = await ctx.newPage();
-  await open(page, 'stormy-greys');
+  await open(page, 'stormy-grey');
   await page.evaluate(() => { const w = window as unknown as { __famStage: { lose(): WEBGL_lose_context }; __lc: WEBGL_lose_context }; w.__lc = w.__famStage.lose(); w.__lc.loseContext(); });
   await expect(page.locator('#st3d canvas')).not.toHaveClass(/\bon\b/);
   await page.evaluate(() => (window as unknown as { __lc: WEBGL_lose_context }).__lc.restoreContext());
@@ -159,7 +159,7 @@ test('context loss: the canvas hides and returns on restore; a second loss lands
 });
 
 test('software rendering without ?render=force lands in swatch grid mode, no message', async ({ page }) => {
-  await page.goto('/shades/blissful-blues/');
+  await page.goto('/shades/blissful-blue/');
   const has = await page.evaluate(() => !!document.getElementById('fam-3d'));
   test.skip(!has, 'this build has no 3D island');
   await expect(page.locator('html')).toHaveClass(/\bgrid\b/, { timeout: 60_000 });

@@ -1,0 +1,3201 @@
+{
+ "about": "ciao energy side scroll icon, measured in the local mirror with Playwright + SwiftShader and read in the source; re-created in scrollicon-ours.html",
+ "sources": {
+  "markup": "SC/refsites/src/ciao/markup.html lines 1771-1857 (left) and 1875-1958 (right)",
+  "js": "SC/refsites/src/ciao/ui-gsap.js initScrollIcon lines 447-498, initSectionGamme lines 1141-1180 (hide), call at line 1511",
+  "css": "SC/refsites/src/ciao/webflow.css .icon-scroll_wrapper line 4738, .code-embed line 4824, .hud family lines 4540-4631, tokens lines 2187-2232",
+  "mirror": "SC/refsites/ciao/www.ciaoenergy.com/index.patched.html via SC/ciaofam/research/scrollicon-capture.mjs"
+ },
+ "svg": {
+  "viewBox": [
+   0,
+   0,
+   35,
+   146
+  ],
+  "markup": "three <g>, five <path> circles each, fill currentColor",
+  "dotRadiusUnits": 2.4,
+  "groups": [
+   {
+    "name": "top",
+    "dots": [
+     {
+      "cx": 2.4,
+      "cy": 2.4,
+      "r": 2.4,
+      "fillOpacity": 0.3
+     },
+     {
+      "cx": 10.0,
+      "cy": 9.1,
+      "r": 2.4,
+      "fillOpacity": 0.6
+     },
+     {
+      "cx": 17.5,
+      "cy": 15.7,
+      "r": 2.4,
+      "fillOpacity": 1.0
+     },
+     {
+      "cx": 25.0,
+      "cy": 9.1,
+      "r": 2.4,
+      "fillOpacity": 0.6
+     },
+     {
+      "cx": 32.6,
+      "cy": 2.4,
+      "r": 2.4,
+      "fillOpacity": 0.3
+     }
+    ],
+    "bboxUnits": {
+     "x": 0,
+     "y": 0.0,
+     "w": 35,
+     "h": 18.1
+    },
+    "originUnits": [
+     17.5,
+     9.05
+    ]
+   },
+   {
+    "name": "middle",
+    "dots": [
+     {
+      "cx": 2.4,
+      "cy": 66.4,
+      "r": 2.4,
+      "fillOpacity": 0.3
+     },
+     {
+      "cx": 10.0,
+      "cy": 73.0,
+      "r": 2.4,
+      "fillOpacity": 0.6
+     },
+     {
+      "cx": 17.5,
+      "cy": 79.7,
+      "r": 2.4,
+      "fillOpacity": 1.0
+     },
+     {
+      "cx": 25.0,
+      "cy": 73.0,
+      "r": 2.4,
+      "fillOpacity": 0.6
+     },
+     {
+      "cx": 32.6,
+      "cy": 66.4,
+      "r": 2.4,
+      "fillOpacity": 0.3
+     }
+    ],
+    "bboxUnits": {
+     "x": 0,
+     "y": 64.0,
+     "w": 35,
+     "h": 18.1
+    },
+    "originUnits": [
+     17.5,
+     73.05
+    ]
+   },
+   {
+    "name": "bottom",
+    "dots": [
+     {
+      "cx": 2.4,
+      "cy": 130.3,
+      "r": 2.4,
+      "fillOpacity": 0.3
+     },
+     {
+      "cx": 10.0,
+      "cy": 137.0,
+      "r": 2.4,
+      "fillOpacity": 0.6
+     },
+     {
+      "cx": 17.5,
+      "cy": 143.7,
+      "r": 2.4,
+      "fillOpacity": 1.0
+     },
+     {
+      "cx": 25.0,
+      "cy": 137.0,
+      "r": 2.4,
+      "fillOpacity": 0.6
+     },
+     {
+      "cx": 32.6,
+      "cy": 130.3,
+      "r": 2.4,
+      "fillOpacity": 0.3
+     }
+    ],
+    "bboxUnits": {
+     "x": 0,
+     "y": 127.9,
+     "w": 35,
+     "h": 18.1
+    },
+    "originUnits": [
+     17.5,
+     136.95000000000002
+    ]
+   }
+  ],
+  "chevronPitchUnits": 64,
+  "chevron": {
+   "outerCentreSpanUnits": 30.2,
+   "centreDropUnits": 13.3,
+   "armSlopeDeg": 41.3,
+   "widthWithDotsUnits": 35,
+   "heightWithDotsUnits": 18.1
+  }
+ },
+ "css": {
+  "wrapper": {
+   "class": "icon-scroll_wrapper",
+   "width": "1.25rem",
+   "position": "absolute",
+   "inset": "auto auto 10rem 50%",
+   "transform": "translate(-50%)",
+   "display": "flex column",
+   "gap": "clamp(1.25rem, 1.1vw, 1.5rem)"
+  },
+  "embed": {
+   "class": "code-embed w-embed",
+   "color": "#fff (var(--_primitives---colors--white))",
+   "svgDisplay": "inline, baseline aligned, leaves a 4.75 px gap under the 73 px svg"
+  },
+  "hud": {
+   "position": "fixed, full viewport, pointer-events none, z-index 1",
+   "paddingTop": "8rem (7rem at max-width 479px)",
+   "paddingBottom": "clamp(2rem, 2vw, 3rem)",
+   "pagePadding": "4%",
+   "color": "#ffffff80",
+   "font": "Geistmono 300 0.75rem (banned for us, rule 19)"
+  },
+  "rootFontPx": 14,
+  "note": "ciao rem = 14 px at both 1280 and 390, so 1.25rem = 17.5 px and 10rem = 140 px"
+ },
+ "colour": {
+  "iconFill": "#ffffff",
+  "dotAlphas": {
+   "apex": 1.0,
+   "mid pair": 0.6,
+   "outer pair": 0.3
+  },
+  "why": ".code-embed sets color white; the hud container colour #ffffff80 only reaches the letters",
+  "measuredPeakAlphaOnFrame_t1.25": "apex 1.00, mid 0.60, outer 0.30 (peak over local median background, desktop-f05)",
+  "lettersColor": "rgba(255,255,255,0.5)"
+ },
+ "rendered": {
+  "1280x800": {
+   "viewport": [
+    1280,
+    800
+   ],
+   "dpr": 1,
+   "rootFontPx": 14.0,
+   "hud": {
+    "paddingTopPx": 112.0,
+    "paddingBottomPx": 28.0,
+    "pagePaddingPx": 51.19,
+    "columnWidthPx": 7,
+    "fontFamily": "Geistmono, Arial, sans-serif",
+    "fontSizePx": 10.5,
+    "color": "rgba(255, 255, 255, 0.5)"
+   },
+   "icons": {
+    "left": {
+     "wrapperRect": {
+      "x": 45.94,
+      "y": 554.27,
+      "w": 17.5,
+      "h": 77.75,
+      "cx": 54.69,
+      "cy": 593.14
+     },
+     "svgRect": {
+      "x": 45.94,
+      "y": 554.27,
+      "w": 17.5,
+      "h": 73,
+      "cx": 54.69,
+      "cy": 590.77
+     },
+     "pxPerViewBoxUnit": 0.5,
+     "parent": {
+      "cls": "hud_left-bottom",
+      "rect": {
+       "x": 51.19,
+       "y": 464.41,
+       "w": 7,
+       "h": 307.61,
+       "cx": 54.69,
+       "cy": 618.21
+      }
+     },
+     "cssBottomPx": 140.0,
+     "cssWidthPx": 17.5,
+     "baselineGapPx": 4.75,
+     "colorOnWrapper": "rgba(255, 255, 255, 0.5)",
+     "groups": [
+      {
+       "index": 0,
+       "name": "top",
+       "bboxUnits": {
+        "x": 0,
+        "y": 0,
+        "w": 35,
+        "h": 18.1
+       },
+       "dotsScreen": [
+        {
+         "cx": 50.94,
+         "cy": 558.82,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 54.69,
+         "cy": 562.12,
+         "r": 1.2,
+         "fillOpacity": 1.0
+        },
+        {
+         "cx": 58.44,
+         "cy": 558.82,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 62.24,
+         "cy": 555.47,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        },
+        {
+         "cx": 47.14,
+         "cy": 555.47,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        }
+       ],
+       "apexScreen": [
+        54.69,
+        562.12
+       ]
+      },
+      {
+       "index": 1,
+       "name": "middle",
+       "bboxUnits": {
+        "x": 0,
+        "y": 64,
+        "w": 35,
+        "h": 18.1
+       },
+       "dotsScreen": [
+        {
+         "cx": 50.94,
+         "cy": 590.77,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 54.69,
+         "cy": 594.12,
+         "r": 1.2,
+         "fillOpacity": 1.0
+        },
+        {
+         "cx": 58.44,
+         "cy": 590.77,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 62.24,
+         "cy": 587.47,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        },
+        {
+         "cx": 47.14,
+         "cy": 587.47,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        }
+       ],
+       "apexScreen": [
+        54.69,
+        594.12
+       ]
+      },
+      {
+       "index": 2,
+       "name": "bottom",
+       "bboxUnits": {
+        "x": 0,
+        "y": 127.9,
+        "w": 35,
+        "h": 18.2
+       },
+       "dotsScreen": [
+        {
+         "cx": 50.94,
+         "cy": 622.77,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 54.69,
+         "cy": 626.12,
+         "r": 1.2,
+         "fillOpacity": 1.0
+        },
+        {
+         "cx": 58.44,
+         "cy": 622.77,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 62.24,
+         "cy": 619.42,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        },
+        {
+         "cx": 47.14,
+         "cy": 619.47,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        }
+       ],
+       "apexScreen": [
+        54.69,
+        626.12
+       ]
+      }
+     ]
+    },
+    "right": {
+     "wrapperRect": {
+      "x": 1216.56,
+      "y": 554.25,
+      "w": 17.5,
+      "h": 77.75,
+      "cx": 1225.31,
+      "cy": 593.13
+     },
+     "svgRect": {
+      "x": 1216.56,
+      "y": 554.25,
+      "w": 17.5,
+      "h": 73,
+      "cx": 1225.31,
+      "cy": 590.75
+     },
+     "pxPerViewBoxUnit": 0.5,
+     "parent": {
+      "cls": "hud_right-bottom",
+      "rect": {
+       "x": 1221.81,
+       "y": 698.06,
+       "w": 7,
+       "h": 73.94,
+       "cx": 1225.31,
+       "cy": 735.03
+      }
+     },
+     "cssBottomPx": 140.0,
+     "cssWidthPx": 17.5,
+     "baselineGapPx": 4.75,
+     "colorOnWrapper": "rgba(255, 255, 255, 0.5)",
+     "groups": [
+      {
+       "index": 0,
+       "name": "top",
+       "bboxUnits": {
+        "x": 0,
+        "y": 0,
+        "w": 35,
+        "h": 18.1
+       },
+       "dotsScreen": [
+        {
+         "cx": 1221.56,
+         "cy": 558.8,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 1225.31,
+         "cy": 562.1,
+         "r": 1.2,
+         "fillOpacity": 1.0
+        },
+        {
+         "cx": 1229.06,
+         "cy": 558.8,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 1232.86,
+         "cy": 555.45,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        },
+        {
+         "cx": 1217.76,
+         "cy": 555.45,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        }
+       ],
+       "apexScreen": [
+        1225.31,
+        562.1
+       ]
+      },
+      {
+       "index": 1,
+       "name": "middle",
+       "bboxUnits": {
+        "x": 0,
+        "y": 64,
+        "w": 35,
+        "h": 18.1
+       },
+       "dotsScreen": [
+        {
+         "cx": 1221.56,
+         "cy": 590.75,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 1225.31,
+         "cy": 594.1,
+         "r": 1.2,
+         "fillOpacity": 1.0
+        },
+        {
+         "cx": 1229.06,
+         "cy": 590.75,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 1232.86,
+         "cy": 587.45,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        },
+        {
+         "cx": 1217.76,
+         "cy": 587.45,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        }
+       ],
+       "apexScreen": [
+        1225.31,
+        594.1
+       ]
+      },
+      {
+       "index": 2,
+       "name": "bottom",
+       "bboxUnits": {
+        "x": 0,
+        "y": 127.9,
+        "w": 35,
+        "h": 18.2
+       },
+       "dotsScreen": [
+        {
+         "cx": 1221.56,
+         "cy": 622.75,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 1225.31,
+         "cy": 626.1,
+         "r": 1.2,
+         "fillOpacity": 1.0
+        },
+        {
+         "cx": 1229.06,
+         "cy": 622.75,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 1232.86,
+         "cy": 619.4,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        },
+        {
+         "cx": 1217.76,
+         "cy": 619.45,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        }
+       ],
+       "apexScreen": [
+        1225.31,
+        626.1
+       ]
+      }
+     ]
+    }
+   },
+   "letters": [
+    {
+     "text": "C",
+     "where": "hud_left-top",
+     "rect": {
+      "x": 51.19,
+      "y": 403.86,
+      "w": 6,
+      "h": 15.75,
+      "cx": 54.19,
+      "cy": 411.73
+     },
+     "font": "Geistmono, Arial, sans-serif 300 10.5px/15.75px",
+     "color": "rgba(255, 255, 255, 0.5)"
+    },
+    {
+     "text": "E",
+     "where": "hud_left-bottom-top",
+     "rect": {
+      "x": 51.19,
+      "y": 464.41,
+      "w": 6,
+      "h": 15.75,
+      "cx": 54.19,
+      "cy": 472.28
+     },
+     "font": "Geistmono, Arial, sans-serif 300 10.5px/15.75px",
+     "color": "rgba(255, 255, 255, 0.5)"
+    },
+    {
+     "text": "_",
+     "where": "hud_left-bottom-top",
+     "rect": {
+      "x": 51.19,
+      "y": 508.16,
+      "w": 6,
+      "h": 15.75,
+      "cx": 54.19,
+      "cy": 516.03
+     },
+     "font": "Geistmono, Arial, sans-serif 300 10.5px/15.75px",
+     "color": "rgba(255, 255, 255, 0.5)"
+    },
+    {
+     "text": "_",
+     "where": "hud_right-top-bottom",
+     "rect": {
+      "x": 1222.81,
+      "y": 163.8,
+      "w": 6,
+      "h": 15.75,
+      "cx": 1225.81,
+      "cy": 171.67
+     },
+     "font": "Geistmono, Arial, sans-serif 300 10.5px/15.75px",
+     "color": "rgba(255, 255, 255, 0.5)"
+    },
+    {
+     "text": "_",
+     "where": "hud_right-bottom",
+     "rect": {
+      "x": 1222.81,
+      "y": 698.06,
+      "w": 6,
+      "h": 15.75,
+      "cx": 1225.81,
+      "cy": 705.94
+     },
+     "font": "Geistmono, Arial, sans-serif 300 10.5px/15.75px",
+     "color": "rgba(255, 255, 255, 0.5)"
+    }
+   ],
+   "corners": [
+    {
+     "where": "hud_left-top",
+     "rect": {
+      "x": 51.19,
+      "y": 112,
+      "w": 7,
+      "h": 7,
+      "cx": 54.69,
+      "cy": 115.5
+     },
+     "strokePath": "M0.5 8.5L0.499999 2.5C0.499998 1.39543 1.39543 0.500001 2.5 0.500001L8.5 0.499999"
+    },
+    {
+     "where": "hud_right-top",
+     "rect": {
+      "x": 1221.81,
+      "y": 112,
+      "w": 7,
+      "h": 7,
+      "cx": 1225.31,
+      "cy": 115.5
+     },
+     "strokePath": "M0.5 0.5L6.5 0.499999C7.60457 0.499999 8.5 1.39543 8.5 2.5L8.5 8.5"
+    },
+    {
+     "where": "hud_right-bottom",
+     "rect": {
+      "x": 1221.81,
+      "y": 765,
+      "w": 7,
+      "h": 7,
+      "cx": 1225.31,
+      "cy": 768.5
+     },
+     "strokePath": "M8.5 0.5L8.5 6.5C8.5 7.60457 7.60457 8.5 6.5 8.5L0.500001 8.5"
+    }
+   ],
+   "scrollDiscover": {
+    "text": "Scroller pour d\u00e9couvrir",
+    "rect": {
+     "x": 395,
+     "y": 760.63,
+     "w": 490,
+     "h": 18.38,
+     "cx": 640,
+     "cy": 769.81
+    },
+    "font": "Geist, Arial, sans-serif 300 12.25px",
+    "textTransform": "uppercase",
+    "color": "rgba(255, 255, 255, 0.6)"
+   },
+   "firstSection": {
+    "rect": {
+     "x": 0,
+     "y": 0,
+     "w": 1280,
+     "h": 1000,
+     "cx": 640,
+     "cy": 500
+    },
+    "offsetTop": 0,
+    "height": 1000
+   },
+   "hideTrigger": {
+    "trigger": "section is-gamme",
+    "start": 200,
+    "end": 1000,
+    "vars": {
+     "start": "bottom bottom",
+     "toggleActions": "play none none reverse"
+    },
+    "targets": [
+     "gamme_gradient-wrapper",
+     "carousel_arrow is-prev",
+     "carousel_pagination",
+     "scroll_discover",
+     "icon-scroll_wrapper",
+     "carousel_title-collection w-dyn-list",
+     "carousel_nav"
+    ],
+    "animDuration": 0.5
+   },
+   "hideCheck": [
+    {
+     "label": "rest",
+     "scroll": 0,
+     "wrappers": [
+      "visible/1.00",
+      "visible/1.00"
+     ],
+     "discover": "visible/1.00",
+     "pagination": "visible/1.00"
+    },
+    {
+     "label": "start-30 (170)",
+     "scroll": 0,
+     "wrappers": [
+      "visible/1.00",
+      "visible/1.00"
+     ],
+     "discover": "visible/1.00",
+     "pagination": "visible/1.00"
+    },
+    {
+     "label": "start+30 after 0.25 s",
+     "scroll": 69,
+     "wrappers": [
+      "visible/1.00",
+      "visible/1.00"
+     ],
+     "discover": "visible/1.00",
+     "pagination": "visible/1.00"
+    },
+    {
+     "label": "start+30 after 1.5 s",
+     "scroll": 0,
+     "wrappers": [
+      "visible/1.00",
+      "visible/1.00"
+     ],
+     "discover": "visible/1.00",
+     "pagination": "visible/1.00"
+    },
+    {
+     "label": "back to start-30",
+     "scroll": 0,
+     "wrappers": [
+      "visible/1.00",
+      "visible/1.00"
+     ],
+     "discover": "visible/1.00",
+     "pagination": "visible/1.00"
+    },
+    {
+     "label": "back to 0",
+     "scroll": 0,
+     "wrappers": [
+      "visible/1.00",
+      "visible/1.00"
+     ],
+     "discover": "visible/1.00",
+     "pagination": "visible/1.00"
+    }
+   ]
+  },
+  "390x844": {
+   "viewport": [
+    390,
+    844
+   ],
+   "dpr": 2,
+   "rootFontPx": 14.0,
+   "hud": {
+    "paddingTopPx": 98.0,
+    "paddingBottomPx": 28.0,
+    "pagePaddingPx": 15.59,
+    "columnWidthPx": 7,
+    "fontFamily": "Geistmono, Arial, sans-serif",
+    "fontSizePx": 10.5,
+    "color": "rgba(255, 255, 255, 0.5)"
+   },
+   "icons": {
+    "left": {
+     "wrapperRect": {
+      "x": 10.34,
+      "y": 598.25,
+      "w": 17.5,
+      "h": 77.75,
+      "cx": 19.09,
+      "cy": 637.13
+     },
+     "svgRect": {
+      "x": 10.34,
+      "y": 598.25,
+      "w": 17.5,
+      "h": 73,
+      "cx": 19.09,
+      "cy": 634.75
+     },
+     "pxPerViewBoxUnit": 0.5,
+     "parent": {
+      "cls": "hud_left-bottom",
+      "rect": {
+       "x": 15.59,
+       "y": 478,
+       "w": 7,
+       "h": 338,
+       "cx": 19.09,
+       "cy": 647
+      }
+     },
+     "cssBottomPx": 140.0,
+     "cssWidthPx": 17.5,
+     "baselineGapPx": 4.75,
+     "colorOnWrapper": "rgba(255, 255, 255, 0.5)",
+     "groups": [
+      {
+       "index": 0,
+       "name": "top",
+       "bboxUnits": {
+        "x": 0,
+        "y": 0,
+        "w": 35,
+        "h": 18.1
+       },
+       "dotsScreen": [
+        {
+         "cx": 15.34,
+         "cy": 602.8,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 19.09,
+         "cy": 606.1,
+         "r": 1.2,
+         "fillOpacity": 1.0
+        },
+        {
+         "cx": 22.84,
+         "cy": 602.8,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 26.64,
+         "cy": 599.45,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        },
+        {
+         "cx": 11.54,
+         "cy": 599.45,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        }
+       ],
+       "apexScreen": [
+        19.09,
+        606.1
+       ]
+      },
+      {
+       "index": 1,
+       "name": "middle",
+       "bboxUnits": {
+        "x": 0,
+        "y": 64,
+        "w": 35,
+        "h": 18.1
+       },
+       "dotsScreen": [
+        {
+         "cx": 15.34,
+         "cy": 634.75,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 19.09,
+         "cy": 638.1,
+         "r": 1.2,
+         "fillOpacity": 1.0
+        },
+        {
+         "cx": 22.84,
+         "cy": 634.75,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 26.64,
+         "cy": 631.45,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        },
+        {
+         "cx": 11.54,
+         "cy": 631.45,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        }
+       ],
+       "apexScreen": [
+        19.09,
+        638.1
+       ]
+      },
+      {
+       "index": 2,
+       "name": "bottom",
+       "bboxUnits": {
+        "x": 0,
+        "y": 127.9,
+        "w": 35,
+        "h": 18.2
+       },
+       "dotsScreen": [
+        {
+         "cx": 15.34,
+         "cy": 666.75,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 19.09,
+         "cy": 670.1,
+         "r": 1.2,
+         "fillOpacity": 1.0
+        },
+        {
+         "cx": 22.84,
+         "cy": 666.75,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 26.64,
+         "cy": 663.4,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        },
+        {
+         "cx": 11.54,
+         "cy": 663.45,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        }
+       ],
+       "apexScreen": [
+        19.09,
+        670.1
+       ]
+      }
+     ]
+    },
+    "right": {
+     "wrapperRect": {
+      "x": 362.16,
+      "y": 598.25,
+      "w": 17.5,
+      "h": 77.75,
+      "cx": 370.91,
+      "cy": 637.13
+     },
+     "svgRect": {
+      "x": 362.16,
+      "y": 598.25,
+      "w": 17.5,
+      "h": 73,
+      "cx": 370.91,
+      "cy": 634.75
+     },
+     "pxPerViewBoxUnit": 0.5,
+     "parent": {
+      "cls": "hud_right-bottom",
+      "rect": {
+       "x": 367.41,
+       "y": 744.25,
+       "w": 7,
+       "h": 71.75,
+       "cx": 370.91,
+       "cy": 780.13
+      }
+     },
+     "cssBottomPx": 140.0,
+     "cssWidthPx": 17.5,
+     "baselineGapPx": 4.75,
+     "colorOnWrapper": "rgba(255, 255, 255, 0.5)",
+     "groups": [
+      {
+       "index": 0,
+       "name": "top",
+       "bboxUnits": {
+        "x": 0,
+        "y": 0,
+        "w": 35,
+        "h": 18.1
+       },
+       "dotsScreen": [
+        {
+         "cx": 367.16,
+         "cy": 602.8,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 370.91,
+         "cy": 606.1,
+         "r": 1.2,
+         "fillOpacity": 1.0
+        },
+        {
+         "cx": 374.66,
+         "cy": 602.8,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 378.46,
+         "cy": 599.45,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        },
+        {
+         "cx": 363.36,
+         "cy": 599.45,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        }
+       ],
+       "apexScreen": [
+        370.91,
+        606.1
+       ]
+      },
+      {
+       "index": 1,
+       "name": "middle",
+       "bboxUnits": {
+        "x": 0,
+        "y": 64,
+        "w": 35,
+        "h": 18.1
+       },
+       "dotsScreen": [
+        {
+         "cx": 367.16,
+         "cy": 634.75,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 370.91,
+         "cy": 638.1,
+         "r": 1.2,
+         "fillOpacity": 1.0
+        },
+        {
+         "cx": 374.66,
+         "cy": 634.75,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 378.46,
+         "cy": 631.45,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        },
+        {
+         "cx": 363.36,
+         "cy": 631.45,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        }
+       ],
+       "apexScreen": [
+        370.91,
+        638.1
+       ]
+      },
+      {
+       "index": 2,
+       "name": "bottom",
+       "bboxUnits": {
+        "x": 0,
+        "y": 127.9,
+        "w": 35,
+        "h": 18.2
+       },
+       "dotsScreen": [
+        {
+         "cx": 367.16,
+         "cy": 666.75,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 370.91,
+         "cy": 670.1,
+         "r": 1.2,
+         "fillOpacity": 1.0
+        },
+        {
+         "cx": 374.66,
+         "cy": 666.75,
+         "r": 1.2,
+         "fillOpacity": 0.6
+        },
+        {
+         "cx": 378.46,
+         "cy": 663.4,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        },
+        {
+         "cx": 363.36,
+         "cy": 663.45,
+         "r": 1.2,
+         "fillOpacity": 0.3
+        }
+       ],
+       "apexScreen": [
+        370.91,
+        670.1
+       ]
+      }
+     ]
+    }
+   },
+   "letters": [
+    {
+     "text": "C",
+     "where": "hud_left-top",
+     "rect": {
+      "x": 15.59,
+      "y": 420.25,
+      "w": 6,
+      "h": 15.75,
+      "cx": 18.59,
+      "cy": 428.13
+     },
+     "font": "Geistmono, Arial, sans-serif 300 10.5px/15.75px",
+     "color": "rgba(255, 255, 255, 0.5)"
+    },
+    {
+     "text": "E",
+     "where": "hud_left-bottom-top",
+     "rect": {
+      "x": 15.59,
+      "y": 478,
+      "w": 6,
+      "h": 15.75,
+      "cx": 18.59,
+      "cy": 485.88
+     },
+     "font": "Geistmono, Arial, sans-serif 300 10.5px/15.75px",
+     "color": "rgba(255, 255, 255, 0.5)"
+    },
+    {
+     "text": "_",
+     "where": "hud_left-bottom-top",
+     "rect": {
+      "x": 15.59,
+      "y": 521.75,
+      "w": 6,
+      "h": 15.75,
+      "cx": 18.59,
+      "cy": 529.63
+     },
+     "font": "Geistmono, Arial, sans-serif 300 10.5px/15.75px",
+     "color": "rgba(255, 255, 255, 0.5)"
+    },
+    {
+     "text": "_",
+     "where": "hud_right-top-bottom",
+     "rect": {
+      "x": 368.41,
+      "y": 147,
+      "w": 6,
+      "h": 15.75,
+      "cx": 371.41,
+      "cy": 154.88
+     },
+     "font": "Geistmono, Arial, sans-serif 300 10.5px/15.75px",
+     "color": "rgba(255, 255, 255, 0.5)"
+    },
+    {
+     "text": "_",
+     "where": "hud_right-bottom",
+     "rect": {
+      "x": 368.41,
+      "y": 744.25,
+      "w": 6,
+      "h": 15.75,
+      "cx": 371.41,
+      "cy": 752.13
+     },
+     "font": "Geistmono, Arial, sans-serif 300 10.5px/15.75px",
+     "color": "rgba(255, 255, 255, 0.5)"
+    }
+   ],
+   "corners": [
+    {
+     "where": "hud_left-top",
+     "rect": {
+      "x": 15.59,
+      "y": 98,
+      "w": 7,
+      "h": 7,
+      "cx": 19.09,
+      "cy": 101.5
+     },
+     "strokePath": "M0.5 8.5L0.499999 2.5C0.499998 1.39543 1.39543 0.500001 2.5 0.500001L8.5 0.499999"
+    },
+    {
+     "where": "hud_right-top",
+     "rect": {
+      "x": 367.41,
+      "y": 98,
+      "w": 7,
+      "h": 7,
+      "cx": 370.91,
+      "cy": 101.5
+     },
+     "strokePath": "M0.5 0.5L6.5 0.499999C7.60457 0.499999 8.5 1.39543 8.5 2.5L8.5 8.5"
+    },
+    {
+     "where": "hud_right-bottom",
+     "rect": {
+      "x": 367.41,
+      "y": 809,
+      "w": 7,
+      "h": 7,
+      "cx": 370.91,
+      "cy": 812.5
+     },
+     "strokePath": "M8.5 0.5L8.5 6.5C8.5 7.60457 7.60457 8.5 6.5 8.5L0.500001 8.5"
+    }
+   ],
+   "scrollDiscover": {
+    "text": "Scroller pour d\u00e9couvrir",
+    "rect": {
+     "x": 41.36,
+     "y": 804.63,
+     "w": 307.28,
+     "h": 18.38,
+     "cx": 195,
+     "cy": 813.81
+    },
+    "font": "Geist, Arial, sans-serif 300 12.25px",
+    "textTransform": "uppercase",
+    "color": "rgba(255, 255, 255, 0.6)"
+   },
+   "firstSection": {
+    "rect": {
+     "x": 0,
+     "y": 0,
+     "w": 390,
+     "h": 1055,
+     "cx": 195,
+     "cy": 527.5
+    },
+    "offsetTop": 0,
+    "height": 1055
+   },
+   "hideTrigger": {
+    "trigger": "section is-gamme",
+    "start": 211,
+    "end": 1055,
+    "vars": {
+     "start": "bottom bottom",
+     "toggleActions": "play none none reverse"
+    },
+    "targets": [
+     "gamme_gradient-wrapper",
+     "carousel_arrow is-prev",
+     "carousel_pagination",
+     "scroll_discover",
+     "icon-scroll_wrapper",
+     "carousel_arrow is-next",
+     "carousel_title-collection w-dyn-list"
+    ],
+    "animDuration": 0.5
+   },
+   "hideCheck": [
+    {
+     "label": "rest",
+     "scroll": 0,
+     "wrappers": [
+      "visible/1.00",
+      "visible/1.00"
+     ],
+     "discover": "visible/1.00",
+     "pagination": "visible/1.00"
+    },
+    {
+     "label": "start-30 (181)",
+     "scroll": 181,
+     "wrappers": [
+      "visible/1.00",
+      "visible/1.00"
+     ],
+     "discover": "visible/1.00",
+     "pagination": "visible/1.00"
+    },
+    {
+     "label": "start+30 after 0.25 s",
+     "scroll": 241,
+     "wrappers": [
+      "visible/0.50",
+      "visible/0.50"
+     ],
+     "discover": "visible/0.50",
+     "pagination": "visible/0.50"
+    },
+    {
+     "label": "start+30 after 1.5 s",
+     "scroll": 241,
+     "wrappers": [
+      "hidden/0.00",
+      "hidden/0.00"
+     ],
+     "discover": "hidden/0.00",
+     "pagination": "hidden/0.00"
+    },
+    {
+     "label": "back to start-30",
+     "scroll": 181,
+     "wrappers": [
+      "visible/1.00",
+      "visible/1.00"
+     ],
+     "discover": "visible/1.00",
+     "pagination": "visible/1.00"
+    },
+    {
+     "label": "back to 0",
+     "scroll": 0,
+     "wrappers": [
+      "visible/1.00",
+      "visible/1.00"
+     ],
+     "discover": "visible/1.00",
+     "pagination": "visible/1.00"
+    }
+   ]
+  }
+ },
+ "timeline": {
+  "engine": "GSAP 3.15.0 timeline, repeat -1, repeatDelay 0.3, no yoyo (ui-gsap.js initScrollIcon)",
+  "cycleSeconds": 2.5,
+  "timelineSeconds": 2.2,
+  "repeatDelaySeconds": 0.3,
+  "initial": {
+   "all": {
+    "opacity": 0,
+    "scale": 0,
+    "transformOrigin": "50% 50% of the group bbox"
+   },
+   "top": {
+    "y": 100
+   },
+   "bottom": {
+    "y": -100
+   },
+   "yUnit": "SVG user units (viewBox), 100 units = 50 px at the rendered 0.5 px per unit"
+  },
+  "tweens": [
+   {
+    "target": "top",
+    "start": 0.0,
+    "end": 0.6,
+    "to": {
+     "opacity": 1,
+     "scale": 1,
+     "y": 0
+    },
+    "ease": "power2.out"
+   },
+   {
+    "target": "middle",
+    "start": 0.2,
+    "end": 0.8,
+    "to": {
+     "opacity": 1,
+     "scale": 1
+    },
+    "ease": "power2.out",
+    "overlap": "starts 0.4 s before the top tween ends"
+   },
+   {
+    "target": "bottom",
+    "start": 0.4,
+    "end": 1.0,
+    "to": {
+     "opacity": 1,
+     "scale": 1,
+     "y": 0
+    },
+    "ease": "power2.out",
+    "overlap": "starts 0.4 s before the middle tween ends"
+   },
+   {
+    "target": "hold",
+    "start": 1.0,
+    "end": 1.3,
+    "note": "all three fully drawn; the fade is positioned +=0.3 after the last tween"
+   },
+   {
+    "target": "top",
+    "start": 1.3,
+    "end": 1.7,
+    "to": {
+     "opacity": 0
+    },
+    "ease": "power2.in",
+    "stagger": 0.25
+   },
+   {
+    "target": "middle",
+    "start": 1.55,
+    "end": 1.95,
+    "to": {
+     "opacity": 0
+    },
+    "ease": "power2.in"
+   },
+   {
+    "target": "bottom",
+    "start": 1.8,
+    "end": 2.2,
+    "to": {
+     "opacity": 0
+    },
+    "ease": "power2.in"
+   },
+   {
+    "target": "repeatDelay",
+    "start": 2.2,
+    "end": 2.5,
+    "note": "nothing visible; at 2.5 the start values (opacity 0, scale 0, y +100 / -100) are restored, invisible, so no pop"
+   }
+  ],
+  "livePageChildren": [
+   {
+    "startTime": 0,
+    "duration": 0.6,
+    "endTime": 0.6,
+    "targets": [
+     0
+    ],
+    "vars": {
+     "opacity": 1,
+     "scale": 1,
+     "y": 0,
+     "duration": 0.6,
+     "ease": "power2.out"
+    }
+   },
+   {
+    "startTime": 0.2,
+    "duration": 0.6,
+    "endTime": 0.8,
+    "targets": [
+     1
+    ],
+    "vars": {
+     "opacity": 1,
+     "scale": 1,
+     "duration": 0.6,
+     "ease": "power2.out"
+    }
+   },
+   {
+    "startTime": 0.4,
+    "duration": 0.6,
+    "endTime": 1,
+    "targets": [
+     2
+    ],
+    "vars": {
+     "opacity": 1,
+     "scale": 1,
+     "y": 0,
+     "duration": 0.6,
+     "ease": "power2.out"
+    }
+   },
+   {
+    "startTime": 1.3,
+    "duration": 0.9,
+    "endTime": 2.2,
+    "targets": [
+     0,
+     1,
+     2
+    ],
+    "vars": {
+     "opacity": 0,
+     "duration": 0.4,
+     "ease": "power2.in",
+     "stagger": 0.25
+    }
+   }
+  ],
+  "eases": {
+   "power2.out": {
+    "formula": "1 - (1 - t)^3",
+    "cssExact": "cubic-bezier(0.333, 1, 0.667, 1)",
+    "checkAtHalf": 0.875
+   },
+   "power2.in": {
+    "formula": "t^3",
+    "cssExact": "cubic-bezier(0.333, 0, 0.667, 0)",
+    "checkAtHalf": 0.125
+   },
+   "power2.inOut": {
+    "formula": "t < 0.5 ? 4 t^3 : 1 - (2 - 2 t)^3 / 2",
+    "cssExact": "two keyframe halves: cubic-bezier(0.333, 0, 0.667, 0) to 50 percent then cubic-bezier(0.333, 1, 0.667, 1)"
+   }
+  },
+  "phaseBetweenSides": "both wrappers are set up in the same forEach and share one global clock; left and right run in step (frames show identical states)"
+ },
+ "frames": [
+  {
+   "t": 0,
+   "desktopFile": "desktop-f00-t0.00.png",
+   "phoneFile": "phone-f00-t0.00.png",
+   "top": {
+    "opacity": 0,
+    "scale": 1,
+    "yUnits": 0
+   },
+   "middle": {
+    "opacity": 0,
+    "scale": 1
+   },
+   "bottom": {
+    "opacity": 0,
+    "scale": 1,
+    "yUnits": 0
+   }
+  },
+  {
+   "t": 0.25,
+   "desktopFile": "desktop-f01-t0.25.png",
+   "phoneFile": "phone-f01-t0.25.png",
+   "top": {
+    "opacity": 0.801,
+    "scale": 0.801,
+    "yUnits": 19.8
+   },
+   "middle": {
+    "opacity": 0.23,
+    "scale": 0.23
+   },
+   "bottom": {
+    "opacity": 0,
+    "scale": 0,
+    "yUnits": -100
+   }
+  },
+  {
+   "t": 0.5,
+   "desktopFile": "desktop-f02-t0.50.png",
+   "phoneFile": "phone-f02-t0.50.png",
+   "top": {
+    "opacity": 0.995,
+    "scale": 0.995,
+    "yUnits": 0.5
+   },
+   "middle": {
+    "opacity": 0.875,
+    "scale": 0.875
+   },
+   "bottom": {
+    "opacity": 0.421,
+    "scale": 0.421,
+    "yUnits": -57.9
+   }
+  },
+  {
+   "t": 0.75,
+   "desktopFile": "desktop-f03-t0.75.png",
+   "phoneFile": "phone-f03-t0.75.png",
+   "top": {
+    "opacity": 1,
+    "scale": 1,
+    "yUnits": 0
+   },
+   "middle": {
+    "opacity": 0.999,
+    "scale": 0.999
+   },
+   "bottom": {
+    "opacity": 0.928,
+    "scale": 0.928,
+    "yUnits": -7.2
+   }
+  },
+  {
+   "t": 1,
+   "desktopFile": "desktop-f04-t1.00.png",
+   "phoneFile": "phone-f04-t1.00.png",
+   "top": {
+    "opacity": 1,
+    "scale": 1,
+    "yUnits": 0
+   },
+   "middle": {
+    "opacity": 1,
+    "scale": 1
+   },
+   "bottom": {
+    "opacity": 1,
+    "scale": 1,
+    "yUnits": 0
+   }
+  },
+  {
+   "t": 1.25,
+   "desktopFile": "desktop-f05-t1.25.png",
+   "phoneFile": "phone-f05-t1.25.png",
+   "top": {
+    "opacity": 1,
+    "scale": 1,
+    "yUnits": 0
+   },
+   "middle": {
+    "opacity": 1,
+    "scale": 1
+   },
+   "bottom": {
+    "opacity": 1,
+    "scale": 1,
+    "yUnits": 0
+   }
+  },
+  {
+   "t": 1.5,
+   "desktopFile": "desktop-f06-t1.50.png",
+   "phoneFile": "phone-f06-t1.50.png",
+   "top": {
+    "opacity": 0.875,
+    "scale": 1,
+    "yUnits": 0
+   },
+   "middle": {
+    "opacity": 1,
+    "scale": 1
+   },
+   "bottom": {
+    "opacity": 1,
+    "scale": 1,
+    "yUnits": 0
+   }
+  },
+  {
+   "t": 1.75,
+   "desktopFile": "desktop-f07-t1.75.png",
+   "phoneFile": "phone-f07-t1.75.png",
+   "top": {
+    "opacity": 0,
+    "scale": 1,
+    "yUnits": 0
+   },
+   "middle": {
+    "opacity": 0.875,
+    "scale": 1
+   },
+   "bottom": {
+    "opacity": 1,
+    "scale": 1,
+    "yUnits": 0
+   }
+  },
+  {
+   "t": 2,
+   "desktopFile": "desktop-f08-t2.00.png",
+   "phoneFile": "phone-f08-t2.00.png",
+   "top": {
+    "opacity": 0,
+    "scale": 1,
+    "yUnits": 0
+   },
+   "middle": {
+    "opacity": 0,
+    "scale": 1
+   },
+   "bottom": {
+    "opacity": 0.875,
+    "scale": 1,
+    "yUnits": 0
+   }
+  },
+  {
+   "t": 2.25,
+   "desktopFile": "desktop-f09-t2.25.png",
+   "phoneFile": "phone-f09-t2.25.png",
+   "top": {
+    "opacity": 0,
+    "scale": 1,
+    "yUnits": 0
+   },
+   "middle": {
+    "opacity": 0,
+    "scale": 1
+   },
+   "bottom": {
+    "opacity": 0,
+    "scale": 1,
+    "yUnits": 0
+   }
+  },
+  {
+   "t": 2.5,
+   "desktopFile": "desktop-f10-t2.50.png",
+   "phoneFile": "phone-f10-t2.50.png",
+   "top": {
+    "opacity": 0,
+    "scale": 1,
+    "yUnits": 0
+   },
+   "middle": {
+    "opacity": 0,
+    "scale": 1
+   },
+   "bottom": {
+    "opacity": 0,
+    "scale": 1,
+    "yUnits": 0
+   }
+  },
+  {
+   "t": 2.75,
+   "desktopFile": "desktop-f11-t2.75.png",
+   "phoneFile": "phone-f11-t2.75.png",
+   "top": {
+    "opacity": 0.801,
+    "scale": 0.801,
+    "yUnits": 19.8
+   },
+   "middle": {
+    "opacity": 0.23,
+    "scale": 0.23
+   },
+   "bottom": {
+    "opacity": 0,
+    "scale": 0,
+    "yUnits": -100
+   }
+  }
+ ],
+ "liveRecord50ms": [
+  {
+   "t": 0.0,
+   "top": [
+    0,
+    1,
+    0
+   ],
+   "middle": [
+    0,
+    1
+   ],
+   "bottom": [
+    0,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 0.05,
+   "top": [
+    0.23,
+    0.23,
+    77
+   ],
+   "middle": [
+    0,
+    0
+   ],
+   "bottom": [
+    0,
+    0,
+    -100
+   ]
+  },
+  {
+   "t": 0.1,
+   "top": [
+    0.421,
+    0.421,
+    57.9
+   ],
+   "middle": [
+    0,
+    0
+   ],
+   "bottom": [
+    0,
+    0,
+    -100
+   ]
+  },
+  {
+   "t": 0.15,
+   "top": [
+    0.578,
+    0.578,
+    42.2
+   ],
+   "middle": [
+    0,
+    0
+   ],
+   "bottom": [
+    0,
+    0,
+    -100
+   ]
+  },
+  {
+   "t": 0.2,
+   "top": [
+    0.704,
+    0.704,
+    29.6
+   ],
+   "middle": [
+    0,
+    0
+   ],
+   "bottom": [
+    0,
+    0,
+    -100
+   ]
+  },
+  {
+   "t": 0.25,
+   "top": [
+    0.801,
+    0.801,
+    19.8
+   ],
+   "middle": [
+    0.23,
+    0.23
+   ],
+   "bottom": [
+    0,
+    0,
+    -100
+   ]
+  },
+  {
+   "t": 0.3,
+   "top": [
+    0.875,
+    0.875,
+    12.5
+   ],
+   "middle": [
+    0.421,
+    0.421
+   ],
+   "bottom": [
+    0,
+    0,
+    -100
+   ]
+  },
+  {
+   "t": 0.35,
+   "top": [
+    0.928,
+    0.928,
+    7.2
+   ],
+   "middle": [
+    0.578,
+    0.578
+   ],
+   "bottom": [
+    0,
+    0,
+    -100
+   ]
+  },
+  {
+   "t": 0.35,
+   "top": [
+    0.928,
+    0.928,
+    7.2
+   ],
+   "middle": [
+    0.578,
+    0.578
+   ],
+   "bottom": [
+    0,
+    0,
+    -100
+   ]
+  },
+  {
+   "t": 0.4,
+   "top": [
+    0.963,
+    0.963,
+    3.7
+   ],
+   "middle": [
+    0.704,
+    0.704
+   ],
+   "bottom": [
+    0,
+    0,
+    -100
+   ]
+  },
+  {
+   "t": 0.4,
+   "top": [
+    0.963,
+    0.963,
+    3.7
+   ],
+   "middle": [
+    0.704,
+    0.704
+   ],
+   "bottom": [
+    0,
+    0,
+    -100
+   ]
+  },
+  {
+   "t": 0.45,
+   "top": [
+    0.984,
+    0.984,
+    1.6
+   ],
+   "middle": [
+    0.801,
+    0.801
+   ],
+   "bottom": [
+    0.23,
+    0.23,
+    -77
+   ]
+  },
+  {
+   "t": 0.45,
+   "top": [
+    0.984,
+    0.984,
+    1.6
+   ],
+   "middle": [
+    0.801,
+    0.801
+   ],
+   "bottom": [
+    0.23,
+    0.23,
+    -77
+   ]
+  },
+  {
+   "t": 0.5,
+   "top": [
+    0.995,
+    0.995,
+    0.5
+   ],
+   "middle": [
+    0.875,
+    0.875
+   ],
+   "bottom": [
+    0.421,
+    0.421,
+    -57.9
+   ]
+  },
+  {
+   "t": 0.5,
+   "top": [
+    0.995,
+    0.995,
+    0.5
+   ],
+   "middle": [
+    0.875,
+    0.875
+   ],
+   "bottom": [
+    0.421,
+    0.421,
+    -57.9
+   ]
+  },
+  {
+   "t": 0.55,
+   "top": [
+    0.999,
+    0.999,
+    0.1
+   ],
+   "middle": [
+    0.928,
+    0.928
+   ],
+   "bottom": [
+    0.578,
+    0.578,
+    -42.2
+   ]
+  },
+  {
+   "t": 0.55,
+   "top": [
+    0.999,
+    0.999,
+    0.1
+   ],
+   "middle": [
+    0.928,
+    0.928
+   ],
+   "bottom": [
+    0.578,
+    0.578,
+    -42.2
+   ]
+  },
+  {
+   "t": 0.6,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    0.963,
+    0.963
+   ],
+   "bottom": [
+    0.704,
+    0.704,
+    -29.6
+   ]
+  },
+  {
+   "t": 0.6,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    0.963,
+    0.963
+   ],
+   "bottom": [
+    0.704,
+    0.704,
+    -29.6
+   ]
+  },
+  {
+   "t": 0.65,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    0.984,
+    0.984
+   ],
+   "bottom": [
+    0.801,
+    0.801,
+    -19.8
+   ]
+  },
+  {
+   "t": 0.65,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    0.984,
+    0.984
+   ],
+   "bottom": [
+    0.801,
+    0.801,
+    -19.8
+   ]
+  },
+  {
+   "t": 0.7,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    0.995,
+    0.995
+   ],
+   "bottom": [
+    0.875,
+    0.875,
+    -12.5
+   ]
+  },
+  {
+   "t": 0.7,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    0.995,
+    0.995
+   ],
+   "bottom": [
+    0.875,
+    0.875,
+    -12.5
+   ]
+  },
+  {
+   "t": 0.75,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    0.999,
+    0.999
+   ],
+   "bottom": [
+    0.928,
+    0.928,
+    -7.2
+   ]
+  },
+  {
+   "t": 0.75,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    0.999,
+    0.999
+   ],
+   "bottom": [
+    0.928,
+    0.928,
+    -7.2
+   ]
+  },
+  {
+   "t": 0.8,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    0.963,
+    0.963,
+    -3.7
+   ]
+  },
+  {
+   "t": 0.8,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    0.963,
+    0.963,
+    -3.7
+   ]
+  },
+  {
+   "t": 0.85,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    0.984,
+    0.984,
+    -1.6
+   ]
+  },
+  {
+   "t": 0.85,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    0.984,
+    0.984,
+    -1.6
+   ]
+  },
+  {
+   "t": 0.9,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    0.995,
+    0.995,
+    -0.5
+   ]
+  },
+  {
+   "t": 0.9,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    0.995,
+    0.995,
+    -0.5
+   ]
+  },
+  {
+   "t": 0.95,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    0.999,
+    0.999,
+    -0.1
+   ]
+  },
+  {
+   "t": 0.95,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    0.999,
+    0.999,
+    -0.1
+   ]
+  },
+  {
+   "t": 1.0,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.0,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.05,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.05,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.1,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.1,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.15,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.15,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.2,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.2,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.25,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.25,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.3,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.3,
+   "top": [
+    1,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.35,
+   "top": [
+    0.998,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.4,
+   "top": [
+    0.984,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.45,
+   "top": [
+    0.947,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.5,
+   "top": [
+    0.875,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.55,
+   "top": [
+    0.756,
+    1,
+    0
+   ],
+   "middle": [
+    1,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.6,
+   "top": [
+    0.578,
+    1,
+    0
+   ],
+   "middle": [
+    0.998,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.65,
+   "top": [
+    0.33,
+    1,
+    0
+   ],
+   "middle": [
+    0.984,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.7,
+   "top": [
+    0,
+    1,
+    0
+   ],
+   "middle": [
+    0.947,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.75,
+   "top": [
+    0,
+    1,
+    0
+   ],
+   "middle": [
+    0.875,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.8,
+   "top": [
+    0,
+    1,
+    0
+   ],
+   "middle": [
+    0.756,
+    1
+   ],
+   "bottom": [
+    1,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.85,
+   "top": [
+    0,
+    1,
+    0
+   ],
+   "middle": [
+    0.578,
+    1
+   ],
+   "bottom": [
+    0.998,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.9,
+   "top": [
+    0,
+    1,
+    0
+   ],
+   "middle": [
+    0.33,
+    1
+   ],
+   "bottom": [
+    0.984,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 1.95,
+   "top": [
+    0,
+    1,
+    0
+   ],
+   "middle": [
+    0,
+    1
+   ],
+   "bottom": [
+    0.947,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 2.0,
+   "top": [
+    0,
+    1,
+    0
+   ],
+   "middle": [
+    0,
+    1
+   ],
+   "bottom": [
+    0.875,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 2.05,
+   "top": [
+    0,
+    1,
+    0
+   ],
+   "middle": [
+    0,
+    1
+   ],
+   "bottom": [
+    0.756,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 2.1,
+   "top": [
+    0,
+    1,
+    0
+   ],
+   "middle": [
+    0,
+    1
+   ],
+   "bottom": [
+    0.578,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 2.15,
+   "top": [
+    0,
+    1,
+    0
+   ],
+   "middle": [
+    0,
+    1
+   ],
+   "bottom": [
+    0.33,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 2.2,
+   "top": [
+    0,
+    1,
+    0
+   ],
+   "middle": [
+    0,
+    1
+   ],
+   "bottom": [
+    0,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 2.25,
+   "top": [
+    0,
+    1,
+    0
+   ],
+   "middle": [
+    0,
+    1
+   ],
+   "bottom": [
+    0,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 2.3,
+   "top": [
+    0,
+    1,
+    0
+   ],
+   "middle": [
+    0,
+    1
+   ],
+   "bottom": [
+    0,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 2.35,
+   "top": [
+    0,
+    1,
+    0
+   ],
+   "middle": [
+    0,
+    1
+   ],
+   "bottom": [
+    0,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 2.4,
+   "top": [
+    0,
+    1,
+    0
+   ],
+   "middle": [
+    0,
+    1
+   ],
+   "bottom": [
+    0,
+    1,
+    0
+   ]
+  },
+  {
+   "t": 2.45,
+   "top": [
+    0,
+    1,
+    0
+   ],
+   "middle": [
+    0,
+    1
+   ],
+   "bottom": [
+    0,
+    1,
+    0
+   ]
+  }
+ ],
+ "hide": {
+  "trigger": ".section.is-gamme, start \"bottom bottom\" (the first section bottom meets the viewport bottom), toggleActions play none none reverse",
+  "startScrollPx": {
+   "1280x800": 200,
+   "390x844": 211
+  },
+  "firstSectionHeightPx": {
+   "1280x800": 1000,
+   "390x844": 1055
+  },
+  "tween": {
+   "autoAlpha": 0,
+   "duration": 0.5,
+   "ease": "power2.inOut"
+  },
+  "tweenTargets": [
+   "gamme_gradient-wrapper",
+   "carousel_arrow is-prev",
+   "carousel_pagination",
+   "scroll_discover",
+   "icon-scroll_wrapper",
+   "icon-scroll_wrapper"
+  ],
+  "desktopExtra": "carousel_title-collection autoAlpha 0, carousel_nav maxWidth 55%",
+  "mobileExtra": "carousel_arrow.is-next autoAlpha 0, carousel_title-collection y -2.5rem",
+  "wheelRecord": {
+   "down": null,
+   "up": null
+  }
+ },
+ "reducedMotion": {
+  "prefersReduce": true,
+  "gsapMatchMedia": "function",
+  "before": [
+   [
+    {
+     "o": 0.875,
+     "s": 0.875,
+     "y": 12.5,
+     "x": 0,
+     "cy": 565,
+     "tr": "matrix(0.875,0,0,0.875,2.1875,13.63125)"
+    },
+    {
+     "o": 0.421,
+     "s": 0.421,
+     "y": 0,
+     "x": 0,
+     "cy": 590.8,
+     "tr": "matrix(0.4213,0,0,0.4213,10.12725,42.27403)"
+    },
+    {
+     "o": 0,
+     "s": 0,
+     "y": -100,
+     "x": 0,
+     "cy": 572.8,
+     "tr": "matrix(0,0,0,0,17.5,37)"
+    }
+   ],
+   [
+    {
+     "o": 0.875,
+     "s": 0.875,
+     "y": 12.5,
+     "x": 0,
+     "cy": 565,
+     "tr": "matrix(0.875,0,0,0.875,2.1875,13.63125)"
+    },
+    {
+     "o": 0.421,
+     "s": 0.421,
+     "y": 0,
+     "x": 0,
+     "cy": 590.8,
+     "tr": "matrix(0.4213,0,0,0.4213,10.12725,42.27403)"
+    },
+    {
+     "o": 0,
+     "s": 0,
+     "y": -100,
+     "x": 0,
+     "cy": 572.8,
+     "tr": "matrix(0,0,0,0,17.5,37)"
+    }
+   ]
+  ],
+  "after1s": [
+   [
+    {
+     "o": 1,
+     "s": 1,
+     "y": 0,
+     "x": 0,
+     "cy": 558.8,
+     "tr": "matrix(1,0,0,1,0,0)"
+    },
+    {
+     "o": 1,
+     "s": 1,
+     "y": 0,
+     "x": 0,
+     "cy": 590.8,
+     "tr": "matrix(1,0,0,1,0,0)"
+    },
+    {
+     "o": 1,
+     "s": 1,
+     "y": 0,
+     "x": 0,
+     "cy": 622.8,
+     "tr": "matrix(1,0,0,1,0,0)"
+    }
+   ],
+   [
+    {
+     "o": 1,
+     "s": 1,
+     "y": 0,
+     "x": 0,
+     "cy": 558.8,
+     "tr": "matrix(1,0,0,1,0,0)"
+    },
+    {
+     "o": 1,
+     "s": 1,
+     "y": 0,
+     "x": 0,
+     "cy": 590.8,
+     "tr": "matrix(1,0,0,1,0,0)"
+    },
+    {
+     "o": 1,
+     "s": 1,
+     "y": 0,
+     "x": 0,
+     "cy": 622.8,
+     "tr": "matrix(1,0,0,1,0,0)"
+    }
+   ]
+  ],
+  "after2s": [
+   [
+    {
+     "o": 0,
+     "s": 1,
+     "y": 0,
+     "x": 0,
+     "cy": 558.8,
+     "tr": "matrix(1,0,0,1,0,0)"
+    },
+    {
+     "o": 0,
+     "s": 1,
+     "y": 0,
+     "x": 0,
+     "cy": 590.8,
+     "tr": "matrix(1,0,0,1,0,0)"
+    },
+    {
+     "o": 0,
+     "s": 1,
+     "y": 0,
+     "x": 0,
+     "cy": 622.8,
+     "tr": "matrix(1,0,0,1,0,0)"
+    }
+   ],
+   [
+    {
+     "o": 0,
+     "s": 1,
+     "y": 0,
+     "x": 0,
+     "cy": 558.8,
+     "tr": "matrix(1,0,0,1,0,0)"
+    },
+    {
+     "o": 0,
+     "s": 1,
+     "y": 0,
+     "x": 0,
+     "cy": 590.8,
+     "tr": "matrix(1,0,0,1,0,0)"
+    },
+    {
+     "o": 0,
+     "s": 1,
+     "y": 0,
+     "x": 0,
+     "cy": 622.8,
+     "tr": "matrix(1,0,0,1,0,0)"
+    }
+   ]
+  ]
+ },
+ "ours": {
+  "file": "SC/ciaofam/research/scrollicon-ours.html",
+  "check": "SC/ciaofam/research/scrollicon-ours-check.mjs, results in scrollicon/ours-check.json",
+  "maxCurveError": 0,
+  "svgRectDesktop": [
+   {
+    "x": 45.94,
+    "y": 554.25,
+    "w": 17.5,
+    "h": 73,
+    "cx": 54.69
+   },
+   {
+    "x": 1216.56,
+    "y": 554.25,
+    "w": 17.5,
+    "h": 73,
+    "cx": 1225.31
+   }
+  ],
+  "svgRectPhone": [
+   {
+    "x": 10.34,
+    "y": 598.25,
+    "w": 17.5,
+    "h": 73,
+    "cx": 19.09
+   },
+   {
+    "x": 362.16,
+    "y": 598.25,
+    "w": 17.5,
+    "h": 73,
+    "cx": 370.91
+   }
+  ]
+ }
+}

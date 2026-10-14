@@ -2,11 +2,11 @@
 const VCLOCK = Q.has('vclock'); let vNow = 0; const nowMs = () => (VCLOCK ? vNow : performance.now()); window.__tick = (ms) => { vNow += ms; return vNow; };
 // ---------------------------------------------------------------- labels: igloo's three labels per stone, igloo's face and reveal
 // Sam, 2026-10-10: igloo's text and font. Each gem carries its family's name in the singular (Sam: "not reds, it's red";
-// Earthy Browns is Basic Brown); the active gem adds igloo's date slot as the shade count over the call to action.
+// Basic Brown is Basic Brown); the active gem adds igloo's date slot as the shade count over the call to action.
 // IBM Plex Mono Medium (SIL OFL), uppercase, Pearl Whisper. Reveal measured on igloo: leader 0.2 s, left-to-right alpha
 // wipe 0.4 s, glyph roll 0.75 s (each letter counts down through the five glyphs after it in its 8-glyph block); hide
 // 0.2 s, leader retracting horizontal segment first, alpha wiping right to left.
-const FAM_ID = ['frosty-whites', 'blissful-blues', 'playful-pinks', 'vivid-violets', 'mellow-yellows', 'earthy-browns', 'blushing-corals', 'stormy-greys', 'go-green', 'roaring-reds'];
+const FAM_ID = ['frosty-white', 'blissful-blue', 'playful-pink', 'vivid-violet', 'mellow-yellow', 'basic-brown', 'blushing-coral', 'stormy-grey', 'go-green', 'roaring-red'];
 const NAME = ['Frosty White', 'Blissful Blue', 'Playful Pink', 'Vivid Violet', 'Mellow Yellow', 'Basic Brown', 'Blushing Coral', 'Stormy Grey', 'Go Green', 'Roaring Red'];
 const LAB_PX = PHONE ? 12 : 13;
 // igloo draws its white labels straight on the fog (about 2.5:1); darkened plates read as grey boxes, so they are off (Sam to sign off the contrast)

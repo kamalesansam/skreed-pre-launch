@@ -13,6 +13,7 @@ test('the cool order resolved through the prototype FAMILIES equals BLOCK_SHADES
   assert.ok(m, 'FAMILIES inlined in index.html');
   const FAMILIES = JSON.parse(m![1]) as { n: string; s: [string, string][] }[];
   const orders = new Function(constSource('BLOCK_ORDERS') + '\nreturn BLOCK_ORDERS;')() as Record<string, string[]>;
+  // the pinned v9.10 fixture still carries the catalog's plural family names (the singular names came on 2026-10-14)
   const REGION = [['Frosty Whites', 'Snow'], ['Blissful Blues', 'Sky'], ['Playful Pinks', 'Rouge'], ['Vivid Violets', 'Amethyst'], ['Mellow Yellows', 'Sunbeam'],
     ['Earthy Browns', 'Cinnamon'], ['Blushing Corals', 'Mango'], ['Stormy Greys', 'Silver'], ['Go Green', 'Lawn'], ['Roaring Reds', 'Crimson']];
   const hexOf = (name: string) => { const [fam] = REGION.find(([, n]) => n === name)!; return FAMILIES.find((f) => f.n === fam)!.s.find((s) => s[0] === name)![1]; };
