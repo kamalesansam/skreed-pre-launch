@@ -111,11 +111,18 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
 @media (hover: hover) { .press:hover { transform: translateY(-1px); } }
 .press:active { transform: scale(0.98); }
 
-/* header */
-.hdr { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 6; height: var(--header-h); display: flex; align-items: center; justify-content: space-between; padding-inline: var(--gutter); border-bottom: 1px solid transparent; background: transparent; }
-:root[data-scrolled] .hdr { background: var(--bg); border-bottom-color: var(--fg); }
-.mark { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; color: var(--fg); }
-.mark svg { width: 72px; height: auto; display: block; fill: currentColor; }
+/* the corners (Sam, 2026-10-15; family-page.md 21): no header bar, no hairline. Top left the wordmark with the hero's
+   logotype glitch (E-F4), at the hero's site-logo inset and size (96 px, 136 px from 1024 px); top right "All families"
+   as plain text, centred on the wordmark's height, opening the family switcher. */
+:root { --inset: clamp(16px, 3.5vw, 56px); --mark-h: 23.25px; }
+@media (min-width: 1024px) { :root { --mark-h: 32.94px; } }
+.mark { position: fixed; top: calc(var(--inset) + env(safe-area-inset-top, 0px)); left: var(--inset); z-index: 6; display: block; line-height: 0; color: var(--fg); }
+.mark::after { content: ""; position: absolute; inset: -11px -8px; }
+.mark svg { display: block; width: 96px; height: auto; overflow: visible; fill: currentColor; }
+.mark:focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 6px; }
+@media (min-width: 1024px) { .mark svg { width: 136px; } }
+@media (prefers-reduced-motion: reduce) { .mark .logo-tiles { display: none !important; } .mark svg { opacity: 1 !important; } }
+.allfam { position: fixed; top: calc(var(--inset) + env(safe-area-inset-top, 0px) + var(--mark-h) / 2 - 22px); right: calc(var(--inset) - var(--s2)); z-index: 6; font: 600 var(--fs-label)/1 var(--font-ui); color: var(--fg); min-height: 44px; padding-inline: var(--s2); display: inline-flex; align-items: center; white-space: nowrap; }
 .txtbtn { font: 600 var(--fs-button)/1 var(--font-ui); min-height: 44px; padding-inline: var(--s2); display: inline-flex; align-items: center; margin-right: calc(var(--s2) * -1); }
 
 /* the side scroll cue, after ciao's (measured, ciaofam/research/scrollicon.md): three chevrons of five dots drawn top down,
@@ -132,8 +139,8 @@ button, a, [role="slider"], canvas { -webkit-tap-highlight-color: transparent; }
 @keyframes cue-bottom { 0% { opacity: 0; transform: translateY(-100px) scale(0); animation-timing-function: linear; } 16% { opacity: 0; transform: translateY(-100px) scale(0); animation-timing-function: cubic-bezier(0.333, 1, 0.667, 1); } 40% { opacity: 1; transform: none; animation-timing-function: linear; } 72% { opacity: 1; transform: none; animation-timing-function: cubic-bezier(0.333, 0, 0.667, 0); } 88% { opacity: 0; transform: none; animation-timing-function: linear; } 100% { opacity: 0; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .chev { animation: none; opacity: 1; transform: none; } }
 /* the lineup: the first screen, under the header (phone first); every HUD row sits over the stage */
-.lineup { position: relative; height: var(--stage-h); margin-top: calc(-1 * var(--header-h) - env(safe-area-inset-top, 0px)); }
-.intro { position: absolute; z-index: 2; left: var(--gutter); right: var(--gutter); top: calc(var(--header-h) + env(safe-area-inset-top, 0px) + var(--s1)); display: grid; gap: var(--s0); pointer-events: none; }
+.lineup { position: relative; height: var(--stage-h); }
+.intro { position: absolute; z-index: 2; left: var(--gutter); right: var(--gutter); top: calc(var(--inset) + var(--mark-h) + env(safe-area-inset-top, 0px) + var(--s4)); display: grid; gap: var(--s0); pointer-events: none; }
 /* ciao's fade over the bottom of the first screen (its overlay: 120% of the screen from -10%, clear to 70%,
    night at 95%, so on the screen clear to 74% and night at 104%), over the cases and under the HUD */
 .fade { position: fixed; inset: 0; z-index: 2; pointer-events: none; transition: opacity 0.6s linear; background: linear-gradient(180deg, transparent 74%, var(--night) 104%); } /*E-F1*/
@@ -159,24 +166,34 @@ html.hud-off .below { opacity: 0; visibility: hidden; transition: opacity 0.5s c
    with ciao's text block (28rem, left), then the carousel returns in the last screen */
 #tint { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 0.6s linear; background: radial-gradient(88.85% 121.19% at 43.49% 112.49%, var(--tint2) 4.96%, var(--tint1) 54.38%, var(--night) 93.49%); } /*E-F2*/
 html.tint-on #tint { opacity: 1; }
+/* ciao's argument screen (Sam, 2026-10-15; family-page.md 21, exception E-F3): after the fourth case type, GO / BEYOND BASIC
+   as letters behind the case, filled with the shade's light tint at 72 percent with two drop shadows in the tint pair,
+   screen-blended over our own smoke loop (a 2D canvas, tinted by the pair), plus a backdrop blur clipped to the letters.
+   The box is ciao's: 80 percent of the width, 1400 px at most, centred. */
+.arg { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 0.5s cubic-bezier(0.333, 0, 0.667, 1), visibility 0s 0.5s; }
+html.arg-on .arg { opacity: 1; visibility: visible; transition: opacity 0.5s cubic-bezier(0.333, 0, 0.667, 1), visibility 0s; }
+.smoke { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: var(--night); }
+.arg-box { position: absolute; left: 50%; top: 50%; width: 80%; max-width: 1400px; transform: translate(-50%, -50%); }
+.arg-svg { display: block; width: 100%; height: auto; overflow: visible; mix-blend-mode: screen; filter: drop-shadow(0 0 80px var(--tint2)) drop-shadow(0 0 90px var(--tint1)); } /*E-F3*/
+.arg-svg text { font-family: var(--font-display); font-weight: 700; fill: var(--tint2); fill-opacity: 0.72; }
+.arg-svg .arg-t { transform-box: fill-box; transform-origin: 50% 50%; opacity: 0; }
+.arg-blur { position: absolute; inset: 0; mix-blend-mode: screen; opacity: 0; clip-path: url(#arg-clip); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); } /*E-F3*/
 .beats { position: relative; z-index: 3; }
 .beat { height: 100svh; position: relative; }
 .beat-in { position: fixed; inset: 0; display: grid; align-content: end; padding: 0 var(--gutter) calc(104px + var(--sab)); pointer-events: none; visibility: hidden; transition: visibility 0s 0.8s; }
 .beat.on .beat-in { visibility: visible; transition: visibility 0s; }
 .beat-txt { max-width: 28rem; display: grid; gap: var(--s2); pointer-events: auto; }
-.beat-eyebrow { font: 600 var(--fs-eyebrow)/1.2 var(--font-ui); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
 .beat-h { font: 700 clamp(2rem, 3vw, 3rem)/1.05 var(--font-display); letter-spacing: -0.015em; margin: 0; }
 .beat-p { font: 400 1.125rem/1.5 var(--font-ui); }
 .beat-txt > * { overflow: hidden; }
 .beat-txt > * > span { display: block; transform: translateY(110%); transition: transform 0.7s cubic-bezier(0.2, 0, 0, 1); }
 .beat.on .beat-txt > * > span { transform: none; }
 .beat.on .beat-txt > :nth-child(2) > span { transition-delay: 0.06s; }
-.beat.on .beat-txt > :nth-child(3) > span { transition-delay: 0.12s; }
 .beatnav { position: fixed; right: var(--s2); top: 50%; transform: translateY(-50%); z-index: 4; display: grid; gap: var(--s2); margin: 0; padding: 0; opacity: 0; visibility: hidden; transition: opacity 0.5s cubic-bezier(0.333, 0, 0.667, 1), visibility 0s 0.5s; }
 html.beats-on .beatnav { opacity: 1; visibility: visible; transition: opacity 0.5s cubic-bezier(0.333, 0, 0.667, 1), visibility 0s; }
 .beatnav button { width: 36px; height: 36px; border-radius: var(--radius-round); border: 1.5px solid color-mix(in srgb, var(--pearl-whisper) 50%, transparent); display: grid; place-items: center; font: 600 0.8125rem/1 var(--font-ui); font-variant-numeric: tabular-nums; color: var(--pearl-whisper); transition: background-color var(--dur-press) var(--ease-standard), color var(--dur-press) var(--ease-standard), border-color var(--dur-press) var(--ease-standard); }
 .beatnav button[aria-current="true"] { background: var(--pearl-whisper); color: var(--night); border-color: var(--pearl-whisper); }
-:root[data-route="index"] .beats, :root[data-route="index"] .beatnav, :root[data-route="index"] #tint { display: none; }
+:root[data-route="index"] .beats, :root[data-route="index"] .beatnav, :root[data-route="index"] #tint, :root[data-route="index"] .arg { display: none; }
 .hud { display: contents; }
 .below .name, .below .meta, .below .arrow, .below .state, .below .scrub, .below .controls { position: absolute; pointer-events: auto; }
 .name { left: var(--gutter); right: var(--gutter); top: var(--name-top); font: 700 var(--fs-tile-name)/var(--lh-tile) var(--font-display); letter-spacing: var(--ls-tile); text-align: center; height: calc(var(--lh-tile) * 1em); }
@@ -274,8 +291,6 @@ html.beats-on .beatnav { opacity: 1; visibility: visible; transition: opacity 0.
 
 /* the wide layout (family-page.md 2.4): one breakpoint, 900 x 600 */
 @media (min-width: 900px) and (min-height: 600px) {
-  .mark svg { width: 72px; }
-  .intro { top: calc(var(--header-h) + var(--s1)); }
   .beat-in { align-content: center; padding: 0 var(--gutter) 0 max(var(--gutter), 10%); }
   .beatnav { right: var(--gutter); }
   .beatnav button { width: 44px; height: 44px; font-size: 0.875rem; }
@@ -301,12 +316,12 @@ html.beats-on .beatnav { opacity: 1; visibility: visible; transition: opacity 0.
   .family-sec .grid-cap { display: none; }
   .famnav { grid-template-columns: 1fr auto 1fr; grid-template-areas: "prev all next"; align-items: center; }
   .foot { padding-bottom: var(--s5); }
-  #family-switcher { inset: auto; top: calc(72px + env(safe-area-inset-top, 0px)); right: var(--gutter); left: auto; bottom: auto; width: 340px; max-height: calc(100svh - 96px); border: 1px solid var(--fg); padding: 0 var(--s3) var(--s3); }
+  #family-switcher { inset: auto; top: calc(var(--inset) + var(--mark-h) + var(--s3) + env(safe-area-inset-top, 0px)); right: var(--inset); left: auto; bottom: auto; width: 340px; max-height: calc(100svh - 96px); border: 1px solid var(--fg); padding: 0 var(--s3) var(--s3); }
   .sw-head { min-height: 56px; }
   .fam-index { grid-template-columns: 1fr 1fr; column-gap: var(--s6); row-gap: var(--s5); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .marker, .press, .stage3d canvas, .beat-txt > * > span, .below, .beatnav, #tint, .fade { transition-duration: 0s; }
+  .marker, .press, .stage3d canvas, .beat-txt > * > span, .below, .beatnav, #tint, .fade, .arg { transition-duration: 0s; }
 }
 /* the loader: the hero's 0-100 screen, our own copy (family-page.md 20) */
 html.loading,html.loading body{overflow:hidden}
@@ -328,14 +343,15 @@ html.loading .scrollcue{visibility:hidden}
 #ldSt{font-size:.75rem;line-height:1.4;color:var(--muted);max-width:calc(100vw - 32px)}
 #ldSt:empty{display:none}
 
+
+/* round 3, Sam 2026-10-15: no Reserve, no Show swatches (grid mode stays the automatic fallback and ?mode=grid); the landing shows only the family name: no eyebrow, no index, no family line in the HUD */
+#eyebrow, #hud-fam, #hud-num, #hud-num-sr, .reserve, #view-btn { display: none !important; }
 </style>
 
 <svg class="sprite" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><g id="skreed-wordmark" fill="currentColor">@LOGO_PATHS@</g></defs></svg>
 <div class="ldr" id="ldr" role="progressbar" aria-label="Loading Skreed" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="ld-w"><div class="ld-m" id="ldM"><div class="ld-g" id="ldG"><i id="ldBase"></i><i id="ldFill"></i></div><div class="ld-s" id="ldS"><i id="ldBand"></i></div></div><svg class="ld-line" id="ldLine" viewBox="0 0 1209.46 292.9" aria-hidden="true" focusable="false"><use href="#skreed-wordmark"/></svg></div><p class="ld-p"><span id="ldSt"></span><span id="ldPct"><span id="ldN">0</span>%</span></p></div>
-<header class="hdr" id="hdr">
-  <a class="mark fr" href="#/" aria-label="Skreed home"><svg viewBox="0 0 1209.46 292.9" aria-hidden="true" focusable="false">@LOGO_PATHS@</svg></a>
-  <button class="txtbtn fr press" id="families-btn" type="button" popovertarget="family-switcher">Families</button>
-</header>
+<a class="mark fr" id="siteLogo" href="#/" aria-label="Skreed home"><svg viewBox="0 0 1209.46 292.9" aria-hidden="true" focusable="false"><defs></defs><use class="logo-base" href="#skreed-wordmark"/><g class="logo-tiles" display="none"></g></svg></a>
+<button class="allfam fr press" id="families-btn" type="button" popovertarget="family-switcher">All families</button>
 
 <main id="main">
   <section class="lineup" id="lineup" aria-labelledby="fam-title">
@@ -420,33 +436,32 @@ html.loading .scrollcue{visibility:hidden}
   </section>
 
   <div id="tint" aria-hidden="true"></div>
+  <div class="arg" id="arg" aria-hidden="true">
+    <canvas class="smoke" id="smoke" width="96" height="54"></canvas>
+    <div class="arg-box" id="arg-box">
+      <svg class="arg-svg" id="arg-svg" viewBox="0 0 1314 405" focusable="false"><defs><clipPath id="arg-clip" clipPathUnits="userSpaceOnUse"></clipPath></defs></svg>
+      <div class="arg-blur" id="arg-blur"></div>
+    </div>
+  </div>
   <div class="beats" id="beats">
-    <section class="beat" data-beat="z" aria-labelledby="bz-h"><div class="beat-in"><div class="beat-txt">
-      <p class="beat-eyebrow"><span id="bz-eyebrow">Blissful Blue, 032 / 240</span></p>
-      <h2 class="beat-h" id="bz-h"><span id="bz-name">Sky</span></h2>
-      <p class="beat-p"><span>Available in 240 shades, matte and gloss.</span></p>
-    </div></div></section>
+    <section class="beat" data-beat="z" aria-hidden="true"><div class="beat-in"></div></section>
     <section class="beat" data-beat="1" id="beat-1" aria-labelledby="b1-h"><div class="beat-in"><div class="beat-txt">
-      <p class="beat-eyebrow"><span>Case 1 of 4</span></p>
       <h2 class="beat-h" id="b1-h"><span>Tough</span></h2>
       <p class="beat-p"><span>A durable polycarbonate shell over a shock-absorbing TPU layer, for everyday bumps, drops and scratches. Precision cutouts keep the camera, port and controls clear.</span></p>
     </div></div></section>
     <section class="beat" data-beat="2" id="beat-2" aria-labelledby="b2-h"><div class="beat-in"><div class="beat-txt">
-      <p class="beat-eyebrow"><span>Case 2 of 4</span></p>
       <h2 class="beat-h" id="b2-h"><span>MagTough</span></h2>
       <p class="beat-p"><span>The Tough case with a built-in magnetic ring. Works with every magnetic phone accessory.</span></p>
     </div></div></section>
     <section class="beat" data-beat="3" id="beat-3" aria-labelledby="b3-h"><div class="beat-in"><div class="beat-txt">
-      <p class="beat-eyebrow"><span>Case 3 of 4</span></p>
       <h2 class="beat-h" id="b3-h"><span>Snap</span></h2>
       <p class="beat-p"><span>Light everyday protection that keeps the slim profile of your phone. Precision cutouts keep the camera, port and controls clear.</span></p>
     </div></div></section>
     <section class="beat" data-beat="4" id="beat-4" aria-labelledby="b4-h"><div class="beat-in"><div class="beat-txt">
-      <p class="beat-eyebrow"><span>Case 4 of 4</span></p>
       <h2 class="beat-h" id="b4-h"><span>Armor</span></h2>
       <p class="beat-p"><span>Built for everyday impact. Reinforced edges and raised protection around the camera, with a built-in magnetic ring for magnetic accessories.</span></p>
     </div></div></section>
-    <section class="beat" data-beat="last" aria-label="The family again"><div class="beat-in"></div></section>
+    <section class="beat" data-beat="arg" aria-labelledby="arg-h"><div class="beat-in"></div><h2 class="vh" id="arg-h">Go beyond basic</h2></section>
   </div>
   <div class="beatnav" id="beatnav" role="group" aria-label="Case types">
     <button type="button" class="fr" data-beat="1" aria-label="Tough">1</button><button type="button" class="fr" data-beat="2" aria-label="MagTough">2</button><button type="button" class="fr" data-beat="3" aria-label="Snap">3</button><button type="button" class="fr" data-beat="4" aria-label="Armor">4</button>
@@ -599,7 +614,7 @@ raf=requestAnimationFrame(tick);
      turn only spins the label; a flat case would show its edge or its inside, so each case spins about its own long
      axis against the slot's turn (face 1: every back shows like the front case's). */
   var CFG = { sp: 3.5, cs: 4.884, camZ: 29, fov: 20, rx: -20, ry: -20, rz: 11.25, face: 1, slotPx: 175, phoneTop: 132, phoneBottom: 262,
-    tiltYaw: 5, tiltPitch: 3, turn: 10, rate: 10.94, gRate: 2, spot: 50, tm: 0, cal: 1, trimOffset: 1, dprCap: 0, aa: 1, envRot: -40 };
+    tiltYaw: 5, tiltPitch: 3, turn: 10, rate: 10.94, gRate: 2, spot: 50, tm: 0, cal: 1, trimOffset: 1, dprCap: 0, aa: 1, envRot: -40, bob: 1, argZ: 8, argZPhone: 10 };
   // every value can be overridden from the query for verification (dprCap and aa exist only for that: a higher pixel
   // ratio cap and multisampling off, used to tell SwiftShader's multisampling seams from real geometry)
   Object.keys(CFG).forEach(function (k) { if (q.has(k) && isFinite(+q.get(k))) CFG[k] = +q.get(k); });
@@ -733,7 +748,7 @@ raf=requestAnimationFrame(tick);
   function setTint(sh, f) {
     var t = tintOf(sh.hex);
     root.style.setProperty('--tint1', t[0]); root.style.setProperty('--tint2', t[1]);
-    $('bz-name').textContent = sh.name; $('bz-eyebrow').textContent = f.name + ', ' + sh.num + ' / 240';
+    smoke.tint(t[0], t[1]);
   }
   function follow(i, input, opts) {
     if (S.fi < 0) return;
@@ -928,7 +943,7 @@ raf=requestAnimationFrame(tick);
         settle(sel, 'deeplink');
         setModeDom();
         drawSkel();
-        if (SK.stage && root.dataset.mode === '3d' && window.__famLoader) window.__famLoader.again();
+        if (SK.stage && root.dataset.mode === '3d' && window.__famLoader) { window.__famLoader.again(); logoGlitch.arm(); }
         if (SK.stage) { if (root.dataset.mode === '3d') SK.stage.resume(); SK.stage.setFamily(r.fi, sel); }
         track('family_open', { family: FL[r.fi].id, from: initial ? 'link' : 'switcher' });
         if (!initial && SK.start) SK.start();
@@ -1029,16 +1044,238 @@ raf=requestAnimationFrame(tick);
     else if (document.activeElement === document.body || sw.contains(document.activeElement)) $('families-btn').focus();
   });
 
-  /* the scroll in screens: 0 to 1 the carousel, 1 to 2 the zoom, 2 to 6 the four case types, 6 to 7 the carousel again.
+  /* ---------------------------------------------------------------- the wordmark's glitch (E-F4; Sam, 2026-10-15: the home page's)
+     The hero's logotype glitch (igloo's logo glitch, research 2026-10-08, re-created in SVG in the hero template; this is a copy
+     of that code, no igloo code): a burst breaks the wordmark into thin horizontal slabs shifted sideways by up to 1.05 percent
+     of its width (about 1.4 px), three slab patterns per burst, an opacity flicker 0.85 + 0.15 sin(30p + phase), then it snaps
+     clean. Here and there a slab splits into a near-complementary pair of the families' key shades (the hero's four pairs), one
+     each side, the Pearl Whisper copy on top. Fired for 0.5 s when the loader lifts (the hero's intro burst), 0.25 s on pointer
+     entry, focus and tap, and an idle twitch every 8 to 16 s. Reduced motion: no burst. */
+  var logoGlitch = (function () {
+    var link = $('siteLogo'), svg = link.querySelector('svg'), defs = svg.querySelector('defs');
+    var base = svg.querySelector('.logo-base'), layer = svg.querySelector('.logo-tiles');
+    var LVW = 1209.46, LVH = 292.9, AMP = LVW * 0.0105, ROWS = 8, SEGS = 6, NS = 'http://www.w3.org/2000/svg', SPLIT = 0.4, IDLE = true;
+    var tiles = [], i;
+    var mk = function () { var e = document.createElementNS(NS, 'use'); e.setAttribute('href', '#skreed-wordmark'); return e; };
+    for (i = 0; i < ROWS * SEGS; i++) {
+      var cp = document.createElementNS(NS, 'clipPath'); cp.id = 'lg-c' + i;
+      var r = document.createElementNS(NS, 'rect'); r.setAttribute('shape-rendering', 'crispEdges'); cp.appendChild(r); defs.appendChild(cp);
+      var g = document.createElementNS(NS, 'g'); g.setAttribute('clip-path', 'url(#lg-c' + i + ')');
+      var ua = mk(), ub = mk(), u = mk(); g.appendChild(ua); g.appendChild(ub); g.appendChild(u); layer.appendChild(g);
+      tiles.push({ r: r, g: g, u: u, ua: ua, ub: ub });
+    }
+    var rand = function (a, b) { return a + Math.random() * (b - a); };
+    var kick = function () { var v = Math.random() * 2 - 1; return (v < 0 ? -1 : 1) * Math.sqrt(Math.abs(v)) * AMP; };
+    // the colour split in our shades: the families' key shades by name; the ghosts' opacity balanced by OKLab lightness
+    var KEY = {}; FL.forEach(function (f) { var k = f.list[f.keyI]; KEY[k.name] = k.hex; });
+    var PAIRS = [['Sky', 'Crimson'], ['Amethyst', 'Sunbeam'], ['Lawn', 'Rouge'], ['Sky', 'Mango']];
+    var ghostAlpha = function (n) { var L = hexToOklab(KEY[n])[0]; return Math.min(0.9, Math.max(0.5, 0.74 * Math.sqrt(0.72 / L))); };
+    var pair = PAIRS[0];
+    var ghost = function (e, name, dx) { e.style.color = KEY[name]; e.setAttribute('opacity', ghostAlpha(name).toFixed(2)); e.setAttribute('transform', 'translate(' + dx.toFixed(2) + ' 0)'); e.removeAttribute('display'); };
+    var snap = function (v) { return v; };
+    function slice() {
+      var i = 0, y = 0;
+      for (var row = 0; row < ROWS && y < LVH; row++) {
+        var h = row === ROWS - 1 ? LVH - y : snap(y + LVH * rand(0.05, 0.24)) - y; if (LVH - (y + h) < LVH * 0.05) h = LVH - y;
+        var x = 0;
+        for (var k = 0; k < SEGS && x < LVW; k++, i++) {
+          var w = k === SEGS - 1 ? LVW - x : snap(x + LVW * rand(0.06, 0.26)) - x; if (LVW - (x + w) < LVW * 0.04) w = LVW - x;
+          var left = x === 0 ? -AMP : x, right = x + w >= LVW ? LVW + AMP : x + w, t = tiles[i];
+          t.r.setAttribute('x', left); t.r.setAttribute('width', right - left); t.r.setAttribute('y', y); t.r.setAttribute('height', h);
+          var kx = kick(); t.u.setAttribute('transform', 'translate(' + kx.toFixed(2) + ' 0)'); t.g.removeAttribute('display'); x += w;
+          if (Math.random() < SPLIT) {
+            var split = AMP * rand(1.4, 2.6), flip = Math.random() < 0.5;
+            ghost(t.ua, pair[flip ? 1 : 0], kx - split); ghost(t.ub, pair[flip ? 0 : 1], kx + split);
+          } else { t.ua.setAttribute('display', 'none'); t.ub.setAttribute('display', 'none'); }
+        }
+        y += h;
+      }
+      for (; i < tiles.length; i++) tiles[i].g.setAttribute('display', 'none');
+    }
+    var p = 1, step = -1, phase = 0, dur = 0.25, startAt = 0, raf = 0;
+    function render() {
+      if (p >= 1) { layer.setAttribute('display', 'none'); base.removeAttribute('display'); svg.style.opacity = ''; step = -1; return; }
+      var k = Math.min(2, Math.floor(p * 3));
+      if (k !== step) { step = k; slice(); }
+      base.setAttribute('display', 'none'); layer.removeAttribute('display');
+      svg.style.opacity = (0.85 + 0.15 * Math.sin(p * 30 + phase)).toFixed(3);
+    }
+    function tick(now) {
+      if (now < startAt) { raf = requestAnimationFrame(tick); return; }
+      p = Math.min(1, (now - startAt) / (dur * 1000)); render();
+      if (p < 1) raf = requestAnimationFrame(tick);
+    }
+    function burst(duration, delay) {
+      if (mqReduce.matches) return;
+      var unit = LVW / Math.max(1, svg.getBoundingClientRect().width * devicePixelRatio);
+      snap = function (v) { return Math.round(v / unit) * unit; };   // cut on device pixels, no hairline seams
+      phase = Math.random() * 12.4242; step = -1; dur = duration; p = 0;
+      pair = PAIRS[Math.floor(Math.random() * PAIRS.length)];
+      cancelAnimationFrame(raf); startAt = performance.now() + (delay || 0) * 1000; raf = requestAnimationFrame(tick);
+      track('logo_glitch', { duration: duration });
+    }
+    link.addEventListener('pointerenter', function (e) { if (e.pointerType !== 'touch') burst(0.25); });
+    link.addEventListener('pointerdown', function (e) { if (e.pointerType === 'touch') burst(0.25); });
+    link.addEventListener('focus', function () { try { if (link.matches(':focus-visible')) burst(0.25); } catch (x) { /* ignore */ } });
+    var idleTimer = 0;
+    function scheduleIdle() { clearTimeout(idleTimer); idleTimer = setTimeout(function () { if (IDLE && !document.hidden) burst(0.25); scheduleIdle(); }, rand(8000, 16000)); }
+    // the intro burst: when the loader lifts (every family load and switch), or at once when there is no loader (grid mode)
+    var armed = false;
+    function arm() {
+      if (!root.classList.contains('loading')) { burst(0.5, 0.25); pair = PAIRS[0]; if (!armed) { armed = true; scheduleIdle(); } return; }
+      var mo = new MutationObserver(function () { if (!root.classList.contains('loading')) { mo.disconnect(); arm(); } });
+      mo.observe(root, { attributes: true, attributeFilter: ['class'] });
+    }
+    return { burst: burst, arm: arm };
+  })();
+  window.__skreedLogo = logoGlitch;   // test hook
+
+  /* ---------------------------------------------------------------- the argument screen (ciao's, measured; family-page.md 21; E-F3)
+     ciao's letters: twelve SVG shapes in a 1314 x 405 box, two rows (ZERO over BULLSHIT, the short row over the long one,
+     both from the left edge, the long row the box's width), caps 184.6 units tall, a 25.2 gap between the rows; the box
+     80 percent of the width (1400 px at most), centred; fill the flavour's light colour at 0.72, drop shadows 80 px in the
+     light colour and 90 px in the dark one, screen blend; a backdrop blur of 2rem (28 px at its 14 px root) masked to the
+     letters, faded in 1 s after the pop; each letter from alpha 0 and scale 0.6 to 1 in 0.5 s with back.out(2), staggered
+     0.04 s after a 0.4 s delay when the section enters, and out in 0.4 s with power2.in when it leaves. Ours: GO over
+     BEYOND BASIC in Poppins 700 (the brand's display face; ciao's is a condensed black slanted face we cannot ship, and the
+     brand bans slanted type), the long row the box's width, the caps and the row gap in ciao's proportion to the cap height;
+     one <text> per letter so each pops on its own; the blur clipped by a copy of the rows in a clipPath. */
+  var ARG = { rows: ['GO', 'BEYOND BASIC'], W: 1314, gapOverCap: 25.2 / 184.6, cap: 0.705 };   // Poppins 700's cap height is 0.705 em
+  var argSvg = $('arg-svg'), argClip = $('arg-clip'), argLetters = [], argClipRows = [], argLaid = false, argShown = false, argAnims = [];
+  function backOutEase(s) { var pts = [], n = 32; for (var i = 0; i <= n; i++) { var u = i / n - 1; pts.push(Math.round(((s + 1) * u * u * u + s * u * u + 1) * 1000) / 1000); } return 'linear(' + pts.join(', ') + ')'; }
+  var EASE_BACK = (window.CSS && CSS.supports && CSS.supports('animation-timing-function', 'linear(0, 1)')) ? backOutEase(2) : 'cubic-bezier(0.34, 1.56, 0.64, 1)';
+  function layoutArg() {
+    if (argLaid || !document.fonts || document.fonts.status !== 'loaded') return;
+    var NS = 'http://www.w3.org/2000/svg';
+    var mkText = function (s, x, y, size, cls) { var t = document.createElementNS(NS, 'text'); t.setAttribute('x', x); t.setAttribute('y', y); t.setAttribute('font-size', size); if (cls) t.setAttribute('class', cls); t.textContent = s; return t; };
+    var probe = mkText(ARG.rows[1], 0, 0, 100); probe.setAttribute('visibility', 'hidden'); argSvg.appendChild(probe);
+    var w100 = probe.getComputedTextLength();
+    if (!(w100 > 0)) { probe.remove(); return; }   // not laid out yet (hidden by display): try again on the next call
+    var F = ARG.W / w100 * 100, cap = ARG.cap * F, gap = ARG.gapOverCap * cap, H = 2 * cap + gap;
+    argSvg.setAttribute('viewBox', '0 0 ' + ARG.W + ' ' + H.toFixed(2));
+    argLetters.forEach(function (t) { t.remove(); }); argLetters = []; argClip.replaceChildren(); argClipRows = [];
+    ARG.rows.forEach(function (row, r) {
+      var y = r === 0 ? cap : H;
+      probe.textContent = row; probe.setAttribute('font-size', F.toFixed(3));
+      for (var i = 0; i < row.length; i++) {
+        if (row[i] === ' ') continue;
+        var x = probe.getStartPositionOfChar(i).x;
+        var t = mkText(row[i], x.toFixed(2), y.toFixed(2), F.toFixed(3), 'arg-t');
+        argSvg.appendChild(t); argLetters.push(t);
+      }
+      var c = mkText(row, 0, y.toFixed(2), F.toFixed(3)); argClip.appendChild(c); argClipRows.push(c);
+    });
+    probe.remove();
+    argLaid = true;
+    argScale();
+    track('argument_layout', { fontSize: Math.round(F), letters: argLetters.length });
+  }
+  // the clip copies the rows in the blur layer's own pixels: scaled by the box's width over the viewBox's
+  function argScale() {
+    if (!argLaid) return;
+    var k = argSvg.getBoundingClientRect().width / ARG.W;
+    if (!(k > 0)) return;
+    argClipRows.forEach(function (c) { c.setAttribute('transform', 'scale(' + k.toFixed(5) + ')'); });
+  }
+  function argument(on) {
+    if (on === argShown) return;
+    argShown = on;
+    if (on && !argLaid) layoutArg();
+    var still = reduced();
+    argAnims.forEach(function (a) { a.cancel(); }); argAnims = [];
+    argLetters.forEach(function (t, i) {
+      if (still || !t.animate) { t.style.opacity = on ? '1' : '0'; t.style.transform = on ? 'none' : 'scale(0.6)'; return; }
+      t.style.opacity = ''; t.style.transform = '';
+      argAnims.push(t.animate(on ? [{ opacity: 0, transform: 'scale(0.6)' }, { opacity: 1, transform: 'scale(1)' }] : [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(0.6)' }],
+        on ? { duration: 500, delay: 400 + 40 * i, easing: EASE_BACK, fill: 'both' } : { duration: 400, easing: 'cubic-bezier(0.333, 0, 0.667, 0)', fill: 'both' }));
+    });
+    var bl = $('arg-blur');
+    if (still || !bl.animate) bl.style.opacity = on ? '1' : '0';
+    else { bl.style.opacity = ''; argAnims.push(bl.animate([{ opacity: on ? 0 : 1 }, { opacity: on ? 1 : 0 }], on ? { duration: 400, delay: 1000, easing: 'cubic-bezier(0.333, 1, 0.667, 1)', fill: 'both' } : { duration: 400, easing: 'cubic-bezier(0.333, 0, 0.667, 0)', fill: 'both' })); }
+    smoke.run(on);
+    if (on) track('argument_shown', {});
+  }
+  if (document.fonts) document.fonts.ready.then(function () { if (argShown) { layoutArg(); argument(false); argument(true); } });
+  addEventListener('resize', argScale);
+
+  /* the smoke: our own looping procedural smoke in place of ciao's per-flavour video. Tileable value noise (three octaves,
+     the lattice two cells tall over the screen, period 40 s) sampled at a low resolution (about 6,000 pixels) and scaled up
+     by the canvas; per frame the lattice values at the current depth are precomputed per octave, so a pixel costs twelve
+     lookups. The field drifts up one period and sways on a circle through the depth over the loop, so the loop is seamless.
+     Colour: the shade's dark tint for the body of the smoke, its light tint for the brightest wisps, over the night.
+     Runs only while the argument screen shows, at 30 frames a second; reduced motion draws one still frame. */
+  var smoke = (function () {
+    var cv = $('smoke'), ctx = cv.getContext('2d', { alpha: false }), W = 0, H = 0, img = null, raf = 0, on = false, last = 0, c1 = [40, 40, 40], c2 = [120, 120, 120], cm = [68, 68, 68];
+    var T = 40, PY = 2, OCT = [1, 2, 4], AMPL = [0.5, 0.25, 0.125], grids = [], stats = { frames: 0, ms: 0 };
+    function h3(x, y, z) { var n = Math.imul(x, 73856093) ^ Math.imul(y, 19349663) ^ Math.imul(z, 83492791); n = Math.imul(n ^ (n >>> 13), 1274126177); n ^= n >>> 16; return (n >>> 0) / 4294967296; }
+    function size() {
+      var vw = innerWidth || 1, vh = innerHeight || 1, a = vw / vh, w = Math.max(24, Math.round(Math.sqrt(6000 * a))), h = Math.max(24, Math.round(w / a));
+      if (w === W && h === H) return;
+      W = w; H = h; cv.width = W; cv.height = H; img = ctx.createImageData(W, H);
+    }
+    function frame(t) {
+      var ph = (t / T) * 2 * Math.PI, sx = 0.7 * Math.cos(ph), sz = 0.7 * Math.sin(ph), sy = (t / T) * PY, CX = PY * W / H, CYc = PY;
+      var o, k, x, y, i, j;
+      for (o = 0; o < OCT.length; o++) {
+        var f = OCT[o], py = PY * f, zf = sz * f, zi = Math.floor(zf), fz = zf - zi; fz = fz * fz * (3 - 2 * fz);
+        var x0 = Math.floor(sx * f) - 1, x1 = Math.floor((CX + sx) * f) + 2, y0 = Math.floor(sy * f) - 1, y1 = Math.floor((CYc + sy) * f) + 2;
+        var nx = x1 - x0 + 1, ny = y1 - y0 + 1, g = grids[o];
+        if (!g || g.nx !== nx || g.ny !== ny) g = grids[o] = { nx: nx, ny: ny, v: new Float32Array(nx * ny) };
+        g.x0 = x0; g.y0 = y0; g.f = f;
+        for (j = 0; j < ny; j++) { var ym = (((y0 + j) % py) + py) % py; for (i = 0; i < nx; i++) { var xm = x0 + i; g.v[j * nx + i] = h3(xm, ym, zi) * (1 - fz) + h3(xm, ym, zi + 1) * fz; } }
+      }
+      var d = img.data, p = 0;
+      for (y = 0; y < H; y++) {
+        var vy = (y + 0.5) / H * CYc + sy;
+        for (x = 0; x < W; x++, p += 4) {
+          var vx = (x + 0.5) / W * CX + sx, n = 0;
+          for (o = 0; o < OCT.length; o++) {
+            g = grids[o]; var fx = vx * g.f, fy = vy * g.f, xi = Math.floor(fx), yi = Math.floor(fy), tx = fx - xi, ty = fy - yi;
+            tx = tx * tx * (3 - 2 * tx); ty = ty * ty * (3 - 2 * ty);
+            var b = (yi - g.y0) * g.nx + (xi - g.x0), v = g.v;
+            n += AMPL[o] * ((v[b] * (1 - tx) + v[b + 1] * tx) * (1 - ty) + (v[b + g.nx] * (1 - tx) + v[b + g.nx + 1] * tx) * ty);
+          }
+          n /= 0.875;
+          var lo = Math.min(1, Math.max(0, (n - 0.40) / 0.32)), hi = Math.min(1, Math.max(0, (n - 0.62) / 0.30));
+          lo = lo * lo * (3 - 2 * lo); hi = hi * hi * (3 - 2 * hi); hi *= 0.6;
+          d[p] = Math.min(255, cm[0] * lo + c2[0] * hi); d[p + 1] = Math.min(255, cm[1] * lo + c2[1] * hi); d[p + 2] = Math.min(255, cm[2] * lo + c2[2] * hi); d[p + 3] = 255;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+    }
+    function draw(now) {
+      raf = 0;
+      if (!on) return;
+      if (now - last >= 31) {
+        last = now; var t0 = performance.now(); size(); frame((now / 1000) % T);
+        stats.frames++; stats.ms += performance.now() - t0;
+      }
+      if (!reduced()) raf = requestAnimationFrame(draw);
+    }
+    var hex = function (h) { return [1, 3, 5].map(function (k) { return parseInt(h.slice(k, k + 2), 16); }); };
+    return {
+      // the body of the smoke sits between the pair (65 percent dark), the brightest wisps take the light tint
+      tint: function (dark, light) { c1 = hex(dark); c2 = hex(light); cm = [0, 1, 2].map(function (k) { return c1[k] * 0.65 + c2[k] * 0.35; }); if (on && reduced()) { size(); frame((performance.now() / 1000) % T); } },
+      run: function (v) { on = !!v; if (on) { if (!raf) raf = requestAnimationFrame(draw); } else { cancelAnimationFrame(raf); raf = 0; } },
+      stats: function () { return { w: W, h: H, frames: stats.frames, msPerFrame: stats.frames ? +(stats.ms / stats.frames).toFixed(2) : 0, on: on }; }
+    };
+  })();
+  window.__smoke = smoke;   // test hook
+
+  /* the scroll in screens: 0 to 1 the carousel, 1 to 2 the zoom, 2 to 6 the four case types, 6 to 7 ciao's argument screen.
      The stage lags it (10 per second); the DOM switches at the same points ciao's triggers fire */
   var beatEls = document.querySelectorAll('.beat'), navBtns = document.querySelectorAll('.beatnav button');
   function onScroll() {
     var sv = innerHeight > 0 ? scrollY / innerHeight : 0;
     if (scrollY > 0) root.setAttribute('data-scrolled', ''); else root.removeAttribute('data-scrolled');
-    root.classList.toggle('hud-off', sv > 0.5 && sv < 6.5);
-    root.classList.toggle('beats-on', sv > 1.6 && sv < 5.9);
-    root.classList.toggle('tint-on', sv > 1.1 && sv < 6.4);
-    var active = sv > 0.6 && sv < 1.9 ? 'z' : sv < 5.9 ? String(Math.max(1, Math.min(4, Math.floor(sv - 0.6)))) : 'none';
+    root.classList.toggle('hud-off', sv > 0.5);
+    root.classList.toggle('beats-on', sv > 1.6 && sv < 5.6);
+    root.classList.toggle('tint-on', sv > 1.1 && sv < 5.6);
+    var argOn = sv > 5.6 && root.dataset.route === 'family';
+    root.classList.toggle('arg-on', argOn);
+    argument(argOn);
+    // nothing but the HUD on the first screen (Sam, 2026-10-15); the zoom carries no text; the four case types from 1.6
+    var active = sv <= 0.6 ? 'none' : sv < 1.6 ? 'z' : sv < 5.6 ? String(Math.min(4, Math.floor(sv - 0.6))) : 'none';
     beatEls.forEach(function (b) { b.classList.toggle('on', b.dataset.beat === active); });
     navBtns.forEach(function (b) { b.setAttribute('aria-current', b.dataset.beat === active ? 'true' : 'false'); });
     S.sv = sv;
@@ -1055,11 +1292,11 @@ raf=requestAnimationFrame(tick);
      4 px ring) is moved clear of the sticky header and of the fixed bar on phones */
   document.addEventListener('focusin', function (e) {
     var t = e.target;
-    if (!t || !t.getBoundingClientRect || t.closest('#hdr, #sticky, [popover]')) return;
+    if (!t || !t.getBoundingClientRect || t.closest('#siteLogo, #families-btn, #sticky, [popover]')) return;
     requestAnimationFrame(function () {
       var kb = true; try { kb = t.matches(':focus-visible'); } catch (x) { /* no :focus-visible: treat as keyboard */ }
       if (document.activeElement !== t || !kb) return;
-      var r = t.getBoundingClientRect(), top = $('hdr').getBoundingClientRect().bottom + 4, bar = $('sticky'), bottom = innerHeight;
+      var r = t.getBoundingClientRect(), top = $('siteLogo').getBoundingClientRect().bottom + 4, bar = $('sticky'), bottom = innerHeight;
       if (getComputedStyle(bar).display !== 'none') bottom = bar.getBoundingClientRect().top - 4;
       if (r.top - 4 < top && scrollY > 0) scrollBy(0, r.top - 4 - top - 8);
       else if (r.bottom + 4 > bottom) scrollBy(0, r.bottom + 4 - bottom + 8);
@@ -1073,11 +1310,12 @@ raf=requestAnimationFrame(tick);
 
   var SK = window.SK = { D: D, FL: FL, CFG: CFG, P: P, FLAGS: FLAGS, derive: function (d) { derive(d); corners(); skelKey = ''; drawSkel(); }, solve: solve, poseOf: poseOf, xform: xform, camBasis: camBasis, project: project,
     layoutClass: layoutClass, reduced: reduced, mqFine: mqFine, mqCoarse: mqCoarse, follow: follow, settle: settle, select: select, setMode: setMode, stateLine: stateLine,
-    track: track, S: S, root: root, shadesOf: function (fi) { return FL[fi].list.map(function (s) { return s.hex; }); }, drawSkel: drawSkel };
+    track: track, S: S, root: root, shadesOf: function (fi) { return FL[fi].list.map(function (s) { return s.hex; }); }, drawSkel: drawSkel, argument: argument, layoutArg: layoutArg };
 
   buildStatic();
   setModeDom();
   route(true);
+  logoGlitch.arm();
   var gate = root.dataset.gate;
   if (gate === 'saveData' || gate === 'slow2g') stateLine(gate);
   track('stage_mode', { mode: root.dataset.mode, reason: gate || 'default' });
@@ -1502,32 +1740,44 @@ async function createStage(THREE, GLTFLoader, why) {
   /* ciao's keyframes after the carousel, in screens of scroll (keyframes-desk.json, scaled by 1.2 where they are in can
      heights): the zoom over 1 to 2 (camera z 29 to 12, y 0 to -2.4, pitched 10 degrees and rolled -10, the case down to
      -0.96 and scaled 1 / 1.2), the four beats at 2 to 6 (the case rising to -0.58, 0.02, 0.6; the roll alternating -10 and
-     +5 degrees), then back to the carousel over 6 to 7. Between beats the values ease with ciao's power1.inOut. The model
-     turns over to MagTough across 2.7 to 3 and back to Tough across 6 to 6.3. */
+     +5 degrees), then over 5 to 6 ciao's argument pose (its row 5000 to 6000: camera at z 8, level, FOV 45; the case at
+     the centre, z -0.5, tipped back 20 degrees and rolled -5, facing the camera; the two carousel spots back at 45 of 50),
+     held over 6 to 7 with the pointer's influence and a slow bob. Between beats the values ease with ciao's power1.inOut.
+     The turn (Sam, 2026-10-15, D3): over each feature transition (into Tough 1.7 to 2, then 2.7 to 3, 3.7 to 4 and 4.7
+     to 5) the case makes a half turn about its vertical axis; at the edge-on frame the model is re-posed a half turn
+     back, so the back that comes round is the next case's; the Desert model (the stand-in for MagTough, Snap and Armor)
+     takes over at the first hand-over's edge-on frame, 2.85, and the Tough model comes back there on the way up. One case
+     type per frame. */
   const sm = (t) => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
-  const RZ = [0, -0.1745, 0.0873, -0.1745, 0.0873, -0.1745, 0], CY = [0, -0.96, -0.58, 0.02, 0.6, 0.6, 0];
+  const RZ = [0, -0.1745, 0.0873, -0.1745, 0.0873, 0, 0], CY = [0, -0.96, -0.58, 0.02, 0.6, 0, 0];
+  const TURNS = [2, 3, 4, 5], TURN_LEN = 0.3, SWAP = 2.85;
   const beatPose = (sv) => {
-    const k = sm(sv - 1) * (1 - sm(sv - 6));
+    const k = sm(sv - 1);
     const j = Math.max(1, Math.min(6, Math.floor(sv))), t = sm(sv - j);
     const rz = RZ[j - 1] + (RZ[j] - RZ[j - 1]) * t, cy = CY[j - 1] + (CY[j] - CY[j - 1]) * t;
-    const mt = sv < 6 ? sm((sv - 2.7) / 0.3) : 1 - sm((sv - 6) / 0.3);
-    return { k, rz, cy, mt };
+    const A = sm(sv - 5);
+    let yaw = 0;
+    for (const n of TURNS) { const u = sm((sv - (n - TURN_LEN)) / TURN_LEN); if (u > 0 && u < 1) yaw = (u <= 0.5 ? u : u - 1) * Math.PI; }
+    return { k, rz, cy, A, yaw, desert: sv >= SWAP };
   };
-  // the selected case's matrix in the zoom: its carousel pose blended to ciao's profile pose by B.k, plus a turn (the hand-over)
-  const zoomMatrix = (i, s, B, turn, out) => {
-    const o = SK.poseOf(i, s, null), k = B.k;
-    const X = o.X * (1 - k), Y = o.Y * (1 - k) + B.cy * k, Z = o.Z * (1 - k), sc = o.sc * (1 - k / 6);
-    eu.set(o.rx * (1 - k), o.ry * (1 - k) + (-0.2618) * k + turn, o.rz * (1 - k), 'XYZ');
+  // the selected case's matrix in the zoom: its carousel pose blended to ciao's profile pose by B.k, the turn, then the
+  // argument pose by B.A; f carries the float (the pointer's yaw and tilt in degrees, the bob in units)
+  const zoomMatrix = (i, s, B, f, out) => {
+    const o = SK.poseOf(i, s, null), k = B.k, A = B.A;
+    const X = o.X * (1 - k), Y = o.Y * (1 - k) + B.cy * k + f.y, Z = o.Z * (1 - k) - 0.5 * A, sc = o.sc * (1 - k / 6);
+    eu.set(o.rx * (1 - k) + (-0.3491 + f.tilt * DEG) * A, o.ry * (1 - k) + (-0.2618) * k * (1 - A) + f.yaw * DEG + B.yaw, o.rz * (1 - k) + (-0.0873) * A, 'XYZ');
     qv.setFromEuler(eu).multiply(qs.setFromAxisAngle(YAX, o.spin * (1 - k)));
     return out.compose(vp.set(X, Y, Z), qv, vs.set(sc, sc, sc));
   };
+  const NOFLOAT = { yaw: 0, tilt: 0, y: 0 };
+  let last = { A: 0, yaw: 0, desert: false, k: 0, frontOn: 1, mtOn: 0 };
   const poseMatrix = (i, s, fx, out) => {
     const o = SK.poseOf(i, s, fx);
     eu.set(o.rx, o.ry, o.rz, 'XYZ');
     qv.setFromEuler(eu).multiply(qs.setFromAxisAngle(YAX, o.spin));
     return out.compose(vp.set(o.X, o.Y, o.Z), qv, vs.set(o.sc, o.sc, o.sc));
   };
-  const update = (s, G, fx) => {
+  const update = (s, G, fx, now) => {
     const a = Math.max(0, Math.min(23, Math.round(s))), nf = [a];
     if (Math.abs(s - a) > 1e-4) { const b = s > a ? a + 1 : a - 1; if (b >= 0 && b < 24) nf.push(b); }
     if (nf.join() !== front.join()) {
@@ -1539,27 +1789,38 @@ async function createStage(THREE, GLTFLoader, why) {
       colourRow(); colourFront();
     }
     for (let i = 0; i < 24; i++) poseMatrix(i, s, fx, poseM[i]);
-    const B = beatPose(st.sv);
+    const B = beatPose(st.sv), fs = Math.round(s);
+    const desert = !!mtShell && B.k > 0 && B.desert;   // the Desert model at the selected slot from the first hand-over's edge-on frame
     if (B.k > 0) {
       // the neighbours slide out as ciao's do (its data.spacing 1 to 3.5); the selected case takes ciao's profile pose
-      const fs = Math.round(s), sp = 1 + 2.5 * B.k;
+      const sp = 1 + 2.5 * B.k;
       for (let i = 0; i < 24; i++) if (i !== fs) { poseM[i].elements[12] *= sp; }
-      zoomMatrix(fs, s, B, 0, poseM[fs]);
+      // the float in the argument screen: the pointer's influence (ciao's pointerInfluence 0.2 there; our tilt of 5 and 3
+      // degrees at the screen's edge) and a slow bob (ours; ciao's can only answers the pointer)
+      let f = NOFLOAT;
+      if (B.A > 0) {
+        f = { yaw: fx ? fx.yaw * B.A : 0, tilt: fx ? fx.tilt * B.A : 0, y: 0 };
+        if (now != null && SK.CFG.bob && !instant()) { f.y = 0.05 * SK.CFG.bob * Math.sin(now / 5600 * 2 * Math.PI) * B.A; f.yaw += 1.5 * SK.CFG.bob * Math.sin(now / 8300 * 2 * Math.PI + 1) * B.A; }
+      }
+      zoomMatrix(fs, s, B, f, poseM[fs]);
     }
-    for (const l of spots) l.intensity = SK.CFG.spot * G * (1 - B.k);   // ciao's entrance: the light comes up; the zoom hands over to the one spot
-    gobo.intensity = 35 * B.k * G;
-    scene.environmentIntensity = CAL.environmentIntensity * (1 - 0.8 * B.k);
+    last = { A: B.A, yaw: B.yaw, desert, k: B.k, frontOn: desert ? 0 : 1, mtOn: desert ? 1 : 0 };
+    // ciao's entrance: the light comes up; the zoom hands over to the one spot; the argument brings the two spots back (45 of 50)
+    for (const l of spots) l.intensity = SK.CFG.spot * G * (1 - B.k + 0.9 * B.k * B.A);
+    gobo.intensity = 35 * B.k * (1 - B.A) * G;
+    scene.environmentIntensity = CAL.environmentIntensity * (1 - 0.8 * B.k * (1 - B.A));
     if (M.gloss) M.gloss.envMapIntensity = M.logoGloss.envMapIntensity = scene.environmentIntensity;
-    cam.position.set(0, -2.4 * B.k, 29 - 17 * B.k); cam.rotation.set(0.1745 * B.k, 0, B.rz * B.k); cam.updateMatrixWorld();
+    // the argument camera: ciao's z 8 (the can 0.58 of the height); on phones z 10, where the wide case leaves the letters
+    // showing either side the way ciao's slender can does (its phone frame: the can 0.47 of the height)
+    const zArg = SK.layoutClass() === 'phone' ? SK.CFG.argZPhone : SK.CFG.argZ;
+    cam.position.set(0, -2.4 * B.k * (1 - B.A), 29 - 17 * B.k - (12 - zArg) * B.k * B.A); cam.rotation.set(0.1745 * B.k * (1 - B.A), 0, B.rz * B.k); cam.updateMatrixWorld();
+    const fov = SK.CFG.fov + 25 * B.k * B.A;
+    if (Math.abs(fov - cam.fov) > 1e-6) { cam.fov = fov; cam.updateProjectionMatrix(); }
     if (mtShell) {
-      // the MagTough case in beats 2 to 4: a turn hands over from the Tough case (edge on at the midpoint, so no frame shows two)
-      const on = B.mt > 0;
-      mtShell.count = on ? 1 : 0; mtTrim.count = on ? 1 : 0; if (mtRing) mtRing.count = on ? 1 : 0;
-      if (on) {
-        const fs2 = Math.round(s);
-        zoomMatrix(fs2, s, B, (1 - B.mt) * -Math.PI / 2, mTmp);
-        mtShell.setMatrixAt(0, mTmp2.multiplyMatrices(mTmp, mtBase.shell)); mtTrim.setMatrixAt(0, mTmp2.multiplyMatrices(mTmp, mtBase.trim));
-        if (mtRing) mtRing.setMatrixAt(0, mTmp2.multiplyMatrices(mTmp, mtBase.ring));
+      mtShell.count = mtTrim.count = desert ? 1 : 0; if (mtRing) mtRing.count = desert ? 1 : 0;
+      if (desert) {
+        mtShell.setMatrixAt(0, mTmp2.multiplyMatrices(poseM[fs], mtBase.shell)); mtTrim.setMatrixAt(0, mTmp2.multiplyMatrices(poseM[fs], mtBase.trim));
+        if (mtRing) mtRing.setMatrixAt(0, mTmp2.multiplyMatrices(poseM[fs], mtBase.ring));
       }
     }
     for (let k = 0; k < rowShell.count; k++) {
@@ -1567,14 +1828,14 @@ async function createStage(THREE, GLTFLoader, why) {
       rowShell.setMatrixAt(k, mTmp.multiplyMatrices(pm, base1.shell));
       rowTrim.setMatrixAt(k, mTmp.multiplyMatrices(pm, base1.trim));
     }
-    if (logo) for (let i = 0; i < 24; i++) logo.setMatrixAt(i, mTmp.multiplyMatrices(poseM[i], base1.logo));
+    // the Tough case's parts at the selected slot (its shell, liner and logo) are away while the Desert shows
+    if (logo) for (let i = 0; i < 24; i++) { if (desert && i === fs) logo.setMatrixAt(i, mTmp.makeScale(0, 0, 0)); else logo.setMatrixAt(i, mTmp.multiplyMatrices(poseM[i], base1.logo)); }
     front.forEach((slot, j) => {
-      if (B.mt > 0 && slot === Math.round(s)) { zoomMatrix(slot, s, B, B.mt * Math.PI / 2, mTmp2); mTmp2.multiply(base0.shell); frontShell.setMatrixAt(j, mTmp2); zoomMatrix(slot, s, B, B.mt * Math.PI / 2, mTmp2); frontTrim.setMatrixAt(j, mTmp2.multiply(base0.trim)); return; }
+      if (desert && slot === fs) { frontShell.setMatrixAt(j, mTmp.makeScale(0, 0, 0)); frontTrim.setMatrixAt(j, mTmp); return; }
       frontShell.setMatrixAt(j, mTmp.multiplyMatrices(poseM[slot], base0.shell));
       frontTrim.setMatrixAt(j, mTmp.multiplyMatrices(poseM[slot], base0.trim));
     });
-    frontShell.count = frontTrim.count = front.length;
-    if (B.mt >= 1) frontShell.count = frontTrim.count = Math.max(0, front.length - 1);   // the Tough case is away while MagTough shows
+    frontShell.count = frontTrim.count = desert && front.length === 1 ? 0 : front.length;
     for (const m of all) { m.instanceMatrix.needsUpdate = true; m.boundingSphere = null; }
   };
 
@@ -1631,10 +1892,11 @@ async function createStage(THREE, GLTFLoader, why) {
     if (Math.abs(st.Gt - st.G) < 0.0005) st.G = st.Gt;
     let turnYaw = 0;
     if (st.turn) { const t = (now - st.turn.t0) / 600; if (t >= 1) st.turn = null; else turnYaw = st.turn.side * SK.CFG.turn * bump(Math.max(0, t)); }
-    const sig = [st.s, st.G, st.tilt.yaw + turnYaw, st.tilt.pitch, st.sv].join();
+    const floating = st.sv > 5.2 && SK.CFG.bob && !instant() && visible;   // the argument screen's bob keeps the loop alive
+    const sig = [st.s, st.G, st.tilt.yaw + turnYaw, st.tilt.pitch, st.sv, floating ? now : 0].join();
     if (sig !== lastSig || dirty) {
       lastSig = sig; dirty = 0;
-      update(st.s, st.G, { yaw: st.tilt.yaw + turnYaw, tilt: st.tilt.pitch });
+      update(st.s, st.G, { yaw: st.tilt.yaw + turnYaw, tilt: st.tilt.pitch }, now);
       frameMs.push(renderNow()); if (frameMs.length > 120) frameMs.shift();
       renders++;
     }
@@ -1648,7 +1910,7 @@ async function createStage(THREE, GLTFLoader, why) {
         st.lastFollow = performance.now(); SK.follow(Math.max(0, Math.min(23, Math.round(st.target))), 'drag');
       }, Math.max(0, 150 - (now - st.lastFollow)));
     }
-    if (animating()) { tail = 2; kick(true); }
+    if (animating() || floating) { tail = 2; kick(true); }
     else {
       if (!st.drag && st.reported !== st.target && Number.isInteger(st.target)) { st.reported = st.target; SK.settle(st.target, st.input); }
       if (tail-- > 0) kick(true);
@@ -1933,7 +2195,8 @@ async function createStage(THREE, GLTFLoader, why) {
       const fm = [...frameMs].sort((a, b) => a - b);
       return { calls: i.render.calls, triangles: i.render.triangles, programs: i.programs.length, geometries: i.memory.geometries, textures: i.memory.textures,
         tier, probes, dpr: renderer.getPixelRatio(), canvas: [canvas.width, canvas.height], size: [W, H], fit, near: cam.near, far: cam.far, dims: { w: SK.P.w, d: SK.P.d, pitch: SK.P.pitch, gap: SK.P.gap }, renderMs: +ms.toFixed(2),
-        frameMsMedian: fm.length ? +fm[Math.floor(fm.length / 2)].toFixed(2) : null, frames: fm.length, s: st.s, target: st.target, G: st.G, front, rowCount: rowShell.count };
+        frameMsMedian: fm.length ? +fm[Math.floor(fm.length / 2)].toFixed(2) : null, frames: fm.length, s: st.s, target: st.target, G: st.G, front, rowCount: rowShell.count,
+        sv: st.sv, arg: last, counts: { front: frontShell.count, mt: mtShell ? mtShell.count : -1 }, fov: cam.fov };
     },
     state: () => ({ s: st.s, target: st.target, G: st.G, drag: !!st.drag, turn: !!st.turn, raf: !!raf, running, busy: !!busy(), renders }),
     // read a case's back plate (3 x 3 px at (0, -0.25) on the outer back, or any local point), right after a render

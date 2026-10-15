@@ -89,10 +89,13 @@ assert '@LOD' not in src and '@MT' not in src and '/*@' not in src
 # copy guards (CLAUDE.md): no em dash, no emoji-range characters, no box-shadow, no gradient, no backdrop-filter, no italic
 code = re.sub(r'<script type="application/octet-stream"[^>]*>[^<]*</script>', '', src)
 # the one approved exception (E-F1, Sam 2026-10-11): ciao's studio backdrop and fade, each line marked /*E-F1*/
-code = '\n'.join(l for l in code.split('\n') if '/*E-F1*/' not in l and '/*E-H1*/' not in l and '/*E-F2*/' not in l)
+# E-F3 (Sam 2026-10-15, round 3): the argument screen's letters, two lines: the drop shadows and the backdrop blur clipped to them
+code = '\n'.join(l for l in code.split('\n') if '/*E-F1*/' not in l and '/*E-H1*/' not in l and '/*E-F2*/' not in l and '/*E-F3*/' not in l)
 assert src.count('/*E-F1*/') == 2, 'E-F1 lines'
 assert src.count('/*E-H1*/') == 2, 'E-H1 lines (the loader)'
 assert src.count('/*E-F2*/') == 1, 'E-F2 line (the per-shade background)'
+assert src.count('/*E-F3*/') == 2, 'E-F3 lines (the argument letters)'
+assert 'drop-shadow' not in code and 'mix-blend' not in code.replace('mix-blend-mode: screen', ''), 'E-F3 effects outside the argument screen'
 for bad in ['—', 'box-shadow', 'gradient', 'backdrop-filter', 'italic', 'Inter,', 'blur(']:
     assert bad not in code, 'guard: ' + repr(bad)
 assert not re.search('[\U0001F300-\U0001FAFF☀-➿]', code), 'emoji'
