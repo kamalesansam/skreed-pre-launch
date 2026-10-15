@@ -1,5 +1,5 @@
 // The loader (hero-architecture.md 4.3): src/inline/loader.inline.js is the prototype's loader (template.html lines 89 to
-// 163) with exactly the seven listed deviations. Undoing them must give the prototype's text byte for byte.
+// 163) with exactly the seven listed deviations plus v10's two (the intro's classes, the gap clock). Undoing them must give the prototype's text byte for byte.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -17,7 +17,8 @@ const UNDO: [string, string][] = [
   ["var swA=null;\n/* behind the loader nothing is reachable (D16): every body child except the loader, the sprite, the poster, the canvas and scripts */\nfunction inertAll(on){for(var e=D.body.firstElementChild;e;e=e.nextElementSibling){if(e===intro||e.tagName==='SCRIPT'||e.matches('svg.sprite,picture.hero-poster,canvas#stage'))continue;if(on)e.setAttribute('inert','');else e.removeAttribute('inert')}}", 'var swA=null;'],
   ["HT.classList.remove('loading');inertAll(false);if(window.__introDone)", "HT.classList.remove('loading');if(window.__introDone)"],
   ['function poster(msg,kind){', 'function poster(msg){'],
-  ["intro.removeAttribute('role');HT.classList.remove('loading');\n  inertAll(false);HT.classList.replace('hero3d','poster');if(window.__skreedOnPoster)window.__skreedOnPoster(kind,msg)}", "intro.removeAttribute('role');HT.classList.remove('loading')}"],
+  ["intro.removeAttribute('role');HT.classList.remove('loading','intro','uh1','uh2','uh3','uh4');\n  inertAll(false);HT.classList.replace('hero3d','poster');if(window.__skreedOnPoster)window.__skreedOnPoster(kind,msg)}", "intro.removeAttribute('role');HT.classList.remove('loading')}"],
+  ["  var g=now-last,dt=Math.max(0,Math.min(.25,g/1e3));if(g>500)lastP=Math.min(now,lastP+g);last=now;   /* a hidden tab's gap never counts as a stall */", "  var dt=Math.max(0,Math.min(.25,(now-last)/1e3));last=now;"],
   ["poster('','stall');return}", "var fb=$('fallback');poster(got.scene?fb&&fb.textContent:'');return}"],
   ["if(ready){ph='enter';HT.classList.replace('poster','hero3d');lift()}", "if(ready){ph='enter';lift()}"],
   ["fail:function(m){poster(m,'fail')},\n  inert:inertAll,\n  abort:abort,", 'fail:function(m){poster(m)},'],
@@ -25,7 +26,7 @@ const UNDO: [string, string][] = [
   ["intro.remove()}\nfunction abort(){ph='done';cancelAnimationFrame(raf);if(swA)swA.cancel();fA.cancel();XA.forEach(function(a){a.cancel()});inertAll(false);HT.classList.remove('loading');intro.remove()}", 'intro.remove()}'],
 ];
 
-test('the loader is the prototype loader plus the seven deviations, nothing else', () => {
+test('the loader is the prototype loader plus the nine deviations, nothing else', () => {
   let port = read('src/inline/loader.inline.js');
   port = port.slice(port.indexOf('(function(){'));
   for (const [now, was] of UNDO) {

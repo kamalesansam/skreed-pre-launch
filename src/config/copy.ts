@@ -23,6 +23,8 @@ export const COPY = {
     noscriptDatetime: '2026-11-01T00:00+05:30',
   },
   cue: { label: 'Scroll' },
+  /** section 2's labels (section-2.md 3): igloo's three slots, carrying our facts, uppercase (E-S2-font) */
+  s2: { count: '24 SHADES', click: 'CLICK TO EXPLORE', tap: 'TAP TO EXPLORE', aria: 'Colour families' },
   logo: { aria: 'Skreed, home' },
   page: {
     h1: 'Skreed. Tech essentials that go beyond basic.',

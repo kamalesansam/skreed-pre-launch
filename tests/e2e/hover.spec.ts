@@ -6,6 +6,7 @@ import { test, expect, type Browser, type BrowserContextOptions, type Page } fro
 import { launch } from '../harness/browser.ts';
 import { servePrototype, PROTO_URL } from '../harness/prototype.ts';
 import { BLOCK_SHADES } from '../../src/config/shades.gen.ts';
+import { PULL } from '../../src/scripts/hero/scroll/scrollMap.ts';
 
 let gl: Browser;
 test.beforeAll(async () => { gl = await launch(); });
@@ -19,7 +20,8 @@ async function open(url: string, proto: boolean, opts: BrowserContextOptions): P
   await page.waitForFunction(() => !document.getElementById('intro') && typeof window.__skreedState === 'function', null, { timeout: 900_000, polling: 500 });
   return page;
 }
-const port = (base: string, q = 'hero3d') => new URL(`/?tier=${q}`, base).href;
+// round 3: the port skips the intro here (?intro=0), as the v9.10 prototype has none; the intro has its own checks (island.spec.ts)
+const port = (base: string, q = 'hero3d') => new URL(`/?tier=${q}&intro=0`, base).href;
 const DESK: BrowserContextOptions = { viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 };
 const PHONE: BrowserContextOptions = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true };
 
@@ -59,8 +61,10 @@ test('AC6.1 and AC6.2 push, floor clearance and labels on both pages (desktop mo
     await page.evaluate(() => document.dispatchEvent(new PointerEvent('pointerleave')));
     await page.waitForFunction(() => document.querySelectorAll('#labels .lab').length === 0, null, { timeout: 120_000, polling: 250 });
     // tp above 0: the labels layer hides
-    await page.evaluate(() => scrollTo(0, innerHeight * 1.75));
-    await page.waitForFunction(() => window.__skreedState!().sb > 1.51, null, { timeout: 600_000, polling: 300 });
+    // (the v9.10 prototype's pull-back ends at 1.5 screens; the port's v11.2 map at PULL, 5 screens)
+    const pull = i ? PULL : 1.5;
+    await page.evaluate((x) => scrollTo(0, innerHeight * (x + 0.25)), pull);
+    await page.waitForFunction((x) => window.__skreedState!().sb > x + 0.01, pull, { timeout: 600_000, polling: 300 });
     await page.waitForFunction(() => document.getElementById('labels')!.style.visibility === 'hidden', null, { timeout: 120_000 });
     console.log(`[AC6.1 ${who}] pushed ${d.filter((x) => x > 0.1).length}, max penetration ${Math.max(...fc.map((x) => x.penetration))}, labels max ${maxLabels}, readouts ${[...readouts].join(' ')}`);
   }

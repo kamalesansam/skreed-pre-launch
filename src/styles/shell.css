@@ -4,7 +4,12 @@
 html,body{background:var(--night)}
 body{color:var(--pearl-whisper);font-family:var(--font-ui);margin:0;font-synthesis:none}
 #stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:pan-y}
-.track{position:relative;height:460svh;pointer-events:none}
+.track{position:relative;height:1820svh;pointer-events:none}   /* TRACK_SVH (config/hero.ts): the v11 scroll map, Sam 2026-10-11 */
+/* section 2 (docs/specs/section-2.md): igloo's labels in IBM Plex Mono Medium, uppercase (exception E-S2-font, hero.md 10) */
+#s2labels{position:fixed;inset:0;pointer-events:none;z-index:3;visibility:hidden}#s2labels svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.s2lab{position:absolute;left:0;top:0;font:500 13px/1.08 "IBM Plex Mono",ui-monospace,monospace;color:var(--pearl-whisper);white-space:pre;letter-spacing:0;text-transform:none;font-synthesis:none;will-change:transform}.s2lab.r{text-align:right}
+@media (max-aspect-ratio:9/10){.s2lab{font-size:12px}}
+#stage.over-gem{cursor:pointer}
 .copy{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:flex-end;gap:var(--s2);padding:0 calc(var(--inset) + env(safe-area-inset-right,0px)) calc(var(--inset) + env(safe-area-inset-bottom,0px)) calc(var(--inset) + env(safe-area-inset-left,0px));pointer-events:none;will-change:transform,clip-path}   /* side safe areas added for landscape phones (web interface guidelines); 0 elsewhere */
 /* hero: plain and simple, a countdown to launch. Open Sans with tabular figures for every live numeral (type system), never Poppins. */
 .copy .eyebrow{font-family:var(--font-ui);font-size:.875rem;font-weight:600;color:var(--pearl-whisper);margin:0;max-width:30ch}   /* Pearl Whisper at 600: the small text sits on pale snow and must hold AA */
@@ -16,17 +21,18 @@ body{color:var(--pearl-whisper);font-family:var(--font-ui);margin:0;font-synthes
 .count:not([data-ready]) .n{visibility:hidden}   /* no false value before the first tick */
 @media (prefers-reduced-motion:reduce){.count .sec{display:none}}   /* a digit changing every second is motion too */
 @media (max-width:1100px){.copy{padding-bottom:calc(var(--inset) + 84px + env(safe-area-inset-bottom,0px))}}   /* below 1100 px the cue would share the countdown's row, so the countdown lifts by the cue's height */
-/* scroll cue, bottom centre: a small ball drops onto a short line, squashes on landing and stretches as it springs back up
-   (squash and stretch, with gravity easing down and a soft easing up); the line dips a hair under it. Not an arrow.
-   It bounces three times and rests on its line (2.44 cycles end on a landing; WCAG 2.2.2, D20). */
-.cue{position:fixed;left:50%;bottom:calc(var(--inset) + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:64px;z-index:2;display:flex;flex-direction:column;align-items:center;gap:var(--s1);font-family:var(--font-ui);font-size:.75rem;font-weight:600;color:var(--pearl-whisper);pointer-events:none;transition:opacity .4s cubic-bezier(.2,0,0,1)}
-.cue.is-off{opacity:0;visibility:hidden;transition:opacity .4s cubic-bezier(.2,0,0,1),visibility 0s .4s}   /* visibility also stops the ball's animation while hidden */
-.cue .lbl{margin-bottom:22px;letter-spacing:0}
-.cue .ball{display:block;width:9px;height:9px;border-radius:var(--radius-round);background:var(--pearl-whisper);transform-origin:50% 100%;animation:cueBall 1.5s 2.44}
-.cue .base{display:block;width:26px;height:1px;margin-top:calc(-1 * var(--s1));background:var(--pearl-whisper);opacity:.6;animation:cueBase 1.5s 2.44}   /* the line sits right under the ball's resting spot */
-@keyframes cueBall{0%{transform:translateY(-22px) scale(.94,1.06);animation-timing-function:cubic-bezier(.55,0,1,.6)}44%{transform:translateY(0) scale(1.38,.62);animation-timing-function:cubic-bezier(.2,.6,.4,1)}52%{transform:translateY(-5px) scale(.9,1.14);animation-timing-function:cubic-bezier(0,.3,.5,1)}100%{transform:translateY(-22px) scale(.94,1.06)}}
-@keyframes cueBase{0%,40%,56%,100%{transform:scaleX(1) translateY(0)}46%{transform:scaleX(1.12) translateY(1px)}}
-@media (prefers-reduced-motion:reduce){.cue .ball,.cue .base{animation:none}.cue .ball{transform:none}}
+/* the side scroll cue, after ciao's (measured, docs/specs/hero.md 14): three chevrons of five dots drawn top down, held, wiped top down, 2.5 s a cycle;
+   17.5 x 73 px, 4 percent plus 3.5 px from each edge, 172.75 px up; hidden while the loader and the intro run and once the pull-back starts. Pearl Whisper, not white (rule 23). */
+.scrollcue{position:fixed;z-index:2;bottom:calc(172.75px + env(safe-area-inset-bottom,0px));width:17.5px;color:var(--pearl-whisper);pointer-events:none;transition:opacity .5s cubic-bezier(.333,0,.667,1),visibility 0s .5s}
+.scrollcue.is-left{left:calc(4% + 3.5px + env(safe-area-inset-left,0px));transform:translateX(-50%)}.scrollcue.is-right{right:calc(4% + 3.5px + env(safe-area-inset-right,0px));transform:translateX(50%)}
+.scrollcue svg{display:block;width:100%;height:auto}
+.scrollcue.is-off,html.loading .scrollcue,html.uh3 .scrollcue{opacity:0;visibility:hidden}
+.intro.po~.scrollcue{opacity:1!important;visibility:visible!important}
+.chev{transform-box:fill-box;transform-origin:50% 50%;opacity:0;animation-duration:2.5s;animation-timing-function:linear;animation-iteration-count:infinite;animation-fill-mode:both}   /* longhands: the build's minifier folds a nameless shorthand to none */.chev-top{animation-name:cue-top}.chev-mid{animation-name:cue-mid}.chev-bottom{animation-name:cue-bottom}
+@keyframes cue-top{0%{opacity:0;transform:translateY(100px) scale(0);animation-timing-function:cubic-bezier(.333,1,.667,1)}24%{opacity:1;transform:none;animation-timing-function:linear}52%{opacity:1;transform:none;animation-timing-function:cubic-bezier(.333,0,.667,0)}68%{opacity:0;transform:none;animation-timing-function:linear}100%{opacity:0;transform:none}}
+@keyframes cue-mid{0%{opacity:0;transform:scale(0);animation-timing-function:linear}8%{opacity:0;transform:scale(0);animation-timing-function:cubic-bezier(.333,1,.667,1)}32%{opacity:1;transform:none;animation-timing-function:linear}62%{opacity:1;transform:none;animation-timing-function:cubic-bezier(.333,0,.667,0)}78%{opacity:0;transform:none;animation-timing-function:linear}100%{opacity:0;transform:none}}
+@keyframes cue-bottom{0%{opacity:0;transform:translateY(-100px) scale(0);animation-timing-function:linear}16%{opacity:0;transform:translateY(-100px) scale(0);animation-timing-function:cubic-bezier(.333,1,.667,1)}40%{opacity:1;transform:none;animation-timing-function:linear}72%{opacity:1;transform:none;animation-timing-function:cubic-bezier(.333,0,.667,0)}88%{opacity:0;transform:none;animation-timing-function:linear}100%{opacity:0;transform:none}}
+@media (prefers-reduced-motion:reduce){.chev{animation:none;opacity:1;transform:none}}
 .labels{position:fixed;inset:0;pointer-events:none;z-index:1}
 .lab{position:absolute;left:0;top:0;font-family:var(--font-ui);font-weight:600;font-size:12px;line-height:1;letter-spacing:.04em;font-variant-numeric:tabular-nums;color:var(--pearl-whisper);will-change:transform,opacity;display:flex;align-items:center;gap:6px}
 .lab i{display:block;width:3px;height:3px;background:var(--pearl-whisper)}
@@ -40,7 +46,13 @@ body{color:var(--pearl-whisper);font-family:var(--font-ui);margin:0;font-synthes
 :focus-visible{outline:2px solid var(--ember-luxe);outline-offset:2px}
 /*LOADER-CSS*/
 html.loading,html.loading body{overflow:hidden}
-html.loading .cue{opacity:0}
+/* the intro (docs/specs/hero-intro/spec.md): the page is locked and the UI hidden while the shot runs; the loader's poster() and the
+   no-module path drop the classes, so the poster never locks the page or hides the UI */
+html.intro,html.intro body{overflow:hidden;overscroll-behavior:none}
+html.uh1 .site-logo{visibility:hidden}
+html.uh1 .site-logo,html.uh2 #heroCopy .eyebrow,html.uh2 #count{opacity:0}
+.intro.po~.site-logo,.intro.po~#heroCopy .eyebrow,.intro.po~#heroCopy #count{opacity:1!important}
+.gl{display:inline-block;white-space:pre;text-align:left}
 .intro{position:fixed;inset:0;z-index:6;background:var(--night);display:grid;place-items:center;contain:strict}
 .intro.po{z-index:0}
 .ld-w{position:relative;width:min(47.6vh,72vw,600px);width:min(47.6svh,72vw,600px);aspect-ratio:1209.46/292.9}
@@ -57,6 +69,7 @@ html.loading .cue{opacity:0}
 #ldPct{font-size:.875rem;font-weight:400;line-height:1;letter-spacing:1.1em;margin-right:-1.1em;font-variant-numeric:tabular-nums}
 #ldSt{font-size:.75rem;line-height:1.4;color:var(--pearl-whisper);max-width:calc(100vw - 32px)}
 #ldSt:empty{display:none}
+.po .ld-p{bottom:auto;top:calc(50% + 12svh)}
 /*LOADER-CSS-END*/
 
 /* the wordmark sprite: defined once, drawn by <use> (a class, not a style attribute, for the CSP) */
@@ -75,11 +88,8 @@ html.hero3d:not(.loading) .hero-poster{visibility:hidden}   /* hidden from the l
 html.poster .intro.po{background:transparent;pointer-events:none}
 html.poster .intro.po .ld-w{display:none}
 
-/* the cue's three bounces start when it becomes visible, and again each time it returns */
-html.loading .cue .ball,html.loading .cue .base,.cue.is-off .ball,.cue.is-off .base{animation:none}
-
 /* no JavaScript: one line instead of empty numeral boxes; no cue */
-html:not(.js) #cdEyebrow,html:not(.js) #count,html:not(.js) .cue{display:none}
+html:not(.js) #cdEyebrow,html:not(.js) #count,html:not(.js) .scrollcue{display:none}
 
 /* the skreed.com link at zero (D12) */
 .copy .eyebrow a{pointer-events:auto;color:inherit;text-decoration:underline;position:relative}

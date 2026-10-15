@@ -19,6 +19,10 @@ export interface BusMap {
   'fam:live': Record<string, never>;
   /** island to page: LOD0 (the close-up detail) did not load; the front case stays at LOD1 */
   'fam:detail': { ok: boolean };
+  /** page to island: the scroll in screens (section 20: the stage lags it at 10 per second) */
+  'fam:scroll': { sv: number };
+  /** island to page: the front case was tapped and turns (the 10 degree turn, section 2.5) */
+  'fam:turn': { side: 1 | -1 };
 }
 export function emit<K extends keyof BusMap>(type: K, detail: BusMap[K]): void {
   document.dispatchEvent(new CustomEvent(type, { detail }));

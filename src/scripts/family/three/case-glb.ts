@@ -8,26 +8,32 @@ import { MeshoptDecoder } from './vendor/meshopt-decoder-reference.js';
 import { findParts, normalising, withBase, type CaseAsset, type CasePart, type PartMap, type RawPart } from './case-asset.ts';
 import { ModelError, fetchModel } from './model-fetch.ts';
 
-export interface CaseManifest {
-  source: 'supplier' | 'standin';
+/** One model's entry: the Cobalt (the manifest's root, the Tough case) or the second model under "magtough" (round 3). */
+export interface ModelEntry {
   lod0: string; lod1: string;
   sha256: { lod0: string; lod1: string };
-  orient: [number, number, number, number];
+  orient?: [number, number, number, number];
   sizeMm: [number, number, number];
-  parts: { body: PartMapEntry; accent?: PartMapEntry; logo?: PartMapEntry };
+  parts: { body: PartMapEntry; accent?: PartMapEntry; logo?: PartMapEntry; ring?: PartMapEntry };
   triangles: { lod0: number; lod1: number };
   bytes: { lod0: number; lod1: number };
 }
+export interface CaseManifest extends ModelEntry {
+  source: 'supplier' | 'standin';
+  orient: [number, number, number, number];
+  magtough?: ModelEntry & { standsInFor: string[] };
+}
 interface PartMapEntry { node: string; material: string; followsShade: boolean; tint?: number }
 
-const partMap = (m: CaseManifest): PartMap => ({
+const partMap = (m: ModelEntry): PartMap => ({
   body: m.parts.body,
   ...(m.parts.accent ? { accent: m.parts.accent } : {}),
   ...(m.parts.logo ? { logo: m.parts.logo } : {}),
+  ...(m.parts.ring ? { ring: m.parts.ring } : {}),
 });
 
 /** Parses one LOD into raw parts. The loaded scene is never added anywhere; its materials are disposed. */
-async function parseLod(buf: ArrayBuffer, m: CaseManifest): Promise<RawPart[]> {
+async function parseLod(buf: ArrayBuffer, m: ModelEntry): Promise<RawPart[]> {
   const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
   let root: Object3D;
   try { root = (await loader.parseAsync(buf, '')).scene; } catch (e) { throw new ModelError('decode', String(e)); }
@@ -49,10 +55,11 @@ async function parseLod(buf: ArrayBuffer, m: CaseManifest): Promise<RawPart[]> {
  * The supplier model as a CaseAsset: LOD1 now (the row, and the front case until LOD0 arrives), LOD0 on loadDetail().
  * The normalisation comes from LOD1's box and serves both, so the front case changes detail without moving.
  */
-export async function loadSupplierAsset(m: CaseManifest, signal?: AbortSignal): Promise<CaseAsset> {
-  if (m.source !== 'supplier') throw new Error('the manifest does not name a supplier model');
+export async function loadSupplierAsset(m: ModelEntry, signal?: AbortSignal): Promise<CaseAsset> {
+  const src = (m as Partial<CaseManifest>).source;
+  if (src !== undefined && src !== 'supplier') throw new Error('the manifest does not name a supplier model');
   const raw1 = await parseLod(await fetchModel(m.lod1, signal), m);
-  const n = normalising(raw1, new Quaternion(...m.orient));
+  const n = normalising(raw1, new Quaternion(...(m.orient ?? [0, 0, 0, 1])));
   const lod1 = withBase(raw1, n.matrix);
   const lods: [CasePart[], CasePart[]] = [lod1, lod1];
   let detail: 'loaded' | 'deferred' = 'deferred';

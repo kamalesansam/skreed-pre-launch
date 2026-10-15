@@ -1,6 +1,7 @@
 // Test hooks (hero-architecture.md 10), compiled only into dev, test and staging builds: every call site sits behind
 // import.meta.env.PUBLIC_HERO_HOOKS === '1', which Vite folds away in production (scripts/guards.mjs checks dist/).
-// The prototype's names are kept for the harness (template.html lines 1240 to 1256).
+// The prototype's names are kept for the harness (template.html lines 1240 to 1256), plus the v10 and v11 ones:
+// __skreedIntro (seek, play, replay, skip, state), __s2 (section 2's state), __skreedSnap (the scroll followers).
 import { Quaternion, Vector3 } from 'three';
 import { assignBlockColours } from '../logo/uniforms.ts';
 import type { HeroContext } from '../types.ts';
@@ -40,4 +41,14 @@ export function installHooks(ctx: HeroContext, loop: Loop, extra: { skyClass: ()
   window.__skreedSkyClass = extra.skyClass;
   // AC6.4: each block's glow colour as an sRGB hex (three's Color converts from the linear working space)
   window.__skreedBlockColours = () => blocks.map((_b, i) => '#' + U.uBlockCol.value[i].getHexString());
+  // v11: the scroll followers pinned (frame tests), section 2's state, and the intro's seek
+  window.__skreedSnap = (v: number) => loop.snap(v);
+  window.__skreedPrograms = () => ctx.renderer.info.programs?.length ?? 0;
+  window.__s2 = () => ctx.section2?.hooks?.() ?? null;
+  const h = ctx.intro.hooks;
+  if (h) window.__skreedIntro = {
+    state: () => h.state(),
+    seek(x: number, t0?: number) { st.t = h.seek(x, t0); loop.stepNow(); return h.state(); },
+    play: () => h.play(), replay: () => h.replay(), skip: () => h.skip(),
+  };
 }

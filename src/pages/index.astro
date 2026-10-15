@@ -12,6 +12,8 @@ import HeroPoster from '../components/hero/HeroPoster.astro';
 import HeroPosterPreload from '../components/hero/HeroPosterPreload.astro';
 import Countdown from '../components/hero/Countdown.astro';
 import ScrollCue from '../components/hero/ScrollCue.astro';
+import Section2Layers from '../components/hero/Section2Layers.astro';
+import FamilyLinks from '../components/family/FamilyLinks.astro';
 import { COPY } from '../config/copy.ts';
 import { NIGHT } from '../config/tokens.ts';
 // Dev-only components are imported only when their flag is set, so production carries neither their markup nor their
@@ -29,6 +31,8 @@ const Tune = import.meta.env.PUBLIC_TUNE === '1' ? (await import('../components/
     <SiteLogo slot="logo" />
     <Countdown slot="copy" />
     <ScrollCue slot="cue" part="cue" />
+    <Section2Layers slot="riders" />
+    <FamilyLinks slot="riders" />
     {AfterTrackFiller && <AfterTrackFiller slot="after-track" />}
     {Tune && <Tune slot="dev" />}
     <ScrollCue slot="last" part="script" />

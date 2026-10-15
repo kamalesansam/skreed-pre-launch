@@ -2,12 +2,16 @@
 // here: same inputs, the same doubles (Object.is) and the same strings (hero-architecture.md 5.1, build step 6).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { constSource, functionSource } from './proto-source.ts';
+import { constSource, functionSource, TEMPLATE11 } from './proto-source.ts';
+import { readFileSync } from 'node:fs';
+import { S2T, CAMX, TRACK_SVH } from '../../src/config/hero.ts';
+import { camX, camCurve } from '../../src/scripts/hero/camera/rig.ts';
+import { Vector3 } from 'three';
 import { lerpFPS, smoothstep, fit, clamp01, easeInOutCubic, sineNoise, hash2, vnoise2, parkMiller } from '../../src/scripts/hero/util/math.ts';
 import { mapScroll, clipFor, PULL, WIPE } from '../../src/scripts/hero/scroll/scrollMap.ts';
 
 const proto = <T>(names: string[], ret: string, args: string[] = [], vals: unknown[] = []): T =>
-  new Function(...args, names.map(constSource).join('\n') + '\nreturn ' + ret)(...vals) as T;
+  new Function(...args, names.map((n) => constSource(n)).join('\n') + '\nreturn ' + ret)(...vals) as T;
 
 const grid = (lo: number, hi: number, n: number) => Array.from({ length: n }, (_, i) => lo + (hi - lo) * i / (n - 1));
 const xs = [...grid(-3.7, 4.2, 61), 0, 0.5, 1, -0, 1e-9, 0.449999];
@@ -47,13 +51,40 @@ test('Park-Miller seed 11 gives the prototype rnd() sequence', () => {
   for (let i = 0; i < 60; i++) assert.ok(Object.is(q(), p()));
 });
 
-test('mapScroll equals the prototype frame lines 1286 to 1288 (normal and reduced)', () => {
-  assert.equal(PULL, 1.5); assert.equal(WIPE, 1.0);
-  const p = proto<(b: number, reduce: boolean) => { s: number; tp: number; heroOn: number }>(['smoothstep', 'clamp01', 'ease'],
-    '(b, reduce) => { const PULL = 1.5, WIPE = 1.0; const s = reduce ? 0 : ease(clamp01(b / PULL)); const tp = clamp01((b - PULL) / WIPE); const heroOn = 1 - smoothstep(0, 0.45, s); return { s, tp, heroOn }; }');
-  for (const b of [...grid(-0.5, 4.5, 181), 0.375, 0.75, 1.125, 2.0, 2.5]) for (const r of [false, true]) {
+// round 3: the v11.2 scroll map (prototype v11.4, template.html: PULL 5, WIPE 1, S2T; the frame's s, tp, tp2, heroOn)
+const v11 = <T>(names: string[], ret: string, extra = ''): T =>
+  new Function(names.map((n) => constSource(n, TEMPLATE11)).join('\n') + '\n' + extra + '\nreturn ' + ret)() as T;
+const S2T_LINE = /S2T\.LAND = [^\n]+/.exec(TEMPLATE11)![0];
+
+test('S2T and CAMX equal the v11.4 prototype', () => {
+  const p = v11<{ PULL: number; WIPE: number; S2T: Record<string, number>; CAMX: number[][] }>(['PULL', 'S2T', 'CAMX'], '{ PULL, WIPE, S2T, CAMX }', S2T_LINE);
+  assert.equal(PULL, p.PULL); assert.equal(WIPE, p.WIPE);
+  assert.equal(PULL, 5.0); assert.equal(WIPE, 1.0);
+  assert.deepEqual({ CAS0: S2T.CAS0, GAP: S2T.GAP, FLY: S2T.FLY, W1END: S2T.W1END, LAND: S2T.LAND, W2: S2T.W2 }, p.S2T);
+  assert.deepEqual(CAMX.map((c) => [...c]), p.CAMX);
+  assert.equal(S2T.W2, 15.2);
+  // the track is the scroll map's length (shell.css carries the literal)
+  assert.ok(readFileSync(new URL('../../src/styles/shell.css', import.meta.url), 'utf8').includes(`.track{position:relative;height:${TRACK_SVH}svh;`));
+});
+
+test('mapScroll equals the v11.4 prototype frame (normal and reduced): s, tp, tp2, heroOn', () => {
+  const p = v11<(b: number, reduce: boolean) => { s: number; tp: number; tp2: number; heroOn: number }>(['smoothstep', 'clamp01', 'ease', 'PULL', 'S2T'],
+    '(b, reduce) => { const s = reduce ? 0 : ease(clamp01(b / PULL)); const tp = clamp01((b - PULL) / WIPE), tp2 = clamp01((b - S2T.W2) / WIPE); const heroOn = 1 - smoothstep(0, 0.45, s); return { s, tp, tp2, heroOn }; }', S2T_LINE);
+  for (const b of [...grid(-0.5, 18.5, 381), 1.25, 2.5, 3.75, 5.0, 5.5, 6.0, 15.0, 15.2, 15.7, 16.2]) for (const r of [false, true]) {
     const a = mapScroll(b, r), e = p(b, r);
-    assert.ok(Object.is(a.s, e.s) && Object.is(a.tp, e.tp) && Object.is(a.heroOn, e.heroOn), `b=${b} reduced=${r}`);
+    assert.ok(Object.is(a.s, e.s) && Object.is(a.tp, e.tp) && Object.is(a.tp2, e.tp2) && Object.is(a.heroOn, e.heroOn), `b=${b} reduced=${r}`);
+  }
+});
+
+test('camX and camCurve equal the v11.4 prototype at every scroll (the level weaving pull-back)', () => {
+  const src = constSource('CAMX', TEMPLATE11) + '\n' + functionSource('function camX(', TEMPLATE11) + '\n' + functionSource('function camCurve(', TEMPLATE11);
+  const tgtFrom = { y: -0.9 };
+  const f = new Function('tgtFrom', 'V', src + '\nreturn { camX, camCurve: (s, u2) => { const P = new V(), T = new V(); camCurve(s, u2, P, T); return [...P.toArray(), ...T.toArray()]; } };')(tgtFrom, Vector3) as { camX: (v: number) => number; camCurve: (s: number, u2: number) => number[] };
+  for (const v of grid(-0.1, 2.3, 241)) assert.ok(Object.is(camX(v), f.camX(v)), `camX ${v}`);
+  const P = new Vector3(), T = new Vector3();
+  for (const s of grid(0, 1, 41)) for (const u2 of grid(0, 1, 21)) {
+    camCurve(s, u2, tgtFrom.y, P, T);
+    assert.deepEqual([...P.toArray(), ...T.toArray()], f.camCurve(s, u2), `camCurve ${s} ${u2}`);
   }
 });
 

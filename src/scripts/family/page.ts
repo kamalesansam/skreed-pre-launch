@@ -1,15 +1,20 @@
-// The family page module (docs/specs/family-page.md 2.3 to 2.7, 4, 5): one selection store and everything that
-// follows it (HUD swap, scrubber, swatch grid, finish, reserve link, URL, live region, events), plus the header,
-// the switcher's focus handling and swatch grid mode. No GSAP: DOM moves are CSS transitions and the Web Animations
-// API (decision 10). The selected markers are drawn by CSS from html[data-shade], so this module only moves the
-// attribute and writes text. Budget: 12 KB gzip (spec 6).
+// The family page module (docs/specs/family-page.md 2.3 to 2.7, 4, 5, 20, 21): one selection store and everything that
+// follows it (the bar's swatch and name, the scrubber, the swatch grid, the finish, the URL, the live region, events),
+// the switcher's focus handling, swatch grid mode, the seven-screen scroll map (the HUD's exit, the tint, the beats'
+// text and nav, the argument screen with its letters and smoke), the skeleton at runtime, the loader's lift (the
+// wordmark's glitch, E-F4). No GSAP: DOM moves are CSS transitions and the Web Animations API (decision 10). The
+// selected markers are drawn by CSS from html[data-shade], so this module only moves the attribute and writes text.
 import { reducedMQ } from '../motion.ts';
 import { FAM_COPY, splitLine, type CopyShade } from './copy.ts';
 import { track } from './track.ts';
 import { emit, on, type Finish, type Input } from './bus.ts';
-import { SWAP_MS, SWAP_EASE, SHADE_MS, URL_DEBOUNCE_MS, SETTLE_MS, DRAG_HUD_MS, LIVE_MS } from './timing.ts';
+import { SWAP_MS, SHADE_MS, URL_DEBOUNCE_MS, SETTLE_MS, DRAG_HUD_MS, LIVE_MS } from './timing.ts';
+import { tintOf } from './tint.ts';
+import { createSmoke } from './smoke.ts';
+import { createArgument } from './argument.ts';
+import { WIDE_MQ, activeBeat, scrollClasses, skeletonPolys, solve, type Dims } from './three/pose.ts';
 
-interface PageData { slug: string; name: string; first: number; key: number; has3d: boolean; size3d: string | null; names: string[] }
+interface PageData { slug: string; name: string; first: number; key: number; has3d: boolean; size3d: string | null; names: string[]; dims: Dims }
 
 const H = document.documentElement;
 const D = JSON.parse(document.getElementById('fam-data')!.textContent!) as PageData;
@@ -17,11 +22,13 @@ const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getEleme
 const nnn = (i: number) => String(D.first + i).padStart(3, '0');
 const shadeAt = (i: number): CopyShade => ({ name: D.names[i], index: i + 1, n: D.first + i, nnn: nnn(i) });
 const clamp = (i: number) => Math.max(0, Math.min(23, Math.round(i)));
+const hexOf = (i: number) => getComputedStyle(H).getPropertyValue(`--shade-${D.slug}-${String(i + 1).padStart(2, '0')}`).trim();
 
-const hudName = $('hudName')!, hudNum = $('hudNum')!, hudNumSr = $('hudNumSr')!, barName = $('barName')!;
+const hudNumSr = $('hudNumSr')!, barName = $('barName')!;
 const prevBtn = $<HTMLButtonElement>('prev')!, nextBtn = $<HTMLButtonElement>('next')!, scrub = $('scrub')!;
-const reserve = $<HTMLAnchorElement>('reserve')!, live = $('live')!, stateEl = $('state')!;
-const finishBox = $('finish')!, st3d = $('st3d'), wholeCap = $('wholeCap');
+const live = $('live')!, stateEl = $('state')!;
+const finishBox = $('finish')!, st3d = $('st3d');
+const mqWide = matchMedia(WIDE_MQ);
 
 // ---- the store ----
 const fromAttr = (v: string | undefined) => { const n = Number(v) - D.first; return Number.isInteger(n) && n >= 0 && n < 24 ? n : D.key; };
@@ -30,26 +37,7 @@ let finish: Finish = H.dataset.finish === 'gloss' ? 'gloss' : 'matte';
 let lastInput: Input = 'deeplink';
 const reduced = () => reducedMQ.matches;
 
-// ---- the name and number swap (spec 4): old and new lines move together inside the mask, never an empty slot ----
-const running = new WeakMap<HTMLElement, Animation[]>();
-function swap(box: HTMLElement, text: string, instant: boolean): void {
-  running.get(box)?.forEach((a) => a.cancel());         // a new swap finishes the running one at its end state
-  running.delete(box);
-  while (box.children.length > 1) box.firstElementChild!.remove();
-  const old = box.firstElementChild as HTMLElement | null;
-  if (old && old.textContent === text) return;
-  const nu = document.createElement('span');
-  nu.textContent = text;
-  if (instant || reduced() || !old || typeof nu.animate !== 'function') { box.replaceChildren(nu); return; }
-  box.append(nu);
-  const o: KeyframeAnimationOptions = { duration: SWAP_MS, easing: SWAP_EASE };
-  const a = [old.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-110%)' }], o),
-    nu.animate([{ transform: 'translateY(110%)' }, { transform: 'translateY(0)' }], o)];
-  running.set(box, a);
-  a[1].onfinish = () => { if (running.get(box) === a) { running.delete(box); old.remove(); } };
-}
-
-// ---- the sticky bar's swatch (spec 4, C3): it takes the new shade at once from html[data-shade]; a copy of the old
+// ---- the bar's swatch (spec 4, C3): it takes the new shade at once from html[data-shade]; a copy of the old
 // shade on top fades out by opacity. A newer copy goes under the ones still fading, so quick changes blend smoothly ----
 const barSw = document.querySelector<HTMLElement>('.bar-sw');
 function fadeBar(from: string | undefined, instant: boolean): void {
@@ -62,17 +50,21 @@ function fadeBar(from: string | undefined, instant: boolean): void {
   old.animate([{ opacity: 1 }, { opacity: 0 }], { duration: SHADE_MS, easing: 'linear', fill: 'forwards' }).onfinish = () => old.remove();
 }
 
+// ---- the per-shade background (E-F2) and the smoke's colours ----
+const smokeCv = $<HTMLCanvasElement>('smoke');
+const smoke = smokeCv ? createSmoke(smokeCv, reduced) : null;
+function setTint(i: number): void {
+  const t = tintOf(hexOf(i));
+  H.style.setProperty('--tint1', t[0]); H.style.setProperty('--tint2', t[1]);
+  smoke?.tint(t[0], t[1]);
+}
+
 // ---- writing a selection into the page ----
-// A 3D build has two copies of the grid (the stage's and the one under "The whole family."); CSS shows one per mode
-// and both follow the selection, so a mode change never has to move or rebuild one.
 const grids = () => document.querySelectorAll<HTMLElement>('.sgrid');
-function writeText(i: number, instant: boolean): void {
+function writeText(i: number): void {
   const s = shadeAt(i);
-  swap(hudName, s.name, instant);
-  swap(hudNum, FAM_COPY.number(s), instant);
   barName.replaceChildren(Object.assign(document.createElement('span'), { textContent: s.name }));
   hudNumSr.textContent = FAM_COPY.numberSr(s);
-  if (wholeCap) wholeCap.textContent = FAM_COPY.caption(s, D.name);
 }
 function writeControls(i: number): void {
   const s = shadeAt(i);
@@ -83,12 +75,7 @@ function writeControls(i: number): void {
     b.setAttribute('aria-checked', k === i ? 'true' : 'false');
     b.tabIndex = k === i ? 0 : -1;
   }));
-  writeReserve();
-}
-function writeReserve(): void {
-  const s = shadeAt(sel);
-  reserve.href = FAM_COPY.reserveHref(s, finish);
-  reserve.setAttribute('aria-label', FAM_COPY.reserveAria(s.name));
+  setTint(i);
 }
 
 // ---- URL (debounced replaceState, so Back leaves the page), settle events and the live region ----
@@ -110,7 +97,6 @@ function settle(): void {
   }, SETTLE_MS);
   clearTimeout(liveT);
   liveT = window.setTimeout(() => {
-    // a focused slider or radio announces its own new value; the live region speaks for every other input
     const a = document.activeElement;
     if (a === scrub || (a instanceof HTMLElement && a.closest('.sgrid'))) return;
     live.textContent = FAM_COPY.live(shadeAt(sel), D.name);
@@ -118,7 +104,7 @@ function settle(): void {
 }
 
 let hudT = 0, hudPending = -1;
-/** The one way the selection changes. While a finger drags, the HUD follows at most every 150 ms (spec 2.5). */
+/** The one way the selection changes. While a finger drags, the bar follows at most every 150 ms (spec 2.5). */
 function select(i: number, input: Input, opts: { instant?: boolean; dragging?: boolean; fromIsland?: boolean } = {}): void {
   i = clamp(i);
   if (i === sel) return;
@@ -130,20 +116,21 @@ function select(i: number, input: Input, opts: { instant?: boolean; dragging?: b
   writeControls(i);
   if (opts.dragging) {
     hudPending = i;
-    if (!hudT) hudT = window.setTimeout(() => { hudT = 0; if (hudPending >= 0) writeText(hudPending, false); hudPending = -1; }, DRAG_HUD_MS);
+    if (!hudT) hudT = window.setTimeout(() => { hudT = 0; if (hudPending >= 0) writeText(hudPending); hudPending = -1; }, DRAG_HUD_MS);
   } else {
     clearTimeout(hudT); hudT = 0; hudPending = -1;
-    writeText(i, !!opts.instant);
+    writeText(i);
   }
   if (!opts.fromIsland) emit('fam:select', { i, input, instant: !!opts.instant || reduced() });
   writeUrl();
   settle();
+  drawSkel();
 }
 
 // ---- first paint: a deep link's text replaces the skeletons; nothing moves ----
 writeControls(sel);
 if (H.hasAttribute('data-deeplink')) {
-  writeText(sel, true);
+  writeText(sel);
   H.removeAttribute('data-deeplink');
   settle();
 }
@@ -176,10 +163,18 @@ scrub.addEventListener('pointermove', (e) => { if (e.pointerId === scrubbing) se
 const endScrub = (e: PointerEvent) => {
   if (e.pointerId !== scrubbing) return;
   scrubbing = -1;
-  if (hudPending >= 0) { clearTimeout(hudT); hudT = 0; writeText(hudPending, false); hudPending = -1; }
+  if (hudPending >= 0) { clearTimeout(hudT); hudT = 0; writeText(hudPending); hudPending = -1; }
 };
 scrub.addEventListener('pointerup', endScrub);
 scrub.addEventListener('pointercancel', endScrub);
+// the whole first screen: left and right arrows move the line (not inside a control)
+document.addEventListener('keydown', (e) => {
+  if (e.altKey || e.ctrlKey || e.metaKey || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') || scrollY > 8) return;
+  const t = e.target as Element | null;
+  if (t?.closest?.('#scrub, .sgrid, [popover], input, textarea, select, #finish, button, a')) return;
+  e.preventDefault();
+  select(sel + (e.key === 'ArrowLeft' ? -1 : 1), 'key');
+});
 
 // ---- the swatch grid: a radio group with a roving tabindex; arrows move by one, up and down by a row ----
 const GRID_KEYS: Record<string, (i: number) => number> = {
@@ -204,7 +199,6 @@ function setFinish(f: Finish, user: boolean): void {
   finish = f;
   H.dataset.finish = f;
   finishBox.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.finish === f ? 'true' : 'false'));
-  writeReserve();
   if (user) { emit('fam:finish', { finish: f }); track('finish_selected', { finish: f, shade_id: nnn(sel), family: D.slug }); writeUrl(); }
 }
 finishBox.addEventListener('click', (e) => {
@@ -213,22 +207,14 @@ finishBox.addEventListener('click', (e) => {
   if ((f === 'matte' || f === 'gloss') && f !== finish) setFinish(f, true);
 });
 
-// ---- links out: reserve, switcher and family navigation ----
-reserve.addEventListener('click', () => track('reserve_click', { shade_id: nnn(sel), family: D.slug, finish }));
+// ---- links out: the switcher ----
 document.addEventListener('click', (e) => {
   const a = (e.target as Element).closest?.('a[href^="/shades/"]') as HTMLAnchorElement | null;
   if (!a) return;
-  const fam = a.pathname.split('/')[2] ?? '';
-  track('family_open', { family: fam, from: a.closest('#family-switcher') ? 'switcher' : 'family_nav' });
+  track('family_open', { family: a.pathname.split('/')[2] ?? '', from: 'switcher' });
 });
 
-// ---- header: transparent at the top, the page neutral with a hairline once content scrolls under it ----
-const fh = $('fh')!;
-const stuck = () => fh.toggleAttribute('data-stuck', scrollY > 0);
-addEventListener('scroll', stuck, { passive: true });
-stuck();
-
-// ---- the switcher: focus moves to the current family on open and back to "Families" on close ----
+// ---- the switcher: focus moves to the current family on open and back to "All families" on close ----
 const sw = $('family-switcher');
 const famBtn = $<HTMLButtonElement>('famBtn')!;
 sw?.addEventListener('toggle', (e) => {
@@ -237,9 +223,65 @@ sw?.addEventListener('toggle', (e) => {
   else if (!document.activeElement || document.activeElement === document.body || sw.contains(document.activeElement)) famBtn.focus();
 });
 
-// ---- swatch grid mode and the state line (2.7, 5). The head script set the mode, and CSS already shows the stage's
-// grid and, for data saver and 2G, the static line with "Show in 3D", so nothing here changes the first paint. Any
-// write to the state line replaces the static lines. ----
+// ---- the skeleton (rule 41): the 24 silhouettes at the carousel pose, drawn in the stage's own pixels; it shows until
+// the canvas is live and again while a context is lost ----
+const skel = document.getElementById('skel');
+let skelKey = '';
+function drawSkel(): void {
+  if (!skel || !st3d || !H.classList.contains('m3d')) return;
+  const W = st3d.clientWidth, Hh = st3d.clientHeight;
+  if (!W || !Hh) return;
+  const cls = mqWide.matches ? 'wide' : 'phone';
+  const key = `${W}x${Hh}${cls}:${sel}`;
+  if (key === skelKey) return;
+  skelKey = key;
+  const fit = solve(W, Hh, cls, D.dims);
+  H.style.setProperty('--case-y', `${fit.caseY.toFixed(1)}px`); H.style.setProperty('--case-hw', `${fit.caseHW.toFixed(1)}px`);
+  skel.setAttribute('viewBox', `0 0 ${W} ${Hh}`);
+  skel.replaceChildren(...skeletonPolys(W, Hh, cls, D.dims, sel).map((pts) => { const p = document.createElementNS('http://www.w3.org/2000/svg', 'polygon'); p.setAttribute('points', pts); return p; }));
+}
+drawSkel();
+if (st3d) new ResizeObserver(drawSkel).observe(st3d);
+
+// ---- the scroll in screens: 0 to 1 the carousel, 1 to 2 the zoom (no text), 2 to 6 the four case types, 6 to 7 the
+// argument screen (pose.ts SV). The stage lags it; the DOM switches at the same points ciao's triggers fire ----
+const argSvg = $('arg-svg') as unknown as SVGSVGElement | null, argClip = document.getElementById('arg-clip') as unknown as SVGClipPathElement | null, argBlur = $('arg-blur');
+const argument = argSvg && argClip && argBlur && smoke ? createArgument(argSvg, argClip, argBlur, smoke, reduced, (e, p) => track(e as 'argument_shown', p)) : null;
+const beatEls = document.querySelectorAll<HTMLElement>('.beat'), navBtns = document.querySelectorAll<HTMLButtonElement>('.beatnav button');
+let sv = 0;
+function onScroll(): void {
+  sv = innerHeight > 0 ? scrollY / innerHeight : 0;
+  if (scrollY > 8) H.setAttribute('data-scrolled', ''); else H.removeAttribute('data-scrolled');
+  const c = scrollClasses(sv);
+  H.classList.toggle('hud-off', c.hudOff);
+  H.classList.toggle('beats-on', c.beatsOn);
+  H.classList.toggle('tint-on', c.tintOn);
+  H.classList.toggle('arg-on', c.argOn);
+  argument?.show(c.argOn);
+  const active = activeBeat(sv);
+  beatEls.forEach((b) => b.classList.toggle('on', b.dataset.beat === active));
+  navBtns.forEach((b) => b.setAttribute('aria-current', b.dataset.beat === active ? 'true' : 'false'));
+  emit('fam:scroll', { sv });
+}
+addEventListener('scroll', onScroll, { passive: true });
+addEventListener('resize', onScroll);
+onScroll();
+$('beatnav')?.addEventListener('click', (e) => {
+  const b = (e.target as Element).closest('button[data-beat]') as HTMLButtonElement | null;
+  if (!b) return;
+  document.getElementById(`beat-${b.dataset.beat}`)?.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' });
+});
+
+// ---- the loader's lift (section 20; E-F4): the wordmark's intro burst when the loader lifts, as on the landing page ----
+type Logo = { intro(d: number): void };
+const w = window as unknown as { __skreedLogo?: Logo; __fam?: unknown };
+if (H.classList.contains('loading')) {
+  const mo = new MutationObserver(() => { if (!H.classList.contains('loading')) { mo.disconnect(); w.__skreedLogo?.intro(0.25); } });
+  mo.observe(H, { attributes: true, attributeFilter: ['class'] });
+}
+
+// ---- swatch grid mode and the state line (2.7, 5). The head script set the mode, and CSS already shows the grid and,
+// for data saver and 2G, the static line with "Show in 3D", so nothing here changes the first paint ----
 function showState(lead: string, rest: string, action?: { label: string; run: () => void }): void {
   const p = document.createElement('p');
   const s = document.createElement('strong');
@@ -273,8 +315,10 @@ on('fam:grid', ({ reason, message, retry }) => {
 });
 on('fam:slow', ({ on: show }) => { if (show) showState(FAM_COPY.slow, ''); else stateEl.replaceChildren(); });
 on('fam:pick', ({ i, input, dragging }) => select(i, input, { fromIsland: true, dragging }));
+on('fam:turn', ({ side }) => track('front_turn', { side }));
 on('fam:live', () => {
   stateEl.replaceChildren();
+  st3d?.classList.add('live');
   track('stage_mode', { mode: '3d', reason: '' });
 });
 
@@ -284,4 +328,4 @@ stateEl.querySelectorAll<HTMLButtonElement>('[data-line] button').forEach((b) =>
 if (H.classList.contains('grid')) track('stage_mode', { mode: 'grid', reason: H.dataset.why ?? '' });
 
 // test and staging builds read the store through this hook; production never defines it
-if (import.meta.env.PUBLIC_HERO_HOOKS === '1') (window as unknown as { __fam: unknown }).__fam = { get: () => ({ sel, finish, shade: nnn(sel) }), select: (i: number) => select(i, 'key') };
+if (import.meta.env.PUBLIC_HERO_HOOKS === '1') w.__fam = { get: () => ({ sel, finish, shade: nnn(sel), sv }), select: (i: number) => select(i, 'key'), smoke: () => smoke?.stats(), argument: () => ({ shown: argument?.shown(), laid: argument?.laid() }) };

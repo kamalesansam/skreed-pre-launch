@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { FAMILIES, buildFamilies, pageCss, contrast, nnn, familyOf, type RawData, type RawKey } from '../../src/scripts/family/data.ts';
-import { FAM_COPY } from '../../src/scripts/family/copy.ts';
+import { ARGUMENT, BEATS, FAM_COPY } from '../../src/scripts/family/copy.ts';
 import { SWAP_MS, SWAP_EASE, SHADE_MS } from '../../src/scripts/family/timing.ts';
 import { family3dMode, familyPagesOn } from '../../src/scripts/family/mode.ts';
 import { SITE_COPY } from '../../src/scripts/family/site-copy.ts';
@@ -98,7 +98,7 @@ test('the page stylesheet: tokens only (no hex), one rule per swatch shown, the 
   }
 });
 
-test('copy: sentence case strings with no em dash, no emoji, real names; the reserve link carries shade and finish', () => {
+test('copy: sentence case strings with no em dash, no emoji, real names; the four case types and the argument rows', () => {
   const strings: string[] = [];
   const s0 = { name: 'Sky', index: 8, n: 32, nnn: '032' };
   for (const v of Object.values(FAM_COPY)) {
@@ -110,7 +110,11 @@ test('copy: sentence case strings with no em dash, no emoji, real names; the res
     assert.doesNotMatch(s, /\p{Extended_Pictographic}/u, `no emoji: ${s}`);
     assert.doesNotMatch(s, /seamless|elevate|unleash|next-level|revolutionary/i);
   }
-  assert.equal(FAM_COPY.reserveHref(s0, 'gloss'), '/?shade=032&finish=gloss#reserve');
+  assert.deepEqual(BEATS.map((b) => b.name), ['Tough', 'MagTough', 'Snap', 'Armor']);
+  for (const b of BEATS) { assert.doesNotMatch(b.copy, /\u2014|\u2013|seamless|elevate|unleash/i); assert.ok(b.copy.length > 40 && b.copy.length < 200, b.name); }
+  assert.deepEqual(ARGUMENT.rows, ['GO', 'BEYOND BASIC']);
+  assert.equal(FAM_COPY.allFamilies, 'All families');
+  assert.ok(!('reserve' in FAM_COPY) && !('eyebrow' in FAM_COPY) && !('number' in FAM_COPY), 'no Reserve, no eyebrow, no index line (round 3)');
   assert.equal(FAM_COPY.title('Blissful Blue'), 'Blissful Blue, all 24 shades. Skreed');
   assert.equal(FAM_COPY.description('Blissful Blue', 'Electric', 'Midnight'), 'All 24 Blissful Blue shades, from Electric to Midnight, on a Skreed case in matte or gloss. Doors open Nov 1.');
   assert.equal(FAM_COPY.live(s0, 'Blissful Blue'), 'Sky. Blissful Blue. Shade 32 of 240.');
@@ -124,13 +128,13 @@ test('motion timings in code equal the CSS tokens (DESIGN.md "Family pages")', (
   assert.equal(css.match(/--dur-shade:\s*(\d+)ms/)?.[1], String(SHADE_MS));
 });
 
-test('C3: the family CSS transitions transform, opacity and press colours only, never a custom property or a shade', () => {
+test('C3: the family CSS transitions transform, opacity, visibility and press colours only, never a custom property or a shade', () => {
   const css = read('src/styles/family.css');
   assert.doesNotMatch(css, /@property/);
   for (const m of css.matchAll(/transition:\s*([^;}]+)/g)) {
-    for (const part of m[1].split(',')) {
+    for (const part of m[1].replace(/\([^)]*\)/g, '()').split(',')) {   // commas inside cubic-bezier() are not separators
       const prop = part.trim().split(/\s+/)[0];
-      assert.ok(['transform', 'opacity', 'none', 'background-color', 'color'].includes(prop), `transition on ${prop}`);
+      assert.ok(['transform', 'opacity', 'visibility', 'none', 'background-color', 'color', 'border-color'].includes(prop), `transition on ${prop}`);
     }
   }
 });
@@ -190,17 +194,20 @@ test('the 404 copy and the structured data facts: no em dash, no emoji, digits o
   }
   assert.match(c.h1, /^404\. /);
   assert.ok(FAMILIES.some((f) => f.shades.some((s) => s.id === c.swatch)), 'the 404 swatch is a real shade');
-  assert.equal(SITE_COPY.org.email, FAM_COPY.email);
-  assert.equal(SITE_COPY.org.instagram, FAM_COPY.instagramHref);
+  assert.match(SITE_COPY.org.email, /@skreed\.in$/);
 });
 
-test('guards on the family sources: no box-shadow, backdrop-filter, gradient, blur( or italic; no em dash; no inline style attribute', () => {
+test('guards on the family sources: no box-shadow, backdrop-filter, gradient, blur( or italic outside the marked exception lines; no em dash; no inline style attribute', () => {
   const files = ['src/styles/family.css', 'src/styles/family-links.css', 'src/scripts/family/page.ts', 'src/scripts/family/copy.ts', 'src/scripts/family/head.inline.js',
-    'src/scripts/family/rock-links.ts', 'src/scripts/family/links.ts', 'src/scripts/family/site-copy.ts',
-    'src/components/family/FamilyPage.astro', 'src/components/family/SwatchGrid.astro', 'src/components/family/FamilyHeadFirst.astro',
+    'src/scripts/family/rock-links.ts', 'src/scripts/family/links.ts', 'src/scripts/family/site-copy.ts', 'src/scripts/family/argument.ts', 'src/scripts/family/smoke.ts', 'src/scripts/family/tint.ts',
+    'src/components/family/FamilyPage.astro', 'src/components/family/SwatchGrid.astro', 'src/components/family/FamilyHeadFirst.astro', 'src/components/family/FamilyCue.astro',
     'src/components/family/FamilyLinks.astro', 'src/components/family/FamilyLinksNav.astro', 'src/pages/shades/[family].astro', 'src/pages/404.astro', 'src/pages/sitemap.xml.ts', 'src/pages/robots.txt.ts'];
+  // the approved exceptions, each on a marked line: E-F1 ciao's backdrop and fade (2), E-F2 the per-shade wash (1), E-F3 the
+  // argument letters' shadows and backdrop blur (2), E-H1 the loader's two light ramps (2); family-page.md 19 to 21
+  const css = read('src/styles/family.css');
+  for (const [mark, n] of [['E-F1', 2], ['E-F2', 1], ['E-F3', 2], ['E-H1', 2]] as const) assert.equal(css.split(`/*${mark}*/`).length - 1, n, `${mark} lines`);
   for (const f of files) {
-    const s = read(f);
+    const s = f.endsWith('family.css') ? css.split('\n').filter((l) => !/\/\*E-(F1|F2|F3|H1)\*\//.test(l)).join('\n') : read(f);
     assert.doesNotMatch(s, /box-shadow|backdrop-filter|gradient|blur\(|italic|font-style:\s*oblique/i, f);
     assert.doesNotMatch(s, /\u2014/, `${f}: em dash`);
     assert.doesNotMatch(s, /\sstyle=["{]/, `${f}: style attribute`);

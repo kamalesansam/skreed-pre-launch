@@ -1,16 +1,20 @@
 ---
 // /shades/<family>/: one static page per colour family (docs/specs/family-page.md). The ten paths come from
 // docs/data/shades-240.json; data.ts fails the build on anything but 10 families of 24. FAMILY_3D (mode.ts) decides
-// whether the 3D island is built at all; the default build is swatch grid mode.
+// whether the 3D island is built at all; the default build is swatch grid mode. In 3D builds the shell's loader covers
+// the page from first paint with the family milestones (section 20).
 import Base from '../../layouts/Base.astro';
 import '../../styles/family.css';
 import FamilyHeadFirst from '../../components/family/FamilyHeadFirst.astro';
 import FamilyPage from '../../components/family/FamilyPage.astro';
-import { FAMILIES, NEUTRAL_HEX, pageCss, type Family } from '../../scripts/family/data.ts';
+import WordmarkSprite from '../../components/shell/WordmarkSprite.astro';
+import { FAMILIES, pageCss, type Family } from '../../scripts/family/data.ts';
 import { FAM_COPY } from '../../scripts/family/copy.ts';
 import { SITE_COPY } from '../../scripts/family/site-copy.ts';
 import { SITE_URL } from '../../config/site.ts';
+import { NIGHT } from '../../config/tokens.ts';
 import { family3dMode, familyPagesOn } from '../../scripts/family/mode.ts';
+import { FAMILY_WT } from '../../scripts/family/loader-weights.ts';
 
 // FAMILY_PAGES off (the production default until Reserve and the Wall exist, G21): no page is emitted at all
 export function getStaticPaths() {
@@ -37,20 +41,19 @@ const ld = JSON.stringify({
   ],
 }).replace(/</g, '\\u003c');
 const has3d = mode !== 'off';
-// The island is a separate component, imported only in 3D builds, so an off build carries none of its scripts. The
-// condition must fold at build time (Astro bundles the scripts of every imported component, rendered or not), so it
-// reads PUBLIC_FAMILY_3D, which Vite replaces statically; mode.ts checks the same variable and its guards.
+// The island and the loader are separate components, imported only in 3D builds, so an off build carries none of their
+// scripts. The condition must fold at build time (Astro bundles the scripts of every imported component, rendered or
+// not), so it reads PUBLIC_FAMILY_3D, which Vite replaces statically; mode.ts checks the same variable and its guards.
 const ON3D = import.meta.env.PUBLIC_FAMILY_3D === 'dev' || import.meta.env.PUBLIC_FAMILY_3D === 'on' || (import.meta.env.DEV && import.meta.env.PUBLIC_FAMILY_3D !== 'off');
 const Island = ON3D ? (await import('../../components/family/Island3D.astro')).default : null;
-// the stage's skeleton and poster, under the same folded test (an off build carries no poster file)
-const Poster = ON3D ? (await import('../../components/family/Poster.astro')).default : null;
+const Loader = ON3D ? (await import('../../components/shell/Loader.astro')).default : null;
 ---
 <Base
   title={title}
   description={description}
   path={`/shades/${fam.slug}/`}
   preloadFonts={['/fonts/poppins-700-latin.woff2', '/fonts/open-sans-400-600-latin.woff2']}
-  themeColor={NEUTRAL_HEX[fam.neutral]}
+  themeColor={NIGHT}
 >
   <FamilyHeadFirst slot="head-first" fam={fam} has3d={has3d} />
   <style slot="head" is:inline set:html={pageCss(fam)}></style>
@@ -68,6 +71,8 @@ const Poster = ON3D ? (await import('../../components/family/Poster.astro')).def
     <link rel="manifest" href="/manifest.webmanifest">
     <script type="application/ld+json" is:inline set:html={ld}></script>
   </Fragment>
-  <FamilyPage fam={fam} has3d={has3d} supplier={mode === 'on'}>{Poster && <Poster slot="poster" slug={fam.slug} mode={mode === 'on' ? 'on' : 'dev'} />}</FamilyPage>
+  <WordmarkSprite />
+  {Loader && <Loader weights={FAMILY_WT} offline={FAM_COPY.loaderOffline} />}
+  <FamilyPage fam={fam} has3d={has3d} supplier={mode === 'on'} />
   {Island && <Island mode={mode === 'on' ? 'on' : 'dev'} />}
 </Base>

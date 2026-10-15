@@ -1,0 +1,12 @@
+---
+// The side scroll cue (docs/specs/family-page.md 20): ciao's side icon re-created, two 17.5 x 73 px columns of three
+// five-dot chevrons, one at each side, drawn top down, held and wiped on a 2.5 s cycle (family.css). Our own SVG and
+// CSS, timed by measurement (prototypes/family-pages/ciao-measure/scrollicon.md); nothing of ciao's ships. Decorative:
+// aria-hidden, no text; hidden while the loader runs and once the page scrolls.
+const svg = `<svg viewBox="0 0 35 146" width="100%" xmlns="http://www.w3.org/2000/svg">
+<g class="chev chev-top"><circle cx="2.4" cy="2.4" r="2.4" fill="currentColor" fill-opacity="0.3"/><circle cx="10" cy="9.1" r="2.4" fill="currentColor" fill-opacity="0.6"/><circle cx="17.5" cy="15.7" r="2.4" fill="currentColor"/><circle cx="25" cy="9.1" r="2.4" fill="currentColor" fill-opacity="0.6"/><circle cx="32.6" cy="2.4" r="2.4" fill="currentColor" fill-opacity="0.3"/></g>
+<g class="chev chev-mid"><circle cx="2.4" cy="66.4" r="2.4" fill="currentColor" fill-opacity="0.3"/><circle cx="10" cy="73" r="2.4" fill="currentColor" fill-opacity="0.6"/><circle cx="17.5" cy="79.7" r="2.4" fill="currentColor"/><circle cx="25" cy="73" r="2.4" fill="currentColor" fill-opacity="0.6"/><circle cx="32.6" cy="66.4" r="2.4" fill="currentColor" fill-opacity="0.3"/></g>
+<g class="chev chev-bottom"><circle cx="2.4" cy="130.3" r="2.4" fill="currentColor" fill-opacity="0.3"/><circle cx="10" cy="137" r="2.4" fill="currentColor" fill-opacity="0.6"/><circle cx="17.5" cy="143.7" r="2.4" fill="currentColor"/><circle cx="25" cy="137" r="2.4" fill="currentColor" fill-opacity="0.6"/><circle cx="32.6" cy="130.3" r="2.4" fill="currentColor" fill-opacity="0.3"/></g>
+</svg>`;
+---
+<div class="scrollcue is-left" id="cue" aria-hidden="true" set:html={svg} /><div class="scrollcue is-right" id="cue2" aria-hidden="true" set:html={svg} />

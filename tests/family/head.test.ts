@@ -98,10 +98,19 @@ test('?finish=gloss or matte is kept on html; anything else is removed', () => {
   assert.equal(r.calls.replaceState, '/shades/blissful-blue/?shade=030');
 });
 
-test('mode: an off build is always swatch grid mode', () => {
+test('mode: an off build is always swatch grid mode, and never the loader', () => {
   const r = run({ has3d: false });
   assert.ok(r.classes.has('grid'));
+  assert.ok(!r.classes.has('loading'));
   assert.equal(r.attrs.get('data-why'), 'off');
+});
+
+test('?mode=grid is the one way to ask for the grid (D7): grid mode, data-why query, no loader, the query kept', () => {
+  const r = run({ has3d: true, url: 'https://skreed.in/shades/blissful-blue/?mode=grid' });
+  assert.ok(r.classes.has('grid'));
+  assert.ok(!r.classes.has('m3d') && !r.classes.has('loading'));
+  assert.equal(r.attrs.get('data-why'), 'query');
+  assert.equal(r.calls.replaceState, undefined);
 });
 
 test('mode in a 3D build: the hero gate signals send the page to swatch grid mode, otherwise 3D', () => {
@@ -116,5 +125,7 @@ test('mode in a 3D build: the hero gate signals send the page to swatch grid mod
   }
   const ok = run({ has3d: true, deviceMemory: 4 });
   assert.ok(ok.classes.has('m3d'));
+  assert.ok(ok.classes.has('loading'), 'the loader covers the page from first paint in 3D mode (section 20)');
   assert.ok(!ok.classes.has('grid'));
+  for (const [env] of cases) assert.ok(!run({ ...env, has3d: true }).classes.has('loading'), 'grid mode never shows the loader');
 });

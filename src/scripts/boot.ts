@@ -13,7 +13,7 @@ import { resetRiders, type RideEls } from './hero/scroll/reset.ts';
 const H = document.documentElement;
 const life = createLife();
 const $ = (id: string) => document.getElementById(id);
-const els: RideEls = { heroCopy: $('heroCopy'), cue: $('cue'), labels: $('labels'), siteLogo: $('siteLogo') };
+const els: RideEls = { heroCopy: $('heroCopy'), cue: $('cue'), cue2: $('cue2'), labels: $('labels'), siteLogo: $('siteLogo') };
 
 /** A hardware WebGL2 context (architecture 8): SwiftShader passes failIfMajorPerformanceCaveat, so the renderer string decides. */
 function hardwareGL(): boolean {

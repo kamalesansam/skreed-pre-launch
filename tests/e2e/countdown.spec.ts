@@ -129,14 +129,14 @@ for (const vp of [{ name: '390', viewport: { width: 390, height: 844 }, deviceSc
     await pauseClockAt(page, '2026-10-09T09:00:00+05:30');
     await page.goto(new URL('/?tier=poster', baseURL).href);
     await page.evaluate(async () => { await document.fonts.ready; await (document.getElementById('posterImg') as HTMLImageElement).decode(); });
-    const sel: Record<string, string> = { eyebrow: '#cdEyebrow', label: '#count .l', numeral: '#count .n', cue: '#cue .lbl' };
+    const sel: Record<string, string> = { eyebrow: '#cdEyebrow', label: '#count .l', numeral: '#count .n' };   // the cue has no text since round 3 (ciao's dots)
     const boxes: { kind: string; box: Box }[] = [];
     for (const [kind, s] of Object.entries(sel)) {
       for (const r of await page.locator(s).evaluateAll((els) => els.map((e) => { const b = e.getBoundingClientRect(); return [b.x, b.y, b.width, b.height]; }))) {
         boxes.push({ kind, box: r.map((v) => v * vp.deviceScaleFactor) as Box });
       }
     }
-    await page.addStyleTag({ content: '.copy,.cue,.site-logo{visibility:hidden!important}' });
+    await page.addStyleTag({ content: '.copy,.scrollcue,.site-logo{visibility:hidden!important}' });
     const png = info.outputPath(`behind-${vp.name}.png`);
     await page.screenshot({ path: png });
     const stats = boxStats(png, boxes.map((b) => b.box));

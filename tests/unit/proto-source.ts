@@ -2,12 +2,14 @@
 // hash-checked by tests/harness/reference.ts), for the parity unit tests and scripts/hero/gen-glsl.mjs: the raw text of
 // every GLSL string literal the hero uses, and the source of makeScrollTexture. The port must produce the same strings
 // and the same wipe texture (hero-architecture.md 5.1, "Port rules that keep pixels identical").
-import { readReferenceText } from '../harness/reference.ts';
+import { readReferenceText, readReference11Text } from '../harness/reference.ts';
 
 /** template.html of prototype v9.10, the stage 1 reference. */
 export const TEMPLATE = readReferenceText('template.html');
 /** index.html of prototype v9.10 (the built page, data inlined). */
 export const INDEX = readReferenceText('index.html');
+/** template.html of prototype v11.4, the round 3 reference (the intro, the v11.2 scroll map, section 2, the cue). */
+export const TEMPLATE11 = readReference11Text('template.html');
 
 /** Reads one JS string or template literal starting at src[i] (a quote or backtick). Returns its raw source text. */
 export function readLiteral(src: string, i: number): string {
@@ -26,7 +28,8 @@ export function readLiteral(src: string, i: number): string {
 }
 
 /** The literal that follows `key` after `anchor` (skipping whitespace and a GLSL tag comment). */
-export function literalAfter(anchor: string, key: string, from = 0): { raw: string; end: number } {
+export function literalAfter(anchor: string, key: string, from = 0, src = TEMPLATE): { raw: string; end: number } {
+  const TEMPLATE = src;
   const a = TEMPLATE.indexOf(anchor, from);
   if (a < 0) throw new Error('anchor not found: ' + anchor);
   const k = TEMPLATE.indexOf(key, a);
@@ -75,7 +78,8 @@ export function prototypeShaders(): Record<string, string> {
 }
 
 /** The source text of a top-level function of the prototype's module, by brace matching from its declaration. */
-export function functionSource(decl: string): string {
+export function functionSource(decl: string, src = TEMPLATE): string {
+  const TEMPLATE = src;
   const a = TEMPLATE.indexOf(decl);
   if (a < 0) throw new Error('function not found: ' + decl);
   let i = TEMPLATE.indexOf('{', a), depth = 0;
@@ -88,7 +92,8 @@ export function functionSource(decl: string): string {
 }
 
 /** The source of `const NAME = ...;` in the prototype's module, up to the statement's end (depth-0 semicolon). */
-export function constSource(name: string): string {
+export function constSource(name: string, src = TEMPLATE): string {
+  const TEMPLATE = src;
   const a = TEMPLATE.indexOf(`const ${name} = `);
   if (a < 0) throw new Error('const not found: ' + name);
   let depth = 0;

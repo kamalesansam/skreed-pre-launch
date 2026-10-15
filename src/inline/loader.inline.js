@@ -1,5 +1,6 @@
 /* Skreed loader: light passes, the wordmark fills with the load, dims to an outline, lifts. The prototype's loader
-   (template.html lines 88 to 163) with the seven deviations of hero-architecture.md 4.3. POSE, WT and COPY are prepended by Loader.astro. */
+   (template.html lines 88 to 163) with the seven deviations of hero-architecture.md 4.3 plus v10's two (the intro's
+   classes drop with the poster; a hidden tab's gap never counts as a stall). POSE, WT and COPY are prepended by Loader.astro. */
 (function(){
 window.SKREED_POSE=POSE;
 var D=document,HT=D.documentElement,$=function(i){return D.getElementById(i)},T0=performance.now();
@@ -48,11 +49,11 @@ function done(){cancelAnimationFrame(raf);ph='done';if(swA)swA.cancel();intro.re
 function abort(){ph='done';cancelAnimationFrame(raf);if(swA)swA.cancel();fA.cancel();XA.forEach(function(a){a.cancel()});inertAll(false);HT.classList.remove('loading');intro.remove()}
 function poster(msg,kind){if(mode==='poster'||ph!=='load')return;mode='poster';if(swA)swA.cancel();
   GL.animate([{opacity:1},{opacity:0}],{duration:400,fill:'forwards'});LN.animate([{opacity:0},{opacity:1}],{duration:400,fill:'forwards'});
-  PC.hidden=true;ST.textContent=msg||'';intro.classList.add('po');intro.removeAttribute('role');HT.classList.remove('loading');
+  PC.hidden=true;ST.textContent=msg||'';intro.classList.add('po');intro.removeAttribute('role');HT.classList.remove('loading','intro','uh1','uh2','uh3','uh4');
   inertAll(false);HT.classList.replace('hero3d','poster');if(window.__skreedOnPoster)window.__skreedOnPoster(kind,msg)}
 function tick(now){raf=requestAnimationFrame(tick);
   if(last<0){if((swA||fA).startTime==null)return;last=now}
-  var dt=Math.max(0,Math.min(.25,(now-last)/1e3));last=now;
+  var g=now-last,dt=Math.max(0,Math.min(.25,g/1e3));if(g>500)lastP=Math.min(now,lastP+g);last=now;   /* a hidden tab's gap never counts as a stall */
   if(ph==='load'){var nx=pend();
     if(!manual&&nx&&!ready)p=Math.max(p,Math.min(pm+.9*WT[nx],p+.02*dt));
     tl=(fA.currentTime||0)/1e3;

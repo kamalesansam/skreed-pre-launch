@@ -1,7 +1,7 @@
-// AC5: the scroll cue and the corner logotype, on the poster path and the loader state (build step 4).
+// AC5: the scroll cue (round 3: ciao's side icon re-created, hero.md 14) and the corner logotype, on the poster path and the loader state.
 // The 3D-path parts (tone light at tp 1, the cue during the wipe, the intro at the loader's cut) wait for step 6.
 import { test, expect, type Page } from '@playwright/test';
-import { servePrototype, PROTO_URL } from '../harness/prototype.ts';
+import { servePrototype, PROTO11_URL } from '../harness/prototype.ts';
 import { recordBursts, bursts } from '../harness/bursts.ts';
 import { boxStats, contrast, luminanceOfHex, type Box } from '../harness/pixels.ts';
 import { URBAN_SLATE, EMBER_LUXE } from '../../src/config/tokens.ts';
@@ -22,47 +22,54 @@ const keyframes = (page: Page, name: string) => page.evaluate((n) => {
   return null;
 }, name);
 
-test('AC5.1 cue: the prototype keyframes, 1.5 s cycle, 2.44 cycles, then it rests on its line', async ({ page, browser }) => {
+test("AC5.1 cue: ciao's side icon re-created, both sides: the v11.4 prototype keyframes, 2.5 s linear infinite, 15 dots a side", async ({ page, browser }) => {
   await page.goto('/?tier=poster');
-  const ball = page.locator('#cue .ball');
-  const st = await ball.evaluate((e) => { const c = getComputedStyle(e); return { name: c.animationName, dur: c.animationDuration, n: c.animationIterationCount, w: c.width, h: c.height }; });
-  expect(st).toEqual({ name: 'cueBall', dur: '1.5s', n: '2.44', w: '9px', h: '9px' });
-  const base = await page.locator('#cue .base').evaluate((e) => { const c = getComputedStyle(e); return [c.animationName, c.animationDuration, c.animationIterationCount]; });
-  expect(base).toEqual(['cueBase', '1.5s', '2.44']);
-  // keyframes and easings identical to the prototype's (22 px drop)
+  for (const id of ['cue', 'cue2']) {
+    for (const [cls, name] of [['chev-top', 'cue-top'], ['chev-mid', 'cue-mid'], ['chev-bottom', 'cue-bottom']]) {
+      const st = await page.locator(`#${id} .${cls}`).evaluate((e) => { const c = getComputedStyle(e); return [c.animationName, c.animationDuration, c.animationIterationCount, c.animationTimingFunction, c.animationFillMode]; });
+      expect(st, `${id} ${cls}`).toEqual([name, '2.5s', 'infinite', 'linear', 'both']);
+    }
+    expect(await page.locator(`#${id} .chev circle`).count()).toBe(15);
+    expect(await page.locator(`#${id}`).evaluate((e) => getComputedStyle(e).color)).toBe('rgb(247, 246, 243)');   // Pearl Whisper (rule 23), the prototype's #fff
+  }
+  // geometry (hero.md 14): 17.5 px wide, 4 percent plus 3.5 px from each edge, 172.75 px up
+  const vp = page.viewportSize()!;
+  const g = await page.evaluate(() => { const a = document.getElementById('cue')!.getBoundingClientRect(), b = document.getElementById('cue2')!.getBoundingClientRect(); return { w: a.width, h: a.height, lc: a.x + a.width / 2, rc: b.x + b.width / 2, up: innerHeight - a.bottom, up2: innerHeight - b.bottom }; });
+  expect(Math.abs(g.w - 17.5)).toBeLessThan(0.6);
+  expect(Math.abs(g.h - 73)).toBeLessThan(1);
+  expect(Math.abs(g.lc - (0.04 * vp.width + 3.5))).toBeLessThan(0.6);
+  expect(Math.abs(g.rc - (vp.width - 0.04 * vp.width - 3.5))).toBeLessThan(0.6);
+  expect(Math.abs(g.up - 172.75)).toBeLessThan(0.6); expect(Math.abs(g.up2 - 172.75)).toBeLessThan(0.6);
+  // keyframes and easings identical to the v11.4 prototype's
   const ctx = await browser.newContext();
-  await servePrototype(ctx, { three: false });
+  await servePrototype(ctx, { three: false, version: 'v11.4' });
   const proto = await ctx.newPage();
-  await proto.goto(PROTO_URL);
-  for (const k of ['cueBall', 'cueBase']) expect(await keyframes(page, k), k).toBe(await keyframes(proto, k));
+  await proto.goto(PROTO11_URL);
+  for (const k of ['cue-top', 'cue-mid', 'cue-bottom']) { const kf = await keyframes(page, k); expect(kf, k).not.toBeNull(); expect(kf, k).toBe(await keyframes(proto, k)); }
   await ctx.close();
-  expect(await keyframes(page, 'cueBall')).toContain('translateY(-22px)');
-  await page.waitForTimeout(3900);
-  expect(await ball.evaluate((e) => ({ anims: e.getAnimations().length, t: getComputedStyle(e).transform }))).toEqual({ anims: 0, t: 'none' });
 });
 
 test('AC5.2 cue visibility: scroll past 8 px, nothing below, while loading, reduced motion', async ({ page, browser, baseURL }) => {
   await page.goto('/?tier=poster');
-  const cue = page.locator('#cue');
+  const cue = page.locator('#cue'), cue2 = page.locator('#cue2');
   await expect(cue).not.toHaveClass(/is-off/);            // the test build has content below (the filler)
   await page.evaluate(() => scrollTo(0, 9));
-  await expect(cue).toHaveClass(/is-off/);
+  await expect(cue).toHaveClass(/is-off/); await expect(cue2).toHaveClass(/is-off/);
   await page.evaluate(() => scrollTo(0, 8));
-  await expect(cue).not.toHaveClass(/is-off/);
+  await expect(cue).not.toHaveClass(/is-off/); await expect(cue2).not.toHaveClass(/is-off/);
   await page.evaluate(() => scrollTo(0, 0));
-  await page.evaluate(() => { document.getElementById('main')?.remove(); dispatchEvent(new Event('resize')); });
+  await page.evaluate(() => { document.getElementById('main')?.remove(); document.getElementById('families')?.remove(); dispatchEvent(new Event('resize')); });   // the filler and, in hooks builds, the family links below the fold
   await expect(cue).toHaveClass(/is-off/);                 // nothing to scroll to
-  // while loading (the 3D tier before the lift): hidden and still
+  // while loading (the 3D tier before the lift): hidden
   const p2 = await browser.newPage({ baseURL });
   await p2.goto('/?tier=hero3d');
   await expect(p2.locator('html')).toHaveClass(/\bloading\b/);
-  expect(await p2.locator('#cue').evaluate((e) => getComputedStyle(e).opacity)).toBe('0');
-  expect(await p2.locator('#cue .ball').evaluate((e) => getComputedStyle(e).animationName)).toBe('none');
+  expect(await p2.locator('#cue').evaluate((e) => [getComputedStyle(e).opacity, getComputedStyle(e).visibility])).toEqual(['0', 'hidden']);
   await p2.close();
-  // reduced motion: still
+  // reduced motion: still, the three chevrons shown
   const p3 = await browser.newPage({ baseURL, reducedMotion: 'reduce' });
   await p3.goto('/');
-  expect(await p3.locator('#cue .ball').evaluate((e) => [getComputedStyle(e).animationName, getComputedStyle(e).transform])).toEqual(['none', 'none']);
+  expect(await p3.locator('#cue .chev-top').evaluate((e) => [getComputedStyle(e).animationName, getComputedStyle(e).transform, getComputedStyle(e).opacity])).toEqual(['none', 'none', '1']);
   await p3.close();
 });
 

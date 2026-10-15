@@ -16,7 +16,7 @@ export async function pauseCue(page: Page): Promise<void> {
   await page.evaluate(() => {
     for (const a of document.getAnimations()) {
       const t = (a.effect as KeyframeEffect | null)?.target as Element | null;
-      if (t && t.closest('.cue')) { a.pause(); a.currentTime = 0; }
+      if (t && t.closest('.cue,.scrollcue')) { a.pause(); a.currentTime = 0; }
     }
   });
 }

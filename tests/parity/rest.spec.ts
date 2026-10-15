@@ -1,7 +1,8 @@
 // AC1.2 canvas-only rest frames, stage 1: identical to the prototype (PSNR 99, the noise floor measured by
 // noise-floor.spec.ts), in normal motion and in reduced motion (port on ?tier=still3d), at 390 x 844 (dsf 1.25) and
 // 1280 x 800 (dsf 1.5). __skreedFreeze is set before load, so scene time stays at 0; frames are taken at least 3 frames
-// after the loader's ready with the DOM overlays and the poster hidden.
+// after the loader's ready with the DOM overlays and the poster hidden. Round 3: the port runs with ?intro=0 (the v9.10
+// reference has no intro); its rest frame stays the v9.10 frame (the v11 slots are inert at rest, uIntro 1, uPrint 1).
 // D8 (architecture 6.3, build step 8): PORT_TEXPATHS=bitmap,image runs the port on both texture paths; 'bitmap' is kept
 // only if its frames are identical too. REVIEW_SHOTS=1 copies the normal-motion prototype frames and x8 diff maps to
 // docs/specs/screenshots/ (hero-<w>-proto.png, hero-<w>-diff.png).
@@ -56,7 +57,7 @@ for (const vp of VIEWPORTS) for (const mode of MODES) {
     const results: Record<string, unknown> = {};
     for (const tp of TEXPATHS) {
       const port = `${dir}/port-${tp}.png`;
-      const url = new URL(`/?tier=${reduced ? 'still3d' : 'hero3d'}&texpath=${tp}`, baseURL).href;
+      const url = new URL(`/?tier=${reduced ? 'still3d' : 'hero3d'}&texpath=${tp}&intro=0`, baseURL).href;   // round 3: the intro skipped, as the v9.10 reference has none
       expect(await frame(url, setup, reduced, false, port)).toEqual([]);
       const r = compare(pp, port, { psnr: 99 }, `${dir}/diff-${tp}.png`);
       results[tp] = r;

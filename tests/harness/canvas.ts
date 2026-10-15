@@ -1,7 +1,7 @@
 // Canvas-only captures (hero-architecture.md 13.1): every DOM overlay and the poster hidden, then #stage alone.
 import type { Page } from '@playwright/test';
 
-export const OVERLAYS = '#intro,.site-logo,.copy,.cue,.tune,.labels,.fallback,.hero-poster';
+export const OVERLAYS = '#intro,.site-logo,.copy,.cue,.scrollcue,.tune,.labels,.fallback,.hero-poster,#s2labels,#s2links,#families';
 
 /**
  * Hides the overlays and paints one background under both pages. At dsf 1.25 a 390 px canvas is 487.5 device pixels

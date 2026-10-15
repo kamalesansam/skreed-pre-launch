@@ -1,15 +1,26 @@
-// Section 2's frame for now (prototype lines 898 to 916; spec D9): the 240 shades as circle swatches in catalog order on
-// Pearl Whisper, 24 per row (12 on a portrait screen), without the placeholder copy. It drifts down by up to 0.8 units
-// over the 1.5 screens after the wipe.
+// The Wall placeholder (prototype lines 898 to 916; spec D9): the far side of the last wipe (section 2 to the Wall),
+// the 240 shades as circle swatches in catalog order on Pearl Whisper, 24 per row (12 on a portrait screen), without the
+// placeholder copy. It drifts down by up to 0.8 units over the 1.5 screens after that wipe. Section 3 replaces it.
 import { CircleGeometry, Color, InstancedMesh, Matrix4, MeshBasicMaterial, PerspectiveCamera, Scene, type WebGLRenderer } from 'three';
 import { SHADE_HEX } from '../../../config/shades.gen.ts';
 import { PEARL_WHISPER } from '../../../config/tokens.ts';
 import { clamp01 } from '../util/math.ts';
-import { PULL, WIPE } from '../scroll/scrollMap.ts';
-import { makePlainComposer } from '../post/composer.ts';
-import type { Section2Scene } from './types.ts';
+import { S2T } from '../../../config/hero.ts';
+import { WIPE } from '../scroll/scrollMap.ts';
+import { makePlainComposer, type PlainComposer } from '../post/composer.ts';
 
-export function createPlaceholderWall(): Section2Scene {
+export interface WallScene {
+  readonly scene: Scene;
+  readonly camera: PerspectiveCamera;
+  /** built at start-up step 14, after composer A: RenderPass + OutputPass under NoToneMapping */
+  composer: PlainComposer | null;
+  makeComposer(renderer: WebGLRenderer): void;
+  resize(w: number, h: number, aspect: number, portrait: boolean): void;
+  update(b: number): void;
+  dispose(): void;
+}
+
+export function createPlaceholderWall(): WallScene {
   const sceneB = new Scene();
   sceneB.background = new Color(PEARL_WHISPER);
   const camB = new PerspectiveCamera(30, 1, 0.1, 100);
@@ -27,16 +38,15 @@ export function createPlaceholderWall(): Section2Scene {
     wall.instanceMatrix.needsUpdate = true; wall.instanceColor!.needsUpdate = true;
     camB.position.set(0, 0, p ? 26 : 19); camB.lookAt(0, 0, 0);
   }
-  const s2: Section2Scene = {
-    scene: sceneB, camera: camB, composer: null, scrollSegments: [],
-    install() {},
+  const s2: WallScene = {
+    scene: sceneB, camera: camB, composer: null,
     makeComposer(renderer: WebGLRenderer) { s2.composer = makePlainComposer(renderer, sceneB, camB); },
     resize(w, h, asp, p) {
       s2.composer?.c.setSize(w, h);
       camB.aspect = asp; camB.updateProjectionMatrix();
       if (p !== portrait || !done) { portrait = p; layoutWall(p); done = true; }
     },
-    update(f) { camB.position.y = -(clamp01((f.b - PULL - WIPE) / 1.5)) * 0.8; },   // a slow drift as you scroll through it
+    update(b) { camB.position.y = -(clamp01((b - S2T.W2 - WIPE) / 1.5)) * 0.8; },   // a slow drift as you scroll through it
     dispose() { wall.geometry.dispose(); wall.material.dispose(); wall.dispose(); },
   };
   return s2;

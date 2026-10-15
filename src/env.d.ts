@@ -49,4 +49,11 @@ interface Window {
   __skreedLoseContext?: () => void;
   __skreedSkyClass?: () => string;
   __skreedBlockColours?: () => string[];
+  /** v11: both scroll followers at once */
+  __skreedSnap?: (v: number) => void;
+  __skreedPrograms?: () => number;
+  /** section 2's state (ready, failed, live, S, L per gem, active, labels shown) */
+  __s2?: () => unknown;
+  /** the intro: seek(x, t0?) pins the shot at x seconds and renders that frame; play() resumes; replay() runs it again */
+  __skreedIntro?: { state(): Record<string, unknown>; seek(x: number, t0?: number): Record<string, unknown>; play(): void; replay(): void; skip(): void };
 }

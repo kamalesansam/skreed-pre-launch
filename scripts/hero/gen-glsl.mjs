@@ -59,15 +59,16 @@ writeFileSync(target('world/shaders.ts'), world);
 
 // ---- post: the bloom restore pass (931 to 935) and the composite (991 to 1035)
 const post = HEAD('the bloom restore pass and the wipe composite') + `
-/** Insertion points on the composite for the v10 intro (uIntro) and section 2's rock modes (architecture 11.1, 11.2). */
-export interface CompositeSlots { fragPars?: string; fragOut?: string }
+/** Insertion points on the composite (architecture 11.1, 11.2). \`full\` replaces the whole fragment: the v11 composite
+ * (src/scripts/hero/v11/glsl.ts) restructures the wipe as a function, which no concatenation point can express. */
+export interface CompositeSlots { fragPars?: string; fragOut?: string; full?: string }
 
 export const RESTORE_VERT = ${S.restoreVert};
 export const RESTORE_FRAG = ${S.restoreFrag};
 
 export const COMPOSITE_VERT = ${S.compositeVert};
 
-export const compositeFrag = (s: CompositeSlots = {}): string => ${slot(slot(S.compositeFrag, 'uniform vec2 uNoiseOff;', "s.fragPars ?? ''"), 'gl_FragColor = vec4(clamp(mix(s1, s2, cut), 0.0, 1.0), 1.0);', "s.fragOut ?? ''")};
+export const compositeFrag = (s: CompositeSlots = {}): string => s.full ?? ${slot(slot(S.compositeFrag, 'uniform vec2 uNoiseOff;', "s.fragPars ?? ''"), 'gl_FragColor = vec4(clamp(mix(s1, s2, cut), 0.0, 1.0), 1.0);', "s.fragOut ?? ''")};
 `;
 writeFileSync(target('post/shaders.ts'), post);
 console.log('gen-glsl: wrote logo/shaders.ts, world/shaders.ts, post/shaders.ts');

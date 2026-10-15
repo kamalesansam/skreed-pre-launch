@@ -1,9 +1,10 @@
-// The WebGL island's entry (hero-architecture.md 5.3): the prototype's module (template.html lines 260 to 1400) in its
-// start-up order, which the loader's milestones and weights depend on. boot.ts has already started the data fetches and
-// loads this chunk dynamically; every disposer is registered with life, and life.check() after every await stops the
-// start-up once a hard failure has killed the island.
+// The WebGL island's entry (hero-architecture.md 5.3; round 3: the v11.4 prototype's start-up order with the igloo intro
+// and section 2's gems filling their slots). boot.ts has already started the data fetches and loads this chunk
+// dynamically; every disposer is registered with life, and life.check() after every await stops the start-up once a
+// hard failure has killed the island. The 27 milestones (config/loader-weights.json) arrive in key order: import, b1 to
+// b10, sky, ground, intro, scene, c1 to c9, compile, frame1, frame2.
 import { PerspectiveCamera, SRGBColorSpace, Scene } from 'three';
-import { POSE } from '../../config/hero.ts';
+import { DPR_CAP, POSE } from '../../config/hero.ts';
 import { heroParams, type HeroParams } from '../../config/params.ts';
 import { hoverNoneMQ, sceneReduced } from '../motion.ts';
 import MOON_META from '../../assets/hero/moon_meta.json';
@@ -25,18 +26,19 @@ import { createStones } from './world/stones.ts';
 import { bakeWindTexture } from './world/wind.ts';
 import { createFogCards, createFogUniforms, placeFogCards, type FogUniforms } from './world/fog.ts';
 import { createCameraRig } from './camera/rig.ts';
-import { createPlaceholderWall } from './section2/placeholderWall.ts';
+import { createPlaceholderWall } from './world/wall.ts';
+import { createGems } from './section2/gems.ts';
 import { makeHeroComposer } from './post/composer.ts';
 import { makeScrollTexture } from './post/wipeTexture.ts';
-import { createComposite } from './post/composite.ts';
+import { createComposite, createLogoMask } from './post/composite.ts';
 import { createResize } from './stage/resize.ts';
 import { createPointer } from './interaction/pointer.ts';
 import { createLabels } from './interaction/labels.ts';
 import { createLoop } from './loop.ts';
 import { warmUp } from './warmup.ts';
-import { NO_INTRO } from './intro/none.ts';
+import { createIglooIntro } from './intro/igloo.ts';
 import type { RideEls } from './scroll/ride.ts';
-import type { HeroContext, SkyState } from './types.ts';
+import type { HeroContext, HeroUniforms, SkyState } from './types.ts';
 
 export interface StartOptions {
   data: HeroData;
@@ -61,15 +63,16 @@ export async function startHero(o: StartOptions): Promise<void> {
   const pieces = await data.pieces; life.check();
   bridge.report('import');
 
-  // 2. params (Tune's live copy in dev and staging when it is open)
+  // 2. params (Tune's live copy in dev and staging when it is open), and the intro director (it locks the scroll now)
   const reduced = sceneReduced(), touch = hoverNoneMQ.matches;
   const tune = import.meta.env.PUBLIC_TUNE === '1' ? window.__skreedTune : undefined;
   const P: HeroParams = tune ? tune.params : heroParams(reduced);
-  const intro = NO_INTRO;
+  const dpr = Math.min(devicePixelRatio, touch ? DPR_CAP.touch : DPR_CAP.fine);
+  const intro = createIglooIntro({ reduced, touch, dpr, mist: P.mist, bloom: P.bloom, hooks: HOOKS });
 
   // 3. renderer
   const canvas = document.getElementById('stage') as HTMLCanvasElement;
-  const { renderer, dpr } = createRenderer(canvas, { touch, forced: o.forced, extra: intro.rendererOptions });
+  const { renderer } = createRenderer(canvas, { touch, forced: o.forced, extra: intro.rendererOptions });
   life.onKill(() => { renderer.dispose(); renderer.forceContextLoss(); });
 
   // 4. scene A and its camera (igloo's field of view)
@@ -77,8 +80,8 @@ export async function startHero(o: StartOptions): Promise<void> {
   const camA = new PerspectiveCamera(30, 1, 0.1, 1200);
   const sf = createSceneFog(); sceneA.background = sf.background; sceneA.fog = sf.fog;
 
-  // 5. the logo first, so it is warm-up group c1
-  const U = createLogoUniforms(P);
+  // 5. the logo first, so it is warm-up group c1 (the intro's uniforms join the logo's before the material is built)
+  const U = Object.assign(createLogoUniforms(P), intro.logoUniforms) as HeroUniforms;
   const logo = createLogoMesh(createLogoMaterial(U, intro.slots.logo));
   sceneA.add(logo);
 
@@ -118,7 +121,7 @@ export async function startHero(o: StartOptions): Promise<void> {
   const dome = createSkyDome(skyTex, P, PROTOTYPE_SKY, intro.slots.sky);
   moon.add(dome);
 
-  // 9. the ground texture, then the floor and the stones once their binaries are in
+  // 9. the ground texture, then the floor (with the apron) and the stones once their binaries are in
   await yieldFrame(); life.check();
   const groundL = texLoad(urls.ground), groundTex = groundL.t;
   groundTex.colorSpace = SRGBColorSpace; groundTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -143,33 +146,44 @@ export async function startHero(o: StartOptions): Promise<void> {
   const rig = createCameraRig(camA);
   applyMoonWorld(sceneA, moon, rig, pose);
 
-  // 13. section 2 (v9.9: the placeholder Wall)
-  const section2 = createPlaceholderWall();
+  // 13. the Wall placeholder (the last wipe's far side) and section 2, the gems (built after the intro, one stone per frame)
+  const wall = createPlaceholderWall();
+  life.onKill(() => wall.dispose());
+  const section2 = createGems({ renderer, reduced, touch, dpr, logo, U, blocks, camA, canvas, hooks: HOOKS });
   life.onKill(() => section2.dispose());
 
   // 14. the composers
   await yieldFrame(); life.check();
   const composerA = makeHeroComposer(renderer, sceneA, camA, P.bloom);
-  section2.makeComposer(renderer);
+  wall.makeComposer(renderer);
 
-  // 15. the composite
+  // 15. the composite (the v11 fragment: the kept logo, the intro's flat night) and the logo mask
   const composite = createComposite(scrollTex.tex, reduced, intro.slots.composite);
+  const mask = createLogoMask();
+  life.onKill(() => mask.dispose());
 
   const skyState: SkyState = { dome, cls: data.cls, onAspect() {}, onFrame2() {} };   // stage 2: world/skyClass.ts
   const ctx: HeroContext = {
-    renderer, dpr, life, bridge, sceneA, camA, U, FOG, blocks, frame, logo, moon, rig,
-    groundAt: ground.groundAt, stoneTopAt: stones.stoneTopAt, sky: skyState,
-    composerA, section2, composite, intro, params: P, reduced, touch, ghost: touch && !reduced, els,
+    renderer, dpr, life, bridge, sceneA, camA, U, FOG, blocks, frame, pieces, logo, moon, rig,
+    groundAt: ground.groundAt, stoneTopAt: stones.stoneTopAt, groundMesh: ground.mesh, stonesMesh: stones.mesh, sky: skyState,
+    composerA, wall, section2, composite, mask, scrollTex: scrollTex.tex, intro, params: P, reduced, touch, ghost: touch && !reduced, els,
   };
-  section2.install(ctx);
+  // the intro's geometry, textures and wire layers (cage, outline, numbers: warm-up groups c5 to c7, before the labels' links)
+  await intro.install(ctx); life.check();
 
-  // 16. resize
+  // 16. resize (a classic scrollbar appearing or going changes the root's width without a window resize event)
   const resize = createResize(ctx);
+  intro.onResize = resize;
   resize();
   addEventListener('resize', resize);
   life.onKill(() => removeEventListener('resize', resize));
+  if ('ResizeObserver' in window) {
+    const ro = new ResizeObserver(() => { if (document.documentElement.clientWidth !== ctx.lastW) resize(); });
+    ro.observe(document.documentElement);
+    life.onKill(() => ro.disconnect());
+  }
 
-  // 17. input, state, the labels' links (added last: warm-up group c5)
+  // 17. input, state, the labels' links (added last: warm-up group c8)
   const pointer = createPointer();
   life.onKill(() => pointer.dispose());
   const labels = createLabels(els.labels, { blocks, U, logo, camA, depth: frame.DEPTH });
@@ -178,6 +192,7 @@ export async function startHero(o: StartOptions): Promise<void> {
   // 18. hooks, the loader's cut, the stage observer
   const loop = createLoop(ctx, pointer, labels, initiallyIntroDone, tex);
   life.onKill(() => { loop.stop(); labels.clear(); labels.dispose(); });
+  section2.snapTo = (screens) => { scrollTo({ top: Math.round(screens * innerHeight), behavior: 'instant' }); loop.snap(screens); };
   if (HOOKS) installHooks(ctx, loop, { skyClass: () => ctx.sky.cls });
   bridge.onIntroDone(() => loop.introDone());
   if (import.meta.env.PUBLIC_TUNE === '1' && tune) {
@@ -208,21 +223,20 @@ export async function startHero(o: StartOptions): Promise<void> {
     io.observe(track);
     life.onKill(() => { io.disconnect(); canvas.style.removeProperty('visibility'); });
   }
-  intro.install(ctx);
 
-  // the textures, in key order: while one is pending the loader reads it as network ('Slow connection')
+  // 19. the textures, in key order (while one is pending the loader reads it as network), then the intro, then the scene
   await sky.p; life.check(); bridge.report('sky');
   await groundL.p; life.check(); bridge.report('ground');
-
-  // 19. the scene is built
+  bridge.report('intro');
   if (HOOKS) await stallGate('scene');
   bridge.report('scene'); await yieldFrame(); life.check();
 
-  // 20. warm-up: compile, groups c1 to c5, composer c6
+  // 20. warm-up: compile, groups c1 to c8, composers c9
   await warmUp(ctx, resize, HOOKS ? stallGate : null);
   life.check();
+  intro.arm();   // the armed frames: real full-size frames of t = 0 under the loader, or the end state when skipped
 
-  // 21. compiled; frame1 and frame2 follow on the first two frames with both textures loaded
+  // 21. compiled; frame1 and frame2 follow from the intro's readiness (its GPU fences)
   if (HOOKS) await stallGate('compile');
   bridge.report('compile');
   compiled = true;

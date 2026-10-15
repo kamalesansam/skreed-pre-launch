@@ -9,10 +9,11 @@ box.setAttribute('data-ready','');
 if(T-Date.now()<=0){live();box.hidden=true;return false;}return true;}
 function loop(){if(tick())setTimeout(loop,1000-Date.now()%1000+5);}   /* aligned to the wall-clock second, so no value is skipped */
 loop();
-/* scroll cue: hides as soon as the page moves, or when there is nothing below to scroll to, in this plain script so it also
-   works without WebGL and under reduced motion */
-var cue=document.getElementById('cue'),R=document.documentElement;
-function cueCheck(){cue.classList.toggle('is-off',scrollY>8||R.scrollHeight<=innerHeight+8);}
+/* scroll cue (both sides): hides as soon as the page moves, or when there is nothing below to scroll to, in this plain script so it
+   also works without WebGL and under reduced motion */
+var cue=document.getElementById('cue'),cue2=document.getElementById('cue2'),R=document.documentElement;
+function cueCheck(){var off=scrollY>8||R.scrollHeight<=innerHeight+8;cue.classList.toggle('is-off',off);cue2.classList.toggle('is-off',off);}
 addEventListener('scroll',cueCheck,{passive:true});addEventListener('resize',cueCheck);cueCheck();
+new MutationObserver(cueCheck).observe(R,{attributes:true,attributeFilter:['class']});   /* the loader and the intro lock the page (overflow hidden, so nothing is below until they end) */
 /* the last script in body: everything behind the loader becomes inert while it shows (D16) */
 if(R.classList.contains('loading')&&window.__skreedLoader)window.__skreedLoader.inert(true);})();

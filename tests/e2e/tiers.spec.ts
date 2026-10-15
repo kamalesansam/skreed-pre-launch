@@ -67,7 +67,7 @@ test('AC7 reduced motion: poster tier, no loader, no seconds, still cue, no isla
   await expect(page.locator('html')).toHaveClass('js poster');
   expect(await page.locator('#intro').evaluate((e) => getComputedStyle(e).display)).toBe('none');
   expect(await page.locator('#count .sec').evaluate((e) => getComputedStyle(e).display)).toBe('none');
-  expect(await page.locator('#cue .ball').evaluate((e) => getComputedStyle(e).animationName)).toBe('none');
+  expect(await page.locator('#cue .chev-top').evaluate((e) => getComputedStyle(e).animationName)).toBe('none');
   expect(reqs.filter((u) => ISLAND.test(new URL(u).pathname))).toEqual([]);
   await ctx.close();
 });
@@ -111,8 +111,8 @@ for (const vp of [{ name: '390 x 844', viewport: { width: 390, height: 844 }, cl
     expect(await page.locator('#count').getAttribute('data-ready')).toBe('');
     await page.locator('#siteLogo').click();
     await page.waitForFunction(() => scrollY === 0);
-    // without anything below the hero (production), the cue is hidden
-    await page.evaluate(() => { document.getElementById('main')?.remove(); dispatchEvent(new Event('resize')); });
+    // without anything below the hero (production), the cue is hidden (the test build also carries the family links below the fold)
+    await page.evaluate(() => { document.getElementById('main')?.remove(); document.getElementById('families')?.remove(); dispatchEvent(new Event('resize')); });
     await expect(page.locator('#cue')).toHaveClass(/is-off/);
     expect(logs).toEqual([]);
     await ctx.close();

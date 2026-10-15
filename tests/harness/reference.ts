@@ -42,6 +42,32 @@ export function readReference(name: RefFile): Buffer {
 /** The pinned file as UTF-8 text. */
 export const readReferenceText = (name: RefFile): string => readReference(name).toString('utf8');
 
+// ---- round 3: the v11.4 prototype (the intro, the v11.2 scroll map, section 2's gems, ciao's cue), pinned in
+// tests/fixtures/hero-v11.4/ from prototypes/hero-v9/ at REF11_COMMIT (see its README.md). The v9.10 reference above
+// stays the stage 1 target; the v11.4 specs (tests/parity/v11-*.spec.ts) and the v11 unit tests read this one.
+export const REF11_COMMIT = 'ac9c61260bb0c10c7f0bf5f36cee1ce28b93722c';
+export const REF11_VERSION = 'v11.4';
+export const REF11_DIR = fileURLToPath(new URL('../fixtures/hero-v11.4/', import.meta.url));
+export const REF11_SHA256 = {
+  'index.html': 'bde312d3d611002c9fd1b3d4d7d3d2fe459a1d3a0648b03ba6b3687e099990b1',
+  'template.html': '481eaa1dc69178a4df4252b9954541dc5d68b49ef166aaac524ef712dbe2663f',
+} as const;
+const cache11 = new Map<RefFile, Buffer>();
+/** The bytes of one pinned v11.4 file, checked against its hash (throws on any difference). */
+export function readReference11(name: RefFile): Buffer {
+  let b = cache11.get(name);
+  if (!b) {
+    b = readFileSync(REF11_DIR + name);
+    const got = sha256(b);
+    if (got !== REF11_SHA256[name]) {
+      throw new Error(`round 3 reference ${REF11_DIR}${name} is not prototype ${REF11_VERSION} (sha256 ${got.slice(0, 12)}, want ${REF11_SHA256[name].slice(0, 12)}); restore it with: git show ${REF11_COMMIT.slice(0, 7)}:prototypes/hero-v9/${name}`);
+    }
+    cache11.set(name, b);
+  }
+  return b;
+}
+export const readReference11Text = (name: RefFile): string => readReference11(name).toString('utf8');
+
 /** The v9.10 asset manifest (assets/* and pieces.json), as `hash  name` lines in the order of src/assets/hero/SHA256SUMS. */
 export function referenceAssetSums(): { hash: string; name: string }[] {
   return readFileSync(REF_DIR + 'assets.SHA256SUMS', 'utf8').trim().split('\n').map((l) => {

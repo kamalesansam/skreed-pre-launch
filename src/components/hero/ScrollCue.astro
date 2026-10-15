@@ -1,6 +1,9 @@
 ---
 // The scroll cue (part "cue") and, as the last element of body (part "script"), the countdown and cue script
 // (hero-architecture.md 4.3): LAUNCH and the live-link copy are prepended as JSON.
+// The cue is ciao's side icon re-created (Sam, 2026-10-14; docs/specs/hero.md 14): two 17.5 x 73 px columns of three
+// five-dot chevrons, one at each side, drawn top down, held and wiped on a 2.5 s cycle (shell.css). Our own SVG and CSS,
+// timed by measurement; nothing of ciao's ships. Decorative: aria-hidden, no text (the loader's and the intro's gates hide it).
 import countdown from '../../inline/countdown.inline.js?raw';
 import { COPY } from '../../config/copy.ts';
 import { LAUNCH_ISO, LIVE_URL } from '../../config/site.ts';
@@ -8,6 +11,29 @@ import { inlineScript } from '../shell/inlineScript.ts';
 interface Props { part: 'cue' | 'script' }
 const { part } = Astro.props;
 const code = inlineScript('countdown.js', { LAUNCH: Date.parse(LAUNCH_ISO), LIVE: { lead: COPY.cd.liveLead, link: COPY.cd.liveLink, href: LIVE_URL } }, countdown);
+const svg = `<svg viewBox="0 0 35 146" width="100%" xmlns="http://www.w3.org/2000/svg">
+    <g class="chev chev-top">
+      <circle cx="2.4"  cy="2.4"  r="2.4" fill="currentColor" fill-opacity="0.3"/>
+      <circle cx="10"   cy="9.1"  r="2.4" fill="currentColor" fill-opacity="0.6"/>
+      <circle cx="17.5" cy="15.7" r="2.4" fill="currentColor"/>
+      <circle cx="25"   cy="9.1"  r="2.4" fill="currentColor" fill-opacity="0.6"/>
+      <circle cx="32.6" cy="2.4"  r="2.4" fill="currentColor" fill-opacity="0.3"/>
+    </g>
+    <g class="chev chev-mid">
+      <circle cx="2.4"  cy="66.4" r="2.4" fill="currentColor" fill-opacity="0.3"/>
+      <circle cx="10"   cy="73"   r="2.4" fill="currentColor" fill-opacity="0.6"/>
+      <circle cx="17.5" cy="79.7" r="2.4" fill="currentColor"/>
+      <circle cx="25"   cy="73"   r="2.4" fill="currentColor" fill-opacity="0.6"/>
+      <circle cx="32.6" cy="66.4" r="2.4" fill="currentColor" fill-opacity="0.3"/>
+    </g>
+    <g class="chev chev-bottom">
+      <circle cx="2.4"  cy="130.3" r="2.4" fill="currentColor" fill-opacity="0.3"/>
+      <circle cx="10"   cy="137"   r="2.4" fill="currentColor" fill-opacity="0.6"/>
+      <circle cx="17.5" cy="143.7" r="2.4" fill="currentColor"/>
+      <circle cx="25"   cy="137"   r="2.4" fill="currentColor" fill-opacity="0.6"/>
+      <circle cx="32.6" cy="130.3" r="2.4" fill="currentColor" fill-opacity="0.3"/>
+    </g>
+  </svg>`;
 ---
-{part === 'cue' && <div class="cue" id="cue" aria-hidden="true"><span class="lbl">{COPY.cue.label}</span><i class="ball"></i><i class="base"></i></div>}
+{part === 'cue' && <Fragment><div class="scrollcue is-left" id="cue" aria-hidden="true" set:html={svg} /><div class="scrollcue is-right" id="cue2" aria-hidden="true" set:html={svg} /></Fragment>}
 {part === 'script' && <script is:inline set:html={code}></script>}

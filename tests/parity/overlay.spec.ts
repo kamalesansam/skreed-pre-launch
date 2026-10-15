@@ -14,7 +14,9 @@ import { pinRandom, sameBackground, pauseCue, fontsReady } from '../harness/sett
 const NOW = new Date('2026-10-09T09:00:00+05:30');
 // #wallCopy is the prototype's section 2 placeholder copy, dropped by the port (spec D9, architecture 5.1). It is a
 // hidden fixed layer with will-change, which changes how Chromium composites the logotype; it is not part of the overlay.
-const HIDE = '#stage,.hero-poster,#intro,.tune,.labels,.fallback,#wallCopy{display:none!important}';
+// Round 3: the cue is ciao's side icon (hero.md 14), not the v9.10 ball, so it is hidden on both pages here and compared by
+// tests/parity/v11-cue.spec.ts against the v11.4 prototype; section 2's layers and the family links are the port's only.
+const HIDE = '#stage,.hero-poster,#intro,.tune,.labels,.fallback,#wallCopy,.cue,.scrollcue,#s2labels,#s2links,#families{display:none!important}';
 const VIEWPORTS = [
   { name: '390', viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 },
   { name: '1280', viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1.5 },
@@ -97,14 +99,9 @@ async function shoot3d(base: string, vp: (typeof VIEWPORTS)[number], proto: bool
   if (proto) await servePrototype(ctx);
   const page = await ctx.newPage();
   await page.clock.setFixedTime(NOW);
-  await page.goto(proto ? PROTO_URL : new URL('/?tier=hero3d', base).href, { timeout: 300_000 });
+  await page.goto(proto ? PROTO_URL : new URL('/?tier=hero3d&intro=0', base).href, { timeout: 300_000 });
   await page.waitForFunction(() => !document.getElementById('intro') && (window as unknown as { __heroStarted?: boolean }).__heroStarted, null, { timeout: 2_700_000, polling: 500 });
   const ride = await page.evaluate(() => { const c = document.getElementById('heroCopy')!, s = getComputedStyle(c); return [s.position, s.transform, s.clipPath, document.getElementById('siteLogo')!.dataset.tone].join(' '); });
-  // D20: the port's cue bounces three times after the lift and rests, so its animation has usually finished by now and
-  // there is nothing to pause at 0. Restarting the ball's and the line's animations (none, reflow, back) brings the bounce
-  // back without touching the cue's opacity, and settle() then pauses both pages at 0 (AC1.3). The prototype's cue loops
-  // forever and is unaffected.
-  if (!proto) await page.evaluate(() => { for (const e of document.querySelectorAll<HTMLElement>('#cue .ball, #cue .base')) { e.style.animation = 'none'; void e.offsetWidth; e.style.removeProperty('animation'); } });
   await settle(page);
   const png = await page.screenshot({ timeout: 600_000 });
   await ctx.close();

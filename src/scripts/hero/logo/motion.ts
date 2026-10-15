@@ -15,6 +15,10 @@ export interface BlockFrame {
   floor: boolean;
   groundAt: (x: number, z: number) => number;
   stoneTopAt: (x: number, z: number) => number;
+  /** igloo's introDisplacementModulator: gates the breathing from 2 s of the intro (1 after it) */
+  breath?: number;
+  /** a seek (test hook) shows the settled pose for its time */
+  paused?: boolean;
 }
 
 const tmpQ = new Quaternion(), ax = [new Vector3(0, 1, 0), new Vector3(0, 0, 1), new Vector3(1, 0, 0)];
@@ -27,12 +31,13 @@ export function updateBlocks(blocks: Block[], U: LogoUniforms, P: HeroParams, f:
     l *= Math.sin(-t * 2 + b.c.x) * 0.5 + 0.5;
     l *= Math.cos(-t) * 0.5 + 0.5;
     l *= 0.5 + 1.5 * b.rand.z;
-    l *= 0.5 * P.breath * live;
+    l *= 0.5 * P.breath * live * (f.breath ?? 1);
     const c = Math.sin(t + b.rand.x * 12.342) * b.rand.y;
     const dist = Math.hypot(b.c.x - mouse.x, b.c.y - mouse.y);
     const h = fit(smoothstep(P.r0, P.r1, dist), 0, 1, P.push + P.wob * c, 0);
     l = Math.max(0, Math.max(l, h * heroOn * live));
     b.t1 = l; b.t2 = lerpFPS(b.t2, b.t1, P.follow, ratio); b.d = lerpFPS(b.d, b.t2, P.follow, ratio);
+    if (f.paused) b.t2 = b.d = l;
     dir.set(b.c.x, b.c.y, P.lift);
     U.uOff.value[i].copy(dir).multiplyScalar(b.d);
     b.q.identity();

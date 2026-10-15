@@ -11,7 +11,10 @@ for (const tier of ['poster', 'hero3d']) {
       await page.goto(new URL(`/?tier=${tier}`, baseURL).href);
       await page.evaluate(() => document.fonts.ready);
       expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
-      const sel = tier === 'poster' ? ['#siteLogo svg', '#cdEyebrow', '#count', '#cue'] : ['#intro .ld-w', '#ldPct'];
+      // the content gutter: the logotype, the countdown and the loader. Round 3: the scroll cue is ciao's side icon at ciao's
+      // measured place (4 percent plus 3.5 px from each edge, hero.md 12.3), decorative and aria-hidden, so it is not content
+      // and sits inside the 16 px gutter on phones (exception E-cue-gutter, pending Sam).
+      const sel = tier === 'poster' ? ['#siteLogo svg', '#cdEyebrow', '#count'] : ['#intro .ld-w', '#ldPct'];
       for (const s of sel) {
         const r = await page.locator(s).evaluate((e) => { const b = e.getBoundingClientRect(); return { l: b.left, r: b.right }; });
         expect(r.l, `${s} left`).toBeGreaterThanOrEqual(16);

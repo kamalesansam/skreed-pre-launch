@@ -1,4 +1,8 @@
-# Family pages prototype (2026-10-09 to 2026-10-14)
+# Family pages prototype (2026-10-09 to 2026-10-15)
+
+## Round 3 (2026-10-15)
+
+The round 3 page (the Desert stand-in for MagTough, Snap and Armor; one case per frame with the half turn at every transition; the argument screen GO / BEYOND BASIC; the wordmark with the hero's glitch and "All families" in place of the header; no Reserve, no "Show swatches", only the family name on landing) is now the real `/shades/<family>/` route on the Astro build. What was built, checked and not done: `docs/specs/family-page.md` section 21.
 
 ## Round 2 after ciao (2026-10-14, hero link version 33)
 

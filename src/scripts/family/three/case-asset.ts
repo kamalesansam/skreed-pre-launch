@@ -1,9 +1,10 @@
 // One case model, its parts and its normalisation (docs/specs/case-model-class.md 2 to 6; Sam 2026-10-09: the case
-// only, so the parts are body, accent and the supplier model's logo inlay, never a device). The normalisation is a matrix, never a geometry rewrite,
+// only, so the parts are body, accent, the supplier model's logo inlay and, on the second model (round 3), the magnetic
+// ring, which takes the shade like the body; never a device). The normalisation is a matrix, never a geometry rewrite,
 // because quantised attributes cannot take a baked transform (section 5).
 import { Box3, BufferGeometry, Matrix4, Mesh, Quaternion, Vector3, type Material, type Object3D, type Texture } from 'three';
 
-export type PartName = 'body' | 'accent' | 'logo';
+export type PartName = 'body' | 'accent' | 'logo' | 'ring';
 export interface CasePart {
   readonly name: PartName;
   readonly geometry: BufferGeometry;
@@ -13,6 +14,8 @@ export interface CasePart {
   readonly followsShade: boolean;
   /** a part that follows the shade at a fraction of it (the supplier logo: 0.8468, amendment 3) */
   readonly tint?: number;
+  /** the file's base colour, linear (the accent keeps its own: the trim's dark grey) */
+  readonly color?: readonly [number, number, number];
 }
 export interface CaseAsset {
   readonly source: 'supplier' | 'standin';
@@ -29,7 +32,7 @@ export interface CaseAsset {
 }
 
 /** A part before normalisation: its geometry and the node's world matrix in the file (dequantising transform included). */
-export interface RawPart { name: PartName; geometry: BufferGeometry; nodeWorld: Matrix4; material?: Material; followsShade: boolean; tint?: number }
+export interface RawPart { name: PartName; geometry: BufferGeometry; nodeWorld: Matrix4; material?: Material; followsShade: boolean; tint?: number; color?: readonly [number, number, number] }
 
 /**
  * The normalising matrix for a set of parts (section 5): the case box is the union of every part's geometry box
@@ -58,12 +61,12 @@ export function normaliseParts(parts: readonly RawPart[], orient?: Quaternion): 
 }
 /** base = normalise x nodeWorld for each part; one normalisation serves both LODs, so the front case swaps LOD in place. */
 export function withBase(parts: readonly RawPart[], normalise: Matrix4): CasePart[] {
-  return parts.map((p) => ({ name: p.name, geometry: p.geometry, base: normalise.clone().multiply(p.nodeWorld), material: p.material, followsShade: p.followsShade, ...(p.tint !== undefined ? { tint: p.tint } : {}) }));
+  return parts.map((p) => ({ name: p.name, geometry: p.geometry, base: normalise.clone().multiply(p.nodeWorld), material: p.material, followsShade: p.followsShade, ...(p.tint !== undefined ? { tint: p.tint } : {}), ...(p.color ? { color: p.color } : {}) }));
 }
 
 /** The manifest's part naming (section 3): node names first, material names second. */
 export interface PartSpec { node: string; material: string; followsShade?: boolean; tint?: number }
-export interface PartMap { body: PartSpec; accent?: PartSpec; logo?: PartSpec }
+export interface PartMap { body: PartSpec; accent?: PartSpec; logo?: PartSpec; ring?: PartSpec }
 export const CONTRACT_PARTS: PartMap = { body: { node: 'Case_Body', material: 'Shade' }, accent: { node: 'Case_Accent', material: 'Accent' } };
 
 const area = (g: BufferGeometry) => {
@@ -98,7 +101,7 @@ export function findParts(root: Object3D, map?: PartMap, warn: (msg: string) => 
     if (mat.color && (Math.abs(mat.color.r - 1) > 1e-3 || Math.abs(mat.color.g - 1) > 1e-3 || Math.abs(mat.color.b - 1) > 1e-3)) throw new Error(`case model: body part "${m.name}" has a base colour other than white`);
     if (m.geometry.getAttribute('color')) throw new Error(`case model: body part "${m.name}" has vertex colours`);
   };
-  const raw = (m: Mesh, name: PartName, followsShade: boolean, tint?: number): RawPart => ({ name, geometry: m.geometry, nodeWorld: m.matrixWorld.clone(), material: meshMaterial(m), followsShade, ...(tint !== undefined ? { tint } : {}) });
+  const raw = (m: Mesh, name: PartName, followsShade: boolean, tint?: number): RawPart => { const c = meshMaterial(m).color; return { name, geometry: m.geometry, nodeWorld: m.matrixWorld.clone(), material: meshMaterial(m), followsShade, ...(tint !== undefined ? { tint } : {}), ...(c ? { color: [c.r, c.g, c.b] as const } : {}) }; };
   if (map) {
     const byName = (node: string, material: string) => meshes.find((m) => m.name === node) ?? meshes.find((m) => meshMaterial(m).name === material);
     const body = byName(map.body.node, map.body.material);
@@ -109,6 +112,8 @@ export function findParts(root: Object3D, map?: PartMap, warn: (msg: string) => 
     if (acc && acc !== body) out.push(raw(acc, 'accent', !!map.accent!.followsShade, map.accent!.tint));
     const logo = map.logo && byName(map.logo.node, map.logo.material);
     if (logo && logo !== body && logo !== acc) out.push(raw(logo, 'logo', map.logo!.followsShade !== false, map.logo!.tint ?? 1));
+    const ring = map.ring && byName(map.ring.node, map.ring.material);
+    if (ring && ring !== body && ring !== acc && ring !== logo) { check(ring); out.push(raw(ring, 'ring', map.ring!.followsShade !== false)); }
     return out;
   }
   const candidates = meshes.filter((m) => !meshMaterial(m).map).map((m) => ({ m, a: area(m.geometry) })).sort((p, q) => q.a - p.a);

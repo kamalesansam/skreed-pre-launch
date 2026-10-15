@@ -1,6 +1,10 @@
-// The moon floor (prototype lines 600 to 687): the bake's grid (rows packed densely near the camera, widening with
-// distance), the baked light from Blender, and igloo's surface character in our own shader code: the tone curve with
-// Sam's locked terrain values, the crumb grain and the ground mist. groundAt() is the floor height at a world (x, z).
+// The moon floor (prototype v11.4 template.html, the ground block): the bake's grid (rows packed densely near the
+// camera, widening with distance), the baked light from Blender, and igloo's surface character in our own shader code:
+// the tone curve with Sam's locked terrain values, the crumb grain and the ground mist. groundAt() is the floor height
+// at a world (x, z).
+// The apron (v11.1, 2026-10-11): the bake stops 30 units in front of the logo; past it the near ground is mirrored about
+// that edge (100 rows of 0.5 units, to z 80), so the level camera can back away without ever seeing the end of the
+// world. The apron sits behind the hero camera, so the rest frame is unchanged.
 import { BufferAttribute, BufferGeometry, DoubleSide, Mesh, MeshBasicMaterial, type Texture, type WebGLProgramParametersWithUniforms } from 'three';
 import { GROUND_FRAG_COMMON, GROUND_FRAG_MAP, GROUND_VERT_COMMON, GROUND_VERT_PROJECT } from './shaders.ts';
 import type { FogUniforms } from './fog.ts';
@@ -20,8 +24,18 @@ export interface Ground { mesh: Mesh<BufferGeometry, MeshBasicMaterial>; materia
 export function createGround(o: { meta: MoonMeta; heights: ArrayBuffer; tex: Texture; FOG: () => FogUniforms; P: HeroParams; patches?: ShaderPatch[] }): Ground {
   const { nr, nc, zmin, zmax } = o.meta.ground, P = o.P, patches = o.patches ?? [];
   const hq = new Uint16Array(o.heights);
-  const pos = new Float32Array(nr * nc * 3), uv = new Float32Array(nr * nc * 2), idx = new Uint32Array((nr - 1) * (nc - 1) * 6);
-  for (let r = 0; r < nr; r++) {
+  const NA = 100, DZ = 0.5, NT = nr + NA, Hq = (r: number, c: number) => zmin + hq[r * nc + c] / 65535 * (zmax - zmin);
+  const pos = new Float32Array(NT * nc * 3), uv = new Float32Array(NT * nc * 2), idx = new Uint32Array((NT - 1) * (nc - 1) * 6);
+  for (let r = 0; r < NT; r++) {
+    if (r >= nr) {
+      const z = 30 + (r - nr + 1) * DZ, PYm = z - 60, rr = (1 - Math.pow((PYm + 30) / 450, 1 / 2.2)) * (nr - 1), r0 = Math.min(nr - 2, Math.floor(rr)), fr = rr - r0, halfWm = 34 + 1.25 * (PYm + 30);
+      for (let c = 0; c < nc; c++) {
+        const k = r * nc + c, x = (-1 + 2 * c / (nc - 1)) * 34, cc = Math.min(nc - 1, Math.max(0, (x / halfWm + 1) / 2 * (nc - 1))), c0 = Math.min(nc - 2, Math.floor(cc)), fc = cc - c0;
+        pos[k * 3] = x; pos[k * 3 + 1] = (Hq(r0, c0) * (1 - fc) + Hq(r0, c0 + 1) * fc) * (1 - fr) + (Hq(r0 + 1, c0) * (1 - fc) + Hq(r0 + 1, c0 + 1) * fc) * fr; pos[k * 3 + 2] = z;
+        uv[k * 2] = cc / (nc - 1); uv[k * 2 + 1] = 1 - rr / (nr - 1);
+      }
+      continue;
+    }
     const PY = -30 + 450 * Math.pow(1 - r / (nr - 1), 2.2), halfW = 34 + 1.25 * (PY + 30);
     for (let c = 0; c < nc; c++) {
       const k = r * nc + c;
@@ -30,7 +44,7 @@ export function createGround(o: { meta: MoonMeta; heights: ArrayBuffer; tex: Tex
     }
   }
   let j = 0;
-  for (let r = 0; r < nr - 1; r++) for (let c = 0; c < nc - 1; c++) {
+  for (let r = 0; r < NT - 1; r++) for (let c = 0; c < nc - 1; c++) {
     const a = r * nc + c, b = a + nc, d = a + 1, e = b + 1;
     idx[j++] = a; idx[j++] = b; idx[j++] = e; idx[j++] = a; idx[j++] = e; idx[j++] = d;
   }
@@ -49,9 +63,9 @@ export function createGround(o: { meta: MoonMeta; heights: ArrayBuffer; tex: Tex
   material.customProgramCacheKey = () => ['skreed-ground', ...patches.map((p) => p.key)].join('|');
   const mesh = new Mesh(g, material);
   mesh.frustumCulled = false;
-  // height of the floor at a world (x, z), from the same grid: the blocks use it so they never sink into the ground
+  // height of the floor at a world (x, z), from the same grid (the apron mirrors past z 30): the blocks use it so they never sink
   const groundAt = (x: number, z: number) => {
-    const PY = Math.max(-30, -z), rr = (1 - Math.pow((PY + 30) / 450, 1 / 2.2)) * (nr - 1);
+    const PY = Math.max(-30, -(z > 30 ? 60 - z : z)), rr = (1 - Math.pow((PY + 30) / 450, 1 / 2.2)) * (nr - 1);
     const cc = Math.min(nc - 1, Math.max(0, (x / (34 + 1.25 * (PY + 30)) + 1) / 2 * (nc - 1)));
     const r0 = Math.min(nr - 2, Math.floor(rr)), c0 = Math.min(nc - 2, Math.floor(cc)), fr = rr - r0, fc = cc - c0;
     const H = (r: number, c: number) => zmin + hq[r * nc + c] / 65535 * (zmax - zmin);

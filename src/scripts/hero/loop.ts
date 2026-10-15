@@ -1,51 +1,62 @@
-// The frame (prototype lines 1273 to 1380), in the order of hero-architecture.md 5.4 (F1 to F16). It owns t, ratio, live
-// and tHero0. requestAnimationFrame is called first, so one bad frame can never stop the loop.
-import { ACESFilmicToneMapping, Clock, NoToneMapping, Plane, Raycaster, Vector3, type Vector2 } from 'three';
-import { clamp01, lerpFPS } from './util/math.ts';
+// The frame (prototype v11.4 template.html step(); hero-architecture.md 5.4, F1 to F16, with the intro's clock and the
+// section 2 hand-over). It owns t, ratio and the scroll followers; the intro director owns live, breath and the crane.
+// requestAnimationFrame is called first, so one bad frame can never stop the loop.
+import { ACESFilmicToneMapping, Clock, Color, NoToneMapping, Plane, Raycaster, Vector3, type Scene, type Vector2 } from 'three';
+import { lerpFPS } from './util/math.ts';
 import { updateBlocks } from './logo/motion.ts';
 import { updateFogLogoRect } from './world/fog.ts';
-import { createScrollFollower, mapScroll } from './scroll/scrollMap.ts';
+import { createScrollFollower, mapScroll, PULL } from './scroll/scrollMap.ts';
 import { rideCopy } from './scroll/ride.ts';
 import { ghostTarget, type Pointer } from './interaction/pointer.ts';
 import type { Labels } from './interaction/labels.ts';
-import type { FrameCtx, HeroContext } from './types.ts';
+import type { HeroContext } from './types.ts';
 
 export interface LoopState {
   t: number; ratio: number; live: number;
   mouse: Vector3; scroll: { a: number; b: number };
   introDone: boolean;
-  /** frames reported since both textures loaded (frame step F15) */
-  texFrames: number;
 }
 
-export interface Loop { state: LoopState; start(): void; stop(): void; readonly running: boolean; introDone(): void }
+export interface Loop {
+  state: LoopState; start(): void; stop(): void; readonly running: boolean;
+  introDone(): void;
+  /** both scroll followers at once (the keyboard's jump to section 2, the test hook) */
+  snap(v: number): void;
+  /** one frame now, outside requestAnimationFrame (the intro's seek hook) */
+  stepNow(): void;
+}
 
-/** tex.ok counts the textures loaded (0 to 2); the first two frames after both report frame1 and frame2. */
+/** tex.ok counts the textures loaded (0 to 2); the intro director turns them into frame1 and frame2. */
 export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, initiallyIntroDone: boolean, tex: { ok: number }): Loop {
-  const { renderer, camA, U, blocks, logo, params: P, reduced, composerA, section2, composite, intro, els } = ctx;
+  const { renderer, camA, U, blocks, logo, params: P, reduced, composerA, wall, composite, intro, els, mask } = ctx;
+  const S2 = ctx.section2;
   const clock = new Clock();
   const ray = new Raycaster(), plane = new Plane(new Vector3(0, 0, 1), 0), hit = new Vector3();
-  const st: LoopState = { t: 0, ratio: 1, live: 0, mouse: new Vector3(99, 99, 0), scroll: createScrollFollower(), introDone: initiallyIntroDone, texFrames: 0 };
-  const scroll = st.scroll as ReturnType<typeof createScrollFollower>;
-  let tHero0 = 0, raf = 0, running = false;
+  const scroll = createScrollFollower();
+  const st: LoopState = { t: 0, ratio: 1, live: 0, mouse: new Vector3(99, 99, 0), scroll, introDone: initiallyIntroDone };
+  let raf = 0, running = false;
   const C = composite.C;
+  const uMask = (U as Record<string, { value: unknown }>).uMask as { value: number } | undefined;
+  const _cc = new Color();
 
-  function frame() {
-    raf = requestAnimationFrame(frame);                                          // F1
+  function step() {
     if (import.meta.env.PUBLIC_HERO_HOOKS === '1') window.__skreedFrame = (window.__skreedFrame ?? 0) + 1;
     window.__heroStarted = true;
-    const freeze = import.meta.env.PUBLIC_HERO_HOOKS === '1' && !!window.__skreedFreeze;
-    const dt = freeze ? (clock.getDelta(), 0) : Math.min(clock.getDelta(), 1 / 12);   // F2
+    const now = performance.now(), raw = clock.getDelta();                        // F2
+    const frozen = (import.meta.env.PUBLIC_HERO_HOOKS === '1' && !!window.__skreedFreeze) || intro.paused;   // freeze: test hook for pixel-diff measurements; a seek pins the clocks
+    const dt = frozen ? 0 : Math.min(raw, 1 / 12);
     st.t += dt; st.ratio = Math.min(5, dt / (1 / 60));
     const t = st.t, ratio = st.ratio;
+    const iv = intro.frame({ t, dt, raw, frozen, now, texOk: tex.ok }, ctx);      // the intro's clock, timeline, fences and readiness
     U.uTime.value = reduced ? 0 : t;                                             // F3
-    const iv = intro.update(t, dt, ctx);
-    st.live = iv?.live ?? (st.introDone ? (reduced ? 1 : 1 - Math.pow(1 - clamp01((t - tHero0) / 2), 3)) : 0);   // F4
+    st.live = iv.live;                                                           // F4
     const live = st.live;
     logo.position.y = reduced ? 0 : Math.sin(t * 0.7) * 0.07 * live;            // F5
     const pr = innerHeight > 0 ? scrollY / innerHeight : 0;                       // F6
     scroll.update(pr, ratio);
-    const { s, tp, heroOn } = mapScroll(scroll.b, reduced);
+    if (S2 && !S2.started && intro.done) void S2.build();
+    if (S2 && !S2.ready && !S2.failed && scroll.b > PULL) scroll.b = PULL;   // section 2 is still being built: the wipe waits
+    const { s, tp, tp2, heroOn } = mapScroll(scroll.b, reduced);
 
     // F7: pointer target: real pointer, or a slow sweep on touch when idle
     let target: Vector2 | null = null;
@@ -55,27 +66,40 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
     if (target) { ray.setFromCamera(target, camA); if (ray.ray.intersectPlane(plane, hit)) { mouse.x = lerpFPS(mouse.x, hit.x, P.mouse, ratio); mouse.y = lerpFPS(mouse.y, hit.y, P.mouse, ratio); } }
     else { mouse.x = lerpFPS(mouse.x, 99, P.mouse * 0.25, ratio); mouse.y = lerpFPS(mouse.y, 99, P.mouse * 0.25, ratio); }
 
-    updateBlocks(blocks, U, P, { t, ratio, live, heroOn, mouse, logoY: logo.position.y, floor: ctx.moon.visible, groundAt: ctx.groundAt, stoneTopAt: ctx.stoneTopAt });   // F8
+    updateBlocks(blocks, U, P, { t, ratio, live, heroOn, mouse, logoY: logo.position.y, floor: ctx.moon.visible, groundAt: ctx.groundAt, stoneTopAt: ctx.stoneTopAt, breath: iv.breath, paused: intro.paused });   // F8
+    if (S2) for (let i = 0; i < blocks.length; i++) if (S2.hidden(i, scroll.b)) U.uOff.value[i].set(0, -500, 0);   // a block that has left for section 2 is gone from the logo
     logo.updateMatrixWorld();                                                    // F9
-    labels.update(dt, !!target && heroOn > 0.5 && tp <= 0 && live > 0.5, mouse); // F10
+    labels.update(dt, !!target && heroOn > 0.5 && tp <= 0 && live > 0.5 && iv.breath >= 1, mouse);   // F10: igloo's labels wait for the breath gate
     if (els.labels) els.labels.style.visibility = tp > 0 ? 'hidden' : 'visible';
 
-    ctx.rig.update({ s, t, ratio, live, reduced, pointerActive: pointer.active, target, follow: ctx.sky.dome });   // F11
-
-    const f: FrameCtx = { t, dt, ratio, live, b: scroll.b, s, tp, heroOn, reduced };
-    section2.update(f);                                                          // F12
+    ctx.rig.update({ s, t, ratio, live, reduced, b: scroll.b, curve: true, crane: iv.crane, pointerActive: pointer.active, target, follow: ctx.sky.dome });   // F11
+    S2?.update(scroll.b, tp, tp2, t, dt);                                        // F12
+    wall.update(scroll.b);
     if (ctx.moon.visible) updateFogLogoRect(ctx.FOG, camA, logo.position.y, renderer);   // F13
 
-    // F14: render the visible scenes, then the composite
-    if (tp < 1) composerA.c.render(dt);
-    if (tp > 0) { renderer.toneMapping = NoToneMapping; section2.composer!.c.render(dt); renderer.toneMapping = ACESFilmicToneMapping; }   // swatches stay true to the catalog
-    C.tA.value = composerA.c.readBuffer.texture; C.tB.value = section2.composer!.c.readBuffer.texture;
-    C.uProgress.value = tp; C.uNoiseOff.value.set(Math.random(), Math.random());
-    renderer.setRenderTarget(null); renderer.render(composite.scene, composite.camera);
-    if (intro.reportFrames) intro.reportFrames(f, (m) => ctx.bridge.report(m));   // F15
-    else if (tex.ok === 2 && st.texFrames < 2) { st.texFrames++; const m = st.texFrames === 1 ? 'frame1' : 'frame2'; ctx.bridge.report(m); if (m === 'frame2') ctx.sky.onFrame2(); }
+    // F14: hero, then section 2 (its own targets), then the Wall; the composite wipes hero to section 2, then section 2 to the Wall
+    if (!iv.hold) {
+      const s2on = !!S2 && S2.ready && tp > 0 && tp2 < 1, keep = s2on && tp2 <= 0 && S2!.logoLeft(), wallOn = tp2 > 0 || (tp > 0 && !(S2 && S2.ready));
+      ctx.moon.visible = tp < 1;   // once the first wipe has covered the scene only the logo is seen: the ground and sky are skipped
+      if (tp < 1 || keep) composerA.c.render(dt);
+      if (s2on) S2!.render();
+      if (wallOn) { renderer.toneMapping = NoToneMapping; wall.composer!.c.render(dt); renderer.toneMapping = ACESFilmicToneMapping; }   // swatches stay true to the catalog
+      if (keep && uMask) { const pc = renderer.getClearColor(_cc), pa = renderer.getClearAlpha(); renderer.setClearColor(0x000000, 1); uMask.value = 1;
+        renderer.setRenderTarget(mask.rt); renderer.render(logo as unknown as Scene, camA); uMask.value = 0; renderer.setClearColor(pc, pa); }
+      const wallTex = wall.composer!.c.readBuffer.texture;
+      if (tp2 > 0) { C.tA.value = S2!.out; C.tB.value = wallTex; C.uProgress.value = tp2; C.uParA.value = 1; }
+      else { C.tA.value = composerA.c.readBuffer.texture; C.tB.value = s2on ? S2!.out : wallTex; C.uProgress.value = tp; C.uParA.value = s2on ? 0 : 1; }
+      C.tH.value = composerA.c.readBuffer.texture; C.tM.value = mask.rt.texture; C.tS.value = s2on ? S2!.out : mask.black; C.uKeep.value = keep ? 1 : 0;
+      C.uNoiseOff.value.set(Math.random(), Math.random());
+      renderer.setRenderTarget(null); renderer.render(composite.scene, composite.camera);
+      intro.afterRender(now, ctx, tex.ok);                                       // F15
+    }
 
-    rideCopy(els, tp, innerWidth / innerHeight);                                 // F16
+    rideCopy(els, tp, innerWidth / innerHeight, !!S2 && S2.ready);               // F16
+  }
+  function frame() {
+    raf = requestAnimationFrame(frame);                                          // F1: the request first, so one bad frame can never stop the loop
+    step();
   }
 
   return {
@@ -83,10 +107,8 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
     get running() { return running; },
     start() { if (running) return; running = true; raf = requestAnimationFrame(frame); },
     stop() { running = false; cancelAnimationFrame(raf); },
-    introDone() {
-      if (st.introDone) return; st.introDone = true; tHero0 = st.t; intro.start(st.t);
-      const w = window;
-      if (w.__skreedLogo) w.__skreedLogo.intro(0.25); else (w.__skreedLogoQ ||= []).push(['intro', 0.25]);
-    },
+    introDone() { if (st.introDone) return; st.introDone = true; intro.start(st.t); },
+    snap(v) { scroll.snap(v); },
+    stepNow() { step(); },
   };
 }
