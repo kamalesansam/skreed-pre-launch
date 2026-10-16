@@ -34,7 +34,8 @@ export function mountQuiz(root: HTMLElement): void {
       c.style.transform = k === i + 1 ? 'scale(0.96)' : '';
     });
     const c = cards[i];
-    if (enter) c.animate(reduced() ? [{ opacity: 0 }, { opacity: 1 }] : [{ transform: 'scale(0.96)', opacity: 0.6 }, { transform: 'none', opacity: 1 }], { duration: reduced() ? DUR_REDUCED : DUR_CARD, easing: EASE_STANDARD });
+    // the next card was already in view behind the top one, so it only comes forward (no opacity ramp: that read as doubled text under the card flying off)
+    if (enter) c.animate(reduced() ? [{ opacity: 0 }, { opacity: 1 }] : [{ transform: 'scale(0.96)' }, { transform: 'none' }], { duration: reduced() ? DUR_REDUCED : DUR_CARD, easing: EASE_STANDARD });
     announce(`${Q.cardAria(i + 1)}: ${QUIZ_CARDS[i].q}`);
     c.focus({ preventScroll: true });
   }
@@ -61,7 +62,7 @@ export function mountQuiz(root: HTMLElement): void {
     const w = card.offsetWidth || 320, dir = side ? -1 : 1;
     const fly = reduced()
       ? card.animate([{ opacity: 1 }, { opacity: 0 }], { duration: DUR_REDUCED, fill: 'forwards' })
-      : card.animate([{ transform: card.style.transform || 'none' }, { transform: `translateX(${dir * (w * 1.3 + Math.abs(dx))}px) rotate(${dir * 14}deg)`, opacity: 0.4 }], { duration: DUR_CARD, easing: EASE_IN, fill: 'forwards' });
+      : card.animate([{ transform: card.style.transform || 'none' }, { transform: `translateX(${dir * (w * 1.3 + Math.abs(dx))}px) rotate(${dir * 14}deg)` }], { duration: DUR_CARD, easing: EASE_IN, fill: 'forwards' });   // opaque all the way: it covers the next card until it has left
     fly.finished.then(() => {
       fly.cancel(); card.style.transform = ''; card.hidden = true; card.classList.remove('is-top');
       top = i + 1; busy = false;
@@ -88,7 +89,7 @@ export function mountQuiz(root: HTMLElement): void {
     for (const c of cards) { c.hidden = false; c.classList.remove('is-top', 'is-next'); }
     answers.length = 0; top = 0;
     deck.hidden = false; setState('quiz'); showCard(0, true);
-    deck.scrollIntoView({ block: 'start', behavior: reduced() ? 'instant' : 'smooth' });
+    root.scrollIntoView({ block: 'start', behavior: reduced() ? 'instant' : 'smooth' });   // the section's top, so the deck sits where the intro stood
   }
 
   // ---- input: a tap on an option, Left and Right on the card (the options bubble to it), or a drag past 35 percent
@@ -102,7 +103,7 @@ export function mountQuiz(root: HTMLElement): void {
   }
   function applyDrag(card: HTMLLIElement, dx: number) {
     const w = card.offsetWidth || 320, p = Math.max(-1, Math.min(1, dx / (w * COMMIT_FRACTION)));
-    if (!reduced()) card.style.transform = `translateX(${dx}px) rotate(${(-8 * p).toFixed(2)}deg)`;
+    if (!reduced()) card.style.transform = `translateX(${dx}px) rotate(${(8 * p).toFixed(2)}deg)`;   // leans into the drag (the same sense as the fly-off)
     const [l, r] = opts(card);
     l?.classList.toggle('is-lift', p <= -1); r?.classList.toggle('is-lift', p >= 1);   // past the threshold the side that will commit shows it (reduced motion too)
   }
