@@ -1,15 +1,24 @@
 ---
 // Section 3, the quiz (docs/specs/quiz.md), in the hero's after-track slot: the intro over section 3's fog ground, the
-// six swipe cards, the ten results (all server-rendered, one shown) and the gift form. The markup is complete without
-// JavaScript (the intro reads, the no-JS line links to the families); scripts/quiz/deck.ts, loaded once the section is
-// within a screen, adds the swipe, the scoring, the states and the fog plates. No style attributes (the CSP has no
-// style-src-attr): the swatches take their shade through data-shade and the rules in quiz.css.
-import { QUIZ_CARDS, QUIZ_COPY as Q, QUIZ_RESULTS, resultHref } from '../../config/quiz.ts';
+// ten question cards (seven answers each), the seven results (all server-rendered, one shown) and the gift form. The
+// markup is complete without JavaScript (the intro reads, the no-JS line links to the families); scripts/quiz/deck.ts,
+// loaded once the section is within a screen, adds the cards, the scoring, the shade draw and the states. Shade names,
+// numbers and hexes are resolved here at build from the catalog (the lazy chunk carries ids only). No style attributes
+// (the CSP has no style-src-attr): the swatches carry data-shade and deck.ts paints them through the CSSOM.
+import { QUIZ_COPY as Q, QUIZ_PERSONAS, QUIZ_QUESTIONS, needsRing, shadeHref } from '../../config/quiz.ts';
+import { SHADES } from '../../config/shades.gen.ts';
 import '../../styles/quiz.css';
 // The gift form needs its Worker (quiz.md D7): on in dev, test and staging builds, off in production until PUBLIC_LEADS
 // is set to on (the same rule as FAMILY_PAGES, folded at build time).
 const LEADS = import.meta.env.PUBLIC_LEADS === 'on' || (import.meta.env.PUBLIC_LEADS !== 'off'
   && (import.meta.env.DEV || import.meta.env.PUBLIC_STAGING === '1' || import.meta.env.PUBLIC_HERO_HOOKS === '1'));
+const byId = new Map(SHADES.map((s) => [s.id, s]));
+const familyName = (f: string) => f.split('-').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+const shade = (id: string) => {
+  const s = byId.get(id);
+  if (!s) throw new Error(`quiz: ${id} is not a catalog shade`);
+  return { ...s, fam: Q.fam(familyName(s.family), s.index), href: shadeHref(s.family, s.n), ring: needsRing(s.hex) };
+};
 ---
 <section class="quiz" id="find" aria-label={Q.aria} data-state="intro">
   <div class="qz-stage">
@@ -21,42 +30,54 @@ const LEADS = import.meta.env.PUBLIC_LEADS === 'on' || (import.meta.env.PUBLIC_L
     </div>
     <div class="qz-deck" id="qzDeck" hidden>
       <div class="qz-cards" id="qzCards">
-        {QUIZ_CARDS.map((c, i) => (
-          <div class="qz-card qz-panel" data-i={i} role="group" aria-label={Q.cardAria(i + 1)} tabindex="-1" hidden={i > 1}>
+        {QUIZ_QUESTIONS.map((c, i) => (
+          <div class="qz-card qz-panel" data-i={i} data-visual={c.visual ? '' : undefined} role="group" aria-label={Q.cardAria(i + 1)} tabindex="-1" hidden={i > 1}>
             <h3 class="qz-q">{c.q}</h3>
             <div class="qz-opts">
-              {[c.left, c.right].map((s, k) => (
-                <button type="button" class="qz-opt" data-side={k === 0 ? '1' : '0'} aria-label={`${s.word}, ${s.name}`}>
-                  <span class="qz-sw" data-shade={s.shade} aria-hidden="true"></span>
-                  <span class="qz-word" aria-hidden="true">{s.word}</span>
-                  <span class="qz-name" aria-hidden="true">{s.name}</span>
-                </button>
+              {c.answers.map((a) => (
+                <button type="button" class="qz-opt" data-persona={a.persona}>{a.text}</button>
               ))}
             </div>
-            <ol class="qz-step" aria-hidden="true">{QUIZ_CARDS.map((_c, k) => <li class="qz-dot" data-done={k < i ? '' : undefined}></li>)}</ol>
+            <div class="qz-foot">
+              {i > 0 ? <button type="button" class="txtbtn qz-back">{Q.back}</button> : <span></span>}
+              <ol class="qz-step" aria-hidden="true">{QUIZ_QUESTIONS.map((_c, k) => <li class="qz-dot" data-done={k < i ? '' : undefined}></li>)}</ol>
+            </div>
           </div>
         ))}
       </div>
     </div>
     <div class="qz-results" id="qzResults" hidden>
-      {QUIZ_RESULTS.map((r) => (
-        <article class="qz-result qz-panel" data-family={r.family} hidden>
-          <span class="qz-big" data-shade={r.shade} aria-hidden="true"></span>
-          <div class="qz-rtext">
-            <p class="qz-eyebrow">{Q.eyebrow}</p>
-            <h3 class="qz-shade" tabindex="-1">{r.name}.</h3>
-            <p class="qz-fam">{Q.fam(r.familyName, r.index)}</p>
-            <p class="qz-finish">{Q.finish(r.finish)}</p>
-            <p class="qz-persona">{r.persona}. {r.tagline}</p>
-            <p class="qz-text">{r.text}</p>
-            <p class="qz-own">{Q.own}</p>
-            <div class="qz-actions">
-              <a class="btn" href={resultHref(r)}>{Q.see}</a>
-              <button type="button" class="txtbtn qz-retry">{Q.retry}</button>
+      {QUIZ_PERSONAS.map((p) => {
+        const first = shade(p.shades[0]);
+        return (
+          <article class="qz-result qz-panel" data-persona={p.id} data-finish={p.finish} hidden>
+            <span class="qz-big" data-shade={first.id} data-ring={first.ring ? '' : undefined} aria-hidden="true"></span>
+            <div class="qz-rtext">
+              <p class="qz-eyebrow">{Q.eyebrow}</p>
+              <h3 class="qz-shade" tabindex="-1">{first.name}.</h3>
+              <p class="qz-fam">{first.fam}</p>
+              <p class="qz-finish">{Q.finish(p.finish)}</p>
+              <p class="qz-persona">{p.name}</p>
+              <p class="qz-text">{p.profile}</p>
+              <p class="qz-palette">{p.palette}</p>
+              <p class="qz-also-h">{Q.also}</p>
+              <ul class="qz-also">
+                {p.shades.map((id) => { const s = shade(id); return (
+                  <li class="qz-mini" data-shade={s.id} data-family={s.family} data-name={s.name} data-fam={s.fam} data-href={s.href} data-ring={s.ring ? '' : undefined} hidden={id === first.id}>
+                    <span class="qz-mini-sw" data-shade={s.id} data-ring={s.ring ? '' : undefined} aria-hidden="true"></span>
+                    <span class="qz-mini-name">{s.name}</span>
+                  </li>
+                ); })}
+              </ul>
+              <p class="qz-own">{Q.own}</p>
+              <div class="qz-actions">
+                <a class="btn qz-see" href={first.href}>{Q.see}</a>
+                <button type="button" class="txtbtn qz-retry">{Q.retry}</button>
+              </div>
             </div>
-          </div>
-        </article>
-      ))}
+          </article>
+        );
+      })}
     </div>
     <p class="sr-only" id="qzLive" aria-live="polite"></p>
   </div>

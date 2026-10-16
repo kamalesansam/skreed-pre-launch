@@ -1,9 +1,10 @@
 /* Section 3, the quiz (docs/specs/quiz.md 2; tokens from DESIGN.md). Phone first. The section sits over the hero's
    fixed canvas (the fog ground on the 3D path) with no background of its own; the intro, the deck, the result and the
    gift each stand on a Pearl Whisper panel with Urban Slate text (9.9:1). Square corners, no borders on panels, no
-   shadows, no blur. The swatches take their shade through data-shade and the rules at the end (no style attributes). */
+   shadows, no blur. The swatches carry data-shade and deck.ts paints them from the catalog token (no style attributes). */
 .quiz { position: relative; z-index: 3; overflow-x: clip;   /* above the hero's riders (the labels at 1 and 3, the cue at 2; DESIGN.md 6), below the logotype at 4 */ color: var(--urban-slate); font-family: var(--font-ui); font-size: var(--fs-legal); line-height: var(--lh-ui); }
-.quiz, .quiz *, .quiz *::before, .quiz *::after { box-sizing: border-box; }   /* widths include padding and hairlines: the 100 percent panels and the input fit the gutters at 390 */
+.quiz, .quiz *, .quiz *::before, .quiz *::after { box-sizing: border-box; }
+.quiz * { overflow-anchor: none; }   /* scroll anchoring keeps to the section itself, whose top never moves: the result replaces the deck without the browser scrolling the page to hold a card (or the section below) still */   /* widths include padding and hairlines: the 100 percent panels and the input fit the gutters at 390 */
 .quiz :focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }   /* DESIGN.md 4: the Ember Luxe outline at 2 px, the Urban Slate ring inside it */
 html:not(.js) .qz-begin { display: none; }   /* without JavaScript the noscript line stands in for the button */
 .quiz .btn, .quiz .qz-opt, .quiz .txtbtn, .quiz .qz-input, .quiz .qz-shade, .quiz .qz-done-text, .quiz .qz-check { position: relative; }
@@ -42,22 +43,22 @@ html:not(.js) .qz-begin { display: none; }   /* without JavaScript the noscript 
 
 /* the deck: one Pearl card at a time, the next behind it at 0.96; each card carries the stepper as its last row */
 .qz-deck { display: grid; gap: var(--s4); justify-items: center; width: 100%; }
-.qz-cards { position: relative; width: 100%; max-width: 480px; height: max(320px, min(68svh, 560px)); }   /* never under its content (312 px at 390): a landscape phone keeps the card's padding */
-.qz-card { position: absolute; inset: 0; display: grid; grid-template-rows: auto 1fr auto; align-content: center; gap: var(--s3); padding: var(--s4) var(--s3); touch-action: pan-y; user-select: none; -webkit-user-select: none; will-change: transform; transform-origin: 50% 100%; }
-.qz-card[hidden] { display: none; }
+.qz-cards { display: grid; width: 100%; max-width: 480px; }   /* the cards share one grid cell, so the deck is as tall as its tallest card on every screen */
+.qz-card { grid-area: 1 / 1; position: relative; display: grid; grid-template-rows: auto 1fr auto; align-content: start; gap: var(--s3); padding: var(--s4) var(--s3); user-select: none; -webkit-user-select: none; will-change: transform; transform-origin: 50% 100%; }
+.qz-card[hidden] { display: grid; visibility: hidden; }   /* a hidden card keeps its place in the cell, so the deck holds the tallest card's height from the first question to the last (no jump as the cards change) */
 .qz-card.is-next { z-index: 0; transform: scale(0.96); }
-.qz-card.is-top { z-index: 1; cursor: grab; }
-.qz-card.is-top:active { cursor: grabbing; }
-.qz-q { margin: 0; text-align: center; font: var(--w-display) var(--fs-quiz) / var(--lh-quiz) var(--font-display); letter-spacing: var(--ls-quiz); }
-.qz-opts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); align-content: center; }
-.qz-opt { display: grid; justify-items: center; align-content: start; gap: var(--s1); min-height: 44px; padding: var(--s2) var(--s1); background: none; border: 0; border-radius: var(--radius-none); color: inherit; font-family: var(--font-ui); cursor: pointer; transition: transform var(--dur-press) var(--ease-standard); -webkit-tap-highlight-color: transparent; }
+.qz-card.is-top { z-index: 1; }
+.qz-q { margin: 0; font: var(--w-display) var(--fs-clause) / var(--lh-quiz) var(--font-display); letter-spacing: var(--ls-quiz); text-wrap: balance; }   /* the questions are sentences now: the clause step, not the two-word quiz step (quiz.md D15) */
+.qz-opts { display: grid; gap: var(--s1); align-content: start; }
+/* an answer: a full-width row, Open Sans 400 on Pearl with an Urban Slate hairline (the input's), square; hover lifts it
+   1 px, press scales to 0.98; the answer taken fills Urban Slate with Pearl text for a beat before the card leaves */
+.qz-opt { display: block; width: 100%; min-height: 44px; padding: var(--s1) var(--s3); background: var(--pearl-whisper); border: 1px solid var(--urban-slate); border-radius: var(--radius-none); color: var(--urban-slate); font: var(--w-ui) var(--fs-legal) / var(--lh-ui) var(--font-ui); text-align: left; cursor: pointer; transition: transform var(--dur-press) var(--ease-standard); -webkit-tap-highlight-color: transparent; }
 @media (hover: hover) { .qz-opt:hover { transform: translateY(-1px); } }
 .qz-opt:active { transform: scale(0.98); }
-.qz-opt.is-lift, .qz-opt.is-lift:hover, .qz-opt.is-lift:active { transform: translateY(-1px); text-decoration: underline; text-underline-offset: 3px; }   /* past the threshold the cue wins over hover and press */
-.qz-sw { display: block; width: 112px; height: 112px; border-radius: var(--radius-round); }
-.qz-word { font-weight: var(--w-ui); font-size: var(--fs-label); line-height: var(--lh-solid); }   /* type-system note 13: the labels under the swatches are Open Sans 400 at 14 px */
-.qz-name { font-size: var(--fs-tile-caption); line-height: var(--lh-ui); }
-.qz-step { display: flex; justify-content: center; gap: var(--s2); margin: 0; padding: 0; list-style: none; }
+.qz-opt[aria-pressed="true"] { background: var(--urban-slate); color: var(--pearl-whisper); }
+.qz-foot { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
+.qz-foot .qz-back { justify-self: start; min-width: 44px; }   /* the tap minimum across as well as up */
+.qz-step { display: flex; justify-content: center; gap: var(--s1); margin: 0; padding: 0; list-style: none; }
 .qz-dot { width: 10px; height: 10px; border-radius: var(--radius-round); border: 1px solid var(--urban-slate); }
 .qz-dot[data-done] { background: var(--urban-slate); }
 
@@ -66,14 +67,20 @@ html:not(.js) .qz-begin { display: none; }   /* without JavaScript the noscript 
 .qz-result { display: grid; gap: var(--s3); justify-items: center; padding: var(--s4) var(--s3); }
 .qz-result[hidden] { display: none; }
 .qz-big { display: block; width: 160px; height: 160px; border-radius: var(--radius-round); }
-.qz-big[data-shade="frosty-white-10"], .qz-big[data-shade="mellow-yellow-11"] { border: 1px solid var(--urban-slate); }   /* under 1.5:1 on Pearl: the family page's hairline (family.css --swr) */
+.qz-big[data-ring], .qz-mini-sw[data-ring] { border: 1px solid var(--urban-slate); }   /* a shade under 1.5:1 on Pearl (needsRing in config/quiz.ts): the family page's hairline (family.css --swr) */
 .qz-rtext { display: grid; gap: var(--s2); text-align: center; }   /* one gap carries the rhythm; no per-line margins (rule 15) */
 .qz-eyebrow { margin: 0; font-size: var(--fs-eyebrow); font-weight: var(--w-ui-strong); line-height: 1.2; }   /* type-system role 11 */
 .qz-shade { margin: 0; font: var(--w-display) var(--fs-tile-name) / var(--lh-tile) var(--font-display); letter-spacing: var(--ls-tile); outline-offset: 2px; }
 .qz-fam { margin: 0; font-size: var(--fs-family); font-variant-numeric: tabular-nums; }
 .qz-finish { margin: 0; font-size: var(--fs-family); }
 .qz-persona { margin: 0; font-size: var(--fs-legal); font-weight: var(--w-ui-strong); }
-.qz-text { margin: 0; font-size: var(--fs-legal); line-height: var(--lh-ui); max-width: var(--measure-prose); }
+.qz-text, .qz-palette { margin: 0; font-size: var(--fs-legal); line-height: var(--lh-ui); max-width: var(--measure-prose); }
+.qz-also-h { margin: 0; font-size: var(--fs-label); font-weight: var(--w-ui-strong); }
+.qz-also { display: grid; grid-template-columns: repeat(auto-fit, minmax(46px, 1fr)); gap: var(--s1); margin: 0; padding: 0; list-style: none; }   /* five compatible shades fit one row at every width; six need 316 px, so they fit from about 380 px up and the sixth wraps at 360; a long name wraps under its swatch */
+.qz-mini { display: grid; justify-items: center; align-content: start; gap: var(--s1); }
+.qz-mini[hidden] { display: none; }
+.qz-mini-sw { display: block; width: 32px; height: 32px; border-radius: var(--radius-round); }
+.qz-mini-name { font-size: var(--fs-tile-caption); line-height: var(--lh-ui); text-align: center; }
 .qz-own { margin: 0; font: var(--w-display) var(--fs-clause) / var(--lh-h2) var(--font-display); letter-spacing: var(--ls-h2); }
 .qz-actions { display: grid; gap: var(--s2); justify-items: center; }
 
@@ -100,9 +107,7 @@ html:not(.js) .qz-begin { display: none; }   /* without JavaScript the noscript 
 @media (min-width: 900px) and (min-height: 600px) {
   .qz-stage { align-content: center; }
   .qz-intro { max-width: 640px; padding: var(--s5); }
-  .qz-cards { height: max(320px, min(70svh, 560px)); }
-  .qz-sw { width: 144px; height: 144px; }
-  .qz-results { max-width: 640px; }
+  .qz-results, .qz-cards { max-width: 640px; }   /* the wider deck keeps most answers to one line */
   .qz-gift-in { max-width: 640px; }
   .qz-result { grid-template-columns: 160px 1fr; align-items: center; justify-items: start; padding: var(--s5); }
   .qz-rtext { text-align: left; }
@@ -110,23 +115,6 @@ html:not(.js) .qz-begin { display: none; }   /* without JavaScript the noscript 
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .quiz .btn, .quiz .txtbtn, .qz-opt { transition: none; }
-  .qz-opt.is-lift, .qz-opt:hover, .qz-opt:active, .quiz .btn:hover, .quiz .btn:active { transform: none; }   /* no transform at all: the underline alone marks the side that will commit */
+  .quiz .btn, .qz-opt { transition: none; }
+  .qz-opt:hover, .qz-opt:active, .quiz .btn:hover, .quiz .btn:active { transform: none; }   /* no transform at all: the fill alone marks the answer taken */
 }
-
-/* the swatches: the twelve card shades and the ten result shades, by id (shades.gen.css tokens) */
-.qz-sw[data-shade="playful-pink-24"], .qz-big[data-shade="playful-pink-24"] { background: var(--shade-playful-pink-24); }
-.qz-sw[data-shade="stormy-grey-07"] { background: var(--shade-stormy-grey-07); }
-.qz-sw[data-shade="blushing-coral-09"], .qz-big[data-shade="blushing-coral-09"] { background: var(--shade-blushing-coral-09); }
-.qz-sw[data-shade="blissful-blue-08"] { background: var(--shade-blissful-blue-08); }
-.qz-sw[data-shade="mellow-yellow-18"] { background: var(--shade-mellow-yellow-18); }
-.qz-sw[data-shade="blissful-blue-24"] { background: var(--shade-blissful-blue-24); }
-.qz-sw[data-shade="stormy-grey-23"], .qz-big[data-shade="stormy-grey-23"] { background: var(--shade-stormy-grey-23); }
-.qz-sw[data-shade="playful-pink-09"], .qz-big[data-shade="playful-pink-09"] { background: var(--shade-playful-pink-09); }
-.qz-sw[data-shade="basic-brown-07"], .qz-big[data-shade="basic-brown-07"] { background: var(--shade-basic-brown-07); }
-.qz-sw[data-shade="vivid-violet-07"], .qz-big[data-shade="vivid-violet-07"] { background: var(--shade-vivid-violet-07); }
-.qz-sw[data-shade="roaring-red-06"], .qz-big[data-shade="roaring-red-06"] { background: var(--shade-roaring-red-06); }
-.qz-sw[data-shade="go-green-09"], .qz-big[data-shade="go-green-09"] { background: var(--shade-go-green-09); }
-.qz-big[data-shade="frosty-white-10"] { background: var(--shade-frosty-white-10); }
-.qz-big[data-shade="blissful-blue-22"] { background: var(--shade-blissful-blue-22); }
-.qz-big[data-shade="mellow-yellow-11"] { background: var(--shade-mellow-yellow-11); }

@@ -1,14 +1,13 @@
-// Section 3, the quiz (docs/specs/quiz.md 2, 4 and 5): the six swipe cards, the scoring, the result and the gift
-// form. Loaded lazily by Quiz.astro once the section is within a screen. No library: Pointer Events for the swipe
-// (touch, mouse and pen alike), the Web Animations API on transform and opacity, reduced motion from motion.ts. Every
-// string comes from config/quiz.ts; the markup is server-rendered, this file only shows, hides and moves it.
-import { QUIZ_CARDS, QUIZ_COPY as Q, QUIZ_LEAD_ENDPOINT, scoreQuiz, type Answer } from '../../config/quiz.ts';
+// Section 3, the quiz (docs/specs/quiz.md 2, 4 and 5): the ten question cards, the scoring, the shade draw, the result
+// and the gift form. Loaded lazily by Quiz.astro once the section is within a screen. No library: the Web Animations
+// API on transform and opacity, reduced motion from motion.ts. Every string comes from config/quiz.ts and the markup is
+// server-rendered (shade names, numbers and links included); this file only shows, hides, moves and paints it.
+import { QUIZ_COPY as Q, QUIZ_LEAD_ENDPOINT, QUIZ_QUESTIONS, pickShade, scoreQuiz, type PersonaId } from '../../config/quiz.ts';
 import { reducedMQ } from '../motion.ts';
 import { track } from './track.ts';
 
-const EASE_STANDARD = 'cubic-bezier(0.2, 0, 0, 1)', EASE_IN = 'cubic-bezier(.55, .085, .68, .53)', EASE_REBOUND = 'cubic-bezier(0, .3, .5, 1)';
-const DUR_OUT = 200, DUR_CARD = 300, DUR_REDUCED = 150;
-const COMMIT_FRACTION = 0.35, FLICK = 0.5, DRAG_DEAD = 8, TAP_MS = 300;
+const EASE_STANDARD = 'cubic-bezier(0.2, 0, 0, 1)', EASE_IN = 'cubic-bezier(.55, .085, .68, .53)';
+const DUR_OUT = 200, DUR_CARD = 300, DUR_REDUCED = 150, DUR_MARK = 120;
 const QUEUE_KEY = 'skreed-quiz-lead';
 
 type State = 'intro' | 'quiz' | 'result';
@@ -21,23 +20,27 @@ export function mountQuiz(root: HTMLElement): void {
   const results = must('qzResults'), live = must('qzLive'), gift = $('qzGift'), form = $<HTMLFormElement>('qzForm');
   const cards = [...cardsEl.querySelectorAll<HTMLDivElement>('.qz-card')];
   const reduced = () => reducedMQ.matches;
-  const answers: Answer[] = [];
+  const answers: PersonaId[] = [];
   let state: State = 'intro', top = 0, busy = false;
+
+  // the swatches take their shade from the catalog token through the CSSOM (the CSP allows no style attributes)
+  for (const el of root.querySelectorAll<HTMLElement>('.qz-big, .qz-mini-sw')) el.style.background = `var(--shade-${el.dataset.shade})`;
 
   function setState(s: State) { state = s; root.dataset.state = s; }
   function announce(text: string) { live.textContent = ''; requestAnimationFrame(() => { live.textContent = text; }); }
 
-  // ---- the deck: one card on top (focusable, role group), the next behind it at 0.96
-  function showCard(i: number, enter: boolean) {
+  // ---- the deck: one card on top (focusable, role group), the next behind it at 0.96 and inert
+  function showCard(i: number, enter: 'none' | 'next' | 'back') {
     cards.forEach((c, k) => {
       c.classList.toggle('is-top', k === i); c.classList.toggle('is-next', k === i + 1); c.hidden = k < i || k > i + 1;
-      c.tabIndex = k === i ? 0 : -1; c.inert = k !== i;   // the next card shows behind the top one but takes no focus or clicks
+      c.tabIndex = k === i ? 0 : -1; c.inert = k !== i;
       c.style.transform = k === i + 1 ? 'scale(0.96)' : '';
+      for (const o of c.querySelectorAll('.qz-opt[aria-pressed]')) o.removeAttribute('aria-pressed');
     });
     const c = cards[i];
-    // the next card was already in view behind the top one, so it only comes forward (no opacity ramp: that read as doubled text under the card flying off)
-    if (enter) c.animate(reduced() ? [{ opacity: 0 }, { opacity: 1 }] : [{ transform: 'scale(0.96)' }, { transform: 'none' }], { duration: reduced() ? DUR_REDUCED : DUR_CARD, easing: EASE_STANDARD });
-    announce(`${Q.cardAria(i + 1)}: ${QUIZ_CARDS[i].q}`);
+    if (enter === 'next') c.animate(reduced() ? [{ opacity: 0 }, { opacity: 1 }] : [{ transform: 'scale(0.96)' }, { transform: 'none' }], { duration: reduced() ? DUR_REDUCED : DUR_CARD, easing: EASE_STANDARD });
+    if (enter === 'back') c.animate(reduced() ? [{ opacity: 0 }, { opacity: 1 }] : [{ transform: `translateX(${-(c.offsetWidth || 320) * 1.3}px) rotate(-14deg)` }, { transform: 'none' }], { duration: reduced() ? DUR_REDUCED : DUR_CARD, easing: EASE_STANDARD });
+    announce(`${Q.cardAria(i + 1)}: ${QUIZ_QUESTIONS[i].q}`);
     c.focus({ preventScroll: true });
   }
 
@@ -51,38 +54,61 @@ export function mountQuiz(root: HTMLElement): void {
       intro.hidden = true; out.cancel(); begin.removeAttribute('aria-disabled');
       deck.hidden = false; setState('quiz');
       if (!reduced()) deck.animate([{ transform: 'translateY(24px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 400, easing: EASE_STANDARD });
-      busy = false; showCard(0, false);
+      busy = false; showCard(0, 'none');
     });
   }
 
-  function commit(side: Answer, dx: number) {
+  /** an answer: the button is marked (filled Urban Slate) for a beat, then the card flies off to the left */
+  function commit(opt: HTMLButtonElement) {
     if (busy || state !== 'quiz') return;
     busy = true;
-    const i = top, card = cards[i];
-    answers[i] = side;
-    track('quiz_answer', { q: i + 1, side: side ? 'left' : 'right' });
-    const w = card.offsetWidth || 320, dir = side ? -1 : 1;
-    const fly = reduced()
-      ? card.animate([{ opacity: 1 }, { opacity: 0 }], { duration: DUR_REDUCED, fill: 'forwards' })
-      : card.animate([{ transform: card.style.transform || 'none' }, { transform: `translateX(${dir * (w * 1.3 + Math.abs(dx))}px) rotate(${dir * 14}deg)` }], { duration: DUR_CARD, easing: EASE_IN, fill: 'forwards' });   // opaque all the way: it covers the next card until it has left
-    fly.finished.then(() => {
-      fly.cancel(); card.style.transform = ''; card.hidden = true; card.classList.remove('is-top');
-      top = i + 1; busy = false;
-      if (top >= QUIZ_CARDS.length) finish(); else showCard(top, true);
-    });
+    const i = top, card = cards[i], persona = opt.dataset.persona as PersonaId;
+    answers[i] = persona;
+    track('quiz_answer', { q: i + 1, persona });
+    opt.setAttribute('aria-pressed', 'true');
+    const w = card.offsetWidth || 320;
+    setTimeout(() => {
+      const fly = reduced()
+        ? card.animate([{ opacity: 1 }, { opacity: 0 }], { duration: DUR_REDUCED, fill: 'forwards' })
+        : card.animate([{ transform: 'none' }, { transform: `translateX(${-w * 1.3}px) rotate(-14deg)` }], { duration: DUR_CARD, easing: EASE_IN, fill: 'forwards' });   // opaque all the way: it covers the next card until it has left
+      fly.finished.then(() => {
+        fly.cancel(); card.hidden = true; card.classList.remove('is-top');
+        top = i + 1; busy = false;
+        if (top >= QUIZ_QUESTIONS.length) finish(); else showCard(top, 'next');
+      });
+    }, reduced() ? 0 : DUR_MARK);
+  }
+
+  /** Back: the last answer is dropped and the previous card comes back in from the left */
+  function back() {
+    if (busy || state !== 'quiz' || top === 0) return;
+    busy = true;   // no answer is taken while the previous card is still coming back
+    track('quiz_back', { q: top + 1 });
+    answers.length = top - 1; top -= 1;
+    showCard(top, 'back');
+    setTimeout(() => { busy = false; }, reduced() ? DUR_REDUCED : DUR_CARD);
   }
 
   function finish() {
-    const r = scoreQuiz(answers);
-    track('quiz_complete', { family: r.family, shade: r.shade });
+    const p = scoreQuiz(answers);
+    const { shade, others } = pickShade(p);
     deck.hidden = true;
-    for (const el of results.querySelectorAll<HTMLElement>('.qz-result')) el.hidden = el.dataset.family !== r.family;
+    for (const el of results.querySelectorAll<HTMLElement>('.qz-result')) el.hidden = el.dataset.persona !== p.id;
+    const shown = results.querySelector<HTMLElement>(`.qz-result[data-persona="${p.id}"]`)!;
+    // the drawn shade takes the large swatch, the heading, the family line and the link; the rest are the compatible ones
+    const pick = shown.querySelector<HTMLElement>(`.qz-mini[data-shade="${shade}"]`)!;
+    const big = shown.querySelector<HTMLElement>('.qz-big')!;
+    big.dataset.shade = shade; big.style.background = `var(--shade-${shade})`; big.toggleAttribute('data-ring', pick.hasAttribute('data-ring'));
+    shown.querySelector('.qz-shade')!.textContent = `${pick.dataset.name}.`;
+    shown.querySelector('.qz-fam')!.textContent = pick.dataset.fam ?? '';
+    shown.querySelector<HTMLAnchorElement>('.qz-see')!.href = pick.dataset.href ?? '';
+    for (const m of shown.querySelectorAll<HTMLElement>('.qz-mini')) m.hidden = m.dataset.shade === shade;
     results.hidden = false; if (gift) gift.hidden = false; setState('result');
-    const shown = results.querySelector<HTMLElement>(`.qz-result[data-family="${r.family}"]`);
-    if (shown && !reduced()) shown.animate([{ transform: 'scale(0.96)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 400, easing: EASE_STANDARD });
-    announce(`${Q.eyebrow}: ${r.name}. ${r.persona}.`);
-    shown?.querySelector<HTMLElement>('.qz-shade')?.focus({ preventScroll: true });
-    if (form) { form.dataset.shade = r.shade; form.dataset.family = r.family; form.dataset.finish = r.finish; }
+    track('quiz_complete', { persona: p.id, shade, others: others.join(',') });
+    if (!reduced()) shown.animate([{ transform: 'scale(0.96)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 400, easing: EASE_STANDARD });
+    announce(`${Q.eyebrow}: ${pick.dataset.name}. ${p.name}.`);
+    shown.querySelector<HTMLElement>('.qz-shade')?.focus({ preventScroll: true });
+    if (form) { form.dataset.shade = shade; form.dataset.family = pick.dataset.family ?? ''; form.dataset.finish = p.finish; form.dataset.persona = p.id; }
   }
 
   function retry() {
@@ -90,56 +116,23 @@ export function mountQuiz(root: HTMLElement): void {
     results.hidden = true; if (gift) gift.hidden = true;
     for (const c of cards) { c.hidden = false; c.classList.remove('is-top', 'is-next'); }
     answers.length = 0; top = 0;
-    deck.hidden = false; setState('quiz'); showCard(0, true);
+    deck.hidden = false; setState('quiz'); showCard(0, 'next');
     root.scrollIntoView({ block: 'start', behavior: reduced() ? 'instant' : 'smooth' });   // the section's top, so the deck sits where the intro stood
   }
 
-  // ---- input: a tap on an option, Left and Right on the card (the options bubble to it), or a drag past 35 percent
-  // of the card's width or a flick. A gesture is a tap while it moves under 8 px and lasts under 300 ms; otherwise it
-  // is a drag, and the click the browser fires afterwards is swallowed.
-  let dragId: number | null = null, dragX0 = 0, dragY0 = 0, dragT0 = 0, dragged = false, lastX = 0, lastT = 0, vel = 0, dragCard: HTMLDivElement | null = null, follow = 0, swallow = false;
-  const opts = (card: HTMLDivElement) => [...card.querySelectorAll<HTMLElement>('.qz-opt')];
+  // ---- input: a tap, click, Enter or Space on an answer commits it; Up and Down move between the answers; Back
   for (const card of cards) {
-    for (const opt of opts(card)) opt.addEventListener('click', () => { if (swallow || !card.classList.contains('is-top')) return; commit(opt.dataset.side === '1' ? 1 : 0, 0); });
-    card.addEventListener('keydown', (e) => { if (!card.classList.contains('is-top')) return; if (e.key === 'ArrowLeft') { e.preventDefault(); commit(1, 0); } else if (e.key === 'ArrowRight') { e.preventDefault(); commit(0, 0); } });
+    const opts = [...card.querySelectorAll<HTMLButtonElement>('.qz-opt')];
+    for (const opt of opts) opt.addEventListener('click', () => { if (card.classList.contains('is-top')) commit(opt); });
+    card.querySelector('.qz-back')?.addEventListener('click', back);
+    card.addEventListener('keydown', (e) => {
+      if (!card.classList.contains('is-top') || (e.key !== 'ArrowDown' && e.key !== 'ArrowUp')) return;
+      e.preventDefault();
+      const at = opts.indexOf(document.activeElement as HTMLButtonElement);
+      const next = e.key === 'ArrowDown' ? (at < 0 ? 0 : Math.min(opts.length - 1, at + 1)) : (at < 0 ? opts.length - 1 : Math.max(0, at - 1));
+      opts[next].focus();
+    });
   }
-  function applyDrag(card: HTMLDivElement, dx: number) {
-    const w = card.offsetWidth || 320, p = Math.max(-1, Math.min(1, dx / (w * COMMIT_FRACTION)));
-    if (!reduced()) card.style.transform = `translateX(${dx}px) rotate(${(8 * p).toFixed(2)}deg)`;   // leans into the drag (the same sense as the fly-off)
-    const [l, r] = opts(card);
-    l?.classList.toggle('is-lift', p <= -1); r?.classList.toggle('is-lift', p >= 1);   // past the threshold the side that will commit shows it (reduced motion too)
-  }
-  function springBack(card: HTMLDivElement) {
-    for (const o of opts(card)) o.classList.remove('is-lift');
-    const back = card.animate([{ transform: card.style.transform || 'none' }, { transform: 'none' }], { duration: reduced() ? 0 : DUR_CARD, easing: EASE_REBOUND, fill: 'forwards' });
-    back.finished.then(() => { back.cancel(); card.style.transform = ''; });
-  }
-  cardsEl.addEventListener('pointerdown', (e) => {
-    const card = (e.target as HTMLElement).closest<HTMLDivElement>('.qz-card.is-top');
-    if (!card || busy || e.button !== 0) return;
-    dragId = e.pointerId; dragX0 = lastX = e.clientX; dragY0 = e.clientY; dragT0 = lastT = e.timeStamp; vel = 0; dragged = false; dragCard = card; swallow = false;
-  });
-  cardsEl.addEventListener('pointermove', (e) => {
-    if (e.pointerId !== dragId || !dragCard) return;
-    const dx = e.clientX - dragX0, dy = e.clientY - dragY0;
-    if (!dragged) { if (Math.abs(dx) < DRAG_DEAD) return; if (Math.abs(dy) > Math.abs(dx)) { dragId = null; dragCard = null; return; } dragged = true; dragCard.setPointerCapture(e.pointerId); }
-    const dt = e.timeStamp - lastT; if (dt > 0) vel = 0.7 * vel + 0.3 * ((e.clientX - lastX) / dt); lastX = e.clientX; lastT = e.timeStamp;
-    if (!follow) follow = requestAnimationFrame(() => { follow = 0; if (dragCard) applyDrag(dragCard, dx); });
-  });
-  const endDrag = (e: PointerEvent, cancelled: boolean) => {
-    if (e.pointerId !== dragId || !dragCard) return;
-    const card = dragCard, dx = e.clientX - dragX0; dragId = null; dragCard = null;
-    if (follow) { cancelAnimationFrame(follow); follow = 0; }
-    if (!dragged) return;
-    swallow = e.timeStamp - dragT0 >= TAP_MS || Math.abs(dx) >= DRAG_DEAD;
-    setTimeout(() => { swallow = false; }, 0);
-    const w = card.offsetWidth || 320;
-    if (!cancelled && (Math.abs(dx) >= w * COMMIT_FRACTION || Math.abs(vel) >= FLICK)) { for (const o of opts(card)) o.classList.remove('is-lift'); commit(dx < 0 ? 1 : 0, dx); }
-    else springBack(card);
-  };
-  cardsEl.addEventListener('pointerup', (e) => endDrag(e, false));
-  cardsEl.addEventListener('pointercancel', (e) => endDrag(e, true));
-  cardsEl.addEventListener('lostpointercapture', (e) => { if (e.pointerId === dragId) endDrag(e, true); });
 
   // ---- begin: the button (tap, click, Enter, Space); a press made before this chunk arrived begins now
   begin.removeAttribute('aria-disabled'); begin.removeAttribute('aria-busy'); begin.textContent = Q.begin;
@@ -166,7 +159,7 @@ export function mountQuiz(root: HTMLElement): void {
   const openForm = () => { doneEl.hidden = true; fields.hidden = false; email.value = ''; consent.checked = false; setErr(errEmail, email, ''); setErr(errConsent, consent, ''); note(''); email.focus(); };
   let sending = false, queued: Record<string, string> | null = null;
   const setSending = (on: boolean, label: string) => { sending = on; send.setAttribute('aria-disabled', on ? 'true' : 'false'); send.textContent = label; };
-  function payload(address: string) { return { email: address, shadeId: form!.dataset.shade ?? '', familyId: form!.dataset.family ?? '', finish: form!.dataset.finish ?? '', answers: answers.join(''), source: 'quiz' }; }
+  function payload(address: string) { return { email: address, shadeId: form!.dataset.shade ?? '', familyId: form!.dataset.family ?? '', finish: form!.dataset.finish ?? '', persona: form!.dataset.persona ?? '', answers: answers.join(','), source: 'quiz' }; }
   function queueLead(body: Record<string, string>) { queued = body; try { sessionStorage.setItem(QUEUE_KEY, JSON.stringify(body)); } catch { /* no storage: the queue lives in memory */ } closeForm(Q.offline); }
   async function submit(body: Record<string, string>) {
     if (sending) return;

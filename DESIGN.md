@@ -182,7 +182,7 @@ html { font-synthesis: none; -webkit-text-size-adjust: 100%; }
 ### Element rules (from type-system.md)
 
 ```css
-h1, h2, .manifesto, .quiz-q, .tile-name, .position, .h404 { font-family: var(--font-display); font-weight: 700; text-transform: none; }
+h1, h2, .manifesto, .qz-q, .tile-name, .position, .h404 { font-family: var(--font-display); font-weight: 700; text-transform: none; }   /* .qz-q, the quiz question, is type-system.md's .quiz-q under the class the code uses */
 .hero-sub, .standfirst, .prose { font-family: var(--font-text); font-weight: 400; font-optical-sizing: auto; font-variant-numeric: proportional-nums; }
 .prose strong, .prose em, .on-slate .standfirst, .on-slate .prose { font-weight: 600; font-style: normal; }
 body, label, input, button, .legal, .caption, .family, .footer { font-family: var(--font-ui); font-weight: 400; }
@@ -293,46 +293,51 @@ Source Serif 4 Fallback 600: size-adjust 106.14%; ascent-override 97.61%; descen
 ### Quiz panel (section 3, `.qz-panel`; `src/styles/quiz.css`)
 
 - **Fill and text.** Pearl Whisper fill, Urban Slate text (9.9:1), square corners (`--radius-none`), no border, no shadow, no blur. The intro, each card, the result and the gift each stand on one. The section has no background of its own and no plates (on the 3D path it sits over the hero's fog ground, otherwise on `--night`), so its text needs no contrast exception.
-- **Box.** `box-sizing: border-box` on everything in the section, so the full-width panels and the input fit the gutters at 390 with their padding and hairlines.
-- **Width.** The intro 480 px wide, 640 px on laptops (900 px wide and 600 px tall or more); every panel is centred in the stage at every width; the results the same; the deck 480 px on every screen; the gift panel 480 px (640 on laptops) on `margin: 0 auto`.
-- **Padding.** On the scale: the intro, the card, the result and the gift `var(--s4) var(--s3)`; the intro and the result `var(--s5)` on laptops. Inside, rows are spaced by `gap` alone (`--s1` to `--s4`), no per-line margins.
+- **Box.** `box-sizing: border-box` on everything in the section, so the full-width panels, the answer rows and the input fit the gutters at 390 with their padding and hairlines.
+- **Width.** The intro, the deck (`.qz-cards`), the results and the gift panel are 480 px wide, 640 px on laptops (900 px wide and 600 px tall or more; the wider deck keeps every answer to one line). Each is centred in the stage at every width, the gift panel on `margin: 0 auto`.
+- **Padding.** On the scale: the intro, the card, the result and the gift `var(--s4) var(--s3)`; the intro and the result `var(--s5)` on laptops, where the card keeps `var(--s4) var(--s3)`. Inside, rows are spaced by `gap` alone (`--s1` to `--s4`), no per-line margins.
 - **Type.** Open Sans at `--fs-legal` / `--lh-ui` throughout; the headline Poppins 700 at `--fs-h2` / `--lh-h2`, `--ls-h2`, within `--measure-h2`, balanced; the standfirst Open Sans 400 at `--fs-standfirst` / `--lh-standfirst`, within `--measure-prose`. Poppins and Open Sans only, no serif (type-system principle 9).
 - **Buttons.** The primary button above, padding `0 var(--s4)`. While the chunk loads or the form sends it is `aria-disabled` (never the `disabled` attribute), reads "Loading..." or "Sending...", keeps its fill and loses the hover lift.
-- **Focus.** Every control on a panel takes the two-tone ring, the Ember Luxe outline at the 2 px offset of the default above plus a 2 px Urban Slate inner ring: on the primary button, the options, the text buttons, the focused card, the result heading and the done line the inner ring is drawn by `::before` at `inset: -2px`; an `<input>` renders no `::before`, so the email input's own hairline thickens to 2 px as its inner ring, and the consent checkbox's 44 px row (`.qz-check:has(input:focus-visible)`) carries both rings round the box and its label, the box's own outline removed. The top card, the one focusable card, takes the same two-tone ring (over the fog, Ember alone is under 3:1).
+- **Focus.** Every control on a panel takes the two-tone ring, the Ember Luxe outline at the 2 px offset of the default above plus a 2 px Urban Slate inner ring: on the primary button, the answers, the text buttons, the focused card, the result heading and the done line the inner ring is drawn by `::before` at `inset: -2px`; an `<input>` renders no `::before`, so the email input's own hairline thickens to 2 px as its inner ring, and the consent checkbox's 44 px row (`.qz-check:has(input:focus-visible)`) carries both rings round the box and its label, the box's own outline removed. The top card, the one focusable card, takes the same two-tone ring (over the fog, Ember alone is under 3:1).
 
 ### Quiz card (`.qz-card`)
 
-- **Deck.** Six cards stacked `position: absolute; inset: 0` in a 480 px deck (`.qz-cards`) of height `min(68svh, 560px)`, `min(70svh, 560px)` on laptops. One card shows at a time: the top card (`.is-top`, `cursor: grab`, `grabbing` while held, `tabindex="0"`), the next behind it (`.is-next`) at `scale(0.96)`, the rest hidden.
-- **Layout.** A grid of three rows, `auto 1fr auto` (the question, the two options, the stepper), `gap: var(--s3)`, content centred; `transform-origin: 50% 100%`, `will-change: transform`.
-- **Question.** Poppins 700 at `--fs-quiz` / `--lh-quiz`, `--ls-quiz`, centred. No digit in it.
-- **Touch.** `touch-action: pan-y`, so a vertical drag still scrolls the page; `user-select: none`.
-- **Motion** (`src/scripts/quiz/deck.ts`, Web Animations, no GSAP). The drag follows the pointer past an 8 px dead zone, turning up to 8 degrees at 35 percent of the card's width; release past 35 percent, or a flick at 0.5 px/ms, commits. The card leaves in `--dur-card` on `--ease-in` (translateX and 14 degrees), the next, already in view behind it, comes forward from `scale(0.96)` in `--dur-card` on `--ease-standard` (no opacity ramp: the leaving card stays opaque until it is off), a short drag springs back in `--dur-card` on `--ease-rebound`. At the start the intro fades out in `--dur-out` and the deck rises 24 px in 400 ms. Reduced motion: 150 ms fades, no rise, no drag follow (the card stays put; release past the threshold still commits).
+- **Deck.** Ten cards, one per question, in `.qz-cards` (480 px, 640 px on laptops). The cards share one grid cell (`display: grid` on the deck, `grid-area: 1 / 1` on every card), so no height is set and nothing is positioned absolutely. A `hidden` card keeps its place in the cell (`.qz-card[hidden] { display: grid; visibility: hidden; }`), so all ten size the cell and the deck holds the tallest card's height from the first question to the last: nothing under it moves from one question to the next. The deck, the tallest card's height, is 661 px at 390 x 844, 679 px at 360 x 780, 542 px at 1280 x 800 and at 1366 x 657, and 578 px at 844 x 390, where the landscape phone scrolls (the stage is `min-height: 100svh`, never a fixed height; measured on the `dist-s3` build of 2026-10-17). One card shows at a time: the top card (`.is-top`, `tabindex="0"`), the next behind it (`.is-next`, `inert`) at `scale(0.96)`, the rest `hidden` (invisible and inert, still holding the cell). Each card is `role="group"` with the `aria-label` "Question n of 10".
+- **Visual questions.** The five Sam marked VISUAL (the Sunday, the dream trip, the desk, the room and the outfit; `visual: true` in `src/config/quiz.ts`) carry `data-visual` on the card, the slot for their pictures. Until the pictures exist they are words only, laid out exactly as the other five.
+- **Layout.** A grid of three rows, `auto 1fr auto` (the question, the seven answers, the footer), `gap: var(--s3)`, `align-content: start`; the question, the answers and Back left aligned, the stepper centred. A card shorter than the tallest stretches to the cell: its answers stay at the top under the question (`.qz-opts` keeps `align-content: start`), the `1fr` row takes the extra height and the footer sits at the bottom. `transform-origin: 50% 100%`, `will-change: transform`, `user-select: none`.
+- **Question.** Poppins 700 at `--fs-clause` (24 to 28 px) / `--lh-quiz`, `--ls-quiz`, balanced, left aligned. Sam's questions are sentences, so they take the clause step, not `--fs-quiz` (28 to 40 px, made for the two-word questions of type-system role 13): a departure from role 13, recorded in quiz.md D15. No digit in it.
+- **Footer** (`.qz-foot`). The card's last row, a grid `1fr auto 1fr` with `align-items: center`: Back (Text button, below) at the left on cards 2 to 10 (an empty `<span>` holds the cell on card 1), the stepper in the centre column.
+- **Input.** An answer is taken by a tap, a click, Enter or Space on it. Up and Down move focus among the seven answers of the top card; from the card itself Down goes to the first answer and Up to the last. No drag and no swipe: the cards never follow a pointer, there is no `grab` cursor and no `touch-action` rule, so the page scrolls over a card as over any panel.
+- **Motion** (`src/scripts/quiz/deck.ts`, Web Animations, no GSAP). The answer taken stays filled for 120 ms (Quiz answer, below), then the card always leaves to the left: `translateX(-1.3 x its width) rotate(-14deg)` in `--dur-card` on `--ease-in`, opaque all the way, so it covers the next card until it is off (`overflow-x: clip` on the section keeps it out of the scroll range). The next card, already in view behind it, comes forward from `scale(0.96)` in `--dur-card` on `--ease-standard`. Back drops the last answer and the previous card returns from the left, from the same `translateX(-1.3 x its width) rotate(-14deg)` to rest, in `--dur-card` on `--ease-standard`, the card it left becoming the next card behind it; no answer is taken until it has arrived (`busy` for the return's `--dur-card`, 150 ms under reduced motion). At the start the intro fades out in `--dur-out` and the deck rises 24 px from opacity 0 in 400 ms on `--ease-standard`; the result comes in from `scale(0.96)` and opacity 0 in 400 ms on `--ease-standard`.
+- **Reduced motion.** The intro fades out in 150 ms and the deck does not rise. No hold: the answer fills and the card leaves at once, fading out in 150 ms; the next card, and the card Back brings back, fade in over 150 ms. No scale-in on the result, and "Not quite? Try again" scrolls back to the section's top at once instead of smoothly.
 
-### Quiz option (`.qz-opt`)
+### Quiz answer (`.qz-opt`)
 
-- **Element.** A real `<button>`, two per card side by side (`grid-template-columns: 1fr 1fr`, `gap: var(--s3)`), no fill, no border, square, minimum height 44 px, padding `var(--s2) var(--s1)`, `gap: var(--s1)`, `aria-label="Word, Name"`.
-- **Swatch.** A 112 px circle (`--radius-round`), 144 px on laptops, filled from the shade token `var(--shade-<id>)` through a per-shade rule on `data-shade` (the CSP has no `style-src-attr`, so no style attributes).
-- **Labels.** The word in Open Sans 400 at `--fs-label` / `--lh-solid` (type-system note 13: the labels under the swatches at 400, 14 px); the shade name at `--fs-tile-caption` / `--lh-ui`; both outside the swatch, in Urban Slate (Swatches, below).
-- **States.** Hover `translateY(-1px)`; past the commit threshold (`.is-lift`) `translateY(-1px)` with an underline at a 3 px offset; press `scale(0.98)`; `--dur-press` on `--ease-standard`. Reduced motion: no transform; the underline alone marks the side that will commit.
+- **Element.** A real `<button type="button">` carrying `data-persona`, text only: no swatch, no word or name spans, no `aria-label` (its text is its name). Seven per card, one per personality, stacked in one column (`.qz-opts`, a grid with `gap: var(--s1)`, 8 px between rows, `align-content: start`), in a fixed shuffle per question (`SHOWN` in `src/config/quiz.ts`), so an answer's position never gives its personality away.
+- **Row.** Full width (`display: block; width: 100%`), Pearl Whisper fill, a 1 px Urban Slate hairline (the email input's), square (`--radius-none`), minimum height 44 px, padding `var(--s1) var(--s3)`, text left aligned. A long answer wraps and its row grows (63 px for two lines at 390); at 640 px every answer holds one line.
+- **Type.** Open Sans 400 at `--fs-legal` / `--lh-ui` (16 to 17 px), Urban Slate on Pearl Whisper (9.9:1).
+- **States.** Hover (`hover: hover` only) `translateY(-1px)`; press `scale(0.98)`; both `--dur-press` on `--ease-standard`, transform only. The answer taken (`aria-pressed="true"`) fills Urban Slate with Pearl Whisper text (9.9:1) for 120 ms before the card leaves; every card shown clears the attribute, so an answer seen again through Back is unfilled. Reduced motion: no transition and no transform, hover and press included; the fill alone marks the answer taken.
 - **Focus.** The two-tone ring (Quiz panel, above).
 
-### Quiz stepper (`.qz-step`, inside the card)
+### Quiz stepper (`.qz-step`, in the card's footer)
 
-- **Placement.** The card's last row, centred, `aria-hidden` (the card's `aria-label` reads "Question n of 6").
-- **Dots.** Six 10 px rings (`--radius-round`), 1 px Urban Slate, `gap: var(--s2)`; an answered card's dot (`data-done`) fills solid Urban Slate. No shade-filled dots: the shades never colour UI (rule 24).
+- **Placement.** The footer's centre column, beside Back: an `<ol>` of ten `li.qz-dot`, a centred flex row, `aria-hidden` (the card's `aria-label` reads "Question n of 10").
+- **Dots.** Ten 10 px rings (`--radius-round`), 1 px Urban Slate, `gap: var(--s1)` (172 px in all); on each card the dots of the questions before it (`data-done`, rendered at build) fill solid Urban Slate. No shade-filled dots: the shades never colour UI (rule 24).
 
-### Result swatch (`.qz-big`)
+### Result swatch (`.qz-big`) and the compatible row (`.qz-also`)
 
-- **Shape.** A 160 px circle (`--radius-round`) filled from `var(--shade-<id>)` by `data-shade`, first on the result panel; on laptops the panel is two columns, 160 px and the text, left aligned.
-- **Hairline.** A 1 px Urban Slate ring when the shade is under 1.5:1 on Pearl Whisper: Porcelain (`frosty-white-10`) and Sunflower (`mellow-yellow-11`), the family page's `--swr` precedent (`src/styles/family.css`). No other swatch has a border.
-- **Beside it.** The eyebrow "Your shade" at `--fs-eyebrow`, 600; the shade name in Poppins 700 at `--fs-tile-name` / `--lh-tile`, `--ls-tile`; the family line at `--fs-family` with tabular numerals; the paragraph at `--fs-legal` / `--lh-ui` within `--measure-prose`; "Found the perfect shade? Make it yours!" in Poppins 700 at `--fs-clause` / `--lh-h2`, `--ls-h2`.
+- **Shape.** A 160 px circle (`--radius-round`), first on the result panel; on laptops the panel is two columns, 160 px and the text, left aligned (`align-items: center`).
+- **Fill.** The drawn shade: `pickShade` draws one shade of the personality's group at random (Sam, 2026-10-16), and `deck.ts` sets the big swatch's `data-shade` and paints `background: var(--shade-<id>)` through the CSSOM, as it paints every swatch in the section (the CSP has no `style-src-attr`, so no style attributes and no per-shade CSS rules). The markup carries the group's first shade, Sam's recommendation, until the draw replaces it.
+- **Hairline.** `data-ring`: a 1 px Urban Slate ring on any shade under 1.5:1 on Pearl Whisper (`needsRing` in `src/config/quiz.ts`), computed at build from the catalog hex and set on every compatible swatch; `deck.ts` copies the drawn shade's flag to the big swatch. In the seven groups that is nine shades: Porcelain, Almond, Powder, Linen, Sunflower, Mimosa, Bumblebee, Daffodil and Pale Violet. It is the family page's `--swr` precedent (`src/styles/family.css`). No other swatch has a border.
+- **Beside it** (`.qz-rtext`, `gap: var(--s2)`, centred on phones, left on laptops), in order: the eyebrow "Your shade" at `--fs-eyebrow`, 600; the drawn shade's name and a full stop in Poppins 700 at `--fs-tile-name` / `--lh-tile`, `--ls-tile` (`tabindex="-1"`, focused when the result shows); the family line ("Blissful Blue, shade 15 of 24") at `--fs-family` with tabular numerals; "Best in gloss." or "Best in matte." at `--fs-family`; the personality's name alone, no tagline, at `--fs-legal`, 600; the personality profile and the colour profile, two paragraphs at `--fs-legal` / `--lh-ui` within `--measure-prose`; "Also compatible with" at `--fs-label`, 600; the compatible row; "Found the perfect shade? Make it yours!" in Poppins 700 at `--fs-clause` / `--lh-h2`, `--ls-h2`; then "See it on the case" (the primary button, to the drawn shade on its family page, `/shades/<family>/?shade=<nnn>`) and "Not quite? Try again" (Text button, below), stacked and centred on phones, side by side on laptops.
+- **Compatible row** (`ul.qz-also`). The rest of the group in Sam's order, five or six shades (the drawn shade's own item is `hidden`; The Spark's group has six shades, the others seven), in a grid of `repeat(auto-fit, minmax(46px, 1fr))` with `gap: var(--s1)` (8 px) that fills the text column at every width. Six columns need 316 px (6 x 46 + 5 x 8): at 390 the column is 326 px and holds six on one row (47.7 px each), and on laptops it is 400 px and holds six 60 px columns; at 360 the column is 296 px and takes five, so the sixth shade of a seven-shade group starts a second row. Each `li.qz-mini` is a grid with its items centred, `align-content: start` and `gap: var(--s1)`: a 32 px circle (`.qz-mini-sw`, painted and ringed as the big swatch) over its name at `--fs-tile-caption` / `--lh-ui`, centred, a long name wrapping under its swatch, in Urban Slate and never in the shade (Swatches, below). The items are not links.
 
 ### Text button (`.txtbtn`)
 
 - **Type.** Open Sans 600 at `--fs-button` / `--lh-solid`, the panel's text colour, no fill, no border.
-- **Size.** Minimum height 44 px, padding `var(--s2) 0`.
+- **Size.** A hit area of at least 44 x 44 px (Tap targets, section 8; CHECKLIST B2): minimum height 44 px, padding `var(--s2) 0`. Back, the shortest label, also takes `min-width: 44px` (`.qz-foot .qz-back`), so it meets the 44 x 44 minimum at every width; "Not quite? Try again" and "Not you? Use another email." are wider than 44 px by their words.
 - **States.** An underline at a 3 px offset, transparent at rest and coloured in on hover and on `:focus-visible` only at once (no transition: nothing but transform and opacity animates, CHECKLIST C3). No transform.
-- **Uses.** "Not quite? Try again" under the result and "Not you? Use another email." once the gift is sent.
+- **Uses.** "Back" in the card's footer (cards 2 to 10), "Not quite? Try again" under the result and "Not you? Use another email." once the gift is sent.
 - **Focus.** The two-tone ring (Quiz panel, above).
 
 ### Email input (`.qz-input`, the gift form)
@@ -363,7 +368,7 @@ One scale, used through `gap` on flex and grid, not per-element margins (rule 15
 
 ```css
 :root {
-  --s1: 8px; --s2: 12px; --s3: 16px; --s4: 24px; --s5: 32px;   /* --s4: the quiz deck's rise, the gap under a quiz card and the quiz panels' padding; --s5: the quiz panels' padding on laptops (section 3, 2026-10-16) */
+  --s1: 8px; --s2: 12px; --s3: 16px; --s4: 24px; --s5: 32px;   /* --s4: the quiz panels' padding top and bottom (--s3 at the sides) and the quiz buttons' side padding; --s5: the quiz intro's and result's padding on laptops (section 3, 2026-10-16) */
   --inset: clamp(16px, 3.5vw, 56px);  /* corner inset: 16 px at 390, 44.8 px at 1280, 56 px at 1700 (measured) */
 }
 ```
@@ -501,7 +506,7 @@ Anything not on that list is not excepted.
   - 1024 px: the logotype goes from 96 to 136 px;
   - 1100 px: the countdown lift is removed;
   - aspect 0.9: portrait framing in the hero (camera zoom `min(1, aspect * 1.25)`, sky crop class, poster class, section 2 swatch columns 24 to 12). In CSS, wide is `(min-aspect-ratio: 9/10)` and portrait is its complement, which matches the scene's `aspect < 0.9` exactly.
-- **The quiz (section 3).** Phone first: the stage is `min-height: 100svh` with its panel bottom-aligned on phones and centred on laptops (900 px wide and 600 px tall or more, the family pages' breakpoint), where the intro and the results widen from 480 to 640 px and the option swatches from 112 to 144 px.
+- **The quiz (section 3).** Phone first: the stage is `min-height: 100svh` with its panel bottom-aligned on phones and centred on laptops (900 px wide and 600 px tall or more, the family pages' breakpoint), where the intro, the deck, the results and the gift panel widen from 480 to 640 px. On every screen the deck holds the tallest card's height from the first question to the last; on a landscape phone it is taller than the screen and the page scrolls through it.
 - **Viewport units.** `svh` for layout heights. Nothing is animated in `dvh`. Safe areas use `env(safe-area-inset-*)`.
 - **Tap targets.** At least 44 px. Inputs are 16 px so iOS never zooms.
 - **Canvas pixel ratio.** Capped at 1.25 on touch and 1.5 elsewhere.
@@ -562,7 +567,7 @@ Motion is reserved for the hero canvas, the Wall, the tilt card and the manifest
   --dur-cue: 1.5s;                                /* one cue cycle */
   --cue-cycles: 2.44;                             /* three bounces, ending on a landing (3.66 s) */
   --dur-out: 200ms;                               /* section 3: the quiz intro fading out */
-  --dur-card: 300ms;                              /* section 3: a quiz card leaving, arriving or springing back */
+  --dur-card: 300ms;                              /* section 3: a quiz card leaving, coming forward or coming back */
 }
 ```
 

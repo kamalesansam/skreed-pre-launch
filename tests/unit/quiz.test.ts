@@ -1,97 +1,100 @@
-// Section 3, the quiz (docs/specs/quiz.md AC1, AC6): the scoring resolves every path, the data matches the catalog,
-// and the copy keeps the brand rules.
+// Section 3, the quiz (docs/specs/quiz.md AC1, AC6): the ten questions give every personality one answer each, the
+// scoring always resolves and breaks ties the same way, the shade draw covers the group, every shade is a catalog shade,
+// the hairline rule matches the catalog, and the copy keeps the brand rules.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { QUIZ_CARDS, QUIZ_COPY, QUIZ_RESULTS, scoreQuiz, resultHref, type Answer } from '../../src/config/quiz.ts';
+import { QUIZ_COPY, QUIZ_PERSONAS, QUIZ_QUESTIONS, QUIZ_QUESTION_COUNT, needsRing, pickShade, scoreQuiz, shadeHref, type PersonaId } from '../../src/config/quiz.ts';
 import { SHADES } from '../../src/config/shades.gen.ts';
 
 const byId = new Map(SHADES.map((s) => [s.id, s]));
-const FAMILIES = ['frosty-white', 'blissful-blue', 'playful-pink', 'vivid-violet', 'mellow-yellow', 'basic-brown', 'blushing-coral', 'stormy-grey', 'go-green', 'roaring-red'];
-
-function dist(a: string, b: string): number { let d = 0; for (let i = 0; i < 6; i++) if (a[i] !== b[i]) d++; return d; }
-function lum(hex: string): number {
-  const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
-  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
-}
-const PEARL = lum('#f7f6f3');
+const IDS: PersonaId[] = ['main', 'curator', 'spark', 'optimist', 'rebel', 'dreamer', 'strategist'];
+/** Sam's recommended shade per personality, by the catalog's name (his "Navy Blue" is the catalog's Navy) */
+const RECOMMENDED: Record<PersonaId, string> = { main: 'Ruby', curator: 'Porcelain', spark: 'Sunflower', optimist: 'Autumn', rebel: 'Ballerina', dreamer: 'Wildberry', strategist: 'Navy' };
 const allStrings = (): string[] => {
   const out: string[] = [];
   for (const v of Object.values(QUIZ_COPY)) out.push(typeof v === 'function' ? (v as (...a: never[]) => string)(...(['Mellow Yellow', 11] as never[])) : v);
-  for (const c of QUIZ_CARDS) out.push(c.q, c.left.word, c.right.word);
-  for (const r of QUIZ_RESULTS) out.push(r.persona, r.tagline, r.text);
+  for (const q of QUIZ_QUESTIONS) out.push(q.q, ...q.answers.map((a) => a.text));
+  for (const p of QUIZ_PERSONAS) out.push(p.name, p.profile, p.palette);
   return out;
 };
 
-test('ten results, one per family in catalog order, each with a 6-bit signature', () => {
-  assert.deepEqual(QUIZ_RESULTS.map((r) => r.family), FAMILIES);
-  for (const r of QUIZ_RESULTS) assert.match(r.sig, /^[01]{6}$/, r.family);
-});
-
-test('the signatures are pairwise at Hamming distance 2 or more', () => {
-  for (let i = 0; i < QUIZ_RESULTS.length; i++) for (let j = i + 1; j < QUIZ_RESULTS.length; j++) {
-    assert.ok(dist(QUIZ_RESULTS[i].sig, QUIZ_RESULTS[j].sig) >= 2, `${QUIZ_RESULTS[i].family} and ${QUIZ_RESULTS[j].family}`);
+test('seven personalities in Sam\'s order, each with a finish and a group of six or seven catalog shades led by his recommendation', () => {
+  assert.deepEqual(QUIZ_PERSONAS.map((p) => p.id), IDS);
+  for (const p of QUIZ_PERSONAS) {
+    assert.match(p.finish, /^(gloss|matte)$/, p.id);
+    assert.ok(p.shades.length >= 6 && p.shades.length <= 7, `${p.id}: ${p.shades.length} shades`);
+    assert.equal(new Set(p.shades).size, p.shades.length, `${p.id}: a shade twice`);
+    for (const id of p.shades) assert.ok(byId.has(id), `${p.id}: ${id} is not a catalog shade`);
+    assert.equal(byId.get(p.shades[0])!.name, RECOMMENDED[p.id], `${p.id}: the first shade is Sam's recommendation`);
   }
 });
 
-test('all 64 answer words resolve, every family is reachable, and the result is deterministic', () => {
-  const hits = new Map<string, number>();
-  for (let w = 0; w < 64; w++) {
-    const answers = [5, 4, 3, 2, 1, 0].map((b) => ((w >> b) & 1) as Answer);
-    const r = scoreQuiz(answers), again = scoreQuiz(answers);
-    assert.ok(r, `word ${w}`);
-    assert.equal(r.family, again.family);
-    // the winner is one of the nearest, and the tie rule picks the one that matches the earliest differing card
-    const d = (sig: string) => dist(sig, answers.join(''));
-    const best = Math.min(...QUIZ_RESULTS.map((x) => d(x.sig)));
-    assert.equal(d(r.sig), best, `word ${w}: not a nearest result`);
-    hits.set(r.family, (hits.get(r.family) ?? 0) + 1);
+test('ten questions, each with seven answers that give every personality exactly one, in a mixed order', () => {
+  assert.equal(QUIZ_QUESTIONS.length, QUIZ_QUESTION_COUNT);
+  assert.equal(QUIZ_QUESTION_COUNT, 10);
+  for (const [i, q] of QUIZ_QUESTIONS.entries()) {
+    assert.equal(q.answers.length, 7, q.q);
+    assert.deepEqual([...q.answers.map((a) => a.persona)].sort(), [...IDS].sort(), q.q);
+    assert.notDeepEqual(q.answers.map((a) => a.persona), IDS, `question ${i + 1} shows the answers in Sam's listing order`);
   }
-  // the paths per family of docs/specs/quiz.md section 5 (a changed signature moves these on purpose)
-  assert.deepEqual(Object.fromEntries(FAMILIES.map((f) => [f, hits.get(f) ?? 0])), { 'frosty-white': 10, 'blissful-blue': 6, 'playful-pink': 7, 'vivid-violet': 5, 'mellow-yellow': 10, 'basic-brown': 6, 'blushing-coral': 6, 'stormy-grey': 3, 'go-green': 5, 'roaring-red': 6 });
-  assert.equal([...hits.values()].reduce((a, b) => a + b, 0), 64);
+  // the first answer on the card is not always the same personality
+  assert.ok(new Set(QUIZ_QUESTIONS.map((q) => q.answers[0].persona)).size >= 5);
+  assert.deepEqual(QUIZ_QUESTIONS.map((q) => q.visual), [true, false, true, false, true, false, false, true, true, false]);
 });
 
-test('a personality’s own signature returns that personality', () => {
-  for (const r of QUIZ_RESULTS) assert.equal(scoreQuiz(r.sig.split('').map(Number) as Answer[]).family, r.family);
+test('the most-picked personality wins, and a tie goes to the tied personality picked most recently', () => {
+  for (const id of IDS) assert.equal(scoreQuiz(Array(10).fill(id)).id, id);
+  // a plurality of four
+  assert.equal(scoreQuiz(['spark', 'spark', 'spark', 'spark', 'main', 'main', 'main', 'curator', 'curator', 'dreamer']).id, 'spark');
+  // three-three tie between main and curator: curator was picked last among them
+  assert.equal(scoreQuiz(['main', 'curator', 'main', 'curator', 'main', 'curator', 'spark', 'optimist', 'rebel', 'dreamer']).id, 'curator');
+  // main, curator and spark two each, the rest one each: of the three tied at two, spark was picked last
+  assert.equal(scoreQuiz(['main', 'curator', 'spark', 'optimist', 'rebel', 'dreamer', 'strategist', 'main', 'curator', 'spark']).id, 'spark');
+  assert.throws(() => scoreQuiz(['main']), /10 answers expected/);
+  // deterministic over a sample of random answer sets
+  let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let k = 0; k < 500; k++) { const a = Array.from({ length: 10 }, () => IDS[Math.floor(rnd() * 7)]); assert.equal(scoreQuiz(a).id, scoreQuiz([...a]).id); }
 });
 
-test('every shade on the cards and in the results is a catalog shade with its name, hex, index and number', () => {
-  const refs = [...QUIZ_CARDS.flatMap((c) => [c.left, c.right]), ...QUIZ_RESULTS];
-  for (const s of refs) {
-    const cat = byId.get(s.shade);
-    assert.ok(cat, s.shade);
-    assert.equal(s.name, cat.name, s.shade);
-    assert.equal(s.hex.toLowerCase(), cat.hex.toLowerCase(), s.shade);
+test('the shade draw: any shade of the group can come up, the others are the compatible ones in their order', () => {
+  for (const p of QUIZ_PERSONAS) {
+    const seen = new Set<string>();
+    for (let k = 0; k < p.shades.length; k++) {
+      const { shade, others } = pickShade(p, () => (k + 0.5) / p.shades.length);
+      seen.add(shade);
+      assert.equal(others.length, p.shades.length - 1);
+      assert.ok(!others.includes(shade));
+      assert.deepEqual(others, p.shades.filter((s) => s !== shade));
+    }
+    assert.equal(seen.size, p.shades.length, `${p.id}: every shade reachable`);
+    assert.equal(pickShade(p, () => 0).shade, p.shades[0]);
+    assert.equal(pickShade(p, () => 0.9999999).shade, p.shades[p.shades.length - 1]);
   }
-  for (const r of QUIZ_RESULTS) { const cat = byId.get(r.shade)!; assert.equal(r.index, cat.index); assert.equal(r.n, cat.n); assert.equal(cat.family, r.family); }
-  assert.equal(resultHref(QUIZ_RESULTS[4]), '/shades/mellow-yellow/?shade=107');
 });
 
-test('the card swatches read on Pearl Whisper without a border (contrast 1.5:1 or more); a result shade under 1.5:1 is one of the two ringed in quiz.css, and no other', () => {
-  const ratio = (hex: string) => (PEARL + 0.05) / (lum(hex) + 0.05);
-  for (const c of QUIZ_CARDS) for (const s of [c.left, c.right]) assert.ok(ratio(s.hex) >= 1.5, `${s.name} ${s.hex}: ${ratio(s.hex).toFixed(2)}:1`);
-  // the result swatch is a 160 px circle on the same Pearl: under 1.5:1 it carries the 1 px Urban Slate hairline (the family page's --swr),
-  // and the rule in src/styles/quiz.css names exactly the shades that need it
+test('the family link carries the three-digit catalog number, and the hairline goes on exactly the shades under 1.5:1 on Pearl', () => {
+  assert.equal(shadeHref('frosty-white', 10), '/shades/frosty-white/?shade=010');
+  assert.equal(shadeHref('mellow-yellow', 107), '/shades/mellow-yellow/?shade=107');
+  const ringed = [...new Set(QUIZ_PERSONAS.flatMap((p) => p.shades))].filter((id) => needsRing(byId.get(id)!.hex));
+  // the near-whites, the pale yellows and the palest pastel: Porcelain, Almond, Powder, Linen, Sunflower, Mimosa, Bumblebee, Daffodil, Pale Violet
+  assert.deepEqual(ringed.sort(), ['basic-brown-01', 'blissful-blue-03', 'frosty-white-10', 'frosty-white-20', 'mellow-yellow-10', 'mellow-yellow-11', 'mellow-yellow-15', 'mellow-yellow-20', 'vivid-violet-02']);
+  // the CSS carries the generic rule the component's data-ring relies on
   const css = readFileSync(new URL('../../src/styles/quiz.css', import.meta.url), 'utf8');
-  const rule = css.split('\n').find((l) => l.includes('.qz-big[data-shade=') && l.includes('border: 1px solid var(--urban-slate)'));
-  assert.ok(rule, 'quiz.css has no hairline ring rule on .qz-big');
-  const ringed = [...rule.matchAll(/\.qz-big\[data-shade="([a-z-]+-\d+)"\]/g)].map((m) => m[1]).sort();
-  assert.deepEqual(ringed, ['frosty-white-10', 'mellow-yellow-11']);
-  const low = QUIZ_RESULTS.filter((r) => ratio(r.hex) < 1.5).map((r) => r.shade).sort();
-  assert.deepEqual(low, ringed, `result shades under 1.5:1 on Pearl: ${QUIZ_RESULTS.map((r) => `${r.shade} ${ratio(r.hex).toFixed(2)}:1`).join(', ')}`);
-  for (const r of QUIZ_RESULTS) if (!ringed.includes(r.shade)) assert.ok(ratio(r.hex) >= 1.5, `${r.name} ${r.hex}: ${ratio(r.hex).toFixed(2)}:1 without a ring`);
+  assert.match(css, /\.qz-big\[data-ring\][^{]*\{[^}]*border: 1px solid var\(--urban-slate\)/);
 });
 
-test('copy: sentence case headings, no em or en dash, no emoji, no banned words (CLAUDE.md 3, 4, 16, 17)', () => {
+test('copy: sentence case headings, no em or en dash, no emoji, no banned words, no digits in a question (CLAUDE.md 3, 4, 16, 17)', () => {
   for (const s of allStrings()) {
     assert.doesNotMatch(s, /[–—]/, s);
     assert.doesNotMatch(s, /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u, s);
     assert.doesNotMatch(s, /\b(seamless|elevate|unleash|next-level|revolutionary)\b/i, s);
   }
-  for (const h of [QUIZ_COPY.h, QUIZ_COPY.own, QUIZ_COPY.gift]) {
+  for (const h of [QUIZ_COPY.h, QUIZ_COPY.own, QUIZ_COPY.gift, ...QUIZ_QUESTIONS.map((q) => q.q)]) {
     assert.notEqual(h, h.toUpperCase(), `all caps: ${h}`);
-    assert.equal(h[0], h[0].toUpperCase());
+    assert.equal(h[0], h[0].toUpperCase(), h);
   }
-  for (const c of QUIZ_CARDS) assert.doesNotMatch(c.q, /\d/, 'no digits in a question');
+  for (const q of QUIZ_QUESTIONS) assert.doesNotMatch(q.q, /\d/, `a digit in a question: ${q.q}`);
+  // no invented counts on the result (Sam, 2026-10-16: the confidence and rarity figures stay out)
+  for (const p of QUIZ_PERSONAS) assert.doesNotMatch(`${p.profile} ${p.palette}`, /%|Top \d/, p.id);
 });
