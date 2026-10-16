@@ -33,6 +33,25 @@ for (const h of heroChunk) add('island js', h, join(dist, h));
 // the lazy quiz chunk (quiz.md 6): reached only through an import() from the page's module scripts, never statically and never
 // the island; the deck chunk by name, or any such chunk that imports config/quiz. Its own static imports not already counted follow it.
 for (const p of [...dynamic].filter((p) => !seen.has(p) && !isHero(p) && existsSync(join(dist, p)))) if (/deck/.test(p) || /config\/quiz/.test(readFileSync(join(dist, p), 'utf8'))) walk(p, 'quiz js (lazy)');
+// section 4's lazy chunks (section-4.md 6): the island's own import() of the section's director (it imports the universe
+// in turn) and the walk script (an import() from the page's module scripts); their static imports not already counted
+// follow them. A chunk is the section's when it carries the section's bridge names, which survive minification.
+const isRoom = (p) => /skreed:room|__skreedRoom|__skreedRoomFrame/.test(readFileSync(join(dist, p), 'utf8'));
+// the entry chunks must carry the names; what they import in turn (the universe, the case loader) is the section's too
+const roomQueue = [...heroChunk.flatMap((h) => jsRefs(readFileSync(join(dist, h), 'utf8')).dyn), ...dynamic].map((p) => ({ p, entry: true }));
+while (roomQueue.length) {
+  const { p, entry } = roomQueue.shift();
+  if (seen.has(p) || isHero(p) || !existsSync(join(dist, p)) || (entry && !isRoom(p))) continue;
+  const before = rows.length; walk(p, 'room js (lazy)');
+  for (const r of rows.slice(before)) roomQueue.push(...jsRefs(readFileSync(join(dist, r.name), 'utf8')).dyn.map((d) => ({ p: d, entry: false })));
+}
+// the section's data: the models and the lightmaps its chunks name (one lightmap format is fetched: AVIF where it decodes,
+// so the WebP twins are listed but not summed), and the family page's case model it shares (public/models)
+for (const r of rows.filter((x) => x.group === 'room js (lazy)')) {
+  const src = readFileSync(join(dist, r.name), 'utf8');
+  for (const d of new Set([...src.matchAll(/[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.(?:glb|avif|webp)\b/g)].map((m) => m[0]))) if (existsSync(join(dist, '_astro', d)) && !rows.some((x) => x.name.endsWith(d))) add(d.endsWith('.webp') ? 'room data (webp, unsummed)' : 'room data', '/_astro/' + d, join(dist, '_astro', d));
+  for (const d of new Set([...src.matchAll(/\/models\/(?:case\.lod1|wallet|airpods|lenskin)\.[a-f0-9]+\.glb/g)].map((m) => m[0]))) if (existsSync(join(dist, d)) && !rows.some((x) => x.name === d)) rows.push({ group: 'room data', name: d, raw: raw(join(dist, d)), gz: raw(join(dist, d)) });
+}
 const dataSeen = new Set();
 for (const r of rows.filter((r) => r.group === 'critical js' || r.group === 'island js')) { const src = readFileSync(join(dist, r.name), 'utf8'); for (const d of new Set([...src.matchAll(/[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.(?:webp|bin|json)\b/g)].map((m) => m[0]))) if (!dataSeen.has(d) && !/^(wide|portrait)\./.test(d) && existsSync(join(dist, '_astro', d))) { dataSeen.add(d); add('island data', '/_astro/' + d, join(dist, '_astro', d)); } }
 for (const f of [...new Set([...html.matchAll(/href="(\/fonts\/[^"]+)"/g)].map((m) => m[1]))]) add('font', f, join(dist, f));
@@ -47,10 +66,15 @@ const totalJs = sum((r) => r.group === 'critical js' || r.group === 'island js' 
 const page = rows[0].gz, openSans = sum((r) => r.group === 'font' && /open-sans/.test(r.name));
 const poster = (cls) => sum((r) => r.group === 'poster' && r.name.includes(cls) && r.name.endsWith('.avif'));
 const island = sum((r) => r.group === 'island data');
+const roomJs = sum((r) => r.group === 'room js (lazy)'), roomData = sum((r) => r.group === 'room data');
 console.log('\nbudget (gzip unless noted; CLAUDE.md: critical JS under 60 KB, total JS under 250 KB, hero image under 120 KB, first view under 1.5 MB)');
 console.log(`critical JS (inline scripts + module scripts + static imports): ${fmt(critical)}`);
 console.log(`quiz JS (lazy chunk, fetched within a screen of section 3):     ${fmt(quizJs)}`);
 console.log(`total JS (critical + island chunk + lazy quiz chunk):           ${fmt(totalJs)}`);
+console.log(`room JS (section 4's lazy chunks; its line is 30 KB):             ${fmt(roomJs)}`);
+console.log(`room data (models as stored, AVIF lightmaps, the case model):    ${fmt(roomData)}`);
+console.log(`section 4 on the 3D tier, lazy (its line is 275 KB):             ${fmt(roomJs + roomData)}`);
+console.log(`total JS with section 4:                                         ${fmt(totalJs + roomJs)}`);
 for (const cls of ['portrait', 'wide']) {
   console.log(`poster ${cls} (AVIF, raw):                                     ${fmt(poster(cls))}`);
   console.log(`first view, poster tier, ${cls}: page + Open Sans + poster:    ${fmt(page + openSans + poster(cls))}`);

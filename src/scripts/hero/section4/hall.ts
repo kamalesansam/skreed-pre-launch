@@ -1,20 +1,20 @@
 // Section 4's entrance hall (docs/specs/section-4.md 2 and 5; the numbers from docs/specs/evidence/section-4-measurements.md).
 // Our own model (src/assets/room/hall.glb, scripts/room/hall.py) lit by our own baked lightmap, drawn unlit: albedo times
 // the light, with the measured seams and the concrete's grain procedural in the shader, the fixtures emissive, the
-// door's seam of light brightening toward the door station. One pass into an 8-bit target, then the measured output
-// pass (vignette that clips at the centre, colour split at the corners, bleach-bypass, grain) into the frame the
-// composite reads as tB of the third wipe and as the whole frame after it. The camera walks the measured hall by the
-// section's scroll progress; the pointer sways the head on laptops. Everything here renders under NoToneMapping into
-// sRGB, as section 3's fog ground does; the hero's composer keeps its ACES.
-import { Color, Mesh, MeshBasicMaterial, NoToneMapping, PerspectiveCamera, Scene, ShaderMaterial, SRGBColorSpace, Texture, Vector2, Vector3, WebGLRenderTarget, type Material, type Object3D, type WebGLRenderer } from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+// door's seam of light brightening toward the door station, the leaves on hinges for the transition. One pass into an
+// 8-bit target, then the measured output pass (post.ts) into the frame the composite reads as tB of the third wipe and
+// as the whole frame after it. The camera walks the measured hall by the section's scroll progress; the pointer sways
+// the head on laptops. Everything here renders under NoToneMapping into sRGB, as section 3's fog ground does.
+import { Color, CubeCamera, Group, LinearMipmapLinearFilter, Mesh, MeshBasicMaterial, NoToneMapping, PerspectiveCamera, Scene, ShaderMaterial, Texture, Vector3, WebGLCubeRenderTarget, WebGLRenderTarget, type CubeTexture, type Object3D, type WebGLRenderer } from 'three';
 import hallUrl from '../../../assets/room/hall.glb?url';
 import lightAvifUrl from '../../../assets/room/hall-lightmap.avif?url';
 import lightWebpUrl from '../../../assets/room/hall-lightmap.webp?url';
-import { fsCam, fsScene } from '../section2/background.ts';
-import { HALL, roomParams, type RoomParams } from '../../../config/room.ts';
+import { HALL, RENDER_COLOURS, roomParams, type RoomParams } from '../../../config/room.ts';
+import { LIGHT_VERT, TO_SRGB, loadLightmap, loadModel } from './assets.ts';
+import { createOutputPass } from './post.ts';
 
-export interface HallLook { yaw: number; pitch: number }
+/** the head: yaw and pitch in degrees (the pointer's sway, the keys' turn, the drag); anchorYaw the part the prompt keeps (the keys and the drag, not the sway) */
+export interface HallLook { yaw: number; pitch: number; anchorYaw?: number }
 
 export interface HallScene {
   readonly started: boolean;
@@ -28,6 +28,8 @@ export interface HallScene {
   resize(w: number, h: number): void;
   /** x: the camera's place along the hall (metres); look: the head's sway in degrees; nearDoor: 0 far to 1 at the station */
   update(x: number, look: HallLook, nearDoor: number, t: number, params: RoomParams): void;
+  /** the door: s 0 closed to 1 open; mode 0 two leaves swinging inward 95 degrees, 1 one slab sliding aside, 2 no door */
+  swing(s: number, mode: number): void;
   render(): void;
   /** a scene point to CSS pixels of the canvas, or null when behind the camera */
   project(p: readonly [number, number, number]): { x: number; y: number } | null;
@@ -36,19 +38,20 @@ export interface HallScene {
   dispose(): void;
 }
 
-export interface HallOptions { renderer: WebGLRenderer; avif: boolean; reduced: boolean }
-
-const LIGHT_VERT = /* glsl */`
-  varying vec2 vUv; varying vec3 vWorld; varying vec3 vNormal;
-  void main() { vUv = uv; vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; vNormal = normalize(mat3(modelMatrix) * normal);
-    gl_Position = projectionMatrix * viewMatrix * w; }`;
+export interface HallOptions { renderer: WebGLRenderer; avif: boolean; reduced: boolean; /** touch devices get no bloom (spec 2: on laptops) */ touch?: boolean }
 
 // albedo x baked light (the lightmap is sRGB), the measured seams as dark lines in world space, the grain as a two-octave
-// hash at a centimetre scale, then back to sRGB for the 8-bit target
+// hash at a centimetre scale, then back to sRGB for the 8-bit target; on the floor, our own cube of the hall (rendered once
+// from its centre and box-projected) reflected at a fifth face-on and two fifths at a grazing angle (spec 2 and 5)
 const LIGHT_FRAG = /* glsl */`
-  uniform sampler2D tLight; uniform float uExposure, uAlbedo, uSeams, uGrain;
+  uniform sampler2D tLight; uniform samplerCube tEnv; uniform float uExposure, uAlbedo, uSeams, uGrain, uEnvOn, uGloss;
+  uniform vec3 uBoxMin, uBoxMax, uCubePos;
   varying vec2 vUv; varying vec3 vWorld; varying vec3 vNormal;
-  vec3 toSrgb(vec3 c) { return mix(c * 12.92, 1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, c)); }
+  ${TO_SRGB}
+  vec3 boxDir(vec3 p, vec3 r) {   // the reflected ray's hit on the hall's box, seen from the cube's centre
+    vec3 f1 = (uBoxMax - p) / r, f2 = (uBoxMin - p) / r, fm = max(f1, f2);
+    return p + r * min(min(fm.x, fm.y), fm.z) - uCubePos;
+  }
   float hash(vec3 p) { p = fract(p * 0.1031); p += dot(p, p.yzx + 33.33); return fract((p.x + p.y) * p.z); }
   float vnoise(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
     float a = hash(i), b = hash(i + vec3(1,0,0)), c = hash(i + vec3(0,1,0)), d = hash(i + vec3(1,1,0));
@@ -64,76 +67,50 @@ const LIGHT_FRAG = /* glsl */`
     light *= 1.0 - uSeams * seam;
     float n = vnoise(vWorld * 90.0) * 0.6 + vnoise(vWorld * 310.0) * 0.4;
     light *= 1.0 + uGrain * (n - 0.5) * 2.0;
-    gl_FragColor = vec4(toSrgb(clamp(light * uAlbedo, 0.0, 1.0)), 1.0);
+    vec3 c = toSrgb(clamp(light * uAlbedo, 0.0, 1.0));
+    if (uEnvOn > 0.5 && vNormal.y > 0.9 && vWorld.y < 0.08) {
+      vec3 V = normalize(vWorld - cameraPosition), R = reflect(V, vec3(0.0, 1.0, 0.0));
+      float F = uGloss * (0.2 + 0.2 * pow(1.0 - max(-V.y, 0.0), 2.0)) * (1.0 - 0.7 * seam);
+      vec3 env = textureCube(tEnv, boxDir(vWorld, R), 1.5).rgb;   // the cube holds display values, as this target does
+      c = mix(c, env, F);
+    }
+    gl_FragColor = vec4(c, 1.0);
   }`;
 
-// the output pass (evidence file section 4; spec 2 "The look on screen"): the vignette multiplies before anything else so
-// the centre clips to white in the 8-bit target; the split pulls red in and blue out by the square of the radius; the
-// bleach-bypass overlays the pixel with its own luma; the grain is a per-frame hash. Normalised by the longer side so a
-// portrait phone keeps the laptop's corners.
-const POST_VERT = /* glsl */`varying vec2 vUv; void main() { vUv = position.xy * 0.5 + 0.5; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
-
-const POST_FRAG = /* glsl */`
-  uniform sampler2D tSrc; uniform vec2 uRes; uniform float uBoost, uCorners, uBleach, uSplit, uNoise, uFrame;
-  varying vec2 vUv;
-  float ign(vec2 p) { return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715)))); }
-  void main() {
-    vec2 d = (vUv - 0.5) * uRes / max(uRes.x, uRes.y);       // the corner of a 16:9 frame sits at |d| = 0.574
-    float r = length(d);
-    float vig = max(0.0, uBoost - (uBoost - uCorners) * (r / 0.574));
-    vec2 off = d * r * uSplit / uRes;                         // grows with the square of the radius, zero at the centre
-    vec3 c = vec3(texture2D(tSrc, vUv - off).r, texture2D(tSrc, vUv).g, texture2D(tSrc, vUv + off).b);
-    c = min(c * vig, 1.0);
-    float luma = dot(c, vec3(0.2125, 0.7154, 0.0721));
-    float m = clamp((luma - 0.45) * 10.0, 0.0, 1.0);
-    vec3 bleached = mix(2.0 * c * luma, 1.0 - 2.0 * (1.0 - c) * (1.0 - luma), m);
-    c = mix(c, bleached, uBleach);
-    c += uNoise * (0.5 - ign(gl_FragCoord.xy + vec2(uFrame * 7.0, uFrame * 3.0)));
-    gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
-  }`;
-
-async function loadLightmap(avif: boolean): Promise<Texture> {
-  const url = avif ? lightAvifUrl : lightWebpUrl;
-  const res = await fetch(url, { credentials: 'same-origin' });
-  if (!res.ok) throw new Error(`hall lightmap: HTTP ${res.status}`);
-  const blob = await res.blob();
-  // no flip: the UVs are glTF's (origin top left), so the image is used as stored
-  const bitmap = await createImageBitmap(blob, { imageOrientation: 'none', premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
-  const tex = new Texture(bitmap); tex.flipY = false; tex.colorSpace = SRGBColorSpace; tex.anisotropy = 8; tex.needsUpdate = true;
-  return tex;
-}
-
-function loadModel(url: string): Promise<Object3D> {
-  return new Promise((resolve, reject) => {
-    fetch(url, { credentials: 'same-origin' }).then(async (res) => {
-      if (!res.ok) throw new Error(`hall model: HTTP ${res.status}`);
-      const buf = await res.arrayBuffer();
-      new GLTFLoader().parse(buf, '', (g) => resolve(g.scene), reject);
-    }).catch(reject);
-  });
-}
+const SWING_DEG = 95, SLAB_SLIDE = 1.62;
 
 export function createHall(o: HallOptions): HallScene {
   const { renderer } = o;
-  const scene = new Scene(); scene.background = new Color(1, 1, 1);   // the transept's open ends show white, as the reference clears to white
+  const scene = new Scene(); scene.background = new Color(...RENDER_COLOURS.hallClear);   // the transept's open ends show white, as the reference clears to white
   const D = roomParams();
   const cam = new PerspectiveCamera(D.fov, 1, 0.05, 30);
-  const U = { tLight: { value: null as Texture | null }, uExposure: { value: D.exposure }, uAlbedo: { value: D.albedo }, uSeams: { value: D.seams }, uGrain: { value: D.grain } };
+  const U = {
+    tLight: { value: null as Texture | null }, uExposure: { value: D.exposure }, uAlbedo: { value: D.albedo }, uSeams: { value: D.seams }, uGrain: { value: D.grain },
+    tEnv: { value: null as CubeTexture | null }, uEnvOn: { value: 0 }, uGloss: { value: D.gloss },
+    uBoxMin: { value: new Vector3(HALL.xWest, 0, -HALL.width / 2) }, uBoxMax: { value: new Vector3(HALL.xEast, HALL.height, HALL.width / 2) }, uCubePos: { value: new Vector3(0, 1.2, 0) },
+  };
+  // the floor's reflection: one 128 px cube from the hall's centre, rendered once after the hall loads (mipmapped for a soft gloss)
+  const cubeRT = new WebGLCubeRenderTarget(128, { generateMipmaps: true, minFilter: LinearMipmapLinearFilter });
+  const cubeCam = new CubeCamera(0.05, 30, cubeRT); cubeCam.position.copy(U.uCubePos.value); scene.add(cubeCam);
   const litMat = new ShaderMaterial({ uniforms: U, vertexShader: LIGHT_VERT, fragmentShader: LIGHT_FRAG });
-  const fixtureMat = new MeshBasicMaterial({ color: new Color(0.84, 0.89, 0.93).multiplyScalar(1.15) });   // cool white, clips white after the boost
-  const spotMat = new MeshBasicMaterial({ color: new Color(0.72, 0.65, 0.51).multiplyScalar(1.25) });      // warm, about 4500 K
-  const leafMat = new MeshBasicMaterial({ color: new Color(0x383f43) });                                   // Urban Slate in the scene, a render parameter
+  const fixtureMat = new MeshBasicMaterial({ color: new Color(...RENDER_COLOURS.fixture) });   // cool white, about 7400 K; clips white after the boost
+  const spotMat = new MeshBasicMaterial({ color: new Color(...RENDER_COLOURS.floorLight) });   // warm, about 4500 K
+  // Urban Slate as display values: a MeshBasicMaterial writes linear into a render target and this target is read as sRGB,
+  // so the colour is given as the hex's own numbers (a hex given to three's Color is decoded to linear and would read near black)
+  const leafMat = new MeshBasicMaterial({ color: new Color(RENDER_COLOURS.leaf[0], RENDER_COLOURS.leaf[1], RENDER_COLOURS.leaf[2]) });
   const seamMat = new MeshBasicMaterial({ color: new Color(1, 1, 1) });
-  const P = { tSrc: { value: null as Texture | null }, uRes: { value: new Vector2(1, 1) }, uBoost: { value: D.vignette }, uCorners: { value: D.corners }, uBleach: { value: D.bleach }, uSplit: { value: D.split }, uNoise: { value: D.noise }, uFrame: { value: 0 } };
-  const postMat = new ShaderMaterial({ uniforms: P, vertexShader: POST_VERT, fragmentShader: POST_FRAG, depthTest: false, depthWrite: false });
-  const postScene = fsScene(postMat);
-  let rtScene: WebGLRenderTarget | null = null, rtOut: WebGLRenderTarget | null = null, W = 1, H = 1, frameNo = 0;
+  const post = createOutputPass(renderer);
+  let rtScene: WebGLRenderTarget | null = null, W = 1, H = 1, wantW = 1, wantH = 1, warming = false, cubeDone = false;
   let started = false, ready = false, failed = false, model: Object3D | null = null, lightmap: Texture | null = null;
-  const leaves: Mesh[] = []; let seamMesh: Mesh | null = null;
+  // each leaf on a hinge group at its jamb (the leaves' vertices are in world space, so the mesh is offset back by the hinge)
+  const hinges: { group: Group; sign: number; z0: number }[] = []; let seamMesh: Mesh | null = null;
   const _cc = new Color(), _v = new Vector3();
-  let curX: number = HALL.start, curNear = 0;
+  const CLEAR = new Color(...RENDER_COLOURS.hallClear);   // white: the hall's open ends, the room before it draws
+  const anchorCam = new PerspectiveCamera(D.fov, 1, 0.05, 30);   // the camera without the pointer's sway, for the prompt's anchor
+  let curX: number = HALL.start, curNear = 0, curSwing = 0;
 
   function build(root: Object3D) {
+    const leaves: Mesh[] = [];
     root.traverse((obj) => {
       const m = obj as Mesh; if (!m.isMesh) return;
       const n = m.name;
@@ -145,38 +122,51 @@ export function createHall(o: HallOptions): HallScene {
       m.frustumCulled = false;
     });
     scene.add(root);
+    for (const leaf of leaves) {
+      leaf.geometry.computeBoundingBox();
+      const b = leaf.geometry.boundingBox!;
+      // the jamb is the leaf's far edge from the seam: the left leaf (named for the visitor) sits at +z, its hinge at the +z jamb
+      const atPlusZ = b.max.z > 0.1;
+      const hinge = new Vector3((b.min.x + b.max.x) / 2, 0, atPlusZ ? b.max.z : b.min.z);
+      const group = new Group(); group.position.copy(hinge);
+      leaf.parent?.remove(leaf); leaf.position.copy(hinge).negate(); group.add(leaf); scene.add(group);
+      hinges.push({ group, sign: atPlusZ ? 1 : -1, z0: hinge.z });
+    }
+  }
+
+  function alloc(w: number, h: number) {
+    W = w; H = h;
+    rtScene?.dispose();
+    rtScene = new WebGLRenderTarget(W, H, { depthBuffer: true });
+    post.resize(W, H);
+    cam.aspect = W / H; cam.zoom = Math.min(1, cam.aspect * 1.25); cam.updateProjectionMatrix();   // the hero's portrait rule
+    anchorCam.copy(cam);
   }
 
   const api: HallScene = {
     get started() { return started; }, get ready() { return ready; }, get failed() { return failed; },
-    get out() { return rtOut ? rtOut.texture : null; },
+    get out() { return post.out; },
     async load() {
       if (started) return; started = true;
       try {
-        const [root, tex] = await Promise.all([loadModel(hallUrl), loadLightmap(o.avif)]);
+        const [root, tex] = await Promise.all([loadModel(hallUrl, 'hall'), loadLightmap(lightAvifUrl, lightWebpUrl, o.avif, 'hall')]);
         model = root; lightmap = tex; U.tLight.value = tex;
         build(root);
         renderer.initTexture(tex);
-        // compile with an 8 px target so the first real frame links nothing
-        const w = W, h = H; api.resize(8, 8);
+        // compile with an 8 px target bound (three keys each program on the target: compiling with none would build the
+        // canvas's sRGB and ACES variants), and keep any resize that lands meanwhile for the end
+        warming = true; alloc(8, 8);
         api.update(HALL.start, { yaw: 0, pitch: 0 }, 0, 0, roomParams());
-        await renderer.compileAsync(scene, cam);
-        api.render();
-        api.resize(w, h);
-        ready = true;
+        renderer.setRenderTarget(rtScene); const compiling = renderer.compileAsync(scene, cam); renderer.setRenderTarget(null);
+        await compiling;
+        ready = true; api.render();
+        warming = false; alloc(wantW, wantH);
       } catch (e) {
         failed = true;
         console.warn('section 4: the hall did not load; the stills stand in', e);
       }
     },
-    resize(w, h) {
-      W = Math.max(1, w); H = Math.max(1, h);
-      rtScene?.dispose(); rtOut?.dispose();
-      rtScene = new WebGLRenderTarget(W, H, { depthBuffer: true });
-      rtOut = new WebGLRenderTarget(W, H, { depthBuffer: false });
-      P.uRes.value.set(W, H);
-      cam.aspect = W / H; cam.zoom = Math.min(1, cam.aspect * 1.25); cam.updateProjectionMatrix();   // the hero's portrait rule
-    },
+    resize(w, h) { wantW = Math.max(1, w); wantH = Math.max(1, h); if (!warming) alloc(wantW, wantH); },
     update(x, look, nearDoor, t, params) {
       curX = x; curNear = nearDoor;
       if (cam.fov !== params.fov) { cam.fov = params.fov; cam.updateProjectionMatrix(); }
@@ -185,38 +175,57 @@ export function createHall(o: HallOptions): HallScene {
       // looking west down the hall (-x); yaw turns toward -z on the right (facing -x, right is -z), pitch lifts the gaze
       _v.set(-Math.cos(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.sin(yaw) * Math.cos(pitch)).add(cam.position);
       cam.lookAt(_v);
-      U.uExposure.value = params.exposure; U.uAlbedo.value = params.albedo; U.uSeams.value = params.seams; U.uGrain.value = params.grain;
-      P.uBoost.value = params.vignette; P.uCorners.value = params.corners; P.uBleach.value = params.bleach; P.uSplit.value = params.split; P.uNoise.value = o.reduced ? 0 : params.noise; P.uFrame.value = t;
-      // the seam of light brightens from 0.2 far out to the full glow at the station (spec section 4)
-      if (seamMesh) seamMat.color.setScalar((0.2 + 0.8 * nearDoor) * params.seamGlow);
-      for (const l of leaves) l.visible = params.door !== 2;
+      // the prompt's camera keeps the keys' turn and the drag but not the pointer's sway, so the prompt stays on the door
+      const ay = ((look.anchorYaw ?? 0) * Math.PI) / 180;
+      anchorCam.copy(cam); anchorCam.lookAt(_v.set(x - Math.cos(ay), params.eye, -Math.sin(ay))); anchorCam.updateMatrixWorld();
+      U.uExposure.value = params.exposure; U.uAlbedo.value = params.albedo; U.uSeams.value = params.seams; U.uGrain.value = params.grain; U.uGloss.value = params.gloss;
+      // the seam of light brightens from 0.2 far out to the full glow at the station (spec section 4), in linear light, written as a display value
+      if (seamMesh) seamMat.color.setScalar(Math.min(1, (0.2 + 0.8 * nearDoor) * params.seamGlow)).convertLinearToSRGB();
+      void t;
+    },
+    swing(s, mode) {
+      curSwing = s;
+      for (const h of hinges) {
+        h.group.visible = mode !== 2;
+        // 0: the leaves swing inward (away from the visitor) about their jambs; 1: both slide aside as one slab
+        h.group.rotation.y = mode === 1 ? 0 : h.sign * (SWING_DEG * Math.PI / 180) * s;
+        h.group.position.z = h.z0 - (mode === 1 ? SLAB_SLIDE * s : 0);
+      }
+      if (seamMesh) seamMesh.visible = mode === 0 && s < 0.02;
     },
     render() {
-      if (!rtScene || !rtOut || !ready && !started) return;
+      if (!rtScene || !ready && !started) return;
       const pc = renderer.getClearColor(_cc), pa = renderer.getClearAlpha(), tm = renderer.toneMapping;
       renderer.toneMapping = NoToneMapping;
-      renderer.setRenderTarget(rtScene); renderer.setClearColor(0xffffff, 1); renderer.clear(); renderer.render(scene, cam);
-      P.tSrc.value = rtScene.texture; P.uFrame.value = (frameNo++) % 4096;
-      renderer.setRenderTarget(rtOut); renderer.render(postScene, fsCam);
+      renderer.setClearColor(CLEAR, 1);
+      if (!cubeDone && ready) {   // once: the hall seen from its centre, without its own reflection, for the floor's gloss
+        cubeDone = true; U.uEnvOn.value = 0; const sv = seamMesh?.visible;
+        for (const h of hinges) h.group.visible = true;
+        cubeCam.update(renderer, scene); U.tEnv.value = cubeRT.texture; U.uEnvOn.value = 1;
+        if (seamMesh && sv !== undefined) seamMesh.visible = sv;
+      }
+      renderer.setRenderTarget(rtScene); renderer.clear(); renderer.render(scene, cam);
+      const P = (window.__skreedTune?.room?.params) ?? D;
+      post.run(rtScene.texture, { boost: P.vignette, corners: P.corners, bleach: P.bleach, split: P.split, noise: o.reduced ? 0 : P.noise, bloom: o.touch ? 0 : P.bloom }, 0);
       renderer.setRenderTarget(null); renderer.setClearColor(pc, pa); renderer.toneMapping = tm;
     },
     project(p) {
-      _v.set(p[0], p[1], p[2]).project(cam);
+      _v.set(p[0], p[1], p[2]).project(anchorCam);
       if (_v.z > 1 || _v.z < -1) return null;
       const w = renderer.domElement.clientWidth || innerWidth, h = renderer.domElement.clientHeight || innerHeight;
       return { x: (_v.x * 0.5 + 0.5) * w, y: (-_v.y * 0.5 + 0.5) * h };
     },
-    hooks() { return { started, ready, failed, x: +curX.toFixed(3), nearDoor: +curNear.toFixed(3), fov: cam.fov, size: [W, H] }; },
+    hooks() { return { started, ready, failed, x: +curX.toFixed(3), nearDoor: +curNear.toFixed(3), swing: +curSwing.toFixed(3), fov: cam.fov, size: [W, H] }; },
     dispose() {
-      rtScene?.dispose(); rtOut?.dispose(); rtScene = rtOut = null;
-      litMat.dispose(); postMat.dispose(); fixtureMat.dispose(); spotMat.dispose(); leafMat.dispose(); seamMat.dispose();
+      rtScene?.dispose(); rtScene = null; post.dispose();
+      litMat.dispose(); fixtureMat.dispose(); spotMat.dispose(); leafMat.dispose(); seamMat.dispose();
       lightmap?.dispose();
       model?.traverse((obj) => { const m = obj as Mesh; if (m.isMesh) { m.geometry.dispose(); } });
+      for (const h of hinges) { h.group.traverse((obj) => { const m = obj as Mesh; if (m.isMesh) m.geometry.dispose(); }); scene.remove(h.group); }
+      cubeRT.dispose();
       if (model) scene.remove(model);
       model = null; ready = false;
     },
   };
   return api;
 }
-
-export type { Material };

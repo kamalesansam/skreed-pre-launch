@@ -4,7 +4,7 @@
 import { test, expect, type BrowserContext, type Request } from '@playwright/test';
 import { statSync, readdirSync } from 'node:fs';
 
-const ISLAND = /three|hero\.|pieces|\.bin|sky\.|ground|boot/;
+const ISLAND = /three|hero\.|pieces|\.bin|sky\.|ground|boot|hall\.|lightmap|room\.[^/]*\.glb|\/models\/|director\.|universe\./;   // section 4: its 3D chunks, models and lightmaps are the island's too (not the walk script or the stills: the poster tier uses them)
 
 const GATE_CASES: Record<string, (ctx: BrowserContext) => Promise<void>> = {
   'WebGL2RenderingContext deleted': (ctx) => ctx.addInitScript(() => { delete (window as unknown as Record<string, unknown>).WebGL2RenderingContext; }),
@@ -53,7 +53,7 @@ test('AC8.1 (test build, no override): boot.ts finds the software renderer and l
   await expect(page.locator('html')).toHaveClass('js poster');
   await expect(page.locator('#intro')).toHaveCount(0);
   expect(await page.locator('[inert]').count()).toBe(0);
-  expect(reqs.filter((u) => /hero\.|three|pieces|\.bin|sky\.|ground/.test(new URL(u).pathname))).toEqual([]);
+  expect(reqs.filter((u) => /hero\.|three|pieces|\.bin|sky\.|ground|hall\.|lightmap|room\.[^/]*\.glb|\/models\/|director\.|universe\./.test(new URL(u).pathname))).toEqual([]);
   expect(logs.filter((l) => !/Failed to load resource/.test(l))).toEqual(['warning: [hero] no hardware WebGL2']);
   await ctx.close();
 });
@@ -121,7 +121,8 @@ for (const vp of [{ name: '390 x 844', viewport: { width: 390, height: 844 }, cl
 
 test('AC8.4 poster markup: one <picture>, four sources split at aspect 0.9, one <img>, two AVIF preloads', async ({ page }) => {
   await page.goto('/?tier=poster');
-  const pics = await page.locator('picture').count();
+  // the hero's poster is the page's one picture outside section 4 (whose stills load later, on the poster tier only)
+  const pics = await page.locator('picture').evaluateAll((els) => els.filter((e) => !e.closest('#room')).length);
   expect(pics).toBe(1);
   const sources = await page.locator('picture.hero-poster source').evaluateAll((els) => els.map((e) => ({
     type: e.getAttribute('type'), media: e.getAttribute('media'), srcset: e.getAttribute('srcset'), width: e.getAttribute('width'), height: e.getAttribute('height'),

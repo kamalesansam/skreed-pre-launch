@@ -41,11 +41,13 @@ interface Window {
     /** section 4's parameters (Tune's "Section 4" group) */
     room?: { params: import('./config/room.ts').RoomParams; subscribe(fn: (p: import('./config/room.ts').RoomParams, key: string | null) => void): () => unknown };
   };
-  /** section 4: the island hands the walk script a frame each step; the walk script hands back the head's turn from the keys */
+  /** section 4: the island hands the walk script a frame each step; the walk script hands back the head's turn from the keys and the drag */
   __skreedRoomFrame?: (f: import('./config/room.ts').RoomFrame) => void;
-  __skreedRoomLook?: { yaw: number };
-  /** hooks builds: section 4's state */
-  __s4?: () => unknown;
+  __skreedRoomLook?: { yaw: number; drag?: number };
+  /** section 4: the island's side of the bridge, installed with the section's director */
+  __skreedRoom?: import('./config/room.ts').RoomIsland;
+  /** hooks builds: section 4's state, entering without the walk, and the transition by its clock (seconds) */
+  __s4?: { state(): unknown; enter(): boolean; seek(sec: number): void; skip(): void; readonly ready: boolean };
   // test hooks (test and staging builds only; hero-architecture.md 10)
   __skreedFreeze?: boolean;
   __skreedFrame?: number;

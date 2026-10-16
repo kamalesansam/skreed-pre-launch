@@ -13,7 +13,7 @@ import type { Composite, LogoMask } from './post/composite.ts';
 import type { CameraRig } from './camera/rig.ts';
 import type { Section2Scene } from './section2/types.ts';
 import type { GroundScene } from './section3/ground.ts';
-import type { HallScene } from './section4/hall.ts';
+import type { RoomDirector } from './section4/director.ts';
 import type { IntroDirector } from './intro/types.ts';
 import type { RideEls } from './scroll/ride.ts';
 import type { SkyClass } from './data/urls.ts';
@@ -45,8 +45,8 @@ export interface HeroContext {
   groundMesh: Mesh<never, MeshBasicMaterial> | Mesh; stonesMesh: Mesh;
   sky: SkyState;
   composerA: HeroComposer; fogGround: GroundScene; section2: Section2Scene | null; composite: Composite; mask: LogoMask; scrollTex: Texture;
-  /** section 4's hall (section4/hall.ts), created by its lazy chunk once the quiz is in view; null before that and on a failed import */
-  hall: HallScene | null;
+  /** section 4 (section4/director.ts: the hall, the transition, the universe, the loop), created by its lazy chunk once the quiz is in view; null before that and on a failed import */
+  room: RoomDirector | null;
   intro: IntroDirector;
   params: HeroParams; reduced: boolean; touch: boolean; ghost: boolean;
   els: RideEls;

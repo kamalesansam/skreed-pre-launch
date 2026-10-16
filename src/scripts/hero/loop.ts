@@ -2,12 +2,11 @@
 // section 2 hand-over). It owns t, ratio and the scroll followers; the intro director owns live, breath and the crane.
 // requestAnimationFrame is called first, so one bad frame can never stop the loop.
 import { Clock, Color, Plane, Raycaster, Vector3, type Scene, type Vector2 } from 'three';
-import { clamp01, lerpFPS } from './util/math.ts';
-import { HALL, ROOM_SCREENS, liveRoomParams } from '../../config/room.ts';
+import { lerpFPS } from './util/math.ts';
 import { updateBlocks } from './logo/motion.ts';
 import { updateFogLogoRect } from './world/fog.ts';
 import { createScrollFollower, mapScroll, PULL } from './scroll/scrollMap.ts';
-import { rideCopy } from './scroll/ride.ts';
+import { rideCopy, rideLoop } from './scroll/ride.ts';
 import { ghostTarget, type Pointer } from './interaction/pointer.ts';
 import type { Labels } from './interaction/labels.ts';
 import type { HeroContext } from './types.ts';
@@ -36,8 +35,6 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
   const ray = new Raycaster(), plane = new Plane(new Vector3(0, 0, 1), 0), hit = new Vector3();
   const scroll = createScrollFollower();
   const st: LoopState = { t: 0, ratio: 1, live: 0, mouse: new Vector3(99, 99, 0), scroll, introDone: initiallyIntroDone };
-  // section 4: the section's own progress through its own followers, and the head's sway
-  const roomEl = document.getElementById('room'), hallScroll = createScrollFollower(), look = { yaw: 0, pitch: 0 };
   let raf = 0, running = false;
   const C = composite.C;
   const uMask = (U as Record<string, { value: unknown }>).uMask as { value: number } | undefined;
@@ -60,7 +57,11 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
     scroll.update(pr, ratio);
     if (S2 && !S2.started && intro.done) void S2.build();
     if (S2 && !S2.ready && !S2.failed && scroll.b > PULL) scroll.b = PULL;   // section 2 is still being built: the wipe waits
-    const { s, tp, tp2, heroOn } = mapScroll(scroll.b, reduced);
+    // section 4's loop screen (docs/specs/section-4.md 5): while the fourth wipe crosses the screen the hero's steps F5 to
+    // F13 run as at scroll 0 (the rest pose, live t, live pointer), so the jump to the top shows the frame the wipe arrived at
+    const room = ctx.room, inLoop = room ? room.begin(ratio).loop > 0 : false;
+    const hb = inLoop ? 0 : scroll.b;
+    const { s, tp, tp2, heroOn } = mapScroll(hb, reduced);
 
     // F7: pointer target: real pointer, or a slow sweep on touch when idle
     let target: Vector2 | null = null;
@@ -71,69 +72,58 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
     else { mouse.x = lerpFPS(mouse.x, 99, P.mouse * 0.25, ratio); mouse.y = lerpFPS(mouse.y, 99, P.mouse * 0.25, ratio); }
 
     updateBlocks(blocks, U, P, { t, ratio, live, heroOn, mouse, logoY: logo.position.y, floor: ctx.moon.visible, groundAt: ctx.groundAt, stoneTopAt: ctx.stoneTopAt, breath: iv.breath, paused: intro.paused });   // F8
-    if (S2) for (let i = 0; i < blocks.length; i++) if (S2.hidden(i, scroll.b)) U.uOff.value[i].set(0, -500, 0);   // a block that has left for section 2 is gone from the logo
+    if (S2) for (let i = 0; i < blocks.length; i++) if (S2.hidden(i, hb)) U.uOff.value[i].set(0, -500, 0);   // a block that has left for section 2 is gone from the logo
     logo.updateMatrixWorld();                                                    // F9
-    labels.update(dt, !!target && heroOn > 0.5 && tp <= 0 && live > 0.5 && iv.breath >= 1, mouse);   // F10: igloo's labels wait for the breath gate
-    if (els.labels) els.labels.style.visibility = tp > 0 ? 'hidden' : 'visible';
+    labels.update(dt, !inLoop && !!target && heroOn > 0.5 && tp <= 0 && live > 0.5 && iv.breath >= 1, mouse);   // F10: igloo's labels wait for the breath gate
+    if (els.labels) els.labels.style.visibility = tp > 0 || inLoop ? 'hidden' : 'visible';
 
-    ctx.rig.update({ s, t, ratio, live, reduced, b: scroll.b, curve: true, crane: iv.crane, pointerActive: pointer.active, target, follow: ctx.sky.dome });   // F11
+    ctx.rig.update({ s, t, ratio, live, reduced, b: hb, curve: true, crane: iv.crane, pointerActive: pointer.active, target, follow: ctx.sky.dome });   // F11
     // F12; past the second wipe section 2 keeps updating for half a second (its labels fade out over 0.2 s and the hover is dropped), then rests under the quiz
     if (tp2 < 1) s2Rest = -1; else if (s2Rest < 0) s2Rest = t;
-    if (S2 && (s2Rest < 0 || t - s2Rest < 0.5)) S2.update(scroll.b, tp, tp2, t, dt);
-    fogGround.update(scroll.b, t);
+    if (S2 && (s2Rest < 0 || t - s2Rest < 0.5)) S2.update(hb, tp, tp2, t, dt);
+    fogGround.update(hb, t);
     if (ctx.moon.visible) updateFogLogoRect(ctx.FOG, camA, logo.position.y, renderer);   // F13
 
-    // section 4 (docs/specs/section-4.md 5): the section's progress in screens from its own rect (the quiz above it
-    // changes height), the third wipe over its first screen, the walk over the next eight, then the door station; the
-    // wipe waits for the hall as the first wipe waits for section 2
-    const hall = ctx.hall;
-    let hallOn = false, tp3 = 0;
-    if (hall && roomEl) {
-      const rect = roomEl.getBoundingClientRect();
-      const inRoom = rect.top < innerHeight && rect.bottom > 0;
-      const screens = +(roomEl.dataset.screens || ROOM_SCREENS.wipe), screenPx = rect.height / screens;   // the section's own screen, never innerHeight (iOS's address bar would move the camera)
-      hallScroll.update(screenPx > 0 ? -rect.top / screenPx : 0, ratio);
-      const q = hall.ready ? Math.max(0, hallScroll.b) : 0;
-      tp3 = clamp01(q / ROOM_SCREENS.wipe);
-      const walk = clamp01((q - ROOM_SCREENS.wipe) / ROOM_SCREENS.walk);
-      const x = HALL.start + (HALL.end - HALL.start) * walk;
-      const nearDoor = clamp01((HALL.promptFrom - (x - HALL.door.face)) / (HALL.promptFrom - (HALL.end - HALL.door.face)));
-      const RP = liveRoomParams();
-      const sway = ctx.touch || reduced ? 0 : 1;
-      const turn = window.__skreedRoomLook?.yaw ?? 0;
-      const tgtYaw = (pointer.active ? pointer.ndc.x * RP.lookYaw : 0) * sway + turn, tgtPitch = (pointer.active ? pointer.ndc.y * RP.lookPitch : 0) * sway;
-      look.yaw = lerpFPS(look.yaw, tgtYaw, P.mouse, ratio); look.pitch = lerpFPS(look.pitch, tgtPitch, P.mouse, ratio);
-      hallOn = hall.ready && inRoom && q > 0;
-      if (hallOn) hall.update(x, look, nearDoor, t, RP);
-      window.__skreedRoomFrame?.({ q, x, nearDoor, ready: hall.ready, failed: hall.failed, inView: inRoom, prompt: hallOn ? hall.project(HALL.door.handle) : null });
-    }
+    // section 4 (docs/specs/section-4.md 5, section4/director.ts): the hall, the transition or the universe into their own
+    // targets, and the plan for the composite: the third wipe from the fog, the section's frame, the fourth wipe
+    const plan = room ? room.step({ t, dt, ratio, pointer, touch: ctx.touch, mouseRate: P.mouse, fog: fogGround.out }) : null;
+    const roomOn = !!plan && plan.on && !!plan.tex;
 
     // F14: hero, then section 2 (its own targets), then section 3's ground (the fog alone); the composite wipes hero to
     // section 2, then section 2 to the ground, which stays the whole frame under section 3 (quiz.md 5)
     if (!iv.hold) {
-      const s2on = !!S2 && S2.ready && tp > 0 && tp2 < 1, keep = s2on && tp2 <= 0 && S2!.logoLeft(), groundOn = (tp2 > 0 || (tp > 0 && !(S2 && S2.ready))) && tp3 < 1;
+      const s2on = !!S2 && S2.ready && tp > 0 && tp2 < 1, keep = s2on && tp2 <= 0 && S2!.logoLeft(), groundOn = ((tp2 > 0 || (tp > 0 && !(S2 && S2.ready))) && !(roomOn && !plan!.groundNeeded)) || (inLoop && !roomOn);
       ctx.moon.visible = tp < 1;   // once the first wipe has covered the scene only the logo is seen: the ground and sky are skipped
       if (tp < 1 || keep) composerA.c.render(dt);
       if (s2on) S2!.render();
       if (groundOn) fogGround.render();
-      if (hallOn) hall!.render();
       if (keep && uMask) { const pc = renderer.getClearColor(_cc), pa = renderer.getClearAlpha(); renderer.setClearColor(0x000000, 1); uMask.value = 1;
         renderer.setRenderTarget(mask.rt); renderer.render(logo as unknown as Scene, camA); uMask.value = 0; renderer.setClearColor(pc, pa); }
       const groundTex = fogGround.out;
       if (tp2 > 0) { C.tA.value = S2!.out; C.tB.value = groundTex; C.uProgress.value = tp2; C.uParA.value = 0; }   // section 2 holds still under the cut, as the hero does in the first wipe; the same fog is on both sides
       else { C.tA.value = composerA.c.readBuffer.texture; C.tB.value = s2on ? S2!.out : groundTex; C.uProgress.value = tp; C.uParA.value = s2on ? 0 : 1; }
-      if (hallOn) {   // the third wipe: the fog holds still under the cut and the hall slides in; past it the hall is the whole frame
-        const hallTex = hall!.out;
-        if (tp3 < 1) { C.tA.value = groundTex; C.tB.value = hallTex; C.uProgress.value = tp3; C.uParA.value = 0; }
-        else { C.tA.value = hallTex; C.tB.value = hallTex; C.uProgress.value = 0; }
+      if (roomOn) {
+        const rt = plan!.tex;
+        // the fourth wipe: the section's frame holds still under the cut and the hero at rest comes in (uParA 0, as section 2's cut)
+        if (inLoop) { C.tA.value = rt; C.tB.value = composerA.c.readBuffer.texture; C.uProgress.value = plan!.loop; C.uParA.value = 0; }
+        // the third wipe: the fog holds still under the cut and the hall slides in; past it the section is the whole frame
+        else if (plan!.wipeIn < 1) { C.tA.value = groundTex; C.tB.value = rt; C.uProgress.value = plan!.wipeIn; C.uParA.value = 0; }
+        else { C.tA.value = rt; C.tB.value = rt; C.uProgress.value = 0; }
+      } else if (inLoop) {   // the loop screen before the hall has arrived: the fog holds under the cut to the hero at rest
+        C.tA.value = groundTex; C.tB.value = composerA.c.readBuffer.texture; C.uProgress.value = plan?.loop ?? 0; C.uParA.value = 0;
       }
       C.tH.value = composerA.c.readBuffer.texture; C.tM.value = mask.rt.texture; C.tS.value = s2on ? S2!.out : mask.black; C.uKeep.value = keep ? 1 : 0;
       C.uNoiseOff.value.set(Math.random(), Math.random());
       renderer.setRenderTarget(null); renderer.render(composite.scene, composite.camera);
       intro.afterRender(now, ctx, tex.ok);                                       // F15
     }
+    room?.after();                                                               // section 4: the jump to the top once the fourth wipe has crossed
 
-    rideCopy(els, tp, innerWidth / innerHeight, !!S2 && S2.ready);               // F16
+    if (inLoop) rideLoop(els, plan?.loop ?? 0, innerWidth / innerHeight, !!plan?.toneDark);
+    else {
+      rideCopy(els, tp, innerWidth / innerHeight, !!S2 && S2.ready);             // F16
+      if (roomOn && plan!.wipeIn >= 0.5) window.__skreedLogo?.setTone(plan!.toneDark);   // the logotype over the section: Pearl on the hall, Urban Slate on the universe
+    }
   }
   function frame() {
     raf = requestAnimationFrame(frame);                                          // F1: the request first, so one bad frame can never stop the loop

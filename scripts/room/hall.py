@@ -81,6 +81,9 @@ for xw, dx in ((XW, -FLOOR_SLOT[0]), (XE, FLOOR_SLOT[0])):
     xb = xw + dx
     rz(FLOOR_SLOT[1], min(xw, xb), max(xw, xb), YS, YN, (0, 0, 0))
     rx(xb, YS, YN, 0, FLOOR_SLOT[1], AX(0))
+    # the slot's two ends, where it meets the side walls (open, they showed the white clear colour at the floor's corners)
+    for y_end, ty in ((YS, 0.5), (YN, -0.5)):
+        ry(y_end, min(xw, xb), max(xw, xb), 0, FLOOR_SLOT[1], ((xw + xb) / 2, ty, FLOOR_SLOT[1] / 2))
 # the side base walls, in three runs around the transept slot (full height; the slot is full height)
 for y, tgt_y in ((YS, 0.0), (YN, 0.0)):
     ry(y, XW, SLOT_X[0], 0, H, (0, tgt_y, H / 2)); ry(y, SLOT_X[1], XE, 0, H, (0, tgt_y, H / 2))
@@ -172,6 +175,9 @@ med = lit[len(lit) // 2] if lit else 1.0; SCALE = max(0.05, med / 0.30)
 def knee(v):
     v = v / SCALE
     return v if v < 0.8 else 0.8 + 0.2 * (1.0 - math.exp(-(v - 0.8) / 0.2))
+# note: these bytes are the knee'd linear values, which the GPU then decodes as sRGB (assets.ts); the hall's look (the
+# median at 0.30, the shader's exposure and grey, the output pass) was matched to the reference on screen through that
+# decode, so it stays as it is; scripts/room/universe.py encodes its map instead
 out = bpy.data.images.new('lightmap8', OUT_SIZE, OUT_SIZE)
 out.pixels = [min(1.0, knee(v)) if (i % 4) != 3 else 1.0 for i, v in enumerate(px)]
 out.filepath_raw = os.path.join(OUT, 'hall-lightmap.png'); out.file_format = 'PNG'; out.save()

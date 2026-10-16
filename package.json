@@ -16,7 +16,7 @@
     "check": "astro check",
     "gen:shades": "node scripts/hero/gen-shades.mjs",
     "assets:stage1": "node scripts/hero/copy-stage1-assets.mjs",
-    "test:unit": "node --test \"tests/unit/**/*.test.ts\"",
+    "test:unit": "node scripts/room/guards.mjs && node --test \"tests/unit/**/*.test.ts\"",
     "test:e2e": "playwright test --project e2e",
     "test:parity": "playwright test --project parity",
     "test:family": "node --test \"tests/family/*.test.ts\" \"tests/case-model/*.test.ts\"",

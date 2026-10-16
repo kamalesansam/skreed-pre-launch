@@ -167,7 +167,7 @@ export async function startHero(o: StartOptions): Promise<void> {
     renderer, dpr, life, bridge, sceneA, camA, U, FOG, blocks, frame, pieces, logo, moon, rig,
     groundAt: ground.groundAt, stoneTopAt: stones.stoneTopAt, groundMesh: ground.mesh, stonesMesh: stones.mesh, sky: skyState,
     composerA, fogGround, section2, composite, mask, scrollTex: scrollTex.tex, intro, params: P, reduced, touch, ghost: touch && !reduced, els,
-    hall: null,
+    room: null,
   };
   // the intro's geometry, textures and wire layers (cage, outline, numbers: warm-up groups c5 to c7, before the labels' links)
   await intro.install(ctx); life.check();
@@ -195,16 +195,26 @@ export async function startHero(o: StartOptions): Promise<void> {
   life.onKill(() => { loop.stop(); labels.clear(); labels.dispose(); });
   section2.snapTo = (screens) => { scrollTo({ top: Math.round(screens * innerHeight), behavior: 'instant' }); loop.snap(screens); };
   if (HOOKS) installHooks(ctx, loop, { skyClass: () => ctx.sky.cls });
-  if (HOOKS) window.__s4 = () => ctx.hall?.hooks() ?? null;
-  // section 4's hall (docs/specs/section-4.md 5) loads one section ahead: its chunk, model and lightmap start when the
-  // quiz or the section itself comes into view, so the walk is ready by the time the third wipe is reached
-  let hallImport: Promise<void> | null = null;
-  const loadHall = () => (hallImport ??= import('./section4/hall.ts').then((m) => {
-    const hall = m.createHall({ renderer, avif: data.avif, reduced });
-    ctx.hall = hall; life.onKill(() => hall.dispose());
-    hall.resize(renderer.domElement.width, renderer.domElement.height);
-    return hall.load();
-  }).catch((e: unknown) => { console.warn('section 4: the hall chunk did not load; the stills stand in', e); }));
+  // section 4 (docs/specs/section-4.md 5) loads one section ahead: its chunk, the hall's model and lightmap start when
+  // the quiz or the section itself comes into view, so the walk is ready by the time the third wipe is reached; the
+  // universe's assets follow during the walk (section4/director.ts)
+  let roomImport: Promise<void> | null = null;
+  const loadHall = () => (roomImport ??= import('./section4/director.ts').then((m) => {
+    const room = m.createRoomDirector({ renderer, avif: data.avif, reduced, touch, onJump: () => loop.snap(0) });
+    ctx.room = room; life.onKill(() => room.dispose());
+    room.resize(renderer.domElement.width, renderer.domElement.height);
+    return room.load().then(() => { if (room.hall.failed) document.getElementById('room')?.setAttribute('data-tier', 'poster'); });
+  }).catch((e: unknown) => { console.warn('section 4: the section chunk did not load; the stills stand in', e); document.getElementById('room')?.setAttribute('data-tier', 'poster'); }));
+  if (HOOKS) {
+    type S4Extra = { seek(sec: number): void; enterNow(): boolean };
+    window.__s4 = {
+      state: () => ctx.room?.hooks() ?? null,
+      enter: () => (ctx.room as unknown as S4Extra | null)?.enterNow() ?? false,
+      seek: (sec) => (ctx.room as unknown as S4Extra | null)?.seek(sec),
+      skip: () => window.__skreedRoom?.skip(),
+      get ready() { return !!ctx.room?.hall.ready; },
+    };
+  }
   bridge.onIntroDone(() => loop.introDone());
   if (import.meta.env.PUBLIC_TUNE === '1' && tune) {
     const apply = () => {

@@ -1,8 +1,8 @@
 {
- "scale": 2.2058275013367337,
- "faces": 58,
+ "scale": 2.205513461271922,
+ "faces": 62,
  "samples": 128,
  "bakeSize": 2048,
  "lightmap": 1024,
- "bakeSeconds": 32
+ "bakeSeconds": 30.8
 }
