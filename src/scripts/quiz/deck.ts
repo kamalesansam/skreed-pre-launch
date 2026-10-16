@@ -15,9 +15,10 @@ type State = 'intro' | 'quiz' | 'result';
 
 export function mountQuiz(root: HTMLElement): void {
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T | null;
-  const intro = $('qzIntro'), begin = $<HTMLButtonElement>('qzBegin'), deck = $('qzDeck'), cardsEl = $('qzCards');
-  const results = $('qzResults'), live = $('qzLive'), gift = $('qzGift'), form = $<HTMLFormElement>('qzForm');
-  if (!intro || !begin || !deck || !cardsEl || !results || !live) return;
+  // the section's own markup (Quiz.astro): missing means a broken build, so it throws rather than mounting half a quiz
+  const must = <T extends HTMLElement>(id: string): T => { const el = $<T>(id); if (!el) throw new Error(`quiz: #${id} missing`); return el; };
+  const intro = must('qzIntro'), begin = must<HTMLButtonElement>('qzBegin'), deck = must('qzDeck'), cardsEl = must('qzCards');
+  const results = must('qzResults'), live = must('qzLive'), gift = $('qzGift'), form = $<HTMLFormElement>('qzForm');
   const cards = [...cardsEl.querySelectorAll<HTMLLIElement>('.qz-card')];
   const reduced = () => reducedMQ.matches;
   const answers: Answer[] = [];

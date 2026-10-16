@@ -47,7 +47,7 @@ export function installHooks(ctx: HeroContext, loop: Loop, extra: { skyClass: ()
   window.__s2 = () => ctx.section2?.hooks?.() ?? null;
   const h = ctx.intro.hooks;
   if (h) window.__skreedIntro = {
-    state: () => h.state(),
+    state: () => h.state() as { t: number } & Record<string, unknown>,   // the director's state always carries t (env.d.ts)
     seek(x: number, t0?: number) { st.t = h.seek(x, t0); loop.stepNow(); return h.state(); },
     play: () => h.play(), replay: () => h.replay(), skip: () => h.skip(),
   };
