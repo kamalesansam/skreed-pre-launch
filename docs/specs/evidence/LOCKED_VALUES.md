@@ -20,3 +20,5 @@ Terrain, from Sam's second Tune screenshot (2026-10-09). These CHANGE the v9.9 d
 | Crumb grain size | crumbSize | 0.03 | 0.07 |
 | Ground mist | mist | 0.55 | 0.20 |
 | Ground mist speed | mistSpeed | 1.00 | 0.55 |
+
+Intro lines (2026-10-16), from Sam's Tune screenshot ("also lock in this number for the intro lines, i got it from the tune"): the "Intro lines" slider at 1.50, its maximum. It is not one of the 66 P keys: on the real build it is the constant INTRO_LINES in src/scripts/hero/intro/igloo.ts (0.45 in v10 round 2, 1.5 from this date); the prototype's P.introLines stays 0.45 in the pinned v11.4 fixture.

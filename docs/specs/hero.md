@@ -39,6 +39,8 @@ The harness also passes `&logoIdle=0` to the prototype, because the production b
 
 Every other value of the prototype's 66-key `P` table keeps its v9.9 default. The full table is in `hero-architecture.md`, section 5.5.
 
+**Intro lines (Sam, 2026-10-16).** Sam: "also lock in this number for the intro lines, i got it from the tune", with a screenshot of the Tune slider "Intro lines" at 1.50 (its maximum). The real build's `INTRO_LINES` (`src/scripts/hero/intro/igloo.ts`, the gain of the intro's cage, outline and number lines) is 1.5 from this date; it was 0.45 (v10 round 2). The pinned v11.4 fixture keeps 0.45, so the intro parity frames are not re-baselined; `tests/unit/params.test.ts` reads the lock from `docs/specs/evidence/LOCKED_VALUES.md`.
+
 ## 1. Goal
 
 Put the approved v9.9 hero on the decided stack (Astro 7 static on Cloudflare Workers + Static Assets) so it stops living only in an artifact. It must match the prototype pixel for pixel wherever the prototype is deterministic. A static poster loads first and stays wherever WebGL cannot or should not run.
