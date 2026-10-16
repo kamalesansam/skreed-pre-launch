@@ -76,7 +76,7 @@ Every version is exact in `package.json`, with no caret (security checklist row 
 │  │  ├─ loader-weights.json      WT, re-measured on fetched assets (section 7.4)
 │  │  ├─ shades.gen.ts            generated from docs/data/shades-240.json by id
 │  │  ├─ tokens.ts                colour constants the canvas needs (night, slate, pearl), checked against tokens.css by a unit test
-│  │  ├─ quiz.ts                  section 3's data: QUIZ_COPY, QUIZ_CARDS, QUIZ_RESULTS, scoreQuiz, resultHref, QUIZ_LEAD_ENDPOINT (docs/specs/quiz.md)
+│  │  ├─ quiz.ts                  section 3's data: QUIZ_COPY, QUIZ_PERSONAS, QUIZ_QUESTIONS, scoreQuiz, pickShade, shadeHref, needsRing, QUIZ_LEAD_ENDPOINT (docs/specs/quiz.md)
 │  │  └─ room.ts                  section 4's data: ROOM_COPY, HALL, TRANSITION, ROOM_BAYS, SWEEP_BANDS, UNIVERSE, ROOM_PRODUCTS, RENDER_COLOURS, ROOM_SCREENS, ROOM_PARAMS (Tune's "Section 4" group), the RoomFrame and RoomIsland bridge types (section 11.4)
 │  ├─ assets/hero/                stage 1: the prototype files plus SHA256SUMS; stage 2: the encodes and packed binaries (section 6); imported with ?url, hashed into /_astro/
 │  ├─ assets/hero/poster/         the four poster files (section 6.4)
@@ -882,6 +882,7 @@ The DOM riders slot takes `#s2Copy` with the copy clip under the logo.
 
 - The quiz is DOM (`components/quiz/Quiz.astro`, `scripts/quiz/deck.ts` and `track.ts`, `styles/quiz.css`, `config/quiz.ts`; docs/specs/quiz.md). Under it the hero's canvas keeps drawing section 3's fog ground (`section3/ground.ts`: section 2's background shader rendered alone into its own render target, `tB` of the second wipe and the whole frame after it), by Sam's brief and against CLAUDE.md's rule of no WebGL from section 3 on: pending exception E-S3-bg (quiz.md section 10), with the fallback named in section 7.5.
 - It mounts in the `after-track` slot inside `main#main` in every build. The `onStageExit(cb)` hand-off for template7's `.wall.is-fixed` (`margin-top: -100svh`) is not built; the observer of section 7.5 watches `section#find` directly.
+- `styles/quiz.css` sets `overflow-anchor: none` on everything inside `.quiz`, so scroll anchoring keeps to the section itself, whose top never moves, and the deck keeps its tallest card's height: `section#find` changes height only when the result replaces the deck. Section 4's director re-measures its cached layout through its ResizeObserver on `#find` (section 11.4), so nothing else is needed below it.
 - It decides the page's root background below the hero (D24) and whether the poster path keeps the cue (D27 shows it once something follows).
 - GSAP, ScrollTrigger and Lenis do not arrive with the quiz (the Web Animations API and Pointer Events only). If a later section brings Lenis, it must not smooth the hero's track range: either it is disabled until the track ends, or the hero keeps reading native `scrollY`. Otherwise the pull-back gets a third smoother.
 - `motion.ts` would then wrap `gsap.matchMedia()` so reduced motion has one source.
