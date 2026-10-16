@@ -12,7 +12,7 @@ import { test, expect, type Page } from '@playwright/test';
 import { QUIZ_COPY as Q, scoreQuiz, resultHref, type Answer, type QuizResult } from '../../src/config/quiz.ts';
 
 /** the lazy chunk (deck.ts with config/quiz.ts), imported by Quiz.astro's loader within a screen of the section */
-const DECK = /\/deck\.[^/]*\.js$/;
+const DECK = /\/deck\.[^/?]*\.js(\?.*)?$/;   // with the loader's retry query (?r=) too
 /** a six-answer word (left = 1), the arrows that give it, and the result config/quiz.ts scores for it */
 const path = (word: string) => { const answers = word.split('').map(Number) as Answer[]; return { word, keys: answers.map((a) => (a ? 'ArrowLeft' : 'ArrowRight')), r: scoreQuiz(answers) }; };
 const BUBBLEGUM = path('110101'), SUNFLOWER = path('111111'), CINNAMON = path('011110');
@@ -144,7 +144,7 @@ test('AC8 the gift form: blur with a value validates and an empty submit shows b
   const email = page.locator('#qzEmail'), consent = page.locator('#qzConsent'), send = page.locator('#qzSend'), done = page.locator('.qz-done-text'), errEmail = page.locator('#qzErrEmail');
   await expect(page.locator('#qzGift')).toBeVisible();
   // a value is validated on blur, never per keystroke
-  await email.fill('nope'); await expect(errEmail).toBeHidden(); await email.blur();
+  await email.fill('nope'); await expect(errEmail).toHaveText(''); await email.blur();
   await expect(errEmail).toHaveText(Q.errEmail);
   await email.fill(''); await send.click();
   await expect(errEmail).toHaveText(Q.errEmail);
@@ -173,7 +173,7 @@ test('AC8 the gift form: blur with a value validates and an empty submit shows b
   await expect(email).toHaveValue('');
   await expect(consent).not.toBeChecked();
   await expect(email).toBeFocused();
-  await expect(errEmail).toBeHidden();
+  await expect(errEmail).toHaveText('');
   // 409: the duplicate line in the done block
   status = 409; await email.fill('again@example.com'); await consent.check(); await send.click();
   await expect(done).toHaveText(Q.dup);
@@ -267,19 +267,20 @@ test('AC5 an aborted chunk gives "Swipe to begin" back, and the next press begin
 
 test('AC8 offline: the lead is queued under skreed-quiz-lead with the offline line, and re-sent when the connection returns', async ({ page, context, baseURL }) => {
   const posts: string[] = [];
-  await page.route('**/api/quiz-lead', (route) => { posts.push(route.request().postData() ?? ''); void route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' }); });
+  let offline = false;   // a routed request is answered even with the context offline, so the route fails it like a dead network while the flag is on
+  await page.route('**/api/quiz-lead', (route) => { if (offline) return route.abort('internetdisconnected'); posts.push(route.request().postData() ?? ''); return route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' }); });
   await openQuiz(page, baseURL);
   await begin(page);
   await answer(page, BUBBLEGUM.keys);
   const done = page.locator('.qz-done-text');
   await page.locator('#qzEmail').fill(EMAIL); await page.locator('#qzConsent').check();
-  await context.setOffline(true);
+  offline = true; await context.setOffline(true);
   await page.locator('#qzSend').click();
   await expect(done).toHaveText(Q.offline);
   await expect(page.locator('.qz-notyou')).toBeVisible();
   expect(await page.evaluate(() => JSON.parse(sessionStorage.getItem('skreed-quiz-lead') ?? 'null'))).toMatchObject({ email: EMAIL, shadeId: BUBBLEGUM.r.shade, answers: BUBBLEGUM.word });
   expect(posts).toEqual([]);
-  await context.setOffline(false);
+  offline = false; await context.setOffline(false);
   await expect(done).toHaveText(Q.done(EMAIL));
   expect(posts).toHaveLength(1);
   expect(await page.evaluate(() => sessionStorage.getItem('skreed-quiz-lead'))).toBeNull();

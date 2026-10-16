@@ -156,7 +156,7 @@ export function mountQuiz(root: HTMLElement): void {
   const doneEl = $('qzDone')!, doneText = doneEl.querySelector<HTMLElement>('.qz-done-text')!, notYou = doneEl.querySelector<HTMLButtonElement>('.qz-notyou')!;
   const fields = form.querySelector<HTMLElement>('.qz-fields')!;
   const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-  const setErr = (el: HTMLElement, input: HTMLInputElement, text: string) => { el.textContent = text; el.hidden = !text; input.setAttribute('aria-invalid', text ? 'true' : 'false'); };
+  const setErr = (el: HTMLElement, input: HTMLInputElement, text: string) => { el.textContent = text; input.setAttribute('aria-invalid', text ? 'true' : 'false'); };   // the line keeps its height (quiz.css), so a message never moves the controls under it
   const validEmail = () => { const ok = EMAIL.test(email.value.trim()); setErr(errEmail, email, ok ? '' : Q.errEmail); return ok; };
   const validConsent = () => { const ok = consent.checked; setErr(errConsent, consent, ok ? '' : Q.errConsent); return ok; };
   email.addEventListener('blur', () => { if (email.value) validEmail(); });   // on blur only once there is a value, never per keystroke

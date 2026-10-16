@@ -91,7 +91,8 @@ html:not(.js) .qz-begin { display: none; }   /* without JavaScript the noscript 
 .qz-check { display: grid; grid-template-columns: auto 1fr; gap: var(--s2); align-items: center; min-height: 44px; font-size: var(--fs-label); font-weight: var(--w-ui-strong); cursor: pointer; }   /* type-system role 6: labels at 600 */
 .qz-check input { width: 20px; height: 20px; margin: 0; accent-color: var(--urban-slate); }
 .qz-err, .qz-msg { margin: 0; font-size: var(--fs-label); line-height: var(--lh-ui); font-weight: var(--w-ui); }   /* type-system note 10: validation and status lines at 400, the state carried by the words and the field border */
-.qz-err[hidden] { display: none; }   /* the status line stays in the tree (a live region entering with its text is not read); empty, it has no height */
+.qz-err { min-height: calc(var(--fs-label) * var(--lh-ui)); }   /* one line is always reserved under a field: a message appearing or clearing (on blur, as the next control is pressed) never moves the controls below it */
+/* the status line stays in the tree (a live region entering with its text is not read); empty, it has no height */
 .qz-fine { margin: 0; font-size: var(--fs-small); line-height: var(--lh-small); }
 .qz-done-text { margin: 0; font-weight: var(--w-ui-strong); }
 

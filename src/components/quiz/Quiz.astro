@@ -68,9 +68,9 @@ const LEADS = import.meta.env.PUBLIC_LEADS === 'on' || (import.meta.env.PUBLIC_L
         <div class="qz-fields">
           <label class="qz-label" for="qzEmail">{Q.email}</label>
           <input class="qz-input" id="qzEmail" name="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" required aria-describedby="qzErrEmail">
-          <p class="qz-err" id="qzErrEmail" hidden></p>
+          <p class="qz-err" id="qzErrEmail"></p>
           <label class="qz-check"><input type="checkbox" id="qzConsent" name="consent" required aria-describedby="qzErrConsent"><span>{Q.consent}</span></label>
-          <p class="qz-err" id="qzErrConsent" hidden></p>
+          <p class="qz-err" id="qzErrConsent"></p>
           <button type="submit" class="btn" id="qzSend">{Q.send}</button>
           <p class="qz-msg" id="qzMsg" role="status"></p>
           <p class="qz-fine">{Q.fine}</p>
@@ -90,12 +90,14 @@ const LEADS = import.meta.env.PUBLIC_LEADS === 'on' || (import.meta.env.PUBLIC_L
   const root = document.getElementById('find');
   const begin = document.getElementById('qzBegin') as HTMLButtonElement | null;
   if (root && begin) {
-    let p: Promise<unknown> | null = null, mounted = false;
+    let p: Promise<unknown> | null = null, mounted = false, retry = '';
     const label = begin.textContent;
     // a rejected import (a chunk gone after a redeploy, a dropped connection) gives the button back, so the next press
-    // tries again; it also retries by itself when the connection returns
-    const reset = () => { p = null; begin.removeAttribute('aria-disabled'); begin.removeAttribute('aria-busy'); delete begin.dataset.pending; begin.textContent = label; };
-    const start = () => (p ??= import('../../scripts/quiz/deck.ts').then((m) => { m.mountQuiz(root); mounted = true; }).catch(reset));
+    // tries again; it also retries by itself when the connection returns. The browser's module map remembers a failed
+    // fetch, so the retry goes through a fresh URL (the one the error names, with a query), where the browser gives one.
+    const reset = (err: unknown) => { const m = /(https?:\/\/[^\s'"()]+\.js)/.exec(String((err as Error)?.message ?? err)); if (m) retry = m[1]; p = null; begin.removeAttribute('aria-disabled'); begin.removeAttribute('aria-busy'); delete begin.dataset.pending; begin.textContent = label; };
+    const load = (): Promise<typeof import('../../scripts/quiz/deck.ts')> => (retry ? import(/* @vite-ignore */ `${retry}?r=${Date.now()}`) : import('../../scripts/quiz/deck.ts'));
+    const start = () => (p ??= load().then((m) => { m.mountQuiz(root); mounted = true; }).catch(reset));
     addEventListener('online', () => { if (!mounted && !p) void start(); });
     if ('IntersectionObserver' in window) {
       const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); void start(); } }, { rootMargin: '100% 0px' });

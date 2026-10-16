@@ -341,7 +341,7 @@ Source Serif 4 Fallback 600: size-adjust 106.14%; ascent-override 97.61%; descen
 - **Invalid.** `aria-invalid="true"` doubles the border to 2 px. Nothing turns red: the colours stay Pearl Whisper and Urban Slate.
 - **Label.** `--fs-label`, 600, above the field.
 - **Checkbox.** The native control at 20 px with `accent-color: var(--urban-slate)`, in a 44 px row with its label at `--fs-label`, `gap: var(--s2)`.
-- **Messages.** The error line under a field and the status line under the button at `--fs-label` / `--lh-ui`, 400 (type-system note 10: the state is carried by the words and the field's border); the fine print at `--fs-small` / `--lh-small`.
+- **Messages.** The error line under a field (one line always reserved, so a message appearing or clearing never moves the control below it) and the status line under the button at `--fs-label` / `--lh-ui`, 400 (type-system note 10: the state is carried by the words and the field's border); the fine print at `--fs-small` / `--lh-small`.
 - **Focus.** The email input: the Ember Luxe outline 2 px outside the field, its hairline at 2 px as the inner ring (an `<input>` renders no `::before`). The checkbox: its own outline is removed and the row takes the two-tone ring round the box and its label (Quiz panel, above).
 
 ### Skeleton (later sections)
