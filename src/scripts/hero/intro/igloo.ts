@@ -16,7 +16,7 @@ import type { IntroDirector, IntroFrame, IntroHooks } from './types.ts';
 
 export const IEND = 8.2;
 /** Tune's "Intro lines" (the prototype's P.introLines): 0.45 in v10 r2; locked at 1.50 by Sam from the Tune panel, 2026-10-16 (hero.md section 0) */
-const INTRO_LINES = 1.5;
+export const INTRO_LINES = 1.5;
 
 type Phase = 'armed' | 'run' | 'done';
 interface IntroState {

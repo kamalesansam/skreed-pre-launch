@@ -54,7 +54,7 @@
   --fs-loader-status: 0.75rem;
 
   /* spacing: one scale, used through gap */
-  --s1: 8px; --s2: 12px; --s3: 16px; --s4: 24px;
+  --s1: 8px; --s2: 12px; --s3: 16px; --s4: 24px; --s5: 32px;
   --inset: clamp(16px, 3.5vw, 56px);
 
   /* radius: square by default, circles only */

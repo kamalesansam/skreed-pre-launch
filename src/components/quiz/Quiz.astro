@@ -20,9 +20,9 @@ const LEADS = import.meta.env.PUBLIC_LEADS === 'on' || (import.meta.env.PUBLIC_L
       <noscript><p class="qz-noscript">{Q.noscriptLead}<a href="/#families">{Q.noscriptLink}</a>{Q.noscriptTail}</p></noscript>
     </div>
     <div class="qz-deck" id="qzDeck" hidden>
-      <ol class="qz-cards" id="qzCards">
+      <div class="qz-cards" id="qzCards">
         {QUIZ_CARDS.map((c, i) => (
-          <li class="qz-card qz-panel" data-i={i} role="group" aria-label={Q.cardAria(i + 1)} tabindex="-1" hidden={i > 1}>
+          <div class="qz-card qz-panel" data-i={i} role="group" aria-label={Q.cardAria(i + 1)} tabindex="-1" hidden={i > 1}>
             <h3 class="qz-q">{c.q}</h3>
             <div class="qz-opts">
               {[c.left, c.right].map((s, k) => (
@@ -34,9 +34,9 @@ const LEADS = import.meta.env.PUBLIC_LEADS === 'on' || (import.meta.env.PUBLIC_L
               ))}
             </div>
             <ol class="qz-step" aria-hidden="true">{QUIZ_CARDS.map((_c, k) => <li class="qz-dot" data-done={k < i ? '' : undefined}></li>)}</ol>
-          </li>
+          </div>
         ))}
-      </ol>
+      </div>
     </div>
     <div class="qz-results" id="qzResults" hidden>
       {QUIZ_RESULTS.map((r) => (
@@ -72,7 +72,7 @@ const LEADS = import.meta.env.PUBLIC_LEADS === 'on' || (import.meta.env.PUBLIC_L
           <label class="qz-check"><input type="checkbox" id="qzConsent" name="consent" required aria-describedby="qzErrConsent"><span>{Q.consent}</span></label>
           <p class="qz-err" id="qzErrConsent" hidden></p>
           <button type="submit" class="btn" id="qzSend">{Q.send}</button>
-          <p class="qz-msg" id="qzMsg" role="status" hidden></p>
+          <p class="qz-msg" id="qzMsg" role="status"></p>
           <p class="qz-fine">{Q.fine}</p>
         </div>
         <div class="qz-done" id="qzDone" hidden>
@@ -84,16 +84,27 @@ const LEADS = import.meta.env.PUBLIC_LEADS === 'on' || (import.meta.env.PUBLIC_L
   </div>}
 </section>
 <script>
-  // the loader: the chunk comes once the section is within a screen, or at once when "Swipe to begin" is pressed first
+  // the loader: the chunk comes once the section is within a screen, or at once when "Swipe to begin" is pressed first.
+  // Any press before the chunk has mounted (whether or not the import is already in flight) shows "Loading..." and is
+  // replayed by mountQuiz through data-pending; once mounted, deck.ts owns the button.
   const root = document.getElementById('find');
   const begin = document.getElementById('qzBegin') as HTMLButtonElement | null;
   if (root && begin) {
-    let p: Promise<unknown> | null = null;
-    const start = () => (p ??= import('../../scripts/quiz/deck.ts').then((m) => m.mountQuiz(root)));
+    let p: Promise<unknown> | null = null, mounted = false;
+    const label = begin.textContent;
+    // a rejected import (a chunk gone after a redeploy, a dropped connection) gives the button back, so the next press
+    // tries again; it also retries by itself when the connection returns
+    const reset = () => { p = null; begin.removeAttribute('aria-disabled'); begin.removeAttribute('aria-busy'); delete begin.dataset.pending; begin.textContent = label; };
+    const start = () => (p ??= import('../../scripts/quiz/deck.ts').then((m) => { m.mountQuiz(root); mounted = true; }).catch(reset));
+    addEventListener('online', () => { if (!mounted && !p) void start(); });
     if ('IntersectionObserver' in window) {
       const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); void start(); } }, { rootMargin: '100% 0px' });
       io.observe(root);
     } else void start();
-    begin.addEventListener('click', () => { if (p) return; begin.setAttribute('aria-disabled', 'true'); begin.setAttribute('aria-busy', 'true'); begin.textContent = begin.dataset.loading ?? ''; begin.dataset.pending = '1'; void start(); }, { once: true });
+    begin.addEventListener('click', () => {
+      if (mounted || begin.dataset.pending) return;
+      begin.setAttribute('aria-disabled', 'true'); begin.setAttribute('aria-busy', 'true'); begin.textContent = begin.dataset.loading ?? ''; begin.dataset.pending = '1';
+      void start();
+    });
   }
 </script>

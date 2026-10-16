@@ -111,7 +111,7 @@ for (const vp of [{ name: '390 x 844', viewport: { width: 390, height: 844 }, cl
     expect(await page.locator('#count').getAttribute('data-ready')).toBe('');
     await page.locator('#siteLogo').click();
     await page.waitForFunction(() => scrollY === 0);
-    // without anything below the hero (production), the cue is hidden (the test build also carries the family links below the fold)
+    // with nothing below the hero (section 3 and, in hooks builds, the family links removed), the cue is hidden
     await page.evaluate(() => { document.getElementById('main')?.remove(); document.getElementById('families')?.remove(); dispatchEvent(new Event('resize')); });
     await expect(page.locator('#cue')).toHaveClass(/is-off/);
     expect(logs).toEqual([]);

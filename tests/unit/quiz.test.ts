@@ -2,6 +2,7 @@
 // and the copy keeps the brand rules.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { QUIZ_CARDS, QUIZ_COPY, QUIZ_RESULTS, scoreQuiz, resultHref, type Answer } from '../../src/config/quiz.ts';
 import { SHADES } from '../../src/config/shades.gen.ts';
 
@@ -46,7 +47,8 @@ test('all 64 answer words resolve, every family is reachable, and the result is 
     assert.equal(d(r.sig), best, `word ${w}: not a nearest result`);
     hits.set(r.family, (hits.get(r.family) ?? 0) + 1);
   }
-  for (const f of FAMILIES) assert.ok((hits.get(f) ?? 0) >= 3, `${f} reachable by at least 3 of 64 paths (${hits.get(f) ?? 0})`);
+  // the paths per family of docs/specs/quiz.md section 5 (a changed signature moves these on purpose)
+  assert.deepEqual(Object.fromEntries(FAMILIES.map((f) => [f, hits.get(f) ?? 0])), { 'frosty-white': 10, 'blissful-blue': 6, 'playful-pink': 7, 'vivid-violet': 5, 'mellow-yellow': 10, 'basic-brown': 6, 'blushing-coral': 6, 'stormy-grey': 3, 'go-green': 5, 'roaring-red': 6 });
   assert.equal([...hits.values()].reduce((a, b) => a + b, 0), 64);
 });
 
@@ -66,11 +68,19 @@ test('every shade on the cards and in the results is a catalog shade with its na
   assert.equal(resultHref(QUIZ_RESULTS[4]), '/shades/mellow-yellow/?shade=107');
 });
 
-test('the card swatches read on Pearl Whisper without a border (contrast 1.5:1 or more)', () => {
-  for (const c of QUIZ_CARDS) for (const s of [c.left, c.right]) {
-    const ratio = (PEARL + 0.05) / (lum(s.hex) + 0.05);
-    assert.ok(ratio >= 1.5, `${s.name} ${s.hex}: ${ratio.toFixed(2)}:1`);
-  }
+test('the card swatches read on Pearl Whisper without a border (contrast 1.5:1 or more); a result shade under 1.5:1 is one of the two ringed in quiz.css, and no other', () => {
+  const ratio = (hex: string) => (PEARL + 0.05) / (lum(hex) + 0.05);
+  for (const c of QUIZ_CARDS) for (const s of [c.left, c.right]) assert.ok(ratio(s.hex) >= 1.5, `${s.name} ${s.hex}: ${ratio(s.hex).toFixed(2)}:1`);
+  // the result swatch is a 160 px circle on the same Pearl: under 1.5:1 it carries the 1 px Urban Slate hairline (the family page's --swr),
+  // and the rule in src/styles/quiz.css names exactly the shades that need it
+  const css = readFileSync(new URL('../../src/styles/quiz.css', import.meta.url), 'utf8');
+  const rule = css.split('\n').find((l) => l.includes('.qz-big[data-shade=') && l.includes('border: 1px solid var(--urban-slate)'));
+  assert.ok(rule, 'quiz.css has no hairline ring rule on .qz-big');
+  const ringed = [...rule.matchAll(/\.qz-big\[data-shade="([a-z-]+-\d+)"\]/g)].map((m) => m[1]).sort();
+  assert.deepEqual(ringed, ['frosty-white-10', 'mellow-yellow-11']);
+  const low = QUIZ_RESULTS.filter((r) => ratio(r.hex) < 1.5).map((r) => r.shade).sort();
+  assert.deepEqual(low, ringed, `result shades under 1.5:1 on Pearl: ${QUIZ_RESULTS.map((r) => `${r.shade} ${ratio(r.hex).toFixed(2)}:1`).join(', ')}`);
+  for (const r of QUIZ_RESULTS) if (!ringed.includes(r.shade)) assert.ok(ratio(r.hex) >= 1.5, `${r.name} ${r.hex}: ${ratio(r.hex).toFixed(2)}:1 without a ring`);
 });
 
 test('copy: sentence case headings, no em or en dash, no emoji, no banned words (CLAUDE.md 3, 4, 16, 17)', () => {

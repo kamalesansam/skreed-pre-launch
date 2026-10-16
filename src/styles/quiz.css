@@ -2,35 +2,47 @@
    fixed canvas (the fog ground on the 3D path) with no background of its own; the intro, the deck, the result and the
    gift each stand on a Pearl Whisper panel with Urban Slate text (9.9:1). Square corners, no borders on panels, no
    shadows, no blur. The swatches take their shade through data-shade and the rules at the end (no style attributes). */
-.quiz { position: relative; z-index: 2; overflow-x: clip; color: var(--urban-slate); font-family: var(--font-ui); font-size: var(--fs-legal); line-height: var(--lh-ui); }
+.quiz { position: relative; z-index: 3; overflow-x: clip;   /* above the hero's riders (the labels at 1 and 3, the cue at 2; DESIGN.md 6), below the logotype at 4 */ color: var(--urban-slate); font-family: var(--font-ui); font-size: var(--fs-legal); line-height: var(--lh-ui); }
 .quiz, .quiz *, .quiz *::before, .quiz *::after { box-sizing: border-box; }   /* widths include padding and hairlines: the 100 percent panels and the input fit the gutters at 390 */
-.quiz :focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 4px; }
-.quiz .btn, .quiz .qz-opt, .quiz .txtbtn, .quiz .qz-input { position: relative; }
-.quiz :is(.btn, .qz-opt, .txtbtn, .qz-input):focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
+.quiz :focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }   /* DESIGN.md 4: the Ember Luxe outline at 2 px, the Urban Slate ring inside it */
+html:not(.js) .qz-begin { display: none; }   /* without JavaScript the noscript line stands in for the button */
+.quiz .btn, .quiz .qz-opt, .quiz .txtbtn, .quiz .qz-input, .quiz .qz-shade, .quiz .qz-done-text, .quiz .qz-check { position: relative; }
+/* the two-tone ring on everything that takes focus: the buttons, the options, the text buttons, the card (over the fog, where
+   Ember alone is under 3:1), the result heading and the done line (focused by script) */
+.quiz :is(.btn, .qz-opt, .txtbtn, .qz-card, .qz-shade, .qz-done-text):focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
+/* the two inputs render no ::before (replaced elements): the email field's own hairline thickens to 2 px as the inner ring, and the
+   checkbox row carries the ring round the box and its label (a browser without :has() keeps the box's own Ember outline) */
+.quiz .qz-input:focus-visible { border-width: 2px; }
+@supports selector(:has(*)) {
+  .quiz .qz-check input:focus-visible { outline: none; }
+  .quiz .qz-check:has(input:focus-visible) { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }
+  .quiz .qz-check:has(input:focus-visible)::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
+}
 .qz-panel { background: var(--pearl-whisper); color: var(--urban-slate); border-radius: var(--radius-none); }
 
 /* the stage: the intro, then the deck, then the result, in place */
-.qz-stage { position: relative; min-height: 100svh; display: grid; align-content: end; justify-items: start; padding: calc(var(--inset) + env(safe-area-inset-top, 0px)) var(--inset) calc(var(--inset) + env(safe-area-inset-bottom, 0px)); }
+.qz-stage { position: relative; min-height: 100svh; display: grid; align-content: end; justify-items: center; padding: calc(var(--inset) + env(safe-area-inset-top, 0px)) var(--inset) calc(var(--inset) + env(safe-area-inset-bottom, 0px)); }
 .quiz[data-state="result"] .qz-stage { min-height: 0; }   /* the gift follows the result at one gap, on every screen */
-.qz-intro { display: grid; gap: var(--s3); justify-items: start; width: 100%; max-width: 480px; padding: calc(var(--s3) * 1.5) var(--s3); }
+.qz-intro { display: grid; gap: var(--s3); justify-items: start; width: 100%; max-width: 480px; padding: var(--s4) var(--s3); }
 .qz-intro[hidden], .qz-deck[hidden], .qz-results[hidden] { display: none; }
 .qz-h { margin: 0; font: var(--w-display) var(--fs-h2) / var(--lh-h2) var(--font-display); letter-spacing: var(--ls-h2); max-width: var(--measure-h2); text-wrap: balance; }
 .qz-sub { margin: 0; font: var(--w-ui) var(--fs-standfirst) / var(--lh-standfirst) var(--font-ui); max-width: var(--measure-prose); }   /* type-system principle 9: the quiz is Poppins and Open Sans, no serif */
 .qz-noscript { margin: 0; font-size: var(--fs-small); line-height: var(--lh-small); }
-.qz-noscript a { color: inherit; }
+.qz-noscript a { color: inherit; position: relative; }
+.qz-noscript a::after { content: ""; position: absolute; inset: -12px -8px; }   /* a 44 px hit box round the one link of the no-JS path */
 
 /* buttons (DESIGN.md 4): Ember Luxe fill, Urban Slate text, 48 px, square; lift 1 px on hover, press to 0.98 */
 .quiz .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 var(--s4); background: var(--ember-luxe); color: #383F43; font: var(--w-ui-strong) var(--fs-button) / var(--lh-solid) var(--font-ui); text-decoration: none; border: 0; border-radius: var(--radius-none); cursor: pointer; width: fit-content; transition: transform var(--dur-press) var(--ease-standard); -webkit-tap-highlight-color: transparent; }
 .quiz .btn[aria-disabled="true"] { cursor: default; }
 @media (hover: hover) { .quiz .btn:hover:not([aria-disabled="true"]) { transform: translateY(-1px); } }
 .quiz .btn:active:not([aria-disabled="true"]) { transform: scale(0.98); }
-.quiz .txtbtn { background: none; border: 0; padding: var(--s2) 0; min-height: 44px; color: inherit; font: var(--w-ui-strong) var(--fs-button) / var(--lh-solid) var(--font-ui); cursor: pointer; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: text-decoration-color var(--dur-press) var(--ease-standard); -webkit-tap-highlight-color: transparent; }
+.quiz .txtbtn { background: none; border: 0; padding: var(--s2) 0; min-height: 44px; color: inherit; font: var(--w-ui-strong) var(--fs-button) / var(--lh-solid) var(--font-ui); cursor: pointer; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; -webkit-tap-highlight-color: transparent; }   /* the underline colours in at once: nothing but transform and opacity animates (CHECKLIST C3) */
 @media (hover: hover) { .quiz .txtbtn:hover { text-decoration-color: currentColor; } }
 .quiz .txtbtn:focus-visible { text-decoration-color: currentColor; }
 
 /* the deck: one Pearl card at a time, the next behind it at 0.96; each card carries the stepper as its last row */
 .qz-deck { display: grid; gap: var(--s4); justify-items: center; width: 100%; }
-.qz-cards { position: relative; width: 100%; max-width: 480px; height: min(68svh, 560px); margin: 0; padding: 0; list-style: none; }
+.qz-cards { position: relative; width: 100%; max-width: 480px; height: max(320px, min(68svh, 560px)); }   /* never under its content (312 px at 390): a landscape phone keeps the card's padding */
 .qz-card { position: absolute; inset: 0; display: grid; grid-template-rows: auto 1fr auto; align-content: center; gap: var(--s3); padding: var(--s4) var(--s3); touch-action: pan-y; user-select: none; -webkit-user-select: none; will-change: transform; transform-origin: 50% 100%; }
 .qz-card[hidden] { display: none; }
 .qz-card.is-next { z-index: 0; transform: scale(0.96); }
@@ -39,12 +51,12 @@
 .qz-q { margin: 0; text-align: center; font: var(--w-display) var(--fs-quiz) / var(--lh-quiz) var(--font-display); letter-spacing: var(--ls-quiz); }
 .qz-opts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); align-content: center; }
 .qz-opt { display: grid; justify-items: center; align-content: start; gap: var(--s1); min-height: 44px; padding: var(--s2) var(--s1); background: none; border: 0; border-radius: var(--radius-none); color: inherit; font-family: var(--font-ui); cursor: pointer; transition: transform var(--dur-press) var(--ease-standard); -webkit-tap-highlight-color: transparent; }
-.qz-opt.is-lift { transform: translateY(-1px); text-decoration: underline; text-underline-offset: 3px; }
 @media (hover: hover) { .qz-opt:hover { transform: translateY(-1px); } }
 .qz-opt:active { transform: scale(0.98); }
+.qz-opt.is-lift, .qz-opt.is-lift:hover, .qz-opt.is-lift:active { transform: translateY(-1px); text-decoration: underline; text-underline-offset: 3px; }   /* past the threshold the cue wins over hover and press */
 .qz-sw { display: block; width: 112px; height: 112px; border-radius: var(--radius-round); }
-.qz-word { font-weight: var(--w-ui-strong); font-size: var(--fs-button); line-height: var(--lh-solid); }
-.qz-name { font-size: var(--fs-caption); line-height: var(--lh-ui); }
+.qz-word { font-weight: var(--w-ui); font-size: var(--fs-label); line-height: var(--lh-solid); }   /* type-system note 13: the labels under the swatches are Open Sans 400 at 14 px */
+.qz-name { font-size: var(--fs-tile-caption); line-height: var(--lh-ui); }
 .qz-step { display: flex; justify-content: center; gap: var(--s2); margin: 0; padding: 0; list-style: none; }
 .qz-dot { width: 10px; height: 10px; border-radius: var(--radius-round); border: 1px solid var(--urban-slate); }
 .qz-dot[data-done] { background: var(--urban-slate); }
@@ -55,15 +67,15 @@
 .qz-result[hidden] { display: none; }
 .qz-big { display: block; width: 160px; height: 160px; border-radius: var(--radius-round); }
 .qz-big[data-shade="frosty-white-10"], .qz-big[data-shade="mellow-yellow-11"] { border: 1px solid var(--urban-slate); }   /* under 1.5:1 on Pearl: the family page's hairline (family.css --swr) */
-.qz-rtext { display: grid; gap: var(--s1); text-align: center; }
-.qz-eyebrow { margin: 0; font-size: var(--fs-eyebrow); font-weight: var(--w-ui-strong); line-height: var(--lh-ui); }
+.qz-rtext { display: grid; gap: var(--s2); text-align: center; }   /* one gap carries the rhythm; no per-line margins (rule 15) */
+.qz-eyebrow { margin: 0; font-size: var(--fs-eyebrow); font-weight: var(--w-ui-strong); line-height: 1.2; }   /* type-system role 11 */
 .qz-shade { margin: 0; font: var(--w-display) var(--fs-tile-name) / var(--lh-tile) var(--font-display); letter-spacing: var(--ls-tile); outline-offset: 2px; }
 .qz-fam { margin: 0; font-size: var(--fs-family); font-variant-numeric: tabular-nums; }
 .qz-finish { margin: 0; font-size: var(--fs-family); }
 .qz-persona { margin: 0; font-size: var(--fs-legal); font-weight: var(--w-ui-strong); }
-.qz-text { margin: var(--s1) 0 0; font-size: var(--fs-legal); line-height: var(--lh-ui); max-width: var(--measure-prose); }
-.qz-own { margin: var(--s2) 0 0; font: var(--w-display) var(--fs-clause) / var(--lh-h2) var(--font-display); letter-spacing: var(--ls-h2); }
-.qz-actions { display: grid; gap: var(--s2); justify-items: center; margin-top: var(--s1); }
+.qz-text { margin: 0; font-size: var(--fs-legal); line-height: var(--lh-ui); max-width: var(--measure-prose); }
+.qz-own { margin: 0; font: var(--w-display) var(--fs-clause) / var(--lh-h2) var(--font-display); letter-spacing: var(--ls-h2); }
+.qz-actions { display: grid; gap: var(--s2); justify-items: center; }
 
 /* the gift (PUBLIC_LEADS on) */
 .qz-gift { padding: 0 var(--inset) calc(var(--inset) + env(safe-area-inset-bottom, 0px)); }
@@ -71,35 +83,34 @@
 .qz-gift-in { display: grid; gap: var(--s3); max-width: 480px; margin: 0 auto; padding: var(--s4) var(--s3); }
 .qz-gift-h { margin: 0; font: var(--w-display) var(--fs-clause) / var(--lh-h2) var(--font-display); letter-spacing: var(--ls-h2); }
 .qz-gift-sub { margin: 0; font-size: var(--fs-legal); line-height: var(--lh-ui); }
-.qz-form, .qz-fields, .qz-done { display: grid; gap: var(--s2); }
+.qz-form, .qz-fields, .qz-done { display: grid; gap: var(--s2); justify-items: start; }   /* the buttons sit at the left, under the text they answer */
 .qz-fields[hidden], .qz-done[hidden] { display: none; }
 .qz-label { font-size: var(--fs-label); font-weight: var(--w-ui-strong); }
 .qz-input { width: 100%; min-height: 48px; padding: 0 var(--s2); border: 1px solid var(--urban-slate); border-radius: var(--radius-none); background: var(--pearl-whisper); color: var(--urban-slate); font: var(--w-ui) var(--fs-input) / var(--lh-input) var(--font-ui); }
 .qz-input[aria-invalid="true"] { border-width: 2px; }
-.qz-check { display: grid; grid-template-columns: auto 1fr; gap: var(--s2); align-items: start; min-height: 44px; font-size: var(--fs-label); cursor: pointer; }
-.qz-check input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--urban-slate); }
-.qz-err, .qz-msg { margin: 0; font-size: var(--fs-label); line-height: var(--lh-ui); font-weight: var(--w-ui-strong); }
-.qz-err[hidden], .qz-msg[hidden] { display: none; }
+.qz-check { display: grid; grid-template-columns: auto 1fr; gap: var(--s2); align-items: center; min-height: 44px; font-size: var(--fs-label); font-weight: var(--w-ui-strong); cursor: pointer; }   /* type-system role 6: labels at 600 */
+.qz-check input { width: 20px; height: 20px; margin: 0; accent-color: var(--urban-slate); }
+.qz-err, .qz-msg { margin: 0; font-size: var(--fs-label); line-height: var(--lh-ui); font-weight: var(--w-ui); }   /* type-system note 10: validation and status lines at 400, the state carried by the words and the field border */
+.qz-err[hidden] { display: none; }   /* the status line stays in the tree (a live region entering with its text is not read); empty, it has no height */
 .qz-fine { margin: 0; font-size: var(--fs-small); line-height: var(--lh-small); }
 .qz-done-text { margin: 0; font-weight: var(--w-ui-strong); }
 
 /* laptops */
 @media (min-width: 900px) and (min-height: 600px) {
   .qz-stage { align-content: center; }
-  .qz-intro { max-width: 640px; padding: calc(var(--s3) * 2); justify-self: center; }
-  .qz-cards { height: min(70svh, 560px); justify-self: center; }
-  .qz-deck { justify-self: center; }
+  .qz-intro { max-width: 640px; padding: var(--s5); }
+  .qz-cards { height: max(320px, min(70svh, 560px)); }
   .qz-sw { width: 144px; height: 144px; }
-  .qz-results { max-width: 640px; justify-self: center; }
+  .qz-results { max-width: 640px; }
   .qz-gift-in { max-width: 640px; }
-  .qz-result { grid-template-columns: 160px 1fr; align-items: center; justify-items: start; padding: calc(var(--s3) * 2); }
+  .qz-result { grid-template-columns: 160px 1fr; align-items: center; justify-items: start; padding: var(--s5); }
   .qz-rtext { text-align: left; }
   .qz-actions { grid-auto-flow: column; align-items: center; justify-items: start; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .quiz .btn, .quiz .txtbtn, .qz-opt { transition: none; }
-  .qz-opt.is-lift, .qz-opt:hover { transform: none; }   /* the underline alone marks the side that will commit */
+  .qz-opt.is-lift, .qz-opt:hover, .qz-opt:active, .quiz .btn:hover, .quiz .btn:active { transform: none; }   /* no transform at all: the underline alone marks the side that will commit */
 }
 
 /* the swatches: the twelve card shades and the ten result shades, by id (shades.gen.css tokens) */

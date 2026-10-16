@@ -1,10 +1,12 @@
 // AC1.1 at the source: the shipped defaults carry Sam's 13 locked values and logoIdle 0 (hero.md section 0, D20).
-// The runtime check of the built hero (__skreedParams) is tests/e2e/locked-values.spec.ts (build step 8).
+// The runtime check of the built hero (__skreedParams) is tests/e2e/locked-values.spec.ts (build step 8). The intro lines
+// (not a P key: the constant INTRO_LINES of the intro) are checked against the prose paragraph of LOCKED_VALUES.md.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { TEMPLATE } from './proto-source.ts';
 import { HERO_PARAMS, LOCKED, heroParams } from '../../src/config/params.ts';
+import { INTRO_LINES } from '../../src/scripts/hero/intro/igloo.ts';
 
 const root = new URL('../../', import.meta.url);
 const read = (p: string) => readFileSync(new URL(p, root), 'utf8');
@@ -62,4 +64,12 @@ test('reduced motion zeroes breath only, and HERO_PARAMS is frozen', () => {
   assert.equal(b.breath, 0);
   assert.deepEqual({ ...b, breath: 0.3 }, a);
   assert.ok(Object.isFrozen(HERO_PARAMS));
+});
+
+test('the intro lines are 1.5 (Sam, 2026-10-16): igloo.ts and the intro lines paragraph of LOCKED_VALUES.md agree', () => {
+  assert.equal(INTRO_LINES, 1.5);
+  const para = read('docs/specs/evidence/LOCKED_VALUES.md').split('\n').find((l) => l.startsWith('Intro lines (2026-10-16)'));
+  assert.ok(para, 'LOCKED_VALUES.md has no intro lines paragraph');
+  assert.match(para, /the "Intro lines" slider at 1\.50, its maximum/);
+  assert.match(para, /the constant INTRO_LINES in src\/scripts\/hero\/intro\/igloo\.ts/);
 });

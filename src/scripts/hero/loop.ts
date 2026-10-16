@@ -32,6 +32,7 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
   const { renderer, camA, U, blocks, logo, params: P, reduced, composerA, fogGround, composite, intro, els, mask } = ctx;
   const S2 = ctx.section2;
   const clock = new Clock();
+  let s2Rest = -1;   // the time the second wipe completed, or -1 while section 2 is in play
   const ray = new Raycaster(), plane = new Plane(new Vector3(0, 0, 1), 0), hit = new Vector3();
   const scroll = createScrollFollower();
   const st: LoopState = { t: 0, ratio: 1, live: 0, mouse: new Vector3(99, 99, 0), scroll, introDone: initiallyIntroDone };
@@ -76,7 +77,9 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
     if (els.labels) els.labels.style.visibility = tp > 0 ? 'hidden' : 'visible';
 
     ctx.rig.update({ s, t, ratio, live, reduced, b: scroll.b, curve: true, crane: iv.crane, pointerActive: pointer.active, target, follow: ctx.sky.dome });   // F11
-    S2?.update(scroll.b, tp, tp2, t, dt);                                        // F12
+    // F12; past the second wipe section 2 keeps updating for half a second (its labels fade out over 0.2 s and the hover is dropped), then rests under the quiz
+    if (tp2 < 1) s2Rest = -1; else if (s2Rest < 0) s2Rest = t;
+    if (S2 && (s2Rest < 0 || t - s2Rest < 0.5)) S2.update(scroll.b, tp, tp2, t, dt);
     fogGround.update(scroll.b, t);
     if (ctx.moon.visible) updateFogLogoRect(ctx.FOG, camA, logo.position.y, renderer);   // F13
 

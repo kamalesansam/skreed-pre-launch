@@ -52,13 +52,13 @@ test("AC5.1 cue: ciao's side icon re-created, both sides: the v11.4 prototype ke
 test('AC5.2 cue visibility: scroll past 8 px, nothing below, while loading, reduced motion', async ({ page, browser, baseURL }) => {
   await page.goto('/?tier=poster');
   const cue = page.locator('#cue'), cue2 = page.locator('#cue2');
-  await expect(cue).not.toHaveClass(/is-off/);            // the test build has content below (the filler)
+  await expect(cue).not.toHaveClass(/is-off/);            // every build has content below (section 3, the quiz)
   await page.evaluate(() => scrollTo(0, 9));
   await expect(cue).toHaveClass(/is-off/); await expect(cue2).toHaveClass(/is-off/);
   await page.evaluate(() => scrollTo(0, 8));
   await expect(cue).not.toHaveClass(/is-off/); await expect(cue2).not.toHaveClass(/is-off/);
   await page.evaluate(() => scrollTo(0, 0));
-  await page.evaluate(() => { document.getElementById('main')?.remove(); document.getElementById('families')?.remove(); dispatchEvent(new Event('resize')); });   // the filler and, in hooks builds, the family links below the fold
+  await page.evaluate(() => { document.getElementById('main')?.remove(); document.getElementById('families')?.remove(); dispatchEvent(new Event('resize')); });   // the quiz section and, in hooks builds, the family links below the fold
   await expect(cue).toHaveClass(/is-off/);                 // nothing to scroll to
   // while loading (the 3D tier before the lift): hidden
   const p2 = await browser.newPage({ baseURL });

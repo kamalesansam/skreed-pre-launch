@@ -19,7 +19,7 @@ export function mountQuiz(root: HTMLElement): void {
   const must = <T extends HTMLElement>(id: string): T => { const el = $<T>(id); if (!el) throw new Error(`quiz: #${id} missing`); return el; };
   const intro = must('qzIntro'), begin = must<HTMLButtonElement>('qzBegin'), deck = must('qzDeck'), cardsEl = must('qzCards');
   const results = must('qzResults'), live = must('qzLive'), gift = $('qzGift'), form = $<HTMLFormElement>('qzForm');
-  const cards = [...cardsEl.querySelectorAll<HTMLLIElement>('.qz-card')];
+  const cards = [...cardsEl.querySelectorAll<HTMLDivElement>('.qz-card')];
   const reduced = () => reducedMQ.matches;
   const answers: Answer[] = [];
   let state: State = 'intro', top = 0, busy = false;
@@ -31,7 +31,7 @@ export function mountQuiz(root: HTMLElement): void {
   function showCard(i: number, enter: boolean) {
     cards.forEach((c, k) => {
       c.classList.toggle('is-top', k === i); c.classList.toggle('is-next', k === i + 1); c.hidden = k < i || k > i + 1;
-      c.tabIndex = k === i ? 0 : -1;
+      c.tabIndex = k === i ? 0 : -1; c.inert = k !== i;   // the next card shows behind the top one but takes no focus or clicks
       c.style.transform = k === i + 1 ? 'scale(0.96)' : '';
     });
     const c = cards[i];
@@ -42,15 +42,16 @@ export function mountQuiz(root: HTMLElement): void {
   }
 
   function beginQuiz() {
-    if (state !== 'intro') return;
+    if (state !== 'intro' || busy) return;
+    busy = true; begin.setAttribute('aria-disabled', 'true');   // a second press during the fade does nothing
     track('quiz_start');
     answers.length = 0; top = 0;
     const out = intro.animate([{ opacity: 1 }, { opacity: 0 }], { duration: reduced() ? DUR_REDUCED : DUR_OUT, easing: EASE_STANDARD, fill: 'forwards' });
     out.finished.then(() => {
-      intro.hidden = true; out.cancel();
+      intro.hidden = true; out.cancel(); begin.removeAttribute('aria-disabled');
       deck.hidden = false; setState('quiz');
       if (!reduced()) deck.animate([{ transform: 'translateY(24px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 400, easing: EASE_STANDARD });
-      showCard(0, false);
+      busy = false; showCard(0, false);
     });
   }
 
@@ -96,25 +97,25 @@ export function mountQuiz(root: HTMLElement): void {
   // ---- input: a tap on an option, Left and Right on the card (the options bubble to it), or a drag past 35 percent
   // of the card's width or a flick. A gesture is a tap while it moves under 8 px and lasts under 300 ms; otherwise it
   // is a drag, and the click the browser fires afterwards is swallowed.
-  let dragId: number | null = null, dragX0 = 0, dragY0 = 0, dragT0 = 0, dragged = false, lastX = 0, lastT = 0, vel = 0, dragCard: HTMLLIElement | null = null, follow = 0, swallow = false;
-  const opts = (card: HTMLLIElement) => [...card.querySelectorAll<HTMLElement>('.qz-opt')];
+  let dragId: number | null = null, dragX0 = 0, dragY0 = 0, dragT0 = 0, dragged = false, lastX = 0, lastT = 0, vel = 0, dragCard: HTMLDivElement | null = null, follow = 0, swallow = false;
+  const opts = (card: HTMLDivElement) => [...card.querySelectorAll<HTMLElement>('.qz-opt')];
   for (const card of cards) {
     for (const opt of opts(card)) opt.addEventListener('click', () => { if (swallow || !card.classList.contains('is-top')) return; commit(opt.dataset.side === '1' ? 1 : 0, 0); });
     card.addEventListener('keydown', (e) => { if (!card.classList.contains('is-top')) return; if (e.key === 'ArrowLeft') { e.preventDefault(); commit(1, 0); } else if (e.key === 'ArrowRight') { e.preventDefault(); commit(0, 0); } });
   }
-  function applyDrag(card: HTMLLIElement, dx: number) {
+  function applyDrag(card: HTMLDivElement, dx: number) {
     const w = card.offsetWidth || 320, p = Math.max(-1, Math.min(1, dx / (w * COMMIT_FRACTION)));
     if (!reduced()) card.style.transform = `translateX(${dx}px) rotate(${(8 * p).toFixed(2)}deg)`;   // leans into the drag (the same sense as the fly-off)
     const [l, r] = opts(card);
     l?.classList.toggle('is-lift', p <= -1); r?.classList.toggle('is-lift', p >= 1);   // past the threshold the side that will commit shows it (reduced motion too)
   }
-  function springBack(card: HTMLLIElement) {
+  function springBack(card: HTMLDivElement) {
     for (const o of opts(card)) o.classList.remove('is-lift');
     const back = card.animate([{ transform: card.style.transform || 'none' }, { transform: 'none' }], { duration: reduced() ? 0 : DUR_CARD, easing: EASE_REBOUND, fill: 'forwards' });
     back.finished.then(() => { back.cancel(); card.style.transform = ''; });
   }
   cardsEl.addEventListener('pointerdown', (e) => {
-    const card = (e.target as HTMLElement).closest<HTMLLIElement>('.qz-card.is-top');
+    const card = (e.target as HTMLElement).closest<HTMLDivElement>('.qz-card.is-top');
     if (!card || busy || e.button !== 0) return;
     dragId = e.pointerId; dragX0 = lastX = e.clientX; dragY0 = e.clientY; dragT0 = lastT = e.timeStamp; vel = 0; dragged = false; dragCard = card; swallow = false;
   });
@@ -160,7 +161,7 @@ export function mountQuiz(root: HTMLElement): void {
   const validConsent = () => { const ok = consent.checked; setErr(errConsent, consent, ok ? '' : Q.errConsent); return ok; };
   email.addEventListener('blur', () => { if (email.value) validEmail(); });   // on blur only once there is a value, never per keystroke
   consent.addEventListener('change', () => { if (consent.checked) validConsent(); });
-  const note = (text: string) => { msg.textContent = text; msg.hidden = !text; };
+  const note = (text: string) => { msg.textContent = text; if (text) announce(text); };   // the status line stays in the tree so the live region is heard; the sr-only region repeats it
   const closeForm = (text: string) => { fields.hidden = true; doneEl.hidden = false; doneText.textContent = text; note(''); doneText.focus(); };
   const openForm = () => { doneEl.hidden = true; fields.hidden = false; email.value = ''; consent.checked = false; setErr(errEmail, email, ''); setErr(errConsent, consent, ''); note(''); email.focus(); };
   let sending = false, queued: Record<string, string> | null = null;
@@ -174,10 +175,12 @@ export function mountQuiz(root: HTMLElement): void {
     const slow = setTimeout(() => { send.textContent = Q.trying; }, 8000), hard = setTimeout(() => ac.abort(), 20000);
     try {
       const res = await fetch(QUIZ_LEAD_ENDPOINT, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), signal: ac.signal });
+      // a definite answer (sent, duplicate, rejected) settles a queued lead too: it must not be re-sent on the next load
+      if (res.ok || res.status === 409 || res.status === 422) { queued = null; try { sessionStorage.removeItem(QUEUE_KEY); } catch { /* ignore */ } }
       if (res.status === 409) { closeForm(Q.dup); track('lead_error', { kind: 'duplicate' }); }
       else if (res.status === 422) { fields.hidden = false; doneEl.hidden = true; setErr(errEmail, email, Q.errEmail); track('lead_error', { kind: 'invalid' }); }
       else if (!res.ok) throw new Error(String(res.status));
-      else { queued = null; try { sessionStorage.removeItem(QUEUE_KEY); } catch { /* ignore */ } closeForm(Q.done(body.email)); track('lead_success'); }
+      else { closeForm(Q.done(body.email)); track('lead_success'); }
     } catch (err) {
       // offline is a failed request with navigator.onLine false (a pre-check lies on captive portals): queue and retry on `online`
       if (!navigator.onLine) queueLead(body);
@@ -185,7 +188,14 @@ export function mountQuiz(root: HTMLElement): void {
     } finally { clearTimeout(slow); clearTimeout(hard); setSending(false, Q.send); }
   }
   addEventListener('online', () => { const q = queued; if (q && !sending) { queued = null; void submit(q); } });
-  try { const saved = sessionStorage.getItem(QUEUE_KEY); if (saved) { const q = JSON.parse(saved) as Record<string, string>; if (navigator.onLine) void submit(q); else queueLead(q); } } catch { /* a bad entry is dropped */ }
+  try {
+    const saved = sessionStorage.getItem(QUEUE_KEY);
+    if (saved) {
+      const q = JSON.parse(saved) as Record<string, string>;
+      email.value = q.email ?? ''; consent.checked = true;   // the visitor consented when it was queued; a failure then shows over the address, not an empty field
+      if (navigator.onLine) void submit(q); else queueLead(q);
+    }
+  } catch { /* a bad entry is dropped */ }
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     if (sending) return;
