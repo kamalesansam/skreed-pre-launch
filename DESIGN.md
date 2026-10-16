@@ -337,7 +337,7 @@ Source Serif 4 Fallback 600: size-adjust 106.14%; ascent-override 97.61%; descen
 - **Type.** Open Sans 600 at `--fs-button` / `--lh-solid`, the panel's text colour, no fill, no border.
 - **Size.** A hit area of at least 44 x 44 px (Tap targets, section 8; CHECKLIST B2): minimum height 44 px, padding `var(--s2) 0`. Back, the shortest label, also takes `min-width: 44px` (`.qz-foot .qz-back`), so it meets the 44 x 44 minimum at every width; "Not quite? Try again" and "Not you? Use another email." are wider than 44 px by their words.
 - **States.** An underline at a 3 px offset, transparent at rest and coloured in on hover and on `:focus-visible` only at once (no transition: nothing but transform and opacity animates, CHECKLIST C3). No transform.
-- **Uses.** "Back" in the card's footer (cards 2 to 10), "Not quite? Try again" under the result and "Not you? Use another email." once the gift is sent.
+- **Uses.** "Back" in the card's footer (cards 2 to 10), "Not quite? Try again" under the result and "Not you? Use another email." once the gift is sent; in section 4, "Skip" on its own panel with padding `var(--s2) var(--s4)` (Skip, below).
 - **Focus.** The two-tone ring (Quiz panel, above).
 
 ### Email input (`.qz-input`, the gift form)
@@ -348,6 +348,71 @@ Source Serif 4 Fallback 600: size-adjust 106.14%; ascent-override 97.61%; descen
 - **Checkbox.** The native control at 20 px with `accent-color: var(--urban-slate)`, in a 44 px row with its label at `--fs-label`, `gap: var(--s2)`.
 - **Messages.** The error line under a field (one line always reserved, so a message appearing or clearing never moves the control below it) and the status line under the button at `--fs-label` / `--lh-ui`, 400 (type-system note 10: the state is carried by the words and the field's border); the fine print at `--fs-small` / `--lh-small`.
 - **Focus.** The email input: the Ember Luxe outline 2 px outside the field, its hairline at 2 px as the inner ring (an `<input>` renders no `::before`). The checkbox: its own outline is removed and the row takes the two-tone ring round the box and its label (Quiz panel, above).
+
+### Section 4 stage (`section#room`; `src/styles/room.css`, `src/components/room/Room.astro`)
+
+- **Ground.** On the 3D path the section has no background of its own: a track of 1300svh (1500svh once the universe is entered) holds a sticky 100svh stage (`.rm-stage`, `overflow: clip`) over the hero's canvas, which draws the hall, the transition and the universe (docs/specs/section-4.md). The DOM over it is the controls below and nothing else. On the poster tier (`html:not(.hero3d)`, `html.poster`, or the section's own `data-tier="poster"` after a failed asset) and without JavaScript the track collapses and the stage is a grid on `--night` holding the two stills, each on a `--skeleton` box of its own aspect ratio (9:16, 16:10 in landscape) until it decodes.
+- **Text and panels.** Open Sans at `--fs-label` / `--lh-ui` in Urban Slate, only ever on a Pearl Whisper panel (9.9:1, whatever the canvas shows), square (`--radius-none`), no border, no shadow, no blur. `box-sizing: border-box` on everything in the section.
+- **Stacking.** The panels and the products at `z-index: 2`, the prompt at 3, Skip at 4, the poster tier's loop fade at 5.
+- **Focus.** `.room :focus-visible` is the Ember Luxe outline at 2 px with a 2 px offset; on the prompt, Skip and the product buttons a `::before` at `inset: -2px` with a 2 px Urban Slate border is the inner ring (the two-tone ring above). The pad's ring is drawn inside it (Pad, below).
+- **Positions.** No style attributes (the CSP has no `style-src-attr`): `src/scripts/room/walk.ts` sets `left` and `top` through the CSSOM, and the stage's opacity while the loop screen fades the section out.
+
+### Section 4 panel (`.rm-pill`: the hint, the loading line, the universe's hint)
+
+- **Box.** Bottom centre: `left: 50%`, `bottom: calc(var(--inset) + env(safe-area-inset-bottom, 0px))`, `transform: translateX(-50%)`; `width: max-content` up to `calc(100% - 2 * var(--inset))`; minimum height 44 px, padding `var(--s2) var(--s3)`, the line centred (`display: flex; align-items: center; text-align: center`).
+- **Fill and type.** Pearl Whisper, Urban Slate, Open Sans 600 (`--w-ui-strong`) at `--fs-label` / `--lh-ui`, square. Every string comes from `src/config/room.ts` `ROOM_COPY`.
+
+### Hint (`p.rm-pill.rm-hint`)
+
+- **Text.** "Scroll or use the arrow keys to walk to the door." on a device that can hover, "Scroll to walk to the door." on `hover: none` (read once when the walk script mounts).
+- **Shown** once the hall's first frame is drawn and the section is in view: state-driven, at full opacity the moment it shows.
+- **Leaving.** After the visitor has walked 1 m it takes `.is-gone` (opacity 0 over `--dur-out` on `--ease-standard`, `pointer-events: none`, `aria-hidden="true"`) and `hidden` 220 ms later; once per page view (E-S4-motion). Reduced motion: no transition, a cut.
+
+### Loading line (`p.rm-pill.rm-loading`, `role="status"`)
+
+- **Text.** "Loading the entrance..." while the section is in view and the hall has not drawn its first frame, and also while the section's own chunk is on its way (its top has reached the viewport's top and no frame has come for 500 ms); "Still loading..." from 8 s. It goes with the first frame, and on the poster tier.
+- **Place.** The panel above, local to the section (CHECKLIST H1). Never a spinner (rule 41). The universe's wait shows on the prompt instead (Prompt, below).
+
+### Prompt (`button.btn.rm-enter`)
+
+- **Button.** The primary button: Ember Luxe fill, Urban Slate text by its literal hex (`#383F43`), Open Sans 600 at `--fs-button` / `--lh-solid`, minimum height 48 px, square, `white-space: nowrap`, `display: inline-flex` with `gap: var(--s2)`. Padding `0 var(--s4) 0 var(--s2)` with the key chip, `0 var(--s4)` without it. The text is "Enter Skreed universe" (`.rm-enter-text`).
+- **Key chip** (`span.rm-key`, `aria-hidden`). "E" in a 28 x 28 px square: Pearl Whisper fill, a 1 px Urban Slate border, Urban Slate text at `--fs-label`, `line-height: 1`, centred. `display: none` on `hover: none`, and with Tune's `promptChip` at 0 (`.room.rm-nochip`).
+- **Anchored to the door.** `position: absolute`, centred on its point by `translate(-50%, -50%)`. Every frame the walk script places it at the door's handle as the island projects it (through the camera without the pointer's sway, so it does not chase the pointer), moved right by half its own width so its left edge sits at the handle, and clamped inside the `--inset` gutters and 44 px clear of the bottom gutter.
+- **Hidden until near, never `hidden`.** In the hall it is always in the Tab order, the section's first tabbable element. Until the visitor is within 2.8 m of the door (`HALL.promptFrom`; the door station is 2.0 m) it is visually hidden by the clip pattern, `opacity: 0; clip-path: inset(50%)`; `.is-near` fades it in over 200 ms on `--ease-standard` with the clip lifted at once, and on leaving it fades out first and clips 200 ms later (E-S4-motion). It takes focus as it appears, unless a text field has it. A visitor's own focus on it while it is clipped (a Tab from the quiz) snaps the page to the door station, so it shows with its ring. When it clips away holding focus, a keyboard user's focus goes to the pad and anyone else's is dropped.
+- **States.** Hover (`hover: hover`, near, not busy) `translate(-50%, calc(-50% - 1px))`; press `scale(0.98)`; both `--dur-press` on `--ease-standard`. While the universe is still loading a press makes it busy: `aria-disabled="true"` and `aria-busy="true"` (never the `disabled` attribute, so focus stays on it), "Loading..." and "Still loading..." from 8 s, `cursor: progress`, no hover lift and no press scale; it enters by itself once the universe is in, and gives up if the visitor walks away.
+- **Input.** A click or a tap, Enter or Space on it, and E while the pad or a control of the section has focus.
+- **Reduced motion.** No transition (it cuts in and out) and no hover lift.
+- **Poster tier.** Shown at once over the hall's still (`top: 50svh`, centred); a press cross-fades to the universe's still over 300 ms (a cut under reduced motion) and shows the products list; gone once entered.
+
+### Pad (`div.rm-pad`, `#rmPad`)
+
+- **Element.** The stage's focusable surface: `tabindex="0"`, `aria-label` "The entrance. Use the arrow keys to walk to the door.", `position: absolute; inset: 0`, after the prompt in the DOM so it comes second in the Tab order; no outline at rest, `-webkit-tap-highlight-color: transparent`.
+- **Keys.** It takes focus on a pointerdown. While it or another control of the section has focus, Up or W and Down or S walk (the page scrolls at Tune's `keySpeed`, 0.5 m per second), Left and Right turn the head 25 degrees for as long as they are held, and Escape blurs it (no trap) or, during the transition, skips. Without that focus the keys do what they always do (WCAG 2.1.4). The browser's own shortcuts pass through.
+- **Pointer.** A tap (under 8 px and 300 ms, the quiz's rule) picks the pedestal under it in the universe, and skips during the transition; on laptops hovering a pedestal sets `.is-over` (`cursor: pointer`).
+- **Focus, inset two-tone ring.** The stage clips, so the ring is drawn inside the pad: `outline: 2px solid var(--ember-luxe); outline-offset: -4px` over `box-shadow: inset 0 0 0 6px var(--urban-slate)`, which reads from the stage's edge inward as 2 px Urban Slate, 2 px Ember Luxe and 2 px Urban Slate, so the ring holds on the dark hall and on the white of the transition. The inset `box-shadow` is a hard ring with no blur and no offset, not a drop shadow, but it is the one `box-shadow` on the site against "No `box-shadow` anywhere" (section 6): flagged, to be recorded as a departure or redrawn with a `::before`.
+
+### Skip (`div.rm-skipwrap` > `button.txtbtn.rm-skip`)
+
+- **Panel.** Its own square Pearl Whisper panel, bottom centre at `--inset` above the safe area (`translateX(-50%)`), minimum height 44 px, `z-index: 4`, so it reads at 9.9:1 over the hall, the white and the bands alike.
+- **Button.** The text button (Text button, above): Open Sans 600 at `--fs-button` / `--lh-solid`, Urban Slate, no fill, padding `var(--s2) var(--s4)`, minimum height 44 px; the underline at a 3 px offset coloured in on hover and on `:focus-visible`.
+- **When.** `hidden` except through the transition, from its first frame to its last. It takes focus at the press when the focus was in the section or the press came from the keyboard. Skip, Escape (or Enter or Space on the pad) and a tap on the stage end the transition at once.
+
+### Product label (`li.rm-item` > `button.rm-product`)
+
+- **Panel.** A real button: Pearl Whisper fill, Urban Slate text, square, no border, `display: grid; gap: var(--s1)`, padding `var(--s3)`, minimum height 44 px, `width: 100%` up to 480 px, the text left aligned, `cursor: default`. Its accessible name is the product's name (`aria-labelledby`) and the line its description (`aria-describedby`).
+- **Type.** The name (`.rm-name`) in Poppins 700 at `--fs-clause` / `--lh-h2`; the line (`.rm-line`) in Open Sans 400 at `--fs-legal` / `--lh-ui`, the catalog's sentence with rule 17's words dropped (Tune's `catalogWords` shows the catalog's own).
+- **Phones: the bottom panel.** `position: absolute` across the gutters (`left` and `right` at `--inset`), its bottom at `--inset` above the safe area, centred; so the focus ring sits on a visible element 44 px tall or more.
+- **Laptops: floating** (`(min-width: 900px) and (hover: hover)`, Tune's `labelFloat` at 1). `.is-float`: `width: max-content` up to `min(320px, calc(100vw - 2 * var(--inset)))`, `transform: translate(-50%, -100%)`, so its bottom centre sits on the product's anchor (0.3 m above the product, projected without the pointer's sway), re-placed every frame and clamped inside the gutters. It shows the hovered product while no product has focus.
+- **Shown and hidden.** Only the active product's item is shown (`.is-shown`); the others are visually hidden by the clip pattern (1 px, `clip-path: inset(50%)`) and stay in the accessibility tree. The item takes no pointer events, its button does. No motion: the label appears in place and its text changes.
+- **The universe's hint** (`p.rm-pill.rm-label`, the panel above): "Scroll to look around. Hover a pedestal, or use the arrow keys, to read about it." on a device that can hover, "Scroll to look around. Tap a pedestal to read about it." on touch; from the universe's first frame until the first pan, tap or key, then hidden while a product's label shows.
+
+### Products list (`ol.rm-products`)
+
+- **Element.** `aria-label` "Products in the universe"; one `li.rm-item` per product (`data-id`), Sam's four in the catalog's order (the phone case, the MagSafe wallet, the Lenskin, the AirPods case), each holding its label's button. Real DOM, so the keyboard and screen readers reach every product without the scene.
+- **Roving tabindex.** Only the active product's button has `tabindex="0"` (the first on entering), the rest `-1`. ArrowLeft and ArrowRight move it and its focus and scroll the page to that pedestal (smooth, instant under reduced motion); a focus or a click on a button centres its pedestal; a focused button follows the pan, so the ring stays on the label that shows. A visitor who entered by keyboard gets the first product's focus at the end of the transition.
+- **Inert.** `inert` on the 3D path until the universe is entered (and `visibility: hidden` until the walk script has run); never inert on the poster tier or without JavaScript.
+- **Announced.** `p.sr-only#rmLive` (`aria-live="polite"`) reads "Name. Line" once the scroll has settled (400 ms) after a change the pan made; never for a focused button, which speaks for itself.
+- **Poster tier and no JavaScript.** A list under the still: `display: grid; gap: var(--s2)`, padding `var(--s3) var(--inset) var(--s5)`, every product its own panel, static (no clip, no transform); after the press on the poster tier, at once without JavaScript.
 
 ### Skeleton (later sections)
 

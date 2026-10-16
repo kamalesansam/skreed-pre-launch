@@ -55,6 +55,7 @@ Every version is exact in `package.json`, with no caret (security checklist row 
 ├─ assets-src/hero/masters/       sky.png and ground_bake.png, the lossless masters (gitignored *.png; SHA256SUMS committed)
 ├─ public/
 │  ├─ fonts/                      the four WOFF2 files (exist; served at /fonts/)
+│  ├─ models/                     content-hashed GLBs: the family pages' case (case.lod0, case.lod1) and section 4's wallet, airpods and lenskin (scripts/room/pack.mjs)
 │  └─ _headers                    static security and cache headers; scripts/csp.mjs appends the CSP into dist/_headers
 ├─ src/
 │  ├─ env.d.ts                    typed window globals (prod contract and hooks)
@@ -65,7 +66,8 @@ Every version is exact in `package.json`, with no caret (security checklist row 
 │  │  ├─ shades.gen.css           generated: --shade-<id> for all 240 (7,855 B raw, 1,288 B br)
 │  │  ├─ fonts.css                @font-face and fallback faces, verbatim from type-system.md and scripts/fonts/manifest.txt
 │  │  ├─ shell.css                hero shell, loader, countdown, cue, logotype, poster, tier layout (section 4.4)
-│  │  └─ quiz.css                 section 3's styles (docs/specs/quiz.md)
+│  │  ├─ quiz.css                 section 3's styles (docs/specs/quiz.md)
+│  │  └─ room.css                 section 4's styles: the track's 1300svh and 1500svh, the stage, the prompt, the pad, Skip, the panels, the products, the poster tier (DESIGN.md section 4)
 │  ├─ config/
 │  │  ├─ site.ts                  SITE_URL, LAUNCH_ISO '2026-11-01T00:00:00+05:30'
 │  │  ├─ hero.ts                  POSE, MOON_POSE, SCROLL_MAP, S2T, TRACK_SVH 1720 (460 in stage 1, 1820 in round 3), PORTRAIT_ASPECT 0.9, DPR caps, GATE (tier rules), SOFTWARE_GL, REDUCED_MOTION_TIER
@@ -74,9 +76,12 @@ Every version is exact in `package.json`, with no caret (security checklist row 
 │  │  ├─ loader-weights.json      WT, re-measured on fetched assets (section 7.4)
 │  │  ├─ shades.gen.ts            generated from docs/data/shades-240.json by id
 │  │  ├─ tokens.ts                colour constants the canvas needs (night, slate, pearl), checked against tokens.css by a unit test
-│  │  └─ quiz.ts                  section 3's data: QUIZ_COPY, QUIZ_CARDS, QUIZ_RESULTS, scoreQuiz, resultHref, QUIZ_LEAD_ENDPOINT (docs/specs/quiz.md)
+│  │  ├─ quiz.ts                  section 3's data: QUIZ_COPY, QUIZ_CARDS, QUIZ_RESULTS, scoreQuiz, resultHref, QUIZ_LEAD_ENDPOINT (docs/specs/quiz.md)
+│  │  └─ room.ts                  section 4's data: ROOM_COPY, HALL, TRANSITION, ROOM_BAYS, SWEEP_BANDS, UNIVERSE, ROOM_PRODUCTS, RENDER_COLOURS, ROOM_SCREENS, ROOM_PARAMS (Tune's "Section 4" group), the RoomFrame and RoomIsland bridge types (section 11.4)
 │  ├─ assets/hero/                stage 1: the prototype files plus SHA256SUMS; stage 2: the encodes and packed binaries (section 6); imported with ?url, hashed into /_astro/
 │  ├─ assets/hero/poster/         the four poster files (section 6.4)
+│  ├─ assets/room/                section 4: hall.glb and room.glb, their lightmaps (AVIF and WebP), stills/ (the poster tier's eight files); imported with ?url
+│  ├─ data/room-products.json     section 4's product models (url, sha256, bytes, triangles, size in mm, parts), written by scripts/room/pack.mjs
 │  ├─ components/
 │  │  ├─ shell/Gate.astro         head inline script: html.js, tier choice (section 8), module load-error catch
 │  │  ├─ shell/WordmarkSprite.astro   #skreed-wordmark built at build time from docs/brand/logo/skreed-logotype.svg
@@ -87,6 +92,7 @@ Every version is exact in `package.json`, with no caret (security checklist row 
 │  │  ├─ hero/Countdown.astro     #heroCopy, countdown markup, noscript line with <time>
 │  │  ├─ hero/ScrollCue.astro     #cue markup and, last in body, the countdown and cue script
 │  │  ├─ quiz/Quiz.astro          section 3, the quiz: the markup and the lazy loader script (docs/specs/quiz.md)
+│  │  ├─ room/Room.astro          section 4, the entrance and the universe: the markup, the stills, and the script that imports walk.ts (docs/specs/section-4.md)
 │  │  └─ dev/Tune.astro           rendered only when PUBLIC_TUNE is '1'
 │  ├─ scripts/
 │  │  ├─ boot.ts                  the 3D path's entry: probe, poster wait, prefetch, import, failure routing (sections 7 and 8)
@@ -95,6 +101,8 @@ Every version is exact in `package.json`, with no caret (security checklist row 
 │  │  ├─ logotype/install.ts      the SiteLogo script: installs window.__skreedLogo and drains its queue
 │  │  ├─ hero/**                  the WebGL island (section 5)
 │  │  ├─ hero/section3/ground.ts  section 3's fog ground: section 2's background shader rendered alone into its own render target (section 11.3)
+│  │  ├─ hero/section4/           section 4 on the island (section 11.4): director.ts, hall.ts, universe.ts, transition.ts, post.ts, assets.ts; two lazy chunks
+│  │  ├─ room/walk.ts             section 4's DOM: the hint, the loading line, the prompt, the keys, Skip, the products and the label; a lazy chunk
 │  │  ├─ quiz/deck.ts             section 3's deck: the cards, the scoring call, the states, the gift form; a lazy chunk (docs/specs/quiz.md)
 │  │  ├─ quiz/track.ts            section 3's analytics queue (window.__skreedEvents)
 │  │  └─ dev/tune.ts              Tune bindings, dynamic import in dev and staging only
@@ -109,6 +117,7 @@ Every version is exact in `package.json`, with no caret (security checklist row 
 │  ├─ budget.mjs                  AC9 (from SCR/port/scripts/sizes.mjs)
 │  ├─ guards.mjs                  AC10.6 grep guards
 │  ├─ lighthouse.mjs              section 16
+│  ├─ room/                       section 4's pipeline: hall.py, universe.py and products.py (Blender headless), encode.mjs and pack.mjs, render-stills.mjs, guards.mjs (in npm run test:unit)
 │  └─ hero/
 │     ├─ probes/                  the readers' scratch scripts, copied verbatim in build step 1 (reference; ported below)
 │     ├─ gen-shades.mjs           shades.gen.ts and shades.gen.css
@@ -121,8 +130,8 @@ Every version is exact in `package.json`, with no caret (security checklist row 
 ├─ tests/
 │  ├─ harness/                    browser launch, routing, settle and freeze helpers, canvas capture, compare.py (from probes/compare2.py)
 │  ├─ parity/                     rest, overlay, wipe, pull-back, loader frames (AC1 to AC3.1)
-│  ├─ e2e/                        countdown, cue, logotype, hover and labels, tiers, reduced motion, failures, CSP, accessibility and breakpoints, locked values, sky class
-│  └─ unit/                       node --test: maths, scroll map, wipe texture checksum, shades, tokens, weights, bins round trip
+│  ├─ e2e/                        countdown, cue, logotype, hover and labels, tiers, reduced motion, failures, CSP, accessibility and breakpoints, locked values, sky class, the quiz, section 4 (room.spec.ts: the track, the keys, the transition, the universe, the loop, the poster tier)
+│  └─ unit/                       node --test: maths, scroll map, wipe texture checksum, shades, tokens, weights, bins round trip, the quiz, section 4 (room.test.ts, room-products.test.ts)
 ├─ docs/specs/evidence/           LOCKED_VALUES.md copied from SCR/port
 ├─ .github/workflows/ci.yml
 └─ .github/dependabot.yml
@@ -309,6 +318,12 @@ All modules are strict TypeScript. "Lines" refers to `template.html`.
 | `stage/resize.ts` | `createResize(ctx)` returning `resize()` (section 5.6) | config | 1039 to 1050 |
 | `section2/types.ts` | `Section2Scene` (section 11) | three | 898 to 916 |
 | `section3/ground.ts` | `createFogGround(renderer, reduced)` returning `GroundScene {out, resize(w, h), update(S, t), render(), dispose()}`: section 2's background shader rendered alone into its own render target (section 11.3); it replaces the v9.9 swatch wall (`section2/placeholderWall.ts`, then `world/wall.ts`, deleted) | three, section2/background, config | new |
+| `section4/director.ts` | `createRoomDirector({renderer, avif, reduced, touch, onJump})` returning `RoomDirector {hall, state, begin(ratio), step(f), after(), resize(w, h), load(), hooks(), dispose()}`: section 4's state, progress, walk, transition clock, pan, loop screen and jump (section 11.4); installs `window.__skreedRoom`; imports `universe.ts` dynamically | config/room, scroll/scrollMap, math, hall, transition | new |
+| `section4/hall.ts` | `createHall(o)` returning `HallScene {ready, failed, out, load(), resize(w, h), update(x, look, nearDoor, t, params), swing(s, mode), render(), project(p), hooks(), dispose()}`: the entrance hall, unlit under its baked lightmap, the door's leaves on hinges, the floor gloss | three, config/room, assets, post | new |
+| `section4/universe.ts` | `createUniverse(o)` returning `UniverseScene {ready, failed, out, load(), resize(w, h), update(yaw, look, hover, dolly, dt, params), render(), anchors(), pick(x, y), shown(i), hooks(), dispose()}`: the round room, the four products under a PMREM of `RoomEnvironment` | three, GLTFLoader, RoomEnvironment, config/room, config/tokens, family/three (case-glb, model-fetch, the vendored meshopt decoder), assets, post | new |
+| `section4/transition.ts` | `createTransition(renderer)` returning `TransitionPass {out, resize(w, h), run(from, to, p, bandW, angle, sweep, reduced, plain?), dispose()}`: the white-out and the ten-band sweep in one full-screen pass | three, section2/background (`fsScene`, `fsCam`), post, config/room | new |
+| `section4/post.ts` | `createOutputPass(renderer)` returning `OutputPass {out, resize(w, h), run(src, look, frame), dispose()}`, `FS_UV_VERT`: the vignette, the colour split, the bleach-bypass, the static grain and the laptop bloom, shared by the hall and the universe | three, section2/background | new |
+| `section4/assets.ts` | `loadLightmap(avifUrl, webpUrl, avif, what)`, `loadModel(url, what)` (GLTFLoader.parse from our own fetch), `LIGHT_VERT`, `TO_SRGB` | three, GLTFLoader | new |
 | `intro/types.ts`, `intro/none.ts` | `IntroDirector`; `NO_INTRO` (v9.9: live ramps from the loader cut, frames reported by texFrames) | none | 1273 to 1282, 1369 |
 | `interaction/pointer.ts` | `createPointer()` returning `{ndc, active, lastInput}`; `ghostTarget(t)` | none | 1073 to 1084 |
 | `interaction/labels.ts` | `createLabels(layerEl, sceneA)` returning `{update(...)}` | three | 1090 to 1154 |
@@ -326,7 +341,7 @@ All modules are strict TypeScript. "Lines" refers to `template.html`.
 - `config/*` and `util/*` are leaves.
 - `world`, `logo` and `post` import only leaves and three.
 - `logo/motion.ts` receives `groundAt` and `stoneTopAt` as functions, so there is no import cycle.
-- `section2` and `intro` are interfaces plugged in through `HeroContext`.
+- `section2` and `intro` are interfaces plugged in through `HeroContext`; so is `room`, section 4's director, which `hero.ts` imports dynamically (section 11.4) and `types.ts` names by type only.
 - `boot.ts` imports `bridge/*`, `data/assets.ts` (which has no three import) and config, and loads `hero.ts` dynamically.
 - `glitch.ts` and `install.ts` never import three.
 
@@ -360,6 +375,7 @@ Expected chunks:
 - `renderer`, `dpr`, `life`;
 - `sceneA`, `camA`, `U`, `FOG`, `blocks`, `logo`, `moon` (with `groundAt` and `stoneTopAt`), `sky` (dome, material, class);
 - `composerA` (bloom), `section2` (a `Section2Scene`, the gems, or null) and `fogGround` (section 3's `GroundScene`, `section3/ground.ts`);
+- `room` (section 4's `RoomDirector`, `section4/director.ts`): null until its lazy chunk arrives, and null for good on a failed import;
 - `composite`, `intro` (an `IntroDirector`, `NO_INTRO` by default);
 - `params`, `reduced` (OS reduced motion or `html.still3d`), `touch`, `ghost` (`touch && !reduced`), `els` (`heroCopy`, `cue`, `labels`, `siteLogo`).
 
@@ -409,6 +425,7 @@ The prototype's invisible plate mesh sat between steps 5 and 8. Removing it save
 | F4 | `live = introDone ? (reduced ? 1 : 1 - (1 - clamp01((t - tHero0) / 2))^3) : 0`. The intro slot may override this. |
 | F5 | `logo.position.y = reduced ? 0 : sin(0.7t) * 0.07 * live` |
 | F6 | scroll followers 0.075 and 0.15; `s = reduced ? 0 : easeInOutCubic(clamp01(b / 1.5))`; `tp = clamp01((b - 1.5) / 1)`; `heroOn = 1 - smoothstep(0, 0.45, s)` |
+| F6a | section 4: `room.begin(ratio)` updates the section's own follower from its cached layout and returns `loop`, the fourth wipe's progress over the loop screen; while `loop > 0` the hero's steps F6 to F13 read `hb = 0` in place of `b` (the hero at rest, section 11.4), and F10 hides the labels |
 | F7 | pointer target (any active pointer, touch included) or ghost sweep (`ghost && live >= 1 && now - lastInput > 2500`, `lastInput` starting at -1e9); raycast through camA onto z = 0; mouse follower |
 | F8 | blocks: breath, push, followers, offset, rotation, floor clearance; write `uOff`, `uQ`, `uD` |
 | F9 | `logo.updateMatrixWorld()` |
@@ -416,9 +433,11 @@ The prototype's invisible plate mesh sat between steps 5 and 8. Removing it save
 | F11 | camera: base pose by `s`, parallax lerps (from any active pointer, times `live`), orbit, position, sky follows the camera, shake, `lookAt`; a pending sky class swap happens here (section 6.5) |
 | F12 | section 2 update (`section2.update(S, tp, tp2, t, dt)`), then the fog ground's (`fogGround.update(S, t)`: `uScroll = 2.15 + 0.3 * (S - S2T.W1END)`, `uTime = t`) |
 | F13 | `FOG.uLogoRect` and `FOG.uResolution` |
-| F14 | composer A if `tp < 1` or the logo is kept; section 2 when it is on; section 3's fog ground into its own target under NoToneMapping when `groundOn` (`tp2 > 0`, or `tp > 0` while section 2 is not ready); composite to the canvas with `uNoiseOff` random (second wipe: `tA` section 2, `tB` the ground, `uParA` 0, so section 2 holds still under the cut and only `tB` slides) |
+| F13a | section 4: `room.step({t, dt, ratio, pointer, touch, mouseRate, fog})` renders the hall, the transition or the universe into their own targets and returns the plan for F14 (`on`, `tex`, `wipeIn`, `groundNeeded`, `loop`, `toneDark`) |
+| F14 | composer A if `tp < 1` or the logo is kept; section 2 when it is on; section 3's fog ground into its own target under NoToneMapping when `groundOn` (`tp2 > 0`, or `tp > 0` while section 2 is not ready, and not once section 4's frame covers it; on the loop screen while the hall has not arrived); composite to the canvas with `uNoiseOff` random (second wipe: `tA` section 2, `tB` the ground, `uParA` 0, so section 2 holds still under the cut and only `tB` slides). When section 4 draws: the third wipe `tA` the ground, `tB` the section's frame, `uProgress` `wipeIn`; past it the section's frame alone; on the loop screen `tA` the section's frame, `tB` composer A's buffer, `uProgress` `loop`, `uParA` 0 |
 | F15 | `ctx.intro.reportFrames ? ctx.intro.reportFrames(f, report) : texFrames` (v9.9: `frame1` and `frame2` on the first two frames with both textures loaded) |
-| F16 | DOM ride: `__skreedLogo?.setTone(tp > 0.5)`, `heroCopy` transform, clip and visibility, cue `is-off` |
+| F15a | section 4: `room.after()`, the jump to the top once `loop` reaches 0.995 (section 11.4) |
+| F16 | DOM ride: `__skreedLogo?.setTone(tp > 0.5)`, `heroCopy` transform, clip and visibility, cue `is-off`; over section 4 the logotype takes the plan's `toneDark` once the third wipe is half way; on the loop screen `rideLoop(els, loop, aspect, toneDark)` in place of `rideCopy` |
 
 ### 5.5 Constants that must survive
 
@@ -536,6 +555,7 @@ function resize() {
   ctx.composite.C.uAspect.value = asp;
   const portrait = asp < PORTRAIT_ASPECT;              // 0.9
   ctx.fogGround.resize(ctx.renderer.domElement.width, ctx.renderer.domElement.height);   // section 3's ground: device pixels, as section 2's targets
+  ctx.room?.resize(ctx.renderer.domElement.width, ctx.renderer.domElement.height);   // section 4: the hall, the universe, the transition, the section's cached layout
   ctx.section2?.resize(w, h);                          // the gems' targets and camera
   ctx.sky.onAspect(asp);                               // stage 2: the one-way portrait to wide upgrade (section 6.5)
 }
@@ -544,6 +564,7 @@ function resize() {
 - `hero.ts` calls it at step 16, registers `addEventListener('resize', resize)` (window `resize` only, as in the prototype; no `visualViewport`, no DPR-change handling), and registers the removal with `life`.
 - The warm-up keeps its own `setSize(8, 8)` calls (including the SavePass target) verbatim, then calls `resize()`.
 - None of these calls reads another's result, so grouping section 2's work into its own `resize` changes no pixel.
+- Section 4's director is created after step 16, so `hero.ts` calls `room.resize` once itself when the chunk arrives; from then on this function sizes the hall's, the universe's and the transition's targets at device pixels and re-reads the section's cached layout (section 11.4).
 
 ## 6. Asset pipeline
 
@@ -632,6 +653,8 @@ Parts, from the readers' measurements (KB of 1024 B) and the architect's packing
 
 Without packing the binaries (318,634 B raw) the last row is 1,517,822 B, a fail; with gzip but without the delta coding it is 1,478,535 B. `budget.mjs` recomputes all four rows from the built files.
 
+Section 4 (section 11.4) adds to the page itself: its markup (7.4 KB raw, the noscript stills included) and `room.css` (8.2 KB raw, minified) inline in `index.html`, about 2.8 KB gzip together, and `Room.astro`'s module script in the critical JS (0.4 KB gzip). Its chunks, models and lightmaps load only once the quiz is in view, outside the first view (`docs/specs/section-4.md` section 6).
+
 ## 7. Loading sequence
 
 ### 7.1 Timeline, 3D path
@@ -712,7 +735,7 @@ Any later change to the warm-up groups, an extra milestone (v10 adds `intro`) or
 
 ### 7.5 Stopping the island
 
-- An IntersectionObserver watches `#track` and `section#find` (section 3, the quiz) together: `hero.ts` keeps a seen map of the two targets and the island is in view if either intersects. While either is in view the loop runs, so the fog ground keeps drifting under section 3; when both have left the viewport the loop stops and `#stage` is hidden, and it restarts when either returns. The loop therefore runs under section 3, by Sam's brief (the same background as section 2), against CLAUDE.md's rule of no WebGL from section 3 on: pending exception E-S3-bg (docs/specs/quiz.md section 10). The rule-compliant fallback if he says no: the observer on `#track` only, so the loop stops at the end of the track as before. `hero.ts` registers it with `life`.
+- An IntersectionObserver watches `#track`, `section#find` (section 3, the quiz) and `section#room` (section 4) together: `hero.ts` keeps a seen map of the three targets and the island is in view if any intersects. The first time `#find` or `#room` intersects, the same callback starts section 4's chunk (`loadHall`, section 11.4), one section ahead of the hall. While any is in view the loop runs, so the fog ground keeps drifting under section 3 and section 4 draws; when all three have left the viewport the loop stops and `#stage` is hidden, and it restarts when one returns. The loop therefore runs under section 3, by Sam's brief (the same background as section 2), against CLAUDE.md's rule of no WebGL from section 3 on: pending exception E-S3-bg (docs/specs/quiz.md section 10); and under section 4, whose content is the scene itself: pending exception E-S4-webgl (docs/specs/section-4.md section 10). The rule-compliant fallback if he says no: the observer on `#track` only, so the loop stops at the end of the track as before (and section 4 falls to its two stills and the list on every tier). `hero.ts` registers it with `life`.
 - `requestAnimationFrame` already pauses in background tabs. The dt cap of 1/12 absorbs the resume.
 
 ## 8. Tiers
@@ -793,7 +816,8 @@ The ShaderChunks the ground and stones patch are compatible between the two vers
 - **Tune.** `dev/tune.ts` is the prototype's slider loop, buttons and `apply()` (lines 303 to 311, 1052 to 1071), dynamically imported only when `PUBLIC_TUNE` is '1' and `?tune` is in the URL. Every lookup is null-guarded (the prototype's `$('ghost')`, `$('glitchNow')`, `$('tuneReset')`, `$('glitchSplit')` and `$('glitchIdle')` would throw without the panel). It drives a mutable dev copy of `HERO_PARAMS`, so Sam can tune on staging and hand the numbers back for `params.ts`. It can switch the idle twitch on for comparison.
 - **Hooks**, with the prototype names kept for the harness:
   - `__skreedState()`, `__skreedSolo(i)`, `__skreedFloorCheck()`, `__skreedProject(i, px, py, back)`, `__skreedFrame`, `__skreedFreeze` (read in F2);
-  - new: `__skreedParams()`, `__skreedMilestoneTimes`, `__skreedLoseContext()` (`WEBGL_lose_context`), `__skreedStall(milestone | null)` (holds the warm-up before that milestone; `null` releases), `__skreedSkyClass()`, `__skreedIntroDoneCalls` (incremented inside `__introDone`), `__skreedDead` (mirrors `life.dead`).
+  - new: `__skreedParams()`, `__skreedMilestoneTimes`, `__skreedLoseContext()` (`WEBGL_lose_context`), `__skreedStall(milestone | null)` (holds the warm-up before that milestone; `null` releases), `__skreedSkyClass()`, `__skreedIntroDoneCalls` (incremented inside `__introDone`), `__skreedDead` (mirrors `life.dead`);
+  - section 4 (`hero.ts`, section 11.4): `__s4.state()` (the director's `hooks()`: state, `q`, `qRaw`, `loop`, `transition`, screens, the hall's and the universe's own state, each pedestal's `q`), `__s4.enter()` (presses the prompt without the walk), `__s4.seek(sec)` (the transition by its clock; from the hall it enters first), `__s4.skip()`, `__s4.ready` (the hall is in). `scripts/room/render-stills.mjs` and `tests/e2e/room.spec.ts` drive the section through them and `scrollTo` for `q`. The bridge to the DOM (`__skreedRoom`, `__skreedRoomFrame`, `__skreedRoomLook`) is not a hook: it ships in every build.
 
 ## 11. Slots for work happening elsewhere
 
@@ -861,6 +885,53 @@ The DOM riders slot takes `#s2Copy` with the copy clip under the logo.
 - It decides the page's root background below the hero (D24) and whether the poster path keeps the cue (D27 shows it once something follows).
 - GSAP, ScrollTrigger and Lenis do not arrive with the quiz (the Web Animations API and Pointer Events only). If a later section brings Lenis, it must not smooth the hero's track range: either it is disabled until the track ends, or the hero keeps reading native `scrollY`. Otherwise the pull-back gets a third smoother.
 - `motion.ts` would then wrap `gsap.matchMedia()` so reduced motion has one source.
+
+### 11.4 Section 4, the entrance and the Skreed universe
+
+The spec is `docs/specs/section-4.md` (its section 12 records the build). The DOM is `components/room/Room.astro`, `scripts/room/walk.ts`, `styles/room.css` and `config/room.ts` (DESIGN.md section 4 describes the controls); it mounts in the `after-track` slot after the quiz. On the 3D path the hero's island draws the section on its own renderer and canvas: no second WebGL context and no second island (pending E-S4-webgl, section 7.5).
+
+**The director (`section4/director.ts`).** `createRoomDirector({ renderer, avif, reduced, touch, onJump })` builds the hall and the transition at once and the universe later, and owns everything the section does over time:
+- **State.** `hall`, `entering` or `universe`, mirrored on `section#room[data-state]`; the track's CSS height reads it (1300svh, 1500svh once entered).
+- **Progress.** `q`, in screens of the section's own height, through one scroll follower (`createScrollFollower`, the hero's 0.075 and 0.15) fed from a cached layout: the section's document top and height, measured once and again only by a ResizeObserver on `#room` and `#find` (the quiz changes height with its states) and on window resize. A frame reads `scrollY` and forces no layout under the quiz (this replaces the spec's per-frame rect read, D2). `qRaw = (scrollY - top) / (height / screens)`; `q` is the follower's `b`, held at 0 until the hall is ready; the loop screen reads the follower itself, so the page never ends while the hall is loading.
+- **The scroll map** (`config/room.ts` `ROOM_SCREENS`): the third wipe q 0 to 1, the walk 1 to 9, the station 9 to 10, the pan 10 to 12 once entered (`PAN_START` 10), then the loop screen (q 10 to 11 in the hall, 12 to 13 once entered, `loopStart`) and one tail screen. `ROOM_HEIGHT` 13 and `ROOM_HEIGHT_ENTERED` 15 keep one screen beyond the tail, so the sticky stage stays pinned through the loop screen and the jump fires while the raw scroll is still inside the document; `tests/unit/room.test.ts` reads both against `room.css`.
+- **The walk.** The camera's x from `HALL.start` (5.33 m) to the door station (2.0 m short of the door's face, Tune `stationDist`) over the walk's eight screens, clamped at 1.0 m per second except across a snap, the hall's arrival, the jump and reduced motion's four cuts; `nearDoor` runs from 0 at 2.8 m (`HALL.promptFrom`, where the prompt appears, about q 8.3) to 1 at the station. The keys and the pointer's sway arrive as `window.__skreedRoomLook` and the pointer from the loop.
+- **The third wipe** (the fog ground to the hall) over q 0 to 1, or over a 1 s clock when the hall becomes ready with the visitor already past the section's top; Tune `handoff` 1 makes it a cut at half way, 2 a fade (a second transition pass in its `plain` mode, made on first use).
+- **The transition clock.** `transP` from 0 to 1 over `transitionMs` (2400; 600 under reduced motion) on the beats of `TRANSITION`: the leaves swing 95 degrees over 0 to 0.375 (cubic ease-out), the camera glides 1.6 m from 0.125 to 0.5 (cubic ease-in-out), the frame lifts to white over 0.125 to 0.417, the sweep runs from 0.417 for its own length, the universe fades in over 0.67 to 1 with a last 0.4 m step. The hall stops drawing once the white covers it and the universe starts drawing just before it shows. At 1 the state becomes `universe` and the page snaps to `PAN_START`; `skip()` sets the clock to 1.
+- **The universe's chunk.** `import('./universe.ts')` once the visitor is past the third wipe (q above 1) with the hall ready, or on a press; the assets load inside it. A press that arrives first waits (`pendingEnter`; the DOM shows the prompt busy) and enters by itself when they are in, unless the visitor has walked away from the door or looped meanwhile. A failure sets `data-tier=poster` on the section: the stills and the list stand in and the island runs on.
+- **The pan.** The yaw from -60 to +60 degrees over q 10 to 12 (three cuts under reduced motion); the active pedestal is the one nearest the centre of the view; the four labels' anchors (0.3 m above each product) are projected every frame.
+- **The bridge to the DOM.** `window.__skreedRoom` (`RoomIsland`: `snap(q, smooth)`, `enter()`, `skip()`, `pick(x, y)`, `setHover(i)`) lets `walk.ts` drive the scene, and `window.__skreedRoomFrame(frame)` hands it one `RoomFrame` per step (`q`, `x`, `nearDoor`, `ready`, `failed`, `inView`, the prompt's anchor, `state`, `universeReady`, `transition`, `yaw`, `active`, `hover`, `labels`, `loop`, `jumped`). Window events carry the rest: `skreed:room-state` (`entering`, `universe`, `unbusy`, `jump`) and `skreed:room-universe` (`{ ready, failed }`).
+
+**How `loop.ts` calls it.** Three calls a frame, each skipped while `ctx.room` is null (before the chunk arrives, and for good after a failed import):
+1. `room.begin(ratio)` right after the hero's own followers (F6a): updates the section's follower and returns `{ loop }`, the fourth wipe's progress over the loop screen. It is 0 off that screen, during the transition, with the section out of view and on the poster path.
+2. `room.step(f)` after F13 (F13a), with `{ t, dt, ratio, pointer, touch, mouseRate, fog: fogGround.out }`: updates and renders the hall, the transition or the universe into their targets, calls `__skreedRoomFrame`, and returns the `RoomPlan` (`on`, `tex`, `wipeIn`, `groundNeeded`, `loop`, `toneDark`) that F14 composites. `on` is false until the hall is ready and the section is past its top, and on the poster path.
+3. `room.after()` after the composite and F15 (F15a): the jump.
+
+**The loop screen: the hero at rest.** While `loop` is above 0 the loop sets `hb = 0`, and the hero's steps F6 to F13 run on it in place of the live `b`: `mapScroll(0)` (`s`, `tp` and `tp2` 0, `heroOn` 1), the blocks with no `S2.hidden` override, the rig on its curve at `b` 0 (`rig.update` reads `b` when `curve` is true, and by the page's end the live `b` has sent the blocks away and hidden the moon, so the rest pose cannot come from the live state), the fog ground at 0 and its logo rect updated, the labels off, the same `t` and the live pointer, so the bob, the breath and the drift run on across the jump. F14 renders composer A (its five passes) because `tp` is under 1, and the composite cuts from the section's frame (`tA`, held still, `uParA` 0) to composer A's buffer (`tB`), `uProgress` = `loop`; before the hall has arrived the fog ground is `tA`. F16 calls `rideLoop(els, loop, aspect, toneDark)` instead of `rideCopy`: the countdown rides in behind the cut with `clipFor(loop, false, aspect)` and `visibility: visible`, the logotype turns Pearl at half way, the cue stays off; `walk.ts` fades the section's own DOM out over the first third of the screen. `after()` jumps when `loop` reaches 0.995, once per crossing (re-armed when it drops under 0.5; a hall that arrives with the visitor already on the loop screen disarms it until the next crossing): `scrollTo({ top: 0, behavior: 'instant' })`, `onJump` (`loop.snap(0)`, the hero's followers), the section's follower to 0, the next lap reset to the hall's start (Tune `lapReset` 0 keeps the universe entered), and `skreed:room-state` `jump`. The frames before and after the jump are the same pose, so it shows no motion. The rest pose is rendered fresh every frame of the loop screen, never cached. The poster tier has no loop screen: `walk.ts` fades through `--night` at `.rm-loopend` and scrolls to 0.
+
+**Render targets and colour spaces.** In three 0.165 every material drawn into a render target writes linear values (`WebGLPrograms.js` line 201), and none of these targets is tagged sRGB, so each one is read back as the numbers written. The composite (`post/composite.ts`) reads every `tA` and `tB` as display values and carries no tone-mapping chunk, so the renderer's ACES setting (composer A's) never touches what section 4 draws. All sizes are device pixels (`stage/resize.ts`); every scene renders under `NoToneMapping`, set and restored around its draw, onto a white clear (`RENDER_COLOURS.hallClear`).
+
+| Module | Target | Format | What it writes |
+|---|---|---|---|
+| `hall.ts`, the scene | its own `WebGLRenderTarget`, with depth | 8-bit RGBA | display values by hand: the lit material is albedo times the lightmap (an sRGB texture, decoded to linear on sampling) times the exposure, with the seams and the grain, then `toSrgb`; the floor mixes in its gloss from the cube; the basic materials (the fixtures, the floor lights, the leaves in Urban Slate, the seam) take the colours' own numbers, because they write unencoded into a target read as display values |
+| `hall.ts`, the floor's gloss | a 128 px `WebGLCubeRenderTarget`, mipmapped | 8-bit | the hall seen from (0, 1.2, 0), rendered once on the hall's first render, box-projected in the floor's shader; display values, as the scene |
+| `universe.ts`, the scene | its own `WebGLRenderTarget`, with depth, `LinearFilter` | half-float RGBA | linear: the room's shader is the baked irradiance times 2 (the bake's median is 0.5) times the exposure times the albedo by place (the ten bays, the floor, the pedestals, linear `Color`s from the hexes); the products are `MeshPhysicalMaterial` under a PMREM of three's `RoomEnvironment` (`fromScene(env, 0.04)`, once), intensity `productLight` 0.8; the ceiling disc at 1.15, over 1 so it clips once encoded |
+| `post.ts`, the output pass (one per scene) | its own target, no depth | 8-bit RGBA | the hall's at `encode` 0 (its source is already display values), the universe's at `encode` 1 (`toSrgb` on every tap before the look); then the colour split, the laptop bloom (12 taps screened, none on touch), the vignette, the bleach-bypass and the static grain (none under reduced motion). The hall at vignette 2.0 to 0.85, bleach 1, split 8 px; the universe at 1.3 to 0.9, bleach 0.3, split 4 px. Its `out` is the scene's frame |
+| `transition.ts` | its own target, no depth | 8-bit RGBA | display values: the hall's and the universe's frames mixed through white (`vec3(1.0)`), then the ten bands, each `Color(hex).convertLinearToSRGB()` (three holds a hex as linear, so this gives the hex's own numbers back); in `plain` mode a straight mix of the fog ground and the section's frame (the fade hand-off) |
+
+The fog ground (`section3/ground.ts`) encodes in its own fragment (`ENCODE_TO`), so on both sides of the third wipe the composite reads display values.
+
+**Warm-up.** The section compiles in its own time, never in the hero's milestones. `hall.load()` fetches the model and the lightmap, builds the scene, binds an 8 px target and compiles with `compileAsync` (three keys each program on the bound target; compiling with none would build the canvas's sRGB and ACES variants), draws once, then allocates the real size, keeping any resize that landed meanwhile. The director's `load()` then runs the transition once with the hall's frame on both sides, so its program exists before the press. `universe.load()` compiles the `RoomEnvironment`'s materials with its own 8 px target bound, waits a frame, runs the PMREM, builds the products, compiles the scene the same way and draws once.
+
+**The lazy chunks.** Section 4 adds four chunks, all outside the first view; the two scene chunks import three from the island chunk (`hero.<hash>.js`), so none of them carries a second copy. Measured on the test build of 2026-10-17 (`npm run build:test` into its own `--outDir`, then `node scripts/hero/budget.mjs <dist>`, the "room js (lazy)" group; the sizes and their budget lines are in `docs/specs/section-4.md` section 6):
+
+| Chunk | What it holds | Imported by | When |
+|---|---|---|---|
+| `room.<hash>.js` | `config/room.ts` (the copy, the scroll map, the pedestals, the parameters) | both of the next two, statically | with the first of them |
+| `walk.<hash>.js` | `scripts/room/walk.ts` | the `Room.astro` module script, `import()` | the section within one screen of the viewport (an IntersectionObserver with a 100 percent root margin), or a focus or a pointerdown inside it first |
+| `director.<hash>.js` | `section4/director.ts`, `hall.ts`, `transition.ts`, `post.ts`, `assets.ts` and three's `GLTFLoader` | `hero.ts` `loadHall()`, `import()` | the first time the stage observer sees `#find` or `#room` (section 7.5); the hall's model and lightmap load straight after |
+| `universe.<hash>.js` | `section4/universe.ts`, three's `RoomEnvironment`, the family pages' `case-glb.ts`, `model-fetch.ts` (20 s timeout, memo) and the vendored pure-JavaScript meshopt decoder (the CSP allows no WebAssembly) | the director, `import()` | past the third wipe with the hall ready, or on a press; the room's model and lightmap, the case's LOD1 and the three product models load inside it |
+
+`Room.astro`'s own module script (0.4 KB gzip) is in the critical JS, and its markup and `room.css` are inline in the page; nothing else of the section is fetched before `#find` comes into view. On the poster tier only `room` and `walk` load (the island never runs there), and `walk.ts` swaps the stills' `data-srcset` in.
 
 ## 12. Cloudflare Workers + Static Assets
 
