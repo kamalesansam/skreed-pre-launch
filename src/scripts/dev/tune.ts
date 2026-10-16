@@ -2,15 +2,22 @@
 // to 311 and 1052 to 1071) over a mutable dev copy of HERO_PARAMS. Every lookup is null-guarded. The island subscribes
 // through window.__skreedTune (build step 6) so Sam can tune on staging and hand the numbers back for params.ts.
 import { HERO_PARAMS, heroParams, type HeroParamKey, type HeroParams } from '../../config/params.ts';
+import { ROOM_PARAMS, roomParams, type RoomParamKey, type RoomParams } from '../../config/room.ts';
 import { sceneReduced } from '../motion.ts';
 
 type Listener = (p: HeroParams, key: HeroParamKey | null) => void;
+type RoomListener = (p: RoomParams, key: RoomParamKey | null) => void;
 const params = heroParams(sceneReduced());
 const listeners = new Set<Listener>();
 const emit = (key: HeroParamKey | null) => listeners.forEach((fn) => fn(params, key));
+// section 4's parameters (config/room.ts): the island reads the live copy every frame through liveRoomParams()
+const room = roomParams();
+const roomListeners = new Set<RoomListener>();
+const emitRoom = (key: RoomParamKey | null) => roomListeners.forEach((fn) => fn(room, key));
 (window as unknown as { __skreedTune: unknown }).__skreedTune = {
   params,
   subscribe(fn: Listener) { listeners.add(fn); return () => listeners.delete(fn); },
+  room: { params: room, subscribe(fn: RoomListener) { roomListeners.add(fn); return () => roomListeners.delete(fn); } },
 };
 
 const $ = (id: string) => document.getElementById(id);
@@ -26,6 +33,15 @@ for (const k of keys) {
   el.addEventListener('input', () => { params[k] = +el.value; const o = $('o-' + k); if (o) o.textContent = (+el.value).toFixed(2); onParam(k); emit(k); });
 }
 
+const roomKeys = Object.keys(ROOM_PARAMS) as RoomParamKey[];
+const showRoom = (k: RoomParamKey) => { const el = $('r-' + k), o = $('o-r-' + k); if (el instanceof HTMLInputElement) el.value = String(room[k]); if (o) o.textContent = Number.isInteger(room[k]) ? String(room[k]) : room[k].toFixed(2); };
+for (const k of roomKeys) {
+  const el = $('r-' + k);
+  if (!(el instanceof HTMLInputElement)) continue;
+  showRoom(k);
+  el.addEventListener('input', () => { room[k] = +el.value; showRoom(k); emitRoom(k); });
+}
+
 function onParam(k: HeroParamKey) {
   if (k === 'logoSplit' || k === 'logoIdle') window.__skreedLogo?.configure({ split: params.logoSplit, idle: params.logoIdle });
 }
@@ -34,6 +50,9 @@ const press = (id: string, on: boolean, label: string) => { const b = $(id); if 
 $('tuneReset')?.addEventListener('click', () => {
   Object.assign(params, heroParams(sceneReduced()));
   for (const k of keys) show(k);
+  Object.assign(room, roomParams());
+  for (const k of roomKeys) showRoom(k);
+  emitRoom(null);
   press('glitchIdle', !!params.logoIdle, 'Idle twitch');
   press('glitchSplit', params.logoSplit > 0, 'Colour split');
   onParam('logoIdle');

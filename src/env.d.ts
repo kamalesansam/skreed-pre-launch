@@ -35,7 +35,17 @@ interface Window {
   __skreedCountV?: string[];
   __skreedTierOverride?: () => string;
   /** dev and staging: Tune's live copy of the params (src/scripts/dev/tune.ts) */
-  __skreedTune?: { params: import('./config/params.ts').HeroParams; subscribe(fn: (p: import('./config/params.ts').HeroParams, key: string | null) => void): () => unknown };
+  __skreedTune?: {
+    params: import('./config/params.ts').HeroParams;
+    subscribe(fn: (p: import('./config/params.ts').HeroParams, key: string | null) => void): () => unknown;
+    /** section 4's parameters (Tune's "Section 4" group) */
+    room?: { params: import('./config/room.ts').RoomParams; subscribe(fn: (p: import('./config/room.ts').RoomParams, key: string | null) => void): () => unknown };
+  };
+  /** section 4: the island hands the walk script a frame each step; the walk script hands back the head's turn from the keys */
+  __skreedRoomFrame?: (f: import('./config/room.ts').RoomFrame) => void;
+  __skreedRoomLook?: { yaw: number };
+  /** hooks builds: section 4's state */
+  __s4?: () => unknown;
   // test hooks (test and staging builds only; hero-architecture.md 10)
   __skreedFreeze?: boolean;
   __skreedFrame?: number;

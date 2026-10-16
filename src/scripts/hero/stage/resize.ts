@@ -16,6 +16,7 @@ export function createResize(ctx: HeroContext & { lastW?: number }): () => void 
     ctx.composerA.c.setSize(w, h);
     cameras();
     ctx.fogGround.resize(ctx.renderer.domElement.width, ctx.renderer.domElement.height);   // device pixels, as section 2's targets
+    ctx.hall?.resize(ctx.renderer.domElement.width, ctx.renderer.domElement.height);
     ctx.mask.resize(w, h, ctx.dpr);
     ctx.section2?.resize(w, h);
     ctx.sky.onAspect(asp);

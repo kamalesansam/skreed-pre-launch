@@ -14,6 +14,7 @@ import Chevron from './Chevron.astro';
 import SwatchGrid from './SwatchGrid.astro';
 import FamilyCue from './FamilyCue.astro';
 import manifest from '../../data/case-model.json';
+import type { CaseManifest } from '../../scripts/family/three/case-glb.ts';
 import { size3dMb } from '../../scripts/family/size3d.ts';
 
 interface Props { fam: Family; has3d: boolean; supplier?: boolean }
@@ -21,7 +22,7 @@ const { fam, has3d, supplier = false } = Astro.props;
 const key = fam.key;
 const ki = key.index - 1;
 // size3d: the island plus both models' downloads in MB for "Show in 3D" (supplier builds); the stand-in has none to state
-const size3d: string | null = has3d && supplier ? size3dMb(manifest.bytes, manifest.magtough?.bytes) : null;
+const size3d: string | null = has3d && supplier ? size3dMb(manifest.bytes, (manifest as unknown as CaseManifest).magtough?.bytes) : null;
 const [mw, mh, md] = manifest.sizeMm;
 const data = { slug: fam.slug, name: fam.name, first: fam.first, key: ki, has3d, size3d, names: fam.shades.map((s) => s.name), dims: { w: +(mw / mh).toFixed(4), d: +(md / mh).toFixed(4) } };
 // the two state lines that are known before any script runs (spec 3, 5): data-why "savedata" or "slow" shows one

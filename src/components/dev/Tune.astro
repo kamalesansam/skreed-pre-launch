@@ -56,6 +56,34 @@
     <label for="amb">Sky ambient <output id="o-amb"></output><input id="amb" type="range" min="0" max="3" step="0.05"></label>
     <label for="bloom">Bloom <output id="o-bloom"></output><input id="bloom" type="range" min="0" max="2" step="0.05"></label>
     <div><button type="button" id="ghost">Auto sweep: on</button></div>
+    <h3>Section 4: the entrance (docs/specs/section-4.md)</h3>
+    <label for="r-eye">Eye height (m) <output id="o-r-eye"></output><input id="r-eye" type="range" min="0.6" max="1.8" step="0.01"></label>
+    <label for="r-fov">Field of view (deg) <output id="o-r-fov"></output><input id="r-fov" type="range" min="40" max="100" step="1"></label>
+    <label for="r-lookYaw">Head sway from the pointer (deg) <output id="o-r-lookYaw"></output><input id="r-lookYaw" type="range" min="0" max="25" step="0.5"></label>
+    <label for="r-lookPitch">Head sway, pitch (deg) <output id="o-r-lookPitch"></output><input id="r-lookPitch" type="range" min="0" max="12" step="0.25"></label>
+    <label for="r-keySpeed">Arrow-key walk (m per s) <output id="o-r-keySpeed"></output><input id="r-keySpeed" type="range" min="0.2" max="2" step="0.05"></label>
+    <label for="r-exposure">Light exposure <output id="o-r-exposure"></output><input id="r-exposure" type="range" min="0.2" max="3" step="0.01"></label>
+    <label for="r-albedo">Concrete grey <output id="o-r-albedo"></output><input id="r-albedo" type="range" min="0.1" max="1" step="0.01"></label>
+    <label for="r-seams">Seam darkness <output id="o-r-seams"></output><input id="r-seams" type="range" min="0" max="1" step="0.01"></label>
+    <label for="r-grain">Concrete grain <output id="o-r-grain"></output><input id="r-grain" type="range" min="0" max="0.3" step="0.005"></label>
+    <label for="r-vignette">Vignette, centre boost <output id="o-r-vignette"></output><input id="r-vignette" type="range" min="1" max="3" step="0.05"></label>
+    <label for="r-corners">Vignette, corners <output id="o-r-corners"></output><input id="r-corners" type="range" min="0.3" max="1.2" step="0.01"></label>
+    <label for="r-bleach">Bleach bypass <output id="o-r-bleach"></output><input id="r-bleach" type="range" min="0" max="1" step="0.05"></label>
+    <label for="r-split">Colour split (px) <output id="o-r-split"></output><input id="r-split" type="range" min="0" max="20" step="1"></label>
+    <label for="r-noise">Film grain <output id="o-r-noise"></output><input id="r-noise" type="range" min="0" max="0.05" step="0.001"></label>
+    <label for="r-door">Door: 0 leaves, 1 slab, 2 none <output id="o-r-door"></output><input id="r-door" type="range" min="0" max="2" step="1"></label>
+    <label for="r-seamGlow">Door seam glow <output id="o-r-seamGlow"></output><input id="r-seamGlow" type="range" min="0" max="3" step="0.05"></label>
+    <label for="r-promptChip">Key chip on the prompt (0 off, 1 on) <output id="o-r-promptChip"></output><input id="r-promptChip" type="range" min="0" max="1" step="1"></label>
+    <label for="r-handoff">Hand-off: 0 wipe, 1 cut, 2 fade <output id="o-r-handoff"></output><input id="r-handoff" type="range" min="0" max="2" step="1"></label>
+    <label for="r-transitionMs">Transition length (ms) <output id="o-r-transitionMs"></output><input id="r-transitionMs" type="range" min="800" max="5000" step="100"></label>
+    <label for="r-sweepSpeed">Sweep speed (screens per s) <output id="o-r-sweepSpeed"></output><input id="r-sweepSpeed" type="range" min="0.3" max="3" step="0.05"></label>
+    <label for="r-sweepAngle">Sweep angle (deg) <output id="o-r-sweepAngle"></output><input id="r-sweepAngle" type="range" min="0" max="90" step="1"></label>
+    <label for="r-sweepWidth">Sweep band width (of the screen) <output id="o-r-sweepWidth"></output><input id="r-sweepWidth" type="range" min="0.03" max="0.4" step="0.01"></label>
+    <label for="r-wallsColour">Universe walls: 0 Pearl, 1 the families <output id="o-r-wallsColour"></output><input id="r-wallsColour" type="range" min="0" max="1" step="1"></label>
+    <label for="r-standins">Snap and Armor on the Cobalt shape (0 hide) <output id="o-r-standins"></output><input id="r-standins" type="range" min="0" max="1" step="1"></label>
+    <label for="r-catalogWords">Labels: 0 trimmed, 1 catalog words <output id="o-r-catalogWords"></output><input id="r-catalogWords" type="range" min="0" max="1" step="1"></label>
+    <label for="r-mouseLook">Mouse-look drag (0 off, 1 on) <output id="o-r-mouseLook"></output><input id="r-mouseLook" type="range" min="0" max="1" step="1"></label>
+    <label for="r-productScale">Products' scale on the pedestals <output id="o-r-productScale"></output><input id="r-productScale" type="range" min="0.5" max="3" step="0.05"></label>
   </div>
 </details>
 <script>if (new URLSearchParams(location.search).has('tune')) import('../../scripts/dev/tune.ts');</script>

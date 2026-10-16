@@ -4,9 +4,11 @@
 // imports the stage chunk (three.js, the two case models) behind the page's grid fallback and under the loader. In a
 // supplier build (on) the data block names both models' LOD1 files, so boot.ts starts their downloads with the chunk's.
 import manifest from '../../data/case-model.json';
+import type { CaseManifest } from '../../scripts/family/three/case-glb.ts';
+const M = manifest as unknown as CaseManifest;   // the JSON's own type has no optional second model
 interface Props { mode: 'dev' | 'on' }
 const { mode } = Astro.props;
-const data = mode === 'on' ? { mode, lod1: manifest.lod1, ...(manifest.magtough ? { lod1b: manifest.magtough.lod1 } : {}) } : { mode };
+const data = mode === 'on' ? { mode, lod1: M.lod1, ...(M.magtough ? { lod1b: M.magtough.lod1 } : {}) } : { mode };
 ---
 <script type="application/json" id="fam-3d" is:inline set:html={JSON.stringify(data)}></script>
 <script>import '../../scripts/family/three/boot.ts';</script>

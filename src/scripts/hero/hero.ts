@@ -167,6 +167,7 @@ export async function startHero(o: StartOptions): Promise<void> {
     renderer, dpr, life, bridge, sceneA, camA, U, FOG, blocks, frame, pieces, logo, moon, rig,
     groundAt: ground.groundAt, stoneTopAt: stones.stoneTopAt, groundMesh: ground.mesh, stonesMesh: stones.mesh, sky: skyState,
     composerA, fogGround, section2, composite, mask, scrollTex: scrollTex.tex, intro, params: P, reduced, touch, ghost: touch && !reduced, els,
+    hall: null,
   };
   // the intro's geometry, textures and wire layers (cage, outline, numbers: warm-up groups c5 to c7, before the labels' links)
   await intro.install(ctx); life.check();
@@ -194,6 +195,16 @@ export async function startHero(o: StartOptions): Promise<void> {
   life.onKill(() => { loop.stop(); labels.clear(); labels.dispose(); });
   section2.snapTo = (screens) => { scrollTo({ top: Math.round(screens * innerHeight), behavior: 'instant' }); loop.snap(screens); };
   if (HOOKS) installHooks(ctx, loop, { skyClass: () => ctx.sky.cls });
+  if (HOOKS) window.__s4 = () => ctx.hall?.hooks() ?? null;
+  // section 4's hall (docs/specs/section-4.md 5) loads one section ahead: its chunk, model and lightmap start when the
+  // quiz or the section itself comes into view, so the walk is ready by the time the third wipe is reached
+  let hallImport: Promise<void> | null = null;
+  const loadHall = () => (hallImport ??= import('./section4/hall.ts').then((m) => {
+    const hall = m.createHall({ renderer, avif: data.avif, reduced });
+    ctx.hall = hall; life.onKill(() => hall.dispose());
+    hall.resize(renderer.domElement.width, renderer.domElement.height);
+    return hall.load();
+  }).catch((e: unknown) => { console.warn('section 4: the hall chunk did not load; the stills stand in', e); }));
   bridge.onIntroDone(() => loop.introDone());
   if (import.meta.env.PUBLIC_TUNE === '1' && tune) {
     const apply = () => {
@@ -214,11 +225,12 @@ export async function startHero(o: StartOptions): Promise<void> {
   // both have left the viewport it stops and the canvas hides (architecture 7.5, amended for section 3). It restarts
   // when either returns.
   let compiled = false, inView = true;
-  const watched = [document.getElementById('track'), document.getElementById('find')].filter((el): el is HTMLElement => !!el);
+  const trackEl = document.getElementById('track');
+  const watched = [trackEl, document.getElementById('find'), document.getElementById('room')].filter((el): el is HTMLElement => !!el);
   if (watched.length && 'IntersectionObserver' in window) {
     const seen = new Map<Element, boolean>();
     const io = new IntersectionObserver((entries) => {
-      for (const e of entries) seen.set(e.target, e.isIntersecting);
+      for (const e of entries) { seen.set(e.target, e.isIntersecting); if (e.isIntersecting && e.target !== trackEl) void loadHall(); }
       inView = [...seen.values()].some(Boolean);
       if (!compiled) return;
       if (inView) { canvas.style.removeProperty('visibility'); loop.start(); } else { loop.stop(); canvas.style.visibility = 'hidden'; }

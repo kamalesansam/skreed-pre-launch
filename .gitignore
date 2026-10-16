@@ -9,3 +9,6 @@ assets-src/hero/masters/*.png
 assets-src/hero/poster/*.png
 *.tmp.*
 /run-*.log
+
+# section 4 bake intermediates (scripts/room/hall.py); the shipped files live in src/assets/room
+scripts/room/out/

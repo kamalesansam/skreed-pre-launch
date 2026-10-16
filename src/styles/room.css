@@ -1,0 +1,32 @@
+/* Section 4, the entrance (docs/specs/section-4.md 2; tokens from DESIGN.md). The section is a tall track with a sticky
+   stage over the hero's fixed canvas, which draws the hall; the DOM here is only what the walk needs. Pearl Whisper
+   pills with Urban Slate text, the primary button at the door, square corners, no shadows, no blur. */
+.room { position: relative; z-index: 2; color: var(--urban-slate); font-family: var(--font-ui); font-size: var(--fs-label); line-height: var(--lh-ui); --rm-screens: 12; }
+.room *, .room *::before, .room *::after { box-sizing: border-box; }
+.rm-track { height: calc(var(--rm-screens) * 100svh); }
+.rm-stage { position: sticky; top: 0; height: 100svh; outline: none; }
+.rm-stage:focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: -4px; }
+
+/* the pills: a line of Open Sans 600 on Pearl Whisper, inside the gutters, above the safe area; the hint at the bottom centre */
+.rm-pill { position: absolute; left: 50%; bottom: calc(var(--inset) + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); margin: 0; max-width: calc(100% - 2 * var(--inset)); min-height: 44px; display: flex; align-items: center; padding: var(--s2) var(--s3); background: var(--pearl-whisper); color: var(--urban-slate); font-weight: var(--w-ui-strong); border-radius: var(--radius-none); text-align: center; }
+.rm-pill[hidden] { display: none; }
+.rm-hint.is-gone { opacity: 0; transition: opacity var(--dur-out) var(--ease-standard); pointer-events: none; }
+
+/* the prompt (DESIGN.md 4, the primary button): anchored to the door's handle by the walk script, fades in over 200 ms */
+.room .btn { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: inline-flex; align-items: center; gap: var(--s2); min-height: 48px; padding: 0 var(--s4) 0 var(--s2); background: var(--ember-luxe); color: #383F43; font: var(--w-ui-strong) var(--fs-button) / var(--lh-solid) var(--font-ui); text-decoration: none; border: 0; border-radius: var(--radius-none); cursor: pointer; white-space: nowrap; opacity: 0; transition: opacity 200ms var(--ease-standard); -webkit-tap-highlight-color: transparent; }
+.room .btn.is-shown { opacity: 1; }
+.room .btn[hidden] { display: none; }
+@media (hover: hover) { .room .btn:hover { transform: translate(-50%, calc(-50% - 1px)); } }
+.room .btn:active { transform: translate(-50%, -50%) scale(0.98); }
+.room :focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 4px; }
+.room .btn, .room .txtbtn { position: absolute; }
+.room :is(.btn, .txtbtn):focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
+.rm-key { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 1px solid var(--urban-slate); background: var(--pearl-whisper); color: var(--urban-slate); font-size: var(--fs-label); line-height: 1; }
+@media (hover: none) { .rm-key { display: none; } .room .btn { padding-left: var(--s4); } }
+.room .txtbtn { left: 50%; bottom: calc(var(--inset) + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: none; border: 0; padding: var(--s2) var(--s3); min-height: 44px; color: var(--pearl-whisper); font: var(--w-ui-strong) var(--fs-button) / var(--lh-solid) var(--font-ui); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.room .txtbtn[hidden] { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .room .btn, .rm-hint.is-gone { transition: none; }
+  .room .btn:hover { transform: translate(-50%, -50%); }
+}

@@ -1,0 +1,33 @@
+---
+// Section 4, the entrance (docs/specs/section-4.md 2 and 5), in the hero's after-track slot after the quiz: a track of
+// ROOM_HEIGHT screens with a sticky stage over the hero's canvas, which draws the hall. The stage holds the DOM the walk
+// needs: the hint, the loading line, the prompt at the door, the skip; scripts/room/walk.ts (lazy, when the section
+// nears) drives them from the frame the island hands over each step. No style attributes (the CSP has no style-src-attr).
+import { ROOM_COPY as R, ROOM_HEIGHT } from '../../config/room.ts';
+import '../../styles/room.css';
+---
+<section class="room" id="room" aria-label={R.aria} data-state="hall" data-screens={ROOM_HEIGHT}>
+  <div class="rm-track">
+    <div class="rm-stage" id="rmStage" tabindex="0" aria-label={R.stageAria}>
+      <p class="rm-pill rm-hint" id="rmHint" data-touch={R.hintTouch} data-keys={R.hintKeys}>{R.hintTouch}</p>
+      <p class="rm-pill rm-loading" id="rmLoading" role="status" hidden>{R.loading}</p>
+      <button type="button" class="btn rm-enter" id="rmEnter" hidden><span class="rm-key" aria-hidden="true">{R.key}</span><span class="rm-enter-text">{R.enter}</span></button>
+      <button type="button" class="txtbtn rm-skip" id="rmSkip" hidden>{R.skip}</button>
+      <noscript><p class="rm-pill">{R.noscript}</p></noscript>
+    </div>
+  </div>
+</section>
+<script>
+  // the walk script comes once the section is within a screen, or at once when the stage is focused or touched first
+  const root = document.getElementById('room');
+  if (root) {
+    let p: Promise<unknown> | null = null;
+    const start = () => (p ??= import('../../scripts/room/walk.ts').then((m) => m.mountRoom(root)));
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); void start(); } }, { rootMargin: '100% 0px' });
+      io.observe(root);
+    } else void start();
+    root.addEventListener('focusin', () => { void start(); }, { once: true });
+    root.addEventListener('pointerdown', () => { void start(); }, { once: true });
+  }
+</script>
