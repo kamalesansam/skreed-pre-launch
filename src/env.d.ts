@@ -5,6 +5,8 @@ interface ImportMetaEnv {
   readonly PUBLIC_HERO_HOOKS?: string;
   readonly PUBLIC_TUNE?: string;
   readonly PUBLIC_STAGING?: string;
+  /** section 3's gift form: on, off, or unset (on in dev, test and staging builds, off in production until its Worker exists) */
+  readonly PUBLIC_LEADS?: string;
 }
 
 interface SkreedLoaderState { phase: string; mode: string; p: number; tl: number; n: number; ready: boolean; note: string; next: string | undefined }
@@ -55,5 +57,5 @@ interface Window {
   /** section 2's state (ready, failed, live, S, L per gem, active, labels shown) */
   __s2?: () => unknown;
   /** the intro: seek(x, t0?) pins the shot at x seconds and renders that frame; play() resumes; replay() runs it again */
-  __skreedIntro?: { state(): Record<string, unknown>; seek(x: number, t0?: number): Record<string, unknown>; play(): void; replay(): void; skip(): void };
+  __skreedIntro?: { state(): { t: number } & Record<string, unknown>; seek(x: number, t0?: number): Record<string, unknown>; play(): void; replay(): void; skip(): void };
 }

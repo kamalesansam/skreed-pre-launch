@@ -3,6 +3,7 @@
 // "Show in 3D" for data saver and 2G), no island request, zero CSP violations. One screenshot per row, at rest and
 // unscrolled: docs/specs/screenshots/family-state-<row>-390x844.png.
 import { test, expect, type BrowserContext } from '@playwright/test';
+import { fileURLToPath } from 'node:url';
 import { PHONE, WIDE, watch, cspViolations, shade, islandRequests } from './util.ts';
 
 const SHOTS = new URL('../../../docs/specs/screenshots/', import.meta.url);
@@ -60,7 +61,7 @@ test.describe('9. states, grid-mode rows (PUBLIC_FAMILY_3D=dev build)', () => {
       expect(islandRequests(reqs), r.row).toEqual([]);
       expect(await cspViolations(page)).toEqual([]);
       expect(await page.evaluate(() => scrollY), 'the screenshot is the page at rest, unscrolled').toBe(0);
-      await page.screenshot({ path: new URL(`family-state-${r.row}-390x844.png`, SHOTS).pathname });
+      await page.screenshot({ path: fileURLToPath(new URL(`family-state-${r.row}-390x844.png`, SHOTS)) });
       await ctx.close();
     });
   }
@@ -121,7 +122,7 @@ test.describe('9. states, grid-mode rows (PUBLIC_FAMILY_3D=dev build)', () => {
     await expect(page.locator('#hudName')).toHaveText('Sky');
     expect(await cspViolations(page)).toEqual([]);
     await page.evaluate(() => document.fonts.ready);
-    await page.screenshot({ path: new URL('family-state-shade-999-390x844.png', SHOTS).pathname });
+    await page.screenshot({ path: fileURLToPath(new URL('family-state-shade-999-390x844.png', SHOTS)) });
     await ctx.close();
   });
 
@@ -136,7 +137,7 @@ test.describe('9. states, grid-mode rows (PUBLIC_FAMILY_3D=dev build)', () => {
     await expect(page.getByRole('button', { name: 'Gloss' })).toHaveAttribute('aria-pressed', 'true');
     expect(await cspViolations(page)).toEqual([]);
     await page.evaluate(() => document.fonts.ready);
-    await page.screenshot({ path: new URL('family-state-cross-family-390x844.png', SHOTS).pathname });
+    await page.screenshot({ path: fileURLToPath(new URL('family-state-cross-family-390x844.png', SHOTS)) });
     await ctx.close();
   });
 });

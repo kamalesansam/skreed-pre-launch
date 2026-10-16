@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { SHADES, SHADE_HEX, REGION, BLOCK_ORDER, BLOCK_SHADES, GALAXY, GLITCH_PAIRS, GLITCH_LIGHT } from '../../src/config/shades.gen.ts';
 
 const root = new URL('../../', import.meta.url);
@@ -13,7 +14,7 @@ const heroMd = read('docs/specs/hero.md');
 const byId = new Map(SHADES.map((s) => [s.id, s]));
 
 test('the generated files are up to date with docs/data/shades-240.json', () => {
-  execFileSync(process.execPath, ['scripts/hero/gen-shades.mjs', '--check'], { cwd: new URL(root).pathname, stdio: 'pipe' });
+  execFileSync(process.execPath, ['scripts/hero/gen-shades.mjs', '--check'], { cwd: fileURLToPath(root), stdio: 'pipe' });
 });
 
 test('240 shades, 24 per family, catalog order, catalog numbers 1 to 240', () => {

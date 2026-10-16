@@ -6,6 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { checkLod, checkPair, readGlb } from '../../scripts/case-model/intake.mjs';
 
 const root = new URL('../../', import.meta.url);
@@ -102,7 +103,7 @@ test('the vendored decoder is meshoptimizer 0.22.0 reference, byte for byte, and
   assert.equal(createHash('sha256').update(src).digest('hex'), '66b9856b46d4e3bdaa822c7defb3e6ab0edb2ca372f8460f6ad5742294019616');
   assert.doesNotMatch(src.toString(), /WebAssembly|eval\(|new Function/);
   // no site module imports three's WebAssembly MeshoptDecoder
-  const walk = (d: URL): string[] => readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? walk(new URL(`${e.name}/`, d)) : [new URL(e.name, d).pathname]);
+  const walk = (d: URL): string[] => readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? walk(new URL(`${e.name}/`, d)) : [fileURLToPath(new URL(e.name, d))]);
   for (const f of walk(new URL('src/', root)).filter((p) => /\.(ts|js|astro|mjs)$/.test(p))) {
     assert.doesNotMatch(readFileSync(f, 'utf8'), /libs\/meshopt_decoder|from 'meshoptimizer'|DRACOLoader|KTX2Loader/, f);
   }
