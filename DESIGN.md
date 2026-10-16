@@ -290,6 +290,60 @@ Source Serif 4 Fallback 600: size-adjust 106.14%; ascent-override 97.61%; descen
 - **States.** Hover `translateY(-1px)`; press `scale(0.98)`; both 150 ms on `--ease-standard`. No opacity change, no darker orange.
 - **Focus.** The two-tone ring, because the Ember Luxe outline sits on the page around the button, and on Pearl Whisper it alone measures 2.0:1.
 
+### Quiz panel (section 3, `.qz-panel`; `src/styles/quiz.css`)
+
+- **Fill and text.** Pearl Whisper fill, Urban Slate text (9.9:1), square corners (`--radius-none`), no border, no shadow, no blur. The intro, each card, the result and the gift each stand on one. The section has no background of its own and no plates (on the 3D path it sits over the hero's fog ground, otherwise on `--night`), so its text needs no contrast exception.
+- **Box.** `box-sizing: border-box` on everything in the section, so the full-width panels and the input fit the gutters at 390 with their padding and hairlines.
+- **Width.** The intro 480 px wide, 640 px on laptops (900 px wide and 600 px tall or more); every panel is centred in the stage at every width; the results the same; the deck 480 px on every screen; the gift panel 480 px (640 on laptops) on `margin: 0 auto`.
+- **Padding.** On the scale: the intro, the card, the result and the gift `var(--s4) var(--s3)`; the intro and the result `var(--s5)` on laptops. Inside, rows are spaced by `gap` alone (`--s1` to `--s4`), no per-line margins.
+- **Type.** Open Sans at `--fs-legal` / `--lh-ui` throughout; the headline Poppins 700 at `--fs-h2` / `--lh-h2`, `--ls-h2`, within `--measure-h2`, balanced; the standfirst Open Sans 400 at `--fs-standfirst` / `--lh-standfirst`, within `--measure-prose`. Poppins and Open Sans only, no serif (type-system principle 9).
+- **Buttons.** The primary button above, padding `0 var(--s4)`. While the chunk loads or the form sends it is `aria-disabled` (never the `disabled` attribute), reads "Loading..." or "Sending...", keeps its fill and loses the hover lift.
+- **Focus.** Every control on a panel takes the two-tone ring, the Ember Luxe outline at the 2 px offset of the default above plus a 2 px Urban Slate inner ring: on the primary button, the options, the text buttons, the focused card, the result heading and the done line the inner ring is drawn by `::before` at `inset: -2px`; an `<input>` renders no `::before`, so the email input's own hairline thickens to 2 px as its inner ring, and the consent checkbox's 44 px row (`.qz-check:has(input:focus-visible)`) carries both rings round the box and its label, the box's own outline removed. The top card, the one focusable card, takes the same two-tone ring (over the fog, Ember alone is under 3:1).
+
+### Quiz card (`.qz-card`)
+
+- **Deck.** Six cards stacked `position: absolute; inset: 0` in a 480 px deck (`.qz-cards`) of height `min(68svh, 560px)`, `min(70svh, 560px)` on laptops. One card shows at a time: the top card (`.is-top`, `cursor: grab`, `grabbing` while held, `tabindex="0"`), the next behind it (`.is-next`) at `scale(0.96)`, the rest hidden.
+- **Layout.** A grid of three rows, `auto 1fr auto` (the question, the two options, the stepper), `gap: var(--s3)`, content centred; `transform-origin: 50% 100%`, `will-change: transform`.
+- **Question.** Poppins 700 at `--fs-quiz` / `--lh-quiz`, `--ls-quiz`, centred. No digit in it.
+- **Touch.** `touch-action: pan-y`, so a vertical drag still scrolls the page; `user-select: none`.
+- **Motion** (`src/scripts/quiz/deck.ts`, Web Animations, no GSAP). The drag follows the pointer past an 8 px dead zone, turning up to 8 degrees at 35 percent of the card's width; release past 35 percent, or a flick at 0.5 px/ms, commits. The card leaves in `--dur-card` on `--ease-in` (translateX and 14 degrees), the next, already in view behind it, comes forward from `scale(0.96)` in `--dur-card` on `--ease-standard` (no opacity ramp: the leaving card stays opaque until it is off), a short drag springs back in `--dur-card` on `--ease-rebound`. At the start the intro fades out in `--dur-out` and the deck rises 24 px in 400 ms. Reduced motion: 150 ms fades, no rise, no drag follow (the card stays put; release past the threshold still commits).
+
+### Quiz option (`.qz-opt`)
+
+- **Element.** A real `<button>`, two per card side by side (`grid-template-columns: 1fr 1fr`, `gap: var(--s3)`), no fill, no border, square, minimum height 44 px, padding `var(--s2) var(--s1)`, `gap: var(--s1)`, `aria-label="Word, Name"`.
+- **Swatch.** A 112 px circle (`--radius-round`), 144 px on laptops, filled from the shade token `var(--shade-<id>)` through a per-shade rule on `data-shade` (the CSP has no `style-src-attr`, so no style attributes).
+- **Labels.** The word in Open Sans 400 at `--fs-label` / `--lh-solid` (type-system note 13: the labels under the swatches at 400, 14 px); the shade name at `--fs-tile-caption` / `--lh-ui`; both outside the swatch, in Urban Slate (Swatches, below).
+- **States.** Hover `translateY(-1px)`; past the commit threshold (`.is-lift`) `translateY(-1px)` with an underline at a 3 px offset; press `scale(0.98)`; `--dur-press` on `--ease-standard`. Reduced motion: no transform; the underline alone marks the side that will commit.
+- **Focus.** The two-tone ring (Quiz panel, above).
+
+### Quiz stepper (`.qz-step`, inside the card)
+
+- **Placement.** The card's last row, centred, `aria-hidden` (the card's `aria-label` reads "Question n of 6").
+- **Dots.** Six 10 px rings (`--radius-round`), 1 px Urban Slate, `gap: var(--s2)`; an answered card's dot (`data-done`) fills solid Urban Slate. No shade-filled dots: the shades never colour UI (rule 24).
+
+### Result swatch (`.qz-big`)
+
+- **Shape.** A 160 px circle (`--radius-round`) filled from `var(--shade-<id>)` by `data-shade`, first on the result panel; on laptops the panel is two columns, 160 px and the text, left aligned.
+- **Hairline.** A 1 px Urban Slate ring when the shade is under 1.5:1 on Pearl Whisper: Porcelain (`frosty-white-10`) and Sunflower (`mellow-yellow-11`), the family page's `--swr` precedent (`src/styles/family.css`). No other swatch has a border.
+- **Beside it.** The eyebrow "Your shade" at `--fs-eyebrow`, 600; the shade name in Poppins 700 at `--fs-tile-name` / `--lh-tile`, `--ls-tile`; the family line at `--fs-family` with tabular numerals; the paragraph at `--fs-legal` / `--lh-ui` within `--measure-prose`; "Found the perfect shade? Make it yours!" in Poppins 700 at `--fs-clause` / `--lh-h2`, `--ls-h2`.
+
+### Text button (`.txtbtn`)
+
+- **Type.** Open Sans 600 at `--fs-button` / `--lh-solid`, the panel's text colour, no fill, no border.
+- **Size.** Minimum height 44 px, padding `var(--s2) 0`.
+- **States.** An underline at a 3 px offset, transparent at rest and coloured in on hover and on `:focus-visible` only at once (no transition: nothing but transform and opacity animates, CHECKLIST C3). No transform.
+- **Uses.** "Not quite? Try again" under the result and "Not you? Use another email." once the gift is sent.
+- **Focus.** The two-tone ring (Quiz panel, above).
+
+### Email input (`.qz-input`, the gift form)
+
+- **Box.** Full width, minimum height 48 px, padding `0 var(--s2)`, a 1 px Urban Slate hairline border, square corners, Pearl Whisper fill, Urban Slate text, Open Sans 400 at `--fs-input` / `--lh-input` (16 px, so iOS never zooms).
+- **Invalid.** `aria-invalid="true"` doubles the border to 2 px. Nothing turns red: the colours stay Pearl Whisper and Urban Slate.
+- **Label.** `--fs-label`, 600, above the field.
+- **Checkbox.** The native control at 20 px with `accent-color: var(--urban-slate)`, in a 44 px row with its label at `--fs-label`, `gap: var(--s2)`.
+- **Messages.** The error line under a field and the status line under the button at `--fs-label` / `--lh-ui`, 400 (type-system note 10: the state is carried by the words and the field's border); the fine print at `--fs-small` / `--lh-small`.
+- **Focus.** The email input: the Ember Luxe outline 2 px outside the field, its hairline at 2 px as the inner ring (an `<input>` renders no `::before`). The checkbox: its own outline is removed and the row takes the two-tone ring round the box and its label (Quiz panel, above).
+
 ### Skeleton (later sections)
 
 - **Box.** The same element and the same character count as the value it waits for, with `color: transparent; background: var(--skeleton)` and square corners. The swap moves nothing.
@@ -309,7 +363,7 @@ One scale, used through `gap` on flex and grid, not per-element margins (rule 15
 
 ```css
 :root {
-  --s1: 8px; --s2: 12px; --s3: 16px; --s4: 24px;   /* --s4: the quiz deck's rise and the gap under a quiz card (section 3, 2026-10-16) */
+  --s1: 8px; --s2: 12px; --s3: 16px; --s4: 24px; --s5: 32px;   /* --s4: the quiz deck's rise, the gap under a quiz card and the quiz panels' padding; --s5: the quiz panels' padding on laptops (section 3, 2026-10-16) */
   --inset: clamp(16px, 3.5vw, 56px);  /* corner inset: 16 px at 390, 44.8 px at 1280, 56 px at 1700 (measured) */
 }
 ```
@@ -330,10 +384,10 @@ One scale, used through `gap` on flex and grid, not per-element margins (rule 15
 
 ### The hero's layout
 
-- A fixed full-screen canvas over a 460svh scroll track (pull-back 1.5 screens, wipe 1 screen).
+- A fixed full-screen canvas over a 1720svh scroll track (`TRACK_SVH`: the pull-back 5 screens, the first wipe 1 screen, section 2's cascade and rest to 15.2, the second wipe to 16.2, then section 3 rising over the fog).
 - DOM riders (countdown, cue, logotype) are fixed and move only by transform and clip-path.
 - On the poster path the track is 100svh, and the poster and the countdown sit in that first screen.
-- Slots follow the track: section 2's riders, then `<main>` with section 3, the Wall.
+- Slots follow the track: section 2's riders, then `<main>` with section 3, the quiz (`section#find`; the Wall is a later section).
 
 ### The family pages' layout (`/shades/<family>/`, `docs/specs/family-page.md` 2.3, 2.4, 2.8)
 
@@ -359,6 +413,7 @@ One idea per screen. No feature grids, no bento, no three-up cards, no badge abo
   | labels | 1 |
   | cue | 2 |
   | Tune, dev only | 3 |
+  | section 3, the quiz (`section#find`, in flow after the track) | 3, after the riders in DOM order, so it paints over section 2's labels |
   | logotype | 4 |
   | loader | 6 |
 
@@ -446,6 +501,7 @@ Anything not on that list is not excepted.
   - 1024 px: the logotype goes from 96 to 136 px;
   - 1100 px: the countdown lift is removed;
   - aspect 0.9: portrait framing in the hero (camera zoom `min(1, aspect * 1.25)`, sky crop class, poster class, section 2 swatch columns 24 to 12). In CSS, wide is `(min-aspect-ratio: 9/10)` and portrait is its complement, which matches the scene's `aspect < 0.9` exactly.
+- **The quiz (section 3).** Phone first: the stage is `min-height: 100svh` with its panel bottom-aligned on phones and centred on laptops (900 px wide and 600 px tall or more, the family pages' breakpoint), where the intro and the results widen from 480 to 640 px and the option swatches from 112 to 144 px.
 - **Viewport units.** `svh` for layout heights. Nothing is animated in `dvh`. Safe areas use `env(safe-area-inset-*)`.
 - **Tap targets.** At least 44 px. Inputs are 16 px so iOS never zooms.
 - **Canvas pixel ratio.** Capped at 1.25 on touch and 1.5 elsewhere.

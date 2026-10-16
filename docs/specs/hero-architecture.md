@@ -19,7 +19,7 @@ The scratch work lives in `/tmp/claude-0/-home-user-skreed-pre-launch/5a355426-a
    - **Stage 1** uses the prototype's asset files byte for byte and must give identical frames. It is a test build only and is never deployed: its first view is about 2.6 MB.
    - **Stage 2** swaps in the measured encodes, the sky crops, the packed binaries and the posters, under the shipping thresholds. It is the first deployable build.
 3. **Poster first.** A raster poster is the LCP element and the fallback for every tier and failure. The WebGL island loads behind it, only when the device and the user's settings allow.
-4. **Clean slots.** The igloo intro (v10), section 2 (the rocks) and section 3 (the Wall) plug into typed interfaces. None of them is ported here.
+4. **Clean slots.** The igloo intro (v10), section 2 (the rocks) and section 3 (the quiz, docs/specs/quiz.md; the Wall moves to a later section) plug into typed interfaces. None of them is ported here.
 5. **Nothing dev-only ships.** Tune and the test hooks exist only in dev, test and staging builds.
 
 ## 2. Versions (exact pins)
@@ -37,7 +37,7 @@ The scratch work lives in `/tmp/claude-0/-home-user-skreed-pre-launch/5a355426-a
 | Python tools (scripts only) | Pillow 12.3.0 (libavif 1.4.2, libwebp 1.6.0), numpy | the texture and poster encodes and the image compare; the same encoder versions produced the measured sizes |
 
 Not installed for this section:
-- `gsap` 3.15.0 and `lenis` 1.3.26: the hero uses neither (spec D6). They arrive with section 3.
+- `gsap` 3.15.0 and `lenis` 1.3.26: the hero uses neither (spec D6), and nor does section 3 (the quiz: the Web Animations API and Pointer Events only). They arrive with a later section, if at all.
 - `@astrojs/cloudflare` 14.3.4: even for a static site it adds a SESSION KV binding and an IMAGES binding that need provisioning on Sam's account. An assets-only Worker serves `dist/` directly. The adapter, or a hand-written Worker, is added with `/api/*` in the Reserve section.
 - `@astrojs/sitemap` 3.7.4: arrives with the site-essentials pass (G8).
 
@@ -64,15 +64,17 @@ Every version is exact in `package.json`, with no caret (security checklist row 
 │  │  ├─ tokens.css               :root tokens from DESIGN.md
 │  │  ├─ shades.gen.css           generated: --shade-<id> for all 240 (7,855 B raw, 1,288 B br)
 │  │  ├─ fonts.css                @font-face and fallback faces, verbatim from type-system.md and scripts/fonts/manifest.txt
-│  │  └─ shell.css                hero shell, loader, countdown, cue, logotype, poster, tier layout (section 4.4)
+│  │  ├─ shell.css                hero shell, loader, countdown, cue, logotype, poster, tier layout (section 4.4)
+│  │  └─ quiz.css                 section 3's styles (docs/specs/quiz.md)
 │  ├─ config/
 │  │  ├─ site.ts                  SITE_URL, LAUNCH_ISO '2026-11-01T00:00:00+05:30'
-│  │  ├─ hero.ts                  POSE, MOON_POSE, SCROLL_MAP, TRACK_SVH 460, PORTRAIT_ASPECT 0.9, DPR caps, GATE (tier rules), SOFTWARE_GL, REDUCED_MOTION_TIER
+│  │  ├─ hero.ts                  POSE, MOON_POSE, SCROLL_MAP, S2T, TRACK_SVH 1720 (460 in stage 1, 1820 in round 3), PORTRAIT_ASPECT 0.9, DPR caps, GATE (tier rules), SOFTWARE_GL, REDUCED_MOTION_TIER
 │  │  ├─ copy.ts                  every string of hero.md section 3, by id; the inline scripts receive the ones they need as JSON
 │  │  ├─ params.ts                HERO_PARAMS (66 keys, locked values applied, logoIdle 0), heroParams(reduced)
 │  │  ├─ loader-weights.json      WT, re-measured on fetched assets (section 7.4)
 │  │  ├─ shades.gen.ts            generated from docs/data/shades-240.json by id
-│  │  └─ tokens.ts                colour constants the canvas needs (night, slate, pearl), checked against tokens.css by a unit test
+│  │  ├─ tokens.ts                colour constants the canvas needs (night, slate, pearl), checked against tokens.css by a unit test
+│  │  └─ quiz.ts                  section 3's data: QUIZ_COPY, QUIZ_CARDS, QUIZ_RESULTS, scoreQuiz, resultHref, QUIZ_LEAD_ENDPOINT (docs/specs/quiz.md)
 │  ├─ assets/hero/                stage 1: the prototype files plus SHA256SUMS; stage 2: the encodes and packed binaries (section 6); imported with ?url, hashed into /_astro/
 │  ├─ assets/hero/poster/         the four poster files (section 6.4)
 │  ├─ components/
@@ -84,14 +86,17 @@ Every version is exact in `package.json`, with no caret (security checklist row 
 │  │  ├─ hero/HeroStage.astro     h1, canvas#stage, #labels, .track, riders slot, after-track slot, boot <script>
 │  │  ├─ hero/Countdown.astro     #heroCopy, countdown markup, noscript line with <time>
 │  │  ├─ hero/ScrollCue.astro     #cue markup and, last in body, the countdown and cue script
-│  │  ├─ dev/Tune.astro           rendered only when PUBLIC_TUNE is '1'
-│  │  └─ dev/AfterTrackFiller.astro   a 100svh Pearl Whisper block, rendered only when PUBLIC_HERO_HOOKS is '1'
+│  │  ├─ quiz/Quiz.astro          section 3, the quiz: the markup and the lazy loader script (docs/specs/quiz.md)
+│  │  └─ dev/Tune.astro           rendered only when PUBLIC_TUNE is '1'
 │  ├─ scripts/
 │  │  ├─ boot.ts                  the 3D path's entry: probe, poster wait, prefetch, import, failure routing (sections 7 and 8)
 │  │  ├─ motion.ts                reduced-motion and hover flags: read once for the scene, a live MediaQueryList for the glitch
 │  │  ├─ logotype/glitch.ts       logotype glitch, no three.js import
 │  │  ├─ logotype/install.ts      the SiteLogo script: installs window.__skreedLogo and drains its queue
 │  │  ├─ hero/**                  the WebGL island (section 5)
+│  │  ├─ hero/section3/ground.ts  section 3's fog ground: section 2's background shader rendered alone into its own render target (section 11.3)
+│  │  ├─ quiz/deck.ts             section 3's deck: the cards, the scoring call, the states, the gift form; a lazy chunk (docs/specs/quiz.md)
+│  │  ├─ quiz/track.ts            section 3's analytics queue (window.__skreedEvents)
 │  │  └─ dev/tune.ts              Tune bindings, dynamic import in dev and staging only
 │  └─ inline/
 │     ├─ gate.inline.js           the Gate body (section 8)
@@ -164,11 +169,11 @@ Slots are left for OG, icons and JSON-LD (site essentials, not this section).
 | 5 | `div#intro` and the loader script | Loader | shown only on `html.hero3d`; the prototype's noscript `<style>` is replaced by CSS on `html:not(.js)`, which saves a CSP hash |
 | 6 | `a#siteLogo.site-logo` and its processed script | SiteLogo | `href="/"`, `aria-label="Skreed, home"`, an empty `<defs>` and a `.logo-tiles` group for the glitch; the script installs the glitch (D25) |
 | 7 | `div#labels` | HeroStage | `aria-hidden` |
-| 8 | `div.track#track` | HeroStage | 460svh on `html.hero3d`, 100svh otherwise |
+| 8 | `div.track#track` | HeroStage | `TRACK_SVH` (1720svh since section 3; 460svh in stage 1) on `html.hero3d`, 100svh otherwise |
 | 9 | `section#heroCopy.copy` | Countdown | `p#cdEyebrow.eyebrow`, `#count`, the noscript line; fixed on `html.hero3d`, absolute otherwise |
 | 10 | `div#cue.cue` | ScrollCue | |
 | 11 | `<slot name="riders">` | HeroStage | section 2's DOM copy (template7's `#s2Copy`) |
-| 12 | `main#main` around `<slot name="after-track">` | HeroStage | rendered only when the slot has content: section 3 in production later, the AfterTrackFiller in test builds now |
+| 12 | `main#main` around `<slot name="after-track">` | HeroStage | rendered only when the slot has content: section 3, the quiz (`quiz/Quiz.astro`, docs/specs/quiz.md), in every build; the test-only filler is gone |
 | 13 | `Tune` | dev/Tune.astro | only when `import.meta.env.PUBLIC_TUNE === '1'` |
 | 14 | `<script>` that imports `boot.ts` | HeroStage | processed by Vite, `type=module`, deferred by nature; runs after the SiteLogo script (document order) |
 | 15 | the countdown and cue script | ScrollCue | the last element of `body` (D16, D27) |
@@ -302,7 +307,8 @@ All modules are strict TypeScript. "Lines" refers to `template.html`.
 | `post/wipeTexture.ts` | `makeScrollTexture(512)` returning `{tex, fill(j0, j1)}`; `needsUpdate` after the last fill | three | 944 to 986 |
 | `post/composite.ts` | `createComposite(scrollTex, calm, slots)` returning `{scene, camera, C, render(...)}` | three | 987 to 1037 |
 | `stage/resize.ts` | `createResize(ctx)` returning `resize()` (section 5.6) | config | 1039 to 1050 |
-| `section2/types.ts`, `section2/placeholderWall.ts` | `Section2Scene` (section 11); the v9.9 swatch field | three, shades | 898 to 916 |
+| `section2/types.ts` | `Section2Scene` (section 11) | three | 898 to 916 |
+| `section3/ground.ts` | `createFogGround(renderer, reduced)` returning `GroundScene {out, resize(w, h), update(S, t), render(), dispose()}`: section 2's background shader rendered alone into its own render target (section 11.3); it replaces the v9.9 swatch wall (`section2/placeholderWall.ts`, then `world/wall.ts`, deleted) | three, section2/background, config | new |
 | `intro/types.ts`, `intro/none.ts` | `IntroDirector`; `NO_INTRO` (v9.9: live ramps from the loader cut, frames reported by texFrames) | none | 1273 to 1282, 1369 |
 | `interaction/pointer.ts` | `createPointer()` returning `{ndc, active, lastInput}`; `ghostTarget(t)` | none | 1073 to 1084 |
 | `interaction/labels.ts` | `createLabels(layerEl, sceneA)` returning `{update(...)}` | three | 1090 to 1154 |
@@ -353,7 +359,7 @@ Expected chunks:
 `hero.ts` builds one object and passes it to `warmUp`, `createLoop`, `createResize`, the hooks and the slots:
 - `renderer`, `dpr`, `life`;
 - `sceneA`, `camA`, `U`, `FOG`, `blocks`, `logo`, `moon` (with `groundAt` and `stoneTopAt`), `sky` (dome, material, class);
-- `composerA` (bloom) and `section2` (a `Section2Scene`, the placeholder by default);
+- `composerA` (bloom), `section2` (a `Section2Scene`, the gems, or null) and `fogGround` (section 3's `GroundScene`, `section3/ground.ts`);
 - `composite`, `intro` (an `IntroDirector`, `NO_INTRO` by default);
 - `params`, `reduced` (OS reduced motion or `html.still3d`), `touch`, `ghost` (`touch && !reduced`), `els` (`heroCopy`, `cue`, `labels`, `siteLogo`).
 
@@ -373,8 +379,8 @@ Updated after build step 6 (17.2 note 1): the textures still start loading at st
 10. Wind texture bake: one synchronous render.
 11. FOG uniforms. Four fog cards added to the moon group, then `placeFogCards`.
 12. `applyMoonWorld`: poses, fog 60 and 430, background and fog #050506, moon visible.
-13. The section 2 scene installed (placeholder: `sceneB` on Pearl Whisper, `camB` (30, 1, 0.1, 100), the 240-instance swatch field).
-14. `yieldFrame`. Composer A (bloom) and the section 2 composer.
+13. Section 3's fog ground created (`createFogGround(renderer, reduced)`, `section3/ground.ts`: section 2's background shader rendered alone into its own render target, section 11.3; its disposer registered with `life`), then the section 2 scene created (the gems, built after the intro).
+14. `yieldFrame`. Composer A (bloom); section 2 and the fog ground own their targets.
 15. The composite.
 16. `resize()` and its `resize` listener (section 5.6).
 17. Pointer listeners, state objects. Labels: the links LineSegments added to `sceneA` last, so they are group c5.
@@ -384,7 +390,7 @@ Updated after build step 6 (17.2 note 1): the textures still start loading at st
     - `compileAsync(sceneA, camA)` and `compileAsync(screenScene, screenCam)`;
     - groups c1 logo, c2 sky, c3 ground and stones, c4 fog cards, c5 links, each drawn alone into an 8 x 8 target, with a yield and a report between them;
     - sizes to 8 x 8, composer A rendered once: c6;
-    - the section 2 composer and the composite drawn once;
+    - section 3's fog ground resized to 8 x 8 and drawn once (its program links here, not at the second wipe), its texture set as the composite's `tB`, then the composite drawn at progress 0.5 and 0;
     - `resize()`, dispose the warm-up target;
     - errors are warned and swallowed, as in the prototype.
 21. `report('compile')`, then the first `requestAnimationFrame`. `frame1` and `frame2` are reported on the two frames after both textures have loaded (or by the intro's own signal, section 11.1).
@@ -408,9 +414,9 @@ The prototype's invisible plate mesh sat between steps 5 and 8. Removing it save
 | F9 | `logo.updateMatrixWorld()` |
 | F10 | labels update; label layer visibility |
 | F11 | camera: base pose by `s`, parallax lerps (from any active pointer, times `live`), orbit, position, sky follows the camera, shake, `lookAt`; a pending sky class swap happens here (section 6.5) |
-| F12 | section 2 update (placeholder: `camB.y = -clamp01((b - 2.5) / 1.5) * 0.8`) |
+| F12 | section 2 update (`section2.update(S, tp, tp2, t, dt)`), then the fog ground's (`fogGround.update(S, t)`: `uScroll = 2.15 + 0.3 * (S - S2T.W1END)`, `uTime = t`) |
 | F13 | `FOG.uLogoRect` and `FOG.uResolution` |
-| F14 | composer A if `tp < 1`; section 2 composer under NoToneMapping if `tp > 0`; composite to the canvas with `uNoiseOff` random |
+| F14 | composer A if `tp < 1` or the logo is kept; section 2 when it is on; section 3's fog ground into its own target under NoToneMapping when `groundOn` (`tp2 > 0`, or `tp > 0` while section 2 is not ready); composite to the canvas with `uNoiseOff` random (second wipe: `tA` section 2, `tB` the ground, `uParA` 0, so section 2 holds still under the cut and only `tB` slides) |
 | F15 | `ctx.intro.reportFrames ? ctx.intro.reportFrames(f, report) : texFrames` (v9.9: `frame1` and `frame2` on the first two frames with both textures loaded) |
 | F16 | DOM ride: `__skreedLogo?.setTone(tp > 0.5)`, `heroCopy` transform, clip and visibility, cue `is-off` |
 
@@ -493,7 +499,7 @@ Each card sits at y = `groundAt(0, z) - 0.15 h + h / 2`, renderOrder 2.
 **Composer and bloom.**
 - No MSAA (v9.8: multisampled half-float targets drew stray lines on GPUs).
 - Pass order: RenderPass, SavePass (HalfFloat), UnrealBloomPass(256 x 256, strength 0.5, radius 0.22, threshold 0.62), Restore `mix(clean, bloomed, step(0.5, clean.a))`, OutputPass.
-- The section 2 composer is RenderPass and OutputPass, rendered under NoToneMapping.
+- Section 3's fog ground (`section3/ground.ts`) renders section 2's background shader alone into its own render target under NoToneMapping, writing sRGB directly (the shader's encode line `gl_FragColor = vec4(dec(srgb), 0.0)` swapped for `vec4(srgb, 1.0)`, so the composite reads `tB` as it read the wall's OutputPass); section 2's own passes are in `section2/background.ts`.
 
 **Wipe texture.**
 - Size and channel R: N 512, 7 cells, warp ±0.03, edge x40.
@@ -506,7 +512,7 @@ Each card sits at y = `groundAt(0, z) - 0.15 h + h / 2`, renderOrder 2.
 - Countdown translate `-0.4 tp^3 * 100vh`.
 - `clipFor`: `sl = 0.2 aspect`, `pp = -0.2 + 1.2 tp (1 + sl) + 0.1`.
 
-**Section 2 placeholder.** Circle radius 0.2, 48 segments, gap 0.5. 24 columns, or 12 when aspect is below 0.9. y offset -0.6 (-0.9 in portrait). camB z 19 (26 in portrait). Background #F7F6F3.
+**Section 3's fog ground** (`section3/ground.ts`, replacing the swatch wall). Section 2's background shader with `uPre` 0 and `uLabN` 0, `uScroll = 2.15 + 0.3 * (S - S2T.W1END)` (section 2's formula, so the fog scrolls on through the second wipe), `uTime = t` (7 under reduced motion), `uRes` and `uFrame` set per render; the grade is the shader's own (with `uPre` 0 it writes its final on-screen ramp, grade and bloom folded in), written as sRGB through the swapped encode line above, and the composite passes `tB` through unchanged once the wipe is complete. Its render target is sized with the renderer in device pixels. Rendered when `groundOn`; its texture is `tB` of the second wipe and the whole frame after it.
 
 **Glitch.**
 - Geometry: viewBox 1209.46 x 292.9, AMP 12.69933, 8 rows by 6 segments.
@@ -529,7 +535,8 @@ function resize() {
   ctx.camA.aspect = asp; ctx.camA.zoom = Math.min(1, asp * 1.25); ctx.camA.updateProjectionMatrix();   // igloo's portrait rule
   ctx.composite.C.uAspect.value = asp;
   const portrait = asp < PORTRAIT_ASPECT;              // 0.9
-  ctx.section2.resize(w, h, asp, portrait);            // placeholder: B composer setSize, camB aspect and projection, layoutWall on a portrait flip or the first call
+  ctx.fogGround.resize(ctx.renderer.domElement.width, ctx.renderer.domElement.height);   // section 3's ground: device pixels, as section 2's targets
+  ctx.section2?.resize(w, h);                          // the gems' targets and camera
   ctx.sky.onAspect(asp);                               // stage 2: the one-way portrait to wide upgrade (section 6.5)
 }
 ```
@@ -705,7 +712,7 @@ Any later change to the warm-up groups, an extra milestone (v10 adds `intro`) or
 
 ### 7.5 Stopping the island
 
-- An IntersectionObserver watches `#track`. When the track leaves the viewport (which can only happen once a section follows it), the loop stops and `#stage` is hidden. It restarts when the track returns. This keeps WebGL out of section 3 and beyond. `hero.ts` registers it with `life`.
+- An IntersectionObserver watches `#track` and `section#find` (section 3, the quiz) together: `hero.ts` keeps a seen map of the two targets and the island is in view if either intersects. While either is in view the loop runs, so the fog ground keeps drifting under section 3; when both have left the viewport the loop stops and `#stage` is hidden, and it restarts when either returns. The loop therefore runs under section 3, by Sam's brief (the same background as section 2), against CLAUDE.md's rule of no WebGL from section 3 on: pending exception E-S3-bg (docs/specs/quiz.md section 10). The rule-compliant fallback if he says no: the observer on `#track` only, so the loop stops at the end of the track as before. `hero.ts` registers it with `life`.
 - `requestAnimationFrame` already pauses in background tabs. The dt cap of 1/12 absorbs the resume.
 
 ## 8. Tiers
@@ -781,7 +788,7 @@ The ShaderChunks the ground and stones patch are compatible between the two vers
 
 - **Processed code** (`boot.ts`, `hero/**`, `logotype/**`) reads the flags as `import.meta.env.PUBLIC_*` inside `if` blocks that Vite folds at build time, so the production bundle contains no Tune code and no hook.
 - **Inline scripts** never see `import.meta.env`. Their components assemble them in the frontmatter (section 4.3): config is prepended as JSON, and the `tier=` override is concatenated only when `PUBLIC_HERO_HOOKS` is '1'.
-- **Components** (`dev/Tune.astro`, `dev/AfterTrackFiller.astro`) render only under their flag.
+- **Components** (`dev/Tune.astro`) render only under their flag. `dev/AfterTrackFiller.astro` was deleted on 2026-10-16: section 3, the quiz, fills the after-track slot in every build.
 - `scripts/guards.mjs` greps `dist/` after the production build and fails on any of: `tuneReset`, `tier=`, `__skreedSolo`, `__skreedState`, `__skreedFreeze`, `__skreedFrame`, `__skreedProject`, `__skreedFloorCheck`, `__skreedParams`, `__skreedStall`, `__skreedLoseContext`, `__skreedSkyClass`, `__skreedIntroDoneCalls`, `__skreedDead`, `__skreedMilestoneTimes`; a base64 `data:` URI (`/data:[\w.+-]+\/[\w.+-]+;base64,[A-Za-z0-9+\/]{16}/`) in `dist/_astro/*.js`; `cdn.jsdelivr.net`; `fonts.googleapis.com`; the banned font names; emoji; U+2014 in shipped copy; `sk_`, `shpat_`, `service_role`.
 - **Tune.** `dev/tune.ts` is the prototype's slider loop, buttons and `apply()` (lines 303 to 311, 1052 to 1071), dynamically imported only when `PUBLIC_TUNE` is '1' and `?tune` is in the URL. Every lookup is null-guarded (the prototype's `$('ghost')`, `$('glitchNow')`, `$('tuneReset')`, `$('glitchSplit')` and `$('glitchIdle')` would throw without the panel). It drives a mutable dev copy of `HERO_PARAMS`, so Sam can tune on staging and hand the numbers back for `params.ts`. It can switch the idle twitch on for comparison.
 - **Hooks**, with the prototype names kept for the harness:
@@ -847,13 +854,13 @@ The DOM riders slot takes `#s2Copy` with the copy clip under the logo.
 
 **Sky crop check.** The stage 2 sky crops assume the hero camera's views. Before the rocks ship, the sky UV probe (`scripts/hero/probes/skyuv.mjs`) is re-run with the section 2 and intro cameras. If they see sky outside u 0.127 to 0.871 or v 0 to 0.651, the crops widen.
 
-### 11.3 Section 3, the Wall
+### 11.3 Section 3, the quiz (the Wall moves to a later section)
 
-- It is DOM, never WebGL (CLAUDE.md).
-- It mounts in the `after-track` slot inside `main#main`. The hero exposes `onStageExit(cb)` from the IntersectionObserver for template7's `.wall.is-fixed` hand-off (`margin-top: -100svh`).
+- The quiz is DOM (`components/quiz/Quiz.astro`, `scripts/quiz/deck.ts` and `track.ts`, `styles/quiz.css`, `config/quiz.ts`; docs/specs/quiz.md). Under it the hero's canvas keeps drawing section 3's fog ground (`section3/ground.ts`: section 2's background shader rendered alone into its own render target, `tB` of the second wipe and the whole frame after it), by Sam's brief and against CLAUDE.md's rule of no WebGL from section 3 on: pending exception E-S3-bg (quiz.md section 10), with the fallback named in section 7.5.
+- It mounts in the `after-track` slot inside `main#main` in every build. The `onStageExit(cb)` hand-off for template7's `.wall.is-fixed` (`margin-top: -100svh`) is not built; the observer of section 7.5 watches `section#find` directly.
 - It decides the page's root background below the hero (D24) and whether the poster path keeps the cue (D27 shows it once something follows).
-- GSAP, ScrollTrigger and Lenis arrive with it. Lenis must not smooth the hero's track range: either it is disabled until the track ends, or the hero keeps reading native `scrollY`. Otherwise the pull-back gets a third smoother.
-- `motion.ts` then wraps `gsap.matchMedia()` so reduced motion has one source.
+- GSAP, ScrollTrigger and Lenis do not arrive with the quiz (the Web Animations API and Pointer Events only). If a later section brings Lenis, it must not smooth the hero's track range: either it is disabled until the track ends, or the hero keeps reading native `scrollY`. Otherwise the pull-back gets a third smoother.
+- `motion.ts` would then wrap `gsap.matchMedia()` so reduced motion has one source.
 
 ## 12. Cloudflare Workers + Static Assets
 
@@ -981,7 +988,7 @@ The harness is ported from the readers' scratch scripts (copied to `scripts/hero
   - `sameBackground(page)`: injects `html, body { background: #000 }` on both pages for the overlay comparison (D24 made the port's body night where the prototype's was Urban Slate).
 - **`canvas.ts`.** Hides `#intro, .site-logo, .copy, .cue, .tune, .labels, .fallback, .hero-poster`, then takes a screenshot of `#stage`.
 - **`compare.py`.** PSNR and SSIM overall, sky band (top 40 percent) and ground band (bottom 35 percent), as `compare2.py`. It takes thresholds as arguments, exits non-zero on a miss, and writes an x8 difference map next to the frames.
-- **Filler.** Test builds render `dev/AfterTrackFiller.astro` in the after-track slot.
+- **Below the track.** Section 3, the quiz (`components/quiz/Quiz.astro`), provides the content below the track in every build; the test-only filler is gone (deleted 2026-10-16).
 
 ### 13.2 Specs
 
@@ -994,13 +1001,13 @@ The harness is ported from the readers' scratch scripts (copied to `scripts/hero
 | `parity/wipe.spec.ts` | AC2.2 and AC2.3 | reduced motion, `still3d`, random pinned, tp 0.5 and 1; ride strings; tone; cue |
 | `parity/loader-frames.spec.ts` | AC3.1 | `.ld-w` screenshots at nine `seek(t)` times |
 | `e2e/locked-values.spec.ts` | AC1.1 | `__skreedParams()` against `hero.md` section 0 and `logoIdle` 0 |
-| `e2e/stopping.spec.ts` | AC2.4 | filler; `__skreedFrame` before and after the track leaves; `#stage` hidden |
+| `e2e/stopping.spec.ts` (not yet written; AC2.4 is graded by hand today) | AC2.4 | the quiz section below the track in every build; `__skreedFrame` keeps increasing and `#stage` stays visible while `section#find` is in view (pending E-S3-bg); the stop is reached only by emptying the flow (remove `#find` and hide `#track`), after which `__skreedFrame` stops and `#stage` is hidden; it resumes when both are restored |
 | `e2e/loader.spec.ts` | AC3.2, AC3.3, AC3.10, AC3.11 | milestone order and monotonic progress; delayed sky and `pieces.json` routes for "Slow connection"; `__skreedStall('c3')` for "Still loading"; `inert` set and cleared; Tab order while loading; `/#x` keeps its scroll |
 | `e2e/failures.spec.ts` | AC3.4 to AC3.9 | `__skreedStall('c1')` past 12 s then release, with and without a 9 px scroll; `context.setOffline(true)` before ready and the three bounding boxes at 360 x 780, 390 x 844 and 1280 x 800; abort of the hero chunk; `__skreedLoseContext()` in the `exit` and `enter` phases and at tp 0.5; `__skreedIntroDoneCalls`, `__skreedDead`, rider styles, `data-tone`, `#labels`, `inert`, scroll position |
 | `e2e/countdown.spec.ts` | AC4 | `page.clock` at three instants; computed `display` of `#count` at zero; the link's `pointer-events`, `elementFromPoint`, hit box and navigation; type, roles; JavaScript disabled; WebGL2 removed; chunk blocked; contrast sampled under the eyebrow, labels, cue label and numerals |
 | `e2e/cue-logotype.spec.ts` | AC5 | cue keyframes and the 2.44 iterations; cue classes at scroll 9 px, with and without content below, during the wipe and while loading; logotype href, label, hit box; two-tone ring contrast at tone dark and light; click scroll; glitch slab count, ghost fills by `var(--shade-<id>)` and computed colour; no burst in 20 s without input; poster-tier intro at 0.75 s; no burst after failures; reduced motion emulated after load |
 | `e2e/hover.spec.ts` | AC6 | the prototype's 40-move routine on both pages; `d` above 0.1; `__skreedFloorCheck()`; label count, readouts and hiding; ghost timing on touch; `th` and `ph` series on both pages for mouse and held touch |
-| `e2e/tiers.spec.ts` | AC7, AC8.1 to AC8.5 | init scripts for WebGL2 removed, `DecompressionStream` removed, `saveData`, `effectiveType` 2g, `deviceMemory` 2; `--disable-3d-apis`; the production build in headless Chromium; reduced motion; aborted chunk; `__skreedLoseContext()`; network log asserts no island requests on the tier cases; poster markup, one poster request per viewport, sizes; track 100svh; poster scrolls away with the filler |
+| `e2e/tiers.spec.ts` | AC7, AC8.1 to AC8.5 | init scripts for WebGL2 removed, `DecompressionStream` removed, `saveData`, `effectiveType` 2g, `deviceMemory` 2; `--disable-3d-apis`; the production build in headless Chromium; reduced motion; aborted chunk; `__skreedLoseContext()`; network log asserts no island requests on the tier cases; poster markup, one poster request per viewport, sizes; track 100svh; poster scrolls away with the quiz section below the track |
 | `e2e/sky-class.spec.ts` | AC8.6 | 390 x 844 then 844 x 390 after `ready`; one wide request; `__skreedSkyClass()`; frame against a fresh wide load under `still3d` |
 | `e2e/csp.spec.ts` | AC10.5 | header present on `/`; `securitypolicyviolation` listener on every path, under `wrangler dev`; with `BASE_URL` set it runs against a deployed host (section 15) |
 | `e2e/a11y-breakpoints.spec.ts` | AC10.3 and AC10.4 | one h1, first in reading order; `aria-hidden` on canvas and labels; no horizontal scroll and 16 px gutters at 360, 390, 430, 768, 1024 and 1280; tap targets; nothing animated in `dvh` |
@@ -1225,7 +1232,7 @@ What steps 5 to 8 decided or changed against the text above (evidence in the han
 4. **D8 texture path: `bitmap`, decided.** `tests/parity/rest.spec.ts` with `PORT_TEXPATHS=bitmap,image` gave PSNR 99 and zero differing pixels against the prototype on both paths, at both viewports, in normal and reduced motion (8 frames). `config/hero.ts` `TEXTURE_PATH` is `'bitmap'`; production takes it as a build-time constant, so `TextureLoader` is not used there; test and staging builds take `?texpath=image|bitmap`. The bitmap path sets `flipY = false` on the texture (the bitmap is decoded flipped) and closes the bitmap in `onUpdate` after the upload.
 5. **Critical chunks.** `boot.ts` imports only `COPY_LD` (the loader strings, now their own export of `config/copy.ts`) and `scroll/reset.ts` (the rider reset split out of `scroll/ride.ts`), so the critical chunk carries no other copy and no scroll maths. The glitch's two values live in `config/glitch.ts` (`LOGO_IDLE` 0, `LOGO_SPLIT` 0.4), which `params.ts` reads, so the SiteLogo script no longer pulls the 66-key params table into the critical path.
 6. **Hooks.** One hook added for AC6.4: `__skreedBlockColours()` returns each block's glow colour as an sRGB hex. Add it to the `guards.mjs` list (step 13). `__skreedDead` is defined by `boot.ts` (hooks builds), so it exists before the island loads. `__skreedStall(m)` holds before b1 to b10, `scene`, c1 to c6 and `compile`.
-7. **Stopping the island.** The IntersectionObserver is attached at step 18 but starts and stops the loop only after `compile`; the loop starts at step 21 only if the track is in view.
+7. **Stopping the island.** The IntersectionObserver is attached at step 18 but starts and stops the loop only after `compile`; the loop starts at step 21 only if the track (or, since section 3, `section#find`) is in view.
 8. **Harness.** `tests/harness/compare.py` (from `compare2.py`; thresholds as arguments, x8 diff map, exit 1 on a miss) with `compare.ts`; `settle.ts` gains `freezeBeforeLoad`, `waitReady`, `moreFrames`, `freeze`, `settleScroll`; `island.ts` holds a page's island (`holdIsland`: the poster's `decode()` never settles, so boot.ts never requests an island byte) or the prototype's loader (`holdPrototypeLoader`: `__heroStarted` set, so its noHero listener is inert without three.js). The prototype is served with three 0.165.0 from `node_modules`, the locked values and `logoIdle=0` (`PROTO_QUERY`). Playwright runs here share `test-results/` with other workflows; every parity run takes its own `--output`.
 9. **Settling.** Scroll positions are compared only once the second follower has settled on the target to 1e-9 (`|sb - target| < 1e-9`), because at 4 decimals the camera moves by about 12 x the follower's residue.
 10. **Parallax series (AC6.5).** SwiftShader frames arrive with irregular gaps, so per-frame `th` and `ph` values cannot match across two pages. The spec compares the series of settled angles through the same script, at 4 decimals: four mouse positions in a 400 x 250 mouse window, and two held touches and their releases through dispatched `PointerEvent`s in a 260 x 563 touch phone. The angles depend only on the pointer in normalised coordinates and on the pointer type; at 1280 x 800 SwiftShader on this machine could not draw the 85 or so frames a settle needs within 10 minutes. Settled means unchanged by less than 1e-7 across at least 3 rendered frames (`__skreedFrame`), never across two polls alone.
@@ -1263,14 +1270,14 @@ The island now runs the approved prototype v11.4 (the igloo intro, the v11.2 scr
 - `src/scripts/hero/v11/glsl.ts`: the v11 GLSL (the IGL helpers, the logo's print and mask slot code, the sky mix, the floor reveal, the v11 composite as one literal, the cage, outline, numbers and triangle-bake shaders). `post/shaders.ts` gains `CompositeSlots.full` (the v11 composite restructures `main()`, which a concatenation slot cannot express; the default string is unchanged).
 - `intro/igloo.ts` (`createIglooIntro`): the `IntroDirector` of 11.1, the whole of v11's shot: SKIP rule, the page lock classes, the bake (`install`: the mosaic texture, the triangle render target, the cage, outline and number meshes added to sceneA, the ground and stones made transparent for the reveal, the sky's flat start), `warm` for the compile groups, `arm`, `start`, `frame` (the timeline `evalTL` driving the logo, the composite's bloom factors, the fog, the sky and the UI reveal), `afterRender` (GPU fences for frame1 and frame2), the resize deferral during the shot, and the hooks (`seek`, `play`, `replay`, `skip`, `state`). `intro/none.ts` stays the v9.9 live ramp for the no-intro case.
 - `section2/`: `gemGeometry.ts` (Gem C, the studio environment function), `gemMaterial.ts`, `frost.ts`, `background.ts` (the fog, dots, sprites, the bloom and composite passes), `labels.ts` (igloo's labels, leaders and reveal), `gems.ts` (`createGems`: the `Section2Scene` of 11.2: build on a yielded tick per stone, the PMREM environment, the flights from the logo's block poses, hidden/logoLeft, the plexus and frost hover, the pointer, the links through the family-page contract, `hooks`).
-- `world/wall.ts` (from `section2/placeholderWall.ts`): the Wall's placeholder, keyed to `S2T.W2` now.
+- `section3/ground.ts` (`createFogGround`): section 3's fog ground, section 2's background shader rendered alone into its own render target, the far side of the second wipe (`S2T.W2`) and the whole frame after it (section 11.3). It replaces `world/wall.ts` (from `section2/placeholderWall.ts`), the v9.9 swatch wall's placeholder, deleted on 2026-10-16 with section 3.
 - `camera/rig.ts`: `camX`, `camCurve`, the crane blend; `world/ground.ts`: the apron; `post/composite.ts`: the v11 uniforms and `createLogoMask`; `scroll/scrollMap.ts`: `tp2`; `config/hero.ts`: `SCROLL_MAP` (5 + 1), `S2T`, `CAMX`, `INTRO_POSE`, `TRACK_SVH`.
 - `hero.ts`, `loop.ts`, `warmup.ts`, `stage/resize.ts`: the v11 start-up, per-frame and resize orders (below). `bridge/hooks.ts`: `__skreedSnap`, `__skreedPrograms`, `__s2`, `__skreedIntro`.
 - Components: `components/hero/ScrollCue.astro` (ciao's two side icons), `components/hero/Section2Layers.astro` (`#s2labels`, `svg#s2leaders`), `pages/index.astro` (the layers and `<FamilyLinks slot="riders" />`). Shell CSS: the track at `TRACK_SVH`, the cue, section 2's labels, the intro's gates. Fonts: IBM Plex Mono 500 subset (section 2's labels only). The countdown script hides both cues and re-checks on class changes. The loader carries v10's two deviations (the intro's classes drop with the poster; a hidden tab's gap never counts as a stall; `tests/unit/inline-loader.test.ts` lists nine).
 
-**Start-up order (27 milestones, `src/config/loader-weights.json`).** import; pieces; the intro director created (its renderer options, its logo uniforms `uPrint`, `uPrintCol`, `tTri`, `uMask`, its slots); renderer, sceneA, the logo with the print slot; the scroll texture; b1 to b10; the moon world and the sky with the mix slot (`sky`); the ground with the reveal slot (`ground`); the wind, the fog; the Wall placeholder; section 2 created (not built); the composers, the v11 composite and the logo mask; `await intro.install(ctx)` (`intro`); resize, pointer, labels and links; the loop; `scene`; warm-up groups c1 to c9 (c5 cage, c6 outline, c7 numbers, c8 links, c9 the composer), `compile`; `intro.arm()`; the loop starts; `frame1` and `frame2` from the intro's GPU fences (or the no-intro texture frames). Section 2 builds after the shot (`intro.done`), one stone per tick; the scroll follower holds at `PULL` until it is ready or failed.
+**Start-up order (27 milestones, `src/config/loader-weights.json`).** import; pieces; the intro director created (its renderer options, its logo uniforms `uPrint`, `uPrintCol`, `tTri`, `uMask`, its slots); renderer, sceneA, the logo with the print slot; the scroll texture; b1 to b10; the moon world and the sky with the mix slot (`sky`); the ground with the reveal slot (`ground`); the wind, the fog; section 3's fog ground; section 2 created (not built); the composers, the v11 composite and the logo mask; `await intro.install(ctx)` (`intro`); resize, pointer, labels and links; the loop; `scene`; warm-up groups c1 to c9 (c5 cage, c6 outline, c7 numbers, c8 links, c9 the composer), `compile`; `intro.arm()`; the loop starts; `frame1` and `frame2` from the intro's GPU fences (or the no-intro texture frames). Section 2 builds after the shot (`intro.done`), one stone per tick; the scroll follower holds at `PULL` until it is ready or failed.
 
-**Per-frame order (`loop.ts`).** `frozen = __skreedFreeze || intro.paused`; `iv = intro.frame(...)` (live, breath, crane, hold); the followers (`mapScroll` gives `s`, `tp`, `tp2`, `heroOn`); the blocks (`breath`, `paused`); a block section 2 has taken is parked at y −500; the labels after the breath; the rig (`curve`, the crane blend); `section2.update(S, tp, tp2, t, dt)`; `wall.update(b)`; render: the hero composer when `tp < 1` or the logo is kept, section 2 when it is on, the Wall under NoToneMapping when `tp2 > 0` (or section 2 is not ready), the mask render of the logo (`uMask`) when kept, the composite's `tA`/`tB`/`uProgress`/`uParA`/`tH`/`tM`/`tS`/`uKeep`, then `intro.afterRender`; the DOM ride (`rideCopy`, the hero copy still once section 2 is ready; both cues off past tp 0).
+**Per-frame order (`loop.ts`).** `frozen = __skreedFreeze || intro.paused`; `iv = intro.frame(...)` (live, breath, crane, hold); the followers (`mapScroll` gives `s`, `tp`, `tp2`, `heroOn`); the blocks (`breath`, `paused`); a block section 2 has taken is parked at y −500; the labels after the breath; the rig (`curve`, the crane blend); `section2.update(S, tp, tp2, t, dt)`; `fogGround.update(S, t)`; render: the hero composer when `tp < 1` or the logo is kept, section 2 when it is on, the fog ground into its own target under NoToneMapping when `groundOn` (`tp2 > 0`, or `tp > 0` while section 2 is not ready), the mask render of the logo (`uMask`) when kept, the composite's `tA`/`tB`/`uProgress`/`uParA`/`tH`/`tM`/`tS`/`uKeep` (in the second wipe `tA` is section 2, `tB` the fog ground and `uParA` 0: section 2 holds still under the cut and only `tB` slides; after it the ground is the whole frame), then `intro.afterRender`; the DOM ride (`rideCopy`, the hero copy still once section 2 is ready; both cues off past tp 0).
 
 **Section 2 contract (11.2, filled).** `Section2Scene { started, ready, failed, out, live, build(), resize(w,h), update(S,tp1,tp2,t,dt), render(), hidden(i,S), logoLeft(), snapTo?, hooks?(), dispose() }`. The links are `nav#families` from `FamilyLinks` (family-page.md 2.2), placed over the gems with `placeLinkBoxes` once a gem has landed and cleared otherwise; `installRockNav` gives focus and keyboard; `onFocusGem` snaps the page to `S2T.LAND`. With FAMILY_PAGES off the nav renders nothing and the gems are not links (the production default until the family pages ship).
 
