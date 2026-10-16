@@ -13,8 +13,6 @@ const root = new URL('../../', import.meta.url);
 const manifest = JSON.parse(readFileSync(new URL('src/data/case-model.json', root), 'utf8'));
 const file = (p: string) => readFileSync(new URL(`public${p}`, root));
 const lod0 = file(manifest.lod0), lod1 = file(manifest.lod1);
-const mt = manifest.magtough;
-const mt0 = file(mt.lod0), mt1 = file(mt.lod1);
 type Row = { id: string; status: string; detail: string };
 const sha = (b: Buffer) => createHash('sha256').update(b).digest('hex');
 
@@ -46,30 +44,11 @@ test('the Tough case (Cobalt): both LODs pass every check and match the manifest
   assert.equal(manifest.triangles.lod1, r.lod1.stats.triangles);
 });
 
-test('the second model (the Desert stand-in for MagTough, Snap and Armor): shell, trim and ring, meshopt over quantisation, inside the byte budgets, matching its manifest entry', () => {
-  const r = checkPair(mt0, mt1);
-  assert.ok(r.ok, fails(r));
-  assert.equal(sha(mt0), mt.sha256.lod0);
-  assert.equal(sha(mt1), mt.sha256.lod1);
-  assert.match(mt.lod0, /^\/models\/magtough\.lod0\.[0-9a-f]{8}\.glb$/);
-  assert.match(mt.lod1, /^\/models\/magtough\.lod1\.[0-9a-f]{8}\.glb$/);
-  assert.deepEqual(Object.keys(mt.parts), ['body', 'accent', 'ring']);
-  assert.equal(mt.parts.ring.followsShade, true, 'the ring takes the shade like the shell');
-  assert.equal(mt.parts.accent.followsShade, false);
-  assert.deepEqual(mt.standsInFor, ['magtough', 'snap', 'armor']);
-  assert.equal(mt.bytes.lod0, mt0.length);
-  assert.equal(mt.bytes.lod1, mt1.length);
-  assert.ok(mt0.length <= 150_000 && mt1.length <= 60_000, `${mt0.length} / ${mt1.length} B`);
-  assert.equal(mt.triangles.lod0, r.lod0.stats.triangles);
-  assert.equal(mt.triangles.lod1, r.lod1.stats.triangles);
-  assert.ok(r.lod0.stats.required.includes('EXT_meshopt_compression'), 'meshopt, decoded by the vendored decoder');
-  // the same case size as the Cobalt (both are the one phone's case), so the models share the pose
-  assert.deepEqual(mt.sizeMm, manifest.sizeMm);
-});
 
-test('exactly the four manifest files in public/models, nothing stale', () => {
+test('exactly the manifest files in public/models, nothing stale', () => {
   const glbs = readdirSync(new URL('public/models/', root)).filter((f) => f.endsWith('.glb')).sort();
-  assert.deepEqual(glbs, [manifest.lod0, manifest.lod1, mt.lod0, mt.lod1].map((p) => p.slice(8)).sort());
+  const listed = [manifest.lod0, manifest.lod1, ...(manifest.magtough ? [manifest.magtough.lod0, manifest.magtough.lod1] : [])];
+  assert.deepEqual(glbs, listed.map((p) => p.slice(8)).sort());
 });
 
 test('a model that needs Draco or Basis fails C2 (WebAssembly under the site CSP); meshopt alone passes', () => {
@@ -85,7 +64,7 @@ test('embedded images fail C3; a device or an unknown part fails C4; a baked bod
   assert.equal(status(checkLod(img, 1).rows, 'C3'), 'FAIL');
   const dev = edit(lod1, (j) => { j.nodes.push({ name: 'Device', mesh: 0 }); });
   assert.equal(status(checkLod(dev, 1).rows, 'C4'), 'FAIL');
-  const strap = edit(mt1, (j) => { j.nodes.push({ name: 'strap', mesh: 0 }); });
+  const strap = edit(lod1, (j) => { j.nodes.push({ name: 'strap', mesh: 0 }); });
   assert.equal(status(checkLod(strap, 1).rows, 'C4'), 'FAIL');
   const baked = edit(lod1, (j) => { j.materials[0].pbrMetallicRoughness.baseColorFactor = [0.06, 0.25, 0.79, 1]; });
   assert.equal(status(checkLod(baked, 1).rows, 'C5'), 'FAIL');
@@ -107,4 +86,9 @@ test('the vendored decoder is meshoptimizer 0.22.0 reference, byte for byte, and
   for (const f of walk(new URL('src/', root)).filter((p) => /\.(ts|js|astro|mjs)$/.test(p))) {
     assert.doesNotMatch(readFileSync(f, 'utf8'), /libs\/meshopt_decoder|from 'meshoptimizer'|DRACOLoader|KTX2Loader/, f);
   }
+});
+
+test('no second model: one model is every case type (Sam, 2026-10-16), so the manifest carries no magtough entry and no stand-in path', () => {
+  assert.equal(manifest.magtough, undefined);
+  assert.equal(manifest.source, 'supplier');
 });

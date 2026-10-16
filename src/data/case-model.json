@@ -54,50 +54,5 @@
   "instancing": true,
   "caseType": "",
   "device": "",
-  "magtough": {
-    "model": "Desert.fbx (Sam, 2026-10-15): the stand-in for MagTough, Snap and Armor until their files come; split shell / ring / trim, simplified and quantised like the Cobalt (round 3)",
-    "lod0": "/models/magtough.lod0.a36de3c2.glb",
-    "lod1": "/models/magtough.lod1.108172f9.glb",
-    "sha256": {
-      "lod0": "a36de3c2644f98d7fce03563b848cf39dfde10b842235e80d7e66473608e0264",
-      "lod1": "108172f9e6603d1c76b3fef025e2f423ebec1a26914083749e719a17ddeb0b40"
-    },
-    "sizeMm": [
-      104.7,
-      196.7,
-      26.6
-    ],
-    "parts": {
-      "body": {
-        "node": "shell",
-        "material": "shell",
-        "followsShade": true
-      },
-      "accent": {
-        "node": "trim",
-        "material": "trim",
-        "followsShade": false,
-        "roughness": 0.553
-      },
-      "ring": {
-        "node": "ring",
-        "material": "ring",
-        "followsShade": true
-      }
-    },
-    "triangles": {
-      "lod0": 17567,
-      "lod1": 7967
-    },
-    "bytes": {
-      "lod0": 96232,
-      "lod1": 52160
-    },
-    "lod1BackOnly": false,
-    "standsInFor": [
-      "magtough",
-      "snap",
-      "armor"
-    ]
-  }
+  "allCaseTypes": "Sam, 2026-10-16: this one model (his Cobalt.fbx) is every phone case on the family pages, Tough through Armor; the Desert second model of 2026-10-15 is withdrawn and no stand-in is drawn for any case type"
 }

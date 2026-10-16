@@ -45,27 +45,3 @@ test('the Tough case: LOD1 first, LOD0 only on request; parts, tint, the accent 
   a.dispose();
 });
 
-test('the second model (Desert): shell, trim and ring, the ring following the shade, the same height-1 box, both LODs', async () => {
-  requested.length = 0;
-  const m = manifest.magtough!;
-  const a = await loadSupplierAsset(m);
-  assert.deepEqual(requested, [m.lod1]);
-  assert.deepEqual(a.lods[1].map((p) => p.name), ['body', 'accent', 'ring']);
-  const ring = a.lods[1].find((p) => p.name === 'ring')!;
-  assert.ok(ring.followsShade, 'the ring takes the shade');
-  assert.ok(ring.color && ring.color.every((v) => Math.abs(v - 1) < 1e-3), 'the ring is white in the file, like the shell');
-  const box = boxOf(a.lods[1]), size = box.getSize(new Vector3()), c = box.getCenter(new Vector3());
-  assert.ok(Math.abs(size.y - 1) < 1e-6 && c.length() < 1e-6, `height ${size.y}, centre ${c.toArray()}`);
-  // the same case as the Cobalt: the silhouette does not jump at the hand-over (D3)
-  assert.ok(Math.abs(a.dims.w - 0.532) < 0.003 && Math.abs(a.dims.d - 0.135) < 0.003, JSON.stringify(a.dims));
-  const lod0 = await a.loadDetail();
-  assert.deepEqual(lod0.map((p) => p.name), ['body', 'accent', 'ring']);
-  assert.equal(tris(lod0), m.triangles.lod0);
-  assert.equal(tris(a.lods[1]), m.triangles.lod1);
-  // the ring sits on the outer back (+Z), inside the outline
-  ring.geometry.computeBoundingBox();
-  const rb = ring.geometry.boundingBox!.clone().applyMatrix4(ring.base);
-  assert.ok(rb.getCenter(new Vector3()).z > 0, 'the ring is on the back');
-  assert.ok(Math.abs(rb.getCenter(new Vector3()).x) < 0.1 && rb.getCenter(new Vector3()).y < -0.3 && rb.getCenter(new Vector3()).y > -0.45, 'the ring is centred, on the lower half of the back (the magnet area)');
-  a.dispose();
-});
