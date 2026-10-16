@@ -54,7 +54,7 @@
   --fs-loader-status: 0.75rem;
 
   /* spacing: one scale, used through gap */
-  --s1: 8px; --s2: 12px; --s3: 16px;
+  --s1: 8px; --s2: 12px; --s3: 16px; --s4: 24px;
   --inset: clamp(16px, 3.5vw, 56px);
 
   /* radius: square by default, circles only */
@@ -72,5 +72,7 @@
   --dur-lift: 600ms;
   --dur-cue: 1.5s;
   --cue-cycles: 2.44;
+  --dur-out: 200ms;                               /* the quiz intro fading out */
+  --dur-card: 300ms;                              /* a quiz card leaving, arriving or springing back */
 }
 html { font-synthesis: none; -webkit-text-size-adjust: 100%; }

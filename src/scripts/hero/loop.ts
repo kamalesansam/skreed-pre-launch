@@ -1,7 +1,7 @@
 // The frame (prototype v11.4 template.html step(); hero-architecture.md 5.4, F1 to F16, with the intro's clock and the
 // section 2 hand-over). It owns t, ratio and the scroll followers; the intro director owns live, breath and the crane.
 // requestAnimationFrame is called first, so one bad frame can never stop the loop.
-import { ACESFilmicToneMapping, Clock, Color, NoToneMapping, Plane, Raycaster, Vector3, type Scene, type Vector2 } from 'three';
+import { Clock, Color, Plane, Raycaster, Vector3, type Scene, type Vector2 } from 'three';
 import { lerpFPS } from './util/math.ts';
 import { updateBlocks } from './logo/motion.ts';
 import { updateFogLogoRect } from './world/fog.ts';
@@ -28,7 +28,7 @@ export interface Loop {
 
 /** tex.ok counts the textures loaded (0 to 2); the intro director turns them into frame1 and frame2. */
 export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, initiallyIntroDone: boolean, tex: { ok: number }): Loop {
-  const { renderer, camA, U, blocks, logo, params: P, reduced, composerA, wall, composite, intro, els, mask } = ctx;
+  const { renderer, camA, U, blocks, logo, params: P, reduced, composerA, fogGround, composite, intro, els, mask } = ctx;
   const S2 = ctx.section2;
   const clock = new Clock();
   const ray = new Raycaster(), plane = new Plane(new Vector3(0, 0, 1), 0), hit = new Vector3();
@@ -74,21 +74,22 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
 
     ctx.rig.update({ s, t, ratio, live, reduced, b: scroll.b, curve: true, crane: iv.crane, pointerActive: pointer.active, target, follow: ctx.sky.dome });   // F11
     S2?.update(scroll.b, tp, tp2, t, dt);                                        // F12
-    wall.update(scroll.b);
+    fogGround.update(scroll.b, t);
     if (ctx.moon.visible) updateFogLogoRect(ctx.FOG, camA, logo.position.y, renderer);   // F13
 
-    // F14: hero, then section 2 (its own targets), then the Wall; the composite wipes hero to section 2, then section 2 to the Wall
+    // F14: hero, then section 2 (its own targets), then section 3's ground (the fog alone); the composite wipes hero to
+    // section 2, then section 2 to the ground, which stays the whole frame under section 3 (quiz.md 5)
     if (!iv.hold) {
-      const s2on = !!S2 && S2.ready && tp > 0 && tp2 < 1, keep = s2on && tp2 <= 0 && S2!.logoLeft(), wallOn = tp2 > 0 || (tp > 0 && !(S2 && S2.ready));
+      const s2on = !!S2 && S2.ready && tp > 0 && tp2 < 1, keep = s2on && tp2 <= 0 && S2!.logoLeft(), groundOn = tp2 > 0 || (tp > 0 && !(S2 && S2.ready));
       ctx.moon.visible = tp < 1;   // once the first wipe has covered the scene only the logo is seen: the ground and sky are skipped
       if (tp < 1 || keep) composerA.c.render(dt);
       if (s2on) S2!.render();
-      if (wallOn) { renderer.toneMapping = NoToneMapping; wall.composer!.c.render(dt); renderer.toneMapping = ACESFilmicToneMapping; }   // swatches stay true to the catalog
+      if (groundOn) fogGround.render();
       if (keep && uMask) { const pc = renderer.getClearColor(_cc), pa = renderer.getClearAlpha(); renderer.setClearColor(0x000000, 1); uMask.value = 1;
         renderer.setRenderTarget(mask.rt); renderer.render(logo as unknown as Scene, camA); uMask.value = 0; renderer.setClearColor(pc, pa); }
-      const wallTex = wall.composer!.c.readBuffer.texture;
-      if (tp2 > 0) { C.tA.value = S2!.out; C.tB.value = wallTex; C.uProgress.value = tp2; C.uParA.value = 1; }
-      else { C.tA.value = composerA.c.readBuffer.texture; C.tB.value = s2on ? S2!.out : wallTex; C.uProgress.value = tp; C.uParA.value = s2on ? 0 : 1; }
+      const groundTex = fogGround.out;
+      if (tp2 > 0) { C.tA.value = S2!.out; C.tB.value = groundTex; C.uProgress.value = tp2; C.uParA.value = 0; }   // section 2 holds still under the cut, as the hero does in the first wipe; the same fog is on both sides
+      else { C.tA.value = composerA.c.readBuffer.texture; C.tB.value = s2on ? S2!.out : groundTex; C.uProgress.value = tp; C.uParA.value = s2on ? 0 : 1; }
       C.tH.value = composerA.c.readBuffer.texture; C.tM.value = mask.rt.texture; C.tS.value = s2on ? S2!.out : mask.black; C.uKeep.value = keep ? 1 : 0;
       C.uNoiseOff.value.set(Math.random(), Math.random());
       renderer.setRenderTarget(null); renderer.render(composite.scene, composite.camera);

@@ -4,7 +4,7 @@
 html,body{background:var(--night)}
 body{color:var(--pearl-whisper);font-family:var(--font-ui);margin:0;font-synthesis:none}
 #stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:pan-y}
-.track{position:relative;height:1820svh;pointer-events:none}   /* TRACK_SVH (config/hero.ts): the v11 scroll map, Sam 2026-10-11 */
+.track{position:relative;height:1720svh;pointer-events:none}   /* TRACK_SVH (config/hero.ts): the v11 scroll map, Sam 2026-10-11; 1720 since section 3 (quiz.md D8) */
 /* section 2 (docs/specs/section-2.md): igloo's labels in IBM Plex Mono Medium, uppercase (exception E-S2-font, hero.md 10) */
 #s2labels{position:fixed;inset:0;pointer-events:none;z-index:3;visibility:hidden}#s2labels svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .s2lab{position:absolute;left:0;top:0;font:500 13px/1.08 "IBM Plex Mono",ui-monospace,monospace;color:var(--pearl-whisper);white-space:pre;letter-spacing:0;text-transform:none;font-synthesis:none;will-change:transform}.s2lab.r{text-align:right}

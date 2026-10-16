@@ -12,7 +12,7 @@ import type { HeroComposer } from './post/composer.ts';
 import type { Composite, LogoMask } from './post/composite.ts';
 import type { CameraRig } from './camera/rig.ts';
 import type { Section2Scene } from './section2/types.ts';
-import type { WallScene } from './world/wall.ts';
+import type { GroundScene } from './section3/ground.ts';
 import type { IntroDirector } from './intro/types.ts';
 import type { RideEls } from './scroll/ride.ts';
 import type { SkyClass } from './data/urls.ts';
@@ -43,7 +43,7 @@ export interface HeroContext {
   groundAt: (x: number, z: number) => number; stoneTopAt: (x: number, z: number) => number;
   groundMesh: Mesh<never, MeshBasicMaterial> | Mesh; stonesMesh: Mesh;
   sky: SkyState;
-  composerA: HeroComposer; wall: WallScene; section2: Section2Scene | null; composite: Composite; mask: LogoMask; scrollTex: Texture;
+  composerA: HeroComposer; fogGround: GroundScene; section2: Section2Scene | null; composite: Composite; mask: LogoMask; scrollTex: Texture;
   intro: IntroDirector;
   params: HeroParams; reduced: boolean; touch: boolean; ghost: boolean;
   els: RideEls;

@@ -309,7 +309,7 @@ One scale, used through `gap` on flex and grid, not per-element margins (rule 15
 
 ```css
 :root {
-  --s1: 8px; --s2: 12px; --s3: 16px;
+  --s1: 8px; --s2: 12px; --s3: 16px; --s4: 24px;   /* --s4: the quiz deck's rise and the gap under a quiz card (section 3, 2026-10-16) */
   --inset: clamp(16px, 3.5vw, 56px);  /* corner inset: 16 px at 390, 44.8 px at 1280, 56 px at 1700 (measured) */
 }
 ```
@@ -505,6 +505,8 @@ Motion is reserved for the hero canvas, the Wall, the tilt card and the manifest
   --dur-lift: 600ms;                              /* loader lift */
   --dur-cue: 1.5s;                                /* one cue cycle */
   --cue-cycles: 2.44;                             /* three bounces, ending on a landing (3.66 s) */
+  --dur-out: 200ms;                               /* section 3: the quiz intro fading out */
+  --dur-card: 300ms;                              /* section 3: a quiz card leaving, arriving or springing back */
 }
 ```
 

@@ -31,8 +31,8 @@ export const S2T = (() => {
  */
 export const CAMX: readonly (readonly [number, number])[] = [[0, 0], [0.25, -6], [0.6, 6], [1.0, -3], [1.5, -5.25], [2.0, -1.5]];
 
-/** Height of the scroll track on the 3D path, in svh (v11.2: 1820). The poster path collapses it to 100. */
-export const TRACK_SVH = 1820;
+/** Height of the scroll track on the 3D path, in svh (v11.2: 1820; 1720 from section 3, docs/specs/quiz.md D8: the quiz rises the moment the second wipe has crossed the screen). The poster path collapses it to 100. */
+export const TRACK_SVH = 1720;
 
 /** Below this aspect (width / height) the hero frames for portrait: camera zoom, sky crop class, poster class, gem layout. */
 export const PORTRAIT_ASPECT = 0.9;

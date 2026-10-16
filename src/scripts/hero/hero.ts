@@ -26,7 +26,7 @@ import { createStones } from './world/stones.ts';
 import { bakeWindTexture } from './world/wind.ts';
 import { createFogCards, createFogUniforms, placeFogCards, type FogUniforms } from './world/fog.ts';
 import { createCameraRig } from './camera/rig.ts';
-import { createPlaceholderWall } from './world/wall.ts';
+import { createFogGround } from './section3/ground.ts';
 import { createGems } from './section2/gems.ts';
 import { makeHeroComposer } from './post/composer.ts';
 import { makeScrollTexture } from './post/wipeTexture.ts';
@@ -146,16 +146,16 @@ export async function startHero(o: StartOptions): Promise<void> {
   const rig = createCameraRig(camA);
   applyMoonWorld(sceneA, moon, rig, pose);
 
-  // 13. the Wall placeholder (the last wipe's far side) and section 2, the gems (built after the intro, one stone per frame)
-  const wall = createPlaceholderWall();
-  life.onKill(() => wall.dispose());
+  // 13. section 3's ground (the last wipe's far side: the fog alone, quiz.md 5) and section 2, the gems (built after the
+  // intro, one stone per frame)
+  const fogGround = createFogGround(renderer, reduced);
+  life.onKill(() => fogGround.dispose());
   const section2 = createGems({ renderer, reduced, touch, dpr, logo, U, blocks, camA, canvas, hooks: HOOKS });
   life.onKill(() => section2.dispose());
 
   // 14. the composers
   await yieldFrame(); life.check();
   const composerA = makeHeroComposer(renderer, sceneA, camA, P.bloom);
-  wall.makeComposer(renderer);
 
   // 15. the composite (the v11 fragment: the kept logo, the intro's flat night) and the logo mask
   const composite = createComposite(scrollTex.tex, reduced, intro.slots.composite);
@@ -166,7 +166,7 @@ export async function startHero(o: StartOptions): Promise<void> {
   const ctx: HeroContext = {
     renderer, dpr, life, bridge, sceneA, camA, U, FOG, blocks, frame, pieces, logo, moon, rig,
     groundAt: ground.groundAt, stoneTopAt: stones.stoneTopAt, groundMesh: ground.mesh, stonesMesh: stones.mesh, sky: skyState,
-    composerA, wall, section2, composite, mask, scrollTex: scrollTex.tex, intro, params: P, reduced, touch, ghost: touch && !reduced, els,
+    composerA, fogGround, section2, composite, mask, scrollTex: scrollTex.tex, intro, params: P, reduced, touch, ghost: touch && !reduced, els,
   };
   // the intro's geometry, textures and wire layers (cage, outline, numbers: warm-up groups c5 to c7, before the labels' links)
   await intro.install(ctx); life.check();
@@ -210,17 +210,20 @@ export async function startHero(o: StartOptions): Promise<void> {
     addEventListener('skreed:tune-ghost', onGhost);
     life.onKill(() => removeEventListener('skreed:tune-ghost', onGhost));
   }
-  // The track leaving the viewport (a section follows it) stops the loop and hides the canvas: no WebGL from section 3
-  // on (architecture 7.5). It restarts when the track returns.
+  // The loop runs while the track or section 3 (section#find, the quiz over the fog ground, quiz.md 5) is in view; once
+  // both have left the viewport it stops and the canvas hides (architecture 7.5, amended for section 3). It restarts
+  // when either returns.
   let compiled = false, inView = true;
-  const track = document.getElementById('track');
-  if (track && 'IntersectionObserver' in window) {
-    const io = new IntersectionObserver(([e]) => {
-      inView = e.isIntersecting;
+  const watched = [document.getElementById('track'), document.getElementById('find')].filter((el): el is HTMLElement => !!el);
+  if (watched.length && 'IntersectionObserver' in window) {
+    const seen = new Map<Element, boolean>();
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) seen.set(e.target, e.isIntersecting);
+      inView = [...seen.values()].some(Boolean);
       if (!compiled) return;
       if (inView) { canvas.style.removeProperty('visibility'); loop.start(); } else { loop.stop(); canvas.style.visibility = 'hidden'; }
     });
-    io.observe(track);
+    for (const el of watched) io.observe(el);
     life.onKill(() => { io.disconnect(); canvas.style.removeProperty('visibility'); });
   }
 

@@ -1,0 +1,99 @@
+---
+// Section 3, the quiz (docs/specs/quiz.md), in the hero's after-track slot: the intro over section 3's fog ground, the
+// six swipe cards, the ten results (all server-rendered, one shown) and the gift form. The markup is complete without
+// JavaScript (the intro reads, the no-JS line links to the families); scripts/quiz/deck.ts, loaded once the section is
+// within a screen, adds the swipe, the scoring, the states and the fog plates. No style attributes (the CSP has no
+// style-src-attr): the swatches take their shade through data-shade and the rules in quiz.css.
+import { QUIZ_CARDS, QUIZ_COPY as Q, QUIZ_RESULTS, resultHref } from '../../config/quiz.ts';
+import '../../styles/quiz.css';
+// The gift form needs its Worker (quiz.md D7): on in dev, test and staging builds, off in production until PUBLIC_LEADS
+// is set to on (the same rule as FAMILY_PAGES, folded at build time).
+const LEADS = import.meta.env.PUBLIC_LEADS === 'on' || (import.meta.env.PUBLIC_LEADS !== 'off'
+  && (import.meta.env.DEV || import.meta.env.PUBLIC_STAGING === '1' || import.meta.env.PUBLIC_HERO_HOOKS === '1'));
+---
+<section class="quiz" id="find" aria-label={Q.aria} data-state="intro">
+  <div class="qz-stage">
+    <div class="qz-intro qz-panel" id="qzIntro">
+      <h2 class="qz-h">{Q.h}</h2>
+      <p class="qz-sub">{Q.sub}</p>
+      <button type="button" class="btn qz-begin" id="qzBegin" data-loading={Q.loading}>{Q.begin}</button>
+      <noscript><p class="qz-noscript">{Q.noscriptLead}<a href="/#families">{Q.noscriptLink}</a>{Q.noscriptTail}</p></noscript>
+    </div>
+    <div class="qz-deck" id="qzDeck" hidden>
+      <ol class="qz-cards" id="qzCards">
+        {QUIZ_CARDS.map((c, i) => (
+          <li class="qz-card qz-panel" data-i={i} role="group" aria-label={Q.cardAria(i + 1)} tabindex="-1" hidden={i > 1}>
+            <h3 class="qz-q">{c.q}</h3>
+            <div class="qz-opts">
+              {[c.left, c.right].map((s, k) => (
+                <button type="button" class="qz-opt" data-side={k === 0 ? '1' : '0'} aria-label={`${s.word}, ${s.name}`}>
+                  <span class="qz-sw" data-shade={s.shade} aria-hidden="true"></span>
+                  <span class="qz-word" aria-hidden="true">{s.word}</span>
+                  <span class="qz-name" aria-hidden="true">{s.name}</span>
+                </button>
+              ))}
+            </div>
+            <ol class="qz-step" aria-hidden="true">{QUIZ_CARDS.map((_c, k) => <li class="qz-dot" data-done={k < i ? '' : undefined}></li>)}</ol>
+          </li>
+        ))}
+      </ol>
+    </div>
+    <div class="qz-results" id="qzResults" hidden>
+      {QUIZ_RESULTS.map((r) => (
+        <article class="qz-result qz-panel" data-family={r.family} hidden>
+          <span class="qz-big" data-shade={r.shade} aria-hidden="true"></span>
+          <div class="qz-rtext">
+            <p class="qz-eyebrow">{Q.eyebrow}</p>
+            <h3 class="qz-shade" tabindex="-1">{r.name}.</h3>
+            <p class="qz-fam">{Q.fam(r.familyName, r.index)}</p>
+            <p class="qz-finish">{Q.finish(r.finish)}</p>
+            <p class="qz-persona">{r.persona}. {r.tagline}</p>
+            <p class="qz-text">{r.text}</p>
+            <p class="qz-own">{Q.own}</p>
+            <div class="qz-actions">
+              <a class="btn" href={resultHref(r)}>{Q.see}</a>
+              <button type="button" class="txtbtn qz-retry">{Q.retry}</button>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+    <p class="sr-only" id="qzLive" aria-live="polite"></p>
+  </div>
+  {LEADS && <div class="qz-gift" id="qzGift" hidden>
+    <div class="qz-gift-in qz-panel">
+      <h3 class="qz-gift-h">{Q.gift}</h3>
+      <p class="qz-gift-sub">{Q.giftSub}</p>
+      <form class="qz-form" id="qzForm" novalidate>
+        <div class="qz-fields">
+          <label class="qz-label" for="qzEmail">{Q.email}</label>
+          <input class="qz-input" id="qzEmail" name="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" required aria-describedby="qzErrEmail">
+          <p class="qz-err" id="qzErrEmail" hidden></p>
+          <label class="qz-check"><input type="checkbox" id="qzConsent" name="consent" required aria-describedby="qzErrConsent"><span>{Q.consent}</span></label>
+          <p class="qz-err" id="qzErrConsent" hidden></p>
+          <button type="submit" class="btn" id="qzSend">{Q.send}</button>
+          <p class="qz-msg" id="qzMsg" role="status" hidden></p>
+          <p class="qz-fine">{Q.fine}</p>
+        </div>
+        <div class="qz-done" id="qzDone" hidden>
+          <p class="qz-done-text" tabindex="-1"></p>
+          <button type="button" class="txtbtn qz-notyou">{Q.notYou}</button>
+        </div>
+      </form>
+    </div>
+  </div>}
+</section>
+<script>
+  // the loader: the chunk comes once the section is within a screen, or at once when "Swipe to begin" is pressed first
+  const root = document.getElementById('find');
+  const begin = document.getElementById('qzBegin') as HTMLButtonElement | null;
+  if (root && begin) {
+    let p: Promise<unknown> | null = null;
+    const start = () => (p ??= import('../../scripts/quiz/deck.ts').then((m) => m.mountQuiz(root)));
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); void start(); } }, { rootMargin: '100% 0px' });
+      io.observe(root);
+    } else void start();
+    begin.addEventListener('click', () => { if (p) return; begin.setAttribute('aria-disabled', 'true'); begin.setAttribute('aria-busy', 'true'); begin.textContent = begin.dataset.loading ?? ''; begin.dataset.pending = '1'; void start(); }, { once: true });
+  }
+</script>

@@ -1,0 +1,117 @@
+/* Section 3, the quiz (docs/specs/quiz.md 2; tokens from DESIGN.md). Phone first. The section sits over the hero's
+   fixed canvas (the fog ground on the 3D path) with no background of its own; the intro, the deck, the result and the
+   gift each stand on a Pearl Whisper panel with Urban Slate text (9.9:1). Square corners, no borders on panels, no
+   shadows, no blur. The swatches take their shade through data-shade and the rules at the end (no style attributes). */
+.quiz { position: relative; z-index: 2; overflow-x: clip; color: var(--urban-slate); font-family: var(--font-ui); font-size: var(--fs-legal); line-height: var(--lh-ui); }
+.quiz :focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 4px; }
+.quiz .btn, .quiz .qz-opt, .quiz .txtbtn, .quiz .qz-input { position: relative; }
+.quiz :is(.btn, .qz-opt, .txtbtn, .qz-input):focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
+.qz-panel { background: var(--pearl-whisper); color: var(--urban-slate); border-radius: var(--radius-none); }
+
+/* the stage: the intro, then the deck, then the result, in place */
+.qz-stage { position: relative; min-height: 100svh; display: grid; align-content: end; justify-items: start; padding: calc(var(--inset) + env(safe-area-inset-top, 0px)) var(--inset) calc(var(--inset) + env(safe-area-inset-bottom, 0px)); }
+.qz-intro { display: grid; gap: var(--s3); justify-items: start; width: 100%; max-width: 480px; padding: calc(var(--s3) * 1.5) var(--s3); }
+.qz-intro[hidden], .qz-deck[hidden], .qz-results[hidden] { display: none; }
+.qz-h { margin: 0; font: var(--w-display) var(--fs-h2) / var(--lh-h2) var(--font-display); letter-spacing: var(--ls-h2); max-width: var(--measure-h2); text-wrap: balance; }
+.qz-sub { margin: 0; font: var(--w-ui) var(--fs-standfirst) / var(--lh-standfirst) var(--font-ui); max-width: var(--measure-prose); }   /* type-system principle 9: the quiz is Poppins and Open Sans, no serif */
+.qz-noscript { margin: 0; font-size: var(--fs-small); line-height: var(--lh-small); }
+.qz-noscript a { color: inherit; }
+
+/* buttons (DESIGN.md 4): Ember Luxe fill, Urban Slate text, 48 px, square; lift 1 px on hover, press to 0.98 */
+.quiz .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 var(--s4); background: var(--ember-luxe); color: #383F43; font: var(--w-ui-strong) var(--fs-button) / var(--lh-solid) var(--font-ui); text-decoration: none; border: 0; border-radius: var(--radius-none); cursor: pointer; width: fit-content; transition: transform var(--dur-press) var(--ease-standard); -webkit-tap-highlight-color: transparent; }
+.quiz .btn[aria-disabled="true"] { cursor: default; }
+@media (hover: hover) { .quiz .btn:hover:not([aria-disabled="true"]) { transform: translateY(-1px); } }
+.quiz .btn:active:not([aria-disabled="true"]) { transform: scale(0.98); }
+.quiz .txtbtn { background: none; border: 0; padding: var(--s2) 0; min-height: 44px; color: inherit; font: var(--w-ui-strong) var(--fs-button) / var(--lh-solid) var(--font-ui); cursor: pointer; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: text-decoration-color var(--dur-press) var(--ease-standard); -webkit-tap-highlight-color: transparent; }
+@media (hover: hover) { .quiz .txtbtn:hover { text-decoration-color: currentColor; } }
+.quiz .txtbtn:focus-visible { text-decoration-color: currentColor; }
+
+/* the deck: one Pearl card at a time, the next behind it at 0.96; each card carries the stepper as its last row */
+.qz-deck { display: grid; gap: var(--s4); justify-items: center; width: 100%; }
+.qz-cards { position: relative; width: 100%; max-width: 480px; height: min(68svh, 560px); margin: 0; padding: 0; list-style: none; }
+.qz-card { position: absolute; inset: 0; display: grid; grid-template-rows: auto 1fr auto; align-content: center; gap: var(--s3); padding: var(--s4) var(--s3); touch-action: pan-y; user-select: none; -webkit-user-select: none; will-change: transform; transform-origin: 50% 100%; }
+.qz-card[hidden] { display: none; }
+.qz-card.is-next { z-index: 0; transform: scale(0.96); }
+.qz-card.is-top { z-index: 1; cursor: grab; }
+.qz-card.is-top:active { cursor: grabbing; }
+.qz-q { margin: 0; text-align: center; font: var(--w-display) var(--fs-quiz) / var(--lh-quiz) var(--font-display); letter-spacing: var(--ls-quiz); }
+.qz-opts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); align-content: center; }
+.qz-opt { display: grid; justify-items: center; align-content: start; gap: var(--s1); min-height: 44px; padding: var(--s2) var(--s1); background: none; border: 0; border-radius: var(--radius-none); color: inherit; font-family: var(--font-ui); cursor: pointer; transition: transform var(--dur-press) var(--ease-standard); -webkit-tap-highlight-color: transparent; }
+.qz-opt.is-lift { transform: translateY(-1px); text-decoration: underline; text-underline-offset: 3px; }
+@media (hover: hover) { .qz-opt:hover { transform: translateY(-1px); } }
+.qz-opt:active { transform: scale(0.98); }
+.qz-sw { display: block; width: 112px; height: 112px; border-radius: var(--radius-round); }
+.qz-word { font-weight: var(--w-ui-strong); font-size: var(--fs-button); line-height: var(--lh-solid); }
+.qz-name { font-size: var(--fs-caption); line-height: var(--lh-ui); }
+.qz-step { display: flex; justify-content: center; gap: var(--s2); margin: 0; padding: 0; list-style: none; }
+.qz-dot { width: 10px; height: 10px; border-radius: var(--radius-round); border: 1px solid var(--urban-slate); }
+.qz-dot[data-done] { background: var(--urban-slate); }
+
+/* the result: the shade large, the words beside it on the same Pearl panel */
+.qz-results { width: 100%; max-width: 480px; }
+.qz-result { display: grid; gap: var(--s3); justify-items: center; padding: var(--s4) var(--s3); }
+.qz-result[hidden] { display: none; }
+.qz-big { display: block; width: 160px; height: 160px; border-radius: var(--radius-round); }
+.qz-big[data-shade="frosty-white-10"], .qz-big[data-shade="mellow-yellow-11"] { border: 1px solid var(--urban-slate); }   /* under 1.5:1 on Pearl: the family page's hairline (family.css --swr) */
+.qz-rtext { display: grid; gap: var(--s1); text-align: center; }
+.qz-eyebrow { margin: 0; font-size: var(--fs-eyebrow); font-weight: var(--w-ui-strong); line-height: var(--lh-ui); }
+.qz-shade { margin: 0; font: var(--w-display) var(--fs-tile-name) / var(--lh-tile) var(--font-display); letter-spacing: var(--ls-tile); outline-offset: 2px; }
+.qz-fam { margin: 0; font-size: var(--fs-family); font-variant-numeric: tabular-nums; }
+.qz-finish { margin: 0; font-size: var(--fs-family); }
+.qz-persona { margin: 0; font-size: var(--fs-legal); font-weight: var(--w-ui-strong); }
+.qz-text { margin: var(--s1) 0 0; font-size: var(--fs-legal); line-height: var(--lh-ui); max-width: var(--measure-prose); }
+.qz-own { margin: var(--s2) 0 0; font: var(--w-display) var(--fs-clause) / var(--lh-h2) var(--font-display); letter-spacing: var(--ls-h2); }
+.qz-actions { display: grid; gap: var(--s2); justify-items: center; margin-top: var(--s1); }
+
+/* the gift (PUBLIC_LEADS on) */
+.qz-gift { padding: 0 var(--inset) calc(var(--inset) + env(safe-area-inset-bottom, 0px)); }
+.qz-gift[hidden] { display: none; }
+.qz-gift-in { display: grid; gap: var(--s3); max-width: 480px; margin: 0 auto; padding: var(--s4) var(--s3); }
+.qz-gift-h { margin: 0; font: var(--w-display) var(--fs-clause) / var(--lh-h2) var(--font-display); letter-spacing: var(--ls-h2); }
+.qz-gift-sub { margin: 0; font-size: var(--fs-legal); line-height: var(--lh-ui); }
+.qz-form, .qz-fields, .qz-done { display: grid; gap: var(--s2); }
+.qz-fields[hidden], .qz-done[hidden] { display: none; }
+.qz-label { font-size: var(--fs-label); font-weight: var(--w-ui-strong); }
+.qz-input { width: 100%; min-height: 48px; padding: 0 var(--s2); border: 1px solid var(--urban-slate); border-radius: var(--radius-none); background: var(--pearl-whisper); color: var(--urban-slate); font: var(--w-ui) var(--fs-input) / var(--lh-input) var(--font-ui); }
+.qz-input[aria-invalid="true"] { border-width: 2px; }
+.qz-check { display: grid; grid-template-columns: auto 1fr; gap: var(--s2); align-items: start; min-height: 44px; font-size: var(--fs-label); cursor: pointer; }
+.qz-check input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--urban-slate); }
+.qz-err, .qz-msg { margin: 0; font-size: var(--fs-label); line-height: var(--lh-ui); font-weight: var(--w-ui-strong); }
+.qz-err[hidden], .qz-msg[hidden] { display: none; }
+.qz-fine { margin: 0; font-size: var(--fs-small); line-height: var(--lh-small); }
+.qz-done-text { margin: 0; font-weight: var(--w-ui-strong); }
+
+/* laptops */
+@media (min-width: 900px) and (min-height: 600px) {
+  .qz-stage { align-content: center; }
+  .qz-intro { max-width: 640px; padding: calc(var(--s3) * 2); }
+  .qz-cards { height: min(70svh, 560px); justify-self: center; }
+  .qz-deck { justify-self: center; }
+  .qz-sw { width: 144px; height: 144px; }
+  .qz-results { max-width: 640px; justify-self: center; }
+  .qz-result { grid-template-columns: 160px 1fr; align-items: center; justify-items: start; padding: calc(var(--s3) * 2); }
+  .qz-rtext { text-align: left; }
+  .qz-actions { grid-auto-flow: column; align-items: center; justify-items: start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quiz .btn, .quiz .txtbtn, .qz-opt { transition: none; }
+  .qz-opt.is-lift, .qz-opt:hover { transform: none; }   /* the underline alone marks the side that will commit */
+}
+
+/* the swatches: the twelve card shades and the ten result shades, by id (shades.gen.css tokens) */
+.qz-sw[data-shade="playful-pink-24"], .qz-big[data-shade="playful-pink-24"] { background: var(--shade-playful-pink-24); }
+.qz-sw[data-shade="stormy-grey-07"] { background: var(--shade-stormy-grey-07); }
+.qz-sw[data-shade="blushing-coral-09"], .qz-big[data-shade="blushing-coral-09"] { background: var(--shade-blushing-coral-09); }
+.qz-sw[data-shade="blissful-blue-08"] { background: var(--shade-blissful-blue-08); }
+.qz-sw[data-shade="mellow-yellow-18"] { background: var(--shade-mellow-yellow-18); }
+.qz-sw[data-shade="blissful-blue-24"] { background: var(--shade-blissful-blue-24); }
+.qz-sw[data-shade="stormy-grey-23"], .qz-big[data-shade="stormy-grey-23"] { background: var(--shade-stormy-grey-23); }
+.qz-sw[data-shade="playful-pink-09"], .qz-big[data-shade="playful-pink-09"] { background: var(--shade-playful-pink-09); }
+.qz-sw[data-shade="basic-brown-07"], .qz-big[data-shade="basic-brown-07"] { background: var(--shade-basic-brown-07); }
+.qz-sw[data-shade="vivid-violet-07"], .qz-big[data-shade="vivid-violet-07"] { background: var(--shade-vivid-violet-07); }
+.qz-sw[data-shade="roaring-red-06"], .qz-big[data-shade="roaring-red-06"] { background: var(--shade-roaring-red-06); }
+.qz-sw[data-shade="go-green-09"], .qz-big[data-shade="go-green-09"] { background: var(--shade-go-green-09); }
+.qz-big[data-shade="frosty-white-10"] { background: var(--shade-frosty-white-10); }
+.qz-big[data-shade="blissful-blue-22"] { background: var(--shade-blissful-blue-22); }
+.qz-big[data-shade="mellow-yellow-11"] { background: var(--shade-mellow-yellow-11); }
