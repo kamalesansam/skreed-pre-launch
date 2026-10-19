@@ -1,0 +1,23 @@
+/* Back to top (src/components/shell/BackToTop.astro; DESIGN.md "Back to top"): a 44 px square on Pearl Whisper with an
+   Urban Slate chevron (9.9:1), square corners, no shadow, the two-tone focus ring, a press state and no hover motion.
+   Hidden in the landing page's first screen; always shown on a family page. The landing page: top right, level with
+   the logotype, above the riders and the sections (z-index 4, the logotype's layer). A family page: in the bar's free
+   right end on phones; on the wide layout (the family page's own query) under "All families", clear of the Matte and
+   Gloss switch at the bottom right. The veil is the --night layer the jump happens under (z-index 5, under the loader). */
+.to-top { position: fixed; z-index: 4; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: var(--pearl-whisper); color: var(--urban-slate); border-radius: var(--radius-none); -webkit-tap-highlight-color: transparent; transition: transform var(--dur-press) var(--ease-standard); }
+.to-top[hidden] { display: none; }
+.to-top svg { width: 16px; height: 16px; }
+.to-top:active { transform: scale(0.98); }
+.to-top:focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }
+.to-top:focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
+/* the landing page: centred on the logotype's row (the logotype is 23.25 px tall at --inset; 32.94 px from 1024 px) */
+.to-top[data-page="home"] { top: calc(var(--inset) + env(safe-area-inset-top, 0px) + 11.625px - 22px); right: calc(var(--inset) + env(safe-area-inset-right, 0px)); }
+@media (min-width: 1024px) { .to-top[data-page="home"] { top: calc(var(--inset) + env(safe-area-inset-top, 0px) + 16.47px - 22px); } }
+/* a family page: the bar's right end on phones (the bar is 72 px plus the safe area, its name on the left), above the bar */
+.to-top[data-page="family"] { z-index: 6; right: calc(var(--inset) + env(safe-area-inset-right, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+@media (min-width: 900px) and (min-height: 600px) {
+  .to-top[data-page="family"] { bottom: auto; top: calc(var(--inset) + env(safe-area-inset-top, 0px) + var(--mark-h) / 2 - 22px + 44px + var(--s1)); }
+}
+.to-top-veil { position: fixed; inset: 0; z-index: 5; background: var(--night); pointer-events: none; }
+.to-top-veil[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .to-top { transition: none; } .to-top:active { transform: none; } }

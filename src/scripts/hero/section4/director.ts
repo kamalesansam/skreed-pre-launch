@@ -42,6 +42,8 @@ export interface RoomDirector {
   step(f: RoomStepIn): RoomPlan;
   /** after the composite: the jump back to the top once the fourth wipe has crossed the screen */
   after(): void;
+  /** the page went to the top by other means (the back-to-top control): the section starts its next lap as the jump does */
+  reset(): void;
   resize(w: number, h: number): void;
   load(): Promise<void>;
   hooks(): Record<string, unknown>;
@@ -265,14 +267,19 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector {
     },
     after() {
       if (loopP >= JUMP_AT && armed && inRoom) {
-        armed = false; jumped = true;
+        armed = false;
         scrollTo({ top: 0, behavior: 'instant' });
         o.onJump();
-        follow.snap(0); q = qAll = 0; loopP = 0; revealAt = -1; pendingEnter = false; snapped = true;
-        if (state === 'universe' && params().lapReset >= 0.5) setState('hall');
-        hall.swing(0, params().door); x = HALL.start; hover = -1;
-        say('jump');
+        api.reset();
       } else if (loopP < 0.5) armed = true;
+    },
+    reset() {
+      jumped = true;
+      follow.snap(0); q = qAll = 0; loopP = 0; revealAt = -1; pendingEnter = false; snapped = true;
+      if (state === 'entering') { transP = 0; seekP = -1; setState('hall'); }
+      if (state === 'universe' && params().lapReset >= 0.5) setState('hall');
+      hall.swing(0, params().door); x = HALL.start; hover = -1;
+      say('jump');
     },
     resize(w, h) { curW = w; curH = h; hall.resize(w, h); trans.resize(w, h); mix?.resize(w, h); universe?.resize(w, h); measure(); },
     // the hall, then the transition's program compiled in the section's own warm-up (not on the press)

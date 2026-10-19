@@ -194,6 +194,9 @@ export async function startHero(o: StartOptions): Promise<void> {
   const loop = createLoop(ctx, pointer, labels, initiallyIntroDone, tex);
   life.onKill(() => { loop.stop(); labels.clear(); labels.dispose(); });
   section2.snapTo = (screens) => { scrollTo({ top: Math.round(screens * innerHeight), behavior: 'instant' }); loop.snap(screens); };
+  // section 1 in place (the back-to-top control, scripts/shell/to-top.ts): the loop's own jump, without the fourth wipe
+  window.__skreedTop = () => { scrollTo({ top: 0, behavior: 'instant' }); loop.snap(0); ctx.room?.reset(); };
+  life.onKill(() => { window.__skreedTop = undefined; });
   if (HOOKS) installHooks(ctx, loop, { skyClass: () => ctx.sky.cls });
   // section 4 (docs/specs/section-4.md 5) loads one section ahead: its chunk, the hall's model and lightmap start when
   // the quiz or the section itself comes into view, so the walk is ready by the time the third wipe is reached; the

@@ -8,6 +8,7 @@ import '../../styles/family.css';
 import FamilyHeadFirst from '../../components/family/FamilyHeadFirst.astro';
 import FamilyPage from '../../components/family/FamilyPage.astro';
 import WordmarkSprite from '../../components/shell/WordmarkSprite.astro';
+import BackToTop from '../../components/shell/BackToTop.astro';
 import { FAMILIES, pageCss, type Family } from '../../scripts/family/data.ts';
 import { FAM_COPY } from '../../scripts/family/copy.ts';
 import { SITE_COPY } from '../../scripts/family/site-copy.ts';
@@ -75,4 +76,5 @@ const Loader = ON3D ? (await import('../../components/shell/Loader.astro')).defa
   {Loader && <Loader weights={FAMILY_WT} offline={FAM_COPY.loaderOffline} />}
   <FamilyPage fam={fam} has3d={has3d} supplier={mode === 'on'} />
   {Island && <Island mode={mode === 'on' ? 'on' : 'dev'} />}
+  <BackToTop page="family" />
 </Base>

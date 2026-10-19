@@ -44,6 +44,8 @@ interface Window {
   /** section 4: the island hands the walk script a frame each step; the walk script hands back the head's turn from the keys and the drag */
   __skreedRoomFrame?: (f: import('./config/room.ts').RoomFrame) => void;
   __skreedRoomLook?: { yaw: number; drag?: number };
+  /** the landing page's jump to section 1 in place (scroll 0, the hero's followers snapped, section 4 reset), installed by the island; the back-to-top control calls it */
+  __skreedTop?: () => void;
   /** section 4: the island's side of the bridge, installed with the section's director */
   __skreedRoom?: import('./config/room.ts').RoomIsland;
   /** hooks builds: section 4's state, entering without the walk, and the transition by its clock (seconds) */

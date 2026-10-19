@@ -16,6 +16,7 @@ import Section2Layers from '../components/hero/Section2Layers.astro';
 import FamilyLinks from '../components/family/FamilyLinks.astro';
 import Quiz from '../components/quiz/Quiz.astro';
 import Room from '../components/room/Room.astro';
+import BackToTop from '../components/shell/BackToTop.astro';
 import { COPY } from '../config/copy.ts';
 import { NIGHT } from '../config/tokens.ts';
 // The dev-only component is imported only when its flag is set, so production carries neither its markup nor its
@@ -34,6 +35,7 @@ const Tune = import.meta.env.PUBLIC_TUNE === '1' ? (await import('../components/
     <ScrollCue slot="cue" part="cue" />
     <Section2Layers slot="riders" />
     <FamilyLinks slot="riders" />
+    <BackToTop slot="riders" page="home" />
     <Quiz slot="after-track" />
     <Room slot="after-track" />
     {Tune && <Tune slot="dev" />}

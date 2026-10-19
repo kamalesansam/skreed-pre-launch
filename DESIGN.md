@@ -234,6 +234,19 @@ Source Serif 4 Fallback 600: size-adjust 106.14%; ascent-override 97.61%; descen
 - **Reduced motion.** The glitch is off. It checks the setting live before every burst.
 - **Link.** `href="/"`, `aria-label="Skreed, home"`.
 
+### Back to top (`a.to-top`, every page)
+
+Sam, 2026-10-19: "add a back to top button throughout the site which navigates back to main section 1, without reloading". `src/components/shell/BackToTop.astro`, `src/scripts/shell/to-top.ts`, `src/styles/to-top.css`.
+
+- **Element.** A link to `/` (so it works without JavaScript), `aria-label` and `title` "Back to top", one static up chevron (16 px in a 44 px square, rule 45: never animated).
+- **Box.** 44 x 44 px, Pearl Whisper fill, Urban Slate chevron (9.9:1), square corners, no border, no shadow.
+- **Placement.** The landing page: fixed top right at `--inset`, centred on the logotype's row, `z-index: 4` (the logotype's layer). A family page: in the bar's free right end on phones (`z-index: 6`, over the bar), and under "All families" on the family page's wide layout (`(min-width: 900px) and (min-height: 600px)`), clear of the Matte and Gloss switch.
+- **When.** The landing page: hidden in its first screen (section 1 is where it leads), shown past it. A family page: always.
+- **Press.** The landing page: a `--night` veil fades in over 250 ms, the page jumps to section 1 in place (the hero's own jump, `window.__skreedTop`: scroll 0, the scroll followers snapped, section 4 reset for its next lap; a plain instant scroll on the poster tier), and the veil lifts once the hero has drawn its rest frame. No reload and no smooth scroll back through the sections. Keyboard focus moves to the logotype. A family page: it steps back through the history to the landing page (the Navigation API's entries, else the referrer and `history.back()`); the browser restores the landing page from its back-forward cache without a reload, and a `sessionStorage` flag makes it jump to section 1 under the veil. With no landing page behind it, the link navigates to `/`, its files from the cache (`public/_headers`).
+- **States.** Press `scale(0.98)` over `--dur-press`; no hover motion (rule 48). The two-tone focus ring (Ember Luxe at 2 px, Urban Slate inside).
+- **Reduced motion.** The cut with no veil; no press scale.
+- **Analytics.** `to_top { from }` through section 3's `track()`.
+
 ### Countdown (hero)
 
 - **Placement.** Bottom left at `--inset`. Below 1100 px it sits 84 px higher, so the cue has its own row. On the poster path it sits in the first screen and scrolls away with it.

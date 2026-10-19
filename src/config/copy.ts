@@ -26,6 +26,8 @@ export const COPY = {
   /** section 2's labels (section-2.md 3): igloo's three slots, carrying our facts, uppercase (E-S2-font) */
   s2: { count: '24 SHADES', click: 'CLICK TO EXPLORE', tap: 'TAP TO EXPLORE', aria: 'Colour families' },
   logo: { aria: 'Skreed, home' },
+  /** the back-to-top control on every page (Sam, 2026-10-19): back to the landing page's section 1, without a reload */
+  toTop: { label: 'Back to top' },
   page: {
     h1: 'Skreed. Tech essentials that go beyond basic.',
     title: 'Skreed. Tech essentials that go beyond basic.',
