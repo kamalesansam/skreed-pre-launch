@@ -1,0 +1,730 @@
+{
+ "about": "Option B: our own stylised, compressed Central Park (scripts/room/park.py, packed by scripts/room/pack.mjs park). glTF frame: metres, y up; the Mall runs toward -z (north). See packPark in pack.mjs for what park.glb carries.",
+ "glb": {
+  "bytes": 150184,
+  "draws": 23,
+  "trianglesDrawn": 30791,
+  "trianglesStatic": 9138,
+  "nodes": [
+   {
+    "name": "deck",
+    "light": "lightmap",
+    "tris": 32,
+    "vertices": 34
+   },
+   {
+    "name": "drive",
+    "light": "lightmap",
+    "tris": 192,
+    "vertices": 206
+   },
+   {
+    "name": "granite",
+    "light": "lightmap",
+    "tris": 372,
+    "vertices": 468
+   },
+   {
+    "name": "iron",
+    "light": "lightmap",
+    "tris": 288,
+    "vertices": 306
+   },
+   {
+    "name": "lawn",
+    "light": "lightmap",
+    "tris": 3526,
+    "vertices": 2527
+   },
+   {
+    "name": "path",
+    "light": "lightmap",
+    "tris": 726,
+    "vertices": 810
+   },
+   {
+    "name": "promenade",
+    "light": "lightmap",
+    "tris": 116,
+    "vertices": 156
+   },
+   {
+    "name": "stone",
+    "light": "lightmap",
+    "tris": 1462,
+    "vertices": 1794
+   },
+   {
+    "name": "tile",
+    "light": "lightmap",
+    "tris": 240,
+    "vertices": 300
+   },
+   {
+    "name": "water",
+    "light": "lightmap",
+    "tris": 134,
+    "vertices": 150
+   },
+   {
+    "name": "farground",
+    "light": "unlit",
+    "tris": 8,
+    "vertices": 8
+   },
+   {
+    "name": "sky",
+    "light": "unlit",
+    "tris": 210,
+    "vertices": 113
+   },
+   {
+    "name": "skyline",
+    "light": "unlit",
+    "tris": 700,
+    "vertices": 1392
+   },
+   {
+    "name": "bench",
+    "light": "baked",
+    "tris": 40,
+    "instances": 33,
+    "vertices": 80
+   },
+   {
+    "name": "elmA",
+    "light": "baked",
+    "tris": 162,
+    "instances": 22,
+    "vertices": 444
+   },
+   {
+    "name": "elmB",
+    "light": "baked",
+    "tris": 154,
+    "instances": 22,
+    "vertices": 428
+   },
+   {
+    "name": "far",
+    "light": "baked",
+    "tris": 26,
+    "instances": 127,
+    "vertices": 72
+   },
+   {
+    "name": "lamp",
+    "light": "baked",
+    "tris": 45,
+    "instances": 13,
+    "vertices": 95
+   },
+   {
+    "name": "planeA",
+    "light": "baked",
+    "tris": 126,
+    "instances": 31,
+    "vertices": 352
+   },
+   {
+    "name": "planeB",
+    "light": "baked",
+    "tris": 106,
+    "instances": 31,
+    "vertices": 292
+   },
+   {
+    "name": "railing",
+    "light": "baked",
+    "tris": 1132,
+    "vertices": 2248
+   },
+   {
+    "name": "small",
+    "light": "baked",
+    "tris": 48,
+    "instances": 29,
+    "vertices": 136
+   },
+   {
+    "name": "willow",
+    "light": "baked",
+    "tris": 70,
+    "instances": 13,
+    "vertices": 200
+   }
+  ]
+ },
+ "lightmap": {
+  "size": 1024,
+  "unit": 0.7,
+  "avif": {
+   "bytes": 86553,
+   "quality": 66
+  },
+  "webp": {
+   "bytes": 155592,
+   "quality": 90
+  },
+  "bake": {
+   "size": 2048,
+   "samples": 256
+  }
+ },
+ "light": {
+  "unit": 0.7,
+  "eOpen": {
+   "all": [
+    1.0749889612197876,
+    1.126381516456604,
+    1.2318757772445679
+   ],
+   "sky": [
+    0.25752949714660645,
+    0.3663216829299927,
+    0.5619485378265381
+   ]
+  },
+  "eOpenProps": [
+   1.07548,
+   1.12684,
+   1.23201
+  ],
+  "shadeRatio": 0.318,
+  "sun": {
+   "dir": [
+    -0.3237,
+    0.6428,
+    0.6943
+   ],
+   "azimuth": 205,
+   "elevation": 40,
+   "rgb": [
+    1,
+    0.93,
+    0.82
+   ]
+  },
+  "exposure": {
+   "target": 0.14,
+   "measured": {
+    "case": {
+     "meanLum": 0.0386,
+     "skyShare": 0.061
+    },
+    "wallet": {
+     "meanLum": 0.0365,
+     "skyShare": 0.047
+    },
+    "lenskin": {
+     "meanLum": 0.2147,
+     "skyShare": 0.42
+    },
+    "airpods": {
+     "meanLum": 0.1982,
+     "skyShare": 0.261
+    }
+   }
+  }
+ },
+ "camera": {
+  "near": 0.1,
+  "far": 1600,
+  "eye": 1.5
+ },
+ "poses": [
+  {
+   "id": "case",
+   "place": "the Mall, under the elms",
+   "position": [
+    0,
+    1.55,
+    60
+   ],
+   "target": [
+    0,
+    1.6058,
+    58.401
+   ],
+   "fov": 32,
+   "near": 1.6,
+   "exposure": 2.4
+  },
+  {
+   "id": "wallet",
+   "place": "Bethesda Terrace's arcade",
+   "position": [
+    0.3,
+    -3,
+    -3.4
+   ],
+   "target": [
+    -1.1889,
+    -2.7773,
+    -3.9419
+   ],
+   "fov": 34,
+   "near": 1.6,
+   "exposure": 2.4
+  },
+  {
+   "id": "lenskin",
+   "place": "Sheep Meadow, the skyline beyond",
+   "position": [
+    -41,
+    1.55,
+    36
+   ],
+   "target": [
+    -42.5434,
+    1.6337,
+    36.4135
+   ],
+   "fov": 32,
+   "near": 1.6,
+   "exposure": 1
+  },
+  {
+   "id": "airpods",
+   "place": "Bow Bridge over the Lake",
+   "position": [
+    -55,
+    -2.95,
+    -23
+   ],
+   "target": [
+    -53.9722,
+    -2.8942,
+    -24.2249
+   ],
+   "fov": 32,
+   "near": 1.6,
+   "exposure": 1
+  }
+ ],
+ "flights": [
+  {
+   "from": 0,
+   "to": 1,
+   "points": [
+    [
+     0,
+     1.55,
+     60
+    ],
+    [
+     0,
+     1.7,
+     48
+    ],
+    [
+     0,
+     1.7,
+     32
+    ],
+    [
+     0,
+     1.7,
+     17
+    ],
+    [
+     0,
+     1.7,
+     10.6
+    ],
+    [
+     0,
+     -0.2538,
+     6.5
+    ],
+    [
+     0,
+     -2.1577,
+     2.4
+    ],
+    [
+     0.15,
+     -2.85,
+     -0.9
+    ],
+    [
+     0.3,
+     -3,
+     -3.4
+    ]
+   ],
+   "look": [
+    [
+     0,
+     1.6058,
+     58.401
+    ],
+    [
+     0,
+     1.7054,
+     44
+    ],
+    [
+     0,
+     1.7,
+     28
+    ],
+    [
+     0,
+     1.7291,
+     13.0001
+    ],
+    [
+     -0.0046,
+     0.591,
+     6.7568
+    ],
+    [
+     0.037,
+     -1.2158,
+     2.6176
+    ],
+    [
+     0.2058,
+     -2.5045,
+     -1.5796
+    ],
+    [
+     0.3894,
+     -2.9936,
+     -4.8902
+    ],
+    [
+     -1.1889,
+     -2.7773,
+     -3.9419
+    ]
+   ],
+   "curve": "CatmullRomCurve3, centripetal; points and look share each control point's parameter (getPoint(t)), the position read at constant speed (getUtoTmapping)"
+  },
+  {
+   "from": 1,
+   "to": 2,
+   "points": [
+    [
+     0.3,
+     -3,
+     -3.4
+    ],
+    [
+     -3.6,
+     -2.85,
+     -3.1
+    ],
+    [
+     -8,
+     -2.85,
+     -2.8
+    ],
+    [
+     -11.6,
+     -2.85,
+     -2.4
+    ],
+    [
+     -13.6,
+     -2.85,
+     -0.9
+    ],
+    [
+     -14,
+     -2.5038,
+     1.8
+    ],
+    [
+     -14,
+     -0.6,
+     5.6
+    ],
+    [
+     -14.2,
+     1.7,
+     10.4
+    ],
+    [
+     -17.5,
+     1.7806,
+     14.6
+    ],
+    [
+     -24,
+     2.0058,
+     20.2
+    ],
+    [
+     -30.5,
+     2.1592,
+     26.3
+    ],
+    [
+     -36.5,
+     1.757,
+     32.2
+    ],
+    [
+     -41,
+     1.55,
+     36
+    ]
+   ],
+   "look": [
+    [
+     -1.1889,
+     -2.7773,
+     -3.9419
+    ],
+    [
+     -7.592,
+     -2.85,
+     -2.8468
+    ],
+    [
+     -11.8071,
+     -2.8535,
+     -1.5728
+    ],
+    [
+     -13.3892,
+     -2.5903,
+     1.1681
+    ],
+    [
+     -13.8782,
+     -2.1012,
+     3.0194
+    ],
+    [
+     -13.9536,
+     -1.3347,
+     5.625
+    ],
+    [
+     -14.3465,
+     0.4339,
+     9.4485
+    ],
+    [
+     -16.7083,
+     1.738,
+     13.5156
+    ],
+    [
+     -20.5239,
+     1.8449,
+     17.2176
+    ],
+    [
+     -26.9291,
+     2.0649,
+     22.9234
+    ],
+    [
+     -33.334,
+     2.0487,
+     29.1207
+    ],
+    [
+     -39.5554,
+     1.6727,
+     34.7802
+    ],
+    [
+     -42.5434,
+     1.6337,
+     36.4135
+    ]
+   ],
+   "curve": "CatmullRomCurve3, centripetal; points and look share each control point's parameter (getPoint(t)), the position read at constant speed (getUtoTmapping)"
+  },
+  {
+   "from": 2,
+   "to": 3,
+   "points": [
+    [
+     -41,
+     1.55,
+     36
+    ],
+    [
+     -49,
+     1.7,
+     38
+    ],
+    [
+     -58.5,
+     1.7,
+     35
+    ],
+    [
+     -64.8,
+     1.7,
+     27.5
+    ],
+    [
+     -67,
+     1.5727,
+     17
+    ],
+    [
+     -67,
+     1.7,
+     5
+    ],
+    [
+     -66.6,
+     1.7,
+     -4
+    ],
+    [
+     -64.6,
+     0.3912,
+     -11.5
+    ],
+    [
+     -61,
+     -2.0381,
+     -17
+    ],
+    [
+     -57.6,
+     -2.8,
+     -20.8
+    ],
+    [
+     -55,
+     -2.95,
+     -23
+    ]
+   ],
+   "look": [
+    [
+     -42.5434,
+     1.6337,
+     36.4135
+    ],
+    [
+     -52.9184,
+     1.7033,
+     37.1961
+    ],
+    [
+     -61.3561,
+     1.7034,
+     32.1996
+    ],
+    [
+     -65.8798,
+     1.667,
+     23.6487
+    ],
+    [
+     -67.1192,
+     1.5947,
+     13.0018
+    ],
+    [
+     -66.9218,
+     1.7435,
+     1.001
+    ],
+    [
+     -65.6952,
+     1.3489,
+     -7.8805
+    ],
+    [
+     -62.507,
+     -0.4994,
+     -14.7903
+    ],
+    [
+     -58.3018,
+     -2.3709,
+     -19.9341
+    ],
+    [
+     -54.5475,
+     -2.9057,
+     -23.3829
+    ],
+    [
+     -53.9722,
+     -2.8942,
+     -24.2249
+    ]
+   ],
+   "curve": "CatmullRomCurve3, centripetal; points and look share each control point's parameter (getPoint(t)), the position read at constant speed (getUtoTmapping)"
+  }
+ ],
+ "checks": {
+  "flights": [
+   {
+    "from": 0,
+    "to": 1,
+    "length_m": 64.4,
+    "eye_over_surface_m": [
+     1.5,
+     2.04
+    ],
+    "clearance_m": 1.34,
+    "headroom_m": 1.83,
+    "path_turn_deg": 5
+   },
+   {
+    "from": 1,
+    "to": 2,
+    "length_m": 64.1,
+    "eye_over_surface_m": [
+     1.5,
+     1.89
+    ],
+    "clearance_m": 1.34,
+    "headroom_m": 1.99,
+    "path_turn_deg": 175
+   },
+   {
+    "from": 2,
+    "to": 3,
+    "length_m": 83.6,
+    "eye_over_surface_m": [
+     1.17,
+     1.81
+    ],
+    "clearance_m": 1.15,
+    "headroom_m": null,
+    "path_turn_deg": 170
+   }
+  ],
+  "poses": [
+   {
+    "id": "case",
+    "free_ahead_m": 134.23,
+    "clearance_m": 1.5,
+    "eye_over_floor_m": 1.5
+   },
+   {
+    "id": "wallet",
+    "free_ahead_m": 7.68,
+    "clearance_m": 1.5,
+    "eye_over_floor_m": 1.5
+   },
+   {
+    "id": "lenskin",
+    "free_ahead_m": 71.44,
+    "clearance_m": 1.55,
+    "eye_over_floor_m": 1.5
+   },
+   {
+    "id": "airpods",
+    "free_ahead_m": 36.85,
+    "clearance_m": 1.5,
+    "eye_over_floor_m": 1.5
+   }
+  ]
+ }
+}
