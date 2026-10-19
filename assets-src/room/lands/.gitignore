@@ -1,0 +1,6 @@
+# Section 4's land masters (docs/specs/section-4-world.md 3, "Provenance"): the pictures stay out of git; their sums
+# are committed, so a copy can be checked with `shasum -a 256 -c SHA256SUMS` from this folder. scripts/room/lands.py
+# writes both (its sums stage).
+*
+!.gitignore
+!SHA256SUMS
