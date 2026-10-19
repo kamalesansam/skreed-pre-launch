@@ -9,9 +9,10 @@
   },
   "scripts": {
     "dev": "PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=1 PUBLIC_STAGING=0 PUBLIC_FAMILY_3D=on astro dev",
-    "build": "PUBLIC_HERO_HOOKS=0 PUBLIC_TUNE=0 PUBLIC_STAGING=0 astro build && node scripts/csp.mjs",
-    "build:test": "PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=0 PUBLIC_STAGING=0 astro build && node scripts/csp.mjs",
-    "build:staging": "PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=1 PUBLIC_STAGING=1 astro build && node scripts/csp.mjs",
+    "//build-modes": "# PUBLIC_PARK_TRAVEL=A|B|C picks section 4's travel between the lands, default A (PUBLIC_PARK_TRAVEL=C npm run build): A the pictures in depth, B the modelled park, C the clips (docs/specs/section-4-world.md 5, Build modes). Each build exports it to every command after astro build. build and build:test ship the pick only (astro.config.mjs resolves the other two to travel-stub.ts); build:staging (Tune on) carries all three. csp.mjs writes media-src 'self' on staging (--media self) and for a C build, 'none' otherwise. build and build:staging then run budget.mjs (section 6's lines) and the post-build guard (no .mp4 unless C, no park asset unless B).",
+    "build": "export PUBLIC_PARK_TRAVEL=${PUBLIC_PARK_TRAVEL:-A} && PUBLIC_HERO_HOOKS=0 PUBLIC_TUNE=0 PUBLIC_STAGING=0 astro build && node scripts/csp.mjs && node scripts/hero/budget.mjs dist --mode build && node scripts/room/guards.mjs --post-build --mode build",
+    "build:test": "export PUBLIC_PARK_TRAVEL=${PUBLIC_PARK_TRAVEL:-A} && PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=0 PUBLIC_STAGING=0 astro build && node scripts/csp.mjs",
+    "build:staging": "export PUBLIC_PARK_TRAVEL=${PUBLIC_PARK_TRAVEL:-A} && PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=1 PUBLIC_STAGING=1 astro build && node scripts/csp.mjs --media self && node scripts/hero/budget.mjs dist --mode staging && node scripts/room/guards.mjs --post-build --mode staging",
     "preview": "wrangler dev --port 8787",
     "check": "astro check",
     "gen:shades": "node scripts/hero/gen-shades.mjs",

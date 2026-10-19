@@ -4,8 +4,14 @@
 //   node scripts/csp.mjs                 enforcing header
 //   node scripts/csp.mjs --report-only   Content-Security-Policy-Report-Only (the first production deploy, section 15)
 //   node scripts/csp.mjs --dist <dir>    a build written elsewhere with astro build --outDir (default: dist/)
+//   node scripts/csp.mjs --media self    media-src 'self' (section-4-world.md 5, "Build modes"): section 4's option C plays
+//                                        its clips from /_astro/. build:staging passes it (Tune can pick C there); without
+//                                        the flag it is 'self' only when PUBLIC_PARK_TRAVEL is C (npm run build exports the
+//                                        pick to every command after astro build), else 'none'. --media none forces 'none'.
+//                                        Clips stream from their URL and are never fetched to a blob:, so blob: is never added.
 // Fails the build when: a markup style="" attribute appears (it would need style-src-attr), the CSP line is longer than
-// 1900 characters (wrangler drops _headers lines over 2000 silently), or dist/_headers has no /* rule.
+// 1900 characters (wrangler drops _headers lines over 2000 silently), dist/_headers has no /* rule, or --media names
+// anything but self or none.
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, writeFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
@@ -15,9 +21,12 @@ const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const di = process.argv.indexOf('--dist');
 const DIST = di > 0 ? resolve(process.argv[di + 1]) : join(ROOT, 'dist');
 const reportOnly = process.argv.includes('--report-only');
+const mi = process.argv.indexOf('--media');
+const media = mi > 0 ? process.argv[mi + 1] : process.env.PUBLIC_PARK_TRAVEL === 'C' ? 'self' : 'none';
 const MAX_LINE = 1900;
 
 const fail = (msg) => { console.error('csp: ' + msg); process.exit(1); };
+if (media !== 'self' && media !== 'none') fail(`--media takes self or none, not ${JSON.stringify(media)}`);
 const walk = (dir) => readdirSync(dir).flatMap((n) => { const p = join(dir, n); return statSync(p).isDirectory() ? walk(p) : [p]; });
 const htmlFiles = walk(DIST).filter((p) => p.endsWith('.html'));
 if (!htmlFiles.length) fail('no HTML in dist/');
@@ -48,7 +57,7 @@ const policy = [
   "img-src 'self' data:",
   "font-src 'self'",
   "connect-src 'self'",
-  "media-src 'none'", "object-src 'none'", "frame-src 'none'", "worker-src 'none'", "manifest-src 'self'",
+  `media-src '${media}'`, "object-src 'none'", "frame-src 'none'", "worker-src 'none'", "manifest-src 'self'",
   "base-uri 'none'", "form-action 'self'", "frame-ancestors 'none'",
   'upgrade-insecure-requests',
 ].join('; ');
@@ -64,4 +73,4 @@ let end = at + 1;
 while (end < lines.length && /^\s+\S/.test(lines[end])) end++;
 lines.splice(end, 0, line);
 writeFileSync(headersPath, lines.join('\n'));
-console.log(`csp: ${htmlFiles.length} page(s), ${scripts.size} inline script hash(es), ${styles.size} inline style hash(es), line ${line.length} chars${reportOnly ? ' (report-only)' : ''}`);
+console.log(`csp: ${htmlFiles.length} page(s), ${scripts.size} inline script hash(es), ${styles.size} inline style hash(es), media-src '${media}', line ${line.length} chars${reportOnly ? ' (report-only)' : ''}`);
