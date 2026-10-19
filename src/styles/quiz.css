@@ -1,120 +1,121 @@
-/* Section 3, the quiz (docs/specs/quiz.md 2; tokens from DESIGN.md). Phone first. The section sits over the hero's
-   fixed canvas (the fog ground on the 3D path) with no background of its own; the intro, the deck, the result and the
-   gift each stand on a Pearl Whisper panel with Urban Slate text (9.9:1). Square corners, no borders on panels, no
-   shadows, no blur. The swatches carry data-shade and deck.ts paints them from the catalog token (no style attributes). */
-.quiz { position: relative; z-index: 3; overflow-x: clip;   /* above the hero's riders (the labels at 1 and 3, the cue at 2; DESIGN.md 6), below the logotype at 4 */ color: var(--urban-slate); font-family: var(--font-ui); font-size: var(--fs-legal); line-height: var(--lh-ui); }
+/* Section 3, the quiz (docs/specs/quiz.md 2 and 4). Sam, 2026-10-19: "just plain text on the fog backround with the same
+   animation, no boxes or anything". Every line is section 2's label type (shell.css .s2lab): IBM Plex Mono Medium, upper
+   case, Pearl Whisper, no letter-spacing, straight on the fog (E-S3-font, E-S3-contrast). No panels, no fills, no borders
+   round anything, no shadows; the controls are words, the links underlined as links are. The shade swatches are the one
+   colour in the section. deck.ts decodes the text in and out (decode.ts); without JavaScript it is the same text, still.
+   Phone first. */
+.quiz {
+  --qz-font: "IBM Plex Mono", ui-monospace, monospace;
+  --qz-fs: 13px; --qz-fs-q: 22px; --qz-fs-big: 36px;   /* the label size; the question and headline step; the shade's name */
+  position: relative; z-index: 3; overflow-x: clip;   /* above the hero's riders (the labels at 1 and 3, the cue at 2; DESIGN.md 6), below the logotype at 4 */
+  color: var(--pearl-whisper); font: 500 var(--qz-fs) / 1.45 var(--qz-font); text-transform: uppercase; letter-spacing: 0; font-synthesis: none;
+}
+@media (max-aspect-ratio: 9/10) { .quiz { --qz-fs: 12px; --qz-fs-q: 18px; --qz-fs-big: 28px; } }   /* the labels' portrait size */
 .quiz, .quiz *, .quiz *::before, .quiz *::after { box-sizing: border-box; }
-.quiz * { overflow-anchor: none; }   /* scroll anchoring keeps to the section itself, whose top never moves: the result replaces the deck without the browser scrolling the page to hold a card (or the section below) still */   /* widths include padding and hairlines: the 100 percent panels and the input fit the gutters at 390 */
-.quiz :focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }   /* DESIGN.md 4: the Ember Luxe outline at 2 px, the Urban Slate ring inside it */
-html:not(.js) .qz-begin { display: none; }   /* without JavaScript the noscript line stands in for the button */
-.quiz .btn, .quiz .qz-opt, .quiz .txtbtn, .quiz .qz-input, .quiz .qz-shade, .quiz .qz-done-text, .quiz .qz-check { position: relative; }
-/* the two-tone ring on everything that takes focus: the buttons, the options, the text buttons, the card (over the fog, where
-   Ember alone is under 3:1), the result heading and the done line (focused by script) */
-.quiz :is(.btn, .qz-opt, .txtbtn, .qz-card, .qz-shade, .qz-done-text):focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
-/* the two inputs render no ::before (replaced elements): the email field's own hairline thickens to 2 px as the inner ring, and the
-   checkbox row carries the ring round the box and its label (a browser without :has() keeps the box's own Ember outline) */
-.quiz .qz-input:focus-visible { border-width: 2px; }
+.quiz * { overflow-anchor: none; }   /* scroll anchoring keeps to the section itself, whose top never moves: the result replaces the deck without the browser scrolling the page to hold a card (or the section below) still */
+.quiz .dc { white-space: normal; }
+.quiz .sr-only { text-transform: none; }   /* assistive technology gets Sam's sentence case: Chrome names elements from the rendered text, so the hidden copy must not inherit the capitals */
+/* focus (DESIGN.md 4): the Ember Luxe outline at 2 px with the Urban Slate ring inside it, on keyboard focus only */
+.quiz :focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }
+.quiz .qz-link, .quiz .qz-opt, .quiz .qz-card, .quiz .qz-shade, .quiz .qz-done-text, .quiz .qz-check { position: relative; }
+.quiz :is(.qz-link, .qz-opt, .qz-card, .qz-shade, .qz-done-text):focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
+.quiz .qz-input:focus-visible { outline: none; border-bottom-width: 3px; }   /* the field shows focus as its line at 3 px and the caret, not a box (an input is focus-visible on every focus, a click included); 3 px so focus still shows on a field already at 2 px for an error */
+@supports not selector(:has(*)) {
+  .quiz .qz-check input:focus-visible + .qz-tick { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }   /* the box itself is unseen, so its own outline would be too */
+}
 @supports selector(:has(*)) {
-  .quiz .qz-check input:focus-visible { outline: none; }
   .quiz .qz-check:has(input:focus-visible) { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }
   .quiz .qz-check:has(input:focus-visible)::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
 }
-.qz-panel { background: var(--pearl-whisper); color: var(--urban-slate); border-radius: var(--radius-none); }
+html:not(.js) .qz-begin { display: none; }   /* without JavaScript the noscript line stands in for the button */
+:where(.quiz) :where(p, h2, h3, ul) { margin: 0; }   /* no specificity, so each element's own rule below sets its size and gap */
+:where(.quiz) :where(h2, h3) { font: inherit; }
 
 /* the stage: the intro, then the deck, then the result, in place */
 .qz-stage { position: relative; min-height: 100svh; display: grid; align-content: end; justify-items: center; padding: calc(var(--inset) + env(safe-area-inset-top, 0px)) var(--inset) calc(var(--inset) + env(safe-area-inset-bottom, 0px)); }
-.quiz[data-state="result"] .qz-stage { min-height: 0; }   /* the gift follows the result at one gap, on every screen */
-.qz-intro { display: grid; gap: var(--s3); justify-items: start; width: 100%; max-width: 480px; padding: var(--s4) var(--s3); }
+.quiz[data-state="result"] .qz-stage { min-height: 0; padding-top: calc(var(--inset) + 56px + env(safe-area-inset-top, 0px)); }   /* the gift follows the result at one gap, on every screen; at the section's top the result starts under the fixed logotype's band */
+.qz-intro, .qz-cards, .qz-results { width: 100%; max-width: 480px; }
+.qz-intro { display: grid; gap: var(--s3); justify-items: start; }
 .qz-intro[hidden], .qz-deck[hidden], .qz-results[hidden] { display: none; }
-.qz-h { margin: 0; font: var(--w-display) var(--fs-h2) / var(--lh-h2) var(--font-display); letter-spacing: var(--ls-h2); max-width: var(--measure-h2); text-wrap: balance; }
-.qz-sub { margin: 0; font: var(--w-ui) var(--fs-standfirst) / var(--lh-standfirst) var(--font-ui); max-width: var(--measure-prose); }   /* type-system principle 9: the quiz is Poppins and Open Sans, no serif */
-.qz-noscript { margin: 0; font-size: var(--fs-small); line-height: var(--lh-small); }
-.qz-noscript a { color: inherit; position: relative; }
-.qz-noscript a::after { content: ""; position: absolute; inset: -12px -8px; }   /* a 44 px hit box round the one link of the no-JS path */
+.qz-h, .qz-q { font-size: var(--qz-fs-q); line-height: 1.25; text-wrap: balance; }
+.qz-h { max-width: calc(26ch + 1px); }   /* + 1 px: once split into one span per glyph the advances round up a little, and the line must break as the server's did */
+.qz-sub { max-width: calc(52ch + 1px); }
+.qz-noscript a { color: inherit; position: relative; -webkit-tap-highlight-color: transparent; }
+.qz-noscript a::after { content: ""; position: absolute; inset: -15px -8px; }   /* a 44 px hit box round the one link of the no-JS path: the mono's 1.3 em content box (16.9 px at 13 px, 15.6 at 12) plus 15 px each way */
 
-/* buttons (DESIGN.md 4): Ember Luxe fill, Urban Slate text, 48 px, square; lift 1 px on hover, press to 0.98 */
-.quiz .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 var(--s4); background: var(--ember-luxe); color: #383F43; font: var(--w-ui-strong) var(--fs-button) / var(--lh-solid) var(--font-ui); text-decoration: none; border: 0; border-radius: var(--radius-none); cursor: pointer; width: fit-content; transition: transform var(--dur-press) var(--ease-standard); -webkit-tap-highlight-color: transparent; }
-.quiz .btn[aria-disabled="true"] { cursor: default; }
-@media (hover: hover) { .quiz .btn:hover:not([aria-disabled="true"]) { transform: translateY(-1px); } }
-.quiz .btn:active:not([aria-disabled="true"]) { transform: scale(0.98); }
-.quiz .txtbtn { background: none; border: 0; padding: var(--s2) 0; min-height: 44px; color: inherit; font: var(--w-ui-strong) var(--fs-button) / var(--lh-solid) var(--font-ui); cursor: pointer; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; -webkit-tap-highlight-color: transparent; }   /* the underline colours in at once: nothing but transform and opacity animates (CHECKLIST C3) */
-@media (hover: hover) { .quiz .txtbtn:hover { text-decoration-color: currentColor; } }
-.quiz .txtbtn:focus-visible { text-decoration-color: currentColor; }
+/* the controls are words: Begin, Back, See it on the case, Try again, Send, Not you. Underlined as links are, at least 44 px
+   each way to tap (BACK is 31 px of type at 13 px; the underline stays under the words); hover thickens the line at once (nothing but opacity animates, CHECKLIST C3) */
+.qz-link { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; padding: 0; background: none; border: 0; border-radius: 0; color: inherit; font: inherit; text-transform: inherit; letter-spacing: inherit; text-align: left; text-decoration-line: underline; text-decoration-thickness: 1px; text-underline-offset: 0.4em; cursor: pointer; -webkit-tap-highlight-color: transparent; }   /* longhands: Safari before 26.2 drops a shorthand with a thickness in it, underline and all */
+.qz-link[aria-disabled="true"] { cursor: default; }
+@media (hover: hover) { .qz-link:hover:not([aria-disabled="true"]) { text-decoration-thickness: 2px; } }
 
-/* the deck: one Pearl card at a time, the next behind it at 0.96; each card carries the stepper as its last row */
-.qz-deck { display: grid; gap: var(--s4); justify-items: center; width: 100%; }
-.qz-cards { display: grid; width: 100%; max-width: 480px; }   /* the cards share one grid cell, so the deck is as tall as its tallest card on every screen */
-.qz-card { grid-area: 1 / 1; position: relative; display: grid; grid-template-rows: auto 1fr auto; align-content: start; gap: var(--s3); padding: var(--s4) var(--s3); user-select: none; -webkit-user-select: none; will-change: transform; transform-origin: 50% 100%; }
-.qz-card[hidden] { display: grid; visibility: hidden; }   /* a hidden card keeps its place in the cell, so the deck holds the tallest card's height from the first question to the last (no jump as the cards change) */
-.qz-card.is-next { z-index: 0; transform: scale(0.96); }
-.qz-card.is-top { z-index: 1; }
-.qz-q { margin: 0; font: var(--w-display) var(--fs-clause) / var(--lh-quiz) var(--font-display); letter-spacing: var(--ls-quiz); text-wrap: balance; }   /* the questions are sentences now: the clause step, not the two-word quiz step (quiz.md D15) */
-.qz-opts { display: grid; gap: var(--s1); align-content: start; }
-/* an answer: a full-width row, Open Sans 400 on Pearl with an Urban Slate hairline (the input's), square; hover lifts it
-   1 px, press scales to 0.98; the answer taken fills Urban Slate with Pearl text for a beat before the card leaves */
-.qz-opt { display: block; width: 100%; min-height: 44px; padding: var(--s1) var(--s3); background: var(--pearl-whisper); border: 1px solid var(--urban-slate); border-radius: var(--radius-none); color: var(--urban-slate); font: var(--w-ui) var(--fs-legal) / var(--lh-ui) var(--font-ui); text-align: left; cursor: pointer; transition: transform var(--dur-press) var(--ease-standard); -webkit-tap-highlight-color: transparent; }
-@media (hover: hover) { .qz-opt:hover { transform: translateY(-1px); } }
-.qz-opt:active { transform: scale(0.98); }
-.qz-opt[aria-pressed="true"] { background: var(--urban-slate); color: var(--pearl-whisper); }
-.qz-foot { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
-.qz-foot .qz-back { justify-self: start; min-width: 44px; }   /* the tap minimum across as well as up */
-.qz-step { display: flex; justify-content: center; gap: var(--s1); margin: 0; padding: 0; list-style: none; }
-.qz-dot { width: 10px; height: 10px; border-radius: var(--radius-round); border: 1px solid var(--urban-slate); }
-.qz-dot[data-done] { background: var(--urban-slate); }
+/* the deck: one question at a time in one grid cell, so the deck is as tall as its tallest card on every screen */
+.qz-deck { display: grid; justify-items: center; width: 100%; }
+.qz-cards { display: grid; }
+.qz-card { grid-area: 1 / 1; display: grid; grid-template-rows: auto auto 1fr auto; align-content: start; gap: var(--s3); user-select: none; -webkit-user-select: none; }
+.qz-card[hidden] { display: grid; visibility: hidden; }   /* a hidden card keeps its place in the cell (no jump as the questions change) */
+.qz-count { font-variant-numeric: tabular-nums; }
+.qz-opts { display: grid; align-content: start; }
+/* an answer: a line of words, 44 px to tap; hover and the answer taken are underlined; the answer taken stays while the
+   rest of the card wipes out, then goes itself (deck.ts) */
+.qz-opt { display: block; width: 100%; min-height: 44px; padding: 10px 0; background: none; border: 0; border-radius: 0; color: inherit; font: inherit; text-transform: inherit; letter-spacing: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; text-underline-offset: 0.4em; }
+@media (hover: hover) { .qz-opt:hover { text-decoration-line: underline; text-decoration-thickness: 1px; } }
+.qz-opt[aria-pressed="true"] { text-decoration-line: underline; text-decoration-thickness: 2px; }
+.qz-foot { display: flex; min-height: 44px; }
 
-/* the result: the shade large, the words beside it on the same Pearl panel */
-.qz-results { width: 100%; max-width: 480px; }
-.qz-result { display: grid; gap: var(--s3); justify-items: center; padding: var(--s4) var(--s3); }
+/* the result: the shade large, the words under it (beside it on laptops) */
+.qz-results { display: grid; }
+.qz-result { display: grid; gap: var(--s4); justify-items: start; }
 .qz-result[hidden] { display: none; }
-.qz-big { display: block; width: 160px; height: 160px; border-radius: var(--radius-round); }
+.qz-big { display: block; width: 120px; height: 120px; border-radius: var(--radius-round); }
 .qz-big[data-ring], .qz-mini-sw[data-ring] { border: 1px solid var(--urban-slate); }   /* a shade under 1.5:1 on Pearl (needsRing in config/quiz.ts): the family page's hairline (family.css --swr) */
-.qz-rtext { display: grid; gap: var(--s2); text-align: center; }   /* one gap carries the rhythm; no per-line margins (rule 15) */
-.qz-eyebrow { margin: 0; font-size: var(--fs-eyebrow); font-weight: var(--w-ui-strong); line-height: 1.2; }   /* type-system role 11 */
-.qz-shade { margin: 0; font: var(--w-display) var(--fs-tile-name) / var(--lh-tile) var(--font-display); letter-spacing: var(--ls-tile); outline-offset: 2px; }
-.qz-fam { margin: 0; font-size: var(--fs-family); font-variant-numeric: tabular-nums; }
-.qz-finish { margin: 0; font-size: var(--fs-family); }
-.qz-persona { margin: 0; font-size: var(--fs-legal); font-weight: var(--w-ui-strong); }
-.qz-text, .qz-palette { margin: 0; font-size: var(--fs-legal); line-height: var(--lh-ui); max-width: var(--measure-prose); }
-.qz-also-h { margin: 0; font-size: var(--fs-label); font-weight: var(--w-ui-strong); }
-.qz-also { display: grid; grid-template-columns: repeat(auto-fit, minmax(46px, 1fr)); gap: var(--s1); margin: 0; padding: 0; list-style: none; }   /* five compatible shades fit one row at every width; six need 316 px, so they fit from about 380 px up and the sixth wraps at 360; a long name wraps under its swatch */
-.qz-mini { display: grid; justify-items: center; align-content: start; gap: var(--s1); }
+/* without the fog (the poster tier, reduced motion, no JavaScript) the quiz stands on --night: there the dark shades under
+   3:1 against it take a Pearl hairline instead (needsRingNight), and the pale shades need none */
+html:not(.hero3d) .qz-big[data-ring], html:not(.hero3d) .qz-mini-sw[data-ring] { border: 0; }
+html:not(.hero3d) .qz-big[data-ring-night], html:not(.hero3d) .qz-mini-sw[data-ring-night] { border: 1px solid var(--pearl-whisper); }
+.qz-rtext { display: grid; gap: var(--s2); }   /* one gap carries the rhythm; no per-line margins (rule 15) */
+.qz-shade { font-size: var(--qz-fs-big); line-height: 1.1; outline-offset: 2px; }
+.qz-fam { font-variant-numeric: tabular-nums; }
+.qz-persona { margin-top: var(--s2); }
+.qz-text, .qz-palette { max-width: 60ch; }
+.qz-also-h { margin-top: var(--s2); }
+.qz-also { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--s1) var(--s3); padding: 0; list-style: none; }
+.qz-mini { display: flex; align-items: center; gap: var(--s1); min-height: 24px; }
 .qz-mini[hidden] { display: none; }
-.qz-mini-sw { display: block; width: 32px; height: 32px; border-radius: var(--radius-round); }
-.qz-mini-name { font-size: var(--fs-tile-caption); line-height: var(--lh-ui); text-align: center; }
-.qz-own { margin: 0; font: var(--w-display) var(--fs-clause) / var(--lh-h2) var(--font-display); letter-spacing: var(--ls-h2); }
-.qz-actions { display: grid; gap: var(--s2); justify-items: center; }
+.qz-mini-sw { flex: none; display: block; width: 16px; height: 16px; border-radius: var(--radius-round); }
+.qz-own { margin-top: var(--s2); font-size: var(--qz-fs-q); line-height: 1.25; text-wrap: balance; }
+.qz-actions { display: flex; flex-wrap: wrap; gap: 0 var(--s4); }
 
 /* the gift (PUBLIC_LEADS on) */
-.qz-gift { padding: 0 var(--inset) calc(var(--inset) + env(safe-area-inset-bottom, 0px)); }
+.qz-gift { padding: var(--s5) var(--inset) calc(var(--inset) + env(safe-area-inset-bottom, 0px)); }
 .qz-gift[hidden] { display: none; }
-.qz-gift-in { display: grid; gap: var(--s3); max-width: 480px; margin: 0 auto; padding: var(--s4) var(--s3); }
-.qz-gift-h { margin: 0; font: var(--w-display) var(--fs-clause) / var(--lh-h2) var(--font-display); letter-spacing: var(--ls-h2); }
-.qz-gift-sub { margin: 0; font-size: var(--fs-legal); line-height: var(--lh-ui); }
-.qz-form, .qz-fields, .qz-done { display: grid; gap: var(--s2); justify-items: start; }   /* the buttons sit at the left, under the text they answer */
+.qz-gift-in { display: grid; gap: var(--s3); max-width: 480px; margin: 0 auto; }
+.qz-gift-h { font-size: var(--qz-fs-q); line-height: 1.25; text-wrap: balance; }
+.qz-gift-sub { max-width: 60ch; }
+.qz-form, .qz-fields, .qz-done { display: grid; gap: var(--s2); justify-items: start; }
+.qz-done-text { max-width: 100%; overflow-wrap: anywhere; }   /* the address is one long word: it breaks anywhere rather than run past the gutter */
 .qz-fields[hidden], .qz-done[hidden] { display: none; }
-.qz-label { font-size: var(--fs-label); font-weight: var(--w-ui-strong); }
-.qz-input { width: 100%; min-height: 48px; padding: 0 var(--s2); border: 1px solid var(--urban-slate); border-radius: var(--radius-none); background: var(--pearl-whisper); color: var(--urban-slate); font: var(--w-ui) var(--fs-input) / var(--lh-input) var(--font-ui); }
-.qz-input[aria-invalid="true"] { border-width: 2px; }
-.qz-check { display: grid; grid-template-columns: auto 1fr; gap: var(--s2); align-items: center; min-height: 44px; font-size: var(--fs-label); font-weight: var(--w-ui-strong); cursor: pointer; }   /* type-system role 6: labels at 600 */
-.qz-check input { width: 20px; height: 20px; margin: 0; accent-color: var(--urban-slate); }
-.qz-err, .qz-msg { margin: 0; font-size: var(--fs-label); line-height: var(--lh-ui); font-weight: var(--w-ui); }   /* type-system note 10: validation and status lines at 400, the state carried by the words and the field border */
-.qz-err { min-height: calc(var(--fs-label) * var(--lh-ui)); }   /* one line is always reserved under a field: a message appearing or clearing (on blur, as the next control is pressed) never moves the controls below it */
-/* the status line stays in the tree (a live region entering with its text is not read); empty, it has no height */
-.qz-fine { margin: 0; font-size: var(--fs-small); line-height: var(--lh-small); }
-.qz-done-text { margin: 0; font-weight: var(--w-ui-strong); }
+/* the email field is a line to write on: the Pearl underline only, no box; the address keeps the case it is typed in */
+.qz-input { width: 100%; min-height: 44px; padding: 0; border: 0; border-bottom: 1px solid var(--pearl-whisper); border-radius: 0; background: transparent; color: var(--pearl-whisper); font: inherit; font-size: 16px; text-transform: none; letter-spacing: 0; caret-color: var(--pearl-whisper); }   /* 16 px: iOS Safari zooms the page on focusing a smaller field (DESIGN.md 8) */
+.qz-input[aria-invalid="true"] { border-bottom-width: 2px; }
+/* the consent tick is text too: the box itself stays in the tree for the keyboard and assistive technology, unseen, and
+   the row shows [ ] or [X] in the same type */
+.qz-check { display: grid; grid-template-columns: auto 1fr; gap: var(--s2); align-items: center; min-height: 44px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.qz-check input { position: absolute; width: 1px; height: 1px; margin: 0; opacity: 0; }
+.qz-tick { white-space: pre; }
+.qz-tick::before { content: "[ ]"; }
+.qz-check input:checked + .qz-tick::before { content: "[X]"; }
+/* autofill: the browsers' fill is !important in their own sheet, so it is held off (its transition never ends) and the
+   text kept Pearl; two rules, as a list with an unknown selector would drop both */
+.qz-input:-webkit-autofill { -webkit-text-fill-color: var(--pearl-whisper); caret-color: var(--pearl-whisper); transition: background-color 0s 86400s, color 0s 86400s; }
+.qz-input:autofill { -webkit-text-fill-color: var(--pearl-whisper); caret-color: var(--pearl-whisper); transition: background-color 0s 86400s, color 0s 86400s; }
+.qz-err { min-height: 1.45em; }   /* one line is always reserved under a field: a message appearing or clearing never moves the controls below it */
 
 /* laptops */
 @media (min-width: 900px) and (min-height: 600px) {
   .qz-stage { align-content: center; }
-  .qz-intro { max-width: 640px; padding: var(--s5); }
-  .qz-results, .qz-cards { max-width: 640px; }   /* the wider deck keeps most answers to one line */
-  .qz-gift-in { max-width: 640px; }
-  .qz-result { grid-template-columns: 160px 1fr; align-items: center; justify-items: start; padding: var(--s5); }
-  .qz-rtext { text-align: left; }
-  .qz-actions { grid-auto-flow: column; align-items: center; justify-items: start; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .quiz .btn, .qz-opt { transition: none; }
-  .qz-opt:hover, .qz-opt:active, .quiz .btn:hover, .quiz .btn:active { transform: none; }   /* no transform at all: the fill alone marks the answer taken */
+  .qz-intro, .qz-cards, .qz-results, .qz-gift-in { max-width: 640px; }
+  .qz-result { grid-template-columns: 160px 1fr; align-items: start; column-gap: var(--s5); }
+  .qz-big { width: 160px; height: 160px; }
+  .qz-gift-in { padding-left: calc(160px + var(--s5)); }   /* the gift's words start on the result's text column */
 }

@@ -21,6 +21,8 @@ export const QUIZ_COPY = {
   noscriptTail: ' instead.',
   /** each card's accessible name, "Question n of 10" */
   cardAria: (n: number) => `Question ${n} of ${QUIZ_QUESTION_COUNT}`,
+  /** the count over each question, in the labels' mono: "01 / 10" (aria-hidden; the card's name says it in words) */
+  count: (n: number) => `${String(n).padStart(2, '0')} / ${QUIZ_QUESTION_COUNT}`,
   back: 'Back',
   eyebrow: 'Your shade',
   fam: (family: string, index: number) => `${family}, shade ${index} of 24`,
@@ -169,9 +171,16 @@ export function luminance(hex: string): number {
   return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
 }
 
-/** A swatch under 1.5:1 against Pearl Whisper gets the 1 px Urban Slate hairline (the family page's --swr rule). */
+/** A swatch under 1.5:1 against Pearl Whisper gets the 1 px Urban Slate hairline (the family page's --swr rule); in the
+ *  quiz it applies on the fog (the 3D tier). */
 export function needsRing(hex: string): boolean {
   return (luminance('#f7f6f3') + 0.05) / (luminance(hex) + 0.05) < 1.5;
+}
+
+/** On the poster tier (reduced motion, no WebGL, no JavaScript) the quiz stands on --night #050506: a swatch under 3:1
+ *  against it (WCAG 1.4.11) gets a 1 px Pearl Whisper hairline there instead (review 2026-10-19). */
+export function needsRingNight(hex: string): boolean {
+  return (luminance(hex) + 0.05) / (luminance('#050506') + 0.05) < 3;
 }
 
 /** The lead endpoint contract (quiz.md 5): the Worker arrives with the lead infrastructure. */

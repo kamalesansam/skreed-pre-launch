@@ -161,15 +161,13 @@ test('FAMILY_3D: off by default in a build, dev under astro dev, on refuses a mi
   assert.throws(() => family3dMode('maybe', false), /must be off, dev or on/);
 });
 
-test('FAMILY_PAGES (G21): off in the production build until Reserve and the Wall exist, on in dev, test and staging builds', () => {
-  const prod = { dev: false, staging: false, hooks: false };
-  assert.equal(familyPagesOn(undefined, prod), false);
-  assert.equal(familyPagesOn(undefined, { ...prod, dev: true }), true);
-  assert.equal(familyPagesOn(undefined, { ...prod, hooks: true }), true);
-  assert.equal(familyPagesOn(undefined, { ...prod, staging: true }), true);
-  assert.equal(familyPagesOn('on', prod), true);
-  assert.equal(familyPagesOn('off', { dev: true, staging: true, hooks: true }), false);
-  assert.throws(() => familyPagesOn('yes', prod), /must be on or off/);
+test('FAMILY_PAGES: on in every build, production included (Sam, 2026-10-19), off only with PUBLIC_FAMILY_PAGES=off', () => {
+  assert.equal(familyPagesOn(undefined), true);
+  assert.equal(familyPagesOn(''), true);
+  assert.equal(familyPagesOn('on'), true);
+  assert.equal(familyPagesOn(' ON '), true);
+  assert.equal(familyPagesOn('off'), false);
+  assert.throws(() => familyPagesOn('yes'), /must be on or off/);
 });
 
 test('FAMILY_PAGES off: the landing mount carries no family-links.css and no script (review iteration 2, item 3)', () => {
@@ -180,7 +178,7 @@ test('FAMILY_PAGES off: the landing mount carries no family-links.css and no scr
   const front = wrap.split('---')[1];
   assert.doesNotMatch(wrap, /family-links\.css|links\.ts|<script/);
   assert.doesNotMatch(front, /^import .*FamilyLinksNav/m);
-  assert.match(front, /import\.meta\.env\.PUBLIC_FAMILY_PAGES === 'on'[\s\S]*\? \(await import\('\.\/FamilyLinksNav\.astro'\)\)\.default : null/);
+  assert.match(front, /import\.meta\.env\.PUBLIC_FAMILY_PAGES !== 'off' \? \(await import\('\.\/FamilyLinksNav\.astro'\)\)\.default : null/);
   const nav = read('src/components/family/FamilyLinksNav.astro');
   assert.match(nav, /import '\.\.\/\.\.\/styles\/family-links\.css'/);
   assert.match(nav, /<script>import '\.\.\/\.\.\/scripts\/family\/links\.ts';<\/script>/);

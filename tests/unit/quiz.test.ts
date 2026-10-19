@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { QUIZ_COPY, QUIZ_PERSONAS, QUIZ_QUESTIONS, QUIZ_QUESTION_COUNT, needsRing, pickShade, scoreQuiz, shadeHref, type PersonaId } from '../../src/config/quiz.ts';
+import { QUIZ_COPY, QUIZ_PERSONAS, QUIZ_QUESTIONS, QUIZ_QUESTION_COUNT, needsRing, needsRingNight, pickShade, scoreQuiz, shadeHref, type PersonaId } from '../../src/config/quiz.ts';
 import { SHADES } from '../../src/config/shades.gen.ts';
 
 const byId = new Map(SHADES.map((s) => [s.id, s]));
@@ -82,6 +82,15 @@ test('the family link carries the three-digit catalog number, and the hairline g
   // the CSS carries the generic rule the component's data-ring relies on
   const css = readFileSync(new URL('../../src/styles/quiz.css', import.meta.url), 'utf8');
   assert.match(css, /\.qz-big\[data-ring\][^{]*\{[^}]*border: 1px solid var\(--urban-slate\)/);
+});
+
+test('on the night ground (the poster tier) the dark shades under 3:1 against --night take a Pearl hairline instead, and the pale ones none (review 2026-10-19)', () => {
+  const night = [...new Set(QUIZ_PERSONAS.flatMap((p) => p.shades))].filter((id) => needsRingNight(byId.get(id)!.hex));
+  // Burgundy, Claret, Wine, Midnight, Sapphire, Chestnut, Fig, Pine, Navy, Prussian
+  assert.deepEqual(night.sort(), ['basic-brown-20', 'blissful-blue-15', 'blissful-blue-21', 'blissful-blue-22', 'blissful-blue-24', 'go-green-21', 'roaring-red-15', 'roaring-red-21', 'roaring-red-23', 'vivid-violet-16']);
+  const css = readFileSync(new URL('../../src/styles/quiz.css', import.meta.url), 'utf8');
+  assert.match(css, /html:not\(\.hero3d\) \.qz-big\[data-ring\], html:not\(\.hero3d\) \.qz-mini-sw\[data-ring\] \{ border: 0; \}/);
+  assert.match(css, /html:not\(\.hero3d\) \.qz-big\[data-ring-night\], html:not\(\.hero3d\) \.qz-mini-sw\[data-ring-night\] \{ border: 1px solid var\(--pearl-whisper\); \}/);
 });
 
 test('copy: sentence case headings, no em or en dash, no emoji, no banned words, no digits in a question (CLAUDE.md 3, 4, 16, 17)', () => {

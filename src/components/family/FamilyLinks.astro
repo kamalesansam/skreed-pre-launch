@@ -1,15 +1,13 @@
 ---
 // Section 2's family links, the mount point for the hero owner (docs/specs/family-page.md 2.2 and 13, step 1:
 // `<FamilyLinks slot="riders" />` in src/pages/index.astro). The nav, family-links.css and links.ts live in
-// FamilyLinksNav.astro. With FAMILY_PAGES off (the production default until Reserve and the Wall exist, G21) this
+// FamilyLinksNav.astro. FAMILY_PAGES is on in every build (Sam, 2026-10-19); with PUBLIC_FAMILY_PAGES=off this
 // component imports nothing, so the landing gets no dead links, no @view-transition rule and no script chunk (review
 // iteration 2, item 3). The condition must fold at build time (Astro bundles the scripts and styles of every imported
 // component, rendered or not), so it reads the PUBLIC_ variables, which Vite replaces statically, as the route does for
 // Island3D; familyPagesOn() (mode.ts) is the same rule with its input checks, and the build fails if the two disagree.
 import { familyPagesOn } from '../../scripts/family/mode.ts';
-const Nav = import.meta.env.PUBLIC_FAMILY_PAGES === 'on' || (import.meta.env.PUBLIC_FAMILY_PAGES !== 'off'
-  && (import.meta.env.DEV || import.meta.env.PUBLIC_STAGING === '1' || import.meta.env.PUBLIC_HERO_HOOKS === '1'))
-  ? (await import('./FamilyLinksNav.astro')).default : null;
+const Nav = import.meta.env.PUBLIC_FAMILY_PAGES !== 'off' ? (await import('./FamilyLinksNav.astro')).default : null;
 if ((Nav !== null) !== familyPagesOn()) throw new Error(`FamilyLinks: the folded FAMILY_PAGES test (${Nav !== null}) disagrees with familyPagesOn() (mode.ts); PUBLIC_FAMILY_PAGES must be exactly on or off`);
 ---
 {Nav && <Nav />}

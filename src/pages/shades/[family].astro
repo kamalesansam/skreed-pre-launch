@@ -17,7 +17,7 @@ import { NIGHT } from '../../config/tokens.ts';
 import { family3dMode, familyPagesOn } from '../../scripts/family/mode.ts';
 import { FAMILY_WT } from '../../scripts/family/loader-weights.ts';
 
-// FAMILY_PAGES off (the production default until Reserve and the Wall exist, G21): no page is emitted at all
+// FAMILY_PAGES off (PUBLIC_FAMILY_PAGES=off; on by default in every build since Sam's yes of 2026-10-19): no page is emitted at all
 export function getStaticPaths() {
   if (!familyPagesOn()) return [];
   return FAMILIES.map((fam) => ({ params: { family: fam.slug }, props: { fam } }));

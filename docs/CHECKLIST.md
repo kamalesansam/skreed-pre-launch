@@ -5,10 +5,13 @@ Each item is PASS or FAIL with a one-line reason. A section ships only when ever
 ## A. Brand and design (from CLAUDE.md)
 A1. Zero violations of rules 1–50 in CLAUDE.md. List any violation by rule number.
    Approved exception (Sam, 2026-10-09; hero only): rule 12 (E-12), rules 13 and 42 (E-13/42), rules 1, 21 and 40 (E-1/21/40), rule 24 (E-24). See `docs/specs/hero.md` section 10.
+   Approved exception (Sam, 2026-10-19; section 3 only): rules 1, 12, 20, 21, 42 and 43 for section 2's fog under the quiz (E-S3-bg); rules 4 and 19 for the quiz's IBM Plex Mono (E-S3-font); rule 12's motion list for the quiz's decode (E-S3-motion). See `docs/specs/hero.md` section 10.
 A2. Colours used come only from `docs/data/shades-240.json`, Pearl Whisper, Urban Slate and Ember Luxe, as CSS tokens. No invented greys; the only derived neutral is `--skeleton`.
    Approved exception (Sam, 2026-10-09; hero only): `--night` and Pearl Whisper at alpha as light (E-A2); the scene's light colours as render parameters (E-A2b).
+   Approved exception (Sam, 2026-10-19; section 3 only): the colours of section 2's fog under the quiz, render parameters of the hero island (E-S3-bg).
 A3. Type follows `docs/brand/type-system.md`: Poppins 700 sentence-case headlines, Source Serif 4 roman for first-person prose only, Open Sans for UI, numerals (tabular) and legal prose. Only the four shipped files; no italic; no digits inside h1, h2 or the manifesto; no face under 12 px.
    Approved exception (Sam, 2026-10-09; hero only): the hero's countdown, loader and label sizes (E-A3).
+   Approved exception (Sam, 2026-10-19; section 3 only): the quiz is set in section 2's label type, IBM Plex Mono Medium in capitals at 12 to 36 px, in place of Poppins and Open Sans, from two self-hosted files outside the four (E-S3-font; type-system principle 9).
 A4. Copy: Skreed voice (confident, minimal, short sentences), no buzzwords, no em dashes, no emojis, real shade names, no invented facts or counts.
 A5. The section shows the real product (case render, shades or swatches), not an abstract stand-in.
 
@@ -23,12 +26,14 @@ C1. Critical JS ≤ 60 KB gz for the page; this section adds no more than its bu
 C2. Images: AVIF with WebP fallback, sizes set, lazy below the fold, hero ≤ 120 KB.
 C3. No WebGL in a spine section. No layout thrash: animations use transform/opacity only.
    Approved exception (Sam, 2026-10-09; hero only): the hero canvas is the one WebGL island (E-C3); the countdown's clip-path ride and the glitch's SVG attribute animation (E-C3b).
+   Approved exception (Sam, 2026-10-19; section 3 only): the hero island keeps rendering section 2's fog under the quiz (E-S3-bg). The quiz's own motion, the decode, uses no transform: it animates each glyph's opacity and, while a glyph rolls, swaps its character for another of the same width, so the second sentence holds there for movement, and the character swap is part of E-S3-motion.
 C4. Lighthouse mobile ≥ 90 performance on the page after this section is added (run it; paste the number).
    Pending Sam (E-C4): the hero's graded run is the poster tier that headless Chromium gets; the 3D path is recorded, and traced on a real phone on staging (hero.md D23, section 11).
 
 ## D. Motion and states
 D1. Visible at rest: nothing waits at opacity 0 for an observer.
    Approved exception (Sam, 2026-10-09; hero only): the hero's loader on the 3D path (E-H1).
+   Section 3 (Sam, 2026-10-19; E-S3-motion): the quiz's text decodes out and in only when a control is pressed (Begin, an answer, Back, Try again); the intro is visible at rest, so D1 holds there, and reduced motion makes the decode a 0.2 s fade (D2).
 D2. `prefers-reduced-motion` honoured; the section still makes sense with motion off.
    Approved exception (Sam, 2026-10-09; hero only): the hero honours it through `matchMedia` and CSS because it loads no GSAP (E-GSAP). Pending Sam: which tier reduced motion gets (default: the poster).
 D3. Every UI state designed where data or input exists: empty, loading (skeleton), error, offline, no results, permission denied, validation, success.
@@ -41,6 +46,7 @@ E2. `visual-critique:critique-screen` run on the 390 px screenshot; its findings
    Pending: as E1.
 E3. Accessibility: semantic HTML, labelled controls, visible focus, AA contrast on both neutrals.
    Pending Sam (E-2.2.2): the hero's ambient scene motion and ticking countdown run without a pause control; the OS reduced-motion setting turns both off. If declined, hero.md section 10 specifies the control.
+   Approved exception (Sam, 2026-10-19; section 3 only): Pearl Whisper text straight on the fog with no panel, below AA (E-S3-contrast: medians 1.47 to 3.27:1, worst 1.43:1, over three runs on the 3D tier, the figures changing from run to run as the fog drifts; about 19:1 on `--night` on the poster tier and under reduced motion; the figures are back with Sam in `docs/specs/quiz.md` section 10); the fog under the quiz drifts with no pause control (E-S3-bg, WCAG 2.2.2, as E-2.2.2 for the hero).
 E4. For anything that writes data: the relevant rows of `docs/research/08-prelaunch-security-checklist.md` pass.
 E5. Database audit (run once the schema exists, re-run after any migration). Each of the five must be answered with evidence from the code, not assumed:
   - N+1 queries: the counters endpoint reads all shade counts in one query (`select shade_id, count from shade_counts`), never one query per tile.
