@@ -84,8 +84,8 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
     fogGround.update(hb, t);
     if (ctx.moon.visible) updateFogLogoRect(ctx.FOG, camA, logo.position.y, renderer);   // F13
 
-    // section 4 (docs/specs/section-4.md 5, section4/director.ts): the hall, the transition or the universe into their own
-    // targets, and the plan for the composite: the third wipe from the fog, the section's frame, the fourth wipe
+    // section 4 (docs/specs/section-4.md 5, section-4-world.md 5, section4/director.ts): the hall, the bubble or the world
+    // into their own targets, and the plan for the composite: the third wipe from the fog, the section's frame, the fourth wipe
     const plan = room ? room.step({ t, dt, ratio, pointer, touch: ctx.touch, mouseRate: P.mouse, fog: fogGround.out }) : null;
     const roomOn = !!plan && plan.on && !!plan.tex;
 
@@ -122,7 +122,7 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
     if (inLoop) rideLoop(els, plan?.loop ?? 0, innerWidth / innerHeight, !!plan?.toneDark);
     else {
       rideCopy(els, tp, innerWidth / innerHeight, !!S2 && S2.ready);             // F16
-      if (roomOn && plan!.wipeIn >= 0.5) window.__skreedLogo?.setTone(plan!.toneDark);   // the logotype over the section: Pearl on the hall, Urban Slate on the universe
+      if (roomOn && plan!.wipeIn >= 0.5) window.__skreedLogo?.setTone(plan!.toneDark);   // the logotype over the section: Pearl on the hall, Urban Slate over the garden and the lands
     }
   }
   function frame() {

@@ -1,5 +1,6 @@
-// Section 4's product models (docs/specs/section-4.md 12; scripts/room/products.py and pack.mjs): each file in the
-// manifest exists with its hash, uses only the extensions the site can decode without WebAssembly, carries no
+// Section 4's product models (docs/specs/section-4.md 12; scripts/room/products.py and pack.mjs), Blender references only
+// since the universe went (section-4-world.md 6: scripts/room/models/, never in public/): each file in the manifest
+// exists with its hash, uses only the extensions the site can decode without WebAssembly, carries no
 // materials, images or colours, and decodes through three's GLTFLoader with the vendored pure-JS meshopt decoder to the
 // named parts at the manifest's life size (metres, standing on y = 0).
 import { test } from 'node:test';
@@ -11,24 +12,25 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from '../../src/scripts/family/three/vendor/meshopt-decoder-reference.js';
 import PRODUCTS from '../../src/data/room-products.json' with { type: 'json' };
 
-type Entry = { url: string; sha256: string; bytes: number; tris: number; sizeMm: number[]; parts: string[] };
+type Entry = { path: string; sha256: string; bytes: number; tris: number; sizeMm: number[]; parts: string[] };
 const ENTRIES = Object.entries(PRODUCTS as Record<string, Entry>);
-const file = (url: string) => readFileSync(new URL(`../../public${url}`, import.meta.url));
+const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url));
 
 test('the manifest names the three products, each file present with its hash and size', () => {
   assert.deepEqual(ENTRIES.map(([k]) => k).sort(), ['airpods', 'lenskin', 'wallet']);
   for (const [k, e] of ENTRIES) {
-    const buf = file(e.url);
+    assert.match(e.path, /^scripts\/room\/models\/[a-z]+\.[0-9a-f]{8}\.glb$/, `${k}: a Blender reference, not a public file`);
+    const buf = file(e.path);
     assert.equal(buf.length, e.bytes, k);
     assert.equal(createHash('sha256').update(buf).digest('hex'), e.sha256, k);
-    assert.ok(e.url.includes(e.sha256.slice(0, 8)), `${k}: the name carries the hash`);
+    assert.ok(e.path.includes(e.sha256.slice(0, 8)), `${k}: the name carries the hash`);
     assert.ok(e.bytes <= 50_000, `${k}: ${e.bytes} B`);
   }
 });
 
 test('only quantisation and meshopt, no materials, images, colours or UVs (the CSP and the island\'s own materials)', () => {
   for (const [k, e] of ENTRIES) {
-    const buf = file(e.url), jl = buf.readUInt32LE(12), json = JSON.parse(buf.subarray(20, 20 + jl).toString('utf8'));
+    const buf = file(e.path), jl = buf.readUInt32LE(12), json = JSON.parse(buf.subarray(20, 20 + jl).toString('utf8'));
     assert.deepEqual([...json.extensionsRequired].sort(), ['EXT_meshopt_compression', 'KHR_mesh_quantization'], k);
     for (const key of ['materials', 'images', 'textures', 'samplers', 'animations', 'skins', 'cameras']) assert.equal(json[key], undefined, `${k}: ${key}`);
     for (const m of json.meshes) for (const p of m.primitives) assert.deepEqual(Object.keys(p.attributes).sort(), ['NORMAL', 'POSITION'], `${k}: ${m.name}`);
@@ -38,7 +40,7 @@ test('only quantisation and meshopt, no materials, images, colours or UVs (the C
 test('each decodes to its named parts at life size, standing on y = 0', async () => {
   await MeshoptDecoder.ready;
   for (const [k, e] of ENTRIES) {
-    const buf = file(e.url);
+    const buf = file(e.path);
     const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parseAsync(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.length), '');
     const names: string[] = []; let tris = 0;
     gltf.scene.traverse((o) => { const m = o as Mesh; if (m.isMesh) { names.push(m.name); tris += (m.geometry.index?.count ?? 0) / 3; } });

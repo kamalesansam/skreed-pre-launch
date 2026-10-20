@@ -16,11 +16,10 @@
 import { Color, ShaderMaterial, Vector2, WebGLRenderTarget, type Texture, type WebGLRenderer } from 'three';
 import { fsCam, fsScene } from '../section2/background.ts';
 import { FS_UV_VERT } from './post.ts';
-import { TRANSITION } from '../../../config/room.ts';
 import { PEARL_WHISPER, URBAN_SLATE } from '../../../config/tokens.ts';
 import { clamp01, smoothstep } from '../util/math.ts';
 
-/** The bubble's numbers (spec 2 "The bubble"); here until the integrator moves them into config/room.ts. */
+/** The bubble's numbers (spec 2 "The bubble"). Tune's range for bubbleMs is world.ts's WORLD_RANGES (what the first ring pass allows), inside msRange. */
 export interface BubbleConstants {
   /** seconds after the press the bubble starts */
   readonly start: number;
@@ -256,18 +255,8 @@ export interface TransitionPass {
   dissolve(from: Texture, to: Texture, ms: number): number;
   /** a straight mix of the two frames by p (the fog's 'fade' hand-off) */
   plain(from: Texture, to: Texture, p: number): void;
-  /**
-   * The old entry point, kept so the current director compiles and runs until the integrator moves it onto bubble(),
-   * dissolve() and plain(): p 0 to 1 over the transition; bandW, angle and sweep are ignored (the bands are gone);
-   * reduced the dissolve over the old fade-in's window; plain a straight mix. The bubble runs over the last part of p,
-   * from where the current director starts drawing the universe, at the default bubbleMs's pace.
-   */
-  run(from: Texture, to: Texture, p: number, bandW: number, angle: number, sweep: readonly [number, number], reduced: boolean, plain?: boolean): void;
   dispose(): void;
 }
-
-/** the old director's p where it starts drawing the universe (director.ts, toIn[0] - 0.03), and where its reduced fade-in began */
-const LEGACY_FROM = TRANSITION.toIn[0] - 0.03, LEGACY_REDUCED_FROM = 0.55;
 
 export function createTransition(renderer: WebGLRenderer): TransitionPass {
   // the outline and Urban Slate as display values: the pass's targets are read as sRGB (three's Color holds a hex as linear)
@@ -303,12 +292,6 @@ export function createTransition(renderer: WebGLRenderer): TransitionPass {
     },
     dissolve(from, to, ms) { const p = dissolveAt(ms); mixAt(from, to, p); return p; },
     plain(from, to, p) { mixAt(from, to, p); },
-    run(from, to, p, _bandW, _angle, _sweep, reduced, plain = false) {
-      if (plain) { mixAt(from, to, p); return; }
-      if (reduced) { pass.dissolve(from, to, ((p - LEGACY_REDUCED_FROM) / (1 - LEGACY_REDUCED_FROM)) * BUBBLE.dissolveMs); return; }
-      const u = (p - LEGACY_FROM) / (1 - LEGACY_FROM);
-      if (u <= 0) mixAt(from, to, 0); else pass.bubble(from, to, u * BUBBLE.ms, BUBBLE.ms);
-    },
     dispose() { rt?.dispose(); rt = null; mat.dispose(); },
   };
   return pass;

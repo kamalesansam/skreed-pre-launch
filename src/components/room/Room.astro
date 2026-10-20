@@ -1,64 +1,99 @@
 ---
-// Section 4, the entrance and the Skreed universe (docs/specs/section-4.md 2 and 5), in the hero's after-track slot after
-// the quiz. On the 3D path a track of 13 screens (15 once entered) with a sticky stage over the hero's canvas, which draws
-// the hall, the transition and the universe; the stage holds the DOM the section needs: the prompt at the door (the
-// section's first tabbable element, never hidden in the hall), the focusable pad that takes the walking keys, the skip,
-// the universe's label panel and its products as real buttons (a roving tabindex), the hint and the loading line. On the
-// poster tier and without JavaScript the two stills and the list stand in. scripts/room/walk.ts drives it (lazy, when the
-// section nears). No style attributes (the CSP has no style-src-attr): positions are set through the CSSOM.
-import { ROOM_COPY as R, ROOM_PRODUCTS } from '../../config/room.ts';
+// Section 4, the entrance and the Skreed world (docs/specs/section-4.md 2 and 5 for the hall, docs/specs/section-4-world.md
+// 2, 3 and 5 "The DOM" for the rest), in the hero's after-track slot after the quiz. On the 3D path a track of 13 screens
+// (12 + 2N once entered, N the lands Sam has approved) with a sticky stage over the hero's canvas, which draws the hall,
+// the bubble and the world; the stage holds only what the section needs over it, all plain text on the scene in section
+// 2's label type (Sam, 2026-10-20): the prompt at the door (the section's first tabbable element, never hidden in the
+// hall, and absent with no land), the pad that takes the keys, Skip, the hints and the loading lines, the lands as a list
+// (each its picture, its name, family line, catalog line and count, and its alt), the visually hidden travel buttons and
+// the live region. On the poster tier the hall's still, then the lands in a column; without JavaScript the same from the
+// noscript copies. scripts/room/walk.ts drives it (lazy, when the section nears). No style attributes (the CSP has no
+// style-src-attr): positions are set through the CSSOM.
+import { LAND_SIZE, ROOM_COPY as R, ROOM_LANDS, fill } from '../../config/room.ts';
 import '../../styles/room.css';
 
-const products = ROOM_PRODUCTS;
-// the poster tier's stills (scripts/room/render-stills.mjs renders them from our own build); absent files render nothing
-const files = import.meta.glob<string>('../../assets/room/stills/*.{avif,webp}', { eager: true, query: '?url', import: 'default' });
+const lands = ROOM_LANDS, N = lands.length;
+// the poster tier's still of the hall (scripts/room/render-stills.mjs renders it from our own build); absent files render nothing
+const files = import.meta.glob<string>('../../assets/room/stills/hall-*.{avif,webp}', { eager: true, query: '?url', import: 'default' });
 const still = (name: string) => {
   const avif = files[`../../assets/room/stills/${name}.avif`], webp = files[`../../assets/room/stills/${name}.webp`];
   return avif && webp ? { avif, webp } : null;
 };
-const stills = (['hall', 'universe'] as const).map((which) => ({ which, portrait: still(`${which}-portrait`), wide: still(`${which}-wide`) })).filter((s) => s.portrait && s.wide);
+const hp = still('hall-portrait'), hw = still('hall-wide'), hall = hp && hw ? { portrait: hp, wide: hw } : null;
+const P = LAND_SIZE.portrait, Wd = LAND_SIZE.wide;
 ---
-<section class="room" id="room" aria-label={R.aria} data-state="hall">
+<section class="room" id="room" aria-label={R.aria} data-state="hall" data-lands={N}>
   <div class="rm-track">
     <div class="rm-stage" id="rmStage">
-      {/* the stills load only on the poster tier, when the section nears (walk.ts swaps data-srcset in), so the first view and
-          the 3D path never fetch them; without JavaScript the noscript copy stands in */}
-      {stills.map((s) => (
-        <picture class="rm-still" data-which={s.which} data-lazy>
-          <source media="(orientation: portrait)" data-srcset={s.portrait!.avif} type="image/avif" />
-          <source media="(orientation: portrait)" data-srcset={s.portrait!.webp} type="image/webp" />
-          <source data-srcset={s.wide!.avif} type="image/avif" />
-          <img data-src={s.wide!.webp} alt={s.which === 'hall' ? R.stillHallAlt : R.stillRoomAlt} width="1280" height="800" decoding="async" />
+      {/* the still loads only on the poster tier, when the section nears (walk.ts swaps data-srcset in), so the first view and
+          the 3D path never fetch it; without JavaScript the noscript copy stands in */}
+      {hall && (
+        <picture class="rm-still" data-lazy>
+          <source media="(orientation: portrait)" data-srcset={hall.portrait.avif} type="image/avif" width="720" height="1280" />
+          <source media="(orientation: portrait)" data-srcset={hall.portrait.webp} type="image/webp" width="720" height="1280" />
+          <source data-srcset={hall.wide.avif} type="image/avif" />
+          <img data-src={hall.wide.webp} alt={R.stillHallAlt} width="1280" height="800" decoding="async" />
         </picture>
-      ))}
+      )}
       <noscript>
-        {stills.map((s) => (
-          <picture class="rm-still" data-which={s.which}>
-            <source media="(orientation: portrait)" srcset={s.portrait!.avif} type="image/avif" />
-            <source media="(orientation: portrait)" srcset={s.portrait!.webp} type="image/webp" />
-            <source srcset={s.wide!.avif} type="image/avif" />
-            <img src={s.wide!.webp} alt={s.which === 'hall' ? R.stillHallAlt : R.stillRoomAlt} width="1280" height="800" loading="lazy" decoding="async" />
+        {hall && (
+          <picture class="rm-still">
+            <source media="(orientation: portrait)" srcset={hall.portrait.avif} type="image/avif" width="720" height="1280" />
+            <source media="(orientation: portrait)" srcset={hall.portrait.webp} type="image/webp" width="720" height="1280" />
+            <source srcset={hall.wide.avif} type="image/avif" />
+            <img src={hall.wide.webp} alt={R.stillHallAlt} width="1280" height="800" loading="lazy" decoding="async" />
           </picture>
-        ))}
+        )}
       </noscript>
-      <button type="button" class="btn rm-enter" id="rmEnter"><span class="rm-key" aria-hidden="true">{R.key}</span><span class="rm-enter-text">{R.enter}</span></button>
-      <div class="rm-pad" id="rmPad" tabindex="0" aria-label={R.stageAria}></div>
-      <div class="rm-skipwrap" id="rmSkipWrap" hidden><button type="button" class="txtbtn rm-skip" id="rmSkip">{R.skip}</button></div>
-      <p class="rm-pill rm-label" id="rmLabel" data-touch={R.roomHintTouch} data-keys={R.roomHintKeys} hidden>{R.roomHintTouch}</p>
-      <ol class="rm-products" id="rmProducts" aria-label={R.productsAria}>
-        {products.map((p, i) => (
-          <li class="rm-item" data-i={i} data-id={p.id}>
-            <button type="button" class="rm-product" data-i={i} tabindex={i === 0 ? '0' : '-1'} aria-labelledby={`rmName-${p.id}`} aria-describedby={`rmLine-${p.id}`}>
-              <span class="rm-name" id={`rmName-${p.id}`}>{p.name}</span>
-              <span class="rm-line" id={`rmLine-${p.id}`} data-trim={p.line} data-catalog={p.lineCatalog}>{p.line}</span>
-            </button>
-          </li>
-        ))}
-      </ol>
-      <p class="rm-pill rm-hint" id="rmHint" data-touch={R.hintTouch} data-keys={R.hintKeys} hidden>{R.hintTouch}</p>
-      <p class="rm-pill rm-loading" id="rmLoading" role="status" hidden>{R.loading}</p>
+      <button type="button" class="rm-enter rm-link" id="rmEnter" aria-keyshortcuts="E" hidden={N === 0}><span class="rm-key" aria-hidden="true">{R.key}</span><span class="rm-enter-text">{R.enter}</span></button>
+      <div class="rm-pad" id="rmPad" tabindex="0" role="group" aria-label={R.stageAria}></div>
+      <button type="button" class="rm-skip rm-link" id="rmSkip" hidden>{R.skip}</button>
+      <p class="rm-line rm-hint" id="rmHint" data-touch={R.hintTouch} data-keys={R.hintKeys} hidden>{R.hintTouch}</p>
+      <p class="rm-line rm-loading" id="rmLoading" role="status" hidden>{R.loading}</p>
+      {N > 0 && <h2 class="sr-only">{R.landsTitle}</h2>}
+      {N > 0 && (
+        <ol class="rm-lands" id="rmLands" aria-label={R.landsAria} data-hint-touch={R.landHintTouch} data-hint-keys={R.landHintKeys}>
+          {lands.map((l) => (
+            <li class="rm-land" data-id={l.id} data-i={l.i}>
+              <picture class="rm-land-pic" data-lazy>
+                <source media="(orientation: portrait)" data-srcset={l.pics.portrait.avif} type="image/avif" width={P.width} height={P.height} />
+                <source media="(orientation: portrait)" data-srcset={l.pics.portrait.webp} type="image/webp" width={P.width} height={P.height} />
+                <source data-srcset={l.pics.wide.avif} type="image/avif" />
+                <img data-src={l.pics.wide.webp} alt={l.alt} width={Wd.width} height={Wd.height} loading="lazy" decoding="async" />
+              </picture>
+              <div class="rm-land-text">
+                <h3 class="rm-land-name" id={`rmName-${l.id}`} tabindex="-1">{l.name}</h3>
+                <p class="rm-land-family">{l.family}</p>
+                <p class="rm-land-line">{l.line}</p>
+                <p class="rm-land-count">{fill(R.count, { n: l.i + 1, N })}</p>
+                <p class="rm-land-more" role="status" hidden></p>
+              </div>
+              <p class="sr-only rm-land-alt" id={`rmAlt-${l.id}`}>{l.alt}</p>
+            </li>
+          ))}
+        </ol>
+      )}
+      {N > 1 && <button type="button" class="rm-prev" id="rmPrev" hidden>{R.prev}</button>}
+      {N > 1 && <button type="button" class="rm-next" id="rmNext" hidden>{R.next}</button>}
       <p class="sr-only" id="rmLive" aria-live="polite"></p>
-      <noscript><p class="rm-pill rm-noscript">{R.noscript}</p></noscript>
+      <noscript>
+        <p class="rm-line rm-noscript">{R.noscript}</p>
+        {N > 0 && (
+          <ol class="rm-lands rm-lands-static" aria-label={R.landsAria}>
+            {lands.map((l) => (
+              <li class="rm-land">
+                <picture class="rm-land-pic">
+                  <source media="(orientation: portrait)" srcset={l.pics.portrait.avif} type="image/avif" width={P.width} height={P.height} />
+                  <source media="(orientation: portrait)" srcset={l.pics.portrait.webp} type="image/webp" width={P.width} height={P.height} />
+                  <source srcset={l.pics.wide.avif} type="image/avif" />
+                  <img src={l.pics.wide.webp} alt={l.alt} width={Wd.width} height={Wd.height} loading="lazy" decoding="async" />
+                </picture>
+                <div class="rm-land-text"><h3 class="rm-land-name">{l.name}</h3><p class="rm-land-family">{l.family}</p><p class="rm-land-line">{l.line}</p><p class="rm-land-count">{fill(R.count, { n: l.i + 1, N })}</p></div>
+              </li>
+            ))}
+          </ol>
+        )}
+      </noscript>
     </div>
   </div>
   <div class="rm-loopend" id="rmLoopEnd" aria-hidden="true"></div>

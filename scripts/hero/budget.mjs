@@ -8,7 +8,8 @@
 // land-<id>-wide.*), their depth maps (land-<id>-<class>-depth.*), the park (park.*, park-*) and the clips (.mp4). Every
 // byte line of its section 6 is a threshold: scripts count at gzip, everything else as stored (the bytes a visitor fetches
 // when the edge does not compress them), gzip printed beside it for reference. AC8's formats are checked too: each picture
-// in AVIF with its WebP twin, each land's <img> with width and height. Any line broken or check failed exits 1 after the
+// in AVIF with its WebP twin and in no other format (a land picture, depth map, still or lightmap in JPEG, PNG or GIF is
+// found by its name all the same, and stops the build), each land's <img> with width and height. Any line broken or check failed exits 1 after the
 // whole report. A line Sam has still to rule on prints "over, pending Sam" past his figure and stops the build only past
 // the spec's hard figure. What it cannot read from a dist (pixel sizes, the clips' tracks, GPU memory) is printed as such.
 // The mode (build, test, staging: which npm script made the dist) and the pick (PUBLIC_PARK_TRAVEL, A, B or C) come from
@@ -44,8 +45,10 @@ const walk = (p, group) => { if (seen.has(p)) return; seen.add(p); const f = joi
 for (const r of jsRefs(html).stat) walk(r, 'critical js');
 // the island chunk (dynamic import from the HeroStage chunk) and its data
 const heroChunk = [...new Set(rows.filter((r) => r.group === 'critical js').flatMap((r) => { const { stat, dyn } = jsRefs(readFileSync(join(dist, r.name), 'utf8')); return [...stat, ...dyn]; }).filter(isHero))];
-// the island's data: every hashed file name the chunk carries (Vite emits ?url imports as /_astro/<name>.<hash>.<ext> or as a name resolved against import.meta.url)
-for (const h of heroChunk) add('island js', h, join(dist, h));
+// the island chunk and its own static imports (the bundler may split what the island shares with the section chunks it
+// loads, three among it, into a chunk of its own that the island imports: it loads with the island, so it is the island's)
+const walkIsland = (p) => { if (seen.has(p)) return; seen.add(p); const f = join(dist, p); if (!existsSync(f)) return; add('island js', p, f); for (const r of jsRefs(readFileSync(f, 'utf8')).stat) walkIsland(r); };
+for (const h of heroChunk) walkIsland(h);
 // the lazy quiz chunk (quiz.md 6): reached only through an import() from the page's module scripts, never statically and never
 // the island; the deck chunk by name, or any such chunk that imports config/quiz. Its own static imports not already counted follow it.
 for (const p of [...dynamic].filter((p) => !seen.has(p) && !isHero(p) && existsSync(join(dist, p)))) if (/deck/.test(p) || /config\/quiz/.test(readFileSync(join(dist, p), 'utf8'))) walk(p, 'quiz js (lazy)');
@@ -71,24 +74,29 @@ for (const p of graph.keys()) add(roomGroup(p), p, join(dist, p));
 
 // section 4's files. By name in dist/_astro: the lands and their depth maps, the park, the hall and its stills; the clips
 // anywhere in dist; the garden as the files of src/assets/room/garden that ship byte for byte (a far plate has "plate" in
-// its name, every other file there is a depth card). The rest of what the section's chunks name stays "room data".
-const H = '[A-Za-z0-9_-]+';
-const LAND = new RegExp(`^land-([a-z0-9-]+?)-(portrait|wide)\\.${H}\\.(avif|webp)$`);
-const DEPTH = new RegExp(`^land-([a-z0-9-]+?)(?:-(portrait|wide))?-depth\\.${H}\\.(avif|webp)$`);
-const STILL = new RegExp(`^hall-(portrait|wide)\\.${H}\\.(avif|webp)$`);
-const HALL_GLB = new RegExp(`^hall\\.${H}\\.glb$`), HALL_LIGHT = new RegExp(`^hall-lightmap\\.${H}\\.(avif|webp)$`);
+// its name, every other file there is a depth card). The rest of what the section's chunks name stays "room data". A
+// picture is found by its name in any image format (IMG), so one in a format AC8 does not allow is counted and refused
+// rather than missed.
+const H = '[A-Za-z0-9_-]+', IMG = 'avif|webp|jpe?g|png|gif';
+const LAND = new RegExp(`^land-([a-z0-9-]+?)-(portrait|wide)\\.${H}\\.(${IMG})$`);
+const DEPTH = new RegExp(`^land-([a-z0-9-]+?)(?:-(portrait|wide))?-depth\\.${H}\\.(${IMG})$`);
+const STILL = new RegExp(`^hall-(portrait|wide)\\.${H}\\.(${IMG})$`);
+const HALL_GLB = new RegExp(`^hall\\.${H}\\.glb$`), HALL_LIGHT = new RegExp(`^hall-lightmap\\.${H}\\.(${IMG})$`);
+/** the formats a picture may ship in (AC8), and a name's extension as the format key (jpg and jpeg alike) */
+const SHIPS = new Set(['avif', 'webp']);
+const fmtOf = (ext) => ext.toLowerCase().replace(/^jpg$/, 'jpeg');
 const files = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap((d) => d.isDirectory() ? files(join(dir, d.name)) : [join(dir, d.name)]);
 const room = [];   // { group, name, stored, kind fields }
 const addFile = (group, p, extra) => { const name = '/' + relative(dist, p); add(group, name, p); room.push({ group, name, stored: raw(p), ...extra }); };
 for (const n of astroFiles) {
   const p = join(dist, '_astro', n);
   let m;
-  if ((m = LAND.exec(n))) addFile('room land', p, { id: m[1], cls: m[2], fmt: m[3] });
-  else if ((m = DEPTH.exec(n))) addFile('room depth', p, { id: m[1], cls: m[2], fmt: m[3] });
-  else if (isParkAsset(n)) addFile('room park', p, { kind: n.endsWith('.glb') ? 'glb' : /lightmap/.test(n) ? 'lightmap' : 'other', fmt: n.split('.').pop() });
-  else if ((m = STILL.exec(n))) addFile('room still', p, { cls: m[1], fmt: m[2] });
+  if ((m = LAND.exec(n))) addFile('room land', p, { id: m[1], cls: m[2], fmt: fmtOf(m[3]) });
+  else if ((m = DEPTH.exec(n))) addFile('room depth', p, { id: m[1], cls: m[2], fmt: fmtOf(m[3]) });
+  else if (isParkAsset(n)) addFile('room park', p, { kind: n.endsWith('.glb') ? 'glb' : /lightmap/.test(n) ? 'lightmap' : 'other', fmt: fmtOf(n.split('.').pop()) });
+  else if ((m = STILL.exec(n))) addFile('room still', p, { cls: m[1], fmt: fmtOf(m[2]) });
   else if (HALL_GLB.test(n)) addFile('room data', p, { hall: 'glb' });
-  else if ((m = HALL_LIGHT.exec(n))) addFile('room data', p, { hall: 'light', fmt: m[1] });
+  else if ((m = HALL_LIGHT.exec(n))) addFile('room data', p, { hall: 'light', fmt: fmtOf(m[1]) });
 }
 for (const p of files(dist).filter((f) => /\.mp4$/i.test(f))) addFile('room clip', p, { cls: /portrait/.test(basename(p)) ? 'portrait' : /wide/.test(basename(p)) ? 'wide' : null });
 const gardenDir = join(ROOT, 'src/assets/room/garden');
@@ -101,12 +109,11 @@ if (existsSync(gardenDir)) for (const src of files(gardenDir)) {
   for (const n of same) addFile('room garden', join(dist, '_astro', n), { part: /plate/.test(stem) ? 'plate' : 'card', fmt: ext });
   if (/^(?:avif|webp)$/.test(ext)) gardenPics.push({ file: basename(src), named: named.length, matched: same.length > 0 });
 }
-// the rest of what the section's chunks name: the old universe's scene and models until they go (counted as stored), and
-// the family page's case model it shares (public/models)
+// the rest of what the section's chunks name (counted as stored): the universe and its product models went with
+// universe.ts, so anything left here is new and shows in the table
 for (const p of graph.keys()) {
   const src = readFileSync(join(dist, p), 'utf8');
   for (const d of new Set([...src.matchAll(/[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.(?:glb|avif|webp)\b/g)].map((m) => m[0]))) if (existsSync(join(dist, '_astro', d)) && !rows.some((x) => x.name.endsWith('/' + d))) add('room data', '/_astro/' + d, join(dist, '_astro', d));
-  for (const d of new Set([...src.matchAll(/\/models\/(?:case\.lod1|wallet|airpods|lenskin)\.[a-f0-9]+\.glb/g)].map((m) => m[0]))) if (existsSync(join(dist, d)) && !rows.some((x) => x.name === d)) rows.push({ group: 'room data', name: d, raw: raw(join(dist, d)), gz: raw(join(dist, d)) });
 }
 
 const dataSeen = new Set();
@@ -183,8 +190,8 @@ line('the garden: three depth cards together, AVIF', garden('avif', 'card'), 60,
 line('the garden: three depth cards together, WebP', garden('webp', 'card'), 100, { note: gardenNote });
 // each land's picture and depth map; "each further land" (92 and 122 KB AVIF, 148 and 196 WebP) is the sum of the two lines
 const PIC = { portrait: { avif: 80, webp: 128 }, wide: { avif: 110, webp: 176 } };
-for (const f of room.filter((x) => x.group === 'room land')) line(`land ${f.id}: ${f.cls}, ${f.fmt.toUpperCase()}`, f.stored, PIC[f.cls][f.fmt], { note: f.name });
-for (const f of room.filter((x) => x.group === 'room depth')) line(`land ${f.id}: depth map${f.cls ? `, ${f.cls}` : ''}, ${f.fmt.toUpperCase()}`, f.stored, f.fmt === 'avif' ? 12 : 20, { note: f.name });
+for (const f of room.filter((x) => x.group === 'room land' && SHIPS.has(x.fmt))) line(`land ${f.id}: ${f.cls}, ${f.fmt.toUpperCase()}`, f.stored, PIC[f.cls][f.fmt], { note: f.name });
+for (const f of room.filter((x) => x.group === 'room depth' && SHIPS.has(x.fmt))) line(`land ${f.id}: depth map${f.cls ? `, ${f.cls}` : ''}, ${f.fmt.toUpperCase()}`, f.stored, f.fmt === 'avif' ? 12 : 20, { note: f.name });
 if (!lands.length) console.log('\n(section 4: no land pictures in this build; N = 0)');
 // option B's park: its caps apply once B is picked (spec 6); before that they are printed
 const parkOn = pick === 'B', parkNote = parkOn ? '' : 'applies once B is picked';
@@ -215,13 +222,17 @@ for (const [fmt, limits] of [['avif', { portrait: 337, wide: 459 }], ['webp', { 
 // AC8's formats. Each picture of the section ships as AVIF with its WebP twin, by the name before the hash: the lands, their
 // depth maps, the garden, the hall's stills and the park's lightmap. Each <img> in the page that names a land picture (its
 // own src or srcset, or a <source> of its <picture>) carries width and height.
-const stemOf = (name) => basename(name).replace(new RegExp(`\\.${H}\\.(?:avif|webp)$`), '');
-const pics = room.filter((f) => ['room land', 'room depth', 'room garden', 'room still'].includes(f.group) || (f.group === 'room park' && f.kind === 'lightmap'));
+const stemOf = (name) => basename(name).replace(new RegExp(`\\.${H}\\.(?:${IMG})$`, 'i'), '');
+const pics = room.filter((f) => ['room land', 'room depth', 'room garden', 'room still'].includes(f.group) || (f.group === 'room park' && f.kind === 'lightmap') || (f.hall === 'light'));
 const byStem = new Map();
-for (const f of pics) byStem.set(stemOf(f.name), new Set([...(byStem.get(stemOf(f.name)) ?? []), f.fmt]));
-const FMT = { avif: 'AVIF', webp: 'WebP' };
+const FMT = { avif: 'AVIF', webp: 'WebP', jpeg: 'JPEG', png: 'PNG', gif: 'GIF' };
+for (const f of pics) {
+  // a picture in any other format is refused, and kept out of the lines and the twin check (AC8: AVIF with WebP only)
+  if (!SHIPS.has(f.fmt)) { faults.push(`${basename(f.name)}: ${FMT[f.fmt] ?? f.fmt} is not a format the section ships (AC8: each picture AVIF with its WebP twin)`); continue; }
+  byStem.set(stemOf(f.name), new Set([...(byStem.get(stemOf(f.name)) ?? []), f.fmt]));
+}
 for (const [stem, fmts] of byStem) for (const [has, lacks] of [['avif', 'webp'], ['webp', 'avif']]) if (fmts.has(has) && !fmts.has(lacks)) faults.push(`${stem}: ${FMT[has]} without its ${FMT[lacks]} twin (AC8: the pictures are AVIF with WebP)`);
-const LAND_REF = /land-[a-z0-9-]+?-(?:portrait|wide)\.[A-Za-z0-9_-]+\.(?:avif|webp)/;
+const LAND_REF = new RegExp(`land-[a-z0-9-]+?-(?:portrait|wide)\\.${H}\\.(?:${IMG})`, 'i');
 const sized = (img) => /\swidth=/.test(img) && /\sheight=/.test(img);
 let landImgs = 0;
 const pictureBlocks = [...html.matchAll(/<picture\b[\s\S]*?<\/picture>/g)].map((m) => m[0]);
