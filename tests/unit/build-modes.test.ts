@@ -1,16 +1,18 @@
 // Section 4's build modes (docs/specs/section-4-world.md 5 "Build modes", AC8 and AC13). scripts/csp.mjs writes the
 // media-src each mode needs, run on a tiny dist in a temporary folder, both on its own and through package.json's own
-// script text with astro build left out; astro.config.mjs's alias resolves the travel options that are not the pick to
-// travel-stub.ts, by the file an import names, and resolves nothing with Tune on; the post-build guard refuses a clip, a
-// park asset or another option's chunk where the mode does not allow it; scripts/hero/budget.mjs exits 1 on a broken line
-// and keeps a land picture out of the hero's posters. A real Vite graph is not built here (see the branch's report).
+// script text with astro build left out; astro.config.mjs's alias, in a real Vite build of a module graph in miniature,
+// resolves the travel options that are not the pick to travel-stub.ts by the file an import resolves to (every spelling),
+// keeps their ?url files out, and resolves nothing with Tune on; optimizeDeps keeps RoomEnvironment while universe.ts
+// needs it; the post-build guard refuses a clip, a park asset or another option's chunk where the mode does not allow it;
+// scripts/hero/budget.mjs exits 1 on a broken line and keeps a land picture out of the hero's posters.
 import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { build as viteBuild } from 'vite';
 import config, { TRAVEL_STUB, parkTravelAlias } from '../../astro.config.mjs';
 import { PICKS, TRAVEL, readMode, readPick } from '../../scripts/room/guards.mjs';
 
@@ -86,34 +88,88 @@ test("package.json: each build sets the pick (default A) for every command; buil
   }
 });
 
-test('the alias: the options that are not the pick resolve to travel-stub.ts, by the file an import names; with Tune on none do', () => {
-  const s4 = join(ROOT, 'src/scripts/hero/section4'), director = join(s4, 'director.ts');
+/**
+ * a module graph in miniature for the alias: section4/ with the three options (the park's model and a clip imported by
+ * ?url, each option with a marker string), a director that reaches each by import() in another spelling (.ts, none,
+ * .js), an entry that reaches two again from outside section4/ (relative and root-relative), and a travel-park.ts
+ * elsewhere that is another module; missing leaves files unwritten, files adds or replaces them
+ */
+function graph({ missing = [], files = {} }: { missing?: string[]; files?: Record<string, string | Buffer> } = {}) {
+  // the folder as tmpdir() names it: on macOS /var is a link to /private/var, and Vite resolves to the real path
+  const root = mkdtempSync(join(tmpdir(), 'skreed-graph-'));
+  temps.push(root);
+  const all: Record<string, string | Buffer> = {
+    'section4/travel-depth.ts': "export const createTravel = (): string => 'depth-marker';",
+    'section4/travel-park.ts': "import park from './park.glb?url';\nexport const createTravel = (): string => park + ' park-marker';",
+    'section4/park.glb': Buffer.alloc(2048, 7),
+    'section4/travel-video.ts': "import clip from './clip-portrait.mp4?url';\nexport const createTravel = (): string => clip + ' video-marker';",
+    'section4/clip-portrait.mp4': Buffer.alloc(2048, 9),
+    'section4/director.ts': "export const travels = [() => import('./travel-depth.ts'), () => import('./travel-park'), () => import('./travel-video.js')];",
+    'other/travel-park.ts': "export const createTravel = (): string => 'elsewhere-marker';",
+    'main.ts': "import { travels } from './section4/director.ts';\nconsole.log([...travels, () => import('./section4/travel-park.ts'), () => import('/section4/travel-video.ts'), () => import('./other/travel-park.ts')]);",
+    ...files,
+  };
+  for (const [p, body] of Object.entries(all)) if (!missing.includes(p)) { mkdirSync(dirname(join(root, p)), { recursive: true }); writeFileSync(join(root, p), body); }
+  return { root, s4: join(root, 'section4') };
+}
+type Out = { fileName: string; type: string; code?: string };
+/** the graph built by Vite through the alias for the pick and Tune: the names it emits, and every chunk's code together */
+async function bundle({ root, s4 }: { root: string; s4: string }, pick: 'A' | 'B' | 'C', tune: boolean) {
+  const out = (await viteBuild({ root, configFile: false, logLevel: 'silent', cacheDir: join(root, '.vite'), plugins: [parkTravelAlias(pick, tune, s4)], build: { write: false, assetsInlineLimit: 0, rollupOptions: { input: join(root, 'main.ts') } } })) as unknown as { output: Out[] } | { output: Out[] }[];
+  const output = (Array.isArray(out) ? out[0] : out).output;
+  return { files: output.map((o) => o.fileName).join(' '), code: output.filter((o) => o.type === 'chunk').map((o) => o.code).join('\n') };
+}
+const MARKER = { A: 'depth-marker', B: 'park-marker', C: 'video-marker' } as const;
+
+test('the alias, in a real Vite build: the options that are not the pick become travel-stub.ts in every spelling and their files stay out; Tune on carries all three', async () => {
+  const g = graph();
   for (const pick of PICKS) {
-    const alias = parkTravelAlias(pick, false);
-    for (const opt of PICKS) assert.equal(alias.resolveId(`./${TRAVEL[opt]}.ts`, director), opt === pick ? null : TRAVEL_STUB, `pick ${pick}, ${TRAVEL[opt]}`);
-    const tune = parkTravelAlias(pick, true);
-    for (const opt of PICKS) assert.equal(tune.resolveId(`./${TRAVEL[opt]}.ts`, director), null, `Tune on, pick ${pick}, ${TRAVEL[opt]}`);
+    const { files, code } = await bundle(g, pick, false);
+    for (const opt of PICKS) assert.equal(code.includes(MARKER[opt]), opt === pick, `pick ${pick}: ${TRAVEL[opt]}'s code`);
+    assert.equal(/\.glb\b/.test(files), pick === 'B', `pick ${pick}: the park's model (${files})`);
+    assert.equal(/\.mp4\b/.test(files), pick === 'C', `pick ${pick}: the clip (${files})`);
+    assert.match(files, /travel-stub/, `pick ${pick}: the stub stands in`);
+    assert.ok(code.includes('elsewhere-marker'), 'a travel-park.ts outside section4/ is another module');
   }
-  const a = parkTravelAlias('A', false);
-  assert.equal(a.resolveId('./section4/travel-park.ts', join(ROOT, 'src/scripts/hero/hero.ts')), TRAVEL_STUB, 'from hero/');
-  assert.equal(a.resolveId('./travel-video.ts?import', `${join(s4, 'world.ts')}?v=1`), TRAVEL_STUB, 'with queries');
-  assert.equal(a.resolveId('/src/scripts/hero/section4/travel-park.ts', join(ROOT, 'src/components/room/Room.astro?astro&type=script&index=0&lang.ts')), TRAVEL_STUB, 'root-relative, from a component script');
-  assert.equal(a.resolveId('./travel-park.ts', join(ROOT, 'src/scripts/quiz/deck.ts')), null, 'a travel-park.ts outside section4 is another module');
-  assert.equal(a.resolveId('./director.ts', director), null);
-  assert.equal(a.resolveId('./travel-park.ts', undefined), null, 'an entry has no importer');
-  // the alias never reads what it replaces, so the build passes before the options exist; the stub is there
+  const { files, code } = await bundle(g, 'A', true);
+  for (const opt of PICKS) assert.ok(code.includes(MARKER[opt]), `Tune on: ${TRAVEL[opt]}`);
+  assert.match(files, /\.glb\b/);
+  assert.match(files, /\.mp4\b/);
+  assert.doesNotMatch(files, /travel-stub/, 'Tune on: no stub');
   assert.ok(existsSync(TRAVEL_STUB));
   assert.match(readFileSync(TRAVEL_STUB, 'utf8'), /^export const TRAVEL_STUB = true;$/m);
 });
 
-test("astro.config.mjs: the alias is wired with the environment's pick and Tune, and RoomEnvironment is out of optimizeDeps", () => {
-  const plugins = (config.vite?.plugins ?? []) as unknown as { name?: string; resolveId?: (s: string, i?: string) => string | null }[];
+test("the alias: an option not written yet is stubbed unless it is the pick or Tune is on; travel-stub.ts's first rule, a static named import of a stubbed option stops the build", async () => {
+  const g = graph({ missing: ['section4/travel-park.ts', 'section4/travel-video.ts'] });
+  assert.ok((await bundle(g, 'A', false)).code.includes(MARKER.A), 'the build passes before the other options exist');
+  await assert.rejects(bundle(g, 'A', true), 'Tune on: all three must exist');
+  await assert.rejects(bundle(g, 'B', false), 'the pick must exist');
+  // only import() reaches a travel module: a static named import from shared code holds for its own pick and breaks every other
+  const shared = graph({ files: { 'section4/world.ts': "import { createTravel } from './travel-depth.ts';\nexport const push = createTravel;", 'main.ts': "import { push } from './section4/world.ts';\nimport { travels } from './section4/director.ts';\nconsole.log(push(), travels);" } });
+  assert.ok((await bundle(shared, 'A', false)).code.includes(MARKER.A));
+  await assert.rejects(bundle(shared, 'B', false), /MISSING_EXPORT|createTravel/);
+});
+
+test("astro.config.mjs: the alias is wired with the environment's pick and Tune; optimizeDeps carries RoomEnvironment exactly while src/ imports it", async () => {
+  type Resolve = (this: unknown, s: string, i?: string, o?: object) => Promise<string | null>;
+  const plugins = (config.vite?.plugins ?? []) as unknown as { name?: string; resolveId?: Resolve }[];
   const alias = plugins.find((p) => p?.name === 'skreed:park-travel');
   assert.ok(alias?.resolveId, 'the alias is among the Vite plugins');
-  // this test process was started without a pick and without Tune unless the shell set them (the config read it at import)
+  // this test process was started without a pick and without Tune unless the shell set them (the config read it at import);
+  // the options are not written yet, so the context's resolver finds nothing and the alias reads the path from the import
   const pick = process.env.PUBLIC_PARK_TRAVEL ?? 'A', tune = process.env.PUBLIC_TUNE === '1';
-  for (const opt of PICKS) assert.equal(alias.resolveId(`./${TRAVEL[opt]}.ts`, join(ROOT, 'src/scripts/hero/section4/director.ts')), tune || opt === pick ? null : TRAVEL_STUB, TRAVEL[opt]);
-  assert.ok(!(config.vite?.optimizeDeps?.include ?? []).some((e) => /RoomEnvironment/.test(e)), 'the universe goes, and its environment with it');
+  const ctx = { resolve: async () => null };
+  for (const opt of PICKS) assert.equal(await alias.resolveId.call(ctx, `./${TRAVEL[opt]}`, join(ROOT, 'src/scripts/hero/section4/director.ts'), {}), tune || opt === pick ? null : TRAVEL_STUB, TRAVEL[opt]);
+  // universe.ts lights the products with RoomEnvironment: without it pre-bundled, dev re-optimises on the way into the
+  // section and answers open tabs with "504 Outdated Optimize Dep". The entry leaves in the change that deletes
+  // universe.ts, and this test then asks for that
+  const ENV = 'three/addons/environments/RoomEnvironment.js';
+  const walk = (d: string): string[] => readdirSync(d).flatMap((n) => statSync(join(d, n)).isDirectory() ? walk(join(d, n)) : [join(d, n)]);
+  const imports = new RegExp(`^\\s*import\\s+(?!type\\b)[^;]*?from\\s*['"]${ENV.replace(/[./]/g, '\\$&')}['"]`, 'm');
+  const importers = walk(join(ROOT, 'src')).filter((f) => /\.(?:ts|js|mjs|astro)$/.test(f) && imports.test(readFileSync(f, 'utf8'))).map((f) => basename(f));
+  const included = (config.vite?.optimizeDeps?.include ?? []).includes(ENV);
+  assert.equal(included, importers.length > 0, importers.length ? `${importers.join(', ')} imports RoomEnvironment: keep it in optimizeDeps` : 'nothing in src/ imports RoomEnvironment: take it out of optimizeDeps');
 });
 
 test('the pick and the mode: flags first, then the environment, then A and build; anything else throws', () => {
