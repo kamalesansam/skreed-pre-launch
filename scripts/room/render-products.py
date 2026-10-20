@@ -21,7 +21,15 @@
 #   catcher    {"matrix": 4 x 4 (a plane's frame, its face toward its own -z, into the camera's), "size": [w, h]} or null:
 #              a Cycles shadow catcher where the product rests, so the contact shadow arrives in the film's alpha
 #   lights     [{"dir": [x, y, z] toward the light from the product, "dist", "size", "watts", "rgb"}], area lights aimed
-#              at the product's centre; world {"rgb", "strength"} the ambient fill (the film stays transparent)
+#              at the product's centre, discs unless "shape": "RECTANGLE" with "size_y" and "roll" (degrees about the
+#              light's own axis): a window, or a strip whose reflection is a streak; world {"rgb", "strength"} the ambient
+#              fill (the film stays transparent)
+#   env        optional, in place of the flat fill: a soft park sky for the metal and the clearcoat to reflect,
+#              {"up": [x, y, z] the sky's zenith in the camera's axes, "horizon": the horizon's height (the sine of its
+#              elevation, from the product), "strength", "zenith", "sky", "trees", "lawn", "nadir": linear rgb}; an
+#              overcast sky brighter toward its zenith over a line of trees, and the lawn below
+#   rough      optional roughness in place of the finish's own; bevel_m optional, the edges' bevel in metres (the
+#              Lenskin's cut edge, where the fresnel lights its rim)
 import bpy, sys, os, json, math
 from mathutils import Matrix, Vector
 
@@ -66,6 +74,25 @@ sc.render.image_settings.file_format = 'PNG'; sc.render.image_settings.color_mod
 world = bpy.data.worlds.new('fill'); sc.world = world; world.use_nodes = True
 wb = world.node_tree.nodes['Background']
 wb.inputs[0].default_value = (*S['world']['rgb'], 1); wb.inputs[1].default_value = S['world']['strength']
+if S.get('env'):
+    # the park sky: the direction's height above the horizon (dot with the zenith, in Blender's axes) through a ramp
+    E = S['env']; wt = world.node_tree
+    up = Vector((E['up'][0], -E['up'][1], -E['up'][2])).normalized()
+    tc = wt.nodes.new('ShaderNodeTexCoord')
+    dot = wt.nodes.new('ShaderNodeVectorMath'); dot.operation = 'DOT_PRODUCT'; dot.inputs[1].default_value = up
+    wt.links.new(tc.outputs['Generated'], dot.inputs[0])
+    mr = wt.nodes.new('ShaderNodeMapRange'); mr.inputs['From Min'].default_value = -1.0; mr.inputs['From Max'].default_value = 1.0
+    wt.links.new(dot.outputs['Value'], mr.inputs['Value'])
+    ramp = wt.nodes.new('ShaderNodeValToRGB'); cr = ramp.color_ramp; cr.interpolation = 'LINEAR'
+    h = float(E.get('horizon', 0.0)); at = lambda u: min(max((u + 1) / 2, 0.0), 1.0)
+    stops = [(at(-1.0), E['nadir']), (at(h - 0.03), E['lawn']), (at(h - 0.012), E['trees']), (at(h + 0.05), E['trees']),
+             (at(h + 0.09), E['sky']), (at(1.0), E['zenith'])]
+    cr.elements[0].position, cr.elements[0].color = stops[0][0], (*stops[0][1], 1)
+    cr.elements[1].position, cr.elements[1].color = stops[-1][0], (*stops[-1][1], 1)
+    for pos, rgb in stops[1:-1]:
+        el = cr.elements.new(pos); el.color = (*rgb, 1)
+    wt.links.new(mr.outputs['Result'], ramp.inputs['Fac'])
+    wt.links.new(ramp.outputs['Color'], wb.inputs[0]); wb.inputs[1].default_value = E.get('strength', 1.0)
 
 # ---- the materials (the universe's finishes, so the land and the site's own renders agree)
 # spec is Blender's Specular IOR Level, where 0.5 is a plain plastic's F0 and the level scales it linearly: three's
@@ -80,9 +107,9 @@ def principled(name, rgb, rough, spec=0.1, metal=0.0, coat=0.0, coat_rough=0.03)
     return m
 
 def body_mat(rgb, finish, name):
-    if finish == 'gloss': return principled(name, rgb, 0.62, coat=1.0)
-    if finish == 'metallic': return principled(name, rgb, 0.38, metal=1.0)
-    return principled(name, rgb, 0.62)
+    if finish == 'gloss': return principled(name, rgb, S.get('rough', 0.62), coat=1.0)
+    if finish == 'metallic': return principled(name, rgb, S.get('rough', 0.38), metal=1.0)
+    return principled(name, rgb, S.get('rough', 0.62))
 
 FIN = S.get('finish', 'matte')
 BODY = body_mat(LIN, FIN, 'body')
@@ -138,6 +165,10 @@ else:
         role = 'trim' if o.name.startswith('trim') else 'logo' if o.name.startswith('logo') else 'body'
         o.data.materials.clear(); o.data.materials.append(BODY if role == 'body' else LOGO if role == 'logo' else TRIM)
         for poly in o.data.polygons: poly.use_smooth = True
+        if S.get('bevel_m'):
+            # the cut edge's small bevel, on the sharp edges only (the plate's faces against its walls, not the walls' facets)
+            bv = o.modifiers.new('bevel', 'BEVEL'); bv.width = float(S['bevel_m']); bv.segments = 3
+            bv.limit_method = 'ANGLE'; bv.angle_limit = math.radians(40); bv.harden_normals = True
         parts.append((o, role))
 
 FLIP = Matrix(((1, 0, 0, 0), (0, -1, 0, 0), (0, 0, -1, 0), (0, 0, 0, 1)))   # the photo's camera axes to Blender's world
@@ -177,12 +208,15 @@ if S.get('catcher'):
 
 # ---- the lights: soft area lights aimed at the product, as the photo's window or sun
 for i, L in enumerate(S['lights']):
-    ld = bpy.data.lights.new(f'L{i}', 'AREA'); ld.shape = 'DISK'; ld.size = L['size']
+    ld = bpy.data.lights.new(f'L{i}', 'AREA'); ld.shape = L.get('shape', 'DISK'); ld.size = L['size']
+    if ld.shape == 'RECTANGLE': ld.size_y = L['size_y']
     ld.energy = L['watts']; ld.color = L.get('rgb', (1, 1, 1))
     lo_ = bpy.data.objects.new(f'L{i}', ld); sc.collection.objects.link(lo_); lo_.visible_camera = False
     d = Vector(L['dir']).normalized(); d = Vector((d.x, -d.y, -d.z))
     lo_.location = centre + d * L['dist']
-    lo_.rotation_euler = (-d).to_track_quat('-Z', 'Y').to_euler()
+    q = (-d).to_track_quat('-Z', 'Y')
+    if L.get('roll'): q = q @ Matrix.Rotation(math.radians(L['roll']), 4, 'Z').to_quaternion()
+    lo_.rotation_euler = q.to_euler()
 
 def render(path):
     sc.render.filepath = path
