@@ -3,14 +3,16 @@
 // without reloading"), on the landing page and every family page. A link to / so it works without JavaScript; with it,
 // scripts/shell/to-top.ts takes over: on / it jumps to section 1 in place behind a short --night veil (no reload, no
 // smooth scroll back through every scene), on a family page it steps back through the history to the landing page,
-// which the browser restores from its back-forward cache, and lands on section 1. One static chevron (rule 45: no
-// animated arrows). page: where it sits (the landing page's top right by the logotype, a family page's bar).
+// which the browser restores from its back-forward cache, and lands on section 1. No box (Sam, 2026-10-20: "fix that
+// and make it look a part of the site"): the words, as "All families" is set, then the scroll cue's five-dot chevron
+// (ScrollCue.astro) turned up, static (rule 45: no animated arrows), in the logotype's colour (to-top.css). The words
+// are its accessible name. page: where it sits (the landing page's top right by the logotype, a family page's bar).
 import { COPY } from '../../config/copy.ts';
 import '../../styles/to-top.css';
 interface Props { page: 'home' | 'family' }
 const { page } = Astro.props;
 ---
-<a class="to-top" id="toTop" href="/" data-page={page} aria-label={COPY.toTop.label} title={COPY.toTop.label} hidden><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.5 10.5 8 5l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" /></svg></a>
+<a class="to-top" id="toTop" href="/" data-page={page} hidden>{COPY.toTop.label}<svg viewBox="0 0 35 18.1" aria-hidden="true" focusable="false"><circle cx="2.4" cy="15.7" r="2.4" fill="currentColor" fill-opacity="0.3" /><circle cx="10" cy="9" r="2.4" fill="currentColor" fill-opacity="0.6" /><circle cx="17.5" cy="2.4" r="2.4" fill="currentColor" /><circle cx="25" cy="9" r="2.4" fill="currentColor" fill-opacity="0.6" /><circle cx="32.6" cy="15.7" r="2.4" fill="currentColor" fill-opacity="0.3" /></svg></a>
 <div class="to-top-veil" id="toTopVeil" aria-hidden="true" hidden></div>
 <script>
   import '../../scripts/shell/to-top.ts';

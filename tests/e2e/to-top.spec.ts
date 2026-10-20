@@ -1,4 +1,4 @@
-// Back to top (Sam, 2026-10-19; src/components/shell/BackToTop.astro, src/scripts/shell/to-top.ts): on the landing page
+// Back to top (Sam, 2026-10-19 and 2026-10-20; src/components/shell/BackToTop.astro, src/scripts/shell/to-top.ts): on the landing page
 // hidden in the first screen and shown past it, on a family page always; on the landing page a press reaches section 1 in place (no navigation, the page's state
 // survives), keyboard focus lands on the logotype; on a family page a press returns to the landing page's section 1
 // (through the history when the landing page is behind it, else by the link). The harness's Chromium has the
@@ -19,7 +19,16 @@ for (const vp of [{ name: '390 x 844', width: 390, height: 844 }, { name: '1280 
     const box = (await btn.boundingBox())!;
     expect(box.width).toBeGreaterThanOrEqual(44); expect(box.height).toBeGreaterThanOrEqual(44);
     expect(box.x + box.width).toBeLessThanOrEqual(vp.width); expect(box.y).toBeGreaterThanOrEqual(0);
-    await expect(btn).toHaveAttribute('aria-label', 'Back to top');
+    // no box (Sam, 2026-10-20): the words as its name, no fill, the logotype's colour, which it follows into Urban Slate
+    await expect(btn).toHaveAccessibleName('Back to top');
+    await expect(btn).toHaveText('Back to top');
+    const look = () => page.evaluate(() => { const b = getComputedStyle(document.getElementById('toTop')!), l = getComputedStyle(document.getElementById('siteLogo')!); return { bg: b.backgroundColor, border: b.borderTopStyle, color: b.color, logo: l.color }; });
+    const before = await look();
+    expect(before.bg).toBe('rgba(0, 0, 0, 0)'); expect(before.border).toBe('none'); expect(before.color).toBe(before.logo);
+    await page.evaluate(() => { document.getElementById('siteLogo')!.dataset.tone = 'light'; });
+    await expect.poll(async () => (await look()).color).toBe('rgb(56, 63, 67)');
+    await page.evaluate(() => { delete document.getElementById('siteLogo')!.dataset.tone; });
+    await expect.poll(async () => (await look()).color).toBe(before.color);
     await btn.click();
     await page.waitForFunction(() => scrollY === 0, null, { timeout: 5000 });
     expect(await page.evaluate(() => (window as unknown as { __alive?: boolean }).__alive)).toBe(true);   // no reload

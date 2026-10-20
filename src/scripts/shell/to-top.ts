@@ -29,6 +29,14 @@ if (btn instanceof HTMLAnchorElement) {
   addEventListener('scroll', update, { passive: true });
   addEventListener('resize', update);
   update();
+  // the landing page: the logotype's colour, which turns Urban Slate over the light fog (glitch.ts setTone, from the
+  // scroll and the loop); a family page keeps Pearl Whisper on its dark ground
+  const logo = home ? document.getElementById('siteLogo') : null;
+  if (logo) {
+    const tone = () => { if (logo.dataset.tone) btn.dataset.tone = logo.dataset.tone; else delete btn.dataset.tone; };
+    new MutationObserver(tone).observe(logo, { attributes: true, attributeFilter: ['data-tone'] });
+    tone();
+  }
 
   /** section 1 at once: the hero's jump when its island runs, else a plain instant scroll */
   const jump = () => { if (window.__skreedTop) window.__skreedTop(); else scrollTo({ top: 0, behavior: 'instant' }); update(); };
@@ -73,7 +81,6 @@ if (btn instanceof HTMLAnchorElement) {
     const keyboard = btn.matches(':focus-visible');
     void veiled(() => {
       jump();
-      const logo = document.getElementById('siteLogo');
       if (keyboard && logo) logo.focus({ preventScroll: true }); else btn.blur();
     });
   });
