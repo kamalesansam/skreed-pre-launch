@@ -23,7 +23,7 @@
 // the payload with the personality and the ten answers, the offline queue and its re-send, "Still trying..." at 8 s and
 // the abort at 20 s. AC9 reduced motion (no transform anywhere, 0.2 s fades with no glyph ever rolling, no hold) and AC4 no
 // horizontal scroll at 390 x 844 and across the widths of CHECKLIST G10, with the text columns inside the gutters, the
-// controls at least 44 px each way and the labels' portrait size at aspect 9/10 or less. The quiz needs no island, so the specs run
+// controls at least 44 px each way and every line at the type scale's size for the screen. The quiz needs no island, so the specs run
 // on the poster tier (?tier=poster; the test build lands there without an override too) and scroll the section in with
 // scrollTo at its own top (17.2 screens on the 3D path, where __skreedSnap pins the followers once the island installed
 // it). The test build has PUBLIC_HERO_HOOKS=1, so the gift form renders.
@@ -39,6 +39,26 @@
 // (Pearl on the ten dark shades) and on the fog (Urban Slate on the pale ones); a 60-character address inside the gutters
 // at 360 px; and the underlines written as longhands in the page's style sheets (Safari before 26.2 drops the shorthand
 // with a thickness, which Chromium computes the same) and computed from them.
+// The changes of 2026-10-20 (Sam: "the text is soo small, look at the screen size and look at how much area the text is
+// covering, it doesnt make any sense"): the type scales with the screen through three clamp() tokens in quiz.css, so every
+// line is held to typeScale() at each size tested, not to fixed sizes; a question takes focus from script only (tabindex
+// -1 on every card) and draws no outline and no ring. And the answer pictures (Sam, the same day: "for any question that
+// is visual, open envato and pick pictures relating to that specific option ... that image should appear only when u hover
+// over that option ... dont just straight up blankly slap the image on the screen on hover"): one Envato stock photograph
+// per answer of the five visual questions (config/quiz-pictures.ts), drawn by picture.ts in 12 strips that decode in as
+// the text does. recordPics() logs every step of a picture on its own clock, as watch() does the text: a mouse over an
+// answer at 1280 x 800 decodes its picture in beside the question and settles it within 0.9 s, the next answer wipes it
+// out and decodes its own over it, and leaving the answers wipes that out; keyboard focus shows it and Tab away hides it;
+// a tap at 390 x 844 shows it above the question and holds the answer until it has settled; a question with no pictures
+// has no frame; only the question on screen loads its pictures; under reduced motion a picture fades, with no roll and no
+// transform. From the review of the same day: pictures held on the network by page.route (an answer hovered and left, or
+// left for a loaded one, before its picture arrives shows nothing when it does, the pointer at rest on question 3 too; a
+// tap on an answer still loading holds it 0.9 s at most and the picture never comes on the question gone); a press that
+// turns into a scroll (pointercancel) and a tap dropped by the guard leave no picture; at 360 x 780 and 844 x 390 the
+// frame has no room (data-none), nothing is asked for and a tap is taken with no hold; at 800 x 1280 the frame is 40% of
+// the height; a picture left on as the question changes is cleared at once; an answer taken with the mouse or the
+// keyboard keeps its picture while the pointer or focus leaves it during the hold; focus that is not the keyboard's shows
+// none; the shade's name and the done line draw no focus box.
 import { test, expect, type Locator, type Page } from '@playwright/test';
 import { QUIZ_COPY as Q, QUIZ_PERSONAS, QUIZ_QUESTIONS, needsRing, needsRingNight, pickShade, scoreQuiz, shadeHref, type Persona, type PersonaId } from '../../src/config/quiz.ts';
 import { SHADES } from '../../src/config/shades.gen.ts';
@@ -193,12 +213,13 @@ async function ready(page: Page, i: number): Promise<void> {
   }, { i, guard: GUARD, reduced: GUARD_REDUCED }, { timeout: 15_000 });
 }
 
-/** the deck as it stands: which cards are unhidden, on top, tabbable and not inert (only the top one, always) */
+/** the deck as it stands: which cards are unhidden, on top and not inert (only the top one, always), and which are in the
+ *  Tab order (none: a question takes focus from script only, tabindex -1 on every card, 2026-10-20) */
 const deckState = (page: Page) => page.locator('.qz-card').evaluateAll((cards) => {
   const pick = (f: (c: HTMLElement) => boolean) => (cards as HTMLElement[]).filter(f).map((c) => Number(c.dataset.i));
-  return { unhidden: pick((c) => !c.hidden), top: pick((c) => c.classList.contains('is-top')), tabbable: pick((c) => c.tabIndex === 0), live: pick((c) => !c.inert) };
+  return { unhidden: pick((c) => !c.hidden), top: pick((c) => c.classList.contains('is-top')), tabbable: pick((c) => c.tabIndex !== -1 || c.getAttribute('tabindex') !== '-1'), live: pick((c) => !c.inert) };
 });
-const only = (i: number) => ({ unhidden: [i], top: [i], tabbable: [i], live: [i] });
+const only = (i: number) => ({ unhidden: [i], top: [i], tabbable: [] as number[], live: [i] });
 
 /** "Swipe to begin" with the chunk in (openQuiz): the press begins at once */
 async function begin(page: Page): Promise<void> {
@@ -794,6 +815,61 @@ test('AC5 the keyboard: from the focused card Down and Up move among the answers
   expect((await events(page)).filter(([n]) => n === 'quiz_answer')).toEqual([['quiz_answer', { q: 1, persona: first.persona }], ['quiz_answer', { q: 2, persona: last.persona }]]);
 });
 
+/** an element's focus as drawn: its outline, and the ring its ::before draws inside it (DESIGN.md 4) */
+const focusLook = (el: Locator) => el.evaluate((e) => {
+  const cs = getComputedStyle(e), b = getComputedStyle(e, '::before');
+  return { outline: cs.outlineStyle === 'none' ? 'none' : `${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineColor} offset ${cs.outlineOffset}`, ring: b.content === 'none' || b.content === 'normal' ? 'none' : `${b.borderTopStyle} ${b.borderTopWidth} ${b.borderTopColor} inset ${b.top}` };
+});
+
+test('AC5 and AC7 a question takes focus from script only: every card is tabindex -1, so Shift+Tab from its first answer leaves the deck and Tab comes back to that answer, never the card; focused after Begin pressed with Enter (so matching :focus-visible), the card draws no outline and no ring, while its answers keep the Ember Luxe outline with the Urban Slate ring; the shade\'s name and the gift\'s done line, focused from script at the end of a keyboard run (so matching :focus-visible too), draw none either', async ({ page, baseURL }) => {
+  await page.route('**/api/quiz-lead', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
+  await openQuiz(page, baseURL);
+  expect(await page.locator('.qz-card').evaluateAll((cs) => cs.map((c) => c.getAttribute('tabindex'))), 'every card, as the server draws it').toEqual(Array(10).fill('-1'));
+  await page.locator('#qzBegin').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#find')).toHaveAttribute('data-state', 'quiz');
+  await onTop(page, 0);
+  const card = page.locator('.qz-card[data-i="0"]');
+  expect(await card.evaluate((c) => c.matches(':focus-visible')), 'focused by script after a key: where a focus ring would show').toBe(true);
+  expect(await focusLook(card), 'the question draws no outline and no ring').toEqual({ outline: 'none', ring: 'none' });
+  expect(await page.locator('.qz-card').evaluateAll((cs) => cs.map((c) => (c as HTMLElement).tabIndex)), 'and none is in the Tab order once the deck has run').toEqual(Array(10).fill(-1));
+  expect(await deckState(page)).toEqual(only(0));
+  await page.keyboard.press('ArrowDown');
+  const first = card.locator('.qz-opt').first();
+  await expect(first).toBeFocused();
+  expect(await focusLook(first), 'an answer keeps the outline and the ring').toEqual({ outline: `solid 2px ${EMBER} offset 2px`, ring: `solid 2px ${URBAN_SLATE} inset -2px` });
+  await page.keyboard.press('Shift+Tab');
+  expect(await page.evaluate(() => { const a = document.activeElement; return a?.closest('.qz-card') ? `in the deck: ${a.className}` : 'out'; }), 'Shift+Tab from the first answer passes the card by').toBe('out');
+  await page.keyboard.press('Tab');
+  await expect(first, 'and Tab comes back to the first answer').toBeFocused();
+  // the rest by keyboard (Down to each question's first answer, Enter): the result focuses the shade's name from script
+  for (let i = 0; i < QUIZ_QUESTIONS.length; i++) {
+    await ready(page, i);
+    if (i > 0) await page.keyboard.press('ArrowDown');
+    await expect(page.locator(`.qz-card[data-i="${i}"] .qz-opt`).first()).toBeFocused();
+    await page.keyboard.press('Enter');
+  }
+  await expect(page.locator('#find')).toHaveAttribute('data-state', 'result');
+  const shade = page.locator('.qz-result:not([hidden]) .qz-shade');
+  await expect(shade).toBeFocused();
+  expect(await shade.evaluate((e) => e.matches(':focus-visible')), 'the shade\'s name, focused from script after a key: where a focus ring would show').toBe(true);
+  expect(await focusLook(shade), 'the shade\'s name draws no outline and no ring').toEqual({ outline: 'none', ring: 'none' });
+  // the gift by keyboard: the address typed, the box ticked with Space, Enter in the field; the done line takes focus
+  await settled(page);
+  await page.locator('#qzEmail').focus();
+  await page.keyboard.type(EMAIL);
+  await page.locator('#qzConsent').focus();
+  await page.keyboard.press('Space');
+  await expect(page.locator('#qzConsent')).toBeChecked();
+  await page.locator('#qzEmail').focus();
+  await page.keyboard.press('Enter');
+  const done = page.locator('.qz-done-text');
+  await expect(said(done)).toHaveText(Q.done(EMAIL));
+  await expect(done).toBeFocused();
+  expect(await done.evaluate((e) => e.matches(':focus-visible')), 'the done line, focused from script after a key').toBe(true);
+  expect(await focusLook(done), 'the done line draws no outline and no ring').toEqual({ outline: 'none', ring: 'none' });
+});
+
 test('AC5 "Not quite? Try again" wipes the result and the gift out, decodes card 1 back in reading 01 / 10 with no Back, the only card unhidden, scrolls the section to its top, and hides the result and the gift; with Math.random changed, the second run draws another shade of the same group', async ({ page, baseURL }) => {
   const DREAMER = Array<PersonaId>(10).fill('dreamer');
   const one = drawn(DREAMER, 0.01), two = drawn(DREAMER, 0.5);
@@ -975,14 +1051,20 @@ test('AC5 a hidden page: a decode under way jumps to its end state at visibility
 /** every element of #find, hidden ones too (a box on one would show the moment it is shown), and its ::before and ::after
  *  with a fill, a background image or a border: none but the swatches (the shade's colour, with a 1 px hairline: Urban
  *  Slate where data-ring asks for it on the fog of the 3D tier, Pearl Whisper where data-ring-night asks for it on the
- *  poster tier's night) and the email field's underline (checked on its own). Focus is dropped first: the focus ring's
- *  ::before is a box on :focus-visible only */
+ *  poster tier's night), the email field's underline (checked on its own) and the strips of an answer picture, whose
+ *  background is the photograph (picture.ts draws the <img>'s chosen source through the CSSOM) with no fill and no border.
+ *  Focus is dropped first: the focus ring's ::before is a box on :focus-visible only */
 const boxed = (page: Page): Promise<string[]> => page.evaluate(({ CLEAR, URBAN_SLATE, PEARL }) => {
   const had = document.activeElement as HTMLElement | null;
   had?.blur?.();
   const found = [...document.querySelectorAll<HTMLElement>('#find, #find *')].flatMap((e) => [null, '::before', '::after'].map((p) => {
     const cs = getComputedStyle(e, p), border = [cs.borderTopWidth, cs.borderRightWidth, cs.borderBottomWidth, cs.borderLeftWidth].join(' ');
     const what = `${e.tagName.toLowerCase()}${e.id ? `#${e.id}` : ''}${[...e.classList].map((c) => `.${c}`).join('')}${p ?? ''}`;
+    if (!p && e.matches('.qz-pics .qz-strip')) {
+      const layer = e.closest<HTMLElement>('.qz-shot'), img = e.closest('.qz-pics')?.querySelector<HTMLImageElement>(`.qz-pic[data-persona="${layer?.dataset.persona}"] img`);
+      const photo = !!img?.currentSrc && cs.backgroundImage === `url("${img.currentSrc}")`;   // built and drawn at once (picture.ts build()), so never none
+      return border === '0px 0px 0px 0px' && cs.backgroundColor === CLEAR && photo ? '' : `${what}: ${cs.backgroundColor} ${cs.backgroundImage} ${border}`;
+    }
     if (!p && e.matches('.qz-big, .qz-mini-sw')) {
       const fog = document.documentElement.classList.contains('hero3d'), ring = e.hasAttribute(fog ? 'data-ring' : 'data-ring-night');
       return border === (ring ? '1px 1px 1px 1px' : '0px 0px 0px 0px') && (!ring || cs.borderTopColor === (fog ? URBAN_SLATE : PEARL)) && cs.backgroundImage === 'none' ? '' : `${what}: ${border} ${cs.borderTopColor} ${cs.backgroundImage}`;
@@ -997,13 +1079,21 @@ const boxed = (page: Page): Promise<string[]> => page.evaluate(({ CLEAR, URBAN_S
 /** no box-shadow or text-shadow on anything in #find, its ::before and ::after included */
 const shadowed = (page: Page): Promise<string[]> => page.evaluate(() => [...document.querySelectorAll('#find, #find *')].flatMap((e) => [null, '::before', '::after'].map((p) => { const cs = getComputedStyle(e, p); return cs.boxShadow !== 'none' || cs.textShadow !== 'none' ? `${e.className}${p ?? ''}: ${cs.boxShadow} ${cs.textShadow}` : ''; })).filter(Boolean));
 
+/** the type scale (quiz.css, 2026-10-20): each size a clamp() of the screen's width and height, 1rem being 16 px; the
+ *  label (the body and the answers) 15 to 22 px, the question and headline step 24 to 52, the shade's name 36 to 88 */
+interface Sizes { label: number; step: number; name: number }
+function typeScale(w: number, h: number): Sizes {
+  const clamp = (lo: number, v: number, hi: number) => Math.min(hi, Math.max(lo, v)), vw = w / 100, vh = h / 100, rem = 16;
+  return { label: clamp(15, Math.min(0.6 * rem + 0.95 * vw, 2.6 * vh), 22), step: clamp(24, Math.min(rem + 2.3 * vw, 5 * vh), 52), name: clamp(36, Math.min(rem + 4.6 * vw, 10 * vh), 88) };
+}
+
 /** every line of #find as drawn, hidden ones too, that is not in section 2's label type: each decoded element and its
  *  glyph row, the lines that are not decoded (the field errors, the status line, the done line, Not you), the consent
  *  tick and anything else holding text of its own; less the visually hidden copies (what assistive technology reads, not
  *  what is drawn) and the email field (the address keeps the case it is typed in, at 16 px against iOS's zoom). The size
- *  by role: the label's (13 px; 12 on a portrait screen), the question and headline step (22; 18) and the shade's name
- *  (36; 28) */
-const offType = async (page: Page, sizes: { label: number; step: number; name: number }): Promise<string[]> => {
+ *  by role, from the type scale for the screen (typeScale()): the label's (the body and the answers), the question and
+ *  headline step, and the shade's name, each within 0.01 px of its clamp() */
+const offType = async (page: Page, sizes: Sizes): Promise<string[]> => {
   const lines = await page.evaluate(() => {
     const els = new Set<Element>(document.querySelectorAll('#find [data-dc], #find .dc, #find .qz-err, #find .qz-msg, #find .qz-done-text, #find .qz-notyou, #find .qz-tick'));
     for (const e of document.querySelectorAll('#find *')) if ([...e.childNodes].some((n) => n.nodeType === Node.TEXT_NODE && n.textContent!.trim())) els.add(e);
@@ -1013,28 +1103,41 @@ const offType = async (page: Page, sizes: { label: number; step: number; name: n
     });
   });
   expect(lines.length, 'lines found').toBeGreaterThan(100);
-  return lines.filter((l) => l.got !== `"IBM Plex Mono"|500|uppercase|0px|${PEARL}|${sizes[l.role as 'label']}px`).map((l) => `${l.what} (${l.role}): ${l.got}`);
+  return lines.filter((l) => {
+    const cut = l.got.lastIndexOf('|'), size = parseFloat(l.got.slice(cut + 1));
+    return l.got.slice(0, cut) !== `"IBM Plex Mono"|500|uppercase|0px|${PEARL}` || !(Math.abs(size - sizes[l.role as keyof Sizes]) <= 0.01);
+  }).map((l) => `${l.what} (${l.role}): ${l.got}, not ${sizes[l.role as keyof Sizes].toFixed(3)}px`);
 };
 
 /** the text controls of #find (Begin, Back, See it on the case, Try again, Send my gift, Not you) that are not underlined */
 const plainLinks = (page: Page): Promise<string[]> => page.evaluate(() => [...document.querySelectorAll<HTMLElement>('#find .qz-link')].filter((l) => !getComputedStyle(l).textDecorationLine.includes('underline')).map((l) => l.className));
 
-test('AC1 and AC7 no boxes: no fill, border or shadow on any element of the section or its ::before and ::after, hidden ones included, but the swatches (on the poster tier a Pearl hairline on the dark shades, none on the pale) and the email field\'s underline; every line in section 2\'s label type, IBM Plex Mono 500, upper case, no letter-spacing, Pearl Whisper, at 13, 22 and 36 px on a landscape screen, the error, status, done and Not-you lines and the consent tick included; every text control underlined', async ({ page, baseURL }) => {
+test('AC1 and AC7 no boxes: no fill, border or shadow on any element of the section or its ::before and ::after, hidden ones included, but the swatches (on the poster tier a Pearl hairline on the dark shades, none on the pale), the email field\'s underline and an answer picture\'s strips (the photograph, nothing else); every line in section 2\'s label type, IBM Plex Mono 500, upper case, no letter-spacing, Pearl Whisper, at the type scale\'s clamp() sizes for the screen (18.72, 36 and 72 px at 1280 x 720), the error, status, done and Not-you lines and the consent tick included; every text control underlined', async ({ page, baseURL }) => {
   let status = 500;
   await page.route('**/api/quiz-lead', (route) => route.fulfill({ status, contentType: 'application/json', body: '{}' }));
+  // the clamp() tokens against the sizes measured on 2026-10-20: the answers and the questions 20.8 and 40 px at 1280 x 800,
+  // 17.08 and 32.85 at 1366 x 657, 15 and 24.97 on a 390 x 844 phone
+  const r2 = (s: Sizes) => [s.label, s.step, s.name].map((v) => Math.round(v * 100) / 100);
+  expect([r2(typeScale(1280, 800)), r2(typeScale(1366, 657)), r2(typeScale(390, 844)), r2(typeScale(1280, 720))]).toEqual([[20.8, 40, 74.88], [17.08, 32.85, 65.7], [15, 24.97, 36], [18.72, 36, 72]]);
   await pin(page, 0.01);
   await openQuiz(page, baseURL);
-  const sizes = { label: 13, step: 22, name: 36 };
+  const { width, height } = page.viewportSize()!;
+  expect([width, height], 'the default screen').toEqual([1280, 720]);
+  const sizes = typeScale(width, height);
   const check = async (at: string) => {
     expect(await boxed(page), `${at}: no fill or border`).toEqual([]);
     expect(await shadowed(page), `${at}: no shadow`).toEqual([]);
     expect(await offType(page, sizes), `${at}: the label type`).toEqual([]);
     expect(await plainLinks(page), `${at}: the controls underlined`).toEqual([]);
   };
-  expect(page.viewportSize()!.width / page.viewportSize()!.height, 'a landscape screen').toBeGreaterThan(0.9);
   await check('the intro');
   await begin(page);
   await settled(page);
+  // an answer's picture on screen: its strips carry the photograph and nothing else in its frame has a fill
+  await picsLoaded(page, 0);
+  const first = QUIZ_QUESTIONS[0].answers[0].persona;
+  await page.locator(`.qz-card.is-top .qz-opt[data-persona="${first}"]`).hover();
+  await expect.poll(async () => (await picNow(page, 0))[first], { message: 'the picture settled' }).toBe('settled');
   await check('card 1');
   for (const h of await page.locator('.qz-card.is-top .qz-opt').evaluateAll((os) => os.map((o) => o.getBoundingClientRect().height))) expect(h, 'each answer is 44 px to tap').toBeGreaterThanOrEqual(44);
   await answer(page, ['curator']);
@@ -1739,12 +1842,11 @@ test('AC1 the decode keeps Sam\'s no-break space: The Spark\'s profile reads "11
 });
 
 for (const [w, h] of [[360, 780], [430, 932], [768, 1024], [1024, 768], [1280, 800], [844, 390]] as const) {
-  const portrait = w / h <= 9 / 10;
-  test(`AC4 at ${w} x ${h}: the intro, a card, the result, the gift and its done line fit the width, the text columns and their words sit inside the gutters, every control is at least 44 px each way (Begin, the answers, Back, the links, Send, the field, the consent row, Not you), and every line is in the labels' ${portrait ? 'portrait 12, 18 and 28' : '13, 22 and 36'} px`, async ({ browser, baseURL }) => {
+  const scale = typeScale(w, h), px = (v: number) => String(Math.round(v * 100) / 100);
+  test(`AC4 at ${w} x ${h}: the intro, a card, the result, the gift and its done line fit the width, the text columns and their words sit inside the gutters, every control is at least 44 px each way (Begin, the answers, Back, the links, Send, the field, the consent row, Not you), and every line is at the type scale's clamp() sizes for the screen, ${px(scale.label)}, ${px(scale.step)} and ${px(scale.name)} px`, async ({ browser, baseURL }) => {
     const ctx = await browser.newContext({ viewport: { width: w, height: h } });
     const page = await ctx.newPage();
     await page.route('**/api/quiz-lead', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
-    const [body, step, big] = portrait ? [12, 18, 28] : [13, 22, 36];
     /** the shown text column (and the drawn glyph rows inside it) between the 16 px gutters, no sideways scroll */
     const fits = async (at: string, sel: string) => {
       const m = await page.evaluate((sel) => {
@@ -1763,7 +1865,7 @@ for (const [w, h] of [[360, 780], [430, 932], [768, 1024], [1024, 768], [1280, 8
       expect(boxes.length, `${at}: ${sel} shown`).toBeGreaterThan(0);
       expect(boxes.filter((b) => b.w < 44 || b.h < 44), `${at}: ${sel} at least 44 x 44 px`).toEqual([]);
     };
-    const sizes = { label: body, step, name: big };
+    const sizes = scale;
     await pin(page, 0.01);
     await openQuiz(page, baseURL);
     await fits('intro', '.qz-intro');
@@ -1826,5 +1928,840 @@ test('AC4 at 360 x 780 the done line with a 60-character address breaks inside t
   expect(m.line, 'the line itself').toBeLessThanOrEqual(360 - 16 + 0.01);
   expect(m.lines, 'broken over three lines or more').toBeGreaterThanOrEqual(3);
   expect(m.wide, 'no horizontal scroll').toBe(false);
+  await ctx.close();
+});
+
+// ---- the answer pictures (Sam, 2026-10-20; config/quiz-pictures.ts, picture.ts) ----
+
+/** a picture file as the build names it: /_astro/q<question index>-<personality>-<width>.<hash>.<avif or webp> */
+const PIC_URL = /\/_astro\/(q\d+-[a-z]+)-(\d+)\.[\w-]+\.(avif|webp)$/;
+/** the sizes attribute of every picture: the second column on a laptop, the width between the gutters on a phone */
+const PIC_SIZES = '(min-width: 900px) and (min-height: 600px) min(30vw, 440px), calc(100vw - 32px)';
+
+/** every picture of card i loaded (each <img> complete, with its size), so a show starts at once: picture.ts first awaits
+ *  a picture still loading */
+const picsLoaded = (page: Page, i: number): Promise<unknown> => page.waitForFunction((i) => {
+  const imgs = [...document.querySelectorAll<HTMLImageElement>(`.qz-card[data-i="${i}"] .qz-pic img`)];
+  return imgs.length > 0 && imgs.every((m) => m.complete && m.naturalWidth > 0);
+}, i, { timeout: 15_000 });
+
+/** card i's pictures as they stand, by personality: 'settled' (on screen, every strip on its own slice at full opacity,
+ *  no transform), 'moving' (on screen part-way) or 'off' (never shown, or hidden with every strip at 0) */
+const picNow = (page: Page, i: number): Promise<Record<string, string>> => page.evaluate((i) => {
+  const frame = document.querySelector<HTMLElement>(`.qz-card[data-i="${i}"] .qz-pics`), out: Record<string, string> = {};
+  if (!frame) return out;
+  for (const pic of frame.querySelectorAll<HTMLElement>('.qz-pic')) out[pic.dataset.persona ?? ''] = 'off';
+  for (const layer of frame.querySelectorAll<HTMLElement>('.qz-shot')) {
+    const strips = [...layer.children] as HTMLElement[], W = frame.clientWidth, a = strips.map((s) => (s.style.opacity === '' ? 1 : Number(s.style.opacity)));
+    const own = strips.every((s, n) => Math.abs(((W - parseFloat(s.style.backgroundSize)) / 2 - parseFloat(s.style.backgroundPosition)) * strips.length / W - n) < 0.01);
+    out[layer.dataset.persona ?? ''] = layer.style.visibility !== 'visible' && a.every((v) => v === 0) ? 'off'
+      : a.every((v) => v === 1) && own && layer.style.transform === '' && getComputedStyle(layer).transform === 'none' ? 'settled' : 'moving';
+  }
+  return out;
+}, i);
+const allOff = (i: number) => Object.fromEntries(QUIZ_QUESTIONS[i].answers.map((a) => [a.persona, 'off']));
+
+/** one step of a picture as drawn, timed on its own clock (the timestamp of the animation frame its step ran in, as
+ *  watch() times the decoder): whose it is (personality and card), its place among the frame's layers (z of n; the later
+ *  drawn over the earlier), its visibility, its transform (inline and computed), the frame's box, and for each of its
+ *  strips, left to right, the opacity and the slice it shows (j: the strip whose part of the covered picture it draws, from
+ *  its background position and size; a strip's own slice is its index) */
+interface PicStep { t: number; k: string; card: number; z: number; n: number; vis: string; tf: string; ctf: string; o: number[]; j: (number | null)[]; box: number[] }
+/** a pointer (enter, leave, down, cancel), focus or blur event on an answer, on the page's clock, caught before the
+ *  deck's own listeners */
+interface PicEvent { t: number; ev: string; k: string; card: number }
+/** an answer's glyphs after a step of the decoder: the least opacity among them */
+interface OptStep { t: number; k: string; card: number; min: number }
+interface PicLog { steps: PicStep[]; events: PicEvent[]; opts: OptStep[] }
+
+/** from now until picLog(): every step of every picture (a MutationObserver callback runs straight after the animation
+ *  frame callback that wrote it, so no step is missed however few frames the page draws), every pointer, focus and blur
+ *  event on an answer, and every step of an answer's glyphs */
+const recordPics = (page: Page): Promise<void> => page.evaluate(() => {
+  const root = document.getElementById('find')!;
+  const log: { steps: unknown[]; events: unknown[]; opts: unknown[] } = { steps: [], events: [], opts: [] };
+  const raf0 = window.requestAnimationFrame;
+  let clock = 0, inFrame = false;
+  window.requestAnimationFrame = (cb) => raf0.call(window, (ts) => { clock = ts; inFrame = true; try { cb(ts); } finally { queueMicrotask(() => { inFrame = false; }); } });
+  const cardOf = (e: Element) => Number(e.closest<HTMLElement>('.qz-card')?.dataset.i ?? -1);
+  const opacity = (s: HTMLElement) => (s.style.opacity === '' ? 1 : Number(s.style.opacity));
+  const step = (layer: HTMLElement, t: number) => {
+    const frame = layer.parentElement as HTMLElement, W = frame.clientWidth, strips = [...layer.children] as HTMLElement[], layers = [...frame.querySelectorAll('.qz-shot')], b = frame.getBoundingClientRect();
+    return {
+      t, k: layer.dataset.persona ?? '', card: cardOf(layer), z: layers.indexOf(layer), n: layers.length, vis: layer.style.visibility, tf: layer.style.transform, ctf: getComputedStyle(layer).transform,
+      o: strips.map(opacity),
+      j: strips.map((s) => { const j = ((W - parseFloat(s.style.backgroundSize)) / 2 - parseFloat(s.style.backgroundPosition)) * strips.length / W; return Number.isFinite(j) ? Math.round(j * 1000) / 1000 : null; }),
+      box: [b.left, b.top, b.right, b.bottom].map((v) => Math.round(v * 10) / 10),
+    };
+  };
+  const onRecords = (recs: MutationRecord[]) => {
+    const t = inFrame ? clock : performance.now(), layers = new Set<HTMLElement>(), opts = new Set<HTMLElement>();
+    for (const r of recs) {
+      const el = (r.target.nodeType === Node.ELEMENT_NODE ? r.target : r.target.parentElement) as HTMLElement | null;
+      if (!el) continue;
+      const layer = el.closest<HTMLElement>('.qz-shot');
+      if (layer) layers.add(layer);
+      for (const n of r.addedNodes) if (n instanceof HTMLElement && n.matches('.qz-shot')) layers.add(n);
+      const opt = el.closest<HTMLElement>('.qz-opt');
+      if (opt && r.type === 'attributes' && el.parentElement?.classList.contains('dc')) opts.add(opt);
+    }
+    for (const l of layers) log.steps.push(step(l, t));
+    for (const o of opts) log.opts.push({ t, k: o.dataset.persona ?? '', card: cardOf(o), min: Math.min(...[...o.querySelectorAll<HTMLElement>(':scope > .dc > span')].map(opacity)) });
+  };
+  const mo = new MutationObserver(onRecords);
+  mo.observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ['style'] });
+  (window as unknown as { __qzPicLog: typeof log }).__qzPicLog = log;   // picPeek() reads it while the record goes on
+  const types = ['pointerenter', 'pointerleave', 'pointerdown', 'pointercancel', 'focus', 'blur'];
+  // pointerenter and pointerleave come to the answer itself; a press and its cancel come to the glyph under it and bubble
+  const on = (e: Event) => { const o = e.type === 'pointerdown' || e.type === 'pointercancel' ? (e.target as Element).closest?.('.qz-opt') : e.target; if (o instanceof HTMLElement && o.matches('.qz-opt')) log.events.push({ t: performance.now(), ev: e instanceof PointerEvent ? `${e.type}:${e.pointerType}` : e.type, k: o.dataset.persona ?? '', card: cardOf(o) }); };
+  for (const ty of types) document.addEventListener(ty, on, true);
+  (window as unknown as { __qzPicStop: () => unknown }).__qzPicStop = () => {
+    onRecords(mo.takeRecords()); mo.disconnect();
+    for (const ty of types) document.removeEventListener(ty, on, true);
+    window.requestAnimationFrame = raf0;
+    return log;
+  };
+});
+const picLog = (page: Page): Promise<PicLog> => page.evaluate(() => (window as unknown as { __qzPicStop: () => PicLog }).__qzPicStop());
+/** the pointer, focus and blur events recorded so far, the record going on */
+const picPeek = (page: Page): Promise<PicEvent[]> => page.evaluate(() => [...(window as unknown as { __qzPicLog: PicLog }).__qzPicLog.events]);
+
+/** the time of the nth event `ev` (pointerenter:mouse, focus, ...) on the answer for k */
+function picEvent(log: PicLog, ev: string, k: string, nth = 0): number {
+  const e = log.events.filter((x) => x.ev === ev && x.k === k)[nth];
+  expect(e, `${ev} on ${k} (${nth + 1})`).toBeTruthy();
+  return e.t;
+}
+/** card i's picture for k, its steps from the event at `from` to the next at `to` (a step can carry its frame's timestamp
+ *  from a little before the event that started it: input is dispatched inside the frame) */
+const between = (log: PicLog, i: number, k: string, from: number, to: number): PicStep[] => log.steps.filter((s) => s.card === i && s.k === k && s.t >= from - 20 && s.t < to - 20);
+const own = (s: PicStep) => s.j.every((j, i) => j !== null && Math.abs(j - i) < 0.01);
+const opaque = (s: PicStep) => s.o.every((o) => o === 1);
+const gone = (s: PicStep) => s.vis === 'hidden' && s.o.every((o) => o === 0);
+const settledPic = (s: PicStep) => s.vis === 'visible' && opaque(s) && own(s) && s.tf === '' && s.ctf === 'none';
+/** the left of the frame at least as visible as the right, strip by strip (both wipes; the decoder rounds to 0.001) */
+const leftFirst = (s: PicStep) => s.o.every((o, i) => i === 0 || o <= s.o[i - 1] + 0.002);
+const partway = (s: PicStep) => s.o.some((o) => o > 0 && o < 1);
+/** a visible strip showing a slice that is not its own */
+const elsewhere = (s: PicStep) => s.j.some((j, i) => s.o[i] > 0 && j !== null && Math.abs(j - i) > 0.01);
+/** every strip on a whole slice, its own or one of the seven after it (the roll counts down from 5.753 steps, mod 8) */
+const nearSlice = (s: PicStep) => s.j.every((j, i) => j !== null && Math.abs(j - Math.round(j)) < 0.01 && (Math.round(j) - i + 12) % 12 <= 7);
+
+/** a picture decoding in from the event at `from`, as picture.ts draws it on the decoder's timings (decode.ts): 12 strips,
+ *  strip i (x = i / 11) at opacity clamp(11u - 10x) with u = t / 0.4, so left to right, the last strip starting at 0.364 s
+ *  and every strip in full at 0.4 s; strip i showing the slice of strip (i + k) % 12 until settled on its own at 0.75 s;
+ *  the frame from scale 1.03 to 1, ease-out cubic over 0.75 s; settled by 0.9 s. Reduced motion: a 0.2 s fade, every
+ *  strip at one opacity and on its own slice at every step, no transform */
+function expectPicIn(at: string, steps: PicStep[], from: number, m: { reduced?: boolean } = {}): void {
+  const since = (s: PicStep) => Math.round(s.t - from);
+  expect(steps.length, `${at}: steps seen`).toBeGreaterThan(2);
+  expect(steps.filter((s) => s.o.length !== 12).map(since), `${at}: 12 strips`).toEqual([]);
+  const done = steps.find(settledPic);
+  expect(done, `${at}: settles on its own slices at full opacity, no transform`).toBeTruthy();
+  expect(settledPic(steps[steps.length - 1]), `${at}: and stays so`).toBe(true);
+  expect(steps.some(partway), `${at}: a step seen part-way`).toBe(true);
+  const fullAt = since(steps.find(opaque)!);
+  if (m.reduced) {
+    expect(steps.filter((s) => new Set(s.o).size > 1).map(since), `${at}: a fade, every strip at one opacity`).toEqual([]);
+    expect(steps.filter((s) => !own(s)).map(since), `${at}: every strip on its own slice at every step`).toEqual([]);
+    expect(steps.filter((s) => s.tf !== '' || s.ctf !== 'none').map((s) => `${since(s)} ms: ${s.tf} ${s.ctf}`), `${at}: no transform`).toEqual([]);
+    expect(fullAt, `${at}: not in full before 0.2 s`).toBeGreaterThan(200 - 1);
+    expect(steps.filter((s) => !opaque(s) && s.t - from > 200 + 10).map(since), `${at}: still fading in after 0.2 s`).toEqual([]);
+    return;
+  }
+  expect(steps.filter((s) => !leftFirst(s)).map(since), `${at}: left to right at every step (the left the more visible)`).toEqual([]);
+  expect(steps.some((s) => partway(s) && new Set(s.o).size > 1), `${at}: a wipe, uneven part-way, not a fade`).toBe(true);
+  expect(steps.filter((s) => !nearSlice(s)).map(since), `${at}: each strip on its own slice or one of the seven after it`).toEqual([]);
+  expect(steps.some(elsewhere), `${at}: a visible strip shows another strip's slice`).toBe(true);
+  expect(since(steps.find((s) => s.o[11] > 0)!), `${at}: the last strip starts at 0.364 s, not before`).toBeGreaterThan(Math.round(400 * 10 / 11) - 1);
+  expect(fullAt, `${at}: not in full before 0.4 s`).toBeGreaterThan(400 - 1);
+  expect(steps.filter((s) => !opaque(s) && s.t - from > 400 + 10).map(since), `${at}: still coming in after 0.4 s`).toEqual([]);
+  expect(steps.filter((s) => elsewhere(s) && s.t - from > 750 + 10).map(since), `${at}: still rolling after 0.75 s`).toEqual([]);
+  expect(since(done!), `${at}: settled at 0.75 s, not before`).toBeGreaterThan(750 - 1);
+  expect(since(done!), `${at}: and within 0.9 s`).toBeLessThanOrEqual(900);
+  const scaled = steps.filter((s) => s.tf !== '');
+  expect(scaled.length, `${at}: scaled while it comes in`).toBeGreaterThan(0);
+  const k = (s: PicStep) => Number(/^scale\(([\d.]+)\)$/.exec(s.tf)?.[1]);
+  for (const s of scaled) {
+    const v = Math.min(1, Math.max(0, s.t - from) / 750), want = 1.03 - 0.03 * (1 - (1 - v) ** 3);
+    expect(Math.abs(k(s) - want), `${at}: ${s.tf} at ${since(s)} ms (ease-out cubic from 1.03 to 1: ${want.toFixed(4)})`).toBeLessThan(0.003);
+    expect(s.ctf, `${at}: ${s.tf} as computed`).toBe(`matrix(${k(s)}, 0, 0, ${k(s)}, 0, 0)`);
+  }
+  expect(scaled.some((s) => k(s) > 1.001 && k(s) < 1.029), `${at}: a step part-way from 1.03 to 1`).toBe(true);
+}
+
+/** a picture going out from the event at `from`: right to left over 0.2 s (the left the more visible at every step), every
+ *  strip on its own slice, no transform, ending hidden with every strip at 0. Reduced motion: a 0.2 s fade. `slack`: how
+ *  late after `from` the hide may have started (10 ms for a pointer or focus event; the touch commit starts it a frame
+ *  after its last settled step) */
+function expectPicOut(at: string, steps: PicStep[], from: number, m: { reduced?: boolean; slack?: number } = {}): void {
+  const since = (s: PicStep) => Math.round(s.t - from), slack = m.slack ?? 10;
+  expect(steps.length, `${at}: steps seen`).toBeGreaterThan(1);
+  const off = steps.find(gone);
+  expect(off, `${at}: ends hidden, every strip at 0`).toBeTruthy();
+  expect(gone(steps[steps.length - 1]), `${at}: and stays so`).toBe(true);
+  expect(since(off!), `${at}: not gone before 0.2 s`).toBeGreaterThan(200 - 1);
+  expect(steps.filter((s) => s.o.some((o) => o > 0) && s.t - from > 200 + slack).map(since), `${at}: still visible after 0.2 s`).toEqual([]);
+  expect(steps.some(partway), `${at}: a step seen part-way`).toBe(true);
+  expect(steps.filter((s) => s.o.some((o) => o > 0) && !own(s)).map(since), `${at}: every strip on its own slice`).toEqual([]);
+  expect(steps.filter((s) => s.tf !== '').map(since), `${at}: no transform`).toEqual([]);
+  if (m.reduced) expect(steps.filter((s) => new Set(s.o).size > 1).map(since), `${at}: a fade, every strip at one opacity`).toEqual([]);
+  else {
+    expect(steps.filter((s) => !leftFirst(s)).map(since), `${at}: right to left at every step (the left the more visible)`).toEqual([]);
+    expect(steps.some((s) => partway(s) && new Set(s.o).size > 1), `${at}: a wipe, uneven part-way, not a fade`).toBe(true);
+  }
+}
+
+/** card i's frame and the picture for k as laid out, with its strips' backgrounds and the picture's chosen source */
+const picGeometry = (page: Page, i: number, k: string) => page.evaluate(({ i, k }) => {
+  const card = document.querySelector<HTMLElement>(`.qz-card[data-i="${i}"]`)!, frame = card.querySelector<HTMLElement>('.qz-pics')!, layer = frame.querySelector<HTMLElement>(`.qz-shot[data-persona="${k}"]`)!;
+  const img = frame.querySelector<HTMLImageElement>(`.qz-pic[data-persona="${k}"] img`)!;
+  const box = (e: Element) => { const r = e.getBoundingClientRect(); return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height }; };
+  return {
+    vw: innerWidth, card: box(card), frame: box(frame), layer: box(layer), q: box(card.querySelector('.qz-q')!),
+    text: Math.max(...[...card.querySelectorAll('.qz-count, .qz-q, .qz-opt')].map((e) => box(e).right)),
+    strips: [...layer.children].map((s) => ({ ...box(s), image: getComputedStyle(s).backgroundImage, size: (s as HTMLElement).style.backgroundSize })),
+    src: img.currentSrc, natural: [img.naturalWidth, img.naturalHeight], W: frame.clientWidth, H: frame.clientHeight,
+  };
+}, { i, k });
+
+/** every step of card i's pictures (or its picture for k) drawn: the layer visible with a strip above opacity 0 */
+const drawnSteps = (log: PicLog, i: number, k?: string): PicStep[] => log.steps.filter((s) => s.card === i && (!k || s.k === k) && s.vis === 'visible' && s.o.some((o) => o > 0));
+
+/** an answer taken: its picture, shown from the event at the start of `steps`, settled and stayed so while the pointer or
+ *  focus left the answer (at `left`, during the answer's hold: aria-pressed keeps it), then wiped out with the answer,
+ *  starting in the frame the answer's glyphs started wiping out (`wiped`), over 0.2 s */
+function expectPicGoesWithAnswer(at: string, steps: PicStep[], left: number, wiped: number): void {
+  const on = steps.findIndex(settledPic), out = steps.findIndex((s, n) => n > on && !settledPic(s));
+  expect(on, `${at}: the picture settles`).toBeGreaterThanOrEqual(0);
+  expect(out, `${at}: then goes`).toBeGreaterThan(on);
+  expect(steps.slice(on, out).filter((s) => !settledPic(s)).length, `${at}: settled until it goes`).toBe(0);
+  expect(Math.round(steps[out].t - left), `${at}: not when the pointer or focus left the answer, 0.1 s or more before it goes`).toBeGreaterThan(100);
+  expect(Math.round(steps[out].t - wiped), `${at}: it goes in the frame the answer starts wiping out`).toBeGreaterThanOrEqual(-20);
+  expect(Math.round(steps[out].t - wiped)).toBeLessThanOrEqual(20);
+  // from a frame and a half before its first step out: the hide began in the task between the two frames
+  expectPicOut(`${at}: it wipes out with the answer`, steps.slice(out), steps[out].t - 25, { slack: 45 });
+}
+
+/** card i's pictures (every one, or those of the answers named) held on the network by page.route until release(): an
+ *  answer can be hovered, focused or tapped while its picture is still loading (picture.ts first awaits its decode).
+ *  held() lists the pictures asked for so far (q<i>-<personality>) */
+async function holdPics(page: Page, i: number, personas?: string[]): Promise<{ release: () => void; held: () => string[] }> {
+  let open: () => void = () => undefined;
+  const gate = new Promise<void>((r) => { open = r; }), held: string[] = [];
+  const key = (url: URL) => PIC_URL.exec(url.pathname)?.[1] ?? '';
+  await page.route((url) => key(url).startsWith(`q${i}-`) && (!personas || personas.includes(key(url).slice(`q${i}-`.length))), async (route) => {
+    held.push(key(new URL(route.request().url())));
+    await gate;
+    await route.continue().catch(() => undefined);   // the page may have closed meanwhile
+  });
+  return { release: () => open(), held: () => [...held] };
+}
+/** whether card i's picture for k has loaded (its <img> complete, with its size), now; and a wait for it */
+const picLoadedNow = (page: Page, i: number, k: string): Promise<boolean> => page.locator(`.qz-card[data-i="${i}"] .qz-pic[data-persona="${k}"] img`).evaluate((m) => (m as HTMLImageElement).complete && (m as HTMLImageElement).naturalWidth > 0);
+const picLoaded = (page: Page, i: number, k: string): Promise<unknown> => page.waitForFunction(({ i, k }) => {
+  const m = document.querySelector<HTMLImageElement>(`.qz-card[data-i="${i}"] .qz-pic[data-persona="${k}"] img`);
+  return !!m && m.complete && m.naturalWidth > 0;
+}, { i, k }, { timeout: 15_000 });
+/** a click by script where the pointer and focus stand (Begin, an answer, Back): neither moves */
+const press = (el: Locator): Promise<void> => el.evaluate((e) => { (e as HTMLElement).click(); });
+
+test('Pictures, a mouse at 1280 x 800 (Sam: "that image should appear only when u hover over that option"): on question 1 the answer under the pointer decodes its picture in beside the question, in the second column (aria-hidden), strip by strip left to right while the strips show other strips\' slices, from scale 1.03, settled on its own slices at full opacity within 0.9 s; the next answer wipes it out right to left over 0.2 s while its own decodes in over it; leaving the answers wipes that out', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await ctx.newPage();
+  const [a, b] = [QUIZ_QUESTIONS[0].answers[0].persona, QUIZ_QUESTIONS[0].answers[3].persona];
+  expect(QUIZ_QUESTIONS[0].visual, 'question 1 is visual').toBe(true);
+  await openQuiz(page, baseURL);
+  await begin(page);
+  await page.mouse.move(0, 0);
+  await settled(page);
+  await picsLoaded(page, 0);
+  await quiet(page);
+  await expect.poll(() => picNow(page, 0), { message: 'no picture with no pointer over an answer' }).toEqual(allOff(0));
+  const frame = page.locator('.qz-card.is-top .qz-pics');
+  await expect(frame, 'the frame is hidden from assistive technology').toHaveAttribute('aria-hidden', 'true');
+  expect(await frame.locator('img').evaluateAll((ms) => ms.map((m) => m.getAttribute('alt'))), 'and its pictures say nothing').toEqual(Array(7).fill(''));
+  await recordPics(page);
+  await page.locator(`.qz-card.is-top .qz-opt[data-persona="${a}"]`).hover();
+  await expect.poll(async () => (await picNow(page, 0))[a]).toBe('settled');
+  const geo = await picGeometry(page, 0, a);
+  await page.locator(`.qz-card.is-top .qz-opt[data-persona="${b}"]`).hover();
+  await expect.poll(async () => { const s = await picNow(page, 0); return [s[a], s[b]]; }).toEqual(['off', 'settled']);
+  await page.mouse.move(0, 0);
+  await expect.poll(() => picNow(page, 0)).toEqual(allOff(0));
+  const log = await picLog(page);
+  await ctx.close();
+  const inA = picEvent(log, 'pointerenter:mouse', a), outA = picEvent(log, 'pointerleave:mouse', a), inB = picEvent(log, 'pointerenter:mouse', b), outB = picEvent(log, 'pointerleave:mouse', b);
+  expectPicIn('the answer under the pointer: its picture decodes in', between(log, 0, a, inA, outA), inA);
+  expectPicOut('the pointer on the next answer: the first picture wipes out', between(log, 0, a, outA, Infinity), outA);
+  expectPicIn('and the next answer\'s decodes in', between(log, 0, b, inB, outB), inB);
+  expectPicOut('the pointer off the answers: it wipes out', between(log, 0, b, outB, Infinity), outB);
+  // the incoming picture is drawn over the outgoing one: the last layer of the frame while the first is still going
+  const going = between(log, 0, a, outA, Infinity).filter((s) => s.o.some((o) => o > 0));
+  expect(going.length, 'the two on screen together a while').toBeGreaterThan(0);
+  expect(going.filter((s) => s.z >= s.n - 1).map((s) => `${s.z} of ${s.n}`), 'the outgoing under the incoming').toEqual([]);
+  expect(between(log, 0, b, inB, outB).filter((s) => s.z !== s.n - 1).map((s) => `${s.z} of ${s.n}`), 'the incoming the last drawn').toEqual([]);
+  // the second column, beside the question: clamp(260px, 30vw, 440px) wide, four by five, level with the question
+  expect(geo.frame.width, 'the column clamp(260px, 30vw, 440px)').toBeCloseTo(Math.min(440, Math.max(260, 0.3 * 1280)), 0);
+  expect(geo.frame.height / geo.frame.width, 'four by five').toBeCloseTo(5 / 4, 2);
+  expect(geo.frame.left - geo.text, 'beside the words, a gap of 32 px or more between').toBeGreaterThanOrEqual(32 - 0.5);
+  expect(geo.frame.top, 'from the card\'s first row').toBeCloseTo(geo.card.top, 0);
+  expect(geo.frame.top <= geo.q.top && geo.frame.bottom >= geo.q.bottom, 'level with the question').toBe(true);
+  expect(geo.frame.right, 'inside the right gutter').toBeLessThanOrEqual(geo.vw - 16 + 0.01);
+  for (const side of ['left', 'top', 'right', 'bottom'] as const) expect(geo.layer[side], `the picture fills the frame (${side})`).toBeCloseTo(geo.frame[side], 0);
+  for (const s of between(log, 0, a, inA, outA).filter(settledPic)) expect(s.box, 'the settled picture where the frame stands').toEqual([geo.frame.left, geo.frame.top, geo.frame.right, geo.frame.bottom].map((v) => Math.round(v * 10) / 10));
+  // twelve strips across it, each drawing the answer's own picture (the <img>'s chosen source), sized as object-fit: cover
+  expect(geo.strips.length).toBe(12);
+  expect(geo.strips.every((s, n) => n === 0 || s.left > geo.strips[n - 1].left), 'left to right in order').toBe(true);
+  expect([geo.strips[0].left, geo.strips[11].right], 'across the frame').toEqual([expect.closeTo(geo.frame.left, 0), expect.closeTo(geo.frame.right + 1, 0)]);
+  expect(PIC_URL.exec(new URL(geo.src).pathname)?.slice(1), 'the answer\'s own picture, AVIF').toEqual([`q0-${a}`, '640', 'avif']);
+  expect([...new Set(geo.strips.map((s) => s.image))], 'every strip draws it').toEqual([`url("${geo.src}")`]);
+  const [cw, ch] = geo.strips[0].size.split(' ').map(parseFloat);
+  expect(cw, 'covers the width').toBeGreaterThanOrEqual(geo.W - 0.01);
+  expect(ch, 'covers the height').toBeGreaterThanOrEqual(geo.H - 0.01);
+  expect(Math.min(cw - geo.W, ch - geo.H), 'and fits one of them').toBeLessThan(0.01);
+  expect(cw / ch, 'at the picture\'s own aspect').toBeCloseTo(geo.natural[0] / geo.natural[1], 3);
+});
+
+test('Pictures, the keyboard: Down from question 1 focuses its first answer, which shows its picture decoding in as under a pointer; Tab to the next answer wipes it out and decodes that one\'s in; Shift+Tab back does the same the other way, and Shift+Tab out of the deck wipes it out, leaving none; Tab back in shows it again, Enter takes the answer, and Tab on during the answer\'s hold keeps its picture settled (the answer taken) and shows none for the answer focused (no answer is live then) until the picture wipes out with the answer', async ({ page, baseURL }) => {
+  const [a0, a1] = [QUIZ_QUESTIONS[0].answers[0].persona, QUIZ_QUESTIONS[0].answers[1].persona];
+  await openQuiz(page, baseURL);
+  await page.locator('#qzBegin').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#find')).toHaveAttribute('data-state', 'quiz');
+  await onTop(page, 0);
+  await settled(page);
+  await picsLoaded(page, 0);
+  await quiet(page);
+  expect(await picNow(page, 0), 'none while the question has focus').toEqual(allOff(0));
+  await recordPics(page);
+  const opts = page.locator('.qz-card[data-i="0"] .qz-opt');
+  await page.keyboard.press('ArrowDown');
+  await expect(opts.nth(0)).toBeFocused();
+  expect(await opts.nth(0).evaluate((o) => o.matches(':focus-visible')), 'keyboard focus').toBe(true);
+  await expect.poll(async () => (await picNow(page, 0))[a0]).toBe('settled');
+  await page.keyboard.press('Tab');
+  await expect(opts.nth(1)).toBeFocused();
+  await expect.poll(async () => { const s = await picNow(page, 0); return [s[a0], s[a1]]; }).toEqual(['off', 'settled']);
+  await page.keyboard.press('Shift+Tab');
+  await expect(opts.nth(0)).toBeFocused();
+  await expect.poll(async () => { const s = await picNow(page, 0); return [s[a0], s[a1]]; }).toEqual(['settled', 'off']);
+  await page.keyboard.press('Shift+Tab');
+  expect(await page.evaluate(() => !!document.activeElement?.closest('#qzCards')), 'focus out of the deck').toBe(false);
+  await expect.poll(() => picNow(page, 0)).toEqual(allOff(0));
+  // Tab back in to the first answer, Enter on it, and Tab on at once, inside the answer's hold: the blur of the answer taken
+  // does not hide its picture (aria-pressed), and the answer focused next shows none (the deck is busy)
+  await page.keyboard.press('Tab');
+  await expect(opts.nth(0)).toBeFocused();
+  await expect.poll(async () => (await picNow(page, 0))[a0]).toBe('settled');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Tab');
+  await onTop(page, 1);
+  await settled(page);
+  const log = await picLog(page);
+  expect((await events(page)).filter(([n]) => n === 'quiz_answer'), 'Enter took the first answer').toEqual([['quiz_answer', { q: 1, persona: a0 }]]);
+  const f0 = picEvent(log, 'focus', a0), b0 = picEvent(log, 'blur', a0), f1 = picEvent(log, 'focus', a1), b1 = picEvent(log, 'blur', a1);
+  const f0b = picEvent(log, 'focus', a0, 1), b0b = picEvent(log, 'blur', a0, 1), f0c = picEvent(log, 'focus', a0, 2), b0c = picEvent(log, 'blur', a0, 2);
+  expectPicIn('focus on the first answer: its picture decodes in', between(log, 0, a0, f0, b0), f0);
+  expectPicOut('Tab away: it wipes out', between(log, 0, a0, b0, f0b), b0);
+  expectPicIn('and the next answer\'s decodes in', between(log, 0, a1, f1, b1), f1);
+  expectPicOut('Shift+Tab back: that one wipes out', between(log, 0, a1, b1, f0c), b1);
+  expectPicIn('and the first answer\'s decodes in again', between(log, 0, a0, f0b, b0b), f0b);
+  expectPicOut('Shift+Tab out of the deck: it wipes out', between(log, 0, a0, b0b, f0c), b0b);
+  expectPicIn('Tab back in: it decodes in again', between(log, 0, a0, f0c, b0c), f0c);
+  // the hold: Tab moved focus on during it, and the picture stayed settled until the answer started wiping out
+  const wiped = log.opts.find((o) => o.card === 0 && o.k === a0 && o.min < 1 && o.t > f0c);
+  expect(wiped, 'the answer wipes out').toBeTruthy();
+  expect(b0c, 'Tab moved focus on before the answer started wiping out').toBeLessThan(wiped!.t);
+  expect(picEvent(log, 'focus', a1, 1), 'to the next answer').toBeGreaterThanOrEqual(b0c);
+  expectPicGoesWithAnswer('Enter, then Tab during the hold', between(log, 0, a0, f0c, Infinity), b0c, wiped!.t);
+  expect(drawnSteps(log, 0, a1).filter((s) => s.t > b0c).map((s) => Math.round(s.t - b0c)), 'the answer focused during the hold shows no picture').toEqual([]);
+});
+
+test('Pictures, a touch screen at 390 x 844: a tap on an answer of question 1 shows its picture above the question, in the open space under the logotype\'s band, decoding in, and holds the answer at full opacity, the rest of the question gone, until the picture has settled (at most 0.9 s); then the answer and its picture wipe out together and question 2 decodes in', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page = await ctx.newPage();
+  const p = QUIZ_QUESTIONS[0].answers[2].persona;
+  await openQuiz(page, baseURL);
+  await page.locator('#qzBegin').tap();
+  await expect(page.locator('#find')).toHaveAttribute('data-state', 'quiz');
+  await onTop(page, 0);
+  await settled(page);
+  await picsLoaded(page, 0);
+  await quiet(page);
+  const place = await page.evaluate(() => {
+    const c = document.querySelector('.qz-card.is-top')!, f = c.querySelector<HTMLElement>('.qz-pics')!, r = (e: Element) => e.getBoundingClientRect();
+    return { frame: [r(f).left, r(f).top, r(f).right, r(f).bottom], none: f.hasAttribute('data-none'), first: r(c.querySelector('.qz-count')!).top };
+  });
+  expect(place.none, 'room for the picture above the question').toBe(false);
+  const [left, top, right, bottom] = place.frame;
+  expect(bottom - top, '96 px high or more').toBeGreaterThanOrEqual(96);
+  expect(top, 'under the logotype\'s band').toBeGreaterThanOrEqual(56 + 16 - 0.5);
+  expect(bottom, 'above the question').toBeLessThanOrEqual(place.first + 0.5);
+  expect([left, right], 'between the gutters').toEqual([expect.closeTo(16, 0), expect.closeTo(390 - 16, 0)]);
+  await recordPics(page);
+  const box = (await page.locator(`.qz-card.is-top .qz-opt[data-persona="${p}"]`).boundingBox())!;
+  await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+  await onTop(page, 1);
+  await settled(page);
+  const log = await picLog(page);
+  expect((await events(page)).filter(([n]) => n === 'quiz_answer'), 'the tap took the answer').toEqual([['quiz_answer', { q: 1, persona: p }]]);
+  await ctx.close();
+  const down = picEvent(log, 'pointerdown:touch', p);
+  const steps = between(log, 0, p, down, Infinity), at = steps.findIndex(settledPic), outAt = steps.findIndex((s, n) => n > at && !settledPic(s));
+  expect(at, 'the picture settles').toBeGreaterThan(0);
+  expect(outAt, 'then goes').toBeGreaterThan(at);
+  expectPicIn('the tap: the picture decodes in', steps.slice(0, outAt), down);
+  expectPicOut('then it wipes out with the answer', steps.slice(outAt), steps[outAt - 1].t, { slack: 40 });
+  for (const s of steps.filter((s) => s.o.some((o) => o > 0))) expect(s.box, 'above the question, where the frame stood').toEqual(place.frame.map((v) => Math.round(v * 10) / 10));
+  // the hold: the answer at full opacity until the picture has settled, the rest of the question gone by then
+  const settledAt = steps[at].t, wiped = log.opts.find((o) => o.card === 0 && o.k === p && o.min < 1);
+  expect(wiped, 'the answer wipes out').toBeTruthy();
+  expect(wiped!.t, 'not before the picture has settled').toBeGreaterThanOrEqual(settledAt);
+  expect(wiped!.t - down, 'held past the 0.32 s a click holds it').toBeGreaterThan(750 - 1);
+  expect(wiped!.t - down, 'and at most 0.9 s past the 0.32 s').toBeLessThan(200 + 120 + 900 + 100);
+  for (const o of QUIZ_QUESTIONS[0].answers.map((x) => x.persona).filter((x) => x !== p)) {
+    expect(log.opts.filter((s) => s.card === 0 && s.k === o && s.t < wiped!.t).pop()?.min, `${o} gone before the answer goes`).toBe(0);
+  }
+});
+
+test('Pictures only where a question is visual: the five visual questions (1, 3, 5, 8 and 9) carry data-pics and one frame, aria-hidden, with a <picture> per answer in the answers\' order (AVIF and WebP at 640 px and a larger width, the column\'s sizes, alt "", lazy, async); the other five have no frame, and hovering or focusing the answers of question 2 asks for no picture and draws none anywhere', async ({ page, baseURL }) => {
+  const visual = QUIZ_QUESTIONS.flatMap((q, i) => (q.visual ? [i] : []));
+  expect(visual).toEqual([0, 2, 4, 7, 8]);
+  const asked: string[] = [];
+  page.on('request', (r) => { const m = PIC_URL.exec(new URL(r.url()).pathname); if (m) asked.push(m[1]); });
+  await openQuiz(page, baseURL);
+  const cards = await page.locator('.qz-card').evaluateAll((cs) => cs.map((c) => ({
+    pics: c.hasAttribute('data-pics'), frames: c.querySelectorAll('.qz-pics').length, hidden: c.querySelector('.qz-pics')?.getAttribute('aria-hidden') ?? null,
+    list: [...c.querySelectorAll<HTMLElement>('.qz-pics > .qz-pic')].map((p) => {
+      const s = p.querySelector('source'), m = p.querySelector('img')!;
+      return { k: p.dataset.persona ?? '', type: s?.getAttribute('type') ?? '', avif: s?.getAttribute('srcset') ?? '', webp: m.getAttribute('srcset') ?? '', sizes: [s?.getAttribute('sizes'), m.getAttribute('sizes')], alt: m.getAttribute('alt'), loading: m.getAttribute('loading'), decoding: m.getAttribute('decoding'), shots: p.parentElement!.querySelectorAll('.qz-shot').length };
+    }),
+  })));
+  for (const [i, c] of cards.entries()) {
+    if (!visual.includes(i)) { expect(c, `question ${i + 1}: no pictures`).toEqual({ pics: false, frames: 0, hidden: null, list: [] }); continue; }
+    expect([c.pics, c.frames, c.hidden], `question ${i + 1}: data-pics and one frame, aria-hidden`).toEqual([true, 1, 'true']);
+    expect(c.list.map((x) => x.k), `question ${i + 1}: a picture per answer, in order`).toEqual(QUIZ_QUESTIONS[i].answers.map((a) => a.persona));
+    for (const x of c.list) {
+      const at = `question ${i + 1}, ${x.k}`;
+      expect({ type: x.type, sizes: x.sizes, alt: x.alt, loading: x.loading, decoding: x.decoding, shots: x.shots }, at).toEqual({ type: 'image/avif', sizes: [PIC_SIZES, PIC_SIZES], alt: '', loading: 'lazy', decoding: 'async', shots: 0 });
+      for (const [set, ext] of [[x.avif, 'avif'], [x.webp, 'webp']] as const) {
+        const items = set.split(', ').map((e) => { const [url, w] = e.split(' '); return { m: PIC_URL.exec(url)?.slice(1), w }; });
+        expect(items.length, `${at}: two widths of ${ext}`).toBe(2);
+        expect(items.map((e) => e.m?.[0]), `${at}: its own files`).toEqual([`q${i}-${x.k}`, `q${i}-${x.k}`]);
+        expect(items.map((e) => e.m?.[2]), `${at}: ${ext}`).toEqual([ext, ext]);
+        expect(items.map((e) => `${e.m?.[1]}w`), `${at}: the descriptor is the file's width`).toEqual(items.map((e) => e.w));
+        expect(Number(items[0].m?.[1]), `${at}: 640 px first`).toBe(640);
+        expect(Number(items[1].m?.[1]), `${at}: then a larger one, at most 1100`).toBeGreaterThan(640);
+        expect(Number(items[1].m?.[1])).toBeLessThanOrEqual(1100);
+      }
+    }
+  }
+  // on question 2, a pointer and keyboard focus on its answers ask for no picture and draw none, on any question
+  await begin(page);
+  await answer(page, ['curator']);
+  await onTop(page, 1);
+  await settled(page);
+  await quiet(page);
+  const before = [...asked].sort();
+  expect(before, 'question 1\'s seven, asked for while it was on screen').toEqual(QUIZ_QUESTIONS[0].answers.map((a) => `q0-${a.persona}`).sort());
+  for (const o of await page.locator('.qz-card.is-top .qz-opt').all()) await o.hover();
+  await page.keyboard.press('ArrowDown'); await page.keyboard.press('ArrowDown');
+  await expect(page.locator('.qz-card[data-i="1"] .qz-opt').nth(1)).toBeFocused();
+  await page.waitForTimeout(900);   // the 0.75 s a picture would take to decode in, and more
+  expect([...asked].sort(), 'no picture asked for').toEqual(before);
+  expect(await page.locator('.qz-card[data-i="1"] .qz-pics, .qz-card[data-i="1"] .qz-shot').count(), 'question 2 has no frame and no picture').toBe(0);
+  expect(await page.locator('.qz-shot').evaluateAll((ls) => ls.filter((l) => (l as HTMLElement).style.visibility === 'visible' || [...l.children].some((s) => (s as HTMLElement).style.opacity !== '0')).map((l) => `${(l as HTMLElement).dataset.persona}@${(l.closest('.qz-card') as HTMLElement).dataset.i}`)), 'no picture drawn on any question').toEqual([]);
+});
+
+test('Pictures load with their question: none with the intro; question 1 on screen requests its seven, each once as AVIF at one width; question 2, with none, requests nothing, and question 3\'s wait until it is on screen, then its seven', async ({ page, baseURL }) => {
+  const got: { key: string; w: number; type: string }[] = [];
+  page.on('request', (r) => { const m = PIC_URL.exec(new URL(r.url()).pathname); if (m) got.push({ key: m[1], w: Number(m[2]), type: m[3] }); });
+  const seven = (i: number) => QUIZ_QUESTIONS[i].answers.map((a) => `q${i}-${a.persona}`).sort();
+  const of = (i: number) => got.filter((g) => g.key.startsWith(`q${i}-`)).map((g) => g.key).sort();
+  await openQuiz(page, baseURL);
+  await quiet(page);
+  expect(got, 'none with the intro').toEqual([]);
+  await begin(page);
+  await picsLoaded(page, 0);
+  await settled(page);
+  await quiet(page);
+  expect(of(0), 'question 1: its seven, each once').toEqual(seven(0));
+  expect(got.length, 'and nothing more').toBe(7);
+  await answer(page, ['curator']);
+  await onTop(page, 1);
+  await settled(page);
+  await quiet(page);
+  expect(got.length, 'question 2: none, and none of question 3\'s').toBe(7);
+  await answer(page, ['curator', 'curator'], 1);
+  await onTop(page, 2);
+  await picsLoaded(page, 2);
+  await settled(page);
+  await quiet(page);
+  expect(of(2), 'question 3 on screen: its seven, each once').toEqual(seven(2));
+  expect(got.length, 'and nothing more').toBe(14);
+  expect([...new Set(got.map((g) => `${g.type} ${g.w}`))], 'AVIF, at the 640 px width the column needs').toEqual(['avif 640']);
+});
+
+test('Pictures under reduced motion: the answer under the pointer fades its picture in over 0.2 s, every strip at one opacity and on its own slice at every step, with no transform; leaving fades it out over 0.2 s the same way', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  const page = await ctx.newPage();
+  const a = QUIZ_QUESTIONS[0].answers[4].persona;
+  await openQuiz(page, baseURL);
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches), 'reduced motion').toBe(true);
+  await begin(page);
+  await page.mouse.move(0, 0);
+  await settled(page);
+  await picsLoaded(page, 0);
+  await quiet(page);
+  await expect.poll(() => picNow(page, 0)).toEqual(allOff(0));
+  await recordPics(page);
+  await page.locator(`.qz-card.is-top .qz-opt[data-persona="${a}"]`).hover();
+  await expect.poll(async () => (await picNow(page, 0))[a]).toBe('settled');
+  await page.mouse.move(0, 0);
+  await expect.poll(() => picNow(page, 0)).toEqual(allOff(0));
+  const log = await picLog(page);
+  await ctx.close();
+  const enter = picEvent(log, 'pointerenter:mouse', a), leave = picEvent(log, 'pointerleave:mouse', a);
+  expectPicIn('the pointer on an answer: its picture fades in', between(log, 0, a, enter, leave), enter, { reduced: true });
+  expectPicOut('the pointer off: it fades out', between(log, 0, a, leave, Infinity), leave, { reduced: true });
+});
+
+// ---- the pictures, from the review of 2026-10-20: a picture still on the network when its answer is shown or left, a
+// touch that takes no answer, a screen with no room for the frame, a picture left on as the question changes, an answer
+// taken with the mouse or the keyboard while the pointer or focus leaves it, and focus that is not the keyboard's
+
+test('Pictures, a mouse press: pressed on an answer of question 1 and dragged off it (no click), the answer keeps focus but not :focus-visible, its picture wipes out as the pointer leaves, and focus given back to it by script (as when the window regains focus) shows none; an answer clicked keeps its picture settled while the pointer leaves it during the answer\'s hold, and the picture wipes out with the answer over 0.2 s as question 2 comes', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await ctx.newPage();
+  const [a, c] = [QUIZ_QUESTIONS[0].answers[2].persona, QUIZ_QUESTIONS[0].answers[5].persona];
+  await openQuiz(page, baseURL);
+  await begin(page);
+  await page.mouse.move(0, 0);
+  await settled(page);
+  await picsLoaded(page, 0);
+  await quiet(page);
+  await expect.poll(() => picNow(page, 0)).toEqual(allOff(0));
+  await recordPics(page);
+  // pressed and dragged off: no click, the answer focused by the mouse
+  const optA = page.locator(`.qz-card.is-top .qz-opt[data-persona="${a}"]`), optC = page.locator(`.qz-card.is-top .qz-opt[data-persona="${c}"]`);
+  const focusOf = (o: Locator) => o.evaluate((e) => [document.activeElement === e, e.matches(':focus-visible')]);
+  await optA.hover();
+  await expect.poll(async () => (await picNow(page, 0))[a]).toBe('settled');
+  await page.mouse.down();
+  expect(await focusOf(optA), 'focused by the press, not :focus-visible').toEqual([true, false]);
+  await page.mouse.move(0, 0);
+  await page.mouse.up();
+  await expect.poll(() => picNow(page, 0), { message: 'the pointer left: its picture wiped out' }).toEqual(allOff(0));
+  expect((await events(page)).filter(([n]) => n === 'quiz_answer'), 'no click, no answer taken').toEqual([]);
+  expect(await focusOf(optA), 'still focused').toEqual([true, false]);
+  // focus away and back by script, the pointer off the answers: a focus that is not the keyboard's shows no picture
+  await optA.evaluate((e) => { (e as HTMLElement).blur(); (e as HTMLElement).focus(); });
+  expect(await focusOf(optA), 'focused again, not :focus-visible').toEqual([true, false]);
+  await page.waitForTimeout(900);   // the 0.75 s a picture would take to decode in, and more
+  expect(await picNow(page, 0), 'no picture from that focus').toEqual(allOff(0));
+  // clicked: the pointer leaves 0.15 s into the answer's hold, and the picture stays until the answer goes
+  await optC.hover();
+  await expect.poll(async () => (await picNow(page, 0))[c]).toBe('settled');
+  await page.mouse.down(); await page.mouse.up();
+  await page.waitForTimeout(150);
+  await page.mouse.move(0, 0);
+  await onTop(page, 1);
+  await settled(page);
+  const log = await picLog(page);
+  expect((await events(page)).filter(([n]) => n === 'quiz_answer'), 'the click took the answer').toEqual([['quiz_answer', { q: 1, persona: c }]]);
+  await ctx.close();
+  const focusA = picEvent(log, 'focus', a, 1);
+  expect(drawnSteps(log, 0, a).filter((s) => s.t >= focusA).map((s) => Math.round(s.t - focusA)), 'nothing drawn for the answer focused by script').toEqual([]);
+  const down = picEvent(log, 'pointerdown:mouse', c), left = picEvent(log, 'pointerleave:mouse', c);
+  const wiped = log.opts.find((o) => o.card === 0 && o.k === c && o.min < 1 && o.t > down);
+  expect(wiped, 'the answer wipes out').toBeTruthy();
+  expect(left, 'the pointer left the answer during its hold').toBeLessThan(wiped!.t);
+  expect(left - down, 'after the click').toBeGreaterThan(100);
+  expectPicGoesWithAnswer('a click, then the pointer off during the hold', between(log, 0, c, picEvent(log, 'pointerenter:mouse', c), Infinity), left, wiped!.t);
+});
+
+test('Pictures on a slow network (question 1\'s pictures held by page.route) at 1280 x 800: an answer hovered and left before its picture has loaded shows nothing when the picture arrives; an answer still loading hovered and then one loaded shows only the loaded one, before and after the first arrives', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await ctx.newPage();
+  const [a, b, c] = [QUIZ_QUESTIONS[0].answers[1].persona, QUIZ_QUESTIONS[0].answers[3].persona, QUIZ_QUESTIONS[0].answers[5].persona];
+  const slowA = await holdPics(page, 0, [a]), slowC = await holdPics(page, 0, [c]);
+  await openQuiz(page, baseURL);
+  await quiet(page);
+  await page.mouse.move(0, 0);
+  await press(page.locator('#qzBegin'));   // the pointer stays off the answers
+  await onTop(page, 0);
+  await settled(page);
+  await picLoaded(page, 0, b);
+  await expect.poll(() => [...slowA.held(), ...slowC.held()].sort(), { message: 'the two asked for and held' }).toEqual([`q0-${a}`, `q0-${c}`].sort());
+  await recordPics(page);
+  // hovered and left while its picture loads
+  await page.locator(`.qz-card.is-top .qz-opt[data-persona="${a}"]`).hover();
+  await page.waitForTimeout(250);
+  expect(await picLoadedNow(page, 0, a), `${a}: still loading under the pointer`).toBe(false);
+  await page.mouse.move(0, 0);
+  expect(await picNow(page, 0), 'nothing drawn while it loads').toEqual(allOff(0));
+  slowA.release();
+  await picLoaded(page, 0, a);
+  await page.waitForTimeout(1200);   // the 0.75 s a show would take, and more
+  expect(await picNow(page, 0), `${a}: arrived with the pointer off the answers, not shown`).toEqual(allOff(0));
+  // a slow one hovered, then a loaded one: the pointer stays on the loaded one
+  await page.locator(`.qz-card.is-top .qz-opt[data-persona="${c}"]`).hover();
+  await page.waitForTimeout(250);
+  expect(await picLoadedNow(page, 0, c), `${c}: still loading under the pointer`).toBe(false);
+  await page.locator(`.qz-card.is-top .qz-opt[data-persona="${b}"]`).hover();
+  await expect.poll(async () => (await picNow(page, 0))[b]).toBe('settled');
+  slowC.release();
+  await picLoaded(page, 0, c);
+  await page.waitForTimeout(1200);
+  expect(await picNow(page, 0), `the pointer on ${b}: its picture alone, after ${c}'s arrived`).toEqual({ ...allOff(0), [b]: 'settled' });
+  const log = await picLog(page);
+  await ctx.close();
+  expect(drawnSteps(log, 0, a).map((s) => s.t), `${a}: never drawn`).toEqual([]);
+  expect(drawnSteps(log, 0, c).map((s) => s.t), `${c}: never drawn`).toEqual([]);
+  const inB = picEvent(log, 'pointerenter:mouse', b);
+  expectPicIn(`${b}: decodes in as ever`, between(log, 0, b, inB, Infinity), inB);
+});
+
+test('Pictures on a slow network, the pointer at rest (question 3\'s pictures held by page.route) at 1280 x 800: question 3 put on screen under the pointer left where question 2\'s answer was clicked gives the answer there pointerenter; the pointer moved off 0.3 s later, before the pictures arrive, leaves none shown once they have', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await ctx.newPage();
+  const slow = await holdPics(page, 2);
+  await openQuiz(page, baseURL);
+  await quiet(page);
+  await page.mouse.move(0, 0);
+  await press(page.locator('#qzBegin'));
+  await ready(page, 0);
+  await press(page.locator('.qz-card.is-top .qz-opt[data-persona="curator"]'));
+  await ready(page, 1);
+  await settled(page);
+  await recordPics(page);
+  await arm(page, 2);
+  await page.locator('.qz-card.is-top .qz-opt').nth(3).click();   // the pointer rests where it clicked
+  const at = await shown(page);
+  await expect.poll(async () => (await picPeek(page)).filter((e) => e.card === 2 && e.ev === 'pointerenter:mouse').length, { message: 'question 3\'s answer under the resting pointer takes pointerenter' }).toBeGreaterThan(0);
+  const k = (await picPeek(page)).find((e) => e.card === 2 && e.ev === 'pointerenter:mouse')!.k;
+  await page.waitForFunction((at) => performance.now() >= at + 300, at);
+  expect(await picLoadedNow(page, 2, k), `${k}: still loading when the pointer moves off`).toBe(false);
+  await page.mouse.move(0, 0);
+  slow.release();
+  await picsLoaded(page, 2);
+  await page.waitForTimeout(1200);
+  expect(await picNow(page, 2), 'the pictures arrived with the pointer off the answers: none shown').toEqual(allOff(2));
+  const log = await picLog(page);
+  await ctx.close();
+  expect(drawnSteps(log, 2).map((s) => `${s.k} ${Math.round(s.t - at)} ms`), 'none drawn on question 3').toEqual([]);
+});
+
+test('Pictures, a tap on an answer whose picture is still loading (held by page.route) at 390 x 844: the answer holds at most 0.9 s past its 0.32 s, then wipes out and question 2 decodes in; the picture arriving later is never drawn, on the question gone or anywhere', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page = await ctx.newPage();
+  const p = QUIZ_QUESTIONS[0].answers[4].persona;
+  const slow = await holdPics(page, 0, [p]);
+  await openQuiz(page, baseURL);
+  await quiet(page);
+  await page.locator('#qzBegin').tap();
+  await onTop(page, 0);
+  await settled(page);
+  await expect.poll(() => slow.held(), { message: 'its picture asked for and held' }).toEqual([`q0-${p}`]);
+  await recordPics(page);
+  const box = (await page.locator(`.qz-card.is-top .qz-opt[data-persona="${p}"]`).boundingBox())!;
+  await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+  await onTop(page, 1);
+  expect(await picLoadedNow(page, 0, p), 'still loading when the answer went').toBe(false);
+  slow.release();
+  await picLoaded(page, 0, p);
+  await page.waitForTimeout(1200);
+  const log = await picLog(page), now = await picNow(page, 0);
+  expect((await events(page)).filter(([n]) => n === 'quiz_answer'), 'the tap took the answer').toEqual([['quiz_answer', { q: 1, persona: p }]]);
+  await ctx.close();
+  const down = picEvent(log, 'pointerdown:touch', p), wiped = log.opts.find((o) => o.card === 0 && o.k === p && o.min < 1);
+  expect(wiped, 'the answer wipes out').toBeTruthy();
+  expect(wiped!.t - down, 'held the 0.9 s its picture may take').toBeGreaterThan(200 + 120 + 900 - 60);
+  expect(wiped!.t - down, 'and no longer: 0.32 s and 0.9 s, and a frame or two').toBeLessThan(200 + 120 + 900 + 150);
+  expect(drawnSteps(log, 0).map((s) => `${s.k} ${Math.round(s.t - down)} ms`), 'no picture drawn on question 1').toEqual([]);
+  expect(now, 'question 1, gone, with no picture on').toEqual(allOff(0));
+});
+
+for (const [w, h] of [[360, 780], [844, 390]] as const) {
+  test(`Pictures with no room for the frame, a touch screen at ${w} x ${h}: question 1's frame has data-none and is not drawn, no picture is asked for, and a tap on its answer is taken with no hold, the answer wiping out as soon after the tap as one on question 2 (no pictures) does`, async ({ browser, baseURL }) => {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true });
+    const page = await ctx.newPage();
+    const asked: string[] = [];
+    page.on('request', (r) => { if (PIC_URL.test(new URL(r.url()).pathname)) asked.push(new URL(r.url()).pathname); });
+    await openQuiz(page, baseURL);
+    await quiet(page);
+    await page.locator('#qzBegin').tap();
+    await onTop(page, 0);
+    await settled(page);
+    expect(await page.evaluate(() => matchMedia('(min-width: 900px) and (min-height: 600px)').matches), 'not the laptop layout').toBe(false);
+    const frame = page.locator('.qz-card[data-i="0"] .qz-pics');
+    await expect(frame, 'under 96 px of room above the question').toHaveAttribute('data-none', '');
+    await expect(frame).toHaveCSS('display', 'none');
+    await recordPics(page);
+    const tapOn = async (i: number, k: string) => {
+      const o = page.locator(`.qz-card[data-i="${i}"] .qz-opt[data-persona="${k}"]`);
+      await o.scrollIntoViewIfNeeded();
+      const b = (await o.boundingBox())!;
+      await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2);
+    };
+    const [p1, p2] = [QUIZ_QUESTIONS[0].answers[2].persona, QUIZ_QUESTIONS[1].answers[2].persona];
+    await tapOn(0, p1);
+    await onTop(page, 1);
+    await ready(page, 1);
+    await settled(page);
+    await tapOn(1, p2);
+    await onTop(page, 2);
+    await settled(page);
+    await expect(page.locator('.qz-card[data-i="2"] .qz-pics'), 'question 3: no room either').toHaveAttribute('data-none', '');
+    const log = await picLog(page);
+    expect((await events(page)).filter(([n]) => n === 'quiz_answer'), 'both taps taken').toEqual([['quiz_answer', { q: 1, persona: p1 }], ['quiz_answer', { q: 2, persona: p2 }]]);
+    await ctx.close();
+    const hold = (i: number, k: string) => {
+      const down = log.events.find((e) => e.card === i && e.k === k && e.ev === 'pointerdown:touch'), wiped = log.opts.find((o) => o.card === i && o.k === k && o.min < 1 && o.t > (down?.t ?? Infinity));
+      expect(down, `question ${i + 1}: the tap`).toBeTruthy();
+      expect(wiped, `question ${i + 1}: the answer wipes out`).toBeTruthy();
+      return Math.round(wiped!.t - down!.t);
+    };
+    expect(asked, 'no picture asked for').toEqual([]);
+    expect(drawnSteps(log, 0), 'none drawn').toEqual([]);
+    const [one, two] = [hold(0, p1), hold(1, p2)];
+    expect(two, 'question 2: the 0.32 s hold of any answer').toBeLessThan(200 + 120 + 100);
+    expect(one - two, `question 1 (${one} ms) held no longer than question 2 (${two} ms): no picture to wait for`).toBeLessThan(100);
+  });
+}
+
+test('Pictures on a tall portrait screen under 900 px wide (800 x 1280): the room above question 1 is more than 40% of the screen\'s height, and the frame takes 40% of it (512 px), above the question, under the logotype\'s band, as wide as the question\'s column', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 800, height: 1280 }, hasTouch: true });
+  const page = await ctx.newPage();
+  await openQuiz(page, baseURL);
+  await page.locator('#qzBegin').tap();
+  await onTop(page, 0);
+  await settled(page);
+  const m = await page.evaluate(() => {
+    const c = document.querySelector('.qz-card.is-top')!, f = c.querySelector<HTMLElement>('.qz-pics')!, r = (e: Element) => e.getBoundingClientRect();
+    return { wide: matchMedia('(min-width: 900px) and (min-height: 600px)').matches, none: f.hasAttribute('data-none'), frame: [r(f).left, r(f).top, r(f).right, r(f).bottom], first: r(c.querySelector('.qz-count')!).top, col: [r(c).left, r(c).right], h: innerHeight };
+  });
+  await ctx.close();
+  expect(m.wide, 'not the laptop layout').toBe(false);
+  expect(m.none, 'room for the picture').toBe(false);
+  const [left, top, right, bottom] = m.frame;
+  expect(m.first - (56 + 16) - 24, 'the room between the logotype\'s band and the question, less the gap, is over 40% of the height').toBeGreaterThan(0.4 * m.h);
+  expect(bottom - top, 'the frame is 40% of the height').toBe(Math.floor(0.4 * m.h));
+  expect(top, 'under the logotype\'s band').toBeGreaterThanOrEqual(56 + 16 - 0.5);
+  expect(bottom, 'above the question').toBeLessThanOrEqual(m.first + 0.5);
+  expect([left, right], 'as wide as the question\'s column (560 px at most, centred)').toEqual([expect.closeTo(m.col[0], 0), expect.closeTo(m.col[1], 0)]);
+  expect(m.col, 'the column').toEqual([expect.closeTo((800 - 560) / 2, 0), expect.closeTo(800 - (800 - 560) / 2, 0)]);
+});
+
+test('Pictures, a new question opens with none: a picture left on as the question changes (a finger held on an answer of question 3 at 390 x 844 while Back is pressed) is off at once as question 2 is put on screen, and question 3 comes back, question 2 answered, with every picture off from its first frame', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page = await ctx.newPage();
+  const k = QUIZ_QUESTIONS[2].answers[5].persona;
+  await openQuiz(page, baseURL);
+  await page.locator('#qzBegin').tap();
+  await ready(page, 0);
+  await press(page.locator('.qz-card.is-top .qz-opt[data-persona="curator"]'));
+  await ready(page, 1);
+  await press(page.locator('.qz-card.is-top .qz-opt[data-persona="curator"]'));
+  await onTop(page, 2);
+  await settled(page);
+  await picsLoaded(page, 2);
+  // a finger down on the answer, and held: its picture decodes in and stays (a touch has no pointerleave)
+  const cdp = await ctx.newCDPSession(page);
+  const b = (await page.locator(`.qz-card[data-i="2"] .qz-opt[data-persona="${k}"]`).boundingBox())!;
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: b.x + b.width / 2, y: b.y + b.height / 2 }] });
+  await expect.poll(async () => (await picNow(page, 2))[k], { message: 'the picture under the finger settles' }).toBe('settled');
+  // question 3's pictures drawn, read as question 2 is put on screen (straight after showCard) and in question 3's first
+  // frame when it comes back
+  await page.evaluate(() => {
+    const w = window as unknown as { __qzAtTop: Record<string, string[]> }, c1 = document.querySelector<HTMLElement>('.qz-card[data-i="1"]')!, c2 = document.querySelector<HTMLElement>('.qz-card[data-i="2"]')!;
+    const drawn = () => [...c2.querySelectorAll<HTMLElement>('.qz-shot')].filter((l) => l.style.visibility === 'visible' || [...l.children].some((s) => (s as HTMLElement).style.opacity !== '0')).map((l) => l.dataset.persona ?? '');
+    w.__qzAtTop = {};
+    const watch = (c: HTMLElement, i: number) => {
+      const mo = new MutationObserver(() => { if (!c.classList.contains('is-top')) return; mo.disconnect(); w.__qzAtTop[`${i}:now`] = drawn(); requestAnimationFrame(() => { w.__qzAtTop[`${i}:frame`] = drawn(); }); });
+      mo.observe(c, { attributes: true, attributeFilter: ['class'] });
+    };
+    watch(c1, 1); watch(c2, 2);   // question 3 loses is-top first, and is watched until it has it again
+  });
+  await press(page.locator('.qz-card[data-i="2"] .qz-back'));
+  await onTop(page, 1);
+  await ready(page, 1);
+  await press(page.locator('.qz-card.is-top .qz-opt[data-persona="curator"]'));
+  await onTop(page, 2);
+  await page.waitForFunction(() => '2:frame' in ((window as unknown as { __qzAtTop: Record<string, string[]> }).__qzAtTop));
+  const at = await page.evaluate(() => (window as unknown as { __qzAtTop: Record<string, string[]> }).__qzAtTop);
+  expect(at['1:now'], 'question 2 put on screen: question 3\'s picture off at once').toEqual([]);
+  expect(at['1:frame'], 'and in question 2\'s first frame').toEqual([]);
+  expect(at['2:now'], 'question 3 back: none drawn').toEqual([]);
+  expect(at['2:frame'], 'none in its first frame').toEqual([]);
+  expect(await picNow(page, 2), 'every picture of question 3 off').toEqual(allOff(2));
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
+  expect((await events(page)).filter(([n]) => n === 'quiz_answer' || n === 'quiz_back'), 'Back and the answers by script only').toEqual([...answered(['curator', 'curator']), ['quiz_back', { q: 3 }], ['quiz_answer', { q: 2, persona: 'curator' }]]);
+  await ctx.close();
+});
+
+test('Pictures, a press on an answer that turns into a scroll at 390 x 844 (pointerdown, then pointercancel, no click): the picture it showed wipes out, and no answer is taken', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page = await ctx.newPage();
+  const k = QUIZ_QUESTIONS[0].answers[6].persona;
+  await openQuiz(page, baseURL);
+  await quiet(page);
+  await page.locator('#qzBegin').tap();
+  await onTop(page, 0);
+  await settled(page);
+  await picsLoaded(page, 0);
+  await recordPics(page);
+  // a finger down on the answer, moved up 160 px over 8 steps (the page scrolls), and lifted
+  const cdp = await ctx.newCDPSession(page);
+  const b = (await page.locator(`.qz-card[data-i="0"] .qz-opt[data-persona="${k}"]`).boundingBox())!, x = b.x + b.width / 2, y = b.y + b.height / 2;
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+  for (let n = 1; n <= 8; n++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y - 20 * n }] }); await page.waitForTimeout(16); }
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await page.waitForTimeout(1500);   // the 0.75 s the picture would take to settle, and more
+  const now = await picNow(page, 0);
+  const log = await picLog(page);
+  const evs = log.events.filter((e) => e.k === k && /^pointer(down|cancel)/.test(e.ev)).map((e) => e.ev);
+  expect(evs, 'a press, then cancelled by the scroll').toEqual(['pointerdown:touch', 'pointercancel:touch']);
+  expect((await events(page)).filter(([n]) => n === 'quiz_answer'), 'no answer taken').toEqual([]);
+  expect(await deckState(page), 'question 1 stays').toEqual(only(0));
+  await ctx.close();
+  expect(now, 'the picture shown at the press wiped out').toEqual(allOff(0));
+});
+
+test('Pictures, a tap dropped by the guard at 390 x 844: a touch press on an answer 100 ms after question 1 was put on screen is dropped, not marked and not taken, and leaves no picture on once the pictures have loaded', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page = await ctx.newPage();
+  const k = QUIZ_QUESTIONS[0].answers[3].persona;
+  await openQuiz(page, baseURL);
+  await quiet(page);
+  // armed before Begin: 100 ms after question 1 is put on screen, a touch press on the answer (pointerdown, then its click)
+  await page.evaluate((k) => {
+    const c = document.querySelector<HTMLElement>('.qz-card[data-i="0"]')!, o = c.querySelector<HTMLElement>(`.qz-opt[data-persona="${k}"]`)!;
+    const w = window as unknown as { __qzTouch?: { at: number; pressed: boolean; loaded: boolean } };
+    const mo = new MutationObserver(() => {
+      if (!c.classList.contains('is-top')) return;
+      mo.disconnect();
+      const t0 = performance.now();
+      setTimeout(() => {
+        const img = c.querySelector<HTMLImageElement>(`.qz-pic[data-persona="${k}"] img`)!;
+        o.dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'touch', isPrimary: true, bubbles: true }));
+        o.click();
+        w.__qzTouch = { at: performance.now() - t0, pressed: o.hasAttribute('aria-pressed'), loaded: img.complete && img.naturalWidth > 0 };
+      }, 100);
+    });
+    mo.observe(c, { attributes: true, attributeFilter: ['class'] });
+  }, k);
+  await page.locator('#qzBegin').tap();
+  const t = await (await page.waitForFunction(() => (window as unknown as { __qzTouch?: unknown }).__qzTouch)).jsonValue() as { at: number; pressed: boolean; loaded: boolean };
+  expect(t.at, 'pressed 100 ms after question 1 was put on screen').toBeGreaterThanOrEqual(100);
+  expect(t.at, 'inside the guard').toBeLessThan(GUARD);
+  expect(t.pressed, 'not marked').toBe(false);
+  await settled(page);
+  await picsLoaded(page, 0);
+  await page.waitForTimeout(1200);
+  expect((await events(page)).filter(([n]) => n === 'quiz_answer'), 'not taken').toEqual([]);
+  expect(await deckState(page), 'question 1 stays').toEqual(only(0));
+  expect(await picNow(page, 0), `the press dropped: no picture on (${t.loaded ? 'its picture had loaded' : 'its picture loaded after the press'})`).toEqual(allOff(0));
   await ctx.close();
 });

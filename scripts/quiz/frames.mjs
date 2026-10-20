@@ -1,6 +1,7 @@
 // Section 3's review frames (docs/specs/quiz.md 7), at 390x844 and 1280x800, from a served build on the forced 3D tier,
 // with Math.random pinned (the shade draw then gives each group's first shade, Sam's recommendation): the hand-off at
-// 15.7, 16.2 and 16.7 screens; the intro (17.2), visible at rest; card 1 mid-decode and settled; an answer taken
+// 15.7, 16.2 and 16.7 screens; the intro (17.2), visible at rest; card 1 mid-decode and settled; on a laptop an answer's
+// picture under the pointer, mid-decode and settled (card-picture-decoding, card-picture); an answer taken
 // (the rest of its question wiped out); card 4; card 3 after Back; the result (The Quiet Curator, Porcelain with its
 // hairline); the gift, its validation state, the network error, the duplicate, the offline queue and
 // the done state; then two more results (The Spark, The Calm Strategist). Writes docs/specs/screenshots/quiz-<w>x<h>-<state>.png.
@@ -12,7 +13,10 @@ import { fileURLToPath } from 'node:url';
 
 const BASE = process.argv[2] || 'http://127.0.0.1:8799/?tier=hero3d';
 const OUT = fileURLToPath(new URL('../../docs/specs/screenshots', import.meta.url));
-mkdirSync(OUT, { recursive: true });
+// frames that show the licensed answer pictures go to a git-ignored folder: the Envato licence does not allow the
+// photographs to be shared outside the site, and this repository is public
+const LICENSED = `${OUT}/licensed`;
+mkdirSync(LICENSED, { recursive: true });
 const GL_ARGS = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
 const SETUPS = [
   { name: '390x844', viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 },
@@ -27,6 +31,7 @@ for (const s of SETUPS) {
   const page = await ctx.newPage();
   let status = 500, offline = false;   // a routed request is answered even with the context offline, so the route fails it while offline
   const shot = (state) => page.screenshot({ path: `${OUT}/quiz-${s.name}-${state}.png` });
+  const shotLicensed = (state) => page.screenshot({ path: `${LICENSED}/quiz-${s.name}-${state}.png` });
   await page.route('**/api/quiz-lead', (route) => (offline ? route.abort('internetdisconnected') : route.fulfill({ status, contentType: 'application/json', body: '{}' })));
   await page.goto(BASE, { waitUntil: 'load' });
   const t0 = Date.now();
@@ -46,10 +51,33 @@ for (const s of SETUPS) {
   await shot('card-decoding');
   await settled();
   await shot('card');
+  // the answer pictures (Sam, 2026-10-20): on a laptop the answer under the pointer shows its picture beside the question,
+  // decoding in strip by strip; on a phone the answer taken by touch holds while its picture decodes above the question
+  if (s.viewport.width >= 900) {
+    await page.locator('.qz-card[data-i="0"] .qz-opt[data-persona="optimist"]').hover();
+    await sleep(250);
+    await shotLicensed('card-picture-decoding');
+    await sleep(1000);
+    await shotLicensed('card-picture');
+    await page.mouse.move(4, 4);
+    await sleep(400);
+  }
   // an answer taken: the rest of the question has wiped out and the answer holds its beat
-  await page.locator('.qz-card[data-i="0"] .qz-opt[data-persona="curator"]').evaluate((b) => b.click());
+  const taken = page.locator('.qz-card[data-i="0"] .qz-opt[data-persona="curator"]');
+  await taken.evaluate((b) => b.click());
   await sleep(230);
   await shot('card-answer');
+  await page.locator('.qz-card[data-i="0"]').waitFor({ state: 'hidden' });
+  await settled();
+  // on a phone, the same answer taken by touch: it holds while its picture decodes above the question (licensed frame)
+  if (s.viewport.width < 900) {
+    await page.locator('.qz-card[data-i="1"] .qz-back').evaluate((b) => b.click());
+    await page.locator('.qz-card[data-i="0"].is-top').waitFor();
+    await settled();
+    await taken.evaluate((b) => { b.dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'touch', bubbles: true })); b.click(); });
+    await sleep(650);
+    await shotLicensed('card-answer-touch');
+  }
   await page.locator('.qz-card[data-i="0"]').waitFor({ state: 'hidden' });
   await settled();
   await page.locator('.qz-card[data-i="1"] .qz-back').evaluate((b) => b.click());

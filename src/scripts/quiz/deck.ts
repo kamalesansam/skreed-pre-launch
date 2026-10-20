@@ -8,6 +8,7 @@
 import { QUIZ_COPY as Q, QUIZ_LEAD_ENDPOINT, QUIZ_QUESTIONS, pickShade, scoreQuiz, type PersonaId } from '../../config/quiz.ts';
 import { reducedMQ } from '../motion.ts';
 import { createDecoder } from './decode.ts';
+import { createPictures, type Pictures } from './picture.ts';
 import { track } from './track.ts';
 
 const DUR_MARK = 120, DUR_SWATCH = 400;
@@ -39,6 +40,25 @@ export function mountQuiz(root: HTMLElement): void {
   /** the decoded elements of a part, in reading order, less those inside something hidden (the drawn shade's mini, the done line) */
   const items = (scope: HTMLElement) => [...scope.querySelectorAll<HTMLElement>('[data-dc]')].filter((e) => { for (let p = e.parentElement; p && p !== scope; p = p.parentElement) if (p.hidden) return false; return true; });
 
+  // ---- the visual questions' answer pictures (picture.ts): the answer under the pointer, in focus or pressed on a touch
+  // screen shows its picture beside the question (above it on a phone), decoding in strip by strip; leaving it wipes it out
+  const pics = new Map<HTMLDivElement, Pictures>();
+  for (const card of cards) { const frame = card.querySelector<HTMLElement>('.qz-pics'); if (frame) pics.set(card, createPictures(frame, reduced)); }
+  const stage = root.querySelector<HTMLElement>('.qz-stage');
+  const wide = matchMedia('(min-width: 900px) and (min-height: 600px)');
+  /** a phone has no room beside the question: the frame takes the open space above the deck, under the logotype's band */
+  function fitPics() {
+    for (const [card, ctl] of pics) {
+      const frame = card.querySelector<HTMLElement>('.qz-pics')!;
+      if (wide.matches || !stage) { frame.style.removeProperty('--qz-pic-h'); frame.removeAttribute('data-none'); ctl.layout(); continue; }
+      const top = stage.getBoundingClientRect().top + 56 + 16, free = Math.min(card.getBoundingClientRect().top - 24 - top, innerHeight * 0.4);
+      frame.toggleAttribute('data-none', free < 96);
+      frame.style.setProperty('--qz-pic-h', `${Math.max(0, Math.floor(free))}px`);
+      ctl.layout();
+    }
+  }
+  addEventListener('resize', fitPics); wide.addEventListener('change', fitPics);
+
   // the swatches take their shade from the catalog token through the CSSOM (the CSP allows no style attributes)
   for (const el of root.querySelectorAll<HTMLElement>('.qz-big, .qz-mini-sw')) el.style.background = `var(--shade-${el.dataset.shade})`;
 
@@ -54,10 +74,12 @@ export function mountQuiz(root: HTMLElement): void {
   // ---- the deck: one question on screen (focusable, role group), the rest hidden in the same grid cell
   function showCard(i: number) {
     cards.forEach((c, k) => {
-      c.classList.toggle('is-top', k === i); c.hidden = k !== i; c.tabIndex = k === i ? 0 : -1; c.inert = k !== i;
+      c.classList.toggle('is-top', k === i); c.hidden = k !== i; c.tabIndex = -1; c.inert = k !== i;   // focus from script only: the question is announced, then Tab or Down reaches its answers
       for (const o of c.querySelectorAll('.qz-opt[aria-pressed]')) o.removeAttribute('aria-pressed');
     });
     const c = cards[i], els = items(c);
+    for (const ctl of pics.values()) ctl.clear();
+    fitPics();
     for (const el of els) dc.prepare(el);
     readyAt = performance.now() + (reduced() ? GUARD_REDUCED : GUARD);
     void dc.showAll(els);
@@ -78,14 +100,25 @@ export function mountQuiz(root: HTMLElement): void {
 
   /** an answer: it is underlined and stays while the rest of the question wipes out, then it goes and the next decodes in */
   async function commit(opt: HTMLButtonElement) {
-    if (busy || state !== 'quiz' || early()) return;
+    if (busy || state !== 'quiz' || early()) {
+      // a tap dropped here showed its picture at the press: it goes again
+      if (touchPic === opt) { touchPic = null; const c = opt.closest<HTMLDivElement>('.qz-card'); if (c) void pics.get(c)?.hide(opt.dataset.persona ?? ''); }
+      return;
+    }
     busy = true;
     const i = top, card = cards[i], persona = opt.dataset.persona as PersonaId;
     answers[i] = persona;
     track('quiz_answer', { q: i + 1, persona });
     opt.setAttribute('aria-pressed', 'true');
+    const ctl = pics.get(card), touched = touchPic === opt;
+    touchPic = null;
     await dc.hideAll(items(card).filter((e) => e !== opt));
     if (!reduced()) await wait(DUR_MARK);
+    // an answer taken on a touch screen had no hover: its picture, shown at the press, holds the answer until it has
+    // decoded (at most 0.9 s), so the visitor sees what they chose before the question goes; not under reduced motion
+    // (the answer never holds there) and not where no frame is drawn (a phone with no room for it)
+    if (touched && !reduced() && ctl?.has(persona) && ctl.visible()) await Promise.race([ctl.show(persona), wait(900)]);
+    if (ctl?.has(persona)) void ctl.hide(persona);
     await dc.hide(opt);
     card.hidden = true; card.classList.remove('is-top');
     top = i + 1; busy = false;
@@ -144,8 +177,22 @@ export function mountQuiz(root: HTMLElement): void {
   }
 
   // ---- input: a tap, click, Enter or Space on an answer commits it; Up and Down move between the answers; Back
+  let touchPic: HTMLButtonElement | null = null;
   for (const card of cards) {
     const opts = [...card.querySelectorAll<HTMLButtonElement>('.qz-opt')];
+    const ctl = pics.get(card);
+    if (ctl) for (const opt of opts) {
+      const key = opt.dataset.persona ?? '';
+      if (!ctl.has(key)) continue;
+      const live = () => card.classList.contains('is-top') && !busy;
+      opt.addEventListener('pointerenter', (e) => { if (e.pointerType !== 'touch' && live()) void ctl.show(key); });
+      opt.addEventListener('pointerleave', (e) => { if (e.pointerType !== 'touch' && opt.getAttribute('aria-pressed') !== 'true') void ctl.hide(key); });
+      opt.addEventListener('focus', () => { if (live() && opt.matches(':focus-visible')) void ctl.show(key); });
+      opt.addEventListener('blur', () => { if (opt.getAttribute('aria-pressed') !== 'true') void ctl.hide(key); });
+      opt.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' && live()) { touchPic = opt; void ctl.show(key); } });
+      // a press that turns into a scroll (or a long press) ends with no click: its picture goes
+      opt.addEventListener('pointercancel', (e) => { if (e.pointerType === 'touch' && touchPic === opt) { touchPic = null; void ctl.hide(key); } });
+    }
     for (const opt of opts) opt.addEventListener('click', () => { if (card.classList.contains('is-top')) void commit(opt); });
     card.querySelector('.qz-back')?.addEventListener('click', () => { void back(); });
     card.addEventListener('keydown', (e) => {
