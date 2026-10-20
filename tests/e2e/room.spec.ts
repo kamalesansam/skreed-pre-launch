@@ -75,7 +75,7 @@ test('section 4 at 390 x 844: the track, the keyboard, the entry, the lands, the
     await goQ(page, 9.5); await page.focus('#rmPad'); await page.keyboard.press('e'); await page.waitForTimeout(800);
     expect((await s4(page)).state).toBe('hall');
     await expect(page.locator('#rmEnter')).toBeHidden();
-    await page.evaluate(() => { const room = document.getElementById('room')!, top = room.getBoundingClientRect().top + scrollY; scrollTo({ top: top + 10.4 * innerHeight, behavior: 'instant' }); });
+    await page.evaluate(() => { const room = document.getElementById('room')!, top = room.getBoundingClientRect().top + scrollY; scrollTo({ top: top + 11.4 * innerHeight, behavior: 'instant' }); });
     await page.waitForFunction(() => scrollY < 2, null, { timeout: 120_000, polling: 250 });
     expect(errors).toEqual([]);
     await ctx.close();
