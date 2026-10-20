@@ -8,21 +8,28 @@
 //   rises to travelRoll before the first ring, is held through the passes and unwinds after the last, never faster than
 //   30 degrees a second (W4). No flash at the rings (W4, WCAG 2.3.1).
 // - The rings (rings.ts, W3) assemble on approach (W2): a ring's shards are thrown out beyond 1.4 S from the camera and
-//   whole by 1.0 S, each on its own window of that falloff. Their faces carry the intro's triangle lattice (tTri) in the
-//   next family's key shade, lit by garden.json's sun, the one the garden was rendered under (the spec's, straight behind
-//   the camera at 35 degrees, when there is no garden). A forcefield disc fills each ring's hole, of radius 0.13 S and
-//   0.06 S ahead of it: the lattice with concentric and radial lines in the shade of the arc behind, brightest at the rim,
-//   faded out as the camera passes through (additive, E-S4-glow).
+//   whole by 1.0 S, each on its own window of that falloff. Their shades blend into each other round the ring in OKLab
+//   (blend.ts, W13: the outer 40 percent of each arc either side), read from one ramp texture at each vertex's arc
+//   coordinate, and each shard's value sits within 6 percent of it. Their faces carry the intro's triangle lattice (tTri)
+//   in the next family's shade, blended the same way. They are lit as glazed lacquer by garden.json's sun, the one the
+//   garden was rendered under (the spec's, straight behind the camera at 35 degrees, when there is no garden): a sky-bright
+//   ambient, the sun's diffuse, soft occlusion toward each seam (gone as the ring breaks apart), and the clear coat's
+//   sheen, a Blinn-Phong highlight toward the sun on the rounded normals and a Fresnel reflection of the sky at grazing
+//   angles, in white light. A forcefield disc fills each ring's hole, of radius 0.13 S and 0.06 S ahead of it: the
+//   lattice with concentric and radial lines in the blended shade of the arc behind, brightest at the rim, faded out as
+//   the camera passes through (additive, E-S4-glow).
 // - The garden (E-S4-garden; scripts/room/garden.py renders it and writes garden.json, the director hands in the URLs it
 //   picked): the far plate is drawn at infinity, its position locked to the camera's and its orientation fixed to the
 //   world, so it rolls on screen with the camera and scales with the FOV; only the band of its rows a frame can reach is
 //   uploaded (GARDEN.band, held by glideZoom). The three depth cards stand square to the axis on their own tangent bounds
 //   as seen from the render pose, the glide's end, so the four line up there and slide against each other in flight.
 //   Once land 1 has arrived the garden's textures are freed, since they serve only the entry and the failed-picture
-//   fallback, and they are decoded again on demand (loadGarden). Without a garden the rings fly over Urban Slate.
-// - The cloud (cloud.ts, W8, W12) waits 2.5 S past the last ring and turns slowly; at 75 percent of the glide's time
-//   (97 percent of its way) it morphs onto the first land's picture filling the frame, the picture fading in under the
-//   points over the morph's last 0.6 s, then the points fade over the push's first 0.25 s.
+//   fallback, and they are decoded again on demand (loadGarden). Without a garden the rings fly over Urban Slate; a
+//   garden.json that does not give what gardenLayout reads fails the load, so the poster column stands in.
+// - The cloud (cloud.ts, W8, W12) waits 2.5 S past the last ring and turns slowly, each point the ramp's blend of the two
+//   shades nearest its longitude; at 75 percent of the glide's time (97 percent of its way) it morphs onto the first
+//   land's picture filling the frame, the picture fading in under the points over the morph's last 0.6 s, then the points
+//   fade over the push's first 0.25 s (their layer carries the fade, pushLayers).
 // - A land is its picture on a displaced grid seen from its capture pose (positions from gl_VertexID, the depth fetched in
 //   the vertex shader by the disparity rule), so at the capture pose it is the picture, cover-fit, pixel for pixel; the
 //   push after the morph moves the camera 0.15 of the land's near distance into it, and that pose is the land's rest.
@@ -33,12 +40,13 @@
 // disposed meanwhile: the rings' generation, each garden image decoded with at most the next one decoding ahead and
 // uploaded in row strips, one compile a frame with the target bound, the laptops' bloom when it is on, a warm draw.
 // The test hooks ship only in hooks builds and Tune's guard only in Tune builds (both folded away in production).
-import { AdditiveBlending, BufferGeometry, Color, DataTexture, DoubleSide, Float32BufferAttribute, Group, LinearFilter, LinearMipmapLinearFilter, Mesh, NoColorSpace, NoToneMapping, NormalBlending, PerspectiveCamera, PlaneGeometry, RedFormat, RGBAFormat, Scene, ShaderMaterial, Sphere, Uint16BufferAttribute, Uint32BufferAttribute, UnsignedByteType, Vector2, Vector3, Vector4, WebGLRenderTarget, type Object3D, type Texture, type WebGLRenderer } from 'three';
+import { AdditiveBlending, BufferGeometry, Color, DataTexture, DoubleSide, Float32BufferAttribute, Group, LinearFilter, LinearMipmapLinearFilter, Mesh, NoColorSpace, NoToneMapping, NormalBlending, PerspectiveCamera, PlaneGeometry, RedFormat, RepeatWrapping, RGBAFormat, Scene, ShaderMaterial, Sphere, Uint16BufferAttribute, Uint32BufferAttribute, UnsignedByteType, Vector2, Vector3, Vector4, WebGLRenderTarget, type Object3D, type Texture, type WebGLRenderer } from 'three';
 import { ROOM_BAYS } from '../../../config/room.ts';
 import { URBAN_SLATE } from '../../../config/tokens.ts';
 import { fsGeo } from '../section2/background.ts';
 import { clamp01, easeInOutCubic } from '../util/math.ts';
 import { TO_SRGB } from './assets.ts';
+import { BLEND, display, ringRamp } from './blend.ts';
 import { CLOUD, coverScale, createPoints, type CloudPoints } from './cloud.ts';
 import { createOutputPass, type OutputPass } from './post.ts';
 import { RING, generateRings, type RingArrays } from './rings.ts';
@@ -92,15 +100,16 @@ export type WorldParams = { -readonly [K in keyof typeof WORLD_DEFAULTS]: number
  * 8 s puts four rings' passes under 0.4 s apart or the first before a 2.19 s bubble clears, five rings fail at any
  * glide here, and a roll over 33 degrees cannot come up before the first of four rings at 30 degrees a second on the
  * shortest glide and morph. bubbleMs is the bubble's own
- * (transition.ts), narrowed from the spec's 1200 to 3200 to what the first pass allows.
+ * (transition.ts), narrowed from revision 2's 1200 to 3200 to what the first pass allows; spec 2 gives these ranges.
  */
 export const WORLD_RANGES: Readonly<Record<keyof WorldParams, readonly [number, number, number]>> = /* @__PURE__ */ Object.freeze({ bubbleMs: [1200, 2190, 10], travelMs: [8000, 12000, 100], ringCount: [2, 4, 1], travelRoll: [0, 33, 1], morphMs: [1000, 3000, 100], enterPushMs: [600, 2000, 100], worldBloom: [0, 1, 0.05] });
 
 /**
  * The scene's colours by id (AC3, read back by tests/unit/room-world.test.ts): the rings' arcs, their lattice (the next
- * family's), the forcefields' lines and the cloud are the ten key shades of ROOM_BAYS; the clear colour, seen only when
- * the garden is withdrawn, is Urban Slate (E-S4-garden's default). The garden and the pictures are image content. Marked
- * pure, as WORLD_RANGES is, so a build that never reads them (production) drops them.
+ * family's), the forcefields' lines and the cloud are the ten key shades of ROOM_BAYS, each blending into its neighbours
+ * in OKLab (blend.ts, E-S4-colour); the clear colour, seen only when the garden is withdrawn, is Urban Slate (E-S4-garden's
+ * default). The garden and the pictures are image content. Marked pure, as WORLD_RANGES is, so a build that never reads
+ * them (production) drops them.
  */
 export const SCENE_COLOURS = /* @__PURE__ */ Object.freeze({
   rings: /* @__PURE__ */ ROOM_BAYS.map((b) => b.shade), lattice: /* @__PURE__ */ ROOM_BAYS.map((_, i) => ROOM_BAYS[(i + 1) % ROOM_BAYS.length].shade),
@@ -153,6 +162,16 @@ export function rollAt(t: number, tl: EntryTimeline): number {
 
 /** the vertical FOV at t (degrees): 22 to 30 on a sine in-out of the glide's time, held at 30 after it */
 export const fovAt = (t: number, tl: EntryTimeline): number => GLIDE.fov[0] + (GLIDE.fov[1] - GLIDE.fov[0]) * (0.5 - 0.5 * Math.cos(Math.PI * clamp01((t - tl.glide[0]) / (tl.glide[1] - tl.glide[0]))));
+
+/**
+ * The push's layers at t, from the morph's end: land 1 pushed in along its view on a cubic in-out, and over it the landed
+ * points, their fade over the push's first 0.25 s carried by their layer (render sets each layer's alpha as it draws it).
+ */
+export function pushLayers(t: number, tl: EntryTimeline, rest: number): WorldLayer[] {
+  const m1 = tl.morph[1], u = clamp01((t - m1) / Math.max(1e-3, tl.push[1] - tl.push[0])), alpha = 1 - clamp01((t - m1) / ENTRY.pointsFade);
+  const land: WorldLayer = { kind: 'land', i: 0, push: rest * easeInOutCubic(u) };
+  return alpha > 0 ? [land, { kind: 'points', alpha }] : [land];
+}
 
 /** what breaks the spec's rules at these values (spec 2: every gap at least 0.4 s, the first pass after the bubble; W4's roll rate) */
 export function entryProblems(p: Pick<WorldParams, 'bubbleMs' | 'travelMs' | 'ringCount' | 'morphMs' | 'enterPushMs' | 'travelRoll'>): string[] {
@@ -212,8 +231,10 @@ export interface GardenJson {
 export interface GardenSpec { json: GardenJson; plate: string; cards: readonly string[] }
 
 export interface GardenLayout {
-  /** the plate's rows kept at upload, [first, end) counted from the image's bottom (it is decoded bottom row first), and the tangent bounds [left, right, bottom, top] they cover */
-  plateRows: readonly [number, number]; plateTan: readonly [number, number, number, number];
+  /** the plate's band kept at upload, [first, end) as shares of its height counted from the bottom (it is decoded bottom row first); bandRows makes them rows of the decoded image, so a scaled encode keeps the same band */
+  plateBand: readonly [number, number];
+  /** the whole plate's tangent bounds [left, right, bottom, top] at unit distance */
+  plateTan: readonly [number, number, number, number];
   /** how far a frame may reach across and up, in tangent units (the kept plate less GARDEN.edge's margin): glideZoom's bound */
   reach: readonly [number, number];
   /** each card's centre and size in scene units with the last ring at z 0, square to the axis at its distance from the render pose */
@@ -222,15 +243,27 @@ export interface GardenLayout {
   sun: readonly [number, number, number];
 }
 
-/** the garden placed from garden.json: each card at (cx d, cy d, pose - d), (r - l) d by (t - b) d, from its tangent bounds and distance; the plate's band of rows */
+/**
+ * The garden placed from garden.json (the format scripts/room/garden.py writes): each card at (cx d, cy d, pose - d),
+ * (r - l) d by (t - b) d, from its tangent bounds and distance; the plate's band; the sun. A file that does not give these
+ * numbers throws here, rather than placing the camera and the plate at NaN.
+ */
 export function gardenLayout(g: GardenJson, band = GARDEN.band): GardenLayout {
   const hx = Math.tan((g.plate.fovDeg * Math.PI) / 360), hy = (hx * g.plate.height) / g.plate.width;
-  const [l, r, b, t] = g.plate.tan ?? [-hx, hx, -hy, hy], h = g.plate.height;
-  const y0 = Math.max(0, Math.floor(((-band - b) / (t - b)) * h)), y1 = Math.min(h, Math.ceil(((band - b) / (t - b)) * h));
-  const tb = b + ((t - b) * y0) / h, tt = b + ((t - b) * y1) / h, pose = -g.camera.pastLastRingS * g.S;
+  const [l, r, b, t] = g.plate.tan ?? [-hx, hx, -hy, hy];
+  const f0 = Math.max(0, (-band - b) / (t - b)), f1 = Math.min(1, (band - b) / (t - b)), tb = b + (t - b) * f0, tt = b + (t - b) * f1, pose = -g.camera.pastLastRingS * g.S;
   const cards = g.cards.map((c) => { const [cl, cr, cb, ct] = c.tan, d = c.distance; return { x: ((cl + cr) / 2) * d, y: ((cb + ct) / 2) * d, z: pose - d, w: (cr - cl) * d, h: (ct - cb) * d }; });
-  const s = g.sun.direction, n = Math.hypot(s[0], s[1], s[2]) || 1;
-  return { plateRows: [y0, y1], plateTan: [l, r, tb, tt], reach: [Math.min(r, -l) * GARDEN.edge, Math.min(tt, -tb) * GARDEN.edge], cards, sun: [s[0] / n, s[1] / n, s[2] / n] };
+  const s = g.sun.direction, n = Math.hypot(s[0], s[1], s[2]);
+  const out: GardenLayout = { plateBand: [f0, f1], plateTan: [l, r, b, t], reach: [Math.min(r, -l) * GARDEN.edge, Math.min(tt, -tb) * GARDEN.edge], cards, sun: [s[0] / n, s[1] / n, s[2] / n] };
+  const sizes = [r - l, t - b, f1 - f0, ...out.reach, n, ...cards.flatMap((c) => [c.w, c.h])];
+  if (![...sizes, ...out.plateTan, ...out.sun, ...cards.flatMap((c) => [c.x, c.y, c.z])].every(Number.isFinite) || sizes.some((x) => x <= 0)) throw new Error('section 4: garden.json does not give the plate, the cards and the sun as world.ts reads them');
+  return out;
+}
+
+/** the plate's band in an image h rows tall (the decoded bitmap's own height): its rows [first, end), widened to whole rows, and the tangent bounds [bottom, top] those rows cover */
+export function bandRows(g: GardenLayout, h: number): { rows: [number, number]; tan: [number, number] } {
+  const [, , b, t] = g.plateTan, y0 = Math.max(0, Math.floor(g.plateBand[0] * h)), y1 = Math.min(h, Math.ceil(g.plateBand[1] * h));
+  return { rows: [y0, y1], tan: [b + ((t - b) * y0) / h, b + ((t - b) * y1) / h] };
 }
 
 // ---------------------------------------------------------------- textures in strips (spec 5: one upload a frame)
@@ -372,35 +405,42 @@ export function landCamera(c: PerspectiveCamera, v: Pick<LandView, 'fov' | 'aspe
 const LIN = /* glsl */`vec3 toLinear(vec3 c) { return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }`;
 
 // the shards: thrown by the camera's distance to their ring (the falloff of W2), each on its own window of it, spun about
-// their own axis, shrunk and pushed out along their centre and toward the camera; flat-lit by the garden's sun, the
-// lattice drawn in the next family's shade
+// their own axis, shrunk and pushed out along their centre and toward the camera. Their colour is the ramp's at their arc
+// coordinate (the shades blended round the ring, blend.ts) times their own value, the lattice the ramp's one arc on (the
+// next family's); lit as glazed lacquer under the garden's sun in white light: ambient brighter toward the sky, the sun's
+// diffuse, the seams' occlusion (half, over uSeam, fading as the shard is thrown), a sharp and a broad highlight toward
+// the sun and the clear coat's Fresnel reflection of the sky
 const RING_VERT = /* glsl */`
-  attribute vec3 aCentre; attribute vec4 aSpin, aFling; attribute vec2 aLat; attribute float aShade;
+  attribute vec3 aCentre, aTone; attribute vec4 aSpin, aFling; attribute vec2 aLat;
   uniform vec2 uAsm; uniform float uBreak;
-  varying vec3 vN; varying vec2 vLat; varying float vShade;
+  varying vec3 vN, vW, vTone; varying vec2 vLat; varying float vB;
   vec3 turn(vec3 v, vec3 k, float t) { return v * cos(t) + cross(k, v) * sin(t) + k * dot(k, v) * (1.0 - cos(t)); }
   void main() {
     float f = clamp((cameraPosition.z - aCentre.z - uAsm.x) / (uAsm.y - uAsm.x), 0.0, 1.0);
     float b = uBreak * smoothstep(0.4 * aFling.w, 0.6 + 0.4 * aFling.w, f), a = aSpin.w * b;
     vec3 p = aCentre + turn(position - aCentre, aSpin.xyz, a) * (1.0 - aFling.z * b);
     p.xy += normalize(aCentre.xy) * aFling.x * b; p.z += aFling.y * b;
-    vN = turn(normal, aSpin.xyz, a); vLat = aLat; vShade = aShade;
+    vN = turn(normal, aSpin.xyz, a); vW = (modelMatrix * vec4(p, 1.0)).xyz; vLat = aLat; vTone = aTone; vB = b;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
   }`;
 const RING_FRAG = /* glsl */`
-  uniform vec3 uShades[10], uSun; uniform sampler2D tTri; uniform float uTri;
-  varying vec3 vN; varying vec2 vLat; varying float vShade;
+  uniform sampler2D tRamp, tTri; uniform vec3 uSun; uniform float uTri, uSeam;
+  varying vec3 vN, vW, vTone; varying vec2 vLat; varying float vB;
   ${TO_SRGB} ${LIN}
+  vec3 ramp(float a) { return texture(tRamp, vec2(a * 0.1, 0.5)).rgb; }
   void main() {
-    int j = int(vShade + 0.5);
-    vec3 alb = mix(uShades[j], uShades[(j + 1) % 10], clamp(uTri * texture(tTri, vLat).r * 1.25, 0.0, 1.0));
-    vec3 n = normalize(gl_FrontFacing ? vN : -vN);
-    float light = 0.52 + 0.5 * max(dot(n, uSun), 0.0) + 0.08 * max(n.y, 0.0);
-    gl_FragColor = vec4(toSrgb(clamp(toLinear(alb) * light, 0.0, 1.0)), 1.0);
+    vec3 alb = toLinear(mix(ramp(vTone.x), ramp(vTone.x + 1.0), clamp(uTri * texture(tTri, vLat).r * 1.25, 0.0, 1.0)) * (1.0 + vTone.z));
+    vec3 n = normalize(gl_FrontFacing ? vN : -vN), v = normalize(cameraPosition - vW);
+    float nh = max(dot(n, normalize(uSun + v)), 0.0), fr = 0.04 + 0.96 * pow(1.0 - max(dot(n, v), 0.0), 5.0);
+    float ao = 1.0 - 0.55 * (1.0 - vB) * (1.0 - smoothstep(0.0, uSeam, vTone.y));
+    vec3 c = alb * (0.28 + 0.12 * n.y + 0.66 * max(dot(n, uSun), 0.0)) * ao;
+    c += ao * (0.7 * pow(nh, 220.0) + 0.035 * pow(nh, 16.0) + 0.15 * fr * (0.6 + 0.4 * reflect(-v, n).y));
+    gl_FragColor = vec4(toSrgb(clamp(c, 0.0, 1.0)), 1.0);
   }`;
 
-// the forcefields: one quad a ring, the disc drawn in the fragment; its colour the arc behind it, by angle clockwise
-// from the top as rings.ts cuts them; it comes up within 3 S and fades out over the last half S to the camera
+// the forcefields: one quad a ring, the disc drawn in the fragment; its colour the ramp's at the arc behind it, by angle
+// clockwise from the top as rings.ts cuts them, so its lines blend round the disc as the arcs do; it comes up within 3 S
+// and fades out over the last half S to the camera
 const FF_VERT = /* glsl */`
   attribute vec2 aLocal; attribute float aRing; uniform float uS;
   varying vec2 vL; varying float vRing, vFade;
@@ -410,14 +450,14 @@ const FF_VERT = /* glsl */`
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }`;
 const FF_FRAG = /* glsl */`
-  uniform vec3 uShades[10]; uniform sampler2D tTri; uniform float uTri, uRad, uLat, uGain;
+  uniform sampler2D tRamp, tTri; uniform float uTri, uRad, uLat, uGain;
   varying vec2 vL; varying float vRing, vFade;
   float line(float x, float w) { float d = abs(fract(x + 0.5) - 0.5), aa = fwidth(x); return 1.0 - smoothstep(w * aa, (w + 1.0) * aa, d); }
   void main() {
     float r = length(vL);
     if (r > 1.0 || vFade <= 0.0) discard;
     float deg = mod(degrees(atan(vL.x, vL.y)) + 360.0, 360.0);
-    vec3 c = uShades[int(mod(floor(deg / 36.0) - vRing + 20.0, 10.0))];
+    vec3 c = texture(tRamp, vec2((deg / 36.0 - vRing) * 0.1, 0.5)).rgb;
     float lat = uTri * texture(tTri, vL * uRad * uLat).r, conc = line(r * 7.0, 0.4), rad = line(deg / 12.0, 0.4) * step(0.22, r);
     float rim = smoothstep(0.15, 1.0, r); rim *= rim;
     float a = clamp((0.8 * lat + 0.3 * conc + 0.18 * rad) * rim + 0.35 * smoothstep(0.86, 0.98, r), 0.0, 1.0);
@@ -450,8 +490,6 @@ const GRID_FRAG = /* glsl */`uniform sampler2D tPic; uniform float uAlpha; varyi
 
 // ---------------------------------------------------------------- the scene
 
-/** a hex's own numbers as display values (the target is read as sRGB, so nothing is decoded) */
-const display = (hex: string): [number, number, number] => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number];
 const frame = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
 /** thrown at the next await once dispose has run (its abort ends a fetch in flight too): the load stops there and allocates nothing more */
 const GONE = new Error('section 4: the world was disposed');
@@ -459,9 +497,13 @@ const GONE = new Error('section 4: the world was disposed');
 export function createWorld(o: WorldOptions): WorldScene {
   const { renderer } = o;
   const par = () => o.params ?? WORLD_DEFAULTS;
-  const shades = new Float32Array(ROOM_BAYS.flatMap((b) => display(b.hex)));
+  // the ten key shades blended round the ring (blend.ts), display values (the target is read as sRGB, so nothing is
+  // decoded); ten arcs, repeating, read at an arc coordinate by the rings, the forcefields and the cloud
+  const ramp = new DataTexture(ringRamp(ROOM_BAYS.map((b) => b.hex)), 10 * BLEND.perArc, 1, RGBAFormat, UnsignedByteType);
+  ramp.colorSpace = NoColorSpace; ramp.wrapS = RepeatWrapping; ramp.minFilter = ramp.magFilter = LinearFilter; ramp.needsUpdate = true;
   const CLEAR = new Color(...display(URBAN_SLATE));
-  const L = o.garden ? gardenLayout(o.garden.json) : null;
+  let L: GardenLayout | null = null, gardenError: unknown = null;
+  if (o.garden) try { L = gardenLayout(o.garden.json); } catch (e) { gardenError = e; }   // load() fails on it: the poster column stands in
   const SUN = new Vector3(...(L?.sun ?? SUN_BEHIND));
   const lat = o.tTri ? 1 : 0;
   const tunnel = new Scene(), landScene = new Scene();
@@ -473,9 +515,9 @@ export function createWorld(o: WorldOptions): WorldScene {
   const alive = () => { if (disposed) throw GONE; };
 
   // the rings: one mesh for all of them, regenerated when Tune's ringCount changes
-  const ringU = { uShades: { value: shades }, uSun: { value: SUN }, tTri: { value: o.tTri }, uTri: { value: lat }, uAsm: { value: new Vector2(GLIDE.assemble[0] * S, GLIDE.assemble[1] * S) }, uBreak: { value: o.reduced ? 0 : 1 } };
+  const ringU = { tRamp: { value: ramp }, uSun: { value: SUN }, uSeam: { value: RING.seamAo * S }, tTri: { value: o.tTri }, uTri: { value: lat }, uAsm: { value: new Vector2(GLIDE.assemble[0] * S, GLIDE.assemble[1] * S) }, uBreak: { value: o.reduced ? 0 : 1 } };
   const ringMat = new ShaderMaterial({ uniforms: ringU, vertexShader: RING_VERT, fragmentShader: RING_FRAG });
-  const ffU = { uShades: { value: shades }, tTri: { value: o.tTri }, uTri: { value: lat }, uRad: { value: GLIDE.forcefield[0] * S }, uLat: { value: RING.fieldLattice }, uGain: { value: 0.5 }, uS: { value: S } };
+  const ffU = { tRamp: { value: ramp }, tTri: { value: o.tTri }, uTri: { value: lat }, uRad: { value: GLIDE.forcefield[0] * S }, uLat: { value: RING.fieldLattice }, uGain: { value: 0.5 }, uS: { value: S } };
   const ffMat = new ShaderMaterial({ uniforms: ffU, vertexShader: FF_VERT, fragmentShader: FF_FRAG, transparent: true, depthWrite: false, blending: AdditiveBlending });
   const rings = new Mesh(new BufferGeometry(), ringMat), fields = new Mesh(new BufferGeometry(), ffMat);
   rings.frustumCulled = false; fields.frustumCulled = false; fields.renderOrder = 100; tunnel.add(rings, fields);
@@ -487,7 +529,7 @@ export function createWorld(o: WorldOptions): WorldScene {
     const g = (rings.geometry = new BufferGeometry());
     g.setAttribute('position', new Float32BufferAttribute(r.position, 3)); g.setAttribute('normal', new Float32BufferAttribute(r.normal, 3));
     g.setAttribute('aCentre', new Float32BufferAttribute(r.centre, 3)); g.setAttribute('aSpin', new Float32BufferAttribute(r.spin, 4));
-    g.setAttribute('aFling', new Float32BufferAttribute(r.fling, 4)); g.setAttribute('aLat', new Float32BufferAttribute(r.lattice, 2)); g.setAttribute('aShade', new Float32BufferAttribute(r.shade, 1));
+    g.setAttribute('aFling', new Float32BufferAttribute(r.fling, 4)); g.setAttribute('aLat', new Float32BufferAttribute(r.lattice, 2)); g.setAttribute('aTone', new Float32BufferAttribute(r.tone, 3));
     g.setIndex(r.index instanceof Uint32Array ? new Uint32BufferAttribute(r.index, 1) : new Uint16BufferAttribute(r.index, 1));
     // the forcefields: a quad a ring, 0.06 S ahead of it (toward the camera)
     const R = GLIDE.forcefield[0] * S, pos: number[] = [], loc: number[] = [], ring: number[] = [], idx: number[] = [];
@@ -504,7 +546,7 @@ export function createWorld(o: WorldOptions): WorldScene {
 
   // the cloud, 2.5 S past the last ring, turning about its vertical axis
   const cloudHolder = new Group();
-  const points: CloudPoints = createPoints({ shades, count: o.touch ? CLOUD.touchCount : CLOUD.count, dpr: o.dpr, radius: CLOUD.radius * S });
+  const points: CloudPoints = createPoints({ ramp, count: o.touch ? CLOUD.touchCount : CLOUD.count, dpr: o.dpr, radius: CLOUD.radius * S });
   cloudHolder.add(points.object); tunnel.add(cloudHolder);
 
   // the morph's picture under the points, filling the frame (cover-fit)
@@ -521,11 +563,9 @@ export function createWorld(o: WorldOptions): WorldScene {
     return { mesh, mat, tex: null };
   };
   const plateAt: [number, number] = [0, 0];
-  if (L) {
-    const [l, r, b, t] = L.plateTan, plate = gardenQuad(true);
-    plate.mesh.renderOrder = -1; plate.mesh.scale.set((r - l) * GARDEN.far, (t - b) * GARDEN.far, 1); plateAt[0] = (l + r) / 2; plateAt[1] = (b + t) / 2;
-    cards.push(plate, ...L.cards.map(() => gardenQuad(false)));
-  }
+  if (L) { const plate = gardenQuad(true); plate.mesh.renderOrder = -1; cards.push(plate, ...L.cards.map(() => gardenQuad(false))); }
+  /** the plate's quad over the tangent bounds of the rows its texture kept, at GARDEN.far; glideTo keeps it at the camera */
+  const placePlate = (tb: number, tt: number) => { const [l, r] = L!.plateTan; cards[0].mesh.scale.set((r - l) * GARDEN.far, (tt - tb) * GARDEN.far, 1); plateAt[0] = (l + r) / 2; plateAt[1] = (tb + tt) / 2; };
   let cloudOrder = 0;
   // the cards and the cloud placed for n rings and drawn far to near (the cloud sits between the first two cards)
   function place(n: number) {
@@ -550,8 +590,10 @@ export function createWorld(o: WorldOptions): WorldScene {
         for (let i = 0; i < urls.length; i++) {
           bmp = await next!; next = null; alive();
           if (i + 1 < urls.length) next = decode(i + 1);
-          up = stripUpload(renderer, bmp, i === 0 ? { rows: L.plateRows } : { mipmaps: true });
+          const band = i === 0 ? bandRows(L, bmp.height) : null;   // the plate: the band's rows of the image as decoded
+          up = stripUpload(renderer, bmp, band ? { rows: band.rows } : { mipmaps: true });
           while (!up.step()) { await frame(); alive(); }
+          if (band) placePlate(...band.tan);
           const c = cards[i]; c.tex?.dispose(); c.tex = up.texture; c.mat.uniforms.tMap.value = up.texture; c.mesh.visible = true;
           up = null; bmp = null;
           await frame(); alive();
@@ -627,6 +669,7 @@ export function createWorld(o: WorldOptions): WorldScene {
       return (loading ??= (async () => {
         started = true;
         try {
+          if (gardenError) throw gardenError;
           buildRings(Math.round(par().ringCount)); await frame(); alive();
           await loadGarden();
           // one program a frame, with an 8 px target bound; the cards share one program, the points one across both scenes
@@ -671,7 +714,7 @@ export function createWorld(o: WorldOptions): WorldScene {
         curPhase = t >= arrive ? 'rest' : 'glide';
         return { phase: curPhase, done: t >= arrive, arrive, passes: [] };
       }
-      const [m0, m1] = tl.morph, pushT = clamp01((t - m1) / Math.max(1e-3, tl.push[1] - tl.push[0]));
+      const [m0, m1] = tl.morph;
       if (!land0 || t < m0) {
         // the glide (and, with no first picture, the garden held at the end pose: that land's text stands on it)
         points.cloud(); points.object.renderOrder = cloudOrder; plan = { kind: 'tunnel', cross: 0 };
@@ -684,11 +727,9 @@ export function createWorld(o: WorldOptions): WorldScene {
         points.object.renderOrder = 300;
         plan = { kind: 'tunnel', cross: 0 }; curPhase = 'morph';
       } else {
-        // the push into the picture through its depth map; the landed points fade over its first 0.25 s
-        const pa = 1 - clamp01((t - m1) / ENTRY.pointsFade);
-        points.morph(1, { texture: land0.picture, aspect: land0.aspect }, W, H); points.alpha(pa);
-        const list: WorldLayer[] = [{ kind: 'land', i: 0, push: api.restPush(0) * easeInOutCubic(pushT) }];
-        plan = { kind: 'layers', list: pa > 0 ? [...list, { kind: 'points' }] : list };
+        // the push into the picture through its depth map; the landed points fade over its first 0.25 s, the fade on their layer
+        points.morph(1, { texture: land0.picture, aspect: land0.aspect }, W, H);
+        plan = { kind: 'layers', list: pushLayers(t, tl, api.restPush(0)) };
         if (t >= tl.arrive) { bloom = 0; releaseGarden(); }
         curPhase = t < tl.arrive ? 'push' : 'rest';
       }
@@ -740,7 +781,7 @@ export function createWorld(o: WorldOptions): WorldScene {
       rings.geometry.dispose(); fields.geometry.dispose();
       ringMat.dispose(); ffMat.dispose(); points.dispose(); (picMesh.material as ShaderMaterial).dispose();
       for (const c of cards) { c.tex?.dispose(); c.tex = null; c.mat.dispose(); }
-      unit.dispose(); gridMat.dispose(); gridGeo.dispose(); lands.clear();
+      unit.dispose(); gridMat.dispose(); gridGeo.dispose(); ramp.dispose(); lands.clear();
     },
   };
 

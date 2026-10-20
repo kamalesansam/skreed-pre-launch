@@ -1,22 +1,28 @@
-// Section 4's world (docs/specs/section-4-world.md 2 "The ring travel", "The particle morph" and "Option A", 6, W2 to
-// W4, W8, AC3): the ring passes computed from the exported timing fall where the spec puts them; every combination Tune
-// offers (WORLD_RANGES, step by step) has every gap at least 0.4 s, the first pass after the bubble and the roll at its
-// rate as it stands, one step past an edge breaks a rule, and Tune's guard only holds values to the ranges; the roll is
-// held through the passes and never turns faster than 30 degrees a second; the rings have the measured proportions,
-// about 2,000 triangles each and the ten key shades in catalog order with each ring turned 36 degrees; the garden is
-// placed from garden.json (the cards on their tangent bounds, the plate's band, the sun) and the glide's zoom keeps every
-// frame inside the plate, ultrawide windows included; the phone's GPU memory, colour plus depth, stays under its line;
-// option A's stream, replayed on the CPU from its own uniforms, starts and ends on each land's cells for two lands of
-// different FOV and push and stays inside the fill bound across the travel; the landed points stay inside it too; and
-// every scene colour is a key shade by id (or Urban Slate, seen only when the garden is withdrawn), with no raw colour in
-// the scene files; and the hooks and Tune's guard sit behind their build flags.
+// Section 4's world (docs/specs/section-4-world.md 2 "The ring travel", "The particle morph" and "Option A", 3
+// "Colours", 6, W2 to W4, W8, W13, AC3): the ring passes computed from the exported timing fall where the spec puts them;
+// every combination Tune offers (WORLD_RANGES, step by step) has every gap at least 0.4 s, the first pass after the
+// bubble and the roll at its rate as it stands, one step past an edge breaks a rule, and Tune's guard only holds values
+// to the ranges; the roll is held through the passes and never turns faster than 30 degrees a second; the rings have the
+// measured proportions, about 2,000 triangles each and the ten key shades in catalog order with each ring turned 36
+// degrees, each vertex at its own arc coordinate, each shard's value within 6 percent; the shades blend round the ring
+// (blend.ts): each arc's middle fifth is its own hex, every other sample a blend of the two neighbouring key shades in
+// OKLab that never dips toward grey, the weight half and half at a boundary, and no two neighbouring samples differ by
+// more than a set OKLab distance (no hard edge); the landed points fade over the push's first 0.25 s on their own layer;
+// the garden is placed from garden.json (the cards on their tangent bounds, the plate's band in the decoded image's own
+// rows, the sun) and a file without those numbers fails rather than placing at NaN; the glide's zoom keeps every frame
+// inside the plate, ultrawide windows included; the phone's GPU memory, colour plus depth, stays under its line; option
+// A's stream, replayed on the CPU from its own uniforms, starts and ends on each land's cells for two lands of different
+// FOV and push and stays inside the fill bound across the travel; the landed points stay inside it too; every scene colour
+// is a key shade by id or a blend of two neighbouring ones (or Urban Slate, seen only when the garden is withdrawn), with
+// no raw colour in the scene files; and the hooks and Tune's guard sit behind their build flags.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { DataTexture, PerspectiveCamera, Vector3, type Matrix4, type Vector4 } from 'three';
 import { ROOM_BAYS } from '../../src/config/room.ts';
-import { GARDEN, GLIDE, GLIDE_EASE, LAND_CLIP, S, SCENE_COLOURS, WORLD_DEFAULTS, WORLD_RANGES, clampEntry, cubicBezier, entryProblems, entryTimeline, fovAt, frameReach, gardenLayout, glideZoom, rollAt, type EntryTimeline, type GardenJson, type LandView, type WorldParams } from '../../src/scripts/hero/section4/world.ts';
-import { RING, arcAt, generateRings } from '../../src/scripts/hero/section4/rings.ts';
+import { ENTRY, GARDEN, GLIDE, GLIDE_EASE, LAND_CLIP, S, SCENE_COLOURS, WORLD_DEFAULTS, WORLD_RANGES, bandRows, clampEntry, cubicBezier, entryProblems, entryTimeline, fovAt, frameReach, gardenLayout, glideZoom, pushLayers, rollAt, type EntryTimeline, type GardenJson, type LandView, type WorldParams } from '../../src/scripts/hero/section4/world.ts';
+import { RING, arcAt, arcCoord, generateRings } from '../../src/scripts/hero/section4/rings.ts';
+import { BLEND, blendAt, chroma, display, mixLab, ringColour, ringRamp, toOklab, type Lab } from '../../src/scripts/hero/section4/blend.ts';
 import { CLOUD, cellGrid, coverScale, landedFill } from '../../src/scripts/hero/section4/cloud.ts';
 import { STREAM, createStream } from '../../src/scripts/hero/section4/stream.ts';
 
@@ -107,30 +113,111 @@ test('the roll: reached before the first pass, held through every pass, unwound 
   assert.equal(entryTimeline(P()).roll.max, 30, 'the default 30 degrees is reached in full');
 });
 
-test('the rings (W3): the measured proportions, about 2,000 triangles each, ten arcs in catalog order clockwise, each ring turned 36 degrees, the same for the same seed', () => {
+test('the rings (W3, W13): the measured proportions, about 2,000 triangles each, ten arcs in catalog order clockwise, each ring turned 36 degrees, each vertex at its own arc coordinate, each shard within 6 percent in value, the same for the same seed', () => {
   const zs = entryTimeline(P({ ringCount: 5 })).rings, r = generateRings(20261020, zs, S);
   r.triangles.forEach((n, k) => assert.ok(n >= 1800 && n <= 2400, `ring ${k}: ${n} triangles`));
   assert.deepEqual(generateRings(20261020, zs, S).position, r.position, 'deterministic');
   assert.notDeepEqual(generateRings(7, zs, S).position, r.position, 'the seed matters');
   assert.deepEqual(generateRings(20261020, zs.slice(0, 3), S).triangles, r.triangles.slice(0, 3), 'adding a ring leaves the others as they were');
-  // per vertex: the radius and depth inside the proportions, and the shade the one rings.ts's arcAt gives for the angle
-  const nv = r.shade.length, seen = zs.map(() => new Set<number>());
+  // per vertex: the radius and depth inside the proportions; its arc coordinate its own angle's, inside the arc rings.ts's
+  // arcAt gives for its shard's centre (so the blend follows the vertex, not the shard); its seam distance along the arc;
+  // its normal of unit length; its shard's value within 6 percent, one value a shard
+  const nv = r.tone.length / 3, seen = zs.map(() => new Set<number>()), values = new Map<string, number>();
   for (let v = 0; v < nv; v++) {
     const x = r.position[v * 3], y = r.position[v * 3 + 1], z = r.position[v * 3 + 2], cz = r.centre[v * 3 + 2], k = zs.findIndex((z0) => Math.abs(z0 - cz) < 1e-5);   // stored as float32
     assert.ok(k >= 0, 'every vertex on a ring');
     const rad = Math.hypot(x, y);
     assert.ok(rad >= RING.inner * S * 0.99 - 1e-6 && rad <= RING.outer * S * 1.025 + 1e-6, `radius ${rad}`);
     assert.ok(Math.abs(z - cz) <= (RING.thickness * S * 1.12) / 2 + 1e-6, 'thickness');
-    const cdeg = (Math.atan2(r.centre[v * 3], r.centre[v * 3 + 1]) * 180) / Math.PI;
-    assert.equal(r.shade[v], arcAt(k, cdeg), `ring ${k} at ${cdeg.toFixed(1)} degrees`);
-    seen[k].add(r.shade[v]);
+    const cdeg = (Math.atan2(r.centre[v * 3], r.centre[v * 3 + 1]) * 180) / Math.PI, vdeg = (Math.atan2(x, y) * 180) / Math.PI;
+    const [arc, seam, value] = [r.tone[v * 3], r.tone[v * 3 + 1], r.tone[v * 3 + 2]], j = arcAt(k, cdeg);
+    assert.ok(arc >= j && arc <= j + 1, `ring ${k} at ${cdeg.toFixed(1)} degrees: arc coordinate ${arc} outside arc ${j}`);
+    const d = Math.abs(arc - arcCoord(k, vdeg)); assert.ok(Math.min(d, 10 - d) < 2e-4, `ring ${k}: arc coordinate ${arc} for a vertex at ${vdeg.toFixed(2)} degrees`);
+    assert.ok(seam >= 0 && seam <= ((RING.arcDeg / 2) * Math.PI * rad) / 180, `seam distance ${seam}`);
+    assert.ok(Math.abs(Math.hypot(r.normal[v * 3], r.normal[v * 3 + 1], r.normal[v * 3 + 2]) - 1) < 1e-5, 'unit normal');
+    assert.ok(Math.abs(value) <= RING.value + 1e-7, `value ${value}`);
+    const key = `${r.centre[v * 3]},${r.centre[v * 3 + 1]},${cz}`; if (values.has(key)) assert.equal(values.get(key), value, 'one value a shard'); else values.set(key, value);
+    seen[k].add(j);
   }
   seen.forEach((s, k) => assert.equal(s.size, 10, `ring ${k} carries all ten shades`));
+  const vals = [...values.values()]; assert.equal(RING.value, 0.06); assert.ok(Math.min(...vals) < -0.04 && Math.max(...vals) > 0.04, 'the values spread across plus or minus 6 percent');
   // ring k starts arc 0 (Snow) at 36 k degrees clockwise from the top
-  for (let k = 0; k < 5; k++) { assert.equal(arcAt(k, 36 * k + 1), 0); assert.equal(arcAt(k, 36 * k + 37), 1); }
+  for (let k = 0; k < 5; k++) { assert.equal(arcAt(k, 36 * k + 1), 0); assert.equal(arcAt(k, 36 * k + 37), 1); near(arcCoord(k, 36 * k + 18), 0.5, 1e-9, 'mid arc 0'); }
   // most of a ring stays near its place while it is broken (a C-arc of 180 to 240 degrees), the rest is thrown
   const tight = r.fling.filter((_, i) => i % 4 === 0).filter((x) => x < 0.17 * RING.outer * S * 1.4).length / nv;
   assert.ok(tight > 0.4 && tight < 0.75, `${tight}`);
+});
+
+const HEX = ROOM_BAYS.map((b) => b.hex), LAB = HEX.map((h) => toOklab(display(h)));
+const dE = (p: Lab, q: Lab) => Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
+const hueOf = (p: Lab) => Math.atan2(p[2], p[1]);
+/** the largest OKLab step between neighbouring samples of a ring's colour, n samples round it */
+const worstStep = (at: (a: number) => Lab, n: number) => { let w = 0; for (let k = 0; k < n; k++) w = Math.max(w, dE(at((10 * k) / n), at((10 * ((k + 1) % n)) / n))); return w; };
+
+test('the blend (W13, E-S4-colour): the weight is half and half at each boundary and reaches over the outer 40 percent of each arc either side', () => {
+  assert.equal(BLEND.half, 0.4);
+  for (let j = 0; j < 10; j++) {
+    const at = (x: number) => blendAt(j + 1 + x);   // x arcs from the boundary between arc j and arc j + 1
+    assert.deepEqual([at(0).i, at(0).j], [j, (j + 1) % 10]); near(at(0).t, 0.5, 1e-12, `boundary ${j}`);
+    near(at(-0.4).t, 0, 1e-12, 'nothing of the next shade 40 percent before the boundary'); near(at(0.4).t, 1, 1e-12, 'nothing of the shade before 40 percent after it');
+    let prev = -1; for (let x = -0.4; x <= 0.4 + 1e-9; x += 0.02) { const t = at(x).t; assert.ok(t >= prev - 1e-12, 'rising'); prev = t; }
+    for (const x of [-0.5, -0.45, 0.45, 0.499]) { const b = blendAt(j + 1 + x); assert.equal(b.t === 0 ? b.i : b.j, x < 0 ? j : (j + 1) % 10, 'its own shade on the middle fifth'); assert.ok(b.t === 0 || b.t === 1); }
+  }
+});
+
+test('the ring\'s colours (AC3 with W13): each arc\'s middle fifth is its key shade\'s hex by id, every other sample a blend of the two neighbouring key shades in OKLab, never toward grey', () => {
+  // the ramp the scene reads: the texels on each arc's middle fifth are the hex's own bytes
+  const ramp = ringRamp(HEX), per = BLEND.perArc;
+  assert.equal(ramp.length, 10 * per * 4);
+  for (let n = 0; n < 10 * per; n++) {
+    const a = (n + 0.5) / per, j = Math.floor(a), f = a - j;
+    if (f > 0.4 && f < 0.6) assert.deepEqual([...ramp.slice(n * 4, n * 4 + 3)], display(HEX[j]).map((x) => Math.round(x * 255)), `${ROOM_BAYS[j].shade} at texel ${n}`);
+  }
+  // elsewhere: lightness between the two neighbours', hue on the short way round from one to the other, chroma never
+  // below 0.55 of the straight mix of theirs (less 0.01 near white): a straight line in OKLab from Amethyst to Sunbeam
+  // would fall to 0.15 of it, a grey beige
+  for (let j = 0; j < 10; j++) {
+    const p = LAB[j], q = LAB[(j + 1) % 10], neutral = Math.min(chroma(p), chroma(q)) < BLEND.neutral;
+    const dh = ((hueOf(q) - hueOf(p) + 3 * Math.PI) % (2 * Math.PI)) - Math.PI;
+    for (let s = 0; s <= 100; s++) {
+      const a = j + 0.6 + (0.8 * s) / 100, { i, t } = blendAt(a), c = toOklab(ringColour(HEX, a)), what = `${ROOM_BAYS[j].name} to ${ROOM_BAYS[(j + 1) % 10].name} at ${a.toFixed(3)}`;
+      assert.equal(i, j, what);
+      assert.ok(c[0] >= Math.min(p[0], q[0]) - 2e-3 && c[0] <= Math.max(p[0], q[0]) + 2e-3, `${what}: lightness ${c[0]}`);
+      assert.ok(chroma(c) >= 0.55 * (chroma(p) + (chroma(q) - chroma(p)) * t) - 0.01, `${what}: chroma ${chroma(c).toFixed(3)}, toward grey`);
+      if (!neutral && chroma(c) > 0.03) { const off = ((hueOf(c) - hueOf(p) + 3 * Math.PI) % (2 * Math.PI)) - Math.PI; assert.ok(off * Math.sign(dh) >= -0.05 && Math.abs(off) <= Math.abs(dh) + 0.05, `${what}: hue off the short way round`); }
+    }
+  }
+  // why the turn: OKLab's straight line between the two near-opposite neighbours dips to grey, the turned mix does not
+  const straight = (p: Lab, q: Lab): Lab => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2, (p[2] + q[2]) / 2];
+  assert.ok(chroma(straight(LAB[3], LAB[4])) < 0.03 && chroma(mixLab(LAB[3], LAB[4], 0.5)) > 0.15, 'Amethyst and Sunbeam');
+});
+
+test('no hard edges (W13): no two neighbouring samples round a ring differ by more than a set OKLab distance, where the old hard arcs jumped', () => {
+  // the blend itself, a tenth of a degree apart (3,600 round the ring): at most 0.006 (a just-noticeable step is about 0.02)
+  const fine = worstStep((a) => toOklab(ringColour(HEX, a)), 3600);
+  assert.ok(fine <= 0.006, `${fine.toFixed(4)} between samples 0.1 degrees apart`);
+  // the ramp as the GPU reads it, texel to texel (0.5625 degrees apart, linearly filtered between): at most 0.03
+  const ramp = ringRamp(HEX), n = 10 * BLEND.perArc, texel = (k: number) => toOklab([0, 1, 2].map((c) => ramp[(((k % n) + n) % n) * 4 + c] / 255) as unknown as Lab);
+  let worst = 0; for (let k = 0; k < n; k++) worst = Math.max(worst, dE(texel(k), texel(k + 1)));
+  assert.ok(worst <= 0.03, `${worst.toFixed(4)} between neighbouring texels`);
+  // the bound bites: the hard 36-degree arcs (arcAt, the old shading) step by at least 0.1 at a boundary
+  const hard = worstStep((a) => LAB[Math.floor(a) % 10], 3600);
+  assert.ok(hard >= 0.1, `${hard}`);
+});
+
+test('the push (check item 1): the landed points fade over its first 0.25 s on their own layer, then only land 1 is drawn', () => {
+  const tl = entryTimeline(P()), m1 = tl.morph[1], rest = 0.18;
+  const pts = (t: number) => pushLayers(t, tl, rest).find((l) => l.kind === 'points') as { alpha?: number } | undefined;
+  near(pts(m1)!.alpha!, 1, 1e-12, 'opaque as they land'); near(pts(m1 + 0.1)!.alpha!, 0.6, 1e-9, 'm1 + 0.1 s'); near(pts(m1 + 0.2)!.alpha!, 0.2, 1e-9, 'm1 + 0.2 s');
+  assert.ok(pts(m1 + 0.24)!.alpha! > 0 && pts(m1 + 0.24)!.alpha! < 0.05);
+  assert.equal(pts(m1 + ENTRY.pointsFade), undefined, 'gone at 0.25 s'); assert.equal(pushLayers(tl.arrive, tl, rest).length, 1);
+  const land = (t: number) => pushLayers(t, tl, rest)[0] as { kind: string; push: number };
+  assert.equal(land(m1).kind, 'land'); near(land(m1).push, 0, 1e-12, 'the push starts at the picture'); near(land(tl.arrive).push, rest, 1e-12, 'and ends at the rest pose');
+  // entry() hands render these layers as they are, and render sets each points layer's alpha from it
+  const src = read('src/scripts/hero/section4/world.ts');
+  assert.match(src, /plan = \{ kind: 'layers', list: pushLayers\(t, tl, api\.restPush\(0\)\) \};/);
+  assert.match(src, /\} else points\.alpha\(l\.alpha \?\? 1\);/);
+  assert.doesNotMatch(src, /\{ kind: 'points' \}/, 'no points layer without its alpha');
 });
 
 test('the points (W8, spec 6): 65,536 and 32,768, landing in a jittered grid of round points whose fill stays under 2.5 screens', () => {
@@ -168,17 +255,41 @@ test('the garden from garden.json: rendered from the glide\'s end, each card on 
   // the hedges, the check's case: 3.21 units across, centred 0.95 below the axis 3.75 units past the render pose (not 4.69 across on the horizon)
   assert.ok(g.cards[0].w < 3.3 && g.cards[0].y < -0.9);
   // the plate: 64 degrees across, its band of rows covering the band about the axis and inside the image
-  const [l, r, b, t] = g.plateTan, [y0, y1] = g.plateRows, hx = Math.tan((32 * Math.PI) / 180);
-  near(r, hx, 1e-9, 'plate right'); near(l, -hx, 1e-9, 'plate left');
+  const [l, r] = g.plateTan, { rows: [y0, y1], tan: [b, t] } = bandRows(g, garden.plate.height), hx = Math.tan((32 * Math.PI) / 180);
+  near(r, hx, 1e-9, 'plate right'); near(l, -hx, 1e-9, 'plate left'); near(g.plateTan[2], -hx, 1e-9, 'plate bottom'); near(g.plateTan[3], hx, 1e-9, 'plate top');
   assert.ok(b <= -GARDEN.band && t >= GARDEN.band && b >= -hx && t <= hx, `${b} ${t}`);
   assert.ok(y0 > 0 && y1 < garden.plate.height && Math.abs((t - b) / (2 * hx) - (y1 - y0) / garden.plate.height) < 1e-9, `${y0} ${y1}`);
-  near(g.reach[0], hx * GARDEN.edge, 1e-9, 'reach across'); near(g.reach[1], Math.min(t, -b) * GARDEN.edge, 1e-9, 'reach up');
+  near(g.reach[0], hx * GARDEN.edge, 1e-9, 'reach across'); assert.ok(g.reach[1] <= Math.min(t, -b) * GARDEN.edge + 1e-12 && g.reach[1] >= GARDEN.band * GARDEN.edge - 1e-12, 'reach up: inside the rows kept');
+  // the band's rows come from the decoded image's own height, so an encode at another scale (garden.json's scale per
+  // format) keeps the same band: a half-height WebP covers the band too, its tangents within one of its rows
+  for (const h of [garden.plate.height / 2, 1606, 777]) {
+    const q = bandRows(g, h), row = (2 * hx) / h;
+    assert.ok(q.rows[0] >= 0 && q.rows[1] <= h && q.tan[0] <= -GARDEN.band && q.tan[1] >= GARDEN.band, `${h} rows`);
+    near(q.tan[0], b, row, `${h} rows: bottom`); near(q.tan[1], t, row, `${h} rows: top`);
+  }
   // the sun: garden.json's direction (another builder may move it), normalised; world.ts reads it from the layout
   const d = garden.sun.direction, n = Math.hypot(d[0], d[1], d[2]);
   g.sun.forEach((x, k) => near(x, d[k] / n, 1e-12, `sun ${k}`));
   const src = read('src/scripts/hero/section4/world.ts');
   assert.match(src, /const SUN = new Vector3\(\.\.\.\(L\?\.sun \?\? SUN_BEHIND\)\)/);
   assert.doesNotMatch(src, /0\.28017|0\.57358|0\.76975/, 'no sun hard-coded from garden.json');
+  // the rings are lit by it: the shards' shader takes uSun for the diffuse and for the highlight's half vector
+  assert.match(src, /uSun: \{ value: SUN \}/); assert.match(src, /normalize\(uSun \+ v\)/); assert.match(src, /max\(dot\(n, uSun\), 0\.0\)/);
+});
+
+test('garden.json\'s format (check item 3): the one garden.py writes is read as it stands; a file without its numbers fails the load instead of placing at NaN', () => {
+  // the plate's size and field, each card's distance and tangent bounds, the sun: what world.ts reads, all there
+  assert.ok(garden.plate.width > 0 && garden.plate.height > 0 && garden.plate.fovDeg > 0 && garden.cards.every((c) => c.distance > 0 && c.tan.length === 4) && garden.sun.direction.length === 3);
+  // a plate whose size moved elsewhere (a per-format block, say), a card without its bounds, no sun: each throws
+  const plate = { fovDeg: garden.plate.fovDeg } as unknown as GardenJson['plate'];
+  assert.throws(() => gardenLayout({ ...garden, plate }), /garden\.json does not give/);
+  assert.throws(() => gardenLayout({ ...garden, cards: [{ distance: 3, tan: [] }] }), /garden\.json does not give/);
+  assert.throws(() => gardenLayout({ ...garden, sun: { direction: [0, 0, 0] } }), /garden\.json does not give/);
+  assert.throws(() => gardenLayout({ ...garden, sun: {} as GardenJson['sun'] }));
+  // createWorld keeps the error and its load fails on it (the poster column stands in, spec 5), never the camera at NaN
+  const src = read('src/scripts/hero/section4/world.ts');
+  assert.match(src, /if \(o\.garden\) try \{ L = gardenLayout\(o\.garden\.json\); \} catch \(e\) \{ gardenError = e; \}/);
+  assert.match(src, /try \{\n\s*if \(gardenError\) throw gardenError;/);
 });
 
 test('the plate\'s edge never shows (garden check 5): the glide\'s zoom rises only where a frame would reach past it, ultrawide windows first', (t) => {
@@ -208,7 +319,7 @@ test('the plate\'s edge never shows (garden check 5): the glide\'s zoom rises on
 test('GPU memory on a phone (spec 6, colour plus depth): under 48 MiB through the entry and after it, the garden freed once land 1 is in', (t) => {
   const MiB = 1 << 20, g = gardenLayout(garden), W = Math.round(390 * 1.25), H = Math.round(844 * 1.25);
   const target = W * H * (4 + 4);   // RGBA8 colour and a 24-bit depth buffer stored in 4 bytes
-  const plate = garden.plate.width * (g.plateRows[1] - g.plateRows[0]) * 4, plateWhole = garden.plate.width * garden.plate.height * 4;   // magnified only: no mips
+  const rows = bandRows(g, garden.plate.height).rows, plate = garden.plate.width * (rows[1] - rows[0]) * 4, plateWhole = garden.plate.width * garden.plate.height * 4;   // magnified only: no mips
   const cards = garden.cards.reduce((s, c) => s + (c.width * c.height * 4 * 4) / 3, 0);
   const picture = (720 * 1280 * 4 * 4) / 3, depth = 180 * 320;
   const entry = target + plate + cards + picture + depth, after = target + 3 * (picture + depth);
@@ -306,7 +417,7 @@ test('option A\'s stream (defect 2, spec 6): every point it draws, counted whole
   }
 });
 
-test('colours (AC3): every scene colour is a key shade by id, the lattice the next family\'s, and no raw colour in the scene files', () => {
+test('colours (AC3): every scene colour is a key shade by id or a blend of two neighbouring ones, the lattice the next family\'s, and no raw colour in the scene files', () => {
   const ids = ROOM_BAYS.map((b) => b.shade);
   assert.deepEqual(SCENE_COLOURS.rings, ids, 'the rings: the ten key shades in catalog order');
   assert.deepEqual(SCENE_COLOURS.lattice, ids.map((_, i) => ids[(i + 1) % 10]), 'the lattice: the next family\'s');
@@ -314,13 +425,21 @@ test('colours (AC3): every scene colour is a key shade by id, the lattice the ne
   // Pearl Whisper is the bubble's and the text's (transition.ts and the DOM); here only Urban Slate, behind a withdrawn garden
   for (const id of Object.values(SCENE_COLOURS).flat()) assert.ok(ids.includes(id) || id === 'urban-slate' || id === 'pearl-whisper', id);
   assert.deepEqual(SCENE_COLOURS.clear, ['urban-slate']);
-  for (const f of ['world', 'rings', 'cloud', 'stream']) {
+  for (const f of ['world', 'rings', 'cloud', 'stream', 'blend']) {
     const src = read(`src/scripts/hero/section4/${f}.ts`);
     assert.doesNotMatch(src, /#[0-9a-fA-F]{6}\b|0x[0-9a-fA-F]{6}\b/, `${f}.ts carries a raw hex colour`);
     for (const m of src.matchAll(/new Color\(([^()]*(?:\([^()]*\))?[^()]*)\)/g)) assert.match(m[1].trim(), /^(|\.\.\.display\(URBAN_SLATE\))$/, `${f}.ts: new Color(${m[1]})`);
     // GLSL: no colour literal (a vector of two or more numbers); broadcast scalars (vec3(2.4) in the sRGB curve) are maths
     for (const m of src.matchAll(/vec[34]\(\s*(-?[\d.]+\s*(?:,\s*-?[\d.]+\s*)+)\)/g)) assert.fail(`${f}.ts: a literal ${m[0]}`);
   }
-  // the shades reach the shaders as their hex's own numbers, ROOM_BAYS order (the target is read as sRGB)
-  assert.match(read('src/scripts/hero/section4/world.ts'), /new Float32Array\(ROOM_BAYS\.flatMap\(\(b\) => display\(b\.hex\)\)\)/);
+  // the shades reach the shaders as one ramp made from ROOM_BAYS' hexes (blend.ts, display values: the target is read as
+  // sRGB), read at an arc coordinate: the shards at theirs and one arc on for the lattice, the forcefields by their angle,
+  // the cloud by its longitude; no shader indexes a shade any more
+  const world = read('src/scripts/hero/section4/world.ts'), cloud = read('src/scripts/hero/section4/cloud.ts');
+  assert.match(world, /new DataTexture\(ringRamp\(ROOM_BAYS\.map\(\(b\) => b\.hex\)\), 10 \* BLEND\.perArc, 1, RGBAFormat, UnsignedByteType\)/);
+  assert.match(world, /ramp\.wrapS = RepeatWrapping; ramp\.minFilter = ramp\.magFilter = LinearFilter;/);
+  assert.match(world, /mix\(ramp\(vTone\.x\), ramp\(vTone\.x \+ 1\.0\), /);
+  assert.match(world, /texture\(tRamp, vec2\(\(deg \/ 36\.0 - vRing\) \* 0\.1, 0\.5\)\)/);
+  assert.match(cloud, /textureLod\(tRamp, vec2\(ph \/ 6\.2831853, 0\.5\), 0\.0\)/);
+  for (const src of [world, cloud]) assert.doesNotMatch(src, /uShades/);
 });

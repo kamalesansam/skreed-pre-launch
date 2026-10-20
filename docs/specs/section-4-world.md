@@ -55,7 +55,7 @@ There are no panels, no fills and no borders anywhere in the section (DESIGN.md'
 - `SKIP` decodes in at the bottom centre and stays until the first land. It takes focus when focus was in the section or the press came from the keyboard.
 - There is no white-out and there are no bands.
 
-**The bubble, from 0.35 s for `bubbleMs` (Tune, default 2000 ms, 1200 to 3200).**
+**The bubble, from 0.35 s for `bubbleMs` (Tune, default 2000 ms, 1200 to 2190: past 2190 ms the first of four rings is passed before the bubble clears on the shortest glide).**
 - **Shape.** A wavy circle opens from the screen's centre and grows until its edge has cleared the farthest corner.
 - **Inside.** The garden tunnel is already moving: the camera glide of the next beat runs from the bubble's first frame ("the inner part ... is colorful").
 - **Outside.** The hall's own frame, greyed and darkened at full strength from the bubble's first frame ("the exterior is dark and grey"): luminance mixed halfway toward Urban Slate, then multiplied by 0.6. On the hall's darker greys and the Urban Slate doorway this measures below 0.06 relative luminance (AC4). It is the hall's pixels, not a new colour.
@@ -66,7 +66,7 @@ There are no panels, no fills and no borders anywhere in the section (DESIGN.md'
 
 **The ring travel, from 0.35 s for `travelMs` (Tune, default 8000 ms).** Sam: "instead of scrolling it automatically moves towards all those circle blocks".
 - **The camera** flies level along the tunnel by itself and ignores the page's scroll. Its ease is igloo's own, `cubic-bezier(0.6, 0, 0, 1)` (evidence 4).
-- **Three rings** (igloo's count; `ringCount` Tune 2 to 5) stand across the flight path, S = 2.5 units apart. They have igloo's proportions (evidence 8): outer radius 0.16 S, inner about 0.116 S, thickness 0.052 S.
+- **Three rings** (igloo's count; `ringCount` Tune 2 to 4: five rings put two passes under 0.4 s apart at any glide Tune offers) stand across the flight path, S = 2.5 units apart. They have igloo's proportions (evidence 8): outer radius 0.16 S, inner about 0.116 S, thickness 0.052 S.
 - **The path.** The camera starts 0.71 S before the first ring, igloo's approach pose, where the ring fills about 116 percent of the laptop frame's height and more than the phone's width. It ends 0.5 S past the last ring.
 - **The ring passes** fall at 2.70, 3.20 and 4.40 s after the press: every gap at least 0.5 s, and the first after the bubble has cleared (2.35 s). A unit test computes the passes from `ROOM_PARAMS` and Tune's ranges and fails on any gap under 0.4 s or a first pass before `0.35 + bubbleMs`; Tune's ranges are clamped to what passes.
 - **The ten families.** Each ring carries the ten families' key shades by id, in catalog order clockwise: the gems' ten, and the old universe's ten bays. Each ring is turned 36 degrees from the one before.
@@ -81,7 +81,7 @@ There are no panels, no fills and no borders anywhere in the section (DESIGN.md'
   - a forward plate covering 64 degrees around the flight's axis: the sky, the far trees and the lawn;
   - in front of it three depth cards at 2, 4 and 7 S beyond the last ring (clipped hedges, flower beds, near trees), which slide against each other as the camera flies, so the garden has parallax.
 - **The lens.** The FOV opens from 22 to 30 degrees over the glide (evidence 2), with the portrait zoom `min(1, aspect x 1.5)`.
-- **The roll** is gentle: up to `travelRoll` (Tune, default 30 degrees, 0 to 90), reached before the first ring and unwound after the last. It is held steady through the passes and never turns faster than 30 degrees a second. igloo turns half a turn; that is a vestibular risk on a phone.
+- **The roll** is gentle: up to `travelRoll` (Tune, default 30 degrees, 0 to 33: a larger roll cannot come up before the first of four rings at 30 degrees a second on the shortest glide and morph), reached before the first ring and unwound after the last. It is held steady through the passes and never turns faster than 30 degrees a second. igloo turns half a turn; that is a vestibular risk on a phone.
 - **No flash.** There is no glitch flash at the rings (WCAG 2.3.1).
 
 **The particle morph, for `morphMs` (Tune, default 1800 ms).** Sam: "by the end of the travel we will have a particle morphism animation which will transition into a 2d picture".
@@ -448,7 +448,7 @@ The product GLBs move out of `public/` into `scripts/room/models/` as Blender re
 | The whole section, by option, AVIF | A: portrait 630, wide 750 KB. B: about 1,020 / 1,140 KB. C: about 2,700 / 2,820 KB | A: the first-land row plus three further lands. B: A plus the park (420) and B's extra script (7), less A's depth maps after land 1 (about 36). C: A plus three clips (2,100), C's extra script (2), less A's depth maps after land 1. |
 | The poster tier | the hall still (16.5 / 18.1 KB) plus four pictures: 337 KB portrait, 459 KB wide (AVIF); 529 and 724 KB (WebP); script 8.5 KB | lazy, one land ahead under Save-Data |
 | The first view | +0 B fetched; inline markup and `room.css` 4 KB gzip or less, `<noscript>` copies included | |
-| GPU memory, phone | section 4's resident set 48 MiB or less | the world target and depth about 2 MiB; three pictures with mips about 15 MiB; the garden about 24 MiB; A's grid and points about 2 MiB. Beside the hero sky's 34 to 45 MiB, which stays resident. `renderer.info.memory` is recorded in the review. |
+| GPU memory, phone | section 4's resident set 48 MiB or less | the world target about 3.9 MiB, colour plus depth (1.96 MiB each at 390 x 844 and DPR 1.25); three pictures with mips about 15 MiB; the garden about 24 MiB; A's grid and points about 2 MiB. Beside the hero sky's 34 to 45 MiB, which stays resident. `renderer.info.memory` is recorded in the review. |
 | Higgsfield credits | **300 or less** | see the credit plan below |
 
 **The credit plan** (unit costs from `higgsfield generate cost`, 2026-10-19 and 2026-10-20).
