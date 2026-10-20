@@ -37,7 +37,7 @@ The scratch work lives in `/tmp/claude-0/-home-user-skreed-pre-launch/5a355426-a
 | Python tools (scripts only) | Pillow 12.3.0 (libavif 1.4.2, libwebp 1.6.0), numpy | the texture and poster encodes and the image compare; the same encoder versions produced the measured sizes |
 
 Not installed for this section:
-- `gsap` 3.15.0 and `lenis` 1.3.26: the hero uses neither (spec D6), and nor does section 3 (the quiz: its decode on `requestAnimationFrame` and one Web Animations fade, with no Pointer Events handlers). They arrive with a later section, if at all.
+- `gsap` 3.15.0 and `lenis` 1.3.26: the hero uses neither (spec D6), and nor does section 3 (the quiz: its decode and its answer pictures' reveal on `requestAnimationFrame` and one Web Animations fade; its only Pointer Events handlers are the answer pictures' `pointerenter`, `pointerleave`, `pointerdown` and `pointercancel`, none for a drag). They arrive with a later section, if at all.
 - `@astrojs/cloudflare` 14.3.4: even for a static site it adds a SESSION KV binding and an IMAGES binding that need provisioning on Sam's account. An assets-only Worker serves `dist/` directly. The adapter, or a hand-written Worker, is added with `/api/*` in the Reserve section.
 - `@astrojs/sitemap` 3.7.4: arrives with the site-essentials pass (G8).
 
@@ -77,10 +77,12 @@ Every version is exact in `package.json`, with no caret (security checklist row 
 │  │  ├─ shades.gen.ts            generated from docs/data/shades-240.json by id
 │  │  ├─ tokens.ts                colour constants the canvas needs (night, slate, pearl), checked against tokens.css by a unit test
 │  │  ├─ quiz.ts                  section 3's data: QUIZ_COPY, QUIZ_PERSONAS, QUIZ_QUESTIONS, scoreQuiz, pickShade, shadeHref, needsRing, QUIZ_LEAD_ENDPOINT (docs/specs/quiz.md)
+│  │  ├─ quiz-pictures.ts         section 3's answer pictures: QUIZ_PICTURES, each key with its Envato title, author and item id (the files are not in git; docs/specs/quiz.md D41)
 │  │  └─ room.ts                  section 4's data: ROOM_COPY, HALL, TRANSITION, ROOM_BAYS, SWEEP_BANDS, UNIVERSE, ROOM_PRODUCTS, RENDER_COLOURS, ROOM_SCREENS, ROOM_PARAMS (Tune's "Section 4" group), the RoomFrame and RoomIsland bridge types (section 11.4)
 │  ├─ assets/hero/                stage 1: the prototype files plus SHA256SUMS; stage 2: the encodes and packed binaries (section 6); imported with ?url, hashed into /_astro/
 │  ├─ assets/hero/poster/         the four poster files (section 6.4)
 │  ├─ assets/room/                section 4: hall.glb and room.glb, their lightmaps (AVIF and WebP), stills/ (the poster tier's eight files); imported with ?url
+│  ├─ assets/quiz/pics/           section 3's answer pictures, AVIF and WebP at two widths and index.json, built by scripts/quiz/; git-ignored, on the build machine only (the Envato licence; docs/specs/quiz.md D41)
 │  ├─ data/room-products.json     section 4's product models (url, sha256, bytes, triangles, size in mm, parts), written by scripts/room/pack.mjs
 │  ├─ components/
 │  │  ├─ shell/Gate.astro         head inline script: html.js, tier choice (section 8), module load-error catch
@@ -103,7 +105,8 @@ Every version is exact in `package.json`, with no caret (security checklist row 
 │  │  ├─ hero/section3/ground.ts  section 3's fog ground: section 2's background shader rendered alone into its own render target (section 11.3)
 │  │  ├─ hero/section4/           section 4 on the island (section 11.4): director.ts, hall.ts, universe.ts, transition.ts, post.ts, assets.ts; two lazy chunks
 │  │  ├─ room/walk.ts             section 4's DOM: the hint, the loading line, the prompt, the keys, Skip, the products and the label; a lazy chunk
-│  │  ├─ quiz/deck.ts             section 3's deck: the cards, the scoring call, the states, the gift form; a lazy chunk with quiz/decode.ts, section 2's label animation on the quiz's text (docs/specs/quiz.md)
+│  │  ├─ quiz/deck.ts             section 3's deck: the cards, the scoring call, the states, the gift form; a lazy chunk with quiz/decode.ts, section 2's label animation on the quiz's text, and quiz/picture.ts (docs/specs/quiz.md)
+│  │  ├─ quiz/picture.ts          section 3's answer pictures: the decode on twelve strips of a photograph, shown and hidden from the deck (one whose file arrives after another picture, or none, was asked for is never drawn)
 │  │  ├─ quiz/track.ts            section 3's analytics queue (window.__skreedEvents)
 │  │  └─ dev/tune.ts              Tune bindings, dynamic import in dev and staging only
 │  └─ inline/
@@ -117,6 +120,7 @@ Every version is exact in `package.json`, with no caret (security checklist row 
 │  ├─ budget.mjs                  AC9 (from SCR/port/scripts/sizes.mjs)
 │  ├─ guards.mjs                  AC10.6 grep guards
 │  ├─ lighthouse.mjs              section 16
+│  ├─ quiz/                       section 3: frames.mjs and contrast.mjs (the review frames, the contrast on the fog); prepare-pictures.py and encode-pictures.mjs (the answer pictures from the Envato downloads into src/assets/quiz/pics/, docs/specs/quiz.md D41)
 │  ├─ room/                       section 4's pipeline: hall.py, universe.py and products.py (Blender headless), encode.mjs and pack.mjs, render-stills.mjs, guards.mjs (in npm run test:unit)
 │  └─ hero/
 │     ├─ probes/                  the readers' scratch scripts, copied verbatim in build step 1 (reference; ported below)
@@ -880,11 +884,11 @@ The DOM riders slot takes `#s2Copy` with the copy clip under the logo.
 
 ### 11.3 Section 3, the quiz (the Wall moves to a later section)
 
-- The quiz is DOM (`components/quiz/Quiz.astro`, `scripts/quiz/deck.ts`, `decode.ts` and `track.ts`, `styles/quiz.css`, `config/quiz.ts`, and the second IBM Plex Mono face in `styles/fonts.css`, `public/fonts/ibm-plex-mono-500-rest.woff2`, E-S3-font; docs/specs/quiz.md). Under it the hero's canvas keeps drawing section 3's fog ground (`section3/ground.ts`: section 2's background shader rendered alone into its own render target, `tB` of the second wipe and the whole frame after it), by Sam's brief and against CLAUDE.md's rule of no WebGL from section 3 on: E-S3-bg, approved by Sam on 2026-10-19 (quiz.md section 10, item 3), so the loop runs under section 3 whatever Sam decides for section 4 (section 7.5's fallback is E-S4-webgl's alone).
+- The quiz is DOM (`components/quiz/Quiz.astro`, `scripts/quiz/deck.ts`, `decode.ts`, `picture.ts` and `track.ts`, `styles/quiz.css`, `config/quiz.ts` and `config/quiz-pictures.ts`, the answer pictures' files git-ignored in `assets/quiz/pics/` (quiz.md D41), and the second IBM Plex Mono face in `styles/fonts.css`, `public/fonts/ibm-plex-mono-500-rest.woff2`, E-S3-font; docs/specs/quiz.md). Under it the hero's canvas keeps drawing section 3's fog ground (`section3/ground.ts`: section 2's background shader rendered alone into its own render target, `tB` of the second wipe and the whole frame after it), by Sam's brief and against CLAUDE.md's rule of no WebGL from section 3 on: E-S3-bg, approved by Sam on 2026-10-19 (quiz.md section 10, item 3), so the loop runs under section 3 whatever Sam decides for section 4 (section 7.5's fallback is E-S4-webgl's alone).
 - It mounts in the `after-track` slot inside `main#main` in every build. The `onStageExit(cb)` hand-off for template7's `.wall.is-fixed` (`margin-top: -100svh`) is not built; the observer of section 7.5 watches `section#find` directly.
 - `styles/quiz.css` sets `overflow-anchor: none` on everything inside `.quiz`, so scroll anchoring keeps to the section itself, whose top never moves, and the deck keeps its tallest card's height: `section#find` changes height only when the result replaces the deck. Section 4's director re-measures its cached layout through its ResizeObserver on `#find` (section 11.4), so nothing else is needed below it.
 - It decides the page's root background below the hero (D24) and whether the poster path keeps the cue (D27 shows it once something follows).
-- GSAP, ScrollTrigger and Lenis do not arrive with the quiz (its decode runs on `requestAnimationFrame`, with one Web Animations fade on the swatches, and it has no Pointer Events handlers). If a later section brings Lenis, it must not smooth the hero's track range: either it is disabled until the track ends, or the hero keeps reading native `scrollY`. Otherwise the pull-back gets a third smoother.
+- GSAP, ScrollTrigger and Lenis do not arrive with the quiz (its decode and its answer pictures' reveal run on `requestAnimationFrame`, with one Web Animations fade on the swatches, and its only Pointer Events handlers, `pointerenter`, `pointerleave`, `pointerdown` and `pointercancel` on the visual questions' answers, show and hide a picture; none is for a drag). If a later section brings Lenis, it must not smooth the hero's track range: either it is disabled until the track ends, or the hero keeps reading native `scrollY`. Otherwise the pull-back gets a third smoother.
 - `motion.ts` would then wrap `gsap.matchMedia()` so reduced motion has one source.
 
 ### 11.4 Section 4, the entrance and the Skreed universe
