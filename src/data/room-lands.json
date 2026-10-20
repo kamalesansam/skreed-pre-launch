@@ -1,5 +1,5 @@
 {
- "about": "Section 4 part two, the four lands (docs/specs/section-4-world.md 3, \"Provenance\"), written by scripts/room/lands.py record. Not in ROOM_LANDS and not encoded until Sam approves each land (CHECKLIST F2).",
+ "about": "Section 4 part two, the four lands (docs/specs/section-4-world.md 3, \"Provenance\"), written by scripts/room/lands.py record. Sam reviewed the first sheet on 2026-10-20 and asked for fixes, then approved sheet-v2 the same day with the seams to be blended and the Lenskin in option 3 (Sage); the masters here carry both. Encoded into src/assets/room/lands/ by scripts/room/encode-lands.mjs; ROOM_LANDS is the integration's to write (CHECKLIST F2).",
  "masters": "assets-src/room/lands/ (gitignored; SHA256SUMS committed); work/ there holds every mask and generator output named here",
  "ledger": "src/data/room-lands.ledger.json",
  "credits": 73.0,
@@ -13,9 +13,25 @@
     "from": "Sam's listing photos, ~/Downloads/amazon listing/image listing/lifestyle/17 promax/"
    },
    "accessory": null,
-   "approval": "Sam 2026-10-20, with fixes",
-   "fixes": [
-    "darken the text areas"
+   "approval": "Sam 2026-10-20 (sheet-v2), with the seams to be blended",
+   "reviews": [
+    {
+     "round": 1,
+     "date": "2026-10-20",
+     "by": "Sam",
+     "sheet": "sheet.jpg",
+     "verdict": "reviewed, fixes asked",
+     "fixes": [
+      "darken the text areas"
+     ]
+    },
+    {
+     "round": 2,
+     "date": "2026-10-20",
+     "by": "Sam",
+     "sheet": "sheet-v2.jpg",
+     "verdict": "approved, with the seams to be blended"
+    }
    ],
    "classes": {
     "square": {
@@ -59,7 +75,7 @@
       {
        "stage": "burn",
        "local": true,
-       "round": 2,
+       "round": 3,
        "stops": 0.85,
        "ru": 1.5,
        "rv": 0.62,
@@ -97,17 +113,67 @@
        "note": "attempt 2"
       },
       {
+       "stage": "seams",
+       "local": true,
+       "round": 3,
+       "pad": {
+        "ramp": 128,
+        "wander": 36,
+        "period": 90,
+        "reach": 320,
+        "path_sigma": 40,
+        "left": {
+         "ramp_px": 128,
+         "centre_px_from_edge": [
+          126.1,
+          234.5
+         ],
+         "photo_weight_at_edge": 0.0,
+         "own_step_max": 0.596
+        },
+        "right": {
+         "ramp_px": 128,
+         "centre_px_from_edge": [
+          68.0,
+          205.8
+         ],
+         "photo_weight_at_edge": 0.0,
+         "own_step_max": 0.281
+        },
+        "registered": "98 of 304 matches"
+       },
+       "darken": {
+        "side": 128,
+        "top": 240,
+        "wander_side": 40,
+        "wander_top": 56,
+        "period_side": 90,
+        "period_top": 120,
+        "lag": 0.5,
+        "low": 48,
+        "side_ramp_px": 128,
+        "top_ramp_px": null,
+        "weight_at_mask_edge": 0.0,
+        "own_step_max_x": 0.826,
+        "own_step_max_y": null,
+        "top_y": 0,
+        "side_x": 948,
+        "registered": "207 of 233 matches"
+       },
+       "note": "both calls registered again and blended by feathered weights along wandering lines, in OKLab (SEAMS in lands.py); work/steps.json measures the old seams"
+      },
+      {
        "stage": "burn",
        "local": true,
-       "round": 2,
-       "stops": 0.5,
+       "round": 3,
+       "stops": 0.7,
        "ru": 0.8,
        "rv": 0.65,
        "hl": 0.6
       }
      ],
      "file": "land-case-wide.png",
-     "sha256": "922b9ad2a3956ed3bcd45cff098caa26bbfb73500a87c5b6020dbe1f6507de80",
+     "sha256": "8518f158e27fd254988ef88f7578c0ea6cb3f8647c17cc4166adb99896c49ea3",
      "source": "yellow.png"
     },
     "portrait-depth": {
@@ -124,6 +190,7 @@
        "note": ""
       }
      ],
+     "made_from": "the round-2 crop (work/v2/land-case-portrait.png)",
      "file": "land-case-portrait-depth.png",
      "sha256": "b2d57cbf810c15712eacf81b9ee26456a96e22350223394bdcf6f05946c498ee",
      "source": "yellow.png"
@@ -140,10 +207,24 @@
        "max_frames": 1,
        "output": "work/depth-case-wide-603ab9f4.mp4",
        "note": ""
+      },
+      {
+       "stage": "depthseams",
+       "local": true,
+       "round": 3,
+       "from": "work/v2/land-case-wide-depth.png",
+       "columns": [
+        960,
+        1000
+       ],
+       "changed_frac": 0.0596,
+       "largest_change": 184,
+       "note": "inside the darken mask, the share of the pad the seams kept takes the depth each row has just right of the edge (the trunk's)"
       }
      ],
+     "made_from": "the round-2 crop (work/v2/land-case-wide.png); the third round blended its seams after it",
      "file": "land-case-wide-depth.png",
-     "sha256": "8856e0c3c849f247b7a392a7d133e1d9f365390e3ee4bd6cd1abe146b8576e15",
+     "sha256": "9459a13f413b97f3f32a74453f0e50d7da3190840953fc870662d0a7a688dfd8",
      "source": "yellow.png"
     }
    }
@@ -163,9 +244,25 @@
     "render": "scripts/room/render-products.py, Blender 5.2 Cycles on Metal",
     "spec": "work/acc-wallet.json"
    },
-   "approval": "Sam 2026-10-20, with fixes",
-   "fixes": [
-    "darken the text areas"
+   "approval": "Sam 2026-10-20 (sheet-v2), with the seams to be blended",
+   "reviews": [
+    {
+     "round": 1,
+     "date": "2026-10-20",
+     "by": "Sam",
+     "sheet": "sheet.jpg",
+     "verdict": "reviewed, fixes asked",
+     "fixes": [
+      "darken the text areas"
+     ]
+    },
+    {
+     "round": 2,
+     "date": "2026-10-20",
+     "by": "Sam",
+     "sheet": "sheet-v2.jpg",
+     "verdict": "approved, with the seams to be blended"
+    }
    ],
    "classes": {
     "square": {
@@ -209,7 +306,7 @@
       {
        "stage": "burn",
        "local": true,
-       "round": 2,
+       "round": 3,
        "stops": 1.6,
        "ru": 1.5,
        "rv": 0.62,
@@ -247,9 +344,59 @@
        "note": "attempt 2"
       },
       {
+       "stage": "seams",
+       "local": true,
+       "round": 3,
+       "pad": {
+        "ramp": 128,
+        "wander": 36,
+        "period": 90,
+        "reach": 320,
+        "path_sigma": 40,
+        "left": {
+         "ramp_px": 128,
+         "centre_px_from_edge": [
+          152.4,
+          248.0
+         ],
+         "photo_weight_at_edge": 0.0,
+         "own_step_max": 0.237
+        },
+        "right": {
+         "ramp_px": 128,
+         "centre_px_from_edge": [
+          68.0,
+          243.0
+         ],
+         "photo_weight_at_edge": 0.0,
+         "own_step_max": 0.37
+        },
+        "registered": "93 of 574 matches"
+       },
+       "darken": {
+        "side": 128,
+        "top": 240,
+        "wander_side": 40,
+        "wander_top": 56,
+        "period_side": 90,
+        "period_top": 120,
+        "lag": 0.5,
+        "low": 48,
+        "side_ramp_px": 128,
+        "top_ramp_px": null,
+        "weight_at_mask_edge": 0.0,
+        "own_step_max_x": 0.604,
+        "own_step_max_y": null,
+        "top_y": 0,
+        "side_x": 948,
+        "registered": "602 of 751 matches"
+       },
+       "note": "both calls registered again and blended by feathered weights along wandering lines, in OKLab (SEAMS in lands.py); work/steps.json measures the old seams"
+      },
+      {
        "stage": "burn",
        "local": true,
-       "round": 2,
+       "round": 3,
        "stops": 1.4,
        "ru": 0.8,
        "rv": 0.65,
@@ -257,7 +404,7 @@
       }
      ],
      "file": "land-wallet-wide.png",
-     "sha256": "08d47a72e247cc20f2a5025ed4a1f59450449e31982121769eb24cd470fac822",
+     "sha256": "88d64f4a39ef5710e0468364867a51b1b0e16528e5b1ce5591c847f7cea1c2cd",
      "source": "blue.png"
     },
     "portrait-depth": {
@@ -274,6 +421,7 @@
        "note": ""
       }
      ],
+     "made_from": "the round-2 crop (work/v2/land-wallet-portrait.png)",
      "file": "land-wallet-portrait-depth.png",
      "sha256": "6df18e305d7ff91b1d07eded7af8c8a257c9c2437bea86ab2d5c6dc98e1e79e2",
      "source": "blue.png"
@@ -292,6 +440,7 @@
        "note": ""
       }
      ],
+     "made_from": "the round-2 crop (work/v2/land-wallet-wide.png); the third round blended its seams after it",
      "file": "land-wallet-wide-depth.png",
      "sha256": "f35f4ba127e0ba4bbe0ca9f5941bd8038744104aa4410f56da1d8d8ba18bfc63",
      "source": "blue.png"
@@ -307,11 +456,11 @@
     "from": "Sam's listing photos, ~/Downloads/amazon listing/image listing/lifestyle/17 promax/"
    },
    "accessory": {
-    "shade": "roaring-red-07",
-    "hex": "#d20000",
+    "shade": "go-green-09",
+    "hex": "#96a880",
     "finish": "metallic",
     "render": "scripts/room/render-products.py, Blender 5.2 Cycles on Metal",
-    "spec": "work/acc-lenskin.json",
+    "spec": "work/acc-lenskin-go-green-09.json",
     "options": [
      {
       "option": 0,
@@ -364,13 +513,42 @@
       "dE2000": 0.0
      }
     ],
-    "note": "the masters carry option 0 (the first candidate) until Sam picks; out/lenskin-options/ holds each candidate's square and crops"
+    "pick": {
+     "option": 3,
+     "shade": "go-green-09",
+     "by": "Sam 2026-10-20 (sheet-v2)",
+     "plate_px": {
+      "square": 80247,
+      "square_frac": 0.0128,
+      "portrait_frac": 0.0228,
+      "wide_frac": 0.008
+     },
+     "room_ts": "roaring-red-07"
+    },
+    "note": "the masters carry option 3, its plate and sheen set inside the plateau (lenskinpick); ROOM_PRODUCTS takes its shade in the integration. out/lenskin-options/ holds each candidate's square and crops as sheet-v2 showed them"
    },
-   "approval": "pending the redo",
-   "fixes": [
-    "the colour against the case (redo)",
-    "the Lenskin's sheen",
-    "darken the text areas"
+   "approval": "Sam 2026-10-20 (sheet-v2), with the seams to be blended, Lenskin option 3 (Sage)",
+   "reviews": [
+    {
+     "round": 1,
+     "date": "2026-10-20",
+     "by": "Sam",
+     "sheet": "sheet.jpg",
+     "verdict": "reviewed, fixes asked",
+     "fixes": [
+      "the colour against the case (redo)",
+      "the Lenskin's sheen",
+      "darken the text areas"
+     ]
+    },
+    {
+     "round": 2,
+     "date": "2026-10-20",
+     "by": "Sam",
+     "sheet": "sheet-v2.jpg",
+     "verdict": "approved, with the seams to be blended",
+     "lenskin": "option 3, go-green-09 (Sage)"
+    }
    ],
    "classes": {
     "square": {
@@ -404,10 +582,16 @@
        "round": 2,
        "mask": "work/retouch-lenskin-mask.png",
        "note": "the old lime wall's line along the case's top edge, filled from its neighbours (cv2.inpaint, Telea, 4 px)"
+      },
+      {
+       "stage": "lenskinpick",
+       "local": true,
+       "round": 3,
+       "note": "lenskin-options/land-lenskin-3-square.png, which differs from the retouched square inside the plateau only"
       }
      ],
      "file": "land-lenskin-square.png",
-     "sha256": "a9c162f21a5b2702b1d78b4ba641e78966ea4a985cb42c7e3f81a6f7886a7fde",
+     "sha256": "8d21cc128d57474e48a27c17165626d0fb5772647d2380992179ee2efa99a50b",
      "source": "green.png"
     },
     "portrait": {
@@ -421,7 +605,7 @@
       {
        "stage": "burn",
        "local": true,
-       "round": 2,
+       "round": 3,
        "stops": 2.6,
        "ru": 1.5,
        "rv": 0.7,
@@ -429,7 +613,7 @@
       }
      ],
      "file": "land-lenskin-portrait.png",
-     "sha256": "1e313d50e9d715e2c369cf3fc528d98e837715115e209012d7ae6a09c4f6e5b8",
+     "sha256": "a1e41a2f069600ae482f77fa8c4c108129a73037484477b48f5e431316f45e9c",
      "source": "green.png"
     },
     "wide": {
@@ -459,9 +643,59 @@
        "note": "attempt 2"
       },
       {
+       "stage": "seams",
+       "local": true,
+       "round": 3,
+       "pad": {
+        "ramp": 128,
+        "wander": 36,
+        "period": 90,
+        "reach": 320,
+        "path_sigma": 40,
+        "left": {
+         "ramp_px": 128,
+         "centre_px_from_edge": [
+          68.0,
+          215.1
+         ],
+         "photo_weight_at_edge": 0.0,
+         "own_step_max": 0.092
+        },
+        "right": {
+         "ramp_px": 128,
+         "centre_px_from_edge": [
+          68.0,
+          194.6
+         ],
+         "photo_weight_at_edge": 0.0,
+         "own_step_max": 0.041
+        },
+        "registered": "265 of 396 matches"
+       },
+       "darken": {
+        "side": 128,
+        "top": 240,
+        "wander_side": 40,
+        "wander_top": 56,
+        "period_side": 90,
+        "period_top": 120,
+        "lag": 0.5,
+        "low": 48,
+        "side_ramp_px": 128,
+        "top_ramp_px": 240,
+        "weight_at_mask_edge": 0.0,
+        "own_step_max_x": 0.562,
+        "own_step_max_y": 0.435,
+        "top_y": 1050,
+        "side_x": 948,
+        "registered": "323 of 395 matches"
+       },
+       "note": "both calls registered again and blended by feathered weights along wandering lines, in OKLab (SEAMS in lands.py); work/steps.json measures the old seams"
+      },
+      {
        "stage": "burn",
        "local": true,
-       "round": 2,
+       "round": 3,
        "stops": 1.1,
        "ru": 0.8,
        "rv": 0.65,
@@ -469,7 +703,7 @@
       }
      ],
      "file": "land-lenskin-wide.png",
-     "sha256": "dde289f7a830e5e32a344d589f83371b55c41e1e8ac3e1dbd5608c88559bda9e",
+     "sha256": "d5d4774f447bd1a45120ffeebd83708a57b87aa5ec494db875635a160cbaa009",
      "source": "green.png"
     },
     "portrait-depth": {
@@ -486,6 +720,7 @@
        "note": ""
       }
      ],
+     "made_from": "the round-2 crop (work/v2/land-lenskin-portrait.png); the Sage plate set after it (2.3 percent of the crop)",
      "file": "land-lenskin-portrait-depth.png",
      "sha256": "932889bab3b2cfa20552c923a059ba6c30d7f901b35adcf577376eb8d615d9ea",
      "source": "green.png"
@@ -504,6 +739,7 @@
        "note": ""
       }
      ],
+     "made_from": "the round-2 crop (work/v2/land-lenskin-wide.png); the third round blended its seams after it; the Sage plate set after it (0.8 percent of the crop)",
      "file": "land-lenskin-wide-depth.png",
      "sha256": "e92de2a57c6228bbf8b7b4d570bc74e817ace20d50d8452b35e13c46299a0fd1",
      "source": "green.png"
@@ -525,10 +761,26 @@
     "render": "scripts/room/render-products.py, Blender 5.2 Cycles on Metal",
     "spec": "work/acc-airpods.json"
    },
-   "approval": "Sam 2026-10-20, with fixes",
-   "fixes": [
-    "the AirPods placement and shadow",
-    "darken the text areas"
+   "approval": "Sam 2026-10-20 (sheet-v2), with the seams to be blended",
+   "reviews": [
+    {
+     "round": 1,
+     "date": "2026-10-20",
+     "by": "Sam",
+     "sheet": "sheet.jpg",
+     "verdict": "reviewed, fixes asked",
+     "fixes": [
+      "the AirPods placement and shadow",
+      "darken the text areas"
+     ]
+    },
+    {
+     "round": 2,
+     "date": "2026-10-20",
+     "by": "Sam",
+     "sheet": "sheet-v2.jpg",
+     "verdict": "approved, with the seams to be blended"
+    }
    ],
    "classes": {
     "square": {
@@ -606,7 +858,7 @@
       {
        "stage": "burn",
        "local": true,
-       "round": 2,
+       "round": 3,
        "stops": 0.6,
        "ru": 1.5,
        "rv": 0.62,
@@ -644,17 +896,67 @@
        "note": "attempt 1"
       },
       {
+       "stage": "seams",
+       "local": true,
+       "round": 3,
+       "pad": {
+        "ramp": 128,
+        "wander": 36,
+        "period": 90,
+        "reach": 320,
+        "path_sigma": 40,
+        "left": {
+         "ramp_px": 128,
+         "centre_px_from_edge": [
+          68.0,
+          218.1
+         ],
+         "photo_weight_at_edge": 0.0,
+         "own_step_max": 0.165
+        },
+        "right": {
+         "ramp_px": 128,
+         "centre_px_from_edge": [
+          68.0,
+          228.4
+         ],
+         "photo_weight_at_edge": 0.0,
+         "own_step_max": 0.046
+        },
+        "registered": "320 of 515 matches"
+       },
+       "darken": {
+        "side": 128,
+        "top": 240,
+        "wander_side": 40,
+        "wander_top": 56,
+        "period_side": 90,
+        "period_top": 120,
+        "lag": 0.5,
+        "low": 48,
+        "side_ramp_px": 128,
+        "top_ramp_px": 240,
+        "weight_at_mask_edge": 0.0,
+        "own_step_max_x": 0.674,
+        "own_step_max_y": 0.331,
+        "top_y": 1050,
+        "side_x": 948,
+        "registered": "477 of 590 matches"
+       },
+       "note": "both calls registered again and blended by feathered weights along wandering lines, in OKLab (SEAMS in lands.py); work/steps.json measures the old seams"
+      },
+      {
        "stage": "burn",
        "local": true,
-       "round": 2,
-       "stops": 0.65,
+       "round": 3,
+       "stops": 1.2,
        "ru": 0.8,
        "rv": 0.65,
        "hl": 0.6
       }
      ],
      "file": "land-airpods-wide.png",
-     "sha256": "cacc5c0a7ad76f1aa67091ef6cb37d5afb54854f05d88871997dbdf28950f79e",
+     "sha256": "64fabd4a9a673a3b8beef3b4069453ac261563d88b71b120915b2a62e107ab86",
      "source": "violet.png"
     },
     "portrait-depth": {
@@ -671,6 +973,7 @@
        "note": ""
       }
      ],
+     "made_from": "the round-2 crop (work/v2/land-airpods-portrait.png)",
      "file": "land-airpods-portrait-depth.png",
      "sha256": "05464b61ec2cf7f5354aa00b2a829065ea1a25666ebf056bbef0b5aa2f7ec59c",
      "source": "violet.png"
@@ -689,6 +992,7 @@
        "note": ""
       }
      ],
+     "made_from": "the round-2 crop (work/v2/land-airpods-wide.png); the third round blended its seams after it",
      "file": "land-airpods-wide-depth.png",
      "sha256": "26bdb7dd2655c33d187789e5182294cdbe9fe6e09f14d3c53028f9bf2b77ed4e",
      "source": "violet.png"

@@ -1,10 +1,10 @@
 # The four lands' pictures, made (evidence for docs/specs/section-4-world.md)
 
-Made 2026-10-20 by `scripts/room/lands.py` (the driver) and `scripts/room/render-products.py` (the accessories in Blender), on the branch `s4/lands-pipeline`. These are **candidates for Sam**, not approved pictures: nothing was encoded into `src/assets/`, nothing is in `ROOM_LANDS`, and nothing ships (spec section 3, "Approval"; CHECKLIST F2). The masters are gitignored in `assets-src/room/lands/`, with their `SHA256SUMS` committed beside the folder's `.gitignore`.
+Made 2026-10-20 by `scripts/room/lands.py` (the driver) and `scripts/room/render-products.py` (the accessories in Blender), on the branch `s4/lands-pipeline`. Sam reviewed the first sheet and asked for fixes (section 8), then approved the second, `sheet-v2.jpg`, with the seams to be blended and the Lenskin in option 3, Sage (section 9). The third round's masters are encoded into `src/assets/room/lands/` by `scripts/room/encode-lands.mjs`; `ROOM_LANDS` is the integration's to write (spec section 3, "Approval"; CHECKLIST F2). The masters are gitignored in `assets-src/room/lands/`, with their `SHA256SUMS` committed beside the folder's `.gitignore`.
 
 **Credits: 45.0 of the 100 this builder was given** (the account read 1,800 before the first call and 1,755 after the last, so no other call was charged to it meanwhile). Every call is in section 4 with its job id.
 
-**The second round** (Sam's review of the first sheet, 2026-10-20) is section 8: **28.0 of its 40 credits** (the account read 1,755 before and 1,727 after). Sections 1 to 7 describe the first round; where section 8 differs, it holds. Lands 1, 2 and 4 are "Sam 2026-10-20, with fixes" in `src/data/room-lands.json`; land 3 is pending the Lenskin redo.
+**The second round** (Sam's review of the first sheet, 2026-10-20) is section 8: **28.0 of its 40 credits** (the account read 1,755 before and 1,727 after). **The third** (his approval of sheet-v2, the same day) is section 9, and made no call: 73.0 credits in all. Sections 1 to 7 describe the first round; where section 8 or 9 differs, the later holds. In `src/data/room-lands.json` every land records round 1 as reviewed on 2026-10-20 with fixes asked, and sheet-v2 as approved by Sam on 2026-10-20 with the seams to be blended; land 3 adds Lenskin option 3 (Sage).
 
 ## 1. The result
 
@@ -244,4 +244,107 @@ python3 -I scripts/room/lands.py render    --root <run> --land lenskin --samples
 python3 -I scripts/room/lands.py lenskin   --root <run> --land lenskin
 python3 -I scripts/room/lands.py depth     --root <run>                                # 1.5 credits per crop
 python3 -I scripts/room/lands.py contrast|check|sheet2|sums|record --root <run>
+```
+
+## 9. The third round (Sam, 2026-10-20)
+
+Sam on sheet-v2: all four lands approved, with the wide crops' seams blended out, and the Lenskin in option 3, Sage (`go-green-09`, #96a880). **No call and no credits**: every wide is made again from the outpaint and the darken refill already paid for. `room-lands.json` records both reviews per land (`reviews`) and the approval: "Sam 2026-10-20 (sheet-v2), with the seams to be blended", and for land 3 ", Lenskin option 3 (Sage)". The second round's masters, as sheet-v2 showed them, are kept in `work/v2/`.
+
+**9.1 The Lenskin in Sage (`lenskinpick`).** Land 3's square is `lenskin-options/land-lenskin-3-square.png`, the plate rendered with its sheen and rim and graded to its hex (dE2000 0.00 over the photo's white, by `check` on the plate's uncovered body). It differs from the retouched square in 80,247 px, every one inside the plateau: 1.3 percent of the square, 2.3 percent of the portrait, 0.8 percent of the wide (the portrait figure is above the 1 percent the round-2 note gave). Its depth maps were made on option 0 and stand: the plate is the same flat plate at the case's depth. `ROOM_PRODUCTS` still names Crimson (`roaring-red-07`); `lands.py` takes the pick from `LENSKIN_PICK` and says so on every run, and `tests/unit/room-lands.test.ts` holds a todo that turns into a test once room.ts names Sage.
+
+**9.2 The seams (`seams`).** Round 2 left two kinds, both straight:
+- **The darken refill's edge.** Its take weight was the mask eroded 24 px and blurred by 24, then cut by the mask itself, so it fell from about 0.16 to 0 in one pixel: x 948 down every wide, and y 1050 across lands 3 and 4.
+- **The outpaint's pad meeting the photo.** A straight 48 px linear band at the square's edges, x 972 to 1020 and 3424 to 3472.
+
+The third round makes each wide again (`seamed_wide`), with the weights in `SEAMS`:
+- **The registrations.** The outpaint is registered again on the square it was sent (`work/square1-<id>.png`), the refill on the canvas it was sent (`work/wide169v2-<id>.png`), each by SIFT and a RANSAC similarity with OpenCV's generator seeded, so a re-run gives the same bytes (checked: two runs, identical sums).
+- **The pad into the photo.** Inside the square only, a smootherstep (no slope and no bend at either end) over 128 px, its weight on the photo 0 at the square's edge. Its centre follows the cheapest path down the rows (the columns where the outpaint's own copy of the square differs least from the photo, at most 320 px in), smoothed over 40 rows and wandering by up to 72 px over about 90 rows, so no seam is straight. The outpaint redrew the square near its edges (25 to 53 code values off on lands 1 and 2), so where it differs most the path goes deeper and keeps the outpaint's own continuation: land 4's lower right now has its balustrade meeting her jacket, not the photo's strip of leaves cut by a line. The ramp ends 8 px short of the product in every row (checked in code).
+- **The refill into the pad.** Inside the mask only, from its edges (the frame's own edges are no seam): first a relight, the pad's linear light times the refill's luminance over its own (both low-passed by 48 px), raised to a smootherstep weight, so the pad's texture darkens as shade would; then, half a ramp behind, the refill itself mixed in by a second smootherstep. 128 px each at the side, 240 at the top (the check asked 200 or more), each edge wandering (up to 80 px at the side over about 90 rows, 112 at the top over about 120 columns). Land 1's elm now keeps more of its trunk, which turns into shade; land 2's sleeve keeps its own outline; land 3's tree shade has a soft, uneven edge.
+- **In OKLab.** Every mix is in OKLab (Björn Ottosson's matrices), as the spec's W13 and E-S4-colour ask of shades that meet; the relight is in linear light.
+- **The weights at the old edges.** Both are 0 at the mask's edge and at the square's edge (recorded per land in `room-lands.json`, `seams`).
+- **The crops.** Then both crops and their burn as `final` does, the burn tuned again: lands 1 and 4's wides take 0.7 and 1.2 stops (were 0.5 and 0.65); the rest are as before.
+
+**9.3 The steps across the old seams (`steps`, `work/steps.json`).** For each old seam: the mean step (code values, the three channels averaged) from each column to the next over the seam's own rows (from each row to the next over its columns, for the top edge); the largest of the three pairs across the seam; and the image's own steps there, the median and the 90th percentile of the same profile over the 256 nearest columns (rows) either side, with the seam's rank among them. "The blend's own step" is the largest step the third round's weights add anywhere along that seam: each weight's change from one column (row) to the next times how far apart the two pictures it mixes are there, averaged as the steps are.
+
+| Land | Old seam | Round 2: step / median (rank) | Now: step / median / p90 (rank) | The blend's own step, largest |
+|---|---|---|---|---|
+| 1 | darken edge, x 948 | 17.07 / 11.84 (99) | 16.42 / 12.13 / 14.74 (100) | 0.83 |
+| 1 | pad band, x 972 | 14.51 / 12.40 (74) | 14.37 / 13.03 / 14.97 (83) | 0.60 |
+| 1 | pad band, x 1020 | 17.01 / 14.00 (72) | 9.99 / 13.43 / 15.06 (13) | 0.60 |
+| 1 | pad band, x 3424 | 2.65 / 2.42 (64) | 2.18 / 2.21 / 2.72 (45) | 0.28 |
+| 1 | pad band, x 3472 | 2.93 / 2.21 (94) | 2.93 / 2.12 / 2.38 (100) | 0.28 |
+| 2 | darken edge, x 948 | 7.36 / 1.81 (100) | 2.33 / 2.14 / 2.64 (72) | 0.60 |
+| 2 | pad band, x 972 | 2.43 / 1.95 (72) | 2.43 / 2.20 / 2.70 (70) | 0.24 |
+| 2 | pad band, x 1020 | 2.68 / 2.36 (81) | 2.74 / 2.33 / 2.74 (90) | 0.24 |
+| 2 | pad band, x 3424 | 2.68 / 2.65 (56) | 2.35 / 2.50 / 3.05 (32) | 0.37 |
+| 2 | pad band, x 3472 | 3.69 / 2.51 (100) | 3.39 / 2.32 / 2.89 (98) | 0.37 |
+| 3 | darken edge, x 948 | 4.94 / 3.78 (74) | 4.65 / 4.52 / 5.11 (57) | 0.56 |
+| 3 | darken top, y 1050 | 4.99 / 1.07 (100) | 1.27 / 1.14 / 1.41 (70) | 0.44 |
+| 3 | pad band, x 972 | 3.79 / 2.61 (97) | 3.79 / 3.13 / 3.52 (98) | 0.09 |
+| 3 | pad band, x 1020 | 2.81 / 2.41 (81) | 3.41 / 3.05 / 3.53 (82) | 0.09 |
+| 3 | pad band, x 3424 | 1.40 / 1.35 (55) | 1.36 / 1.37 / 1.80 (47) | 0.04 |
+| 3 | pad band, x 3472 | 1.16 / 1.21 (41) | 1.16 / 1.27 / 1.62 (38) | 0.04 |
+| 4 | darken edge, x 948 | 4.92 / 1.09 (100) | 1.05 / 0.91 / 1.01 (93) | 0.67 |
+| 4 | darken top, y 1050 | 2.43 / 1.22 (100) | 1.36 / 1.25 / 1.45 (75) | 0.33 |
+| 4 | pad band, x 972 | 1.12 / 1.20 (38) | 1.04 / 1.05 / 1.21 (49) | 0.17 |
+| 4 | pad band, x 1020 | 1.69 / 1.34 (85) | 1.18 / 1.09 / 1.40 (71) | 0.17 |
+| 4 | pad band, x 3424 | 2.05 / 1.23 (90) | 1.82 / 1.17 / 1.87 (88) | 0.05 |
+| 4 | pad band, x 3472 | 1.17 / 1.18 (49) | 1.14 / 1.12 / 1.87 (54) | 0.05 |
+
+- **The blend.** Its own step is under the image's own median step at every one of the 22 seams: 0.04 to 0.83 code values, against medians of 0.91 to 13.4.
+- **The hard steps are gone.** The four that stood out at rank 100 with nothing in the picture to explain them now rank as their neighbours do: land 2 at x 948 (7.36, 4 times its median, now 2.33), land 3 at y 1050 (4.99, now 1.27), and land 4 at x 948 (4.92, now 1.05) and at y 1050 (2.43, now 1.36).
+- **What still ranks high is the picture itself, where no weight changes.**
+  - Land 1, x 944 to 966: the outpaint's sharpest bark, between the refill's ramp and the pad's. The profile is flat across the old seam (15.5 to 16.4).
+  - Lands 1 and 2, x 3472, and land 3, x 972: the same two columns of the outpaint's own picture in both rounds, with an equal step in both, so nothing composited is there. On land 2 it is an arcade pillar's upright edge.
+  - Land 4, x 948: within 0.14 of its median, on calm water.
+- **The frames** `after-a.jpg` and `after-b.jpg` (this round's scratch folder, `wave2a/lands-pipeline/probe/`: the round-2 wide over the new, at 1:1, on each worst seam) show no line on any of them.
+
+**9.4 Checks.**
+- **The case is untouched** in every master: 0.0 mean difference on all four lands (largest single difference 0, 1, 0 and 0 code values; land 3's plateau is the Lenskin's footprint).
+- **Colours over the photo's white.**
+  - Desert dE 2.23 and the AirPods case's Sage 2.57, as in round 2 (check items 5 and 6, minor, not part of this round).
+  - The Lenskin's Sage 0.00.
+- **Contrast**, Pearl Whisper over each crop's text area, median and lightest 5 percent, by `contrast.mjs`'s method.
+  - The portraits are as round 2: 5.87 / 3.03, 8.04 / 2.86, 4.40 / 2.16, 18.01 / 7.79.
+  - The wides now: 15.44 / 3.01, 10.78 / 2.33, 9.37 / 3.03, 12.73 / 3.03 (round 2: 16.22 / 3.09, 11.35 / 2.34, 9.82 / 3.03, 11.87 / 3.00).
+  - Every median passes 4.5:1 but land 3's portrait (4.40). The lightest 5 percent stays under 3:1 on land 2's two crops and land 3's portrait, as in round 2.
+
+**9.5 Depth (`depthseams`; no call).**
+- **Land 1.** Its wide now keeps the elm's trunk up to about 200 px further left than the depth map made in round 2, which had the trunk end at x 948 and the far park beyond. So inside the mask, the share of the picture the seams took from the pad takes each row's depth just right of the edge (the median over x 960 to 1000, the trunk's, which fills every row there). That is 6.0 percent of the map.
+- **Lands 2, 3 and 4.** Their wide depth maps stay as made. The same carry drew blocks with straight tops where a silhouette crosses those columns. Their round-2 maps already hold the jacket (land 3), the sleeve within about 20 px of its edge in the picture (land 2) and the water (land 4).
+- **The portraits' maps** are the round-2 ones, and every portrait is unchanged byte for byte, but land 3's (the plate).
+- **If Sam's displaced-grid frames show a tear,** a fresh depth call per wide is 1.5 credits (6 for the four).
+
+**9.6 The encoded files (`scripts/room/encode-lands.mjs`, sharp 0.35.5 on libvips 8.18.7).**
+- **The input.** Each master is read only after its SHA-256 matches `room-lands.json`'s.
+- **The sizes.** `land-<id>-portrait` 720 x 1280, `land-<id>-wide` 1920 x 1200, and the depth maps at a quarter of each (180 x 320 and 480 x 300, grey; the AVIF in three channels with flat chroma, as sharp writes no 4:0:0).
+- **The encoders.** AVIF from q60 (4:4:4, effort 9) and WebP from q80 (effort 6), each lowered by 1 until it fits its line.
+- **What is written.** No ICC profile and no metadata. `encoded.json` beside the files records each one's bytes, quality, size and master. KB below are 1024 B, as stored.
+
+| Land | Portrait AVIF | Portrait WebP | Wide AVIF | Wide WebP | Depth AVIF, portrait / wide | Depth WebP, portrait / wide |
+|---|---|---|---|---|---|---|
+| 1 case | 65.5 (q60) | 83.2 (q80) | 107.0 (**q48**) | 174.9 (**q64**) | 2.0 / 3.0 | 1.9 / 2.8 |
+| 2 wallet | 72.8 (q60) | 90.6 (q80) | 109.6 (q57) | 175.1 (q80) | 2.2 / 2.9 | 2.2 / 2.7 |
+| 3 lenskin | 42.7 (q60) | 52.7 (q80) | 105.4 (q58) | 148.8 (q80) | 1.7 / 3.0 | 1.5 / 2.9 |
+| 4 airpods | 50.1 (q60) | 60.9 (q80) | 88.3 (q60) | 115.2 (q80) | 2.1 / 3.1 | 2.0 / 2.9 |
+| line | 80 | 128 | 110 | 176 | 12 | 20 |
+
+- **Land 1's wide** is the one file that needed to go under the brief's range. The sunlit bark and paving cost the most:
+  - At q50 it was 115 KB in 4:2:0 and more in 4:4:4, so the AVIF fits its 110 KB at q48.
+  - The WebP fits its 176 KB at q64 (q80 was 237 KB).
+  - Decoded, both differ from the master by 2.9 code values on average; the bark is a little softer at 1:1.
+- **The rest** fit at q57 to q60 and q80.
+- **The final sheet**, `out/sheet-final.jpg` in the run folder, is made from the files decoded back (`lands.py sheetfinal`).
+
+**9.7 The masters, kept twice.**
+- **The sums.** `assets-src/room/lands/SHA256SUMS` (76 lines: the 20 masters, the 15 candidates, round 1's 20 in `v1/`, round 2's 20 in `work/v2/`, and `work/SHA256SUMS`) and `work/SHA256SUMS` (339 files: every mask and generator output `room-lands.json` names, the ledger, the picks) both check OK.
+- **The main checkout.** The folder is copied with `rsync -a` (nothing deleted) into the main checkout's `assets-src/room/lands/`, and both sums check OK there.
+
+```
+python3 -I scripts/room/lands.py lenskinpick --root <run> --land lenskin
+python3 -I scripts/room/lands.py seams       --root <run>
+python3 -I scripts/room/lands.py depthseams  --root <run>
+python3 -I scripts/room/lands.py steps|check|contrast|sums|record --root <run>
+node scripts/room/encode-lands.mjs --decoded <run>/out/decoded
+python3 -I scripts/room/lands.py sheetfinal  --root <run>
 ```
