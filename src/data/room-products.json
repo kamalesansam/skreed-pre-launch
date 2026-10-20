@@ -1,6 +1,6 @@
 {
  "wallet": {
-  "path": "scripts/room/models/wallet.a15a8ebb.glb",
+  "url": "/models/wallet.a15a8ebb.glb",
   "sha256": "a15a8ebb2864a8b5b1a05cf3f9b84a2d6a06a877d39376459be7fb7503f79caf",
   "bytes": 32496,
   "tris": 3925,
@@ -18,7 +18,7 @@
   "source": "Sam's wallet FBX (2026-10-16), cleaned by scripts/room/products.py"
  },
  "airpods": {
-  "path": "scripts/room/models/airpods.6fe7a22f.glb",
+  "url": "/models/airpods.6fe7a22f.glb",
   "sha256": "6fe7a22fd392106f49719909c95e065f10956f48105d2ac36b63149b48dae1c2",
   "bytes": 42796,
   "tris": 5067,
@@ -35,7 +35,7 @@
   "source": "Sam's airpods FBX (2026-10-16), cleaned by scripts/room/products.py"
  },
  "lenskin": {
-  "path": "scripts/room/models/lenskin.3831acd1.glb",
+  "url": "/models/lenskin.3831acd1.glb",
   "sha256": "3831acd1ffd8f45e2e04cf3d33e8987305e2a9f0e90fa6159f174c020d7fd21b",
   "bytes": 14760,
   "tris": 1400,

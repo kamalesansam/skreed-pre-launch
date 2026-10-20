@@ -33,7 +33,9 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 BLENDER = '/Applications/Blender.app/Contents/MacOS/Blender'
 RENDER = os.path.join(REPO, 'scripts/room/render-products.py')
 SHADES = os.path.join(REPO, 'docs/data/shades-240.json')
-MODELS = os.path.join(REPO, 'scripts/room/models')
+# the shipped GLBs, read where the site serves them; they move to scripts/room/models in the integration that deletes
+# universe.ts (the last reader of their public url)
+MODELS = os.path.join(REPO, 'public/models')
 SIDE = 2500                       # the listing photos are 2500 x 2500
 PORTRAIT_W = 1406                 # 9:16 of the square's height
 WIDE16x9, WIDE16x10 = 4444, 4000  # at the square's height
