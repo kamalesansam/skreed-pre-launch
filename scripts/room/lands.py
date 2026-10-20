@@ -22,11 +22,14 @@
 #   check      the case diffed against the base in every master, each accessory's colour read back against its hex
 #   sheet      the contact sheet; sums  the masters' SHA256SUMS into assets-src/room/lands/; ledger  the call table
 # The second round (Sam's review of 2026-10-20) adds retouch, rebg, square2, wide2, darken, final, lenskin, contrast,
-# sheet2 and record: see "the second round" below, before the stage table. The shade ids are read from ROOM_PRODUCTS.
+# sheet2 and record: see "the second round" below, before the stage table. The third (his approval of sheet-v2, the same
+# day) adds lenskinpick, seams, depthseams, steps and sheetfinal, and makes no call: see "the third round". The shade ids are read
+# from ROOM_PRODUCTS, but for the Lenskin's, which is Sam's pick (LENSKIN_PICK) until room.ts names it.
 # Every Higgsfield call is costed first ('higgsfield generate cost') and refused when the ledger plus its cost would pass
 # --cap; each one lands in work/ledger.jsonl with its job id, model, credits, prompt, seed and inputs (a failed job at 0
 # credits). What each step measured and every call made for the first candidates: docs/specs/evidence/
-# section-4-world-lands.md. Nothing here encodes into src/assets: Sam approves the pictures first (CHECKLIST F2).
+# section-4-world-lands.md. Nothing here encodes into src/assets (CHECKLIST F2): scripts/room/encode-lands.mjs does, from
+# the masters Sam approved.
 import argparse, glob, hashlib, json, math, os, re, shutil, subprocess, sys, time, urllib.request
 import numpy as np, cv2
 from PIL import Image, ImageDraw, ImageFont
@@ -66,6 +69,9 @@ LANDS = {
         # the whole left pad, not its lower part: the first call (masked from 0.42 down) cut the elm's trunk off in a
         # straight line over a lawn; here the trunk ends inside the pad and the park in shade shows beyond it
         'darken_top': 0.0,
+        # the elm's trunk runs the full height where the pad meets the photo, so the third round's seams keep more of it
+        # and its depth is carried across with it (depthseams)
+        'depth_carry': True,
         'darken': ("Fill only the masked area at the left: the great elm's trunk ends just inside the right side of the "
                    "masked area, its shaded left edge, and beyond it the Mall in Central Park in the deep shade of the elms: "
                    "dark shaded lawn and the edge of the path, darkest and quietest toward the lower left, soft and out of "
@@ -229,6 +235,9 @@ LENSKIN_OPTIONS = [
     ('go-green-09', 'a lighter green: Sage, from the case\'s own family, greyed and far lighter: an analogous, tone-on-tone pairing (and the AirPods case\'s shade in land 4)'),
     ('stormy-grey-23', 'a dark neutral: Graphite, gunmetal; a green darker than the case would vanish on it, so the dark option is a neutral, the quietest of the four'),
 ]
+# Sam's pick on sheet-v2 (2026-10-20): option 3, Sage. The masters take that option's plate; ROOM_PRODUCTS' Lenskin shade
+# follows in the integration (room.ts is not this script's to write), and until it does bind_products says so
+LENSKIN_PICK = 3
 
 def room_products():
     """ROOM_PRODUCTS' shade id, hex and finish per product, read from src/config/room.ts, so the shade a land renders is
@@ -271,10 +280,14 @@ def shade(sid):
     raise SystemExit(f'no shade {sid}')
 def hex_rgb(h): return np.array([int(h[i:i + 2], 16) for i in (1, 3, 5)], np.float64)
 def bind_products():
-    """each land's accessory takes its shade and finish from ROOM_PRODUCTS (never typed here), the hex checked by id"""
+    """each land's accessory takes its shade and finish from ROOM_PRODUCTS (never typed here), the hex checked by id; the
+    Lenskin's shade is Sam's pick among LENSKIN_OPTIONS, and room.ts is told apart from it until it names the same"""
     for lid, rp in room_products().items():
         if shade(rp['shade'])['hex'].lower() != rp['hex']: raise SystemExit(f"{lid}: room.ts has {rp['shade']} as {rp['hex']}, shades-240 as {shade(rp['shade'])['hex']}")
         if 'accessory' in LANDS[lid]: LANDS[lid]['accessory'].update(shade=rp['shade'], finish=rp['finish'])
+    sid = LENSKIN_OPTIONS[LENSKIN_PICK][0]; was = LANDS['lenskin']['accessory']['shade']
+    LANDS['lenskin']['accessory'].update(shade=sid, room_ts=was)
+    if was != sid: print(f"lenskin: ROOM_PRODUCTS still names {was}; Sam picked option {LENSKIN_PICK}, {sid} (the integration sets room.ts)")
 def lab(srgb255):
     x = to_lin(np.asarray(srgb255, np.float64)) @ np.array([[0.4124, 0.2126, 0.0193], [0.3576, 0.7152, 0.1192], [0.1805, 0.0722, 0.9505]])
     x = x / np.array([0.95047, 1.0, 1.08883]); f = np.where(x > 216 / 24389, np.cbrt(x), (24389 / 27 * x + 16) / 116)
@@ -838,6 +851,9 @@ def st_check(root, lid, L, args):
     base = load_rgb(P(root, 'src', L['base'])).astype(np.float64)
     accp = P(root, 'work', f'accalpha-{lid}.png')
     acc = (np.asarray(Image.open(accp).convert('L')) > 5) if os.path.exists(accp) else np.zeros(base.shape[:2], bool)
+    # the Lenskin's footprint is its plateau (dilated 3 px, where lenskin set each option's plate and its gap shade): the
+    # first candidate's alpha alone leaves out the gaps the redo shades
+    if lid == 'lenskin': acc |= dilate((poly_mask(L['plateau'], base.shape[:2]) > 0.5).astype(np.uint8), 3) > 0
     region = case_region(L, np.asarray(Image.open(P(root, 'work', f'matte-{lid}.png')).convert('L')).astype(np.float64) / 255.0) > 0.5
     keep = region & ~(dilate(acc.astype(np.uint8), 3) > 0)
     rep = {'land': lid, 'case_region_px': int(keep.sum())}
@@ -864,8 +880,15 @@ def st_check(root, lid, L, args):
         rep[f'{cls}_case_mad'] = round(float(np.abs(m[k] - ref[k]).mean()), 4)
         rep[f'{cls}_case_max'] = int(np.abs(m[k] - ref[k]).max())
     if 'accessory' in L:
-        rgb, a, obj, shadow, nrgb, body = accessory_layers(root, lid, L)
+        # the Lenskin's picked option is read through its own render (each option is its own render of the plate)
+        stem = f"acc-lenskin-{L['accessory']['shade']}" if lid == 'lenskin' and LENSKIN_PICK else None
+        rgb, a, obj, shadow, nrgb, body = accessory_layers(root, lid, L, stem)
         sel = (body > 0.9) & (obj > 0.99)
+        if stem:
+            # the plate as lenskin graded it: its body where nothing covers it (the bezels, his fingers) and no contact
+            # shade falls, at the grade on record for the option
+            g = next(o['grade'] for o in json.load(open(P(root, 'work', 'lenskin-options.json'))) if o['option'] == LENSKIN_PICK)
+            _, sel, _ = composite_lenskin(root, L, stem, base.astype(np.uint8), g)
         sel = cv2.erode(sel.astype(np.uint8), np.ones((5, 5), np.uint8)) > 0
         alb = np.median(to_lin(rgb[sel] * 255.0) / np.maximum(to_lin(nrgb[sel] * 255.0), 1e-6), axis=0)
         alb_srgb = u8(to_srgb(alb)).astype(np.float64)
@@ -902,17 +925,24 @@ def st_sheet(root, args):
 
 def st_sums(root, args):
     """the masters copied beside their sums in assets-src/room/lands/ (gitignored), with the Lenskin's candidates in
-    lenskin-options/ and the first round's masters in v1/ (copied there before this round began); the run's work/ and
-    out/ are copied whole beside them, so the ledger, the masks and the generator outputs outlive the scratch folder"""
+    lenskin-options/, the first round's masters in v1/ (copied there before the second round began) and the second's in
+    work/v2/ (kept by the third); the run's work/ and out/ are copied whole beside them, so the ledger, the masks
+    and the generator outputs outlive the scratch folder. work/ carries its own SHA256SUMS (every file in it, which
+    room-lands.json's masks and outputs name), and the folder's SHA256SUMS lists that file too, so one committed file
+    pins all of them: `shasum -a 256 -c SHA256SUMS` in the folder, then the same in work/"""
     dst = os.path.join(REPO, 'assets-src/room/lands'); os.makedirs(dst, exist_ok=True)
     for p in sorted(glob.glob(P(root, 'out', 'land-*.png'))): shutil.copyfile(p, os.path.join(dst, os.path.basename(p)))
     if os.path.isdir(P(root, 'out', 'lenskin-options')): shutil.copytree(P(root, 'out', 'lenskin-options'), os.path.join(dst, 'lenskin-options'), dirs_exist_ok=True)
     for d in ('work', 'out'): shutil.copytree(P(root, d), os.path.join(dst, d), dirs_exist_ok=True)
+    wd = os.path.join(dst, 'work')
+    wf = sorted(os.path.relpath(os.path.join(a, f), wd) for a, _, fs in os.walk(wd) for f in fs if not (a == wd and f == 'SHA256SUMS'))
+    open(os.path.join(wd, 'SHA256SUMS'), 'w').write(''.join(f'{sha256(os.path.join(wd, f))}  {f}\n' for f in wf))
     files = sorted(os.path.basename(p) for p in glob.glob(os.path.join(dst, 'land-*.png')))
     files += sorted('lenskin-options/' + os.path.basename(p) for p in glob.glob(os.path.join(dst, 'lenskin-options', 'land-*.png')))
-    files += sorted('v1/' + os.path.basename(p) for p in glob.glob(os.path.join(dst, 'v1', 'land-*.png')))
+    for v in ('v1', 'work/v2'): files += sorted(f'{v}/' + os.path.basename(p) for p in glob.glob(os.path.join(dst, v, 'land-*.png')))
+    files.append('work/SHA256SUMS')
     lines = [f'{sha256(os.path.join(dst, f))}  {f}' for f in files]
-    open(os.path.join(dst, 'SHA256SUMS'), 'w').write('\n'.join(lines) + '\n'); print('\n'.join(lines))
+    open(os.path.join(dst, 'SHA256SUMS'), 'w').write('\n'.join(lines) + '\n'); print('\n'.join(lines)); print(f'work/SHA256SUMS: {len(wf)} files')
 
 def st_ledger(root, args):
     print('| # | stage | land | model | job id | credits | note |\n|---|---|---|---|---|---|---|')
@@ -937,7 +967,7 @@ def st_ledger(root, args):
 #             out/lenskin-options.jpg for Sam to choose from (nothing here picks)
 #   contrast  Pearl Whisper over each crop's text area by scripts/quiz/contrast.mjs's method, this round and the first
 #   sheet2    out/sheet-v2.jpg; record  src/data/room-lands.json and its ledger, from the ledger and the picks
-ROUND = 2
+ROUND = 2   # the round a new call or pick is recorded under (the third round sets 3 below; it makes no call)
 PEARL = (0xF7, 0xF6, 0xF3)
 # where a land's text sits (spec 2: bottom left at the inset, at the quiz's sizes; on a phone the catalog line runs most
 # of the 358 px column): fractions of the frame as shown, x0, x1, y0, y1; the portrait as a 390 x 844 cover-fit shows it
@@ -1123,13 +1153,14 @@ def st_redarken(root, lid, L, args):
     canvas = load_rgb(P(root, 'work', f'wide169v2-{lid}.png'))
     redarken(root, lid, L, args, canvas, P(root, 'work', paid(root, 'darken', lid, args.attempt)['file']))
 
-def finish_crops(root, lid, L, sq, tune=False):
-    """the portrait and the wide from a square, with this round's darkened pad and burn: tuned (final, on the master)
-    or as the master's (the Lenskin's candidates, so each is burnt alike)"""
+def finish_crops(root, lid, L, sq, tune=False, info=None):
+    """the portrait and the wide from a square, with the darkened pad and the burn: tuned (final and seams, on the
+    master) or as the master's (the Lenskin's candidates, so each is burnt alike). The wide is the third round's
+    (seamed_wide: every seam blended); the second round's, with its hard seams, is work/dark169-<id>-<n>.png"""
     pk = pick(root, lid); burn = None if tune else pk.get('burn')
     if not tune and not burn: raise SystemExit(f'{lid}: no burn on record (run final first)')
-    dark = load_rgb(P(root, 'work', f'dark169-{lid}-{pk["darken_attempt"]}.png')).copy()
-    band = 48; dark[:, SQ_X + band:SQ_X + SIDE - band] = sq[:, band:SIDE - band]
+    dark, inf = seamed_wide(root, lid, L, sq)
+    if info is not None: info.update(inf)
     x0 = L['portrait_x']; crops = {'portrait': sq[:, x0:x0 + PORTRAIT_W], 'wide': dark[:, :WIDE16x10]}
     pm = product_mask(root, lid, L)
     pms = {'portrait': pm[:, x0:x0 + PORTRAIT_W], 'wide': np.pad(pm, ((0, 0), (SQ_X, WIDE16x9 - SQ_X - SIDE)))[:, :WIDE16x10]}
@@ -1204,7 +1235,8 @@ def st_lenskin(root, lid, L, args):
     is the shade named; the sheen runs either side of it), set into the retouched square inside the plateau only, and
     cut and burnt as the masters are; then the sheet for Sam"""
     if lid != 'lenskin': return
-    base = load_rgb(P(root, 'src', L['base'])); sq0 = load_rgb(P(root, 'out', f'land-{lid}-square.png'))
+    # the retouched square with the first candidate's plate (the master until the pick; lenskinpick replaced it)
+    base = load_rgb(P(root, 'src', L['base'])); sq0 = load_rgb(P(root, 'work', f'retouch-{lid}.png'))
     R = dilate((poly_mask(L['plateau'], base.shape[:2]) > 0.5).astype(np.uint8), 3) > 0
     od = P(root, 'out', 'lenskin-options'); os.makedirs(od, exist_ok=True)
     white = to_lin(np.array(L['white'], np.float64)); rep = []
@@ -1260,16 +1292,16 @@ def st_contrast(root, args):
     for lid in ORDER:
         for cls in ('portrait', 'wide'):
             row = {'land': lid, 'crop': cls, 'box': text_box((2500, PORTRAIT_W if cls == 'portrait' else WIDE16x10), cls)}
-            for tag, d in (('first', v1), ('now', P(root, 'out'))):
+            for tag, d in (('first', v1), ('second', P(root, 'work', 'v2')), ('now', P(root, 'out'))):
                 p = os.path.join(d, f'land-{lid}-{cls}.png')
                 if os.path.exists(p): row[tag] = pearl_contrast(load_rgb(p), cls)
             row['burn_stops'] = pick(root, lid).get('burn', {}).get(cls, {}).get('stops')
             rows.append(row)
     json.dump(rows, open(P(root, 'work', 'contrast.json'), 'w'), indent=1)
-    print('| Land | Crop | First round, median / worst | Now, median / worst | Burn, stops |\n|---|---|---|---|---|')
+    print('| Land | Crop | First round, median / worst | Second | Now | Burn, stops |\n|---|---|---|---|---|---|')
     for r in rows:
-        f = r.get('first', ('-', '-')); n = r.get('now', ('-', '-'))
-        print(f"| {LANDS[r['land']]['n']} {r['land']} | {r['crop']} | {f[0]} / {f[1]} | {n[0]} / {n[1]} | {r['burn_stops']} |")
+        f = r.get('first', ('-', '-')); s2 = r.get('second', ('-', '-')); n = r.get('now', ('-', '-'))
+        print(f"| {LANDS[r['land']]['n']} {r['land']} | {r['crop']} | {f[0]} / {f[1]} | {s2[0]} / {s2[1]} | {n[0]} / {n[1]} | {r['burn_stops']} |")
 
 def st_sheet2(root, args):
     """the full sheet of this round: per land the square, the portrait (its phone window marked at the edges) and the
@@ -1301,8 +1333,308 @@ def st_sheet2(root, args):
         y += H + gap
     sheet.save(P(root, 'out', 'sheet-v2.jpg'), quality=88); print('sheet ->', P(root, 'out', 'sheet-v2.jpg'), sheet.size)
 
-APPROVAL = {'case': 'Sam 2026-10-20, with fixes', 'wallet': 'Sam 2026-10-20, with fixes', 'airpods': 'Sam 2026-10-20, with fixes',
-            'lenskin': 'pending the redo'}
+# ----------------------------------------------------------------------------------------- the third round (v3)
+# Sam on sheet-v2 (2026-10-20): all four lands approved, with the wide crops' seams blended out, and the Lenskin in
+# option 3, Sage. No call: every wide is made again from the outpaint and the darken refill already paid for.
+#   lenskinpick  out/land-lenskin-square.png <- out/lenskin-options/land-lenskin-<LENSKIN_PICK>-square.png (the plate and
+#                its sheen inside the plateau; nothing outside it differs), the round-2 masters kept in work/v2/ first
+#   seams        each wide again (seamed_wide), where the outpaint's pad meets the photo and where the darken refill meets
+#                the pad, by feathered weights that reach 0 smoothly over 128 px or more along a wandering line (no
+#                straight seam), mixed in OKLab; then both crops and their burn as final does (the burn tuned again)
+#   depthseams   land 1's wide depth map carried across the seam where the trunk now reaches further (no call)
+#   steps        the step from one column (row) to the next across each old seam, before (work/v2) and after, against the
+#                image's own median step over the same rows (columns); work/steps.json
+#   sheetfinal   out/sheet-final.jpg, from the encoded files decoded back (scripts/room/encode-lands.mjs --decoded)
+# The seams of the second round: the darken take was the mask eroded 24 px and blurred by 24 px, then cut by the mask
+# itself, so it fell from about 0.16 to 0 in one pixel (x 948 down every wide, y 1050 across lands 3 and 4); and the
+# outpaint's pad faded into the photo over a straight 48 px band (x 972 to 1020, and 3424 to 3472).
+ROUND = 3
+SEAMS = {
+    # the pad into the photo: inside the square, a smootherstep over 'ramp' px whose centre follows the cheapest path (the
+    # columns where the outpaint's own copy of the square differs least from the photo, 'reach' px at most from the
+    # edge), wandering by up to 2 x 'wander' px over about 'period' rows. The outpaint redrew the square near its edges
+    # (25 to 53 code values off on lands 1 and 2), so where it differs most the path goes deeper and the outpaint's own
+    # continuation is kept (land 4's lower right: its balustrade meeting her jacket rather than the photo's strip of leaves)
+    'pad': {'ramp': 128, 'wander': 36, 'period': 90, 'reach': 320, 'path_sigma': 40},
+    # the darken refill into the pad: inside the mask, two smootherstep weights from its edges (the frame's own edges
+    # are not seams): 'lo' relights the pad toward the refill's own light (its luminance low-passed by 'low' px, a ratio
+    # in linear light, so the pad's texture darkens as shade would), then 'hi', 'lag' of a ramp behind, mixes in the
+    # refill itself, in OKLab. The side ramp is 128 px, the top 240 (the check: 200 or more), each edge wandering
+    'darken': {'side': 128, 'top': 240, 'wander_side': 40, 'wander_top': 56, 'period_side': 90, 'period_top': 120, 'lag': 0.5, 'low': 48},
+}
+
+_M1 = np.array([[0.4122214708, 0.5363325363, 0.0514459929], [0.2119034982, 0.6806995451, 0.1073969566], [0.0883024619, 0.2817188376, 0.6299787005]], np.float32)
+_M2 = np.array([[0.2104542553, 0.7936177850, -0.0040720468], [1.9779984951, -2.4285922050, 0.4505937099], [0.0259040371, 0.7827717662, -0.8086757660]], np.float32)
+_M1i, _M2i = np.linalg.inv(_M1.astype(np.float64)).astype(np.float32), np.linalg.inv(_M2.astype(np.float64)).astype(np.float32)
+def lin32(img): x = img.astype(np.float32) / 255.0; return np.where(x <= 0.04045, x / 12.92, ((x + 0.055) / 1.055) ** 2.4).astype(np.float32)
+def oklab_lin(l): return np.cbrt(np.maximum(l @ _M1.T, 0)) @ _M2.T
+def oklab_u8(lab):
+    x = np.clip((lab @ _M2i.T) ** 3 @ _M1i.T, 0, 1)
+    return np.clip(np.round(np.where(x <= 0.0031308, x * 12.92, 1.055 * x ** (1 / 2.4) - 0.055) * 255), 0, 255).astype(np.uint8)
+def smoother(t): t = np.clip(t, 0, 1); return t * t * t * (t * (6 * t - 15) + 10)   # 0 to 1 with no slope or bend at either end
+def wander(n, amp, period, seed):
+    """a smooth offset in [0, 2 amp] along n px: seeded noise blurred over 'period' px, stretched to its range"""
+    r = np.random.default_rng(seed).normal(size=n + 6 * period).astype(np.float32)
+    r = cv2.GaussianBlur(r.reshape(1, -1), (0, 0), period).ravel()[3 * period:3 * period + n]
+    return ((r - r.min()) / max(float(r.max() - r.min()), 1e-6) * 2 * amp).astype(np.float32)
+
+def seam_path(cost, lo, hi, step=8, slope=2):
+    """the cheapest path down the rows of cost[y, k] for k in lo..hi-1, moving at most 'slope' columns per 'step' rows
+    (dynamic programming on every step-th row); an offset per row"""
+    rows = np.arange(0, cost.shape[0], step); c = cost[rows][:, lo:hi].astype(np.float64); n, K = c.shape
+    acc, back = c.copy(), np.zeros((n, K), np.int32)
+    for i in range(1, n):
+        best, arg = np.full(K, np.inf), np.zeros(K, np.int32)
+        for s in range(-slope, slope + 1):
+            sh = np.full(K, np.inf)
+            if s > 0: sh[s:] = acc[i - 1][:K - s]
+            elif s < 0: sh[:s] = acc[i - 1][-s:]
+            else: sh = acc[i - 1].copy()
+            ok = sh < best; best[ok] = sh[ok]; arg[ok] = (np.arange(K) - s)[ok]
+        acc[i] = c[i] + best; back[i] = arg
+    k = np.zeros(n, np.int32); k[-1] = int(np.argmin(acc[-1]))
+    for i in range(n - 1, 0, -1): k[i - 1] = back[i, k[i]]
+    return np.interp(np.arange(cost.shape[0]), rows, k + lo).astype(np.float32)
+
+def registered(raw, sent_full, x0, seed):
+    """a generator output warped onto the 16:9 it was sent (sent_full, at full size), as widen and redarken do, with
+    OpenCV's RANSAC seeded so the same call registers the same way every run"""
+    sx = PAD_SIZE[0] / WIDE16x9
+    sent = np.asarray(Image.fromarray(sent_full).resize(PAD_SIZE, Image.LANCZOS))
+    m = np.zeros(sent.shape[:2], np.uint8); m[:, int((x0 + 200) * sx):int((x0 + SIDE - 200) * sx)] = 255
+    cv2.setRNGSeed(seed)
+    M, inl, n = register(raw, sent, m)
+    if M is None: raise SystemExit(f'the output does not register to its canvas ({n} matches)')
+    T = (np.diag([1 / sx, 1 / sx, 1.0]) @ np.vstack([M, [0, 0, 1]]))[:2]
+    return cv2.warpAffine(raw, T, (WIDE16x9, SIDE), flags=cv2.INTER_LANCZOS4, borderMode=cv2.BORDER_REPLICATE), int(inl.sum()), n
+
+def pad_blend(gen, sq, pm, seed):
+    """the 16:9: the outpaint (gen, registered) outside the square, the photo inside, and at each of the square's edges
+    the outpaint handing over to the photo (SEAMS['pad']); pm, the product in the square, is never reached"""
+    S = SEAMS['pad']; W, A, R = S['ramp'], S['wander'], S['reach']
+    G, Q = oklab_lin(lin32(gen)), oklab_lin(lin32(sq))
+    out = G.copy(); out[:, SQ_X:SQ_X + SIDE] = Q
+    info = {}
+    for k, edge in enumerate(('left', 'right')):
+        cols = np.arange(R) if edge == 'left' else np.arange(SIDE - 1, SIDE - 1 - R, -1)   # cols[i]: i px in from the edge
+        g, q = G[:, SQ_X + cols], Q[:, cols]
+        cost = cv2.blur(np.linalg.norm(cv2.GaussianBlur(g - q, (0, 0), 6), axis=2), (W, 1))
+        path = seam_path(cost, W // 2 + 8, R - W // 2 - A)
+        path = cv2.GaussianBlur(path.reshape(-1, 1), (0, 0), S['path_sigma']).ravel()
+        c = path + wander(SIDE, A, S['period'], seed + k) - A
+        # never into the product: the ramp ends 8 px short of the first product column of each row
+        hit = pm[:, cols] > 0.01
+        first = np.where(hit.any(axis=1), hit.argmax(axis=1), R).astype(np.float32)
+        c = np.clip(c, W / 2 + 4, np.minimum(R, first) - W / 2 - 8)
+        wp = smoother((np.arange(R, dtype=np.float32)[None, :] - (c[:, None] - W / 2)) / W)   # the photo's weight
+        if ((1 - wp) * hit).max() > 0: raise SystemExit(f'the pad seam would reach the product ({edge})')
+        out[:, SQ_X + cols] = g * (1 - wp[..., None]) + q * wp[..., None]
+        # the step the blend itself adds from one column to the next: the weight's change times how far apart the two
+        # pictures are there (code values), averaged over the rows as steps does; its largest anywhere in the band
+        own = (np.abs(np.diff(wp, axis=1)) * np.abs(gen[:, SQ_X + cols].astype(np.float32) - sq[:, cols]).mean(axis=2)[:, 1:]).mean(axis=0)
+        info[edge] = {'ramp_px': W, 'centre_px_from_edge': [round(float(c.min()), 1), round(float(c.max()), 1)], 'photo_weight_at_edge': round(float(wp[:, 0].max()), 6),
+                      'own_step_max': round(float(own.max()), 3)}
+    return oklab_u8(out), info
+
+def srgb255(l): x = np.clip(l, 0, 1); return np.where(x <= 0.0031308, x * 12.92, 1.055 * x ** (1 / 2.4) - 0.055) * 255.0
+
+def dark_weights(H, Wd, top, seed):
+    """the darken's two weights (wlo, whi) on an H x Wd 16:9 or 16:10, and the side edge's own share of whi"""
+    S = SEAMS['darken']; xr = SQ_X - 24
+    ramp = lambda d, R, lag: smoother((d - lag * R) / R)
+    ds = (xr - 1 - np.arange(Wd, dtype=np.float32))[None, :] - wander(H, S['wander_side'], S['period_side'], seed + 7)[:, None]
+    wlo, whi = ramp(ds, S['side'], 0), ramp(ds, S['side'], S['lag'])
+    side = np.broadcast_to(whi, (H, Wd)).copy()
+    if top > 0:
+        dt = (np.arange(H, dtype=np.float32) - top)[:, None] - wander(Wd, S['wander_top'], S['period_top'], seed + 8)[None, :]
+        wlo, whi = wlo * ramp(dt, S['top'], 0), whi * ramp(dt, S['top'], S['lag'])
+    return np.broadcast_to(wlo, (H, Wd)), np.broadcast_to(whi, (H, Wd)), side
+
+def dark_blend(base, dgen, top, seed):
+    """the darken refill (dgen, registered) taken inside its mask: x < SQ_X - 24, from y 'top' down (SEAMS['darken'])"""
+    S = SEAMS['darken']; H, Wd = base.shape[:2]; xr = SQ_X - 24
+    wlo, whi, _ = dark_weights(H, Wd, top, seed)
+    bl, dl = lin32(base), lin32(dgen)
+    Y = np.array([0.2126, 0.7152, 0.0722], np.float32)
+    yb, yd = cv2.GaussianBlur(bl @ Y, (0, 0), S['low']), cv2.GaussianBlur(dl @ Y, (0, 0), S['low'])
+    ratio = np.clip(yd / np.maximum(yb, 1e-5), 1 / 16, 4)
+    relit = bl * (ratio ** wlo)[..., None]
+    out = oklab_lin(relit) * (1 - whi[..., None]) + oklab_lin(dl) * whi[..., None]
+    mask = np.zeros((H, Wd), bool); mask[top:, :xr] = True
+    if (np.maximum(wlo, whi) * ~mask).max() > 0: raise SystemExit('the darken weight reaches outside its mask')
+    edge_w = float(max(wlo[top:, xr - 1].max(), whi[top:, xr - 1].max(), wlo[top, :xr].max() if top else 0.0))
+    # the step the blend itself adds (as pad_blend's): the relight's change toward the refill's light, then the mix
+    lo_gap = np.abs(srgb255(bl * ratio[..., None]) - base).mean(axis=2); hi_gap = np.abs(srgb255(relit) - dgen).mean(axis=2)
+    own = lambda ax: np.abs(np.diff(wlo, axis=ax)) * np.delete(lo_gap * (1 - whi), 0, axis=ax) + np.abs(np.diff(whi, axis=ax)) * np.delete(hi_gap, 0, axis=ax)
+    own_x = own(1)[top:].mean(axis=0); own_y = own(0)[:, :xr].mean(axis=1) if top else None
+    return oklab_u8(out), {'side_ramp_px': S['side'], 'top_ramp_px': S['top'] if top else None, 'lag': S['lag'], 'weight_at_mask_edge': round(edge_w, 6),
+                           'own_step_max_x': round(float(own_x.max()), 3), 'own_step_max_y': round(float(own_y.max()), 3) if top else None}
+
+def seamed_wide(root, lid, L, sq):
+    """the third round's 16:9 from the calls already paid for: the outpaint registered again on the square it was sent
+    (work/square1-<id>.png, the first round's), the pad blended into this square (pad_blend), and the darken refill
+    registered on the canvas it was sent (work/wide169v2-<id>.png) and blended into the pad (dark_blend)"""
+    pk = pick(root, lid)
+    e = paid(root, 'pad', lid, pk['pad_attempt'])
+    if e['model'] != 'outpaint': raise SystemExit(f'{lid}: the seams expect the outpaint pad')
+    sent_sq = load_rgb(P(root, 'work', f'square1-{lid}.png')) if os.path.exists(P(root, 'work', f'square1-{lid}.png')) else sq
+    canvas, _, _ = wide_canvas(sent_sq, outpaint_land(L))
+    gen, ni, nm = registered(np.asarray(Image.open(P(root, 'work', e['file'])).convert('RGB')), canvas, SQ_X, L['seed'])
+    pm = product_mask(root, lid, L)
+    w169, info_pad = pad_blend(gen, sq, pm, L['seed'])
+    ed = paid(root, 'darken', lid, pk['darken_attempt'])
+    dgen, di, dn = registered(np.asarray(Image.open(P(root, 'work', ed['file'])).convert('RGB')), load_rgb(P(root, 'work', f'wide169v2-{lid}.png')), SQ_X, L['seed'] + 1)
+    top = int(L.get('darken_top', DARKEN_TOP) * SIDE)
+    out, info_dark = dark_blend(w169, dgen, top, L['seed'])
+    return out, {'pad': dict(info_pad, registered=f'{ni} of {nm} matches'), 'darken': dict(info_dark, top_y=top, side_x=SQ_X - 24, registered=f'{di} of {dn} matches')}
+
+def st_lenskinpick(root, lid, L, args):
+    if lid != 'lenskin': return
+    keep_v2(root)
+    src = P(root, 'out', 'lenskin-options', f'land-lenskin-{LENSKIN_PICK}-square.png'); sq0 = load_rgb(P(root, 'work', f'retouch-{lid}.png'))
+    sq = load_rgb(src)
+    R = dilate((poly_mask(L['plateau'], sq.shape[:2]) > 0.5).astype(np.uint8), 3) > 0
+    d = np.abs(sq.astype(int) - sq0).max(axis=2) > 0
+    if (d & ~R).any(): raise SystemExit(f'{lid}: option {LENSKIN_PICK} differs from the retouched square outside the plateau')
+    shutil.copyfile(src, P(root, 'out', f'land-{lid}-square.png'))
+    x0 = L['portrait_x']
+    set_pick(root, lid, lenskin_option=LENSKIN_PICK, lenskin_shade=LENSKIN_OPTIONS[LENSKIN_PICK][0],
+             plate_px={'square': int(d.sum()), 'square_frac': round(float(d.mean()), 4), 'portrait_frac': round(float(d[:, x0:x0 + PORTRAIT_W].mean()), 4),
+                       'wide_frac': round(float(d.sum()) / (SIDE * WIDE16x10), 4)})
+    print(f'{lid}: square <- option {LENSKIN_PICK} ({LENSKIN_OPTIONS[LENSKIN_PICK][0]}), {int(d.sum())} px changed, all inside the plateau')
+
+def keep_v2(root):
+    """the second round's masters, as sheet-v2 showed them, into work/v2/ once (before anything replaces them)"""
+    d = P(root, 'work', 'v2'); os.makedirs(d, exist_ok=True)
+    for p in sorted(glob.glob(P(root, 'out', 'land-*.png'))):
+        if not os.path.exists(os.path.join(d, os.path.basename(p))): shutil.copyfile(p, os.path.join(d, os.path.basename(p)))
+
+def st_seams(root, lid, L, args):
+    keep_v2(root)
+    if lid == 'lenskin' and pick(root, lid).get('lenskin_option') != LENSKIN_PICK: raise SystemExit('lenskin: run lenskinpick first')
+    sq = load_rgb(P(root, 'out', f'land-{lid}-square.png'))
+    info = {}
+    out, used = finish_crops(root, lid, L, sq, tune=True, info=info)
+    for cls, img in out.items(): save_rgb(img, P(root, 'out', f'land-{lid}-{cls}.png'))
+    set_pick(root, lid, round=ROUND, burn=used, seams=info, wide_square_x=SQ_X)
+    print(f'{lid}: seams {json.dumps(info)}; burn', {k: v['stops'] for k, v in used.items()}, 'contrast', {k: pearl_contrast(v, k) for k, v in out.items()})
+
+def st_depthseams(root, lid, L, args):
+    """the wide's depth map (made from the round-2 wide, work/v2) where the seams changed what the picture shows: the
+    round-2 wide took the refill from x 948 leftward, the third keeps the pad's own picture there for as much as the side
+    edge's 'hi' weight leaves (land 1's elm trunk, land 2's sleeve, land 4's balustrade, land 3's jacket), so inside the
+    mask that share of the depth is the depth just right of the edge (each row's median over x 960 to 1000), carried
+    across: the surface the pad continues, at the depth it has where it meets the photo. The rest of the map is as made.
+    No call: a fresh depth call per wide (1.5 credits) would replace this. Only where 'depth_carry' is set: the carry is
+    right only for a surface that fills every row at those columns (land 1's trunk); on lands 2 and 3 it drew blocks
+    with straight tops where a silhouette crosses them, and their round-2 maps already hold the jacket (land 3) and the
+    sleeve within about 20 px of its edge in the picture (land 2), land 4's the water, so those stay as made"""
+    src = P(root, 'work', 'v2', f'land-{lid}-wide-depth.png')
+    if not L.get('depth_carry'):
+        shutil.copyfile(src, P(root, 'out', f'land-{lid}-wide-depth.png')); set_pick(root, lid, depth_seams=None)
+        print(f'{lid}: wide depth as made in round 2'); return
+    dv2 = np.asarray(Image.open(src).convert('L')).astype(np.float32)
+    h, w = dv2.shape; s = w / WIDE16x10
+    top = int(L.get('darken_top', DARKEN_TOP) * SIDE)
+    side = dark_weights(SIDE, WIDE16x9, top, L['seed'])[2][:, :WIDE16x10]   # as seamed_wide drew it, on the 16:9
+    mask = np.zeros((SIDE, WIDE16x10), np.float32); mask[top:, :SQ_X - 24] = 1
+    keep = cv2.resize((1 - side) * mask, (w, h), interpolation=cv2.INTER_AREA)       # the pad's share, at the map's size
+    ext = np.median(dv2[:, int(960 * s):int(1000 * s)], axis=1)[:, None]
+    out = dv2 * (1 - keep) + ext * keep
+    Image.fromarray(np.clip(np.round(out), 0, 255).astype(np.uint8)).save(P(root, 'out', f'land-{lid}-wide-depth.png'))
+    set_pick(root, lid, depth_seams={'from': f'work/v2/land-{lid}-wide-depth.png', 'columns': [960, 1000], 'changed_frac': round(float((keep > 0.01).mean()), 4),
+                                     'largest_change': int(np.abs(out - dv2).max())})
+    print(f'{lid}: wide depth carried across the seam on {(keep > 0.01).mean() * 100:.1f} percent of the map, largest change {np.abs(out - dv2).max():.0f} of 255')
+
+def seam_list(L):
+    """the second round's seams in the 16:10 wide (it is cut from the 16:9's left edge, so x is the same in both)"""
+    top = int(L.get('darken_top', DARKEN_TOP) * SIDE); xr = SQ_X - 24
+    s = [('the darken edge, x %d' % xr, 'x', xr, (top, SIDE)),
+         ('the pad band, x %d' % SQ_X, 'x', SQ_X, (0, SIDE)), ('the pad band, x %d' % (SQ_X + 48), 'x', SQ_X + 48, (0, SIDE)),
+         ('the pad band, x %d' % (SQ_X + SIDE - 48), 'x', SQ_X + SIDE - 48, (0, SIDE)), ('the pad band, x %d' % (SQ_X + SIDE), 'x', SQ_X + SIDE, (0, SIDE))]
+    if top: s.insert(1, ('the darken top, y %d' % top, 'y', top, (0, xr)))
+    return s
+
+def seam_steps(img, L):
+    """per old seam: the mean step (code values, the three channels averaged) from each column to the next over the
+    seam's own rows (from each row to the next over its columns, for the top edge); the largest of the three pairs
+    across the seam; and the image's own steps there: the median, the 90th percentile and the seam's rank among the
+    same profile's 256 nearest columns (rows) either side, the seam's own 3 left out. A seam stands out of its own
+    texture (rank near 100); one blended away ranks as any column does. The median over the whole row is kept too"""
+    f = img.astype(np.float32); rows = []
+    for name, axis, at, (a, b) in seam_list(L):
+        if axis == 'x': prof = np.abs(np.diff(f[a:b], axis=1)).mean(axis=(0, 2))    # prof[i]: the step from column i to i + 1
+        else: prof = np.abs(np.diff(f[:, a:b], axis=0)).mean(axis=(1, 2))
+        seam = float(prof[at - 2:at + 1].max())                                       # the pairs (at-2, at-1), (at-1, at), (at, at+1)
+        near = np.concatenate([prof[max(at - 2 - 128, 0):at - 2], prof[at + 1:at + 1 + 128]])
+        med = float(np.median(near))
+        rows.append({'seam': name, 'step': round(seam, 2), 'median': round(med, 2), 'p90': round(float(np.percentile(near, 90)), 2),
+                     'rank': round(float((near < seam).mean() * 100), 1), 'ratio': round(seam / med, 2), 'row_median': round(float(np.median(prof)), 2)})
+    return rows
+
+def st_steps(root, args):
+    """seam_steps on the second round's wides (work/v2) and this round's, with each seam's own blend step (seams, the
+    largest step its weights add anywhere along it) beside the image's own median step there"""
+    rep = {}
+    for lid in ORDER:
+        L = LANDS[lid]; rep[lid] = {}
+        for tag, d in (('before', P(root, 'work', 'v2')), ('after', P(root, 'out'))):
+            p = os.path.join(d, f'land-{lid}-wide.png')
+            if os.path.exists(p): rep[lid][tag] = seam_steps(load_rgb(p), L)
+        sm = pick(root, lid).get('seams', {})
+        for r in rep[lid].get('after', []):
+            k = r['seam']
+            own = (sm.get('darken', {}).get('own_step_max_y') if 'darken top' in k else sm.get('darken', {}).get('own_step_max_x') if 'darken' in k
+                   else sm.get('pad', {}).get('left' if int(k.split('x ')[1]) < SQ_X + SIDE // 2 else 'right', {}).get('own_step_max'))
+            r['blend_own_step'] = own
+    json.dump(rep, open(P(root, 'work', 'steps.json'), 'w'), indent=1)
+    print('| Land | Old seam | Before: step / median (rank) | After: step / median / p90 (rank) | The blend\'s own step, largest |\n|---|---|---|---|---|')
+    for lid in ORDER:
+        b, a = rep[lid].get('before', []), rep[lid].get('after', [])
+        for i, r in enumerate(a):
+            rb = b[i] if i < len(b) else {'step': '-', 'median': '-', 'rank': '-'}
+            print(f"| {LANDS[lid]['n']} {lid} | {r['seam']} | {rb['step']} / {rb['median']} ({rb['rank']}) | {r['step']} / {r['median']} / {r['p90']} ({r['rank']}) | {r.get('blend_own_step')} |")
+
+def st_sheetfinal(root, args):
+    """the encoded files decoded back (scripts/room/encode-lands.mjs --decoded <dir>): per land, the portrait and the
+    wide as AVIF, their WebP twins small, and both depth maps, each with its bytes"""
+    dec = args.decoded or P(root, 'out', 'decoded')
+    sizes = json.load(open(os.path.join(dec, 'sizes.json')))
+    H, gap = 640, 16; f1, f2 = ImageFont.load_default(size=22), ImageFont.load_default(size=17)
+    rows = []
+    for lid in ORDER:
+        im = lambda n: Image.open(os.path.join(dec, n)).convert('RGB')
+        pa, wa = im(f'land-{lid}-portrait.avif.png'), im(f'land-{lid}-wide.avif.png')
+        pw, ww = im(f'land-{lid}-portrait.webp.png'), im(f'land-{lid}-wide.webp.png')
+        pd, wd = im(f'land-{lid}-portrait-depth.avif.png'), im(f'land-{lid}-wide-depth.avif.png')
+        t = [pa.resize((round(pa.width * H / pa.height), H), Image.LANCZOS), wa.resize((round(wa.width * H / wa.height), H), Image.LANCZOS)]
+        h2 = (H - gap) // 2
+        small = Image.new('RGB', (round(ww.width * h2 / ww.height) + gap + round(pw.width * h2 / pw.height), H), (24, 26, 28))
+        small.paste(ww.resize((round(ww.width * h2 / ww.height), h2), Image.LANCZOS), (0, 0)); small.paste(pw.resize((round(pw.width * h2 / pw.height), h2), Image.LANCZOS), (round(ww.width * h2 / ww.height) + gap, 0))
+        small.paste(wd.resize((round(wd.width * h2 / wd.height), h2), Image.NEAREST), (0, h2 + gap)); small.paste(pd.resize((round(pd.width * h2 / pd.height), h2), Image.NEAREST), (round(wd.width * h2 / wd.height) + gap, h2 + gap))
+        t.append(small); rows.append((lid, t))
+    Wd = max(sum(x.width for x in t) + gap * (len(t) + 1) for _, t in rows)
+    sheet = Image.new('RGB', (Wd, len(rows) * (H + gap + 64) + gap), (24, 26, 28)); d = ImageDraw.Draw(sheet); y = gap
+    kb = lambda n: '%.1f KB' % (sizes[n]['bytes'] / 1024)
+    for lid, t in rows:
+        L = LANDS[lid]; s = sizes
+        d.text((gap, y), f"{L['n']} / 4  {lid}: decoded from src/assets/room/lands. Portrait AVIF (720 x 1280), wide AVIF (1920 x 1200); right: the WebP twins over the depth maps (AVIF)", fill=(235, 235, 230), font=f1); y += 30
+        d.text((gap, y), f"portrait {kb(f'land-{lid}-portrait.avif')} AVIF q{s[f'land-{lid}-portrait.avif']['quality']}, {kb(f'land-{lid}-portrait.webp')} WebP q{s[f'land-{lid}-portrait.webp']['quality']};  "
+                         f"wide {kb(f'land-{lid}-wide.avif')} AVIF q{s[f'land-{lid}-wide.avif']['quality']}, {kb(f'land-{lid}-wide.webp')} WebP q{s[f'land-{lid}-wide.webp']['quality']};  "
+                         f"depth {kb(f'land-{lid}-portrait-depth.avif')} / {kb(f'land-{lid}-wide-depth.avif')} AVIF, {kb(f'land-{lid}-portrait-depth.webp')} / {kb(f'land-{lid}-wide-depth.webp')} WebP", fill=(180, 180, 175), font=f2); y += 34
+        x = gap
+        for im_ in t: sheet.paste(im_, (x, y)); x += im_.width + gap
+        y += H + gap
+    sheet.save(P(root, 'out', 'sheet-final.jpg'), quality=88); print('sheet ->', P(root, 'out', 'sheet-final.jpg'), sheet.size)
+
+REVIEWS = [
+    {'round': 1, 'date': '2026-10-20', 'by': 'Sam', 'sheet': 'sheet.jpg', 'verdict': 'reviewed, fixes asked'},
+    {'round': 2, 'date': '2026-10-20', 'by': 'Sam', 'sheet': 'sheet-v2.jpg', 'verdict': 'approved, with the seams to be blended',
+     'lenskin': f'option {LENSKIN_PICK}, {LENSKIN_OPTIONS[LENSKIN_PICK][0]} (Sage)'},
+]
+APPROVAL = {lid: 'Sam 2026-10-20 (sheet-v2), with the seams to be blended' for lid in ORDER}
+APPROVAL['lenskin'] += f', Lenskin option {LENSKIN_PICK} (Sage)'
+# what Sam asked in round 1 (his words of 2026-10-20 on sheet.jpg), and what round 3 did for his approval of sheet-v2
 FIXES = {'case': ['darken the text areas'], 'wallet': ['darken the text areas'],
          'airpods': ['the AirPods placement and shadow', 'darken the text areas'],
          'lenskin': ['the colour against the case (redo)', "the Lenskin's sheen", 'darken the text areas']}
@@ -1339,34 +1671,53 @@ def st_record(root, args):
         sq_steps = [step(find('matte', lid))] if find('matte', lid) else []
         if lid == 'airpods':
             sq_steps = [step(find('hand', lid, first.get('hand_attempt'), 1)), step(find('matte', lid)), step(find('bg', lid, 1)),
-                        step(find('hand', lid, pk.get('hand_attempt'), ROUND)),
-                        {'stage': 'rebg', 'local': True, 'round': ROUND, 'note': "the second pose's hand composite over bg attempt 1's background; the matte the first round's with the new hand added"}]
+                        step(find('hand', lid, pk.get('hand_attempt'), 2)),
+                        {'stage': 'rebg', 'local': True, 'round': 2, 'note': "the second pose's hand composite over bg attempt 1's background; the matte the first round's with the new hand added"}]
         else:
             sq_steps.append(step(find('bg', lid, first.get('bg_attempt'))))
-        if lid == 'lenskin': sq_steps.append({'stage': 'retouch', 'local': True, 'round': ROUND, 'mask': 'work/retouch-lenskin-mask.png', 'note': "the old lime wall's line along the case's top edge, filled from its neighbours (cv2.inpaint, Telea, 4 px)"})
+        if lid == 'lenskin': sq_steps.append({'stage': 'retouch', 'local': True, 'round': 2, 'mask': 'work/retouch-lenskin-mask.png', 'note': "the old lime wall's line along the case's top edge, filled from its neighbours (cv2.inpaint, Telea, 4 px)"})
         acc = None
         if 'accessory' in L:
             acc = {'shade': L['accessory']['shade'], 'hex': shade(L['accessory']['shade'])['hex'], 'finish': L['accessory']['finish'],
                    'render': 'scripts/room/render-products.py, Blender 5.2 Cycles on Metal', 'spec': f"work/acc-{lid}.json"}
             if lid == 'lenskin':
                 acc['options'] = json.load(open(P(root, 'work', 'lenskin-options.json'))) if os.path.exists(P(root, 'work', 'lenskin-options.json')) else []
-                acc['note'] = 'the masters carry option 0 (the first candidate) until Sam picks; out/lenskin-options/ holds each candidate\'s square and crops'
+                acc['pick'] = {'option': LENSKIN_PICK, 'shade': LENSKIN_OPTIONS[LENSKIN_PICK][0], 'by': 'Sam 2026-10-20 (sheet-v2)', 'plate_px': pk.get('plate_px'),
+                               'room_ts': L['accessory'].get('room_ts')}
+                acc['spec'] = f"work/acc-lenskin-{LENSKIN_OPTIONS[LENSKIN_PICK][0]}.json"
+                acc['note'] = (f'the masters carry option {LENSKIN_PICK}, its plate and sheen set inside the plateau (lenskinpick); ROOM_PRODUCTS takes its shade in '
+                               'the integration. out/lenskin-options/ holds each candidate\'s square and crops as sheet-v2 showed them')
+                sq_steps.append({'stage': 'lenskinpick', 'local': True, 'round': 3, 'note': f"lenskin-options/land-lenskin-{LENSKIN_PICK}-square.png, which differs from the retouched square inside the plateau only"})
         burn = pk.get('burn', {})
         cls = {'square': {'steps': sq_steps}}
         cls['portrait'] = {'steps': [{'stage': 'crop', 'local': True, 'x': L['portrait_x'], 'width': PORTRAIT_W},
-                                     {'stage': 'burn', 'local': True, 'round': ROUND, **{k: burn.get('portrait', {}).get(k) for k in ('stops', 'ru', 'rv', 'hl')}}]}
-        cls['wide'] = {'steps': [step(find('pad', lid, first.get('pad_attempt'))), step(find('darken', lid, pk.get('darken_attempt'), ROUND)) if find('darken', lid, pk.get('darken_attempt'), ROUND) else None,
-                                 {'stage': 'burn', 'local': True, 'round': ROUND, **{k: burn.get('wide', {}).get(k) for k in ('stops', 'ru', 'rv', 'hl')}}]}
+                                     {'stage': 'burn', 'local': True, 'round': pk.get('round', 2), **{k: burn.get('portrait', {}).get(k) for k in ('stops', 'ru', 'rv', 'hl')}}]}
+        sm = pk.get('seams', {})
+        cls['wide'] = {'steps': [step(find('pad', lid, first.get('pad_attempt'))), step(find('darken', lid, pk.get('darken_attempt'), 2)) if find('darken', lid, pk.get('darken_attempt'), 2) else None,
+                                 {'stage': 'seams', 'local': True, 'round': 3, 'pad': {**SEAMS['pad'], **sm.get('pad', {})}, 'darken': {**SEAMS['darken'], **sm.get('darken', {})},
+                                  'note': 'both calls registered again and blended by feathered weights along wandering lines, in OKLab (SEAMS in lands.py); work/steps.json measures the old seams'} if sm else None,
+                                 {'stage': 'burn', 'local': True, 'round': pk.get('round', 2), **{k: burn.get('wide', {}).get(k) for k in ('stops', 'ru', 'rv', 'hl')}}]}
         cls['wide']['steps'] = [s for s in cls['wide']['steps'] if s]
         for c in ('portrait', 'wide'):
             e = find('depth', f'{lid}-{c}')
             cls[f'{c}-depth'] = {'steps': [step(e)] if e else []}
+            # made in round 2 from the round-2 crops (no new call this round): the wides' seams were blended after them,
+            # and land 3's plate set; every other portrait is the round-2 one, byte for byte
+            frac = (pk.get('plate_px') or {}).get(f'{c}_frac')
+            cls[f'{c}-depth']['made_from'] = ('the round-2 crop (work/v2/' + f'land-{lid}-{c}.png' + ')' + ('; the third round blended its seams after it' if c == 'wide' else '')
+                                              + (f'; the Sage plate set after it ({frac * 100:.1f} percent of the crop)' if lid == 'lenskin' and frac else ''))
+            if c == 'wide' and pk.get('depth_seams'):
+                cls[f'{c}-depth']['steps'].append({'stage': 'depthseams', 'local': True, 'round': 3, **pk['depth_seams'],
+                                                   'note': "inside the darken mask, the share of the pad the seams kept takes the depth each row has just right of the edge (the trunk's)"})
         for c, v in cls.items():
             f = f'land-{lid}-{c}.png'; v['file'] = f; v['sha256'] = sums.get(f); v['source'] = L['base']
         lands.append({'id': lid, 'n': L['n'], 'family': L['family'], 'base': {'file': L['base'], 'from': "Sam's listing photos, ~/Downloads/amazon listing/image listing/lifestyle/17 promax/"},
-                      'accessory': acc, 'approval': APPROVAL[lid], 'fixes': FIXES[lid], 'classes': cls})
+                      'accessory': acc, 'approval': APPROVAL[lid], 'reviews': [dict(REVIEWS[0], fixes=FIXES[lid]), REVIEWS[1] if lid == 'lenskin' else {k: v for k, v in REVIEWS[1].items() if k != 'lenskin'}],
+                      'classes': cls})
     doc = {'about': ('Section 4 part two, the four lands (docs/specs/section-4-world.md 3, "Provenance"), written by scripts/room/lands.py record. '
-                     'Not in ROOM_LANDS and not encoded until Sam approves each land (CHECKLIST F2).'),
+                     'Sam reviewed the first sheet on 2026-10-20 and asked for fixes, then approved sheet-v2 the same day with the seams to be blended '
+                     'and the Lenskin in option 3 (Sage); the masters here carry both. Encoded into src/assets/room/lands/ by scripts/room/encode-lands.mjs; '
+                     'ROOM_LANDS is the integration\'s to write (CHECKLIST F2).'),
            'masters': 'assets-src/room/lands/ (gitignored; SHA256SUMS committed); work/ there holds every mask and generator output named here',
            'ledger': 'src/data/room-lands.ledger.json', 'credits': spent(root), 'lands': lands}
     json.dump(doc, open(os.path.join(REPO, 'src/data/room-lands.json'), 'w'), indent=1, ensure_ascii=False); open(os.path.join(REPO, 'src/data/room-lands.json'), 'a').write('\n')
@@ -1377,8 +1728,9 @@ def st_record(root, args):
 STAGES = {'render': st_render, 'composite': st_composite, 'hand': st_hand, 'matte': st_matte, 'bg': st_bg, 'blend': st_blend, 'pick': st_pick,
           'crops': st_crops, 'widen': st_widen, 'pickwide': st_pickwide, 'depth': st_depth, 'check': st_check,
           'retouch': st_retouch, 'rebg': st_rebg, 'square2': st_square2, 'wide2': st_wide2, 'darken': st_darken, 'redarken': st_redarken,
-          'final': st_final, 'lenskin': st_lenskin}
-GLOBAL = {'sheet': st_sheet, 'sheet2': st_sheet2, 'sums': st_sums, 'ledger': st_ledger, 'contrast': st_contrast, 'record': st_record}
+          'final': st_final, 'lenskin': st_lenskin, 'lenskinpick': st_lenskinpick, 'seams': st_seams, 'depthseams': st_depthseams}
+GLOBAL = {'sheet': st_sheet, 'sheet2': st_sheet2, 'sums': st_sums, 'ledger': st_ledger, 'contrast': st_contrast, 'record': st_record,
+          'steps': st_steps, 'sheetfinal': st_sheetfinal}
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
@@ -1392,6 +1744,7 @@ if __name__ == '__main__':
     ap.add_argument('--reuse', action='store_true', help='hand: re-blend the attempt already paid for, with no new call')
     ap.add_argument('--airpods-fbx', default=None)
     ap.add_argument('--option', type=int, action='append', help='lenskin: which candidate shade(s) to render (1 to 4; all when left out)')
+    ap.add_argument('--decoded', default=None, help='sheetfinal: the folder encode-lands.mjs --decoded wrote (default <root>/out/decoded)')
     ap.add_argument('--pad-model', choices=['outpaint', 'nano'], default='outpaint', help='crops: the wide pad by Higgsfield outpaint (default) or a nano_banana_2_1 masked inpaint')
     a = ap.parse_args()
     root = os.path.abspath(a.root); os.makedirs(P(root, 'work'), exist_ok=True); os.makedirs(P(root, 'out'), exist_ok=True)
