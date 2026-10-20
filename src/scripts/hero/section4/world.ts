@@ -3,37 +3,46 @@
 // morph onto the first land's picture and the push into it, and every land at rest. It replaces universe.ts.
 // - The flight is level (W1) along -z, on igloo's own ease, cubic-bezier(0.6, 0, 0, 1) (evidence 4), from 0.71 S before
 //   the first ring (igloo's approach pose: the ring fills about 116 percent of a laptop frame's height) to 0.5 S past the
-//   last; the FOV opens 22 to 30 degrees (evidence 2) under the hero's portrait zoom, min(1, aspect x 1.5); the roll
+//   last; the FOV opens 22 to 30 degrees (evidence 2) under the hero's portrait zoom, min(1, aspect x 1.5), raised only
+//   where a frame would reach past the garden's plate (glideZoom: windows wider than about 2.2:1); the roll
 //   rises to travelRoll before the first ring, is held through the passes and unwinds after the last, never faster than
 //   30 degrees a second (W4). No flash at the rings (W4, WCAG 2.3.1).
 // - The rings (rings.ts, W3) assemble on approach (W2): a ring's shards are thrown out beyond 1.4 S from the camera and
 //   whole by 1.0 S, each on its own window of that falloff. Their faces carry the intro's triangle lattice (tTri) in the
-//   next family's key shade, lit by the garden's sun behind the camera at 35 degrees. A forcefield disc fills each
-//   ring's hole, of radius 0.13 S and 0.06 S ahead of it: the lattice with concentric and radial lines in the
-//   shade of the arc behind, brightest at the rim, faded out as the camera passes through (additive, E-S4-glow).
-// - The garden (E-S4-garden; scripts/room/garden.py renders it, its URLs and distances come in through options): a far
-//   plate and three depth cards with alpha, each covering its image's field (64 degrees across by default) as seen from
-//   the glide's end pose on the axis, so the four line up as rendered there and slide against each other in flight.
-//   Without a garden (E-S4-garden's default if withdrawn) the rings fly over Urban Slate.
+//   next family's key shade, lit by garden.json's sun, the one the garden was rendered under (the spec's, straight behind
+//   the camera at 35 degrees, when there is no garden). A forcefield disc fills each ring's hole, of radius 0.13 S and
+//   0.06 S ahead of it: the lattice with concentric and radial lines in the shade of the arc behind, brightest at the rim,
+//   faded out as the camera passes through (additive, E-S4-glow).
+// - The garden (E-S4-garden; scripts/room/garden.py renders it and writes garden.json, the director hands in the URLs it
+//   picked): the far plate is drawn at infinity, its position locked to the camera's and its orientation fixed to the
+//   world, so it rolls on screen with the camera and scales with the FOV; only the band of its rows a frame can reach is
+//   uploaded (GARDEN.band, held by glideZoom). The three depth cards stand square to the axis on their own tangent bounds
+//   as seen from the render pose, the glide's end, so the four line up there and slide against each other in flight.
+//   Once land 1 has arrived the garden's textures are freed, since they serve only the entry and the failed-picture
+//   fallback, and they are decoded again on demand (loadGarden). Without a garden the rings fly over Urban Slate.
 // - The cloud (cloud.ts, W8, W12) waits 2.5 S past the last ring and turns slowly; at 75 percent of the glide's time
 //   (97 percent of its way) it morphs onto the first land's picture filling the frame, the picture fading in under the
 //   points over the morph's last 0.6 s, then the points fade over the push's first 0.25 s.
 // - A land is its picture on a displaced grid seen from its capture pose (positions from gl_VertexID, the depth fetched in
 //   the vertex shader by the disparity rule), so at the capture pose it is the picture, cover-fit, pixel for pixel; the
 //   push after the morph moves the camera 0.15 of the land's near distance into it, and that pose is the land's rest.
+// - Option A's stream (stream.ts) is drawn here as a layer handed in by option A's travel module, which alone imports it.
 // One 8-bit target with depth, display values written by hand (toSrgb) under NoToneMapping set and restored around the
 // draw, as the hall's; no output pass, and on laptops at most the screened bloom with everything else of post.ts off,
-// never on a land at rest. Loading runs one step a frame (spec 5 "Loading, in phases"): the rings' generation, each
-// garden image's decode and its upload in row strips, the compile with the target bound, a warm draw.
-import { AdditiveBlending, BufferGeometry, Color, DataTexture, DoubleSide, Float32BufferAttribute, Group, LinearFilter, LinearMipmapLinearFilter, Mesh, NoColorSpace, NoToneMapping, NormalBlending, PerspectiveCamera, PlaneGeometry, RedFormat, RGBAFormat, Scene, ShaderMaterial, Sphere, Uint16BufferAttribute, Uint32BufferAttribute, UnsignedByteType, Vector2, Vector3, Vector4, WebGLRenderTarget, type Texture, type WebGLRenderer } from 'three';
+// never on a land at rest. Loading runs one step a frame (spec 5 "Loading, in phases") and stops at once if the world is
+// disposed meanwhile: the rings' generation, each garden image decoded with at most the next one decoding ahead and
+// uploaded in row strips, one compile a frame with the target bound, the laptops' bloom when it is on, a warm draw.
+// The test hooks ship only in hooks builds and Tune's guard only in Tune builds (both folded away in production).
+import { AdditiveBlending, BufferGeometry, Color, DataTexture, DoubleSide, Float32BufferAttribute, Group, LinearFilter, LinearMipmapLinearFilter, Mesh, NoColorSpace, NoToneMapping, NormalBlending, PerspectiveCamera, PlaneGeometry, RedFormat, RGBAFormat, Scene, ShaderMaterial, Sphere, Uint16BufferAttribute, Uint32BufferAttribute, UnsignedByteType, Vector2, Vector3, Vector4, WebGLRenderTarget, type Object3D, type Texture, type WebGLRenderer } from 'three';
 import { ROOM_BAYS } from '../../../config/room.ts';
 import { URBAN_SLATE } from '../../../config/tokens.ts';
 import { fsGeo } from '../section2/background.ts';
-import { easeInOutCubic } from '../util/math.ts';
+import { clamp01, easeInOutCubic } from '../util/math.ts';
 import { TO_SRGB } from './assets.ts';
-import { CLOUD, coverScale, createPoints, type CloudPoints, type StreamEnd } from './cloud.ts';
+import { CLOUD, coverScale, createPoints, type CloudPoints } from './cloud.ts';
 import { createOutputPass, type OutputPass } from './post.ts';
 import { RING, generateRings, type RingArrays } from './rings.ts';
+import type { WorldStream } from './stream.ts';
 
 // ---------------------------------------------------------------- the numbers (for config/room.ts at integration)
 
@@ -43,7 +52,7 @@ export const S = 2.5;
 /** the glide (spec 2 "The ring travel"; seconds after the press, lengths in S) */
 export const GLIDE = Object.freeze({
   start: 0.35,                       // the bubble's first frame and the glide's
-  approach: 0.71, exit: 0.5,         // S before the first ring, S past the last
+  approach: 0.71, exit: 0.5,         // S before the first ring, S past the last (garden.json's render pose)
   ease: [0.6, 0, 0, 1] as const,     // igloo's inOut3 (evidence 4)
   fov: [22, 30] as const,            // degrees, over the glide (evidence 2), sine in-out of its time
   portrait: 1.5,                     // the zoom: min(1, aspect x 1.5)
@@ -60,29 +69,42 @@ export const GLIDE = Object.freeze({
 export const ENTRY = Object.freeze({ pushRest: 0.15, picFade: 0.6, pointsFade: 0.25 });
 /** the still3d entry (spec 4 "Reduced motion"): the bubble's dissolve, the tunnel held still, the cross-fade to land 1 (s) */
 export const REDUCED_ENTRY = Object.freeze({ dissolve: 0.6, hold: 1.0, fade: 0.3 });
-/** the garden's defaults (spec 3 "The garden"): each image's field in degrees across, the plate's and the cards' distances in S beyond the last ring */
-export const GARDEN = Object.freeze({ fov: 64, plate: 40, cards: [2, 4, 7] as const });
+/**
+ * The garden's drawing (garden.json places the images): the plate's rows kept at upload, as the band's half height in
+ * tangent units about the axis (at the 30-degree roll a 390 x 844 frame reaches 0.41 up, a 9:21 phone 0.44, a landscape
+ * phone or a 21:9 window 0.47); the share of the plate's edge and band a frame may reach before glideZoom raises the
+ * zoom (a hair inside, for the filtering at the edge: a landscape phone reaches 0.616 of the plate's 0.625 across); and
+ * the distance the plate is drawn ahead of the camera (it is at infinity: only its direction matters, inside the far plane).
+ */
+export const GARDEN = Object.freeze({ band: 0.49, edge: 0.99, far: 100 });
+/** the sun without a garden: behind the camera (+z), 35 degrees up (spec 3 "The garden") */
+const SUN_BEHIND = [0, Math.sin((35 * Math.PI) / 180), Math.cos((35 * Math.PI) / 180)] as const;
+/** the lands' clip planes, shared by the grid's camera and the stream's two (so their depths compare) */
+export const LAND_CLIP = Object.freeze([0.01, 400] as const);
 
 /** the entry's Tune values (to join ROOM_PARAMS at integration); the spec's defaults */
 export const WORLD_DEFAULTS = Object.freeze({ bubbleMs: 2000, travelMs: 8000, ringCount: 3, travelRoll: 30, morphMs: 1800, enterPushMs: 1200, /** laptops: post.ts's screened bloom over the tunnel and the push (0 off; never on a land at rest) */ worldBloom: 0 });
 export type WorldParams = { -readonly [K in keyof typeof WORLD_DEFAULTS]: number };
-/** Tune's ranges: the spec's for bubbleMs, ringCount and travelRoll; the others proposed. clampEntry narrows them to what passes. */
-export const WORLD_RANGES: Readonly<Record<keyof WorldParams, readonly [number, number]>> = Object.freeze({ bubbleMs: [1200, 3200], travelMs: [6000, 12000], ringCount: [2, 5], travelRoll: [0, 90], morphMs: [1000, 3000], enterPushMs: [600, 2000], worldBloom: [0, 1] });
 /**
- * The ranges Tune can offer at the default 8 s glide with every combination passing as it stands (the unit test proves
- * it and that one step past each edge fails): five rings put two passes 0.28 s apart, a bubble longer than 2.19 s still
- * covers the first of four rings, and a roll past 37 degrees cannot come up before it at 30 degrees a second.
+ * Tune's ranges and steps, [min, max, step], for the "Section 4" group at integration: inside them every combination
+ * passes the spec's rules as it stands (spec 2: every gap at least 0.4 s, the first pass after the bubble; W4's roll
+ * rate), which tests/unit/room-world.test.ts walks step by step, so nothing is clamped live. Past them: a glide under
+ * 8 s puts four rings' passes under 0.4 s apart or the first before a 2.19 s bubble clears, five rings fail at any
+ * glide here, and a roll over 33 degrees cannot come up before the first of four rings at 30 degrees a second on the
+ * shortest glide and morph. bubbleMs is the bubble's own
+ * (transition.ts), narrowed from the spec's 1200 to 3200 to what the first pass allows.
  */
-export const WORLD_TUNE_SAFE = Object.freeze({ bubbleMs: [1200, 2190] as const, ringCount: [2, 4] as const, travelRoll: [0, 37] as const });
+export const WORLD_RANGES: Readonly<Record<keyof WorldParams, readonly [number, number, number]>> = /* @__PURE__ */ Object.freeze({ bubbleMs: [1200, 2190, 10], travelMs: [8000, 12000, 100], ringCount: [2, 4, 1], travelRoll: [0, 33, 1], morphMs: [1000, 3000, 100], enterPushMs: [600, 2000, 100], worldBloom: [0, 1, 0.05] });
 
 /**
  * The scene's colours by id (AC3, read back by tests/unit/room-world.test.ts): the rings' arcs, their lattice (the next
  * family's), the forcefields' lines and the cloud are the ten key shades of ROOM_BAYS; the clear colour, seen only when
- * the garden is withdrawn, is Urban Slate (E-S4-garden's default). The garden and the pictures are image content.
+ * the garden is withdrawn, is Urban Slate (E-S4-garden's default). The garden and the pictures are image content. Marked
+ * pure, as WORLD_RANGES is, so a build that never reads them (production) drops them.
  */
-export const SCENE_COLOURS = Object.freeze({
-  rings: ROOM_BAYS.map((b) => b.shade), lattice: ROOM_BAYS.map((_, i) => ROOM_BAYS[(i + 1) % ROOM_BAYS.length].shade),
-  forcefields: ROOM_BAYS.map((b) => b.shade), cloud: ROOM_BAYS.map((b) => b.shade), clear: ['urban-slate'],
+export const SCENE_COLOURS = /* @__PURE__ */ Object.freeze({
+  rings: /* @__PURE__ */ ROOM_BAYS.map((b) => b.shade), lattice: /* @__PURE__ */ ROOM_BAYS.map((_, i) => ROOM_BAYS[(i + 1) % ROOM_BAYS.length].shade),
+  forcefields: /* @__PURE__ */ ROOM_BAYS.map((b) => b.shade), cloud: /* @__PURE__ */ ROOM_BAYS.map((b) => b.shade), clear: ['urban-slate'],
 });
 
 // ---------------------------------------------------------------- the timeline (pure: the unit test runs it)
@@ -129,6 +151,9 @@ export function rollAt(t: number, tl: EntryTimeline): number {
   return tl.roll.max * (ramp(tl.roll.in[0], tl.roll.in[1]) - ramp(tl.roll.out[0], tl.roll.out[1]));
 }
 
+/** the vertical FOV at t (degrees): 22 to 30 on a sine in-out of the glide's time, held at 30 after it */
+export const fovAt = (t: number, tl: EntryTimeline): number => GLIDE.fov[0] + (GLIDE.fov[1] - GLIDE.fov[0]) * (0.5 - 0.5 * Math.cos(Math.PI * clamp01((t - tl.glide[0]) / (tl.glide[1] - tl.glide[0]))));
+
 /** what breaks the spec's rules at these values (spec 2: every gap at least 0.4 s, the first pass after the bubble; W4's roll rate) */
 export function entryProblems(p: Pick<WorldParams, 'bubbleMs' | 'travelMs' | 'ringCount' | 'morphMs' | 'enterPushMs' | 'travelRoll'>): string[] {
   const tl = entryTimeline(p), out: string[] = [];
@@ -139,21 +164,73 @@ export function entryProblems(p: Pick<WorldParams, 'bubbleMs' | 'travelMs' | 'ri
 }
 
 /**
- * The Tune values made to pass (the director applies it to Tune's live copy): rings dropped until every gap holds (the
- * glide lengthened if two still do not), the bubble shortened to clear before the first pass, the roll to its rate.
+ * Tune's guard (Tune builds only, applied by entry): its live values held inside WORLD_RANGES with ringCount whole, and a
+ * warning should any combination still break a rule. It never drops a ring or shortens the bubble, so the scene is what
+ * Tune shows; inside the ranges nothing breaks (the unit test proves it).
  */
 export function clampEntry(p: WorldParams): WorldParams {
   const q = { ...p };
-  const lim = (k: keyof WorldParams) => { const [a, b] = WORLD_RANGES[k]; q[k] = Math.min(b, Math.max(a, q[k])); };
-  (Object.keys(WORLD_RANGES) as (keyof WorldParams)[]).forEach(lim);
+  for (const k of Object.keys(WORLD_RANGES) as (keyof WorldParams)[]) { const [a, b] = WORLD_RANGES[k]; q[k] = Math.min(b, Math.max(a, q[k])); }
   q.ringCount = Math.round(q.ringCount);
-  const gapsOk = () => { const ps = entryTimeline(q).passes; return ps.every((t, k) => k === 0 || t - ps[k - 1] >= GLIDE.minGap); };
-  while (!gapsOk() && q.ringCount > WORLD_RANGES.ringCount[0]) q.ringCount--;
-  while (!gapsOk() && q.travelMs < 30000) q.travelMs += 250;
-  const tl = entryTimeline(q);
-  q.bubbleMs = Math.min(q.bubbleMs, Math.floor((tl.passes[0] - GLIDE.start) * 100) * 10);
-  q.travelRoll = tl.roll.max;
+  const probs = entryProblems(q);
+  if (probs.length) console.warn('section 4: these entry values break the spec', q, probs);
   return q;
+}
+
+/** the frame's reach in tangent units of the world's frame (the plate's), across and up: its half extents at a vertical FOV and zoom, turned by the roll */
+export function frameReach(aspect: number, fovDeg: number, zoom: number, rollDeg: number): [number, number] {
+  const ty = Math.tan((fovDeg * Math.PI) / 360) / zoom, tx = ty * aspect, r = (rollDeg * Math.PI) / 180, c = Math.abs(Math.cos(r)), s = Math.abs(Math.sin(r));
+  return [tx * c + ty * s, tx * s + ty * c];
+}
+
+/**
+ * The glide's zoom for a frame's aspect: the portrait zoom, min(1, aspect x 1.5), raised just enough that the frame
+ * never reaches past `reach` (the plate's edge and band, less a hair) at any moment from the glide's start to the
+ * picture's arrival, roll included: windows wider than about 2.2:1 (garden check 5), and frames taller than any phone's.
+ * One zoom for the whole entry, so the lens never pumps; null reach (no garden), the portrait zoom.
+ */
+export function glideZoom(aspect: number, tl: EntryTimeline, reach: readonly [number, number] | null): number {
+  const z = Math.min(1, aspect * GLIDE.portrait);
+  if (!reach) return z;
+  const t0 = tl.glide[0], t1 = Math.max(tl.glide[1], tl.morph[1]);
+  let need = 0;
+  for (let i = 0; i <= 256; i++) { const t = t0 + ((t1 - t0) * i) / 256, [x, y] = frameReach(aspect, fovAt(t, tl), 1, rollAt(t, tl)); need = Math.max(need, x / reach[0], y / reach[1]); }
+  return Math.max(z, need * 1.002);   // the sampling's slack
+}
+
+// ---------------------------------------------------------------- the garden (pure: the unit test reads garden.json through it)
+
+/** garden.json as world.ts reads it (scripts/room/garden.py and encode.mjs write it): the spacing, the render pose, the sun, the plate's field and each card's tangent bounds */
+export interface GardenJson {
+  S: number;
+  camera: { pastLastRingS: number };
+  sun: { direction: readonly number[] };
+  plate: { width: number; height: number; fovDeg: number; /** [left, right, bottom, top] at unit distance; else centred on the axis from fovDeg (across) and the image's aspect */ tan?: readonly number[] };
+  cards: readonly { id?: string; distance: number; tan: readonly number[] }[];
+}
+/** the garden as the director hands it in: garden.json and the URLs it picked (AVIF or WebP), the cards in garden.json's order */
+export interface GardenSpec { json: GardenJson; plate: string; cards: readonly string[] }
+
+export interface GardenLayout {
+  /** the plate's rows kept at upload, [first, end) counted from the image's bottom (it is decoded bottom row first), and the tangent bounds [left, right, bottom, top] they cover */
+  plateRows: readonly [number, number]; plateTan: readonly [number, number, number, number];
+  /** how far a frame may reach across and up, in tangent units (the kept plate less GARDEN.edge's margin): glideZoom's bound */
+  reach: readonly [number, number];
+  /** each card's centre and size in scene units with the last ring at z 0, square to the axis at its distance from the render pose */
+  cards: readonly { x: number; y: number; z: number; w: number; h: number }[];
+  /** the unit direction toward the sun, island frame */
+  sun: readonly [number, number, number];
+}
+
+/** the garden placed from garden.json: each card at (cx d, cy d, pose - d), (r - l) d by (t - b) d, from its tangent bounds and distance; the plate's band of rows */
+export function gardenLayout(g: GardenJson, band = GARDEN.band): GardenLayout {
+  const hx = Math.tan((g.plate.fovDeg * Math.PI) / 360), hy = (hx * g.plate.height) / g.plate.width;
+  const [l, r, b, t] = g.plate.tan ?? [-hx, hx, -hy, hy], h = g.plate.height;
+  const y0 = Math.max(0, Math.floor(((-band - b) / (t - b)) * h)), y1 = Math.min(h, Math.ceil(((band - b) / (t - b)) * h));
+  const tb = b + ((t - b) * y0) / h, tt = b + ((t - b) * y1) / h, pose = -g.camera.pastLastRingS * g.S;
+  const cards = g.cards.map((c) => { const [cl, cr, cb, ct] = c.tan, d = c.distance; return { x: ((cl + cr) / 2) * d, y: ((cb + ct) / 2) * d, z: pose - d, w: (cr - cl) * d, h: (ct - cb) * d }; });
+  const s = g.sun.direction, n = Math.hypot(s[0], s[1], s[2]) || 1;
+  return { plateRows: [y0, y1], plateTan: [l, r, tb, tt], reach: [Math.min(r, -l) * GARDEN.edge, Math.min(tt, -tb) * GARDEN.edge], cards, sun: [s[0] / n, s[1] / n, s[2] / n] };
 }
 
 // ---------------------------------------------------------------- textures in strips (spec 5: one upload a frame)
@@ -161,23 +238,27 @@ export function clampEntry(p: WorldParams): WorldParams {
 /** an image fetched with the site's 20 s timeout and decoded off the main thread, bottom row first (uv 0 at the bottom, three's), untagged */
 export async function decodeImage(url: string, signal?: AbortSignal): Promise<ImageBitmap> {
   const ac = new AbortController(), t = setTimeout(() => ac.abort(), 20_000), stop = () => ac.abort();
+  if (signal?.aborted) ac.abort();
   signal?.addEventListener('abort', stop, { once: true });
   try {
     const res = await fetch(url, { signal: ac.signal, credentials: 'same-origin' });
     if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
-    return await createImageBitmap(await res.blob(), { imageOrientation: 'flipY', premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
+    const bmp = await createImageBitmap(await res.blob(), { imageOrientation: 'flipY', premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
+    if (ac.signal.aborted) { bmp.close(); throw new Error(`${url}: aborted`); }
+    return bmp;
   } finally { clearTimeout(t); signal?.removeEventListener('abort', stop); }
 }
 
-export interface StripUpload { readonly texture: DataTexture; readonly done: boolean; /** one step: the storage, then a strip of rows, then the mip chain; true once complete */ step(): boolean }
+export interface StripUpload { readonly texture: DataTexture; readonly done: boolean; /** one step: the storage, then a strip of rows, then the mip chain; true once complete (the bitmap is closed then) */ step(): boolean }
 
 /**
  * A texture uploaded from an ImageBitmap a strip of rows at a time (about 1 MB a step): three allocates the storage once
  * (texStorage2D, every level), each step copies the next rows with UNPACK_SKIP_ROWS through three's own state cache, and
- * the last generates the mip chain. Display values in and out (NoColorSpace); red takes the first channel (depth maps).
+ * the last generates the mip chain. Display values in and out (NoColorSpace); red takes the first channel (depth maps);
+ * rows keeps only [first, end) of the bitmap's rows (the plate's band), the texture that many rows tall.
  */
-export function stripUpload(renderer: WebGLRenderer, bmp: ImageBitmap, o: { red?: boolean; mipmaps?: boolean } = {}): StripUpload {
-  const w = bmp.width, h = bmp.height, red = !!o.red, mips = !!o.mipmaps;
+export function stripUpload(renderer: WebGLRenderer, bmp: ImageBitmap, o: { red?: boolean; mipmaps?: boolean; rows?: readonly [number, number] } = {}): StripUpload {
+  const w = bmp.width, [r0, r1] = o.rows ?? [0, bmp.height], h = r1 - r0, red = !!o.red, mips = !!o.mipmaps;
   const texture = new DataTexture(null, w, h, red ? RedFormat : RGBAFormat, UnsignedByteType);
   texture.source.dataReady = false;   // the first upload allocates only
   texture.colorSpace = NoColorSpace; texture.flipY = false; texture.generateMipmaps = mips; texture.unpackAlignment = 1;
@@ -194,7 +275,7 @@ export function stripUpload(renderer: WebGLRenderer, bmp: ImageBitmap, o: { red?
       if (y < h) {
         const n = Math.min(rows, h - y);
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
-        gl.pixelStorei(gl.UNPACK_SKIP_ROWS, y);
+        gl.pixelStorei(gl.UNPACK_SKIP_ROWS, r0 + y);
         gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, y, w, n, red ? gl.RED : gl.RGBA, gl.UNSIGNED_BYTE, bmp);
         gl.pixelStorei(gl.UNPACK_SKIP_ROWS, 0);
         y += n;
@@ -208,10 +289,6 @@ export function stripUpload(renderer: WebGLRenderer, bmp: ImageBitmap, o: { red?
 
 // ---------------------------------------------------------------- the API
 
-/** one garden image (garden.json): its URL (the director picks AVIF or WebP), its distance in S beyond the last ring, its field in degrees across from the glide's end pose */
-export interface GardenImage { url: string; distance: number; fov?: number; /** mip it (the cards seen small from afar); the plate is near 1:1 and goes without */ mipmaps?: boolean }
-export interface GardenSpec { plate: GardenImage; cards: readonly GardenImage[] }
-
 /**
  * A land as the director hands it in (it loads and owns the textures: stripUpload makes them): the picture (untagged,
  * mipmapped, uv 0 at its bottom), its depth map or null (single channel, 1 near, 0 far), the picture's aspect (width
@@ -222,8 +299,9 @@ export interface LandView { picture: Texture; depth: Texture | null; aspect: num
 /** a layer of a land frame, drawn in order over the one before (the depth cleared between) */
 export type WorldLayer =
   | { kind: 'land'; i: number; /** scene units into the land along its view */ push: number; alpha?: number; /** degrees of yaw and pitch (option A's slight sway) */ sway?: readonly [number, number] }
-  | { kind: 'points'; alpha?: number; /** option A's stream between two resident lands; without it the points as they stand (the morph's landed points) */ stream?: { from: number; to: number; p: number; fromPush: number; toPush: number } }
-  | { kind: 'garden' };
+  | { kind: 'points'; alpha?: number }   // the morph's landed points as they stand (the push's first 0.25 s)
+  | { kind: 'stream'; /** option A's (stream.ts) */ stream: WorldStream; from: number; to: number; p: number; fromPush: number; toPush: number; fromSway?: readonly [number, number]; alpha?: number }
+  | { kind: 'garden' };   // the tunnel at the glide's end pose (a failed picture's fallback; the garden is decoded again if it was freed)
 
 export interface EntryFrame { phase: 'glide' | 'morph' | 'push' | 'rest'; done: boolean; arrive: number; passes: readonly number[] }
 
@@ -233,8 +311,16 @@ export interface WorldScene {
   readonly failed: boolean;
   /** the frame: display values, alpha 1 (the bubble's inside, then the whole frame) */
   readonly out: Texture | null;
+  /** the garden's textures are resident (they are freed once land 1 has arrived) */
+  readonly gardenReady: boolean;
   /** rings, cloud and garden, uploaded and compiled one step a frame */
   load(): Promise<void>;
+  /** the garden decoded and uploaded again after it was freed (a later lap's walk, before the press; one step a frame) */
+  loadGarden(): Promise<void>;
+  /** free the garden's textures (done by itself once land 1 has arrived) */
+  releaseGarden(): void;
+  /** one object compiled for the lands' scene with the target bound (option A's stream: one step, before its first travel) */
+  warm(object: Object3D): Promise<void>;
   /** device pixels */
   resize(w: number, h: number): void;
   /** a land's textures and capture (null: forget it; the director keeps only the previous, current and next resident) */
@@ -250,7 +336,8 @@ export interface WorldScene {
   render(): void;
   /** the rest pose's push into land i (0.15 of its near distance) */
   restPush(i: number): number;
-  hooks(): Record<string, unknown>;
+  /** hooks builds only (PUBLIC_HERO_HOOKS): the state, the camera, the rings and the GPU memory held, colour plus depth */
+  hooks?: () => Record<string, unknown>;
   dispose(): void;
 }
 
@@ -264,11 +351,20 @@ export interface WorldOptions {
   dpr: number;
   /** the intro's lattice: the 512 px red-channel target (tTri), or null for none */
   tTri: Texture | null;
-  /** garden.json's images, or null for the rings over Urban Slate */
+  /** garden.json and its images' URLs, or null for the rings over Urban Slate */
   garden: GardenSpec | null;
-  /** Tune's values at load (the rings are generated for its ringCount); the defaults otherwise */
+  /** Tune's values at load (the rings are generated for its ringCount, the bloom made if on); the defaults otherwise */
   params?: WorldParams;
   seed?: number;
+}
+
+/** the land camera for land v cover-fit on a frame of this aspect, pushed into it along its view and swayed (yaw and pitch, degrees): the grid's, and each end of the stream's */
+export function landCamera(c: PerspectiveCamera, v: Pick<LandView, 'fov' | 'aspect'>, aspect: number, push: number, sway?: readonly [number, number]): PerspectiveCamera {
+  const ty = Math.tan((v.fov * Math.PI) / 360), tyS = aspect < v.aspect ? ty : (ty * v.aspect) / aspect;
+  c.fov = (2 * Math.atan(tyS) * 180) / Math.PI; c.aspect = aspect; c.zoom = 1; c.updateProjectionMatrix();
+  c.position.set(0, 0, -push); c.rotation.set(((sway?.[1] ?? 0) * Math.PI) / 180, ((sway?.[0] ?? 0) * Math.PI) / 180, 0);
+  c.updateMatrixWorld();
+  return c;
 }
 
 // ---------------------------------------------------------------- shaders
@@ -276,7 +372,8 @@ export interface WorldOptions {
 const LIN = /* glsl */`vec3 toLinear(vec3 c) { return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }`;
 
 // the shards: thrown by the camera's distance to their ring (the falloff of W2), each on its own window of it, spun about
-// their own axis, shrunk and pushed out along their centre and toward the camera; flat-lit by the garden's sun
+// their own axis, shrunk and pushed out along their centre and toward the camera; flat-lit by the garden's sun, the
+// lattice drawn in the next family's shade
 const RING_VERT = /* glsl */`
   attribute vec3 aCentre; attribute vec4 aSpin, aFling; attribute vec2 aLat; attribute float aShade;
   uniform vec2 uAsm; uniform float uBreak;
@@ -296,7 +393,7 @@ const RING_FRAG = /* glsl */`
   ${TO_SRGB} ${LIN}
   void main() {
     int j = int(vShade + 0.5);
-    vec3 alb = mix(uShades[j], uShades[(j + 1) % 10], clamp(uTri * texture(tTri, vLat).r * 1.25, 0.0, 1.0));   // the lattice in the next family's shade
+    vec3 alb = mix(uShades[j], uShades[(j + 1) % 10], clamp(uTri * texture(tTri, vLat).r * 1.25, 0.0, 1.0));
     vec3 n = normalize(gl_FrontFacing ? vN : -vN);
     float light = 0.52 + 0.5 * max(dot(n, uSun), 0.0) + 0.08 * max(n.y, 0.0);
     gl_FragColor = vec4(toSrgb(clamp(toLinear(alb) * light, 0.0, 1.0)), 1.0);
@@ -355,38 +452,43 @@ const GRID_FRAG = /* glsl */`uniform sampler2D tPic; uniform float uAlpha; varyi
 
 /** a hex's own numbers as display values (the target is read as sRGB, so nothing is decoded) */
 const display = (hex: string): [number, number, number] => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number];
-const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 const frame = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
+/** thrown at the next await once dispose has run (its abort ends a fetch in flight too): the load stops there and allocates nothing more */
+const GONE = new Error('section 4: the world was disposed');
 
 export function createWorld(o: WorldOptions): WorldScene {
   const { renderer } = o;
+  const par = () => o.params ?? WORLD_DEFAULTS;
   const shades = new Float32Array(ROOM_BAYS.flatMap((b) => display(b.hex)));
   const CLEAR = new Color(...display(URBAN_SLATE));
-  const sunEl = (35 * Math.PI) / 180, SUN = new Vector3(0, Math.sin(sunEl), Math.cos(sunEl));   // behind the camera (+z), 35 degrees up
+  const L = o.garden ? gardenLayout(o.garden.json) : null;
+  const SUN = new Vector3(...(L?.sun ?? SUN_BEHIND));
   const lat = o.tTri ? 1 : 0;
   const tunnel = new Scene(), landScene = new Scene();
-  const cam = new PerspectiveCamera(GLIDE.fov[0], 1, 0.05, 160), landCam = new PerspectiveCamera(50, 1, 0.01, 400);
-  let post: OutputPass | null = null, postW = 0, postH = 0;   // the laptops' optional bloom, made on first use
+  const cam = new PerspectiveCamera(GLIDE.fov[0], 1, 0.05, 160), landCam = new PerspectiveCamera(50, 1, LAND_CLIP[0], LAND_CLIP[1]);
+  let post: OutputPass | null = null, postW = 0, postH = 0;   // the laptops' optional bloom, made in load() when it is on
   let rt: WebGLRenderTarget | null = null, W = 1, H = 1, wantW = 1, wantH = 1, warming = false;
-  let started = false, ready = false, failed = false, usedBloom = false;
+  let started = false, ready = false, failed = false, usedBloom = false, disposed = false, loading: Promise<void> | null = null;
+  const ac = new AbortController();
+  const alive = () => { if (disposed) throw GONE; };
 
   // the rings: one mesh for all of them, regenerated when Tune's ringCount changes
   const ringU = { uShades: { value: shades }, uSun: { value: SUN }, tTri: { value: o.tTri }, uTri: { value: lat }, uAsm: { value: new Vector2(GLIDE.assemble[0] * S, GLIDE.assemble[1] * S) }, uBreak: { value: o.reduced ? 0 : 1 } };
   const ringMat = new ShaderMaterial({ uniforms: ringU, vertexShader: RING_VERT, fragmentShader: RING_FRAG });
   const ffU = { uShades: { value: shades }, tTri: { value: o.tTri }, uTri: { value: lat }, uRad: { value: GLIDE.forcefield[0] * S }, uLat: { value: RING.fieldLattice }, uGain: { value: 0.5 }, uS: { value: S } };
   const ffMat = new ShaderMaterial({ uniforms: ffU, vertexShader: FF_VERT, fragmentShader: FF_FRAG, transparent: true, depthWrite: false, blending: AdditiveBlending });
-  let rings: Mesh | null = null, fields: Mesh | null = null, ringData: RingArrays | null = null, nRings = 0;
+  const rings = new Mesh(new BufferGeometry(), ringMat), fields = new Mesh(new BufferGeometry(), ffMat);
+  rings.frustumCulled = false; fields.frustumCulled = false; fields.renderOrder = 100; tunnel.add(rings, fields);
+  let ringData: RingArrays | null = null, nRings = 0;
   function buildRings(n: number) {
-    if (rings) { tunnel.remove(rings); rings.geometry.dispose(); }
-    if (fields) { tunnel.remove(fields); fields.geometry.dispose(); }
+    rings.geometry.dispose(); fields.geometry.dispose();
     const zs = Array.from({ length: n }, (_, k) => ringZ(k));
     const r = (ringData = generateRings(o.seed ?? 20261020, zs, S));
-    const g = new BufferGeometry();
+    const g = (rings.geometry = new BufferGeometry());
     g.setAttribute('position', new Float32BufferAttribute(r.position, 3)); g.setAttribute('normal', new Float32BufferAttribute(r.normal, 3));
     g.setAttribute('aCentre', new Float32BufferAttribute(r.centre, 3)); g.setAttribute('aSpin', new Float32BufferAttribute(r.spin, 4));
     g.setAttribute('aFling', new Float32BufferAttribute(r.fling, 4)); g.setAttribute('aLat', new Float32BufferAttribute(r.lattice, 2)); g.setAttribute('aShade', new Float32BufferAttribute(r.shade, 1));
     g.setIndex(r.index instanceof Uint32Array ? new Uint32BufferAttribute(r.index, 1) : new Uint16BufferAttribute(r.index, 1));
-    rings = new Mesh(g, ringMat); rings.frustumCulled = false; tunnel.add(rings);
     // the forcefields: a quad a ring, 0.06 S ahead of it (toward the camera)
     const R = GLIDE.forcefield[0] * S, pos: number[] = [], loc: number[] = [], ring: number[] = [], idx: number[] = [];
     zs.forEach((z, k) => {
@@ -394,9 +496,8 @@ export function createWorld(o: WorldOptions): WorldScene {
       for (const [x, y] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { pos.push(x * R, y * R, zf); loc.push(x, y); ring.push(k); }
       idx.push(b, b + 1, b + 2, b, b + 2, b + 3);
     });
-    const fg = new BufferGeometry();
+    const fg = (fields.geometry = new BufferGeometry());
     fg.setAttribute('position', new Float32BufferAttribute(pos, 3)); fg.setAttribute('aLocal', new Float32BufferAttribute(loc, 2)); fg.setAttribute('aRing', new Float32BufferAttribute(ring, 1)); fg.setIndex(idx);
-    fields = new Mesh(fg, ffMat); fields.frustumCulled = false; fields.renderOrder = 100; tunnel.add(fields);
     nRings = n;
     place(n);
   }
@@ -411,118 +512,152 @@ export function createWorld(o: WorldOptions): WorldScene {
   const picMesh = new Mesh(fsGeo, new ShaderMaterial({ uniforms: picU, vertexShader: PIC_VERT, fragmentShader: PIC_FRAG, transparent: true, depthTest: false, depthWrite: false }));
   picMesh.frustumCulled = false; picMesh.renderOrder = 200; picMesh.visible = false; tunnel.add(picMesh);
 
-  // the garden: the plate and the cards, built once each image is in
-  interface Card { mesh: Mesh; mat: ShaderMaterial; tex: DataTexture; spec: GardenImage }
-  const garden: Card[] = [];
-  let cloudOrder = 0;
-  function gardenQuad(spec: GardenImage, tex: DataTexture, plate: boolean): Card {
-    const mat = new ShaderMaterial({ uniforms: { tMap: { value: tex }, uOpaque: { value: plate ? 1 : 0 } }, vertexShader: PLATE_VERT, fragmentShader: PLATE_FRAG, transparent: !plate, depthWrite: false, blending: NormalBlending });
-    const mesh = new Mesh(new PlaneGeometry(1, 1), mat); mesh.frustumCulled = false;
-    tunnel.add(mesh);
-    return { mesh, mat, tex, spec };
+  // the garden: the plate (drawn first, at infinity) then garden.json's cards, each a unit quad shown once its texture is in
+  interface Card { mesh: Mesh; mat: ShaderMaterial; tex: DataTexture | null }
+  const unit = new PlaneGeometry(1, 1), cards: Card[] = [];
+  const gardenQuad = (plate: boolean): Card => {
+    const mat = new ShaderMaterial({ uniforms: { tMap: { value: null as Texture | null }, uOpaque: { value: plate ? 1 : 0 } }, vertexShader: PLATE_VERT, fragmentShader: PLATE_FRAG, transparent: !plate, depthTest: !plate, depthWrite: false, blending: NormalBlending });
+    const mesh = new Mesh(unit, mat); mesh.frustumCulled = false; mesh.visible = false; tunnel.add(mesh);
+    return { mesh, mat, tex: null };
+  };
+  const plateAt: [number, number] = [0, 0];
+  if (L) {
+    const [l, r, b, t] = L.plateTan, plate = gardenQuad(true);
+    plate.mesh.renderOrder = -1; plate.mesh.scale.set((r - l) * GARDEN.far, (t - b) * GARDEN.far, 1); plateAt[0] = (l + r) / 2; plateAt[1] = (b + t) / 2;
+    cards.push(plate, ...L.cards.map(() => gardenQuad(false)));
   }
-  // the images and the cloud placed for n rings, the cards and the cloud drawn far to near (the cloud sits between the first two cards)
+  let cloudOrder = 0;
+  // the cards and the cloud placed for n rings and drawn far to near (the cloud sits between the first two cards)
   function place(n: number) {
-    const last = ringZ(n - 1), end = -(GLIDE.approach + n - 1 + GLIDE.exit) * S;
+    const last = ringZ(n - 1);
     cloudHolder.position.set(0, 0, last - GLIDE.cloudBeyond * S);
-    const order: { obj: { renderOrder: number }; d: number }[] = [{ obj: points.object, d: GLIDE.cloudBeyond }];
-    for (const c of garden) {
-      const z = last - c.spec.distance * S, w = 2 * (end - z) * Math.tan(((c.spec.fov ?? GARDEN.fov) * Math.PI) / 360), img = c.tex.image as { width: number; height: number };
-      c.mesh.position.set(0, 0, z); c.mesh.scale.set(w, (w * img.height) / img.width, 1);
-      order.push({ obj: c.mesh, d: c.spec.distance });
-    }
-    order.sort((a, b) => b.d - a.d).forEach((e, i) => { e.obj.renderOrder = i; });
+    const order: { obj: Object3D; z: number }[] = [{ obj: points.object, z: cloudHolder.position.z }];
+    L?.cards.forEach((c, k) => { const m = cards[k + 1].mesh; m.position.set(c.x, c.y, last + c.z); m.scale.set(c.w, c.h, 1); order.push({ obj: m, z: last + c.z }); });
+    order.sort((a, b) => a.z - b.z).forEach((e, i) => { e.obj.renderOrder = i; });
     cloudOrder = points.object.renderOrder;
   }
+  let gardenJob: Promise<void> | null = null;
+  const gardenIn = () => cards.length > 0 && cards.every((c) => c.tex);
+  /** the garden's images decoded and uploaded, one step a frame, at most the next image decoding meanwhile */
+  function loadGarden(): Promise<void> {
+    if (!o.garden || !L || gardenIn()) return Promise.resolve();
+    if (gardenJob) return gardenJob;
+    const urls = [o.garden.plate, ...o.garden.cards];
+    const decode = (i: number) => { const d = decodeImage(urls[i], ac.signal); d.catch(() => {}); return d; };
+    return (gardenJob = (async () => {
+      let next: Promise<ImageBitmap> | null = decode(0), bmp: ImageBitmap | null = null, up: StripUpload | null = null;
+      try {
+        for (let i = 0; i < urls.length; i++) {
+          bmp = await next!; next = null; alive();
+          if (i + 1 < urls.length) next = decode(i + 1);
+          up = stripUpload(renderer, bmp, i === 0 ? { rows: L.plateRows } : { mipmaps: true });
+          while (!up.step()) { await frame(); alive(); }
+          const c = cards[i]; c.tex?.dispose(); c.tex = up.texture; c.mat.uniforms.tMap.value = up.texture; c.mesh.visible = true;
+          up = null; bmp = null;
+          await frame(); alive();
+        }
+      } catch (e) { up?.texture.dispose(); throw e; }
+      finally { bmp?.close(); void next?.then((b) => b.close(), () => {}); gardenJob = null; }
+    })());
+  }
+  function releaseGarden() {
+    if (gardenJob) return;   // a load in flight finishes first; the next arrival frees it
+    for (const c of cards) { c.tex?.dispose(); c.tex = null; c.mat.uniforms.tMap.value = null; c.mesh.visible = false; }
+  }
+  const askGarden = () => { if (L && !gardenIn() && !gardenJob && ready) loadGarden().catch((e) => { if (!disposed) console.warn('section 4: the garden did not load again', e); }); };
 
-  // the lands: one grid material, its uniforms set per layer; the grid follows the depth map's size (two texels a cell)
+  // the lands: one grid material, its uniforms set per layer; the grid follows the depth map's size (two texels a cell).
+  // Always transparent and single-pass, so one program serves every alpha (three keys an opaque material apart).
   const lands = new Map<number, LandView>();
   const gridU = { tPic: { value: null as Texture | null }, tDepth: { value: null as Texture | null }, uGrid: { value: new Vector2(8, 8) }, uCap: { value: new Vector4(1, 1, 1, 10) }, uHasDepth: { value: 0 }, uAlpha: { value: 1 } };
-  const gridMat = new ShaderMaterial({ uniforms: gridU, vertexShader: GRID_VERT, fragmentShader: GRID_FRAG, side: DoubleSide, transparent: true });
+  const gridMat = new ShaderMaterial({ uniforms: gridU, vertexShader: GRID_VERT, fragmentShader: GRID_FRAG, side: DoubleSide, transparent: true, forceSinglePass: true });
   const gridGeo = new BufferGeometry(); gridGeo.boundingSphere = new Sphere(new Vector3(), 1e4);
   const grid = new Mesh(gridGeo, gridMat); grid.frustumCulled = false; landScene.add(grid);
   /** set the grid and the land camera for land v at push (scene units along its view), cover-fit to the target */
   function aimLand(v: LandView, push: number, alpha: number, sway?: readonly [number, number]) {
-    const a = W / H, ty = Math.tan((v.fov * Math.PI) / 360), tyS = a < v.aspect ? ty : (ty * v.aspect) / a;
-    landCam.fov = (2 * Math.atan(tyS) * 180) / Math.PI; landCam.aspect = a; landCam.zoom = 1; landCam.updateProjectionMatrix();
-    landCam.position.set(0, 0, -push); landCam.rotation.set(((sway?.[1] ?? 0) * Math.PI) / 180, ((sway?.[0] ?? 0) * Math.PI) / 180, 0);
-    const img = v.depth?.image as { width?: number; height?: number } | undefined;
+    landCamera(landCam, v, W / H, push, sway);
+    const img = v.depth?.image as { width?: number; height?: number } | undefined, ty = Math.tan((v.fov * Math.PI) / 360);
     const cols = img?.width ? Math.min(256, Math.max(16, Math.round(img.width / 2))) : 8, rows = img?.height ? Math.min(256, Math.max(16, Math.round(img.height / 2))) : 8;
     gridU.uGrid.value.set(cols, rows); gridGeo.setDrawRange(0, cols * rows * 6);
     gridU.tPic.value = v.picture; gridU.tDepth.value = v.depth; gridU.uHasDepth.value = v.depth ? 1 : 0;
     gridU.uCap.value.set(ty * v.aspect, ty, v.near, v.far); gridU.uAlpha.value = alpha;
-    gridMat.transparent = alpha < 1; gridMat.depthWrite = true;
   }
-  const streamEnd = (i: number, push: number): StreamEnd | null => { const v = lands.get(i); return v ? { texture: v.picture, aspect: v.aspect, depth: v.depth, fov: v.fov, near: v.near, far: v.far, push } : null; };
 
   // the frame's plan, set by entry, land or layers and drawn by render
   type Plan = { kind: 'tunnel'; cross: number } | { kind: 'layers'; list: readonly WorldLayer[] };
   let plan: Plan = { kind: 'tunnel', cross: 0 }, bloom = 0, curT = 0, curPhase: EntryFrame['phase'] = 'glide';
   let scissorRect: { x: number; y: number; w: number; h: number } | null = null;
-  let tlKey = '', tl: EntryTimeline = entryTimeline(WORLD_DEFAULTS);
+  let tlKey = '', tl: EntryTimeline = entryTimeline(WORLD_DEFAULTS), zoomKey = '';
+  let guardKey = '', guarded: WorldParams = WORLD_DEFAULTS;
   const _cc = new Color();
 
   function alloc(w: number, h: number) {
     W = w; H = h;
     rt?.dispose();
     rt = new WebGLRenderTarget(W, H, { depthBuffer: true });
-    cam.aspect = W / H; cam.zoom = Math.min(1, cam.aspect * GLIDE.portrait); cam.updateProjectionMatrix();
+    cam.aspect = W / H;
   }
 
-  /** the tunnel camera and the scene at t on the glide (the still3d tier: the start pose, whole, level) */
+  /** the tunnel camera and the scene at t on the glide (the still3d tier: the start pose, whole, level); the plate follows the camera */
   function glideTo(t: number) {
-    const T = tl.glide[1] - tl.glide[0], u = o.reduced ? 0 : clamp01((t - tl.glide[0]) / T);
+    const u = o.reduced ? 0 : clamp01((t - tl.glide[0]) / (tl.glide[1] - tl.glide[0])), zk = `${W}x${H}|${tlKey}`;
+    if (zk !== zoomKey) { zoomKey = zk; cam.zoom = glideZoom(W / H, tl, L?.reach ?? null); }
     cam.position.set(0, 0, tl.camZ[0] + (tl.camZ[1] - tl.camZ[0]) * GLIDE_EASE.at(u));
-    cam.fov = GLIDE.fov[0] + (GLIDE.fov[1] - GLIDE.fov[0]) * (0.5 - 0.5 * Math.cos(Math.PI * u)); cam.updateProjectionMatrix();
+    cam.fov = fovAt(o.reduced ? 0 : t, tl); cam.updateProjectionMatrix();
     cam.rotation.set(0, 0, o.reduced ? 0 : (rollAt(t, tl) * Math.PI) / 180);
     cam.updateMatrixWorld();
+    cards[0]?.mesh.position.set(cam.position.x + plateAt[0] * GARDEN.far, cam.position.y + plateAt[1] * GARDEN.far, cam.position.z - GARDEN.far);
     cloudHolder.rotation.y = o.reduced ? 0 : CLOUD.spin * t;
   }
+
+  /** one object's program, compiled with the target bound under NoToneMapping (three keys each program on both) */
+  async function compile(obj: Object3D, c: PerspectiveCamera, sc: Scene) {
+    const tm = renderer.toneMapping; renderer.toneMapping = NoToneMapping; renderer.setRenderTarget(rt);
+    const done = renderer.compileAsync(obj, c, sc);
+    renderer.setRenderTarget(null); renderer.toneMapping = tm;
+    await done;
+  }
+  const bloomLook = (b: number) => ({ boost: 1, corners: 1, bleach: 0, split: 0, noise: 0, bloom: b });
 
   const api: WorldScene = {
     get started() { return started; }, get ready() { return ready; }, get failed() { return failed; },
     get out() { return usedBloom && post ? post.out : rt ? rt.texture : null; },
-    async load() {
-      if (started) return; started = true;
-      try {
-        buildRings(Math.round((o.params ?? WORLD_DEFAULTS).ringCount)); await frame();
-        // the garden: each image decoded off the main thread, then uploaded a strip a frame
-        if (o.garden) {
-          const specs = [o.garden.plate, ...o.garden.cards];
-          const bitmaps = specs.map((s) => decodeImage(s.url));
-          for (let i = 0; i < specs.length; i++) {
-            const up = stripUpload(renderer, await bitmaps[i], { mipmaps: specs[i].mipmaps ?? i > 0 });
-            while (!up.step()) await frame();
-            garden.push(gardenQuad(specs[i], up.texture, i === 0));
-            await frame();
-          }
-          place(nRings);
+    get gardenReady() { return gardenIn(); },
+    load() {
+      return (loading ??= (async () => {
+        started = true;
+        try {
+          buildRings(Math.round(par().ringCount)); await frame(); alive();
+          await loadGarden();
+          // one program a frame, with an 8 px target bound; the cards share one program, the points one across both scenes
+          warming = true; alloc(8, 8);
+          const steps: [Object3D, PerspectiveCamera, Scene][] = [[rings, cam, tunnel], [fields, cam, tunnel], [points.object, cam, tunnel], [picMesh, cam, tunnel], [grid, landCam, landScene]];
+          if (cards.length > 1) steps.push([cards[0].mesh, cam, tunnel], [cards[1].mesh, cam, tunnel]);
+          for (const [obj, c, sc] of steps) { await compile(obj, c, sc); await frame(); alive(); }
+          // the laptops' bloom, when it is on at load, compiled by a first run (Tune turning it on later compiles it then)
+          if (!o.touch && par().worldBloom > 0) { post = createOutputPass(renderer); post.resize(8, 8); postW = postH = 8; post.run(rt!.texture, bloomLook(par().worldBloom), 0); await frame(); alive(); }
+          glideTo(0); ready = true; api.render(); await frame(); alive();
+          warming = false; alloc(wantW, wantH);
+        } catch (e) {
+          ready = false;
+          if (!disposed) { failed = true; console.warn('section 4: the world did not load; the poster column stands in', e); }   // a dispose's abort is no failure
         }
-        // compile with an 8 px target bound and NoToneMapping (three keys each program on both), then a warm draw that
-        // uploads the rings' buffers; a resize that lands meanwhile is kept for the end
-        warming = true; alloc(8, 8);
-        picMesh.visible = true;
-        const tm = renderer.toneMapping; renderer.toneMapping = NoToneMapping;
-        renderer.setRenderTarget(rt);
-        const compiling = Promise.all([renderer.compileAsync(tunnel, cam), renderer.compileAsync(landScene, landCam)]);
-        renderer.setRenderTarget(null); renderer.toneMapping = tm;
-        await compiling;
-        picMesh.visible = false;
-        glideTo(0); ready = true; api.render(); await frame();
-        warming = false; alloc(wantW, wantH);
-      } catch (e) {
-        failed = true;
-        console.warn('section 4: the world did not load; the poster column stands in', e);
-      }
+      })());
     },
-    resize(w, h) { wantW = Math.max(1, w); wantH = Math.max(1, h); if (!warming) alloc(wantW, wantH); },
+    loadGarden,
+    releaseGarden,
+    async warm(obj) { if (rt && !disposed) await compile(obj, landCam, landScene); },
+    resize(w, h) { wantW = Math.max(1, w); wantH = Math.max(1, h); if (!warming && !disposed) alloc(wantW, wantH); },
     setLand(i, v) { if (v) lands.set(i, v); else lands.delete(i); },
     restPush(i) { return ENTRY.pushRest * (lands.get(i)?.near ?? 0); },
-    entry(t, p) {
+    entry(t, params) {
+      let p = params;
+      if (import.meta.env.PUBLIC_TUNE === '1') { const k = Object.values(p).join('|'); if (k !== guardKey) { guardKey = k; guarded = clampEntry(p); } p = guarded; }
       curT = t;
       const key = `${p.travelMs}|${p.ringCount}|${p.morphMs}|${p.enterPushMs}|${p.travelRoll}`;
       if (key !== tlKey) { tlKey = key; tl = entryTimeline(p); }
       if (ready && Math.round(p.ringCount) !== nRings) buildRings(Math.round(p.ringCount));
+      if (t < (o.reduced ? REDUCED_ENTRY.dissolve : tl.morph[0])) askGarden();   // a later lap's entry, should the director not have reloaded it
       bloom = o.touch ? 0 : p.worldBloom;
       const land0 = lands.get(0);
       glideTo(t);
@@ -531,7 +666,7 @@ export function createWorld(o: WorldOptions): WorldScene {
         // still3d: the start pose held, then a cross-fade to land 1 at rest
         const t0 = REDUCED_ENTRY.dissolve + REDUCED_ENTRY.hold, a = land0 ? clamp01((t - t0) / REDUCED_ENTRY.fade) : 0, arrive = t0 + REDUCED_ENTRY.fade;
         points.cloud(); points.object.renderOrder = cloudOrder;
-        if (a >= 1 && land0) { plan = { kind: 'layers', list: [{ kind: 'land', i: 0, push: api.restPush(0) }] }; bloom = 0; }
+        if (a >= 1 && land0) { plan = { kind: 'layers', list: [{ kind: 'land', i: 0, push: api.restPush(0) }] }; bloom = 0; releaseGarden(); }
         else plan = { kind: 'tunnel', cross: a };
         curPhase = t >= arrive ? 'rest' : 'glide';
         return { phase: curPhase, done: t >= arrive, arrive, passes: [] };
@@ -554,13 +689,13 @@ export function createWorld(o: WorldOptions): WorldScene {
         points.morph(1, { texture: land0.picture, aspect: land0.aspect }, W, H); points.alpha(pa);
         const list: WorldLayer[] = [{ kind: 'land', i: 0, push: api.restPush(0) * easeInOutCubic(pushT) }];
         plan = { kind: 'layers', list: pa > 0 ? [...list, { kind: 'points' }] : list };
-        if (t >= tl.arrive) bloom = 0;
+        if (t >= tl.arrive) { bloom = 0; releaseGarden(); }
         curPhase = t < tl.arrive ? 'push' : 'rest';
       }
       return { phase: curPhase, done: t >= tl.arrive, arrive: tl.arrive, passes: tl.passes };
     },
-    land(i) { plan = { kind: 'layers', list: [{ kind: 'land', i, push: api.restPush(i) }] }; bloom = 0; curPhase = 'rest'; },
-    layers(list, b = 0) { plan = { kind: 'layers', list }; bloom = o.touch ? 0 : b; },
+    land(i) { plan = { kind: 'layers', list: [{ kind: 'land', i, push: api.restPush(i) }] }; bloom = 0; curPhase = 'rest'; releaseGarden(); },
+    layers(list, b = 0) { plan = { kind: 'layers', list }; bloom = o.touch ? 0 : b; if (list.some((l) => l.kind === 'garden')) askGarden(); },
     scissor(r) { scissorRect = r; },
     render() {
       if (!rt || !ready) return;
@@ -577,39 +712,51 @@ export function createWorld(o: WorldOptions): WorldScene {
         for (const l of plan.list) {
           renderer.clearDepth();
           if (l.kind === 'garden') { if (points.object.parent !== cloudHolder) cloudHolder.add(points.object); glideTo(tl.arrive); points.cloud(); points.object.renderOrder = cloudOrder; points.alpha(1); renderer.render(tunnel, cam); continue; }
-          if (l.kind === 'land') { const v = lands.get(l.i); if (!v) continue; aimLand(v, l.push, l.alpha ?? 1, l.sway); grid.visible = true; renderer.render(landScene, landCam); continue; }
-          // points over the land: the morph's landed points as they stand, or option A's stream between two resident lands
-          grid.visible = false;
-          if (l.stream) { const st = l.stream, f = streamEnd(st.from, st.fromPush), to = streamEnd(st.to, st.toPush); if (!f || !to) { grid.visible = true; continue; } points.stream(st.p, f, to, W, H); points.alpha(l.alpha ?? 1); }
-          landScene.add(points.object); renderer.render(landScene, landCam); grid.visible = true;
+          if (l.kind === 'land') { const v = lands.get(l.i); if (!v) continue; aimLand(v, l.push, l.alpha ?? 1, l.sway); renderer.render(landScene, landCam); continue; }
+          // points over the land, drawn through the land camera the land layer before set: the morph's landed points as
+          // they stand, or option A's stream between two resident lands (its shader projects each end with its own camera)
+          let obj: Object3D = points.object;
+          if (l.kind === 'stream') {
+            const a = lands.get(l.from), b = lands.get(l.to);
+            if (!a || !b) continue;
+            l.stream.update(l.p, { view: a, push: l.fromPush, sway: l.fromSway }, { view: b, push: l.toPush }, W, H); l.stream.alpha(l.alpha ?? 1);
+            obj = l.stream.object;
+          } else points.alpha(l.alpha ?? 1);
+          grid.visible = false; landScene.add(obj); renderer.render(landScene, landCam); landScene.remove(obj); grid.visible = true;
         }
-        if (points.object.parent === landScene) cloudHolder.add(points.object);
+        if (points.object.parent !== cloudHolder) cloudHolder.add(points.object);
       }
       usedBloom = bloom > 0 && !o.touch;
       if (usedBloom) {
         post ??= createOutputPass(renderer);
         if (postW !== W || postH !== H) { post.resize(W, H); postW = W; postH = H; }
-        post.run(rt.texture, { boost: 1, corners: 1, bleach: 0, split: 0, noise: 0, bloom }, 0);
+        post.run(rt.texture, bloomLook(bloom), 0);
       }
       renderer.setRenderTarget(null); renderer.setClearColor(pc, pa); renderer.toneMapping = tm; renderer.autoClear = ac;
     },
-    hooks() {
+    dispose() {
+      disposed = true; ac.abort(); ready = false;
+      rt?.dispose(); rt = null; post?.dispose(); post = null;
+      rings.geometry.dispose(); fields.geometry.dispose();
+      ringMat.dispose(); ffMat.dispose(); points.dispose(); (picMesh.material as ShaderMaterial).dispose();
+      for (const c of cards) { c.tex?.dispose(); c.tex = null; c.mat.dispose(); }
+      unit.dispose(); gridMat.dispose(); gridGeo.dispose(); lands.clear();
+    },
+  };
+
+  if (import.meta.env.PUBLIC_HERO_HOOKS === '1') {
+    // GPU bytes: the target's colour (RGBA8) and depth (24 bits, stored in 4 bytes), each texture with its mip chain
+    const bytes = (t: Texture | null | undefined) => { const i = t?.image as { width?: number; height?: number } | undefined; return i?.width && i.height ? i.width * i.height * ((t as DataTexture).format === RedFormat ? 1 : 4) * (t!.generateMipmaps ? 4 / 3 : 1) : 0; };
+    api.hooks = () => {
       const b = (z: number) => { const f = clamp01((cam.position.z - z - GLIDE.assemble[0] * S) / ((GLIDE.assemble[1] - GLIDE.assemble[0]) * S)); return +(o.reduced ? 0 : f).toFixed(3); };
       return {
         started, ready, failed, phase: curPhase, t: +curT.toFixed(3), plan: plan.kind,
         cam: { z: +cam.position.z.toFixed(3), fov: +cam.fov.toFixed(2), zoom: +cam.zoom.toFixed(3), roll: +((cam.rotation.z * 180) / Math.PI).toFixed(2) },
         rings: nRings, triangles: ringData?.triangles ?? [], shards: ringData?.shards ?? [], broken: tl.rings.map(b),
-        points: points.count, garden: garden.length, lands: [...lands.keys()], passes: tl.passes.map((x) => +x.toFixed(3)), arrive: +tl.arrive.toFixed(3), size: [W, H],
+        points: points.count, garden: cards.filter((c) => c.tex).length, lands: [...lands.keys()], passes: tl.passes.map((x) => +x.toFixed(3)), arrive: +tl.arrive.toFixed(3), size: [W, H],
+        memory: { target: rt ? W * H * 8 : 0, garden: Math.round(cards.reduce((s, c) => s + bytes(c.tex), 0)), lands: Math.round([...lands.values()].reduce((s, v) => s + bytes(v.picture) + bytes(v.depth), 0)), bloom: usedBloom || post ? postW * postH * 4 : 0 },
       };
-    },
-    dispose() {
-      rt?.dispose(); rt = null; post?.dispose();
-      if (rings) rings.geometry.dispose();
-      if (fields) fields.geometry.dispose();
-      ringMat.dispose(); ffMat.dispose(); points.dispose(); (picMesh.material as ShaderMaterial).dispose();
-      for (const c of garden) { c.mesh.geometry.dispose(); c.mat.dispose(); c.tex.dispose(); }
-      garden.length = 0; gridMat.dispose(); gridGeo.dispose(); lands.clear(); ready = false;
-    },
-  };
+    };
+  }
   return api;
 }

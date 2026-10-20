@@ -1,17 +1,24 @@
-// Section 4's world (docs/specs/section-4-world.md 2 "The ring travel" and "The particle morph", W2 to W4, W8, AC3):
-// the ring passes computed from the exported timing fall where the spec puts them; across Tune's ranges every gap is at
-// least 0.4 s and the first pass comes after the bubble, or the combination is reported for the integrator's clamp and
-// clampEntry makes it pass; the roll is held through the passes and never turns faster than 30 degrees a second; the
-// generated rings have the measured proportions, about 2,000 triangles each and the ten key shades in catalog order with
-// each ring turned 36 degrees; the landed points stay inside the fill bound; and every scene colour is a key shade by id
-// (or Urban Slate, seen only when the garden is withdrawn), with no raw colour in the three scene files.
+// Section 4's world (docs/specs/section-4-world.md 2 "The ring travel", "The particle morph" and "Option A", 6, W2 to
+// W4, W8, AC3): the ring passes computed from the exported timing fall where the spec puts them; every combination Tune
+// offers (WORLD_RANGES, step by step) has every gap at least 0.4 s, the first pass after the bubble and the roll at its
+// rate as it stands, one step past an edge breaks a rule, and Tune's guard only holds values to the ranges; the roll is
+// held through the passes and never turns faster than 30 degrees a second; the rings have the measured proportions,
+// about 2,000 triangles each and the ten key shades in catalog order with each ring turned 36 degrees; the garden is
+// placed from garden.json (the cards on their tangent bounds, the plate's band, the sun) and the glide's zoom keeps every
+// frame inside the plate, ultrawide windows included; the phone's GPU memory, colour plus depth, stays under its line;
+// option A's stream, replayed on the CPU from its own uniforms, starts and ends on each land's cells for two lands of
+// different FOV and push and stays inside the fill bound across the travel; the landed points stay inside it too; and
+// every scene colour is a key shade by id (or Urban Slate, seen only when the garden is withdrawn), with no raw colour in
+// the scene files; and the hooks and Tune's guard sit behind their build flags.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { DataTexture, PerspectiveCamera, Vector3, type Matrix4, type Vector4 } from 'three';
 import { ROOM_BAYS } from '../../src/config/room.ts';
-import { GLIDE, GLIDE_EASE, S, SCENE_COLOURS, WORLD_DEFAULTS, WORLD_RANGES, WORLD_TUNE_SAFE, clampEntry, cubicBezier, entryProblems, entryTimeline, rollAt, type WorldParams } from '../../src/scripts/hero/section4/world.ts';
+import { GARDEN, GLIDE, GLIDE_EASE, LAND_CLIP, S, SCENE_COLOURS, WORLD_DEFAULTS, WORLD_RANGES, clampEntry, cubicBezier, entryProblems, entryTimeline, fovAt, frameReach, gardenLayout, glideZoom, rollAt, type EntryTimeline, type GardenJson, type LandView, type WorldParams } from '../../src/scripts/hero/section4/world.ts';
 import { RING, arcAt, generateRings } from '../../src/scripts/hero/section4/rings.ts';
 import { CLOUD, cellGrid, coverScale, landedFill } from '../../src/scripts/hero/section4/cloud.ts';
+import { STREAM, createStream } from '../../src/scripts/hero/section4/stream.ts';
 
 const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const P = (o: Partial<WorldParams> = {}): WorldParams => ({ ...WORLD_DEFAULTS, ...o });
@@ -49,46 +56,40 @@ test('the approach pose: ring 1 fills about 116 percent of a laptop frame\'s hei
   assert.ok(ring > phoneW, `${ring} vs ${phoneW}`);
 });
 
-test('Tune\'s ranges (bubbleMs 1200 to 3200 at travelMs 8000, ringCount 2 to 5): every gap 0.4 s or more and the first pass after the bubble, or reported and clamped', (t) => {
-  const failing: string[] = [];
-  for (const ringCount of steps(WORLD_RANGES.ringCount[0], WORLD_RANGES.ringCount[1], 1)) {
-    // the spec's line: at the default bubble the first pass is after 0.35 + 2.0 s for every ring count
-    assert.ok(entryTimeline(P({ ringCount })).passes[0] > GLIDE.start + 2.0, `ringCount ${ringCount}: first pass before 2.35 s`);
-    for (const bubbleMs of steps(WORLD_RANGES.bubbleMs[0], WORLD_RANGES.bubbleMs[1], 10)) {
-      const p = P({ ringCount, bubbleMs, travelMs: 8000 }), probs = entryProblems(p).filter((s) => !s.startsWith('roll'));
-      if (probs.length) failing.push(`ringCount ${ringCount}, bubbleMs ${bubbleMs}: ${probs.join('; ')}`);
-      // whatever fails, clampEntry passes: every gap, the first pass after the bubble, the roll at its rate
-      const c = clampEntry(p), tl = entryTimeline(c);
-      assert.ok(gaps(tl.passes).every((g) => g >= GLIDE.minGap), `clamped ${JSON.stringify(c)}`);
-      assert.ok(tl.passes[0] >= GLIDE.start + c.bubbleMs / 1000, `clamped bubble ${c.bubbleMs}`);
-      assert.deepEqual(entryProblems(c), [], JSON.stringify(c));
-    }
-  }
-  // the report for the integrator: the edges of what passes as it stands
-  const maxBubble = (n: number) => Math.floor((entryTimeline(P({ ringCount: n })).passes[0] - GLIDE.start) * 100) * 10;
-  t.diagnostic(`failing combinations: ${failing.length}; the first per ring count: ${[2, 3, 4, 5].map((n) => failing.find((f) => f.startsWith(`ringCount ${n},`)) ?? `ringCount ${n}: none`).join(' | ')}`);
-  t.diagnostic(`bubbleMs passes up to: ${[2, 3, 4, 5].map((n) => `${n} rings ${maxBubble(n)} ms`).join(', ')}; five rings fail the gap at any bubble (${gaps(entryTimeline(P({ ringCount: 5 })).passes).map((g) => g.toFixed(3)).join(', ')} s)`);
-  assert.ok(failing.length > 0, 'the spec\'s full ranges hold combinations that fail (the integrator clamps Tune to WORLD_TUNE_SAFE)');
-  assert.deepEqual(clampEntry(P()), P(), 'the defaults are untouched by the clamp');
+test('Tune\'s ranges (WORLD_RANGES): every combination Tune offers passes as it stands, and one step past an edge breaks a rule', () => {
+  const R = WORLD_RANGES, vals = (k: keyof WorldParams) => steps(R[k][0], R[k][1], R[k][2]);
+  const ok = (p: WorldParams) => assert.deepEqual(entryProblems(p), [], JSON.stringify(p));
+  // the rules only get harder as the bubble lengthens (the first pass must clear it) and as the roll grows (it must come
+  // up in time), so for every glide, ring count and morph Tune offers the longest bubble with the largest roll is the
+  // hardest case; every bubble and every roll are also walked at the shortest glide and morph, and a coarse full product
+  for (const travelMs of vals('travelMs')) for (const ringCount of vals('ringCount')) for (const morphMs of vals('morphMs')) ok(P({ travelMs, ringCount, morphMs, bubbleMs: R.bubbleMs[1], travelRoll: R.travelRoll[1] }));
+  for (const ringCount of vals('ringCount')) for (const bubbleMs of vals('bubbleMs')) for (const travelRoll of vals('travelRoll')) ok(P({ travelMs: R.travelMs[0], morphMs: R.morphMs[0], ringCount, bubbleMs, travelRoll }));
+  for (const travelMs of steps(R.travelMs[0], R.travelMs[1], 500)) for (const ringCount of vals('ringCount')) for (const morphMs of steps(R.morphMs[0], R.morphMs[1], 500))
+    for (const bubbleMs of steps(R.bubbleMs[0], R.bubbleMs[1], 90)) for (const travelRoll of steps(R.travelRoll[0], R.travelRoll[1], 5)) ok(P({ travelMs, ringCount, morphMs, bubbleMs, travelRoll }));
+  // enterPushMs and worldBloom change no rule: the push comes after every pass, the bloom is a look
+  for (const enterPushMs of vals('enterPushMs')) ok(P({ enterPushMs, ringCount: 4, bubbleMs: R.bubbleMs[1] }));
+  // one step past each edge: a fifth ring, a longer bubble, a shorter glide and a larger roll each break a rule somewhere
+  const fails = (p: Partial<WorldParams>, what: string) => assert.ok(entryProblems(P(p)).some((s) => s.startsWith(what)), `${JSON.stringify(p)}: ${what}`);
+  fails({ ringCount: R.ringCount[1] + 1 }, 'gap');
+  fails({ ringCount: 4, bubbleMs: R.bubbleMs[1] + R.bubbleMs[2] }, 'first pass');
+  fails({ ringCount: 4, bubbleMs: R.bubbleMs[1], travelMs: R.travelMs[0] - R.travelMs[2] }, 'first pass');
+  fails({ ringCount: 4, travelMs: R.travelMs[0], morphMs: R.morphMs[0], travelRoll: R.travelRoll[1] + R.travelRoll[2] }, 'roll');
+  // the defaults are inside, on a step
+  for (const k of Object.keys(R) as (keyof WorldParams)[]) { const [a, b, d] = R[k]; assert.ok(WORLD_DEFAULTS[k] >= a && WORLD_DEFAULTS[k] <= b && Math.abs(((WORLD_DEFAULTS[k] - a) / d) % 1) < 1e-9, k); }
 });
 
-test('WORLD_TUNE_SAFE: every combination inside passes as it stands, and one step past each edge fails', () => {
-  const [b0, b1] = WORLD_TUNE_SAFE.bubbleMs, [n0, n1] = WORLD_TUNE_SAFE.ringCount, [, r1] = WORLD_TUNE_SAFE.travelRoll;
-  for (const ringCount of steps(n0, n1, 1)) for (const bubbleMs of steps(b0, b1, 10)) for (const travelRoll of [0, 15, 30, r1]) assert.deepEqual(entryProblems(P({ ringCount, bubbleMs, travelRoll })), [], `${ringCount} ${bubbleMs} ${travelRoll}`);
-  assert.ok(entryProblems(P({ ringCount: n1 + 1 })).some((s) => s.startsWith('gap')), 'one ring more breaks a gap');
-  assert.ok(entryProblems(P({ ringCount: n1, bubbleMs: b1 + 10 })).some((s) => s.startsWith('first pass')), 'a longer bubble covers the first pass');
-  assert.ok(entryProblems(P({ ringCount: n1, travelRoll: r1 + 1 })).some((s) => s.startsWith('roll')), 'a larger roll cannot come up in time');
-  assert.ok(WORLD_DEFAULTS.ringCount >= n0 && WORLD_DEFAULTS.ringCount <= n1 && WORLD_DEFAULTS.bubbleMs >= b0 && WORLD_DEFAULTS.bubbleMs <= b1 && WORLD_DEFAULTS.travelRoll <= r1);
-});
-
-test('the glide\'s length (proposed travelMs 6000 to 12000): clampEntry keeps every gap', (t) => {
-  const raw: string[] = [];
-  for (const travelMs of steps(WORLD_RANGES.travelMs[0], WORLD_RANGES.travelMs[1], 250)) for (const ringCount of [2, 3, 4, 5]) {
-    const p = P({ travelMs, ringCount }), g = entryProblems(p).filter((s) => s.startsWith('gap'));
-    if (g.length) raw.push(`${travelMs}/${ringCount}`);
-    assert.ok(gaps(entryTimeline(clampEntry(p)).passes).every((x) => x >= GLIDE.minGap), `${travelMs} ${ringCount}`);
-  }
-  t.diagnostic(`travelMs/ringCount failing the gap as they stand: ${raw.join(', ') || 'none'}`);
+test('Tune\'s guard (clampEntry, Tune builds only): it leaves Tune\'s values as they are inside the ranges, and only holds the rest to them', (t) => {
+  const warn = t.mock.method(console, 'warn', () => {});
+  assert.deepEqual(clampEntry(P()), P(), 'the defaults are untouched');
+  for (const ringCount of [2, 3, 4]) for (const travelMs of [8000, 12000]) assert.deepEqual(clampEntry(P({ ringCount, travelMs, bubbleMs: 2190, travelRoll: 33 })), P({ ringCount, travelMs, bubbleMs: 2190, travelRoll: 33 }), 'never a ring dropped or the bubble shortened');
+  const R = WORLD_RANGES;
+  assert.deepEqual(clampEntry(P({ ringCount: 5.4, bubbleMs: 3200, travelMs: 6000, travelRoll: 90, morphMs: 200 })), P({ ringCount: R.ringCount[1], bubbleMs: R.bubbleMs[1], travelMs: R.travelMs[0], travelRoll: R.travelRoll[1], morphMs: R.morphMs[0] }));
+  assert.equal(warn.mock.callCount(), 0, 'held to the ranges, nothing breaks, nothing to warn of');
+  // the guard and the hooks ship only in Tune and hooks builds (folded away in production)
+  const src = read('src/scripts/hero/section4/world.ts');
+  assert.match(src, /if \(import\.meta\.env\.PUBLIC_TUNE === '1'\) \{[^\n]*clampEntry\(p\)/);
+  assert.match(src, /if \(import\.meta\.env\.PUBLIC_HERO_HOOKS === '1'\) \{\n(?:[^\n]*\n){0,3}\s*api\.hooks = /);
+  assert.equal(src.match(/clampEntry\(/g)?.length, 2, 'declared once and called once, behind the Tune flag');
 });
 
 test('the roll: reached before the first pass, held through every pass, unwound after the last, at most 30 degrees a second', () => {
@@ -146,6 +147,165 @@ test('the points (W8, spec 6): 65,536 and 32,768, landing in a jittered grid of 
   assert.deepEqual(coverScale(1280 / 800, 1920 / 1200), [1, 1]);
 });
 
+// garden.json as garden.py and encode.mjs write it, with the fields world.ts does not read but the tests check against
+type GardenFile = Omit<GardenJson, 'camera' | 'cards'> & {
+  camera: { startBeforeFirstS: number; pastLastRingS: number };
+  cards: readonly { id: string; pastLastRingS: number; distance: number; tan: number[]; width: number; height: number; world: { width: number; height: number; x: number; y: number } }[];
+};
+const garden = JSON.parse(read('src/assets/room/garden/garden.json')) as GardenFile;
+const near = (a: number, b: number, e: number, what: string) => assert.ok(Math.abs(a - b) <= e, `${what}: ${a} vs ${b}`);
+
+test('the garden from garden.json: rendered from the glide\'s end, each card on its own tangent bounds, the plate\'s band, the sun as rendered', () => {
+  assert.equal(garden.S, S); assert.equal(garden.camera.pastLastRingS, GLIDE.exit); assert.equal(garden.camera.startBeforeFirstS, GLIDE.approach);
+  const g = gardenLayout(garden);
+  garden.cards.forEach((c, k) => {
+    const q = g.cards[k];
+    // the card square to the axis at its distance from the render pose, sized and centred as garden.json's world rectangle
+    near(q.w, c.world.width, 2e-3, `${c.id} width`); near(q.h, c.world.height, 2e-3, `${c.id} height`);
+    near(q.x, c.world.x, 2e-3, `${c.id} x`); near(q.y, c.world.y, 2e-3, `${c.id} y`);
+    near(q.z, -c.pastLastRingS * S, 1e-9, `${c.id} z past the last ring`);
+  });
+  // the hedges, the check's case: 3.21 units across, centred 0.95 below the axis 3.75 units past the render pose (not 4.69 across on the horizon)
+  assert.ok(g.cards[0].w < 3.3 && g.cards[0].y < -0.9);
+  // the plate: 64 degrees across, its band of rows covering the band about the axis and inside the image
+  const [l, r, b, t] = g.plateTan, [y0, y1] = g.plateRows, hx = Math.tan((32 * Math.PI) / 180);
+  near(r, hx, 1e-9, 'plate right'); near(l, -hx, 1e-9, 'plate left');
+  assert.ok(b <= -GARDEN.band && t >= GARDEN.band && b >= -hx && t <= hx, `${b} ${t}`);
+  assert.ok(y0 > 0 && y1 < garden.plate.height && Math.abs((t - b) / (2 * hx) - (y1 - y0) / garden.plate.height) < 1e-9, `${y0} ${y1}`);
+  near(g.reach[0], hx * GARDEN.edge, 1e-9, 'reach across'); near(g.reach[1], Math.min(t, -b) * GARDEN.edge, 1e-9, 'reach up');
+  // the sun: garden.json's direction (another builder may move it), normalised; world.ts reads it from the layout
+  const d = garden.sun.direction, n = Math.hypot(d[0], d[1], d[2]);
+  g.sun.forEach((x, k) => near(x, d[k] / n, 1e-12, `sun ${k}`));
+  const src = read('src/scripts/hero/section4/world.ts');
+  assert.match(src, /const SUN = new Vector3\(\.\.\.\(L\?\.sun \?\? SUN_BEHIND\)\)/);
+  assert.doesNotMatch(src, /0\.28017|0\.57358|0\.76975/, 'no sun hard-coded from garden.json');
+});
+
+test('the plate\'s edge never shows (garden check 5): the glide\'s zoom rises only where a frame would reach past it, ultrawide windows first', (t) => {
+  const g = gardenLayout(garden);
+  const views = [[390, 844], [360, 780], [360, 840], [844, 390], [932, 430], [1280, 800], [1440, 900], [1920, 1080], [2560, 1080], [3440, 1440], [3840, 1080], [5120, 1440], [300, 1000]] as const;
+  const tls = [P(), P({ ringCount: 2, morphMs: 1000 }), P({ ringCount: 4, travelMs: 12000, morphMs: 3000 }), P({ ringCount: 4, morphMs: 3000 }), P({ travelRoll: 0 })].map(entryTimeline);
+  const worst = (a: number, tl: EntryTimeline, z: number) => {
+    const t0 = tl.glide[0], t1 = Math.max(tl.glide[1], tl.morph[1]); let x = 0, y = 0;
+    for (let i = 0; i <= 2000; i++) { const tt = t0 + ((t1 - t0) * i) / 2000, [rx, ry] = frameReach(a, fovAt(tt, tl), z, rollAt(tt, tl)); x = Math.max(x, rx); y = Math.max(y, ry); }
+    return [x, y];
+  };
+  const raised: string[] = [];
+  for (const [w, h] of views) for (const tl of tls) {
+    const a = w / h, z = glideZoom(a, tl, g.reach), [x, y] = worst(a, tl, z);
+    assert.ok(x <= g.reach[0] + 1e-9 && y <= g.reach[1] + 1e-9, `${w} x ${h}: reaches ${x.toFixed(3)}, ${y.toFixed(3)} of ${g.reach.map((v) => v.toFixed(3))}`);
+    if (z > Math.min(1, a * GLIDE.portrait) && tl === tls[0]) raised.push(`${w}x${h} ${z.toFixed(3)}`);
+  }
+  // the check's measurement: 2560 x 1080 at the default 30-degree roll reached 0.648 across, past the plate's 0.625
+  near(worst(2560 / 1080, tls[0], 1)[0], 0.648, 0.003, '2560 x 1080 without the raise');
+  // the frames that were covered keep the spec's zoom exactly
+  for (const [w, h] of [[390, 844], [360, 780], [360, 840], [844, 390], [932, 430], [1280, 800], [1920, 1080]] as const) for (const tl of tls) assert.equal(glideZoom(w / h, tl, g.reach), Math.min(1, (w / h) * GLIDE.portrait), `${w} x ${h}`);
+  assert.ok(glideZoom(2560 / 1080, tls[0], g.reach) > 1 && glideZoom(3440 / 1440, tls[0], g.reach) > 1);
+  assert.equal(glideZoom(2560 / 1080, tls[0], null), 1, 'no garden, no raise');
+  t.diagnostic(`zoom raised at the defaults: ${raised.join(', ')}`);
+});
+
+test('GPU memory on a phone (spec 6, colour plus depth): under 48 MiB through the entry and after it, the garden freed once land 1 is in', (t) => {
+  const MiB = 1 << 20, g = gardenLayout(garden), W = Math.round(390 * 1.25), H = Math.round(844 * 1.25);
+  const target = W * H * (4 + 4);   // RGBA8 colour and a 24-bit depth buffer stored in 4 bytes
+  const plate = garden.plate.width * (g.plateRows[1] - g.plateRows[0]) * 4, plateWhole = garden.plate.width * garden.plate.height * 4;   // magnified only: no mips
+  const cards = garden.cards.reduce((s, c) => s + (c.width * c.height * 4 * 4) / 3, 0);
+  const picture = (720 * 1280 * 4 * 4) / 3, depth = 180 * 320;
+  const entry = target + plate + cards + picture + depth, after = target + 3 * (picture + depth);
+  t.diagnostic(`target ${(target / MiB).toFixed(2)} MiB (colour and depth); plate ${(plate / MiB).toFixed(2)} of ${(plateWhole / MiB).toFixed(2)}; cards ${(cards / MiB).toFixed(2)}; the entry ${(entry / MiB).toFixed(2)} MiB, after land 1 ${(after / MiB).toFixed(2)} MiB`);
+  assert.ok(entry <= 48 * MiB && after <= 48 * MiB);
+  assert.ok(plate <= plateWhole * 0.8, 'the band keeps four fifths of the plate or less');
+  // world.ts frees the garden on land 1's arrival (the push's end, still3d's cross-fade, a land at rest)
+  assert.equal(read('src/scripts/hero/section4/world.ts').match(/releaseGarden\(\); \}|releaseGarden\(\); \},/g)?.length, 3);
+});
+
+// option A's stream vertex shader (stream.ts VERT), replayed on the CPU from the material's own uniforms
+const pcg = (v: number) => { const s = (Math.imul(v, 747796405) + 2891336453) >>> 0; const w = Math.imul(((s >>> ((s >>> 28) + 4)) ^ s) >>> 0, 277803737) >>> 0; return ((w >>> 22) ^ w) >>> 0; };
+const rnd = (i: number, k: number) => pcg((Math.imul(i, 8) + k) >>> 0) / 4294967296;
+const smooth = (a: number, b: number, x: number) => { const u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
+type U = Record<string, { value: unknown }>;
+const mul = (m: number[], x: number, y: number, z: number, w: number) => [m[0] * x + m[4] * y + m[8] * z + m[12] * w, m[1] * x + m[5] * y + m[9] * z + m[13] * w, m[2] * x + m[6] * y + m[10] * z + m[14] * w, m[3] * x + m[7] * y + m[11] * z + m[15] * w];
+function replayStream(u: U, depth: (x: number, y: number) => number) {
+  const num = (k: string) => u[k].value as number, vec = (k: string) => u[k].value as Vector4, mat = (k: string) => (u[k].value as Matrix4).elements;
+  const cols = vec('uGrid').x, rows = vec('uGrid').y, jit = num('uJitter'), p = num('uP'), st = num('uStagger'), base = num('uBase');
+  const ends = (['A', 'B'] as const).map((k, j) => ({ cover: vec(`uCover${k}`), cap: vec(`uCap${k}`), view: mat(`uView${k}`), proj: mat(`uProj${k}`), has: j ? vec('uHas').y : vec('uHas').x }));
+  const land = (e: (typeof ends)[number], sx: number, sy: number) => {
+    const px = 0.5 + (sx - 0.5) * e.cover.x, py = 0.5 + (sy - 0.5) * e.cover.y, d = e.has > 0.5 ? depth(px, py) : 1, z = 1 / (1 / e.cap.w + (1 / e.cap.z - 1 / e.cap.w) * d);
+    return { v: mul(e.view, (px * 2 - 1) * e.cap.x * z, (py * 2 - 1) * e.cap.y * z, -z, 1), puv: [px, py] };
+  };
+  return (i: number) => {
+    const idx = i % (cols * rows), sx = ((idx % cols) + 0.5 + (rnd(i, 4) - 0.5) * jit) / cols, sy = (Math.floor(idx / cols) + 0.5 + (rnd(i, 5) - 0.5) * jit) / rows;
+    const A = land(ends[0], sx, sy), B = land(ends[1], sx, sy), l = Math.min(1, Math.max(0, (p - st * rnd(i, 6)) / (1 - st)));
+    let v: number[], clip: number[], z0: number, a = num('uAlpha');
+    if (l < 0.5) { const s = 2 * l; v = [A.v[0], A.v[1], A.v[2] + (num('uBehind') - A.v[2]) * s * s * s]; z0 = A.v[2]; clip = mul(ends[0].proj, v[0], v[1], v[2], 1); }
+    else { const s = 1 - Math.pow(2 - 2 * l, 3); v = [B.v[0], B.v[1], B.v[2] * num('uFrom') + (B.v[2] - B.v[2] * num('uFrom')) * s]; z0 = B.v[2]; clip = mul(ends[1].proj, v[0], v[1], v[2], 1); a *= smooth(0.5, 0.55, l); }
+    a *= smooth(0, num('uNear'), -v[2]);
+    const px = Math.max(1, Math.min((base * z0) / Math.min(v[2], -0.001), Math.min(base * num('uGrow'), num('uCap'))));
+    const drawn = a >= 0.01 && Math.abs(clip[0]) <= clip[3] && Math.abs(clip[1]) <= clip[3];
+    return { ndc: [clip[0] / clip[3], clip[1] / clip[3]], px, drawn, suv: [sx, sy], A, B };
+  };
+}
+const fakeLand = (w: number, h: number, fov: number, nr: number, fr: number): LandView => ({ picture: new DataTexture(null, w, h), depth: new DataTexture(null, w / 4, h / 4), aspect: w / h, fov, near: nr, far: fr });
+const depthAt = (x: number, y: number) => 0.5 + 0.45 * Math.sin(x * 7.1) * Math.cos(y * 5.3);
+/** where land v's grid draws its vertex at a picture uv (the disparity rule's depth there), through a camera built here from the spec: the land's cover-fit FOV, pushed and swayed */
+function gridNdc(v: LandView, aspect: number, push: number, sway: readonly [number, number], puv: readonly number[]) {
+  const ty = Math.tan((v.fov * Math.PI) / 360), c = new PerspectiveCamera((2 * Math.atan(aspect < v.aspect ? ty : (ty * v.aspect) / aspect) * 180) / Math.PI, aspect, LAND_CLIP[0], LAND_CLIP[1]);
+  c.position.set(0, 0, -push); c.rotation.set((sway[1] * Math.PI) / 180, (sway[0] * Math.PI) / 180, 0); c.updateMatrixWorld();
+  const z = 1 / (1 / v.far + (1 / v.near - 1 / v.far) * depthAt(puv[0], puv[1])), q = new Vector3((puv[0] * 2 - 1) * ty * v.aspect * z, (puv[1] * 2 - 1) * ty * z, -z).project(c);
+  return [q.x, q.y];
+}
+
+test('option A\'s stream (defect 1): it starts on the first land\'s cells and ends on the next land\'s, each through its own camera, for two lands of different FOV and push', () => {
+  for (const [w, h, portrait] of [[488, 1055, true], [1920, 1200, false]] as const) {
+    const pw = portrait ? 720 : 1920, ph = portrait ? 1280 : 1200, A = fakeLand(pw, ph, 45, 1.2, 6), B = fakeLand(pw, ph, 60, 1.0, 8);
+    const n = portrait ? CLOUD.touchCount : CLOUD.count, s = createStream({ count: n, dpr: portrait ? 1.25 : 1.5 }), u = (s.object.material as unknown as { uniforms: U }).uniforms, a = w / h;
+    const cases = [
+      { p: 0, push: 0, sway: [0, 0] as const, want: 'cell' },
+      { p: 0, push: 0.35 * A.near, sway: [0.8, -0.4] as const, want: 'A' },
+      { p: 1, push: 0.35 * A.near, sway: [0.8, -0.4] as const, want: 'B' },
+    ];
+    for (const c of cases) {
+      s.update(c.p, { view: A, push: c.push, sway: c.sway }, { view: B, push: 0.15 * B.near }, w, h);
+      const at = replayStream(u, depthAt);
+      let worst = 0, apart = 0;
+      for (let i = 0; i < n; i += 7) {
+        const q = at(i), want = c.want === 'cell' ? [q.suv[0] * 2 - 1, q.suv[1] * 2 - 1] : c.want === 'A' ? gridNdc(A, a, c.push, c.sway, q.A.puv) : gridNdc(B, a, 0.15 * B.near, [0, 0], q.B.puv);
+        worst = Math.max(worst, Math.hypot(q.ndc[0] - want[0], q.ndc[1] - want[1]));
+        assert.ok(Math.abs(q.px - Math.max(1, Math.min(u.uBase.value as number, u.uCap.value as number))) < 1e-6, 'at its landed size at either end');
+        // what the old stream drew: the next land through the current land's camera
+        if (c.want === 'B') { const old = gridNdc(A, a, c.push, c.sway, q.B.puv); apart = Math.max(apart, Math.hypot(old[0] - want[0], old[1] - want[1])); }
+      }
+      assert.ok(worst < 1e-4, `${w} x ${h}, p ${c.p} on ${c.want}: off by ${worst} in NDC`);
+      if (c.want === 'B') assert.ok(apart > 0.2, 'the two lands\' cameras differ, so the old projection would have missed the cells');
+    }
+    s.dispose();
+  }
+  // the shader projects each half through its own end's camera, with the depth test and write on (defect 8)
+  const src = read('src/scripts/hero/section4/stream.ts');
+  assert.match(src, /gl_Position = uProjA \* vec4\(v, 1\.0\)/); assert.match(src, /gl_Position = uProjB \* vec4\(v, 1\.0\)/);
+  assert.match(src, /depthTest: true, depthWrite: true/);
+});
+
+test('option A\'s stream (defect 2, spec 6): every point it draws, counted whole, fills at most 2.5 screens at any moment of the travel', (t) => {
+  for (const [cw, chh, dpr, n, portrait] of [[390, 844, 1.25, CLOUD.touchCount, true], [1280, 800, 1.5, CLOUD.count, false]] as const) {
+    const W = Math.round(cw * dpr), H = Math.round(chh * dpr), pw = portrait ? 720 : 1920, ph = portrait ? 1280 : 1200;
+    const A = fakeLand(pw, ph, 45, 1.2, 6), B = fakeLand(pw, ph, 60, 1.0, 8), s = createStream({ count: n, dpr }), u = (s.object.material as unknown as { uniforms: U }).uniforms;
+    let worst = 0, at = 0, size = 0;
+    for (let k = 0; k <= 50; k++) {
+      const p = k / 50, push = 0.35 * A.near * Math.min(1, p / 0.45);
+      s.update(p, { view: A, push, sway: [0.8 * Math.sin(3 * p), 0.4 * Math.sin(2 * p)] }, { view: B, push: 0.15 * B.near }, W, H);
+      const pt = replayStream(u, depthAt);
+      let area = 0;
+      for (let i = 0; i < n; i++) { const q = pt(i); if (q.drawn) { area += (Math.PI * q.px * q.px) / 4; size = Math.max(size, q.px / (u.uBase.value as number)); } }
+      if (area / (W * H) > worst) { worst = area / (W * H); at = p; }
+    }
+    t.diagnostic(`${cw} x ${chh}: at most ${worst.toFixed(2)} screens (at p ${at.toFixed(2)}), points at most ${size.toFixed(2)} landed sizes`);
+    assert.ok(worst <= 2.5, `${cw} x ${chh}: ${worst.toFixed(2)} screens at p ${at}`);
+    assert.ok(size <= STREAM.grow + 1e-9);
+    s.dispose();
+  }
+});
+
 test('colours (AC3): every scene colour is a key shade by id, the lattice the next family\'s, and no raw colour in the scene files', () => {
   const ids = ROOM_BAYS.map((b) => b.shade);
   assert.deepEqual(SCENE_COLOURS.rings, ids, 'the rings: the ten key shades in catalog order');
@@ -154,7 +314,7 @@ test('colours (AC3): every scene colour is a key shade by id, the lattice the ne
   // Pearl Whisper is the bubble's and the text's (transition.ts and the DOM); here only Urban Slate, behind a withdrawn garden
   for (const id of Object.values(SCENE_COLOURS).flat()) assert.ok(ids.includes(id) || id === 'urban-slate' || id === 'pearl-whisper', id);
   assert.deepEqual(SCENE_COLOURS.clear, ['urban-slate']);
-  for (const f of ['world', 'rings', 'cloud']) {
+  for (const f of ['world', 'rings', 'cloud', 'stream']) {
     const src = read(`src/scripts/hero/section4/${f}.ts`);
     assert.doesNotMatch(src, /#[0-9a-fA-F]{6}\b|0x[0-9a-fA-F]{6}\b/, `${f}.ts carries a raw hex colour`);
     for (const m of src.matchAll(/new Color\(([^()]*(?:\([^()]*\))?[^()]*)\)/g)) assert.match(m[1].trim(), /^(|\.\.\.display\(URBAN_SLATE\))$/, `${f}.ts: new Color(${m[1]})`);
