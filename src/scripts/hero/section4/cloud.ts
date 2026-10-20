@@ -2,7 +2,8 @@
 // points (32,768 on touch) with no buffers at all, every point's place and colour computed in the vertex shader from
 // gl_VertexID and one progress value, so there is no simulation, no float target and no worker (W8). Two modes:
 // - the cloud: igloo's vanishing-point target kept as ours (W12), a ball of radius 0.2 S, denser at its
-//   middle, each point in one of the ten key shades by its longitude (ten wedges, as the rings carry them), turned
+//   middle, each point the blend of the two key shades nearest its longitude (the rings' ramp, blend.ts: ten arcs round
+//   the ball, each blending into the next in OKLab, W13), so the cloud shifts smoothly from colour to colour; turned
 //   slowly about its vertical axis by the caller;
 // - the morph: each point leaves the cloud on a curved path, a swirl about the view axis that unwinds as it lands, the
 //   frame's centre first, onto its cell of a jittered grid over the frame (never a regular dot grid, rule 43), taking
@@ -77,14 +78,14 @@ export const CELL_GLSL = /* glsl */`
 // colour taken over the flight's middle
 const VERT = /* glsl */`
   uniform float uMode, uP, uR, uPx, uCap, uAlpha, uLod, uCellPx, uSize, uSwirl, uSpread, uD, uAspect;
-  uniform vec2 uCover; uniform vec3 uShades[10]; uniform sampler2D tPic;
+  uniform vec2 uCover; uniform sampler2D tPic, tRamp;
   varying vec3 vCol; varying float vPx, vA;
   ${CELL_GLSL}
   float ease(float x) { float s = x * x * (3.0 - 2.0 * x); return 1.0 - pow(1.0 - s, 3.0); }
   vec3 ahead(vec2 suv, float dist) { vec2 n = suv * 2.0 - 1.0; return vec3(n.x * dist / projectionMatrix[0][0], n.y * dist / projectionMatrix[1][1], -dist); }
   void main() {
     float u = rnd(0), cz = rnd(1) * 2.0 - 1.0, ph = rnd(2) * 6.2831853, sz = sqrt(1.0 - cz * cz);
-    vec3 col = uShades[int(mod(floor((ph / 6.2831853 + 0.05 * (rnd(3) - 0.5)) * 10.0), 10.0))];
+    vec3 col = textureLod(tRamp, vec2(ph / 6.2831853, 0.5), 0.0).rgb;
     vec3 pos = (modelViewMatrix * vec4(vec3(sz * cos(ph), cz, sz * sin(ph)) * uR * pow(u, 0.45), 1.0)).xyz;
     float px = uPx * 5.0 / max(0.05, -pos.z);
     if (uMode > 0.5) {
@@ -116,12 +117,12 @@ export const POINT_FRAG = /* glsl */`
 export const cellLod = (picW: number, cover: number, cols: number): number => Math.max(0, Math.log2(Math.max(1, (picW * cover) / cols)));
 export const picWidth = (t: Texture | null): number => (t?.image as { width?: number } | null)?.width ?? 1024;
 
-/** the points: shades as display values (ten, ROOM_BAYS order), count, the DPR (sizes and the cap) */
-export function createPoints(o: { shades: Float32Array; count: number; dpr: number; radius: number }): CloudPoints {
+/** the points: the shades' ramp round the ring (world.ts makes it from blend.ts, display values), count, the DPR (sizes and the cap) */
+export function createPoints(o: { ramp: Texture; count: number; dpr: number; radius: number }): CloudPoints {
   const U = {
     uMode: { value: 0 }, uP: { value: 0 }, uR: { value: o.radius }, uPx: { value: CLOUD.px * o.dpr }, uCap: { value: CLOUD.capPx * o.dpr }, uAlpha: { value: 1 },
     uLod: { value: 0 }, uCellPx: { value: 4 }, uSize: { value: CLOUD.size }, uJitter: { value: CLOUD.jitter }, uSwirl: { value: CLOUD.swirl }, uSpread: { value: CLOUD.spread }, uD: { value: CLOUD.plane }, uAspect: { value: 1 },
-    uGrid: { value: new Vector2(1, 1) }, uCover: { value: new Vector2(1, 1) }, uShades: { value: o.shades }, tPic: { value: null as Texture | null },
+    uGrid: { value: new Vector2(1, 1) }, uCover: { value: new Vector2(1, 1) }, tRamp: { value: o.ramp }, tPic: { value: null as Texture | null },
   };
   const material = new ShaderMaterial({ uniforms: U, vertexShader: VERT, fragmentShader: POINT_FRAG, transparent: true, depthWrite: false, blending: NormalBlending });
   // no attributes: the draw range is the count and every point is computed from its gl_VertexID
