@@ -4,10 +4,12 @@
 // resolves the travel options that are not the pick to travel-stub.ts by the file an import resolves to (every spelling),
 // keeps their ?url files out, and resolves nothing with Tune on; optimizeDeps keeps RoomEnvironment while universe.ts
 // needs it; the post-build guard refuses a clip, a park asset or another option's chunk where the mode does not allow it;
-// scripts/hero/budget.mjs exits 1 on a broken line and keeps a land picture out of the hero's posters.
+// scripts/hero/budget.mjs exits 1 on a broken line or a failed format check, prints Sam's pending line as such, measures
+// the garden or stops the build, and keeps a land picture out of the hero's posters.
 import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
@@ -216,12 +218,13 @@ test('the post-build guard: a clip only with C, a park asset only with B, anothe
   assert.match(r.stdout, /nothing of the reference/);
 });
 
+const budget = (dist: string, ...flags: string[]) => run(['scripts/hero/budget.mjs', dist, ...flags]);
+
 test("budget.mjs: section 6's lines exit 1 when broken, and a land picture is never the hero's poster", () => {
-  const budget = (dist: string, ...flags: string[]) => run(['scripts/hero/budget.mjs', dist, ...flags]);
-  const page = '<picture><source data-srcset="/_astro/land-case-portrait.Ab3_x9Zq.avif"><img src="/_astro/portrait.Pq7_k2Lm.avif" alt=""></picture>';
+  const page = '<picture><source data-srcset="/_astro/land-case-portrait.Ab3_x9Zq.avif"><img src="/_astro/portrait.Pq7_k2Lm.avif" width="720" height="1280" alt=""></picture>';
   // at the line passes, one byte over breaks it
   for (const [bytes, status] of [[80 * 1024, 0], [80 * 1024 + 1, 1]] as const) {
-    const r = budget(fixture({ '_astro/land-case-portrait.Ab3_x9Zq.avif': Buffer.alloc(bytes, 1), '_astro/portrait.Pq7_k2Lm.avif': kb(30) }, undefined, page), '--mode', 'build', '--pick', 'A');
+    const r = budget(fixture({ '_astro/land-case-portrait.Ab3_x9Zq.avif': Buffer.alloc(bytes, 1), '_astro/land-case-portrait.Bc4_y0Zr.webp': kb(20), '_astro/portrait.Pq7_k2Lm.avif': kb(30) }, undefined, page), '--mode', 'build', '--pick', 'A');
     assert.equal(r.status, status, r.stdout + r.stderr);
     const posters = r.stdout.split('\n').filter((l) => /^poster {4,}/.test(l));   // the table's rows, not the summary's lines
     assert.equal(posters.length, 1);
@@ -234,7 +237,7 @@ test("budget.mjs: section 6's lines exit 1 when broken, and a land picture is ne
     assert.equal(r.status, 1, r.stdout);
     assert.match(r.stderr, want);
   };
-  broken({ '_astro/land-case-wide-depth.Ab3_x9Zq.avif': kb(13) }, ['--mode', 'build'], /land case: depth map, wide, AVIF/);
+  broken({ '_astro/land-case-wide-depth.Ab3_x9Zq.avif': kb(13), '_astro/land-case-wide-depth.Bc4_y0Zr.webp': kb(13) }, ['--mode', 'build'], /land case: depth map, wide, AVIF/);
   broken({ '_astro/clip-1-2-wide.Ab3_x9Zq.mp4': kb(701) }, ['--mode', 'staging'], /option C: clip/);
   broken({ '_astro/travel-video.Cd5_z1Zs.js': 'export const c=1' }, ['--mode', 'build', '--pick', 'A'], /option C's chunk in a production build whose pick is A/);
   broken({ '_astro/park.Ab3_x9Zq.glb': kb(301) }, ['--mode', 'build', '--pick', 'B'], /option B: the park, GLB/);
@@ -242,4 +245,63 @@ test("budget.mjs: section 6's lines exit 1 when broken, and a land picture is ne
   assert.equal(budget(fixture({ '_astro/park.Ab3_x9Zq.glb': kb(301) }), '--mode', 'staging', '--pick', 'A').status, 0);
   assert.equal(budget(fixture({ '_astro/travel-video.Cd5_z1Zs.js': 'export const c=1' }), '--mode', 'staging', '--pick', 'A').status, 0);
   assert.equal(budget(fixture(), '--pick', 'D').status, 1);
+});
+
+test("budget.mjs: option A's script reads 'over, pending Sam' past his 30 KB and stops the build only past the spec's 38 KB", () => {
+  // the page's module import()s the island, and the island import()s a chunk of section 4 (known by its bridge's name);
+  // random bytes, so the gzip size is the size
+  const page = '<script type="module" src="/_astro/page.Ab3_x9Zq.js"></script>';
+  const room = (n: number) => ({ '_astro/page.Ab3_x9Zq.js': 'import("./hero.Bc4_y0Zr.js")', '_astro/hero.Bc4_y0Zr.js': 'import("./director.Cd5_z1Zs.js")', '_astro/director.Cd5_z1Zs.js': Buffer.concat([Buffer.from('/*skreed:room*/'), randomBytes(n * 1024)]) });
+  const row = (status: string) => new RegExp(`^ {2}${status} +[\\d.]+ KB of +${status === 'OVER' ? '38' : '30'}\\.0 KB {2}section 4's script, option A shipped`, 'm');
+  for (const [n, status, code] of [[20, 'ok', 0], [33, 'over, pending Sam', 0], [39, 'OVER', 1]] as const) {
+    const r = budget(fixture(room(n), undefined, page), '--mode', 'build', '--pick', 'A');
+    assert.equal(r.status, code, r.stdout + r.stderr);
+    assert.match(r.stdout, row(status), `${n} KB`);
+    if (status === 'over, pending Sam') assert.match(r.stdout, /holds .* 1 over Sam's figure, pending him: section 4's script, option A shipped \(gzip\) at 33\.\d KB against his 30\.0 KB/);
+    if (code) assert.match(r.stderr, /section 4's script, option A shipped \(gzip\): 39\.\d KB over 38\.0 KB/);
+  }
+  // B and C have no line of Sam's: their figures are the spec's
+  const b = budget(fixture(room(33), undefined, page), '--mode', 'build', '--pick', 'B');
+  assert.equal(b.status, 0, b.stderr);
+  assert.match(b.stdout, /^ {2}ok +[\d.]+ KB of +45\.0 KB {2}section 4's script, option B shipped/m);
+});
+
+test("budget.mjs: AC8's formats, each picture AVIF with its WebP twin and each land's <img> with width and height", () => {
+  const twin = { '_astro/land-case-portrait.Ab3_x9Zq.avif': kb(10), '_astro/land-case-portrait.Bc4_y0Zr.webp': kb(16) };
+  const sized = '<picture><source data-srcset="/_astro/land-case-portrait.Ab3_x9Zq.avif" type="image/avif"><img src="/_astro/land-case-portrait.Bc4_y0Zr.webp" width="720" height="1280" alt=""></picture>';
+  const ok = budget(fixture(twin, undefined, sized), '--mode', 'build');
+  assert.equal(ok.status, 0, ok.stdout + ok.stderr);
+  assert.match(ok.stdout, /^ {2}ok +formats: 1 picture\(s\) by name, AVIF with WebP; 1 land <img> in the page/m);
+  const fails = (files: Record<string, Buffer | string>, page: string, want: RegExp) => {
+    const r = budget(fixture(files, undefined, page), '--mode', 'build');
+    assert.equal(r.status, 1, r.stdout);
+    assert.match(r.stderr, want);
+    assert.match(r.stdout, /^ {2}FAIL +formats:/m);
+  };
+  fails({ '_astro/land-case-portrait.Ab3_x9Zq.avif': kb(10) }, sized, /land-case-portrait: AVIF without its WebP twin/);
+  fails({ '_astro/land-case-wide-depth.Bc4_y0Zr.webp': kb(4) }, '', /land-case-wide-depth: WebP without its AVIF twin/);
+  fails(twin, sized.replace(' width="720" height="1280"', ''), /a <picture> of land-case-portrait\.Ab3_x9Zq\.avif: its <img> has no width and height/);
+  fails(twin, '<noscript><img src="/_astro/land-case-portrait.Bc4_y0Zr.webp" width="720" alt=""></noscript>', /an <img> of land-case-portrait\.Bc4_y0Zr\.webp has no width and height/);
+});
+
+test('budget.mjs: once the world ships, the garden is in dist byte for byte or the build stops, never a garden of 0 KB', () => {
+  const dir = join(ROOT, 'src/assets/room/garden');
+  const pics = readdirSync(dir).filter((n) => /\.(?:avif|webp)$/.test(n));
+  assert.ok(pics.length >= 2, 'the garden is in src/');
+  // as shipped: each picture under a hashed name, its bytes unchanged (Vite's ?url)
+  const shipped = (rename: (n: string) => string = (n) => n, bytes: (n: string) => Buffer = (n) => readFileSync(join(dir, n))) => Object.fromEntries(pics.map((n) => [`_astro/${rename(n).replace(/\.(avif|webp)$/, '.Gd7_b3Zu.$1')}`, bytes(n)]));
+  const world = { '_astro/world.Ab3_x9Zq.js': 'export const w=1' };
+  // no world: the garden is not in the build yet, and nothing is asked of it
+  assert.equal(budget(fixture(), '--mode', 'build').status, 0);
+  const all = budget(fixture({ ...world, ...shipped() }), '--mode', 'build');
+  assert.equal(all.status, 0, all.stdout + all.stderr);
+  assert.match(all.stdout, new RegExp(`the garden, ${pics.length} of ${pics.length} pictures shipped as they are in src/`));
+  assert.match(all.stdout, /^room garden .*garden-plate\.Gd7_b3Zu\.avif/m);
+  assert.doesNotMatch(all.stdout, /^ {2}ok +0\.0 KB of +110\.0 KB {2}the garden: far plate, AVIF/m);
+  const stops = (files: Record<string, Buffer | string>, want: RegExp) => { const r = budget(fixture(files), '--mode', 'build'); assert.equal(r.status, 1, r.stdout); assert.match(r.stderr, want); };
+  stops(world, new RegExp(`the world ships, but none of the ${pics.length} pictures in src/assets/room/garden is in dist byte for byte`));
+  stops({ ...world, ...shipped((n) => `world-${n}`) }, /none of the .* pictures/);
+  stops({ ...world, ...shipped(undefined, (n) => n === pics[0] ? Buffer.alloc(64, 3) : readFileSync(join(dir, n))) }, new RegExp(`the garden: ${pics[0].replace('.', '\\.')} \\(in dist, but not these bytes\\) not in dist byte for byte`));
+  // a garden file in dist under its own name, re-encoded, is enough to know the world ships it, chunk or not
+  stops(shipped(undefined, () => Buffer.alloc(64, 3)), /none of the .* pictures/);
 });

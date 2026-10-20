@@ -6,8 +6,11 @@
 // Section 4 (docs/specs/section-4-world.md 6 and AC8) has its own groups: its lazy chunks, the world chunk, each travel
 // option's chunk, the garden (the files of src/assets/room/garden as shipped), the land pictures (land-<id>-portrait.*,
 // land-<id>-wide.*), their depth maps (land-<id>-<class>-depth.*), the park (park.*, park-*) and the clips (.mp4). Every
-// line of its section 6 is a threshold: scripts count at gzip, everything else as stored (the bytes a visitor fetches when
-// the edge does not compress them), gzip printed beside it for reference; any line broken exits 1 after the whole report.
+// byte line of its section 6 is a threshold: scripts count at gzip, everything else as stored (the bytes a visitor fetches
+// when the edge does not compress them), gzip printed beside it for reference. AC8's formats are checked too: each picture
+// in AVIF with its WebP twin, each land's <img> with width and height. Any line broken or check failed exits 1 after the
+// whole report. A line Sam has still to rule on prints "over, pending Sam" past his figure and stops the build only past
+// the spec's hard figure. What it cannot read from a dist (pixel sizes, the clips' tracks, GPU memory) is printed as such.
 // The mode (build, test, staging: which npm script made the dist) and the pick (PUBLIC_PARK_TRAVEL, A, B or C) come from
 // --mode and --pick, else from the environment (scripts/room/guards.mjs); npm run build and build:staging pass them.
 //   node scripts/hero/budget.mjs [dist] [--mode build|test|staging] [--pick A|B|C]
@@ -89,10 +92,14 @@ for (const n of astroFiles) {
 }
 for (const p of files(dist).filter((f) => /\.mp4$/i.test(f))) addFile('room clip', p, { cls: /portrait/.test(basename(p)) ? 'portrait' : /wide/.test(basename(p)) ? 'wide' : null });
 const gardenDir = join(ROOT, 'src/assets/room/garden');
+// the garden's pictures in src/, each with the dist files that carry its name and whether one of them is its bytes
+const gardenPics = [];
 if (existsSync(gardenDir)) for (const src of files(gardenDir)) {
   const stem = basename(src).replace(/\.[^.]+$/, ''), ext = src.split('.').pop(), bytes = readFileSync(src);
   const re = new RegExp(`^${stem.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\.${H}\\.${ext}$`);
-  for (const n of astroFiles.filter((f) => re.test(f) && readFileSync(join(dist, '_astro', f)).equals(bytes))) addFile('room garden', join(dist, '_astro', n), { part: /plate/.test(stem) ? 'plate' : 'card', fmt: ext });
+  const named = astroFiles.filter((f) => re.test(f)), same = named.filter((f) => readFileSync(join(dist, '_astro', f)).equals(bytes));
+  for (const n of same) addFile('room garden', join(dist, '_astro', n), { part: /plate/.test(stem) ? 'plate' : 'card', fmt: ext });
+  if (/^(?:avif|webp)$/.test(ext)) gardenPics.push({ file: basename(src), named: named.length, matched: same.length > 0 });
 }
 // the rest of what the section's chunks name: the old universe's scene and models until they go (counted as stored), and
 // the family page's case model it shares (public/models)
@@ -153,20 +160,27 @@ const htmlOrder = [...new Set([...html.matchAll(/land-([a-z0-9-]+?)-(?:portrait|
 const lands = [...htmlOrder, ...landIds.filter((id) => !htmlOrder.includes(id)).sort((a, b) => pic(b, 'wide', 'avif') - pic(a, 'wide', 'avif'))];
 const land1 = lands[0];
 
-const lines = [];
-const line = (name, bytes, limitKB, { enforced = true, note = '' } = {}) => lines.push({ name, bytes, limit: limitKB * KB, enforced, note });
+const lines = [], faults = [];
+// pendingKB: Sam's figure for a line he has still to rule on; past it the line prints "over, pending Sam", and only past
+// limitKB (the spec's hard figure) does it stop the build
+const line = (name, bytes, limitKB, { enforced = true, note = '', pendingKB = 0 } = {}) => lines.push({ name, bytes, limit: limitKB * KB, pending: pendingKB * KB, enforced, note });
 const SCRIPT = { A: 38, B: 45, C: 40 };
-line(`section 4's script, option ${pick} shipped (gzip)`, roomScript, SCRIPT[pick], { note: pick === 'A' ? `Sam's line is 30 KB, pending him (spec 11, item 1)${roomScript > 30 * KB ? ', over it' : ''}; the build fails above the spec's likely 38 KB` : `the spec's figure for option ${pick}` });
+line(`section 4's script, option ${pick} shipped (gzip)`, roomScript, SCRIPT[pick], pick === 'A'
+  ? { pendingKB: 30, note: "Sam's 30 KB line, pending him (spec 11, item 1: move it to 38 KB, or replace three's model loader); the build stops above the spec's likely 38 KB" }
+  : { note: `the spec's figure for option ${pick}` });
 for (const o of PICKS) if (chunksOf(o).size) {
   if (!tune && o !== pick) line(`option ${o}'s chunk in a ${BUILD} whose pick is ${pick} (gzip)`, ownOf(o), 0, { note: 'never in production until picked: astro.config.mjs aliases it to travel-stub.ts' });
   else line(`option ${o}'s own chunks (gzip)`, ownOf(o), 8, { note: 'about 8 KB each' });
 }
 line('total JS with section 4 (gzip)', totalJs + roomScript, 250, { enforced: !tune, note: tune ? "production's line; this staging build carries Tune" : 'production' });
 line('section 4 on the poster tier: its script (gzip)', posterScript, 8.5);
-line('the garden: far plate, AVIF', garden('avif', 'plate'), 110);
-line('the garden: far plate, WebP', garden('webp', 'plate'), 180);
-line('the garden: three depth cards together, AVIF', garden('avif', 'card'), 60);
-line('the garden: three depth cards together, WebP', garden('webp', 'card'), 100);
+// the world ships once its chunk does, or a file named as a garden picture; before that the garden is not in the build
+const worldShips = [...graph.keys()].some((p) => /^world\./.test(basename(p))) || gardenPics.some((g) => g.named);
+const gardenNote = worldShips ? '' : 'not in this build yet: no world chunk';
+line('the garden: far plate, AVIF', garden('avif', 'plate'), 110, { note: gardenNote });
+line('the garden: far plate, WebP', garden('webp', 'plate'), 180, { note: gardenNote });
+line('the garden: three depth cards together, AVIF', garden('avif', 'card'), 60, { note: gardenNote });
+line('the garden: three depth cards together, WebP', garden('webp', 'card'), 100, { note: gardenNote });
 // each land's picture and depth map; "each further land" (92 and 122 KB AVIF, 148 and 196 WebP) is the sum of the two lines
 const PIC = { portrait: { avif: 80, webp: 128 }, wide: { avif: 110, webp: 176 } };
 for (const f of room.filter((x) => x.group === 'room land')) line(`land ${f.id}: ${f.cls}, ${f.fmt.toUpperCase()}`, f.stored, PIC[f.cls][f.fmt], { note: f.name });
@@ -198,6 +212,35 @@ for (const cls of CLASSES) {
 for (const [fmt, limits] of [['avif', { portrait: 337, wide: 459 }], ['webp', { portrait: 529, wide: 724 }]]) for (const cls of CLASSES) {
   line(`the poster tier, ${cls}, ${fmt === 'avif' ? 'AVIF' : 'WebP'}: the hall's still and the lands`, still(cls, fmt) + lands.reduce((a, id) => a + pic(id, cls, fmt), 0), limits[cls]);
 }
+// AC8's formats. Each picture of the section ships as AVIF with its WebP twin, by the name before the hash: the lands, their
+// depth maps, the garden, the hall's stills and the park's lightmap. Each <img> in the page that names a land picture (its
+// own src or srcset, or a <source> of its <picture>) carries width and height.
+const stemOf = (name) => basename(name).replace(new RegExp(`\\.${H}\\.(?:avif|webp)$`), '');
+const pics = room.filter((f) => ['room land', 'room depth', 'room garden', 'room still'].includes(f.group) || (f.group === 'room park' && f.kind === 'lightmap'));
+const byStem = new Map();
+for (const f of pics) byStem.set(stemOf(f.name), new Set([...(byStem.get(stemOf(f.name)) ?? []), f.fmt]));
+const FMT = { avif: 'AVIF', webp: 'WebP' };
+for (const [stem, fmts] of byStem) for (const [has, lacks] of [['avif', 'webp'], ['webp', 'avif']]) if (fmts.has(has) && !fmts.has(lacks)) faults.push(`${stem}: ${FMT[has]} without its ${FMT[lacks]} twin (AC8: the pictures are AVIF with WebP)`);
+const LAND_REF = /land-[a-z0-9-]+?-(?:portrait|wide)\.[A-Za-z0-9_-]+\.(?:avif|webp)/;
+const sized = (img) => /\swidth=/.test(img) && /\sheight=/.test(img);
+let landImgs = 0;
+const pictureBlocks = [...html.matchAll(/<picture\b[\s\S]*?<\/picture>/g)].map((m) => m[0]);
+for (const block of pictureBlocks.filter((b) => LAND_REF.test(b))) {
+  const img = block.match(/<img\b[^>]*>/)?.[0];
+  landImgs++;
+  if (!img || !sized(img)) faults.push(`a <picture> of ${block.match(LAND_REF)[0]}: its <img> has no width and height (AC8)`);
+}
+for (const img of [...html.replace(/<picture\b[\s\S]*?<\/picture>/g, '').matchAll(/<img\b[^>]*>/g)].map((m) => m[0]).filter((t) => LAND_REF.test(t))) {
+  landImgs++;
+  if (!sized(img)) faults.push(`an <img> of ${img.match(LAND_REF)[0]} has no width and height (AC8)`);
+}
+// the garden is found by its bytes, so a garden that ships re-encoded or renamed would read 0 KB on its four lines and pass.
+// Once the world ships, every garden picture in src/ must be in dist as is.
+const unmatched = gardenPics.filter((g) => !g.matched);
+if (worldShips && unmatched.length) faults.push(unmatched.length === gardenPics.length
+  ? `the garden: the world ships, but none of the ${gardenPics.length} pictures in src/assets/room/garden is in dist byte for byte (re-encoded or renamed?), so its lines cannot be measured`
+  : `the garden: ${unmatched.map((g) => `${g.file}${g.named ? ' (in dist, but not these bytes)' : ''}`).join(', ')} not in dist byte for byte, so its lines are short`);
+
 // the first view: the section's markup as built (its noscript copies included) and room.css, minified from the source here
 // because the build inlines it into the one stylesheet with every other section's
 const at = html.search(/<section\b[^>]*\bid="room"/);
@@ -208,11 +251,20 @@ const css = existsSync(cssPath) ? readFileSync(cssPath, 'utf8').replace(/\/\*[\s
 line("the first view: section 4's markup and room.css (gzip)", gzipSync(markup + css, { level: 9 }).length, 4, { note: `markup ${markup.length} B, room.css about ${css.length} B` });
 
 console.log(`\nsection 4 (section-4-world.md 6; the ${BUILD}, pick ${pick}; scripts at gzip, everything else as stored; KB = 1024 B)`);
+const PENDING = 'over, pending Sam';
 for (const l of lines) {
-  const over = l.bytes > l.limit, tail = [l.note, over && !l.enforced ? 'not enforced here' : ''].filter(Boolean).join('; ');
-  console.log(`  ${(over ? (l.enforced ? 'OVER' : 'over') : 'ok').padEnd(4)} ${fmt(l.bytes)} of ${fmt(l.limit)}  ${l.name}${tail ? `  (${tail})` : ''}`);
+  const over = l.bytes > l.limit, waits = !over && l.pending > 0 && l.bytes > l.pending;
+  const status = over ? (l.enforced ? 'OVER' : 'over') : waits ? PENDING : 'ok';
+  const tail = [l.note, over && !l.enforced ? 'not enforced here' : ''].filter(Boolean).join('; ');
+  console.log(`  ${status.padEnd(PENDING.length)} ${fmt(l.bytes)} of ${fmt(over ? l.limit : l.pending || l.limit)}  ${l.name}${tail ? `  (${tail})` : ''}`);
 }
-console.log('  not measured here: the GPU memory (the review reads renderer.info), the Higgsfield credits (the ledger), the rings and the cloud (generated, 0 B)');
-const broken = lines.filter((l) => l.enforced && l.bytes > l.limit);
-if (broken.length) { console.error(`\nbudget: ${broken.length} line(s) of section-4-world.md 6 broken:\n${broken.map((l) => `  ${l.name}: ${fmt(l.bytes).trim()} over ${fmt(l.limit).trim()}`).join('\n')}`); process.exit(1); }
-console.log(`\nbudget: every line of section-4-world.md 6 holds (${lines.filter((l) => l.enforced).length} enforced)`);
+console.log(`  ${(faults.length ? 'FAIL' : 'ok').padEnd(PENDING.length)} formats: ${byStem.size} picture(s) by name, AVIF with WebP; ${landImgs} land <img> in the page, with width and height${worldShips ? `; the garden, ${gardenPics.length - unmatched.length} of ${gardenPics.length} pictures shipped as they are in src/` : ''}`);
+for (const f of faults) console.log(`  ${''.padEnd(PENDING.length)} ${f}`);
+console.log("  not measured here: the pixel sizes (720 x 1280, 1920 x 1200, the 2048 px plate, the 1024 px lightmap), the clips' count (3 per class), length (3 s), codec (H.264 720p) and missing audio track, the park's triangles and draws, the GPU memory (the review reads renderer.info), the frame cost (the probe), the Higgsfield credits (the ledger), the rings and the cloud (generated, 0 B)");
+const broken = lines.filter((l) => l.enforced && l.bytes > l.limit), waiting = lines.filter((l) => l.bytes <= l.limit && l.pending > 0 && l.bytes > l.pending);
+const pendingNote = waiting.length ? `; ${waiting.length} over Sam's figure, pending him: ${waiting.map((l) => `${l.name} at ${fmt(l.bytes).trim()} against his ${fmt(l.pending).trim()}`).join(', ')}` : '';
+if (broken.length || faults.length) {
+  console.error(`\nbudget: section-4-world.md 6 and AC8 do not hold:\n${[...broken.map((l) => `  ${l.name}: ${fmt(l.bytes).trim()} over ${fmt(l.limit).trim()}`), ...faults.map((f) => `  ${f}`)].join('\n')}${pendingNote ? `\n(and${pendingNote.slice(1)})` : ''}`);
+  process.exit(1);
+}
+console.log(`\nbudget: every enforced line of section-4-world.md 6 holds (${lines.filter((l) => l.enforced).length} enforced) and AC8's formats check${pendingNote}`);
