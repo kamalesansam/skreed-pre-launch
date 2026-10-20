@@ -148,10 +148,12 @@ test('AC11, plain text: room.css and Room.astro carry no panel, fill, border but
   for (const { sel, body } of rules) {
     for (const d of body.split(';').map((x) => x.trim()).filter(Boolean)) {
       const [prop, ...rest] = d.split(':'), val = rest.join(':').trim();
-      assert.doesNotMatch(prop, /box-shadow|backdrop-filter|border-radius/, `${sel}: ${d}`);
+      assert.doesNotMatch(prop, /box-shadow|backdrop-filter/, `${sel}: ${d}`);
+      if (/border-radius/.test(prop)) assert.equal(val, '0', `${sel}: ${d}`);   // a control's UA corner taken off, nothing rounded
       // the poster column and the loop's fade stand on --night, each picture on a --skeleton box until it decodes (H1)
-      if (/^background/.test(prop.trim())) assert.match(val, /^var\(--(night|skeleton)\)$/, `${sel}: ${d}`);
-      if (/^border/.test(prop.trim())) assert.match(sel, /:focus-visible/, `${sel}: a border outside the focus ring (${d})`);
+      // (and a control's UA fill and border taken off: none and 0)
+      if (/^background/.test(prop.trim())) assert.match(val, /^(none|var\(--(night|skeleton)\))$/, `${sel}: ${d}`);
+      if (/^border(?!-radius)/.test(prop.trim()) && !/^(0|none)$/.test(val)) assert.match(sel, /:focus-visible/, `${sel}: a border outside the focus ring (${d})`);
     }
   }
   for (const src of [css, astro]) {

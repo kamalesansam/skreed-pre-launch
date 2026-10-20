@@ -135,7 +135,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   // the world: its module, its scene, the lands' slots, the land on screen and what it is doing
   let W: WorldModule | null = null, world: WorldScene | null = null, worldJob: Promise<void> | null = null, worldFailed = false, gardenLap = -1, lap = 0;
   const slots = new Map<number, LandSlot>();
-  let land = 0, sub: LandSub = 'rest', landArmed = false, waitTo = -1, waitAt = 0, restKey = '';
+  let land = 0, sub: LandSub = 'rest', landArmed = false, waitTo = -1, waitAt = 0, waitByKey = false, restKey = '';
   // a travel between lands: from, to, its clock (ms), its length and how it plays; a held p for the review frames
   let tFrom = 0, tTo = 0, tMs = FADE_MS, tAt = 0, tSeek = -1, tMode: 'option' | 'fade' = 'fade', tOpt: TravelOption | 'fade' = 'fade';
   let travel: Travel | null = null, travelOpt: TravelOption | null = null, optJob: Promise<void> | null = null;
@@ -283,11 +283,12 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   }
 
   // ---- the travels between lands
-  function requestTravel(to: number): boolean {
+  /** a travel to land `to`, by a scroll past a trigger or by a key or button (byKey) */
+  function requestTravel(to: number, byKey: boolean): boolean {
     if (state !== 'world' || sub !== 'rest' || to < 0 || to >= N || to === land) return false;
     landArmed = false;
     if (settled(to)) { beginTravel(land, to); return true; }
-    waitTo = to; waitAt = performance.now(); setSub('wait');
+    waitTo = to; waitAt = performance.now(); waitByKey = byKey; setSub('wait');
     void ensureLand(to).then(() => { if (sub === 'wait' && waitTo === to && !disposed) beginTravel(land, to); });
     return true;
   }
@@ -321,7 +322,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       if (state === 'entering') endNow = true;
       else if (state === 'world' && sub === 'travel') { tSeek = -1; tAt = tMs; }
     },
-    travel(dir) { return requestTravel(land + dir); },
+    travel(dir) { return requestTravel(land + dir, true); },
     setHover(i) { hover = i; holdSway = i === -2; },
   };
   window.__skreedRoom = island;
@@ -455,11 +456,13 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
           if (sub === 'rest') {
             if (!landArmed && Math.abs(q - at) <= hold) landArmed = true;
             if (landArmed && inRoom) {
-              if (q > at + hold && land < N - 1) requestTravel(land + 1);
-              else if (q < at - hold && land > 0) requestTravel(land - 1);
+              if (q > at + hold && land < N - 1) requestTravel(land + 1, false);
+              else if (q < at - hold && land > 0) requestTravel(land - 1, false);
             }
           } else if (sub === 'wait') {
-            if (Math.abs(q - at) <= hold) { waitTo = -1; setSub('rest'); landArmed = true; }   // scrolling back cancels the wait
+            // scrolling back cancels the wait: into the hold zone after a scroll's trigger, past its other edge after a key's
+            const back = Math.sign(waitTo - land) * (q - at);
+            if (waitByKey ? back < -hold : back <= hold) { waitTo = -1; setSub('rest'); landArmed = Math.abs(q - at) <= hold; }
           }
           if (sub === 'travel') {
             if (tSeek >= 0) tAt = tSeek * tMs; else tAt += f.dt * 1000;
@@ -514,8 +517,8 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       world?.scissor(null);
       if (state === 'entering') { setState('hall'); hall.entering(false); }
       if (state === 'world') {
-        land = 0; landArmed = false; restKey = '';
-        if (params().lapReset >= 0.5) { setState('hall'); hall.entering(false); } else setSub('rest');
+        land = 0; landArmed = false; restKey = ''; setSub('rest');   // a travel, its settling or a wait ends here
+        if (params().lapReset >= 0.5) { setState('hall'); hall.entering(false); }
       }
       if (state === 'hall') keepAround(0);
       hall.swing(0, params().door); x = HALL.start; hover = -1; holdSway = false; hallFrozen = false;
@@ -535,7 +538,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       return {
         state, sub, land, lands: N, q: +q.toFixed(3), qRaw: +qRaw.toFixed(3), loop: +loopP.toFixed(3), screens: screens(),
         entry: +entryT.toFixed(3), arrive: +arrive.toFixed(3), worldReady: worldReady(), worldFailed,
-        travel: sub === 'travel' ? { from: tFrom, to: tTo, p: +clamp01(tAt / tMs).toFixed(3), ms: tMs, option: tOpt } : null,
+        travel: state === 'world' && sub === 'travel' ? { from: tFrom, to: tTo, p: +clamp01(tAt / tMs).toFixed(3), ms: tMs, option: tOpt } : null,
         option: travelOpt, optionModule: !!travel, resident: [...slots].map(([i, s]) => ({ i, cls: s.cls, ready: !!s.view, failed: s.failed, loading: !!s.job })),
         landQ: Array.from({ length: N }, (_, i) => landQ(i)), hall: hall.hooks(), world: world?.hooks?.() ?? null,
       };

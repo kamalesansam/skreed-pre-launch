@@ -33,7 +33,7 @@
 .rm-pad { position: absolute; inset: 0; outline: none; -webkit-tap-highlight-color: transparent; }
 
 /* the words that are controls: the quiz's link pattern (quiz.css .qz-link), a 44 px hit area, the underline thickening on hover */
-.room .rm-link { position: absolute; z-index: 3; display: inline-flex; align-items: center; gap: 0.6em; min-height: 44px; min-width: 44px; margin: 0; padding: 0; color: inherit; font: inherit; text-transform: inherit; letter-spacing: inherit; white-space: nowrap; text-decoration-line: underline; text-decoration-thickness: 1px; text-underline-offset: 0.4em; cursor: pointer; -webkit-tap-highlight-color: transparent; appearance: none; }
+.room .rm-link { position: absolute; z-index: 3; display: inline-flex; align-items: center; gap: 0.6em; min-height: 44px; min-width: 44px; margin: 0; padding: 0; background: none; border: 0; border-radius: 0; color: inherit; font: inherit; text-transform: inherit; letter-spacing: inherit; white-space: nowrap; text-decoration-line: underline; text-decoration-thickness: 1px; text-underline-offset: 0.4em; cursor: pointer; -webkit-tap-highlight-color: transparent; appearance: none; }
 .room .rm-link[aria-disabled="true"] { cursor: progress; }
 @media (hover: hover) { .room .rm-link:hover:not([aria-disabled="true"]) { text-decoration-thickness: 2px; } }
 .room .rm-link[hidden] { display: none; }
@@ -70,7 +70,7 @@
 .rm-land-count { font-variant-numeric: tabular-nums; }
 .rm-land-more[hidden] { display: none; }
 /* the travel buttons: visually hidden (the clip pattern), for browse mode; each runs the same travel as the keys */
-.room :is(.rm-prev, .rm-next) { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; appearance: none; }
+.room :is(.rm-prev, .rm-next) { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; background: none; border: 0; appearance: none; }
 .room :is(.rm-prev, .rm-next)[hidden] { display: none; }
 
 /* the fade of the poster tier's loop (through --night to the first screen) */
