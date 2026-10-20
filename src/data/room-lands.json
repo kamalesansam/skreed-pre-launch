@@ -1,0 +1,699 @@
+{
+ "about": "Section 4 part two, the four lands (docs/specs/section-4-world.md 3, \"Provenance\"), written by scripts/room/lands.py record. Not in ROOM_LANDS and not encoded until Sam approves each land (CHECKLIST F2).",
+ "masters": "assets-src/room/lands/ (gitignored; SHA256SUMS committed); work/ there holds every mask and generator output named here",
+ "ledger": "src/data/room-lands.ledger.json",
+ "credits": 73.0,
+ "lands": [
+  {
+   "id": "case",
+   "n": 1,
+   "family": "Mellow Yellow",
+   "base": {
+    "file": "yellow.png",
+    "from": "Sam's listing photos, ~/Downloads/amazon listing/image listing/lifestyle/17 promax/"
+   },
+   "accessory": null,
+   "approval": "Sam 2026-10-20, with fixes",
+   "fixes": [
+    "darken the text areas"
+   ],
+   "classes": {
+    "square": {
+     "steps": [
+      {
+       "stage": "matte",
+       "model": "image_background_remover",
+       "job": "a8997fd3-4297-4e74-8190-fe1a4ccff7fa",
+       "credits": 1.0,
+       "round": 1,
+       "output": "work/matte-case-a8997fd3.png",
+       "note": "comp-case.png"
+      },
+      {
+       "stage": "bg",
+       "model": "nano_banana_2_1",
+       "job": "8fff57ab-eb18-4587-8285-e83bcbf32861",
+       "credits": 2.0,
+       "round": 1,
+       "prompt": "Replace only the background with the Mall in Central Park, New York: the wide paved promenade beneath tall arching American elms, park benches and old lamp posts receding along the walk, direct warm late-afternoon sun from the right raking through the leaves, long soft shadows on the paving, the background softly out of focus as with a portrait lens at f/2. She leans against the trunk of a large elm. Photorealistic, natural colour. Keep the woman, her face, hair, hands, scarf, the phone, the yellow case and the flowers exactly as they are.",
+       "seed": 41113,
+       "resolution": "2k",
+       "aspect_ratio": "1:1",
+       "mask": "work/bg-case-mask-2.png",
+       "output": "work/bg-case-8fff57ab.png",
+       "note": "attempt 2"
+      }
+     ],
+     "file": "land-case-square.png",
+     "sha256": "615cdd642ad58e73b58cdaf72d193fd67ccff6298ccfa408f09b820cdbd83f32",
+     "source": "yellow.png"
+    },
+    "portrait": {
+     "steps": [
+      {
+       "stage": "crop",
+       "local": true,
+       "x": 657,
+       "width": 1406
+      },
+      {
+       "stage": "burn",
+       "local": true,
+       "round": 2,
+       "stops": 0.85,
+       "ru": 1.5,
+       "rv": 0.62,
+       "hl": 0.6
+      }
+     ],
+     "file": "land-case-portrait.png",
+     "sha256": "4f74f3d6e59fd619b5b6567f11015843e4d54ac16b9a591b00709b9e6662a483",
+     "source": "yellow.png"
+    },
+    "wide": {
+     "steps": [
+      {
+       "stage": "pad",
+       "model": "outpaint",
+       "job": "31ce3e41-63ba-4d37-8b8d-a483140a70c4",
+       "credits": 2.0,
+       "round": 1,
+       "aspect_ratio": "16:9",
+       "output": "work/pad-case-31ce3e41.png",
+       "note": "attempt 2"
+      },
+      {
+       "stage": "darken",
+       "model": "nano_banana_2_1",
+       "job": "e5009577-54a8-42ab-a8d5-9fe87a1790c0",
+       "credits": 2.0,
+       "round": 2,
+       "prompt": "Fill only the masked area at the left: the great elm's trunk ends just inside the right side of the masked area, its shaded left edge, and beyond it the Mall in Central Park in the deep shade of the elms: dark shaded lawn and the edge of the path, darkest and quietest toward the lower left, soft and out of focus like the rest of the background, with nothing in it: no people, no benches, no flowers, no bark texture up close. Keep the light, colour and focus of the photograph. Change nothing outside the mask.",
+       "seed": 41133,
+       "resolution": "2k",
+       "aspect_ratio": "16:9",
+       "mask": "work/darken-case-mask-2.png",
+       "output": "work/darken-case-e5009577.png",
+       "note": "attempt 2"
+      },
+      {
+       "stage": "burn",
+       "local": true,
+       "round": 2,
+       "stops": 0.5,
+       "ru": 0.8,
+       "rv": 0.65,
+       "hl": 0.6
+      }
+     ],
+     "file": "land-case-wide.png",
+     "sha256": "922b9ad2a3956ed3bcd45cff098caa26bbfb73500a87c5b6020dbe1f6507de80",
+     "source": "yellow.png"
+    },
+    "portrait-depth": {
+     "steps": [
+      {
+       "stage": "depth",
+       "model": "depth_anything_video",
+       "job": "535797f7-ea1f-49b1-9111-080553ebe584",
+       "credits": 1.5,
+       "round": 2,
+       "variant": "VDA-Small",
+       "max_frames": 1,
+       "output": "work/depth-case-portrait-535797f7.mp4",
+       "note": ""
+      }
+     ],
+     "file": "land-case-portrait-depth.png",
+     "sha256": "b2d57cbf810c15712eacf81b9ee26456a96e22350223394bdcf6f05946c498ee",
+     "source": "yellow.png"
+    },
+    "wide-depth": {
+     "steps": [
+      {
+       "stage": "depth",
+       "model": "depth_anything_video",
+       "job": "603ab9f4-36ae-4daf-a731-1150ddf51b56",
+       "credits": 1.5,
+       "round": 2,
+       "variant": "VDA-Small",
+       "max_frames": 1,
+       "output": "work/depth-case-wide-603ab9f4.mp4",
+       "note": ""
+      }
+     ],
+     "file": "land-case-wide-depth.png",
+     "sha256": "8856e0c3c849f247b7a392a7d133e1d9f365390e3ee4bd6cd1abe146b8576e15",
+     "source": "yellow.png"
+    }
+   }
+  },
+  {
+   "id": "wallet",
+   "n": 2,
+   "family": "Blissful Blue",
+   "base": {
+    "file": "blue.png",
+    "from": "Sam's listing photos, ~/Downloads/amazon listing/image listing/lifestyle/17 promax/"
+   },
+   "accessory": {
+    "shade": "basic-brown-04",
+    "hex": "#c6a884",
+    "finish": "matte",
+    "render": "scripts/room/render-products.py, Blender 5.2 Cycles on Metal",
+    "spec": "work/acc-wallet.json"
+   },
+   "approval": "Sam 2026-10-20, with fixes",
+   "fixes": [
+    "darken the text areas"
+   ],
+   "classes": {
+    "square": {
+     "steps": [
+      {
+       "stage": "matte",
+       "model": "image_background_remover",
+       "job": "e7b1ac28-ef2a-41c5-b58c-ed0f122b49ab",
+       "credits": 1.0,
+       "round": 1,
+       "output": "work/matte-wallet-e7b1ac28.png",
+       "note": "comp-wallet.png"
+      },
+      {
+       "stage": "bg",
+       "model": "nano_banana_2_1",
+       "job": "765be83f-e22b-49e8-a406-300783070bba",
+       "credits": 2.0,
+       "round": 1,
+       "prompt": "Replace only the background with the arcade under Bethesda Terrace in Central Park, New York: its warm sandstone arches and the patterned tile ceiling behind her, in soft open shade, the background softly out of focus as with a portrait lens at f/2. Photorealistic, natural colour. Keep the woman, her hair, her hands, her sweater, the phone, the blue case and the brown wallet on it exactly as they are.",
+       "seed": 41213,
+       "resolution": "2k",
+       "aspect_ratio": "1:1",
+       "mask": "work/bg-wallet-mask-2.png",
+       "output": "work/bg-wallet-765be83f.png",
+       "note": "attempt 2"
+      }
+     ],
+     "file": "land-wallet-square.png",
+     "sha256": "b43f9f1e9411e0af0c34d064f8a3d9c4d186c3db5584a83897c1e2592b00b8fd",
+     "source": "blue.png"
+    },
+    "portrait": {
+     "steps": [
+      {
+       "stage": "crop",
+       "local": true,
+       "x": 587,
+       "width": 1406
+      },
+      {
+       "stage": "burn",
+       "local": true,
+       "round": 2,
+       "stops": 1.6,
+       "ru": 1.5,
+       "rv": 0.62,
+       "hl": 0.6
+      }
+     ],
+     "file": "land-wallet-portrait.png",
+     "sha256": "92fe7369b2eb09d8e003ee79fd340d2820ae5b46501079b501334d4ba3014447",
+     "source": "blue.png"
+    },
+    "wide": {
+     "steps": [
+      {
+       "stage": "pad",
+       "model": "outpaint",
+       "job": "ea5b966b-f6d2-4172-aa8d-406c88f45d1f",
+       "credits": 2.0,
+       "round": 1,
+       "aspect_ratio": "16:9",
+       "output": "work/pad-wallet-ea5b966b.png",
+       "note": "attempt 2"
+      },
+      {
+       "stage": "darken",
+       "model": "nano_banana_2_1",
+       "job": "7d6bd7ae-a65d-4a4c-827b-4ca9d8106420",
+       "credits": 2.0,
+       "round": 2,
+       "prompt": "Fill only the masked area at the left: the arcade under Bethesda Terrace continuing to the left, its sandstone arches and columns receding into deep shade, the openings dim, the floor dark, darkest and quietest toward the lower left, soft and out of focus like the rest of the background, with nothing in it: no people, no bright tiles, no daylight at the lower left. Keep the light, colour and focus of the photograph. Change nothing outside the mask.",
+       "seed": 41233,
+       "resolution": "2k",
+       "aspect_ratio": "16:9",
+       "mask": "work/darken-wallet-mask-2.png",
+       "output": "work/darken-wallet-7d6bd7ae.png",
+       "note": "attempt 2"
+      },
+      {
+       "stage": "burn",
+       "local": true,
+       "round": 2,
+       "stops": 1.4,
+       "ru": 0.8,
+       "rv": 0.65,
+       "hl": 0.6
+      }
+     ],
+     "file": "land-wallet-wide.png",
+     "sha256": "08d47a72e247cc20f2a5025ed4a1f59450449e31982121769eb24cd470fac822",
+     "source": "blue.png"
+    },
+    "portrait-depth": {
+     "steps": [
+      {
+       "stage": "depth",
+       "model": "depth_anything_video",
+       "job": "6e0d763b-d252-495f-a2a2-1d3b403249c5",
+       "credits": 1.5,
+       "round": 2,
+       "variant": "VDA-Small",
+       "max_frames": 1,
+       "output": "work/depth-wallet-portrait-6e0d763b.mp4",
+       "note": ""
+      }
+     ],
+     "file": "land-wallet-portrait-depth.png",
+     "sha256": "6df18e305d7ff91b1d07eded7af8c8a257c9c2437bea86ab2d5c6dc98e1e79e2",
+     "source": "blue.png"
+    },
+    "wide-depth": {
+     "steps": [
+      {
+       "stage": "depth",
+       "model": "depth_anything_video",
+       "job": "91371a3e-1415-4ee5-bf5b-2fec89e90a78",
+       "credits": 1.5,
+       "round": 2,
+       "variant": "VDA-Small",
+       "max_frames": 1,
+       "output": "work/depth-wallet-wide-91371a3e.mp4",
+       "note": ""
+      }
+     ],
+     "file": "land-wallet-wide-depth.png",
+     "sha256": "f35f4ba127e0ba4bbe0ca9f5941bd8038744104aa4410f56da1d8d8ba18bfc63",
+     "source": "blue.png"
+    }
+   }
+  },
+  {
+   "id": "lenskin",
+   "n": 3,
+   "family": "Go Green",
+   "base": {
+    "file": "green.png",
+    "from": "Sam's listing photos, ~/Downloads/amazon listing/image listing/lifestyle/17 promax/"
+   },
+   "accessory": {
+    "shade": "roaring-red-07",
+    "hex": "#d20000",
+    "finish": "metallic",
+    "render": "scripts/room/render-products.py, Blender 5.2 Cycles on Metal",
+    "spec": "work/acc-lenskin.json",
+    "options": [
+     {
+      "option": 0,
+      "shade": "roaring-red-07",
+      "name": "Crimson",
+      "hex": "#d20000",
+      "why": "the first candidate, kept for comparison: near the case's complement at full chroma",
+      "grade": 0.85,
+      "over_photo_white": "#e00000",
+      "dE2000": 2.96
+     },
+     {
+      "option": 1,
+      "shade": "frosty-white-10",
+      "name": "Porcelain",
+      "hex": "#eff1f0",
+      "why": "a light neutral: Porcelain, a cool near-white that reads as brushed aluminium; the most contrast in value and none in hue, its faint green cast the case's own",
+      "grade": 0.851,
+      "over_photo_white": "#f2f3f3",
+      "dE2000": 0.95
+     },
+     {
+      "option": 2,
+      "shade": "mellow-yellow-24",
+      "name": "Dijon",
+      "hex": "#cea146",
+      "why": "a warm metal: Dijon, a muted gold about a third of the wheel from the case (a triad, not a complement), the racing green and gold of the classic pairing",
+      "grade": 0.748,
+      "over_photo_white": "#cfa046",
+      "dE2000": 0.68
+     },
+     {
+      "option": 3,
+      "shade": "go-green-09",
+      "name": "Sage",
+      "hex": "#96a880",
+      "why": "a lighter green: Sage, from the case's own family, greyed and far lighter: an analogous, tone-on-tone pairing (and the AirPods case's shade in land 4)",
+      "grade": 0.745,
+      "over_photo_white": "#96a880",
+      "dE2000": 0.0
+     },
+     {
+      "option": 4,
+      "shade": "stormy-grey-23",
+      "name": "Graphite",
+      "hex": "#424548",
+      "why": "a dark neutral: Graphite, gunmetal; a green darker than the case would vanish on it, so the dark option is a neutral, the quietest of the four",
+      "grade": 0.748,
+      "over_photo_white": "#424548",
+      "dE2000": 0.0
+     }
+    ],
+    "note": "the masters carry option 0 (the first candidate) until Sam picks; out/lenskin-options/ holds each candidate's square and crops"
+   },
+   "approval": "pending the redo",
+   "fixes": [
+    "the colour against the case (redo)",
+    "the Lenskin's sheen",
+    "darken the text areas"
+   ],
+   "classes": {
+    "square": {
+     "steps": [
+      {
+       "stage": "matte",
+       "model": "image_background_remover",
+       "job": "53692dc4-86cf-4e28-842f-bcac74bccec8",
+       "credits": 1.0,
+       "round": 1,
+       "output": "work/matte-lenskin-53692dc4.png",
+       "note": "comp-lenskin.png"
+      },
+      {
+       "stage": "bg",
+       "model": "nano_banana_2_1",
+       "job": "d89f29d3-47fa-4bce-b0c9-f7283239a327",
+       "credits": 2.0,
+       "round": 1,
+       "prompt": "Replace only the background with Sheep Meadow in Central Park, New York, under a soft overcast sky: the wide green lawn behind him, a line of trees at its far edge and the Midtown skyline rising beyond, softly out of focus as with a portrait lens at f/2, cool even light. Photorealistic, natural colour. Keep the man, his face, his hands, his watch, his clothes, the phone, the green case and the red plate on its camera exactly as they are.",
+       "seed": 41312,
+       "resolution": "2k",
+       "aspect_ratio": "1:1",
+       "mask": "work/bg-lenskin-mask-1.png",
+       "output": "work/bg-lenskin-d89f29d3.png",
+       "note": "attempt 1"
+      },
+      {
+       "stage": "retouch",
+       "local": true,
+       "round": 2,
+       "mask": "work/retouch-lenskin-mask.png",
+       "note": "the old lime wall's line along the case's top edge, filled from its neighbours (cv2.inpaint, Telea, 4 px)"
+      }
+     ],
+     "file": "land-lenskin-square.png",
+     "sha256": "a9c162f21a5b2702b1d78b4ba641e78966ea4a985cb42c7e3f81a6f7886a7fde",
+     "source": "green.png"
+    },
+    "portrait": {
+     "steps": [
+      {
+       "stage": "crop",
+       "local": true,
+       "x": 250,
+       "width": 1406
+      },
+      {
+       "stage": "burn",
+       "local": true,
+       "round": 2,
+       "stops": 2.6,
+       "ru": 1.5,
+       "rv": 0.7,
+       "hl": 1.4
+      }
+     ],
+     "file": "land-lenskin-portrait.png",
+     "sha256": "1e313d50e9d715e2c369cf3fc528d98e837715115e209012d7ae6a09c4f6e5b8",
+     "source": "green.png"
+    },
+    "wide": {
+     "steps": [
+      {
+       "stage": "pad",
+       "model": "outpaint",
+       "job": "3e98cd05-8fd0-4baf-bc6c-ccf1ec70740e",
+       "credits": 2.0,
+       "round": 1,
+       "aspect_ratio": "16:9",
+       "output": "work/pad-lenskin-3e98cd05.png",
+       "note": "attempt 2"
+      },
+      {
+       "stage": "darken",
+       "model": "nano_banana_2_1",
+       "job": "39ef2429-3c49-4fad-9a4c-6b617d10cce5",
+       "credits": 2.0,
+       "round": 2,
+       "prompt": "Fill only the masked lower left with Sheep Meadow's lawn in the shade of a large tree just outside the picture: dark, quiet, even grass, much darker than the open lawn, soft and out of focus like the rest of the background, with nothing in it: no people, no paths, no bright patches. Keep the light, colour and focus of the photograph. Change nothing outside the mask.",
+       "seed": 41333,
+       "resolution": "2k",
+       "aspect_ratio": "16:9",
+       "mask": "work/darken-lenskin-mask-2.png",
+       "output": "work/darken-lenskin-39ef2429.png",
+       "note": "attempt 2"
+      },
+      {
+       "stage": "burn",
+       "local": true,
+       "round": 2,
+       "stops": 1.1,
+       "ru": 0.8,
+       "rv": 0.65,
+       "hl": 0.6
+      }
+     ],
+     "file": "land-lenskin-wide.png",
+     "sha256": "dde289f7a830e5e32a344d589f83371b55c41e1e8ac3e1dbd5608c88559bda9e",
+     "source": "green.png"
+    },
+    "portrait-depth": {
+     "steps": [
+      {
+       "stage": "depth",
+       "model": "depth_anything_video",
+       "job": "bac0ebde-8ba8-4fbc-8acc-2e0d54627315",
+       "credits": 1.5,
+       "round": 2,
+       "variant": "VDA-Small",
+       "max_frames": 1,
+       "output": "work/depth-lenskin-portrait-bac0ebde.mp4",
+       "note": ""
+      }
+     ],
+     "file": "land-lenskin-portrait-depth.png",
+     "sha256": "932889bab3b2cfa20552c923a059ba6c30d7f901b35adcf577376eb8d615d9ea",
+     "source": "green.png"
+    },
+    "wide-depth": {
+     "steps": [
+      {
+       "stage": "depth",
+       "model": "depth_anything_video",
+       "job": "a58ad032-83fa-4bf9-9561-5ab28907aae6",
+       "credits": 1.5,
+       "round": 2,
+       "variant": "VDA-Small",
+       "max_frames": 1,
+       "output": "work/depth-lenskin-wide-a58ad032.mp4",
+       "note": ""
+      }
+     ],
+     "file": "land-lenskin-wide-depth.png",
+     "sha256": "e92de2a57c6228bbf8b7b4d570bc74e817ace20d50d8452b35e13c46299a0fd1",
+     "source": "green.png"
+    }
+   }
+  },
+  {
+   "id": "airpods",
+   "n": 4,
+   "family": "Vivid Violet",
+   "base": {
+    "file": "violet.png",
+    "from": "Sam's listing photos, ~/Downloads/amazon listing/image listing/lifestyle/17 promax/"
+   },
+   "accessory": {
+    "shade": "go-green-09",
+    "hex": "#96a880",
+    "finish": "gloss",
+    "render": "scripts/room/render-products.py, Blender 5.2 Cycles on Metal",
+    "spec": "work/acc-airpods.json"
+   },
+   "approval": "Sam 2026-10-20, with fixes",
+   "fixes": [
+    "the AirPods placement and shadow",
+    "darken the text areas"
+   ],
+   "classes": {
+    "square": {
+     "steps": [
+      {
+       "stage": "hand",
+       "model": "nano_banana_2_1",
+       "job": "fd8a1625-077f-4d65-afae-5c8ec8c29ab2",
+       "credits": 2.0,
+       "round": 1,
+       "prompt": "Her left hand rises from the lower right and holds the small open sage green earbuds case that is already in the picture from underneath: the case sits on her fingers and palm, her thumb against its side. Her forearm in the same black leather jacket sleeve, the same skin tone and soft window light as her right hand, a natural relaxed hand with five fingers. Photorealistic. Draw only her hand and sleeve: do not draw any other case, earbuds, phone or object, and do not change the case already there.",
+       "seed": 41403,
+       "resolution": "2k",
+       "aspect_ratio": "1:1",
+       "mask": "work/hand-airpods-mask-2.png",
+       "output": "work/hand-airpods-fd8a1625.png",
+       "note": "attempt 2"
+      },
+      {
+       "stage": "matte",
+       "model": "image_background_remover",
+       "job": "fb685562-4356-44d5-a623-473279c0602b",
+       "credits": 1.0,
+       "round": 1,
+       "output": "work/matte-airpods-fb685562.png",
+       "note": "hand-airpods-2.png"
+      },
+      {
+       "stage": "bg",
+       "model": "nano_banana_2_1",
+       "job": "1475d9be-4c44-4966-b65c-3b984b9c1a2c",
+       "credits": 2.0,
+       "round": 1,
+       "prompt": "Replace only the background with Bow Bridge over the Lake in Central Park, New York, behind her: the cast-iron bridge's low graceful arch over calm water, trees along the bank, in soft open shade, the background softly out of focus as with a portrait lens at f/2. Photorealistic, natural colour. Keep the woman, her face, hair, hands, jacket, the phone, the violet case and the green earbuds case exactly as they are.",
+       "seed": 41412,
+       "resolution": "2k",
+       "aspect_ratio": "1:1",
+       "mask": "work/bg-airpods-mask-1.png",
+       "output": "work/bg-airpods-1475d9be.png",
+       "note": "attempt 1"
+      },
+      {
+       "stage": "hand",
+       "model": "nano_banana_2_1",
+       "job": "6e73cb69-0b5a-4fdd-9537-b9aaef7dc4d5",
+       "credits": 2.0,
+       "round": 2,
+       "prompt": "Her left hand rises from below the picture and holds the small open sage green earbuds case that is already in the picture from underneath: the case sits on her fingers and palm, her thumb against its side. Her forearm in the same black leather jacket sleeve, the same skin tone and soft window light as her right hand, a natural relaxed hand with five fingers. Photorealistic. Draw only her hand and sleeve: do not draw any other case, earbuds, phone or object, and do not change the case already there.",
+       "seed": 41404,
+       "resolution": "2k",
+       "aspect_ratio": "1:1",
+       "mask": "work/hand-airpods-mask-3.png",
+       "output": "work/hand-airpods-6e73cb69.png",
+       "note": "attempt 3"
+      },
+      {
+       "stage": "rebg",
+       "local": true,
+       "round": 2,
+       "note": "the second pose's hand composite over bg attempt 1's background; the matte the first round's with the new hand added"
+      }
+     ],
+     "file": "land-airpods-square.png",
+     "sha256": "49a18978afe3c9c449451cace2c46d45ed2deb787c59a85add3221e7a3a7aabe",
+     "source": "violet.png"
+    },
+    "portrait": {
+     "steps": [
+      {
+       "stage": "crop",
+       "local": true,
+       "x": 360,
+       "width": 1406
+      },
+      {
+       "stage": "burn",
+       "local": true,
+       "round": 2,
+       "stops": 0.6,
+       "ru": 1.5,
+       "rv": 0.62,
+       "hl": 0.6
+      }
+     ],
+     "file": "land-airpods-portrait.png",
+     "sha256": "a0c43c4122e3c97d249f2bdb2b5363cfc14f2be5db7a57874dc84392fd159ebe",
+     "source": "violet.png"
+    },
+    "wide": {
+     "steps": [
+      {
+       "stage": "pad",
+       "model": "outpaint",
+       "job": "e5b3882e-15ab-4173-8be9-6d838c9a39e6",
+       "credits": 2.0,
+       "round": 1,
+       "aspect_ratio": "16:9",
+       "output": "work/pad-airpods-e5b3882e.png",
+       "note": "attempt 2"
+      },
+      {
+       "stage": "darken",
+       "model": "nano_banana_2_1",
+       "job": "54f03f5f-437f-4572-ab8b-8b6aea044349",
+       "credits": 2.0,
+       "round": 2,
+       "prompt": "Fill only the masked lower left with the Lake's dark, still water in the shade of the trees on its bank, much darker and quieter than the rest, soft and out of focus like the rest of the background, with nothing in it: no railing, no balustrade, no stone, no reflections of the sky. Keep the light, colour and focus of the photograph. Change nothing outside the mask.",
+       "seed": 41432,
+       "resolution": "2k",
+       "aspect_ratio": "16:9",
+       "mask": "work/darken-airpods-mask-1.png",
+       "output": "work/darken-airpods-54f03f5f.png",
+       "note": "attempt 1"
+      },
+      {
+       "stage": "burn",
+       "local": true,
+       "round": 2,
+       "stops": 0.65,
+       "ru": 0.8,
+       "rv": 0.65,
+       "hl": 0.6
+      }
+     ],
+     "file": "land-airpods-wide.png",
+     "sha256": "cacc5c0a7ad76f1aa67091ef6cb37d5afb54854f05d88871997dbdf28950f79e",
+     "source": "violet.png"
+    },
+    "portrait-depth": {
+     "steps": [
+      {
+       "stage": "depth",
+       "model": "depth_anything_video",
+       "job": "b95403b8-a194-4b47-a8ab-d32e17f3e8a6",
+       "credits": 1.5,
+       "round": 2,
+       "variant": "VDA-Small",
+       "max_frames": 1,
+       "output": "work/depth-airpods-portrait-b95403b8.mp4",
+       "note": ""
+      }
+     ],
+     "file": "land-airpods-portrait-depth.png",
+     "sha256": "05464b61ec2cf7f5354aa00b2a829065ea1a25666ebf056bbef0b5aa2f7ec59c",
+     "source": "violet.png"
+    },
+    "wide-depth": {
+     "steps": [
+      {
+       "stage": "depth",
+       "model": "depth_anything_video",
+       "job": "1b0befa0-ff24-4a07-885c-846dec5d4b29",
+       "credits": 1.5,
+       "round": 2,
+       "variant": "VDA-Small",
+       "max_frames": 1,
+       "output": "work/depth-airpods-wide-1b0befa0.mp4",
+       "note": ""
+      }
+     ],
+     "file": "land-airpods-wide-depth.png",
+     "sha256": "26bdb7dd2655c33d187789e5182294cdbe9fe6e09f14d3c53028f9bf2b77ed4e",
+     "source": "violet.png"
+    }
+   }
+  }
+ ]
+}

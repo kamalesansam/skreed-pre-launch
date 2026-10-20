@@ -4,6 +4,8 @@ Made 2026-10-20 by `scripts/room/lands.py` (the driver) and `scripts/room/render
 
 **Credits: 45.0 of the 100 this builder was given** (the account read 1,800 before the first call and 1,755 after the last, so no other call was charged to it meanwhile). Every call is in section 4 with its job id.
 
+**The second round** (Sam's review of the first sheet, 2026-10-20) is section 8: **28.0 of its 40 credits** (the account read 1,755 before and 1,727 after). Sections 1 to 7 describe the first round; where section 8 differs, it holds. Lands 1, 2 and 4 are "Sam 2026-10-20, with fixes" in `src/data/room-lands.json`; land 3 is pending the Lenskin redo.
+
 ## 1. The result
 
 | # | Land | Base | Place | Square | Portrait 1406 x 2500 | Wide 4000 x 2500 (16:10) |
@@ -140,3 +142,106 @@ python3 -I scripts/room/lands.py depth     --root <run>                         
 python3 -I scripts/room/lands.py check|sheet|sums|ledger --root <run>
 ```
 `<run>` holds `src/` (the four copies), `work/` (every intermediate, the uploads memo and the ledger) and `out/`. The generators are not deterministic across their versions even with a seed, so a re-run makes new candidates; the sums pin the ones above.
+
+## 8. The second round (Sam, 2026-10-20)
+
+Sam's words on the first sheet: "the lenskin color combination with the phone case and the lenskin doesnt go well, redo that one. fix the AirPods placement and shadow, the Lenskin's sheen, and darken the text areas." The approved backgrounds and pads are kept: their calls are reused, never paid again. The masters, the run's `work/` and `out/`, and the first round's masters (`v1/`) are copied into `assets-src/room/lands/` (gitignored); `SHA256SUMS` lists all 55 (the 20 masters, the Lenskin candidates' 15 in `lenskin-options/`, and the first round's 20 in `v1/`), and `shasum -a 256 -c SHA256SUMS` passes for every one. The sheet is `out/sheet-v2.jpg` in the run folder; the Lenskin's is `out/lenskin-options.jpg`.
+
+**8.1 The shades are read, not typed.** `lands.py` reads each accessory's shade id and finish from `ROOM_PRODUCTS` in `src/config/room.ts` and checks the hex against `shades-240.json` by id; `tests/unit/room-lands.test.ts` checks `room-lands.json` against the same.
+
+**8.2 The Lenskin, redone (land 3; nothing generated).** The park of the first round stays; only the plate changes, in four candidate shades by id, each metallic matte, for Sam to choose from. Nothing here picks.
+- **Why these four.** The case as photographed is a deep blue-green, #103f32 at its median (hue about 163 degrees, L* about 23). Crimson sits almost opposite it on the wheel at full chroma, the pairing that fights. The four keep a contrast in value or in warmth instead:
+
+| Option | Shade | Id | Hex | Why |
+|---|---|---|---|---|
+| 0 | Crimson | `roaring-red-07` | #d20000 | the first candidate, for comparison |
+| 1 | Porcelain | `frosty-white-10` | #eff1f0 | a light neutral that reads as brushed aluminium: the most contrast in value and none in hue, its faint green cast the case's own |
+| 2 | Dijon | `mellow-yellow-24` | #cea146 | a warm metal, a muted gold about a third of the wheel from the case (a triad, not a complement): racing green and gold |
+| 3 | Sage | `go-green-09` | #96a880 | a lighter green from the case's own family, greyed: analogous, tone on tone (and land 4's AirPods case) |
+| 4 | Graphite | `stormy-grey-23` | #424548 | a dark neutral, gunmetal: a green darker than this case would vanish on it, so the dark option is a neutral, the quietest |
+
+- **The sheen.** Rendered in Blender (Cycles on Metal, 128 samples) in perspective, the plate face-on at 0.2 m, its outside face still 20 px per mm so the first round's hole homography places it unchanged (residual 0.8 to 3.6 px). The view turns about 9 degrees across the plate, so it reflects a soft park sky (`env`: an overcast sky brighter toward its zenith, a line of trees, the lawn), its zenith the photo's up (the render's left: the phone is held on its side) and the horizon a little under the mirror direction. A strip light (0.4 x 0.006 m, 0.25 m off, rolled 18 degrees) lays a streak along the plate; a 0.3 mm bevel on the model's cut edges is where the metal's fresnel lights its rim, and where the plate is cut to the plateau the same rim is carried along the cut (lit facing the photo's up, shaded facing down). Roughness 0.24 here against the universe's 0.38: at a hand's length 0.38 spread the streak over the whole plate. The lights are in the photo's own axes (the soft key above and in front, as on his face), turned into the plate's frame by the homography; the first round's lights had the photo's light coming from its lower left.
+- **The composite.** As the first round's (the photo's white for the gain, the plateau's clip, behind his fingers, the photo's softness and grain), plus: the lenses', flash's, microphone's and LiDAR's bezels (fitted on a 3x zoom: radius 52 px for the three lenses, 20, 7 and 24 for the others) stay on top, the plate takes a 5 px contact shade round each, and the plateau left showing in the holes' gaps and at the plate's left edge takes the plate's shade (0.55). A shoulder rolls the sheen off toward the photo's white above 0.75 of it, on the brightest channel, so Porcelain does not blow out flat (38 percent of its plate clipped without it). Each plate is then graded so its median over the photo's white is the hex's luminance:
+
+| Option | Grade | Over the photo's white | dE2000 against the hex |
+|---|---|---|---|
+| 0 Crimson (the first round's plate) | 0.85 | #e00000 | 2.96 |
+| 1 Porcelain | 0.851 | #f2f3f3 | 0.95 |
+| 2 Dijon | 0.748 | #cfa046 | 0.68 |
+| 3 Sage | 0.745 | #96a880 | 0.00 |
+| 4 Graphite | 0.748 | #424548 | 0.00 |
+
+- **The lime line.** The old wall's faint line along the case's top edge and its wedge between the case's right edge and his finger (2,917 px), found by hue within 16 px of the person's outline: the line filled from both sides (`cv2.inpaint`, Telea, 4 px), the wedge with the background just under it carried up column by column. No credits.
+- **The masters** carry option 0 until Sam picks; `out/lenskin-options/land-lenskin-<n>-{square,portrait,wide}.png` hold each candidate, cut and burnt exactly as the masters. A pick swaps only the plate inside the plateau, so the depth maps (made on option 0) stand: the plate is under 1 percent of either crop.
+
+**8.3 The AirPods case, placed again (land 4).**
+- **The pose.** From (1725, 1470), yaw 20, to (1470, 1360), yaw 14 (pitch 28, 4.1 px per mm, as before), with the portrait from x 360 (was 450). The case spans x 1362 to 1577 and y 1241 to 1479 of the square: its bottom at 59.2 percent of the frame (inside the upper 60), and the phone's 390 x 844 cover-fit window (x 485 to 1641) holds it whole with 64 px to spare on the right; the violet phone's left edge (x 490) is inside the window too. The check's suggestion was x 1500 to 1530 with the portrait from 375; at 375 the phone's left edge falls 10 px outside the window, so the case went 30 px further left instead.
+- **The gloss.** The window at the picture's left is now a 0.28 x 0.8 m rectangle at 1.2 m (was a 1.2 m disc, which spread its reflection to nothing), so the clearcoat carries its highlight down the case's left side; a soft open-shade sky (`env`) gives the rims the rest. Graded 1.07 toward the hex: the composite over the photo's white reads #8fa07c, dE2000 2.57 (was #8c9b78, 4.07).
+- **The hand.** One new masked inpaint (attempt 3, the zone moved with the case: from under it down to the frame's foot). She holds the case up from below between her fingertips and thumb, her forearm in the jacket's sleeve crossing to the lower right. The first round's background is reused (`rebg`: bg attempt 1's generator output, the first round's matte with the new hand added), so Bow Bridge is as Sam saw it; 56 px of the square's edge bands changed (the old sleeve's last rows), under the 0.05 percent the wide's seams allow.
+- **The shadow.** On her generated hand: the window's short cast shadow (10, 14 px down and right, blur 6, 0.55) and the contact's occlusion (blur 3, 0.5); on her top behind, a softer drop shadow farther off (36, 44 px, blur 22, 0.3; the case is held a few centimetres in front of her). The Cycles catcher's shadow is kept within about 12 px of the case: its plane is the case's base, and farther off it fell on a plane her chest is not on, as a pale box (seen and removed before the masters).
+
+**8.4 The text areas, darker.**
+- **The wides.** The lower-left pad of each refilled by a masked `nano_banana_2_1` inpaint at 2k with a prompt for a darker, quieter lower left (the `darken` strings in `LANDS`), registered back by SIFT and taken inside the mask only, its edge drawn 24 px in and feathered over 24. Land 1's busy bark: the first call (masked from 0.42 down) cut the trunk off in a straight line over a lawn, so the second took the whole pad: the elm's trunk now ends inside it, and the Mall in deep shade lies beyond, darkest at the lower left. Land 2: the first call painted a dark wall under a straight edge across the arches; the second, on the whole pad, has the arcade recede into shade. Land 3: the first call came back square (2048 x 2048, not the 16:9 sent) and did not register; the second puts the lawn in a tree's shade. Land 4: the lake's dark water at the lower left, the stone balustrade gone from that corner.
+- **The burn.** Every portrait and wide then takes a soft burn of its lower left, local and free: a raised cosine over an ellipse from the frame's lower-left corner (its reach 1.5 of the width shown and 0.62 of the height on the portrait, 0.8 and 0.65 on the wide), multiplicative in linear light with a shoulder that holds the brightest things down a little more, so it reads as shade falling across the corner rather than a box. Each crop takes the least burn, from 0.6 stops (portrait) or 0.5 (wide) at the corner, that brings its text area's median to 4.5:1 and its lightest 5 percent to 3:1, and at most 1.6 (1.4); land 3's portrait, which his white T-shirt fills, up to 2.6 with a stronger shoulder. The product (the phone in its case and the accessory, dilated and feathered 24 px) is never burnt: the case is untouched in every master (8.6).
+- **The contrast.** Pearl Whisper (#F7F6F3) over each crop's text area by `scripts/quiz/contrast.mjs`'s method: the WCAG luminance of every pixel under the text, sorted, the median and the value at 95 percent (the lightest 5 percent), and Pearl's ratio against each. The text area is the spec's bottom left as the land shows it: on the portrait, x 0.04 to 0.92 and y 0.74 to 0.97 of what a 390 x 844 cover-fit shows (its middle 0.82 of the width); on the wide, x 0.03 to 0.45 and y 0.68 to 0.95 of the 16:10 at 1280 x 800. The first round's numbers are on the same boxes (the check's own boxes differ a little, so its figures do too).
+
+| Land | Crop | First round, median / lightest 5% | Now, median / lightest 5% | Burn at the corner, stops |
+|---|---|---|---|---|
+| 1 Phone case | portrait | 4.16 / 2.14 | 5.87 / 3.03 | 0.85 |
+| 1 Phone case | wide | 7.28 / 1.84 | 16.22 / 3.09 | 0.5 |
+| 2 MagSafe wallet | portrait | 4.72 / 1.60 | 8.04 / 2.86 | 1.6 |
+| 2 MagSafe wallet | wide | 3.09 / 1.42 | 11.35 / 2.34 | 1.4 |
+| 3 Lenskin | portrait | 1.40 / 1.04 | 4.40 / 2.16 | 2.6 |
+| 3 Lenskin | wide | 4.18 / 2.13 | 9.82 / 3.03 | 1.1 |
+| 4 AirPods case | portrait | 17.50 / 5.25 | 18.01 / 7.79 | 0.6 |
+| 4 AirPods case | wide | 4.51 / 1.87 | 11.87 / 3.00 | 0.65 |
+
+  Seven of the eight medians pass 4.5:1; land 3's portrait reaches 4.40. No lightest 5 percent reaches 4.5:1: four reach 3:1, and land 2's two (2.86, 2.34) and land 3's portrait (2.16) do not. Below 4.5:1 is recorded here and flagged to Sam, never boxed (AC12). Land 3's portrait needs a new composition to do better: every 1406-wide window holds the T-shirt.
+
+**8.5 Depth (option A), made again from the final crops.** All eight, since every crop changed: `depth_anything_video` VDA-Small, `--max_frames 1`, greyscale, 1.5 credits each, on a one-frame clip of each final crop at its encoded size (720 x 1280 and 1920 x 1200). Land 1's no longer predate its crops.
+
+**8.6 Checks.** The case against its base inside the phone-in-its-case region, accessory and shadow left out, in every master: mean absolute difference 0.0 on lands 1, 2 and 4 (largest single difference 0, 1 and 0 code values) and 0.0003 on land 3 (largest 2, the Lenskin's clip, as before), square, portrait and wide alike. The burn's weight inside the products is 0 by construction. `npm run test:unit`: 94 of 94 (the first round's 89 with the GLBs back in `public/models`, and 5 for `room-lands.json`). `npx astro check`: 0 errors. `PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=0 PUBLIC_STAGING=0 npx astro build`: 12 pages, `dist/models` with the three product GLBs and the case's LODs, and the universe's chunk naming each by its url again.
+
+**8.7 Every call this round** (round 2 in `work/ledger.jsonl` and `src/data/room-lands.ledger.json`; each costed first and refused past the cap, 85 on the ledger's running total: the first round's 45 plus this round's 40).
+
+| # | Stage | Land | Model | Job id | Credits | Seed | What came of it |
+|---|---|---|---|---|---|---|---|
+| 30 | hand | 4 | `nano_banana_2_1` 2k inpaint | `6e73cb69-0b5a-4fdd-9537-b9aaef7dc4d5` | 2 | 41404 | used (attempt 3, the second pose) |
+| 31 | darken | 1 | `nano_banana_2_1` 2k inpaint | `d01e8e5e-65e0-4690-b2ec-9531640dc51c` | 2 | 41132 | not used: the trunk cut off in a straight line |
+| 32 | darken | 1 | `nano_banana_2_1` 2k inpaint | `e5009577-54a8-42ab-a8d5-9fe87a1790c0` | 2 | 41133 | used (the whole pad) |
+| 33 | darken | 2 | `nano_banana_2_1` 2k inpaint | `85d2a354-53c0-4c74-9a1f-c989cb8fd6a0` | 2 | 41232 | not used: a dark wall under a straight edge |
+| 34 | darken | 3 | `nano_banana_2_1` 2k inpaint | `b2bda40c-2aca-4b50-9a5e-c26946991931` | 2 | 41332 | not used: came back square, did not register |
+| 35 | darken | 4 | `nano_banana_2_1` 2k inpaint | `54f03f5f-437f-4572-ab8b-8b6aea044349` | 2 | 41432 | used |
+| 36 | darken | 2 | `nano_banana_2_1` 2k inpaint | `7d6bd7ae-a65d-4a4c-827b-4ca9d8106420` | 2 | 41233 | used (the whole pad) |
+| 37 | darken | 3 | `nano_banana_2_1` 2k inpaint | `39ef2429-3c49-4fad-9a4c-6b617d10cce5` | 2 | 41333 | used |
+| 38 | depth | 1 portrait | `depth_anything_video` VDA-Small | `535797f7-ea1f-49b1-9111-080553ebe584` | 1.5 | | used |
+| 39 | depth | 1 wide | `depth_anything_video` VDA-Small | `603ab9f4-36ae-4daf-a731-1150ddf51b56` | 1.5 | | used |
+| 40 | depth | 2 portrait | `depth_anything_video` VDA-Small | `6e0d763b-d252-495f-a2a2-1d3b403249c5` | 1.5 | | used |
+| 41 | depth | 2 wide | `depth_anything_video` VDA-Small | `91371a3e-1415-4ee5-bf5b-2fec89e90a78` | 1.5 | | used |
+| 42 | depth | 3 portrait | `depth_anything_video` VDA-Small | `bac0ebde-8ba8-4fbc-8acc-2e0d54627315` | 1.5 | | used (on option 0) |
+| 43 | depth | 3 wide | `depth_anything_video` VDA-Small | `a58ad032-83fa-4bf9-9561-5ab28907aae6` | 1.5 | | used (on option 0) |
+| 44 | depth | 4 portrait | `depth_anything_video` VDA-Small | `b95403b8-a194-4b47-a8ab-d32e17f3e8a6` | 1.5 | | used |
+| 45 | depth | 4 wide | `depth_anything_video` VDA-Small | `1b0befa0-ff24-4a07-885c-846dec5d4b29` | 1.5 | | used |
+| | | | | **this round** | **28.0** | | **73.0 in all** |
+
+**8.8 For Sam.**
+- **Land 3:** pick a Lenskin, 0 to 4, from `lenskin-options.jpg` (or another shade). If it is not Crimson, `ROOM_PRODUCTS`' Lenskin shade changes with it (spec 3: the shade rendered is the shade named), and the masters take that option's plate.
+- **Land 4:** look at the new hand (generated, as before) and the shadow under the case.
+- **The text areas:** land 3's portrait reaches 4.40:1 at its median; land 2's lightest 5 percent stay under 3:1. Accept them under E-S4-contrast, or say which land to recompose.
+- **Still open from the first round:** land 2's few smeared wisps at her hair's right edge, the wallet's 93.8 mm size, the generated skyline and the generated places in general (E-S4-photo, E-S4-people).
+
+```
+python3 -I scripts/room/lands.py render    --root <run> --land airpods --airpods-fbx <run>/airpods-src/airpods.fbx --samples 128
+python3 -I scripts/room/lands.py composite --root <run> --land airpods
+python3 -I scripts/room/lands.py hand      --root <run> --land airpods --attempt 3     # 2 credits; --reuse to re-blend
+python3 -I scripts/room/lands.py rebg      --root <run> --land airpods --hand 3
+python3 -I scripts/room/lands.py retouch   --root <run> --land lenskin
+python3 -I scripts/room/lands.py square2   --root <run> --hand 3
+python3 -I scripts/room/lands.py wide2     --root <run>
+python3 -I scripts/room/lands.py darken    --root <run> --land <id> --attempt <n>      # 2 credits each; redarken re-makes
+python3 -I scripts/room/lands.py final     --root <run> --land <id> --attempt <n>      # n: the darken call the wide is made from
+python3 -I scripts/room/lands.py render    --root <run> --land lenskin --samples 128   # the four candidates
+python3 -I scripts/room/lands.py lenskin   --root <run> --land lenskin
+python3 -I scripts/room/lands.py depth     --root <run>                                # 1.5 credits per crop
+python3 -I scripts/room/lands.py contrast|check|sheet2|sums|record --root <run>
+```
