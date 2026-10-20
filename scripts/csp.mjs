@@ -6,8 +6,9 @@
 //   node scripts/csp.mjs --dist <dir>    a build written elsewhere with astro build --outDir (default: dist/)
 //   node scripts/csp.mjs --media self    media-src 'self' (section-4-world.md 5, "Build modes"): section 4's option C plays
 //                                        its clips from /_astro/. build:staging passes it (Tune can pick C there); without
-//                                        the flag it is 'self' only when PUBLIC_PARK_TRAVEL is C (npm run build exports the
-//                                        pick to every command after astro build), else 'none'. --media none forces 'none'.
+//                                        the flag it is 'self' only when PUBLIC_PARK_TRAVEL is C (each build script exports
+//                                        the pick first, so astro build and every command after it read the same one), else
+//                                        'none'. --media none forces 'none'.
 //                                        Clips stream from their URL and are never fetched to a blob:, so blob: is never added.
 // Fails the build when: a markup style="" attribute appears (it would need style-src-attr), the CSP line is longer than
 // 1900 characters (wrangler drops _headers lines over 2000 silently), dist/_headers has no /* rule, or --media names

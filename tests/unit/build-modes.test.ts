@@ -19,7 +19,7 @@ import config, { TRAVEL_STUB, parkTravelAlias } from '../../astro.config.mjs';
 import { PICKS, TRAVEL, readMode, readPick } from '../../scripts/room/guards.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
-const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as { scripts: Record<string, string> };
+const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as { scripts: Record<string, string>; '//build-modes'?: string };
 // the children never inherit a pick, a Tune flag or a hooks flag from the shell that runs the tests
 const BASE: Record<string, string> = Object.fromEntries(Object.entries(process.env).filter((e): e is [string, string] => e[1] !== undefined && !/^PUBLIC_(PARK_TRAVEL|TUNE|HERO_HOOKS|STAGING)$/.test(e[0])));
 const temps: string[] = [];
@@ -73,7 +73,9 @@ test("package.json: each build sets the pick (default A) for every command; buil
   assert.doesNotMatch(pkg.scripts.build, /--media/, 'build takes the media from the pick');
   assert.match(pkg.scripts.build, /&& node scripts\/hero\/budget\.mjs dist --mode build && node scripts\/room\/guards\.mjs --post-build --mode build$/);
   assert.match(pkg.scripts['build:staging'], /&& node scripts\/hero\/budget\.mjs dist --mode staging && node scripts\/room\/guards\.mjs --post-build --mode staging$/);
-  assert.match(pkg.scripts['//build-modes'], /^# /, 'the note is a shell comment, so running it does nothing');
+  // the note sits beside the scripts, not among them, so npm run cannot run it, and it says the pick is exported first
+  assert.ok(!Object.keys(pkg.scripts).some((k) => k.startsWith('//')), 'no note among the scripts');
+  assert.match(pkg['//build-modes'] ?? '', /each export it first, so astro build and every command after it read the same pick/);
   // each script as written, with astro build left out and the dist pointed at a fixture: the media-src per mode and pick
   const chain = (name: string, dist: string) => pkg.scripts[name].replace(/\bastro build\b/, 'true')
     .replace('scripts/csp.mjs', `scripts/csp.mjs --dist '${dist}'`).replace(/budget\.mjs dist\b/, `budget.mjs '${dist}'`).replace('--post-build', `--post-build --dist '${dist}'`);
