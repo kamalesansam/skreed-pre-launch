@@ -8,7 +8,23 @@
 // (the CSP has no style-src-attr): the swatches carry data-shade and deck.ts paints them through the CSSOM.
 import { QUIZ_COPY as Q, QUIZ_PERSONAS, QUIZ_QUESTIONS, needsRing, needsRingNight, shadeHref } from '../../config/quiz.ts';
 import { SHADES } from '../../config/shades.gen.ts';
+import { QUIZ_PICTURES } from '../../config/quiz-pictures.ts';
 import '../../styles/quiz.css';
+// The visual questions' answer pictures (Sam, 2026-10-20; config/quiz-pictures.ts): AVIF and WebP at two widths from
+// scripts/quiz/encode-pictures.mjs, in a git-ignored folder (the Envato licence does not allow the files to be shared and
+// the repository is public). A key with no files renders no picture, so a checkout without them builds words only.
+const picUrls = import.meta.glob<string>('../../assets/quiz/pics/*.{avif,webp}', { eager: true, query: '?url', import: 'default' });
+const picIndex: Record<string, { width: number; height: number; widths: number[] }> =
+  Object.values(import.meta.glob<{ default: Record<string, { width: number; height: number; widths: number[] }> }>('../../assets/quiz/pics/index.json', { eager: true }))[0]?.default ?? {};
+const PIC_SIZES = '(min-width: 900px) and (min-height: 600px) min(30vw, 440px), calc(100vw - 32px)';
+const picture = (key: string) => {
+  const m = picIndex[key];
+  if (!m || !QUIZ_PICTURES.some((p) => p.key === key)) return null;
+  const set = (ext: string) => m.widths.map((w) => { const u = picUrls[`../../assets/quiz/pics/${key}-${w}.${ext}`]; return u ? `${u} ${w}w` : ''; });
+  const avif = set('avif'), webp = set('webp');
+  if (avif.includes('') || webp.includes('')) return null;
+  return { avif: avif.join(', '), webp: webp.join(', '), src: webp[0].split(' ')[0], width: m.width, height: m.height };
+};
 // The gift form needs its Worker (quiz.md D7): on in dev, test and staging builds, off in production until PUBLIC_LEADS
 // is set to on (folded at build time; the gift email is saved for later, Sam 2026-10-19).
 const LEADS = import.meta.env.PUBLIC_LEADS === 'on' || (import.meta.env.PUBLIC_LEADS !== 'off'
@@ -32,7 +48,7 @@ const shade = (id: string) => {
     <div class="qz-deck" id="qzDeck" hidden>
       <div class="qz-cards" id="qzCards">
         {QUIZ_QUESTIONS.map((c, i) => (
-          <div class="qz-card" data-i={i} data-visual={c.visual ? '' : undefined} role="group" aria-label={Q.cardAria(i + 1)} tabindex="-1" hidden>
+          <div class="qz-card" data-i={i} data-visual={c.visual ? '' : undefined} data-pics={c.visual && c.answers.some((a) => picture(`q${i}-${a.persona}`)) ? '' : undefined} role="group" aria-label={Q.cardAria(i + 1)} tabindex="-1" hidden>
             <p class="qz-count" aria-hidden="true" data-dc>{Q.count(i + 1)}</p>
             <h3 class="qz-q" data-dc>{c.q}</h3>
             <div class="qz-opts">
@@ -43,6 +59,16 @@ const shade = (id: string) => {
             <div class="qz-foot">
               {i > 0 && <button type="button" class="qz-link qz-back" data-dc>{Q.back}</button>}
             </div>
+            {c.visual && c.answers.some((a) => picture(`q${i}-${a.persona}`)) && (
+              <div class="qz-pics" aria-hidden="true">
+                {c.answers.map((a) => { const pic = picture(`q${i}-${a.persona}`); return pic && (
+                  <picture class="qz-pic" data-persona={a.persona}>
+                    <source type="image/avif" srcset={pic.avif} sizes={PIC_SIZES} />
+                    <img src={pic.src} srcset={pic.webp} sizes={PIC_SIZES} width={pic.width} height={pic.height} alt="" loading="lazy" decoding="async" />
+                  </picture>
+                ); })}
+              </div>
+            )}
           </div>
         ))}
       </div>

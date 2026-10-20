@@ -6,11 +6,13 @@
    Phone first. */
 .quiz {
   --qz-font: "IBM Plex Mono", ui-monospace, monospace;
-  --qz-fs: 13px; --qz-fs-q: 22px; --qz-fs-big: 36px;   /* the label size; the question and headline step; the shade's name */
+  /* the type scales with the screen (Sam, 2026-10-20: "the text is soo small, look at the screen size and look at how much
+     area the text is covering"): body and answers 15 px on a phone to 22 px, questions and headlines 24 to 52 px, the
+     shade's name 36 to 88 px; on a short laptop the steps follow the height too */
+  --qz-fs: clamp(15px, min(calc(0.6rem + 0.95vw), 2.6vh), 22px); --qz-fs-q: clamp(24px, min(calc(1rem + 2.3vw), 5vh), 52px); --qz-fs-big: clamp(36px, min(calc(1rem + 4.6vw), 10vh), 88px);
   position: relative; z-index: 3; overflow-x: clip;   /* above the hero's riders (the labels at 1 and 3, the cue at 2; DESIGN.md 6), below the logotype at 4 */
   color: var(--pearl-whisper); font: 500 var(--qz-fs) / 1.45 var(--qz-font); text-transform: uppercase; letter-spacing: 0; font-synthesis: none;
 }
-@media (max-aspect-ratio: 9/10) { .quiz { --qz-fs: 12px; --qz-fs-q: 18px; --qz-fs-big: 28px; } }   /* the labels' portrait size */
 .quiz, .quiz *, .quiz *::before, .quiz *::after { box-sizing: border-box; }
 .quiz * { overflow-anchor: none; }   /* scroll anchoring keeps to the section itself, whose top never moves: the result replaces the deck without the browser scrolling the page to hold a card (or the section below) still */
 .quiz .dc { white-space: normal; }
@@ -18,7 +20,8 @@
 /* focus (DESIGN.md 4): the Ember Luxe outline at 2 px with the Urban Slate ring inside it, on keyboard focus only */
 .quiz :focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }
 .quiz .qz-link, .quiz .qz-opt, .quiz .qz-card, .quiz .qz-shade, .quiz .qz-done-text, .quiz .qz-check { position: relative; }
-.quiz :is(.qz-link, .qz-opt, .qz-card, .qz-shade, .qz-done-text):focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
+.quiz :is(.qz-link, .qz-opt):focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
+.quiz :is(.qz-card, .qz-shade, .qz-done-text):focus { outline: none; }   /* the question, the shade's name and the done line take focus only from script (tabindex -1), so their words are announced (and Up and Down reach a question's answers); they are no controls, so no box is drawn round them */
 .quiz .qz-input:focus-visible { outline: none; border-bottom-width: 3px; }   /* the field shows focus as its line at 3 px and the caret, not a box (an input is focus-visible on every focus, a click included); 3 px so focus still shows on a field already at 2 px for an error */
 @supports not selector(:has(*)) {
   .quiz .qz-check input:focus-visible + .qz-tick { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }   /* the box itself is unseen, so its own outline would be too */
@@ -34,7 +37,7 @@ html:not(.js) .qz-begin { display: none; }   /* without JavaScript the noscript 
 /* the stage: the intro, then the deck, then the result, in place */
 .qz-stage { position: relative; min-height: 100svh; display: grid; align-content: end; justify-items: center; padding: calc(var(--inset) + env(safe-area-inset-top, 0px)) var(--inset) calc(var(--inset) + env(safe-area-inset-bottom, 0px)); }
 .quiz[data-state="result"] .qz-stage { min-height: 0; padding-top: calc(var(--inset) + 56px + env(safe-area-inset-top, 0px)); }   /* the gift follows the result at one gap, on every screen; at the section's top the result starts under the fixed logotype's band */
-.qz-intro, .qz-cards, .qz-results { width: 100%; max-width: 480px; }
+.qz-intro, .qz-cards, .qz-results { width: 100%; max-width: 560px; }
 .qz-intro { display: grid; gap: var(--s3); justify-items: start; }
 .qz-intro[hidden], .qz-deck[hidden], .qz-results[hidden] { display: none; }
 .qz-h, .qz-q { font-size: var(--qz-fs-q); line-height: 1.25; text-wrap: balance; }
@@ -58,7 +61,7 @@ html:not(.js) .qz-begin { display: none; }   /* without JavaScript the noscript 
 .qz-opts { display: grid; align-content: start; }
 /* an answer: a line of words, 44 px to tap; hover and the answer taken are underlined; the answer taken stays while the
    rest of the card wipes out, then goes itself (deck.ts) */
-.qz-opt { display: block; width: 100%; min-height: 44px; padding: 10px 0; background: none; border: 0; border-radius: 0; color: inherit; font: inherit; text-transform: inherit; letter-spacing: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; text-underline-offset: 0.4em; }
+.qz-opt { display: block; width: 100%; min-height: 44px; padding: 0.4em 0; background: none; border: 0; border-radius: 0; color: inherit; font: inherit; text-transform: inherit; letter-spacing: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; text-underline-offset: 0.4em; }
 @media (hover: hover) { .qz-opt:hover { text-decoration-line: underline; text-decoration-thickness: 1px; } }
 .qz-opt[aria-pressed="true"] { text-decoration-line: underline; text-decoration-thickness: 2px; }
 .qz-foot { display: flex; min-height: 44px; }
@@ -79,17 +82,17 @@ html:not(.hero3d) .qz-big[data-ring-night], html:not(.hero3d) .qz-mini-sw[data-r
 .qz-persona { margin-top: var(--s2); }
 .qz-text, .qz-palette { max-width: 60ch; }
 .qz-also-h { margin-top: var(--s2); }
-.qz-also { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--s1) var(--s3); padding: 0; list-style: none; }
+.qz-also { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 12em), 1fr)); gap: var(--s1) var(--s3); padding: 0; list-style: none; }
 .qz-mini { display: flex; align-items: center; gap: var(--s1); min-height: 24px; }
 .qz-mini[hidden] { display: none; }
-.qz-mini-sw { flex: none; display: block; width: 16px; height: 16px; border-radius: var(--radius-round); }
+.qz-mini-sw { flex: none; display: block; width: 1.1em; height: 1.1em; border-radius: var(--radius-round); }
 .qz-own { margin-top: var(--s2); font-size: var(--qz-fs-q); line-height: 1.25; text-wrap: balance; }
 .qz-actions { display: flex; flex-wrap: wrap; gap: 0 var(--s4); }
 
 /* the gift (PUBLIC_LEADS on) */
 .qz-gift { padding: var(--s5) var(--inset) calc(var(--inset) + env(safe-area-inset-bottom, 0px)); }
 .qz-gift[hidden] { display: none; }
-.qz-gift-in { display: grid; gap: var(--s3); max-width: 480px; margin: 0 auto; }
+.qz-gift-in { display: grid; gap: var(--s3); max-width: 560px; margin: 0 auto; }
 .qz-gift-h { font-size: var(--qz-fs-q); line-height: 1.25; text-wrap: balance; }
 .qz-gift-sub { max-width: 60ch; }
 .qz-form, .qz-fields, .qz-done { display: grid; gap: var(--s2); justify-items: start; }
@@ -111,11 +114,27 @@ html:not(.hero3d) .qz-big[data-ring-night], html:not(.hero3d) .qz-mini-sw[data-r
 .qz-input:autofill { -webkit-text-fill-color: var(--pearl-whisper); caret-color: var(--pearl-whisper); transition: background-color 0s 86400s, color 0s 86400s; }
 .qz-err { min-height: 1.45em; }   /* one line is always reserved under a field: a message appearing or clearing never moves the controls below it */
 
-/* laptops */
+/* the answer pictures of the visual questions (Sam, 2026-10-20; picture.ts): one frame per card, the picture of the answer
+   under the pointer (or in focus, or pressed on a touch screen) decoding in strip by strip. On a phone the frame stands in
+   the open space above the question (deck.ts sizes it: --qz-pic-h, none under 96 px); beside the question on a laptop.
+   Hidden cards render no frame, so a card's pictures load only once it is on screen. */
+.qz-pics { position: absolute; left: 0; right: 0; bottom: calc(100% + var(--s4)); height: var(--qz-pic-h, 0px); pointer-events: none; overflow: hidden; }
+.qz-card[hidden] .qz-pics, .qz-pics[data-none] { display: none; }
+.qz-pic { position: absolute; inset: 0; opacity: 0; }   /* the <picture> only loads the right source; the strips draw it */
+.qz-pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.qz-shot { position: absolute; inset: 0; visibility: hidden; transform-origin: 50% 50%; }
+.qz-strip { position: absolute; top: 0; bottom: 0; background-repeat: no-repeat; }
+
+/* laptops: the text takes most of the screen; the question's picture stands beside it */
 @media (min-width: 900px) and (min-height: 600px) {
-  .qz-stage { align-content: center; }
-  .qz-intro, .qz-cards, .qz-results, .qz-gift-in { max-width: 640px; }
-  .qz-result { grid-template-columns: 160px 1fr; align-items: start; column-gap: var(--s5); }
-  .qz-big { width: 160px; height: 160px; }
-  .qz-gift-in { padding-left: calc(160px + var(--s5)); }   /* the gift's words start on the result's text column */
+  .qz-stage { align-content: center; padding-top: calc(var(--inset) + 64px + env(safe-area-inset-top, 0px)); }   /* clear of the fixed logotype's band */
+  .qz-intro { max-width: min(78vw, 1040px); }
+  .qz-cards { max-width: min(90vw, 1240px); }
+  .qz-results, .qz-gift-in { max-width: min(84vw, 1120px); }
+  .qz-card { --qz-pic-w: clamp(260px, 30vw, 440px); grid-template-columns: minmax(0, 1fr) var(--qz-pic-w); column-gap: clamp(32px, 4vw, 80px); }
+  .qz-card > :not(.qz-pics) { grid-column: 1; }
+  .qz-pics { position: relative; bottom: auto; left: auto; right: auto; grid-column: 2; grid-row: 1 / span 4; align-self: start; height: auto; aspect-ratio: 4 / 5; }
+  .qz-result { grid-template-columns: clamp(160px, 18vw, 260px) 1fr; align-items: start; column-gap: clamp(32px, 4vw, 72px); }
+  .qz-big { width: clamp(160px, 18vw, 260px); height: clamp(160px, 18vw, 260px); }
+  .qz-gift-in { padding-left: calc(clamp(160px, 18vw, 260px) + clamp(32px, 4vw, 72px)); }   /* the gift's words start on the result's text column */
 }

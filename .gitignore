@@ -12,3 +12,12 @@ assets-src/hero/poster/*.png
 
 # section 4 bake intermediates (scripts/room/hall.py); the shipped files live in src/assets/room
 scripts/room/out/
+
+# section 3's answer pictures (Envato Elements, licensed to Sam's account): the licence allows them in the built site but
+# not shared as files, and this repository is public, so they stay on the build machine (src/config/quiz-pictures.ts
+# lists each one with its Envato item; the build renders words only where a file is missing)
+src/assets/quiz/pics/
+# every build written elsewhere with astro build --outDir (dist-s3, dist-s3t and the like): each holds the pictures above
+/dist*/
+# review frames that show those licensed pictures (scripts/quiz/frames.mjs writes them here)
+docs/specs/screenshots/licensed/
