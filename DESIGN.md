@@ -15,7 +15,7 @@ If this file and a source disagree, the source wins and this file is fixed.
 
 - **The idea.** Skreed reads like a paint brand that happens to make phone cases. The product is the colour: 240 shades, 24 per family, ten families. The site's own chrome stays quiet: off-white and charcoal, one orange accent, three typefaces with one job each. The colour on screen comes from the shades themselves, shown as real swatches and real product, never as decoration.
 - **Pages.** Pearl Whisper (#F7F6F3) pages alternate with Urban Slate (#383F43) bands, as in the 2026-27 catalog. Circle swatches sit in a 6 x 4 grid per family. Photography is soft lifestyle on neutral backdrops.
-- **The hero.** The one exception to the flat pages, on purpose. Night (#050506) over a moonlit, igloo-style snowfield with a faint Milky Way and low fog. The SKRD mark stands as ten matte black blocks, each holding one family's shade as a glow inside its cut faces. The chrome is a corner logotype, a countdown to 1 November 2026 and a scroll cue. Scrolling pulls the camera back, then an ice-shard wipe opens the next section.
+- **The hero.** The one exception to the flat pages, on purpose. Night (#050506) over a moonlit, igloo-style snowfield with a faint Milky Way and low fog. The SKRD mark stands as ten matte black blocks, each holding one family's shade as a glow inside its cut faces. The chrome is a corner logotype, a countdown to 15 November 2026 and a scroll cue. Scrolling pulls the camera back, then an ice-shard wipe opens the next section.
 - **Density.** Low. One idea per screen. Short sentences, first person, active voice, sensory colour words. Tagline: "Tech Essentials That Go Beyond Basic." Line: "colour is personal."
 - **Mood words.** Confident, minimal, design-led, quiet, precise. Never hype, never discount.
 
@@ -263,22 +263,22 @@ Sam, 2026-10-19: "add a back to top button throughout the site which navigates b
 
 ### Countdown (hero)
 
-- **Placement.** Bottom left at `--inset`. Below 1100 px it sits 84 px higher, so the cue has its own row. On the poster path it sits in the first screen and scrolls away with it.
+- **Placement.** Bottom left at `--inset`. Below 1100 px it would reach the middle, so it sits 84 px higher and the cue sits under it. On the poster path it sits in the first screen and scrolls away with it.
 - **Eyebrow.** "Launch in", Open Sans 600 at 14 px.
 - **Groups.** Four columns (days, hours, minutes, seconds) with gap `clamp(var(--s3), 4vw, 44px)`. Each holds a numeral at `--fs-hero-countdown`, 600, tabular, always two digits, `min-width: 2ch`, with a unit label 600 at 14 px under it, `gap: var(--s1)`. All Pearl Whisper.
 - **Semantics.** `role="timer"`, `aria-label="Time until launch"`.
 - **First tick.** The numerals stay hidden until the first tick, which runs in the same task.
 - **At zero.** The eyebrow reads "Skreed is live. skreed.com", with "skreed.com" a real link: Pearl Whisper, underlined, `pointer-events: auto`, a hit box at least 44 px tall, the two-tone focus ring. The numerals are not displayed (`.count[hidden]{display:none}`).
-- **No JavaScript.** One line, "Launching 1 November 2026", with the date in a `<time>`; the eyebrow and the numerals are not displayed.
+- **No JavaScript.** One line, "Launching 15 November 2026", with the date in a `<time>`; the eyebrow and the numerals are not displayed.
 - **Reduced motion.** The seconds group is hidden.
 
 ### Scroll cue (hero)
 
-- **Placement.** Bottom centre at `--inset`, 64 px wide.
-- **Parts.** "Scroll" in Open Sans 600 at 12 px, 22 px above a 9 px Pearl Whisper ball, over a 26 x 1 px line at opacity 0.6.
-- **Animation.** Three bounces, then rest. Each 1.5 s cycle: the ball drops 22 px on `--ease-gravity`, squashes to 1.38 x 0.62 on landing, stretches to 0.9 x 1.14 on the rebound, and returns; the line widens to 1.12 and dips 1 px under it. The animation runs 2.44 cycles (3.66 s) and ends on a landing, so the ball rests on its line. It starts when the cue becomes visible, and again each time it returns.
-- **Hiding.** It fades out in 0.4 s (`--ease-standard`) once `scrollY` passes 8 px, during the wipe and while loading. It is hidden when there is nothing below to scroll to, and without JavaScript.
-- **Reduced motion.** It is still.
+- **One cue, in the middle.** Sam, 2026-10-20: "put only one in the middle"; the two side cues clashed with the countdown. Bottom centre, its bottom edge on `--inset`. From 1100 px it sits on the countdown's row, right of the numerals. Below 1100 px it sits under the lifted countdown, 11 px clear of it.
+- **Parts.** ciao's side icon re-created (docs/specs/hero.md 12.3): one 17.5 x 73 px column of three five-dot chevrons, our own SVG, in Pearl Whisper. No text.
+- **Animation.** Each chevron is drawn top down, held and wiped top down on a 2.5 s linear cycle (`cue-top`, `cue-mid`, `cue-bottom`). It cycles for as long as it is shown (E-cue-motion).
+- **Hiding.** It fades out in 0.5 s once `scrollY` passes 8 px, during the wipe and while the loader and the intro run. It is hidden when there is nothing below to scroll to, and without JavaScript.
+- **Reduced motion.** It is still, the three chevrons shown.
 - **Not an arrow.** Rule 45 bans animated arrows.
 
 ### Loader (hero, 3D path only; exception E-H1)

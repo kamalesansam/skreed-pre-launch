@@ -7,7 +7,7 @@ export interface CopyShade { readonly name: string; readonly index: number; read
 
 export const FAM_COPY = {
   title: (family: string) => `${family}, all 24 shades. Skreed`,
-  description: (family: string, first: string, last: string) => `All 24 ${family} shades, from ${first} to ${last}, on a Skreed case in matte or gloss. Doors open Nov 1.`,
+  description: (family: string, first: string, last: string) => `All 24 ${family} shades, from ${first} to ${last}, on a Skreed case in matte or gloss. Doors open Nov 15.`,
   home: 'Skreed home',
   families: 'Families',
   allFamilies: 'All families',

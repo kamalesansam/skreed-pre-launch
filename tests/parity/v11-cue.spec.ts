@@ -1,9 +1,11 @@
-// Round 3, the scroll cue: ciao's side icon re-created (hero.md 14) against the v11.4 prototype's. Both pages on the
-// poster path (three aborted on the prototype; the port on ?tier=poster), everything but the two cues hidden, one
-// background, the cue's animations paused at the same instant (0.6 s and 1.4 s into the 2.5 s cycle: the top chevron
-// drawn; all three held), CPU raster (as overlay.spec.ts), full-page screenshots compared pixel for pixel. The one
-// designed difference is the colour: the port draws the dots in Pearl Whisper (#F7F6F3, rule 23) where the prototype
-// uses #fff, 12/255 at most on any channel, so max_diff must stay within 12 and the differing pixels within the cues.
+// Round 3, the scroll cue: ciao's side icon re-created (hero.md 12.3) against the v11.4 prototype's. Both pages on the
+// poster path (three aborted on the prototype; the port on ?tier=poster), everything but the cue hidden, one
+// background. The prototype has a cue at each side; the port has one at the bottom centre (Sam, 2026-10-20), so the
+// prototype's second cue is hidden and its first is moved to the port's place (geometry is e2e's, AC5.1). The cue's
+// animations are paused at the same instant (0.6 s and 1.4 s into the 2.5 s cycle: the top chevron drawn; all three
+// held), CPU raster (as overlay.spec.ts), full-page screenshots compared pixel for pixel. The one designed difference
+// is the colour: the port draws the dots in Pearl Whisper (#F7F6F3, rule 23) where the prototype uses #fff, 12/255 at
+// most on any channel, so max_diff must stay within 12 and the differing pixels within the cue.
 import { test, expect, chromium, type Browser, type Page } from '@playwright/test';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { servePrototype, PROTO11_URL } from '../harness/prototype.ts';
@@ -11,9 +13,11 @@ import { CHROME_PATH } from '../harness/browser.ts';
 import { compare } from '../harness/compare.ts';
 import { sameBackground } from '../harness/settle.ts';
 
-// The cue's show and hide logic is e2e's (AC5.2); here both cues are forced shown, so only the drawing is compared.
+// The cue's show and hide logic is e2e's (AC5.2); here the cue is forced shown, so only the drawing is compared.
 const HIDE = '#stage,.hero-poster,#intro,.tune,.labels,.fallback,#wallCopy,.site-logo,.copy,#s2labels,#s2links,#families,#main{display:none!important}'
   + '.scrollcue{opacity:1!important;visibility:visible!important;transition:none!important}';
+/** the prototype's left cue at the port's place (shell.css: centred, its bottom on --inset, which both pages define alike) */
+const PROTO_AT_PORT = '#cue2{display:none!important}#cue{left:50%!important;right:auto!important;bottom:var(--inset)!important;transform:translateX(-50%)!important}';
 const TIMES = [0.6, 1.4];
 const VIEWPORTS = [
   { name: '390', viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 },
@@ -41,9 +45,10 @@ async function shoot(browser: Browser, base: string, vp: (typeof VIEWPORTS)[numb
     await page.goto(new URL('/?tier=poster', base).href);
   }
   await page.addStyleTag({ content: HIDE });
+  if (proto) await page.addStyleTag({ content: PROTO_AT_PORT });
   await sameBackground(page);
   await page.evaluate(() => scrollTo(0, 0));
-  const shown = await page.evaluate(() => ['cue', 'cue2'].map((id) => { const e = document.getElementById(id)!, c = getComputedStyle(e); return [c.visibility, c.opacity, e.querySelectorAll('.chev').length].join(' '); }));
+  const shown = await page.evaluate(() => ['cue'].map((id) => { const e = document.getElementById(id)!, c = getComputedStyle(e); return [c.visibility, c.opacity, e.querySelectorAll('.chev').length].join(' '); }));
   const pngs: Buffer[] = [];
   for (const t of TIMES) { await pauseAt(page, t); pngs.push(await page.screenshot()); }
   await ctx.close();
@@ -55,10 +60,10 @@ test.beforeAll(async () => { cpu = await chromium.launch({ executablePath: CHROM
 test.afterAll(async () => { await cpu?.close(); });
 
 for (const vp of VIEWPORTS) {
-  test(`v11.4 cue at rest at ${vp.name}: both cues identical to the prototype's but for Pearl Whisper against white`, async ({ baseURL }, info) => {
+  test(`v11.4 cue at rest at ${vp.name}: the cue identical to the prototype's but for Pearl Whisper against white`, async ({ baseURL }, info) => {
     const a = await shoot(cpu, baseURL!, vp, true), b = await shoot(cpu, baseURL!, vp, false);
     expect(b.shown).toEqual(a.shown);
-    expect(a.shown).toEqual(['visible 1 3', 'visible 1 3']);
+    expect(a.shown).toEqual(['visible 1 3']);
     const dir = info.outputPath(); mkdirSync(dir, { recursive: true });
     const rows: string[] = [];
     TIMES.forEach((t, i) => {

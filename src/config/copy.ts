@@ -19,8 +19,8 @@ export const COPY = {
     liveLink: 'skreed.com',
     /** No JavaScript: "Launching " followed by the date in a <time> element. */
     noscriptLead: 'Launching ',
-    noscriptDate: '1 November 2026',
-    noscriptDatetime: '2026-11-01T00:00+05:30',
+    noscriptDate: '15 November 2026',
+    noscriptDatetime: '2026-11-15T00:00+05:30',
   },
   cue: { label: 'Scroll' },
   /** section 2's labels (section-2.md 3): igloo's three slots, carrying our facts, uppercase (E-S2-font) */
@@ -31,7 +31,7 @@ export const COPY = {
   page: {
     h1: 'Skreed. Tech essentials that go beyond basic.',
     title: 'Skreed. Tech essentials that go beyond basic.',
-    description: 'Skreed launches in India on 1 November 2026. 240 shades. One of them is yours.',
+    description: 'Skreed launches in India on 15 November 2026. 240 shades. One of them is yours.',
   },
   poster: { alt: 'The Skreed mark in ten black blocks on a moonlit snowfield.' },
 } as const;

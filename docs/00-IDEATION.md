@@ -1,6 +1,6 @@
 # Skreed Pre-Launch Site: Ideation & Plan
 
-Prepared 2026-10-01. Live window: skreed.in forwards to this site until Oct 31, then to skreed.com on Nov 1. No festival framing anywhere on the site (Sam, 2026-10-06).
+Prepared 2026-10-01. Live window: skreed.in forwards to this site until Nov 14, then to skreed.com on Nov 15 (Sam moved the launch from Nov 1 on 2026-10-20; the dates further down are the original plan's). No festival framing anywhere on the site (Sam, 2026-10-06).
 
 Detailed research behind every section lives in `docs/research/` (seven reports, including a digest of Sam's 149 saved Instagram posts) and the data files in `docs/data/`. This document is the synthesis: what we know, what we recommend, and what the team still has to decide.
 

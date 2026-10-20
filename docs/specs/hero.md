@@ -102,7 +102,7 @@ On a fast load the whole sequence takes 8.2 s from first paint to the hero.
 - The page's first screen is one screen tall: the 460svh track collapses to 100svh and the countdown sits in that screen, not fixed.
 - The cue shows only when there is something below to scroll to. Section 3, the quiz, follows the hero in every build, so the cue shows until the page moves 8 px (D27); with nothing below the track (the section removed in a test) it is hidden.
 - The logotype runs its 0.5 s intro burst 0.75 s after its script installs (the prototype's no-loader timing) and keeps its glitch on hover, tap and focus. It does not need WebGL. Under reduced motion it never glitches.
-- Without JavaScript the countdown shows one line instead of numerals: "Launching 1 November 2026" (D27, AC4.3).
+- Without JavaScript the countdown shows one line instead of numerals: "Launching 15 November 2026" (D27, AC4.3).
 
 ### 1280 x 800
 
@@ -130,12 +130,12 @@ Same composition, wider frame:
 | `cd.units` | days, hours, minutes, seconds | countdown labels | approved, v9.1 |
 | `cd.aria` | Time until launch | `#count` aria-label (role timer) | approved, v9.1 |
 | `cd.live` | Skreed is live. skreed.com | eyebrow at zero; "skreed.com" is a link to `https://skreed.com` (D12) | approved text, v9.2 |
-| `cd.noscript` | Launching 1 November 2026 | the no-JavaScript line, with "1 November 2026" in `<time datetime="2026-11-01T00:00+05:30">` | approved, v9.2 |
+| `cd.noscript` | Launching 15 November 2026 | the no-JavaScript line, with "15 November 2026" in `<time datetime="2026-11-15T00:00+05:30">` | approved, v9.2; date moved by Sam, 2026-10-20 |
 | `cue.label` | Scroll | scroll cue | approved, v9.1 |
 | `logo.aria` | Skreed, home | corner logotype link | approved, v9 |
 | `h1` | Skreed. Tech essentials that go beyond basic. | visually hidden h1, the page's only h1, first in reading order (D13) | new, tagline from the catalog, needs Sam's yes |
 | `title` | Skreed. Tech essentials that go beyond basic. | `<title>` of `/` | new, needs Sam's yes |
-| `description` | Skreed launches in India on 1 November 2026. 240 shades. One of them is yours. | meta description of `/` | new, from 00-IDEATION facts and type-system role 2, needs Sam's yes |
+| `description` | Skreed launches in India on 15 November 2026. 240 shades. One of them is yours. | meta description of `/` | new, from 00-IDEATION facts and type-system role 2, needs Sam's yes |
 | `poster.alt` | The Skreed mark in ten black blocks on a moonlit snowfield. | poster `<img>` alt (G9) | new, descriptive, needs Sam's yes |
 
 The prototype's fallback text ("This prototype needs WebGL2...") and the section 2 placeholder copy ("The Wall." and its sub-line) do not ship (F2). The poster is the designed failure state, so a failure shows no error copy; only offline shows `ld.offline` (section 5).
@@ -362,13 +362,13 @@ The rendering setups used below:
 
    | Instant | Reads |
    |---|---|
-   | 2026-10-09T09:00:00+05:30 | 22 15 00 00 |
-   | 2026-10-31T23:59:59+05:30 | 00 00 00 01 |
-   | 2026-11-01T00:00:00+05:30 | see below |
+   | 2026-10-09T09:00:00+05:30 | 36 15 00 00 |
+   | 2026-11-14T23:59:59+05:30 | 00 00 00 01 |
+   | 2026-11-15T00:00:00+05:30 | see below |
 
    At zero: the eyebrow reads `cd.live`; `#count`'s computed `display` is `none` (D26); the `a[href="https://skreed.com"]` link has computed `pointer-events: auto`, `document.elementFromPoint` at its centre returns the link, its hit box is at least 44 px tall, and a click navigates (route intercepted in the test).
 2. **Type.** Numerals are Open Sans 600 with `tabular-nums`, two digits, `min-width: 2ch`. They are hidden until the first tick, and ticks align to the wall-clock second.
-3. **Semantics and no JavaScript.** `role="timer"` and `aria-label` `cd.aria`. With JavaScript disabled, `#cdEyebrow` and `#count` are not displayed, the cue is not displayed, and the noscript line shows `cd.noscript` with its `<time datetime="2026-11-01T00:00+05:30">`.
+3. **Semantics and no JavaScript.** `role="timer"` and `aria-label` `cd.aria`. With JavaScript disabled, `#cdEyebrow` and `#count` are not displayed, the cue is not displayed, and the noscript line shows `cd.noscript` with its `<time datetime="2026-11-15T00:00+05:30">`.
 4. **Independence.** It runs with WebGL2 removed and with the hero chunk blocked.
 5. **Reduced motion.** The seconds group is hidden.
 6. **Contrast.** At the rest frame with the locked terrain, the eyebrow, the unit labels and the cue label measure at least 4.5:1 against the pixels behind them, and the numerals at least 3:1 (large text), at both viewports. At zero, the link's two-tone focus ring meets the rule of AC5.3 against the snow behind it.
@@ -569,13 +569,13 @@ Sam, 2026-10-15: "whatever we have on the prototype, build it on the real build.
 Constants: `src/config/hero.ts` (`SCROLL_MAP`, `S2T`, `CAMX`), equal to the v11.4 template by unit test; `TRACK_SVH` is 1720 (the template's 1820 less the swatch wall's two screens, quiz.md D8), equal to the shell CSS by unit test.
 
 ### 12.3 The scroll cue (ciao's, measured; Sam 2026-10-14)
-Two columns of three five-dot chevrons, one at each side of the fold: 17.5 x 73 px, 4 percent plus 3.5 px from each edge, 172.75 px up from the bottom (plus the safe area), each chevron drawn top down, held and wiped top down on a 2.5 s linear cycle (`cue-top`, `cue-mid`, `cue-bottom` keyframes, `src/styles/shell.css`), our own SVG and CSS, timed by measurement (`prototypes/family-pages/ciao-measure/scrollicon.md`). Pearl Whisper, not ciao's white (rule 23). Hidden while the loader runs, during the shot's first beats (`uh3`) and from the first pixel of scroll (the plain countdown script toggles `is-off` on both; it re-checks when the page's classes change, because the loader's and the intro's page lock make the root's scrollHeight the viewport). Still under reduced motion, the three chevrons shown. Decorative: `aria-hidden`, no text, so it is not in the content gutter of AC10.3 (see E-cue-gutter).
+One column of three five-dot chevrons at the bottom centre, its bottom edge on `--inset` (plus the safe area): 17.5 x 73 px. ciao's measured place was a column at each side of the fold, 4 percent plus 3.5 px from each edge and 172.75 px up; Sam moved it on 2026-10-20 ("put only one in the middle", the side ones clashed with the countdown). From 1100 px it sits on the countdown's row, right of the numerals; below that the countdown lifts 84 px and the cue sits under it. Each chevron drawn top down, held and wiped top down on a 2.5 s linear cycle (`cue-top`, `cue-mid`, `cue-bottom` keyframes, `src/styles/shell.css`), our own SVG and CSS, timed by measurement (`prototypes/family-pages/ciao-measure/scrollicon.md`). Pearl Whisper, not ciao's white (rule 23). Hidden while the loader runs, during the shot's first beats (`uh3`) and from the first pixel of scroll (the plain countdown script toggles `is-off`; it re-checks when the page's classes change, because the loader's and the intro's page lock make the root's scrollHeight the viewport). Still under reduced motion, the three chevrons shown. Decorative: `aria-hidden`, no text, so it is not in the content gutter of AC10.3 (see E-cue-gutter).
 
 ### 12.4 Exceptions added in round 3 (Sam, 2026-10-10 and 2026-10-14)
 - **E-S2-font:** the gem labels are IBM Plex Mono Medium in uppercase, igloo's label face (rules 4 and 19 waived for these labels only, Sam 2026-10-10). Self-hosted subset of 38 glyphs (A to Z, 0 to 9, space), 2.2 KB, `public/fonts/ibm-plex-mono-500-caps.woff2`, loaded when section 2 builds its labels or when the quiz's text is drawn (it is also the first half of section 3's type, E-S3-font, section 10).
 - **E-S2-contrast:** the labels sit at igloo's contrast on the fog, below AA, approved as igloo's (Sam, 2026-10-10).
 - **E-S2-bg:** section 2's background is igloo's animated fog, dots and sprites re-created (rules 42 and 43 waived for this canvas, decided 2026-10-09).
-- **E-cue-gutter (pending Sam):** at ciao's measured place the cue sits 9 to 12 px from the edge on phones, inside the 16 px content gutter; it is decorative and keeps ciao's geometry. The build ships ciao's geometry and flags it.
+- **E-cue-gutter (closed, 2026-10-20):** at ciao's measured place the cue sat 9 to 12 px from the edge on phones, inside the 16 px content gutter. The cue now sits at the bottom centre, so it is clear of the gutter.
 - **E-cue-motion:** the cue cycles for as long as it is shown (ciao's), an exception to D20's three bounces; it stops under reduced motion and hides from the first scroll.
 
 ### 12.5 How it was verified (round 3)

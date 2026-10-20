@@ -69,7 +69,7 @@ Every version is exact in `package.json`, with no caret (security checklist row 
 │  │  ├─ quiz.css                 section 3's styles (docs/specs/quiz.md)
 │  │  └─ room.css                 section 4's styles: the track's 1300svh and 1500svh, the stage, the prompt, the pad, Skip, the panels, the products, the poster tier (DESIGN.md section 4)
 │  ├─ config/
-│  │  ├─ site.ts                  SITE_URL, LAUNCH_ISO '2026-11-01T00:00:00+05:30'
+│  │  ├─ site.ts                  SITE_URL, LAUNCH_ISO '2026-11-15T00:00:00+05:30'
 │  │  ├─ hero.ts                  POSE, MOON_POSE, SCROLL_MAP, S2T, TRACK_SVH 1720 (460 in stage 1, 1820 in round 3), PORTRAIT_ASPECT 0.9, DPR caps, GATE (tier rules), SOFTWARE_GL, REDUCED_MOTION_TIER
 │  │  ├─ copy.ts                  every string of hero.md section 3, by id; the inline scripts receive the ones they need as JSON
 │  │  ├─ params.ts                HERO_PARAMS (66 keys, locked values applied, logoIdle 0), heroParams(reduced)
@@ -989,7 +989,7 @@ The fog ground (`section3/ground.ts`) encodes in its own fragment (`ENCODE_TO`),
 - **HTML** follows `00-IDEATION.md`: `max-age=0, s-maxage=60`. Each later HTML route adds its own exact-path rule, so no two `Cache-Control` rules match one path.
 - **Hashed assets** (scripts, textures, packed binaries, posters, `pieces.json`) are immutable.
 - **Fonts** keep their fixed `/fonts/` URLs (type-system.md), so they get one month instead of immutable. A changed font file gets a new name.
-- **HSTS** is one year, with no `includeSubDomains` and no `preload`, because skreed.in redirects to skreed.com after 31 October.
+- **HSTS** is one year, with no `includeSubDomains` and no `preload`, because skreed.in redirects to skreed.com after 14 November.
 - **Permissions-Policy** gets `gyroscope=(self)` when the tilt card ships, and `camera=(self)` only if the week-two camera ships.
 
 ### 12.3 CSP (what the hero needs and why)
@@ -1182,7 +1182,7 @@ There are no Cloudflare credentials in this environment.
    - Run `BASE_URL=https://skreed.in npx playwright test e2e/csp.spec.ts`: the report-only header is present and no violation is reported on any path.
    - Deploy again with the enforcing CSP, and run the same spec.
 4. **Rollback.** `npx wrangler rollback` to the previous version, or re-dispatch an earlier commit.
-5. **Cutover (G20, not this section).** A Single Redirect rule `skreed.in/* -> https://skreed.com/$1`, 302 for about ten minutes of testing, then 301, at 31 October 23:59 IST. It is rehearsed a week early on a staging hostname. The teaser stays deployed for rollback. The exceptions for `/r/<code>` and `/thanks` are still undecided.
+5. **Cutover (G20, not this section).** A Single Redirect rule `skreed.in/* -> https://skreed.com/$1`, 302 for about ten minutes of testing, then 301, at 14 November 23:59 IST (the launch moved to 15 November, Sam 2026-10-20). It is rehearsed a week early on a staging hostname. The teaser stays deployed for rollback. The exceptions for `/r/<code>` and `/thanks` are still undecided.
 
 ## 16. Lighthouse (C4) and the main thread (spec D23)
 
