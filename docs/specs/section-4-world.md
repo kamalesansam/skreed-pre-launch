@@ -69,9 +69,13 @@ There are no panels, no fills and no borders anywhere in the section (DESIGN.md'
 - **Three rings** (igloo's count; `ringCount` Tune 2 to 5) stand across the flight path, S = 2.5 units apart. They have igloo's proportions (evidence 8): outer radius 0.16 S, inner about 0.116 S, thickness 0.052 S.
 - **The path.** The camera starts 0.71 S before the first ring, igloo's approach pose, where the ring fills about 116 percent of the laptop frame's height and more than the phone's width. It ends 0.5 S past the last ring.
 - **The ring passes** fall at 2.70, 3.20 and 4.40 s after the press: every gap at least 0.5 s, and the first after the bubble has cleared (2.35 s). A unit test computes the passes from `ROOM_PARAMS` and Tune's ranges and fails on any gap under 0.4 s or a first pass before `0.35 + bubbleMs`; Tune's ranges are clamped to what passes.
-- **The ten families.** Each ring is cut into ten 36-degree arcs in the ten families' key shades by id, in catalog order clockwise: the gems' ten, and the old universe's ten bays. Each ring is turned 36 degrees from the one before.
+- **The ten families.** Each ring carries the ten families' key shades by id, in catalog order clockwise: the gems' ten, and the old universe's ten bays. Each ring is turned 36 degrees from the one before.
+- **Blended, never blocks** (Sam, 2026-10-20: "wherever there are colors involved, make gradient blends besides each color, so it doesnt look like a kids coloring book, make it realistic and add gradient beside each other").
+  - Each shade blends softly into the next over the outer 40 percent of its 36 degrees on either side. The mix is in OKLab, so a blend stays clean and never passes through grey.
+  - The shards vary slightly in value (plus or minus 6 percent).
+  - The shards are lit by the garden's sun, with soft ambient occlusion in their seams and a soft specular sheen, so they read as a glazed, lacquered material, not flat fill.
 - **Assembly.** A ring far ahead is broken: shards pushed outward along their own centre vector, spun about a random axis and shrunk. It pulls together between 1.4 S and 1.0 S from the camera and is whole as the camera passes through it. That is what igloo shows on screen (evidence 5: "far rings are spread apart and they come together between about 3.5 and 2.5 units").
-- **The lattice.** Each shard face carries our own triangle lattice (the intro's `tTri`, already on the GPU) in the next family's key shade. A forcefield disc fills each ring's hole, 0.13 S in radius and 0.06 S ahead of the ring: the lattice plus concentric and radial lines in the arc's shade, brightest at the rim, fading toward the centre, and fading out as the camera passes through.
+- **The lattice.** Each shard face carries our own triangle lattice (the intro's `tTri`, already on the GPU) in the next family's key shade, blended around the ring the same way as the arcs. A forcefield disc fills each ring's hole, 0.13 S in radius and 0.06 S ahead of the ring: the lattice plus concentric and radial lines in the arc's shade, brightest at the rim, fading toward the centre, and fading out as the camera passes through.
 - **The vanishing point.** igloo keeps a target at its vanishing point (evidence 5). Here it is the morph's points, waiting at the tunnel's far end as a slowly turning cloud in the ten key shades, 2.5 S past the last ring, seen through the rings from the start.
 - **The garden** ("a bright beautiful day garden kind of area") is our own Blender render (section 3):
   - a forward plate covering 64 degrees around the flight's axis: the sky, the far trees and the lawn;
@@ -211,7 +215,8 @@ The accessories' shades are `ROOM_PRODUCTS`' (Desert, Crimson, Sage) unless Sam 
 **The garden** (`scripts/room/garden.py`, new; Blender 5.2 headless, Cycles on Metal, our own geometry):
 - **The far plate.** Rendered with a perspective camera on the flight's axis, 64 degrees across, at 2048 x 2048: a clear blue sky with soft clouds, far trees, the lawn.
 - **The depth cards.** Three cards with alpha, each 1024 to 2048 px wide: clipped box hedges, flower beds and near trees, each rendered on its own.
-- **The flowers.** The beds' flowers are the ten key shades by id.
+- **The flowers.** The beds' flowers are the ten key shades by id. Neighbouring drifts intermix over about a third of each drift's length, so the beds pass from one colour to the next as a real planting does. The flowers vary in value and tint around their shade and are lit as real petals.
+- **Realistic, not stylised** (Sam, 2026-10-20: "make it realistic"). The garden reads as a photograph of a sunny garden, not low-poly geometry: real grass texture, leaf canopies, soft shadows, aerial haze toward the horizon. It is either a photoreal Blender render or a Higgsfield-generated plate with its depth layers, approved by Sam like the pictures.
 - **The light.** The sun is behind the camera at 35 degrees.
 - **Detail.** The plate gives at least 25 device px per degree at 390 and 32 at 1280; the cards give 40 or more.
 
@@ -231,9 +236,9 @@ The accessories' shades are `ROOM_PRODUCTS`' (Desert, Crimson, Sage) unless Sam 
 - **What it never says.** That a picture was taken in Central Park; anything about a person's identity.
 
 **Colours.**
-- **The rings:** the ten key shades by id (`ROOM_BAYS`).
-- **The lattice and the lines:** the next family's key shade by id.
-- **The cloud:** the ten key shades by id.
+- **The rings:** the ten key shades by id (`ROOM_BAYS`), each blending into its neighbours (section 2).
+- **The lattice and the lines:** the next family's key shade by id, blended the same way.
+- **The cloud:** the ten key shades by id; each point takes a blend of the two shades nearest its place in the cloud, so the cloud shifts smoothly from colour to colour.
 - **The bubble's outline and every line of text:** Pearl Whisper.
 - **Outside the bubble:** the hall's frame, mixed toward Urban Slate.
 - **The hall's clear colour while entering:** Urban Slate.
@@ -576,6 +581,7 @@ The product GLBs move out of `public/` into `scripts/room/models/` as Blender re
 - **W9. One option ships.** In production only the picked option is in the bundle, through the alias. With Tune on, all three load on demand, so Sam can compare them on staging.
 - **W10. No tap-to-skip.** A tap on the stage no longer skips, because over a 9 s sequence a thumb stopping momentum would end it by accident.
 - **W11. The real case stays real.** The listing photos are the masters' base. A masked inpaint changes only the background, so the case Sam photographed is never redrawn. The accessories are our own Blender renders, composited.
+- **W13. Blends and realism.** Every place several shades meet in the scene blends them softly (rings, lattice, cloud, flower beds), and every surface is lit and textured to read as a real material. Sam's words of 2026-10-20 replace the hard 36-degree arcs and the stylised garden of revision 2.
 - **W12. igloo's other layers.** Its plasma halos, smoke trails, tunnel ripples and snow are dropped: their look is ice and data, not a garden, and they cost bytes and fill. Its vanishing-point target is kept, as the cloud. Three rings, as igloo.
 
 ## 10. Exceptions this part needs
@@ -583,7 +589,7 @@ The product GLBs move out of `public/` into `scripts/room/models/` as Blender re
 This section is the only text for every E-S4 id. Those Sam's own words already cover are recorded as approved, with his words, as CLAUDE.md does for E-S3; the rest are pending.
 
 **Approved by Sam's words**
-- **E-S4-colour (rewritten; the universe's walls are gone).** The rings' ten arcs, their lattice, the forcefield lines and the cloud carry the ten key shades by id as scene surfaces and lines (rule 24; A2 by id). Never a neon or pastel shade as a ring's dominant colour (rules 49, 50). Sam, 2026-10-19: "we will make it colorful instead, all the mini geometrical grids and lines everything will be colorfull". *Default if withdrawn:* the rings and the lattice in Pearl Whisper as light (igloo's white).
+- **E-S4-colour (rewritten; the universe's walls are gone).** The rings, their lattice, the forcefield lines, the cloud and the garden's flower beds carry the ten key shades by id as scene surfaces and lines (rule 24; A2 by id), each blending softly into its neighbours. That blending waives rules 1 and 21 (no gradient as a device; no harsh gradients) for these scene surfaces only: the blends are soft, in OKLab, and never harsh. Never a neon or pastel shade as a ring's dominant colour (rules 49, 50). Sam, 2026-10-19: "we will make it colorful instead, all the mini geometrical grids and lines everything will be colorfull"; 2026-10-20: "wherever there are colors involved, make gradient blends besides each color, so it doesnt look like a kids coloring book, make it realistic and add gradient beside each other". *Default if withdrawn:* the rings and the lattice in Pearl Whisper as light (igloo's white).
 - **E-S4-garden (new).** The tunnel's backdrop is our own Blender garden in daylight. Its colours are image content (A2, as E-A2b), and its sky's fall-off is a natural gradient (rules 1, 21, as E-1/21/40). Never clipped to #ffffff across the frame (rule 23), and no grain (rule 20). Sam, 2026-10-19: "even the backround will be like a bright beautiful day garden kind of area". *Default if withdrawn:* the rings over Urban Slate.
 - **E-S4-portal (new; replaces E-S4-sweep).** The wavy circle that opens over the hall: rule 42 while it is small, rule 21 for its antialiased edge, rule 12 for the motion. Sam, 2026-10-19: "have a wavy circle zooming from centre to the end of the screen". *Default if withdrawn:* a 300 ms cross-fade.
 - **E-S4-font (new).** Section 2's label type for every line of section 4: IBM Plex Mono Medium in capitals, against rules 4 and 19, the brand facts' typography line, `docs/brand/type-system.md` (the three families; no all-caps), DESIGN.md's type rules and CHECKLIST A3. As E-S3-font for the quiz. Sizes are the quiz's: `--qz-fs` 13 px, `--qz-fs-q` 22 px, 12 and 18 px under `max-aspect-ratio: 9/10` (`quiz.css:9, 13`). The two existing files, `ibm-plex-mono-500-caps.woff2` and `ibm-plex-mono-500-rest.woff2`, carry it. Sam, 2026-10-20: "Yes, all of it". *Default if withdrawn:* Open Sans and Poppins, still with no panels.
