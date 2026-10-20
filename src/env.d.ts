@@ -7,6 +7,8 @@ interface ImportMetaEnv {
   readonly PUBLIC_STAGING?: string;
   /** section 3's gift form: on, off, or unset (on in dev, test and staging builds, off in production until its Worker exists) */
   readonly PUBLIC_LEADS?: string;
+  /** section 4's travel between the lands, A, B or C (section-4-world.md 5, "Build modes"); astro.config.mjs sets it to A when it is unset, so every build carries one */
+  readonly PUBLIC_PARK_TRAVEL?: 'A' | 'B' | 'C';
 }
 
 interface SkreedLoaderState { phase: string; mode: string; p: number; tl: number; n: number; ready: boolean; note: string; next: string | undefined }
