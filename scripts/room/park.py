@@ -23,9 +23,12 @@
 #   in place        the bridge's railing (hundreds of slivers, too fine for the atlas): shaded per face against the whole
 #                   park in the same way, stored lit as COLOR_0
 #   unlit           the sky dome, the skyline cards and the far ground carry their final colour as COLOR_0
-# Each land pose also carries an exposure (the view's mean luminance brought toward a photograph's, 1 to 2.4), for the
-# shaded places (the elms' tunnel, the arcade) to read as the pictures will; the flights between are checked for their
-# height over the surface, their clearance and their headroom against the same geometry.
+# Each land pose carries two exposures: the scene's (the view's mean luminance brought toward a photograph's, 1 to 2.4,
+# but never so far that more than 1 percent of its frame clips) and the sky's (the unlit meshes', held under 0.92 on the
+# brightest channel in view); each flight carries both on its look keys. The flights are designed in time under the
+# runtime's own ease and curves (see "The flights" below), and checked: their view's turn rate at 2600 and 4500 ms, their
+# height over the surface, clearance and headroom, and the share of their frames that clip. The run exits 1 when a check
+# fails, so pack.mjs never packs such a park (it refuses the report too).
 import bpy, bmesh, math, sys, os, time, json, random, bisect
 import numpy as np
 from mathutils import Vector, Matrix
@@ -57,27 +60,91 @@ TERRACE = (-16.0, 16.0, 7.0, 26.0)         # the lower terrace: x0, x1, y0, y1 (
 ARC_X, ARC_Y, ARC_CEIL = 11.0, (0.0, 6.0), -0.7   # the arcade's hall: x -11..11, y 0..6 under the drive, 3.8 m high
 FACADE = (6.0, 7.0)                        # the arcade's north wall with its five arches onto the terrace
 SPRING, ARCH_R = -2.6, 1.7                 # the arches spring 1.9 m above the floor and rise 1.7 m
-CUTS = [(-3.5, 3.5), (-16.0, -12.0), (12.0, 16.0)]   # the three stair cuts down from the plaza (y -10 to -1): the Mall's and the two side stairs
+CUTS = [(-3.5, 3.5)]                       # the Mall's stair cut down from the plaza (y -10 to -1), straight north
 CUT_Y = (-10.0, -1.0)
+# the two side stairs leave the arcade's ends on the diagonal, rising away from it (the west one toward Sheep Meadow, so
+# the second flight climbs it head on): each its foot's outer corner on the vestibule's outer wall, its heading up the
+# flight, its width; 26 steps over 9 m, as the Mall's stair
+SIDE_FOOT, SIDE_H, SIDE_W, SIDE_RUN = (-16.0, -0.5), 235.0, 4.0, 9.0
 WALL_T = 0.4                               # balustrade and cheek walls
 BAL_H = 1.0
+PLAZA = (-26.0, 26.0, -12.0, -1.3)         # the paved plaza round the three stair heads, up to the drive's curb
 FOUNTAIN = (0.0, 16.5)
 MEADOW = ((-66.0, -48.0), (32.0, 26.0))    # Sheep Meadow: an ellipse kept level and free of trees
 BRIDGE = dict(x=-40.0, y0=29.0, y1=50.8, w=3.4, z_end=-4.40, z_mid=-3.05, chord_end=-5.1, chord_mid=-3.55)
 LAKE_X = (-102.0, 50.0)
 EYE = 1.5                                  # the lifestyle pictures' camera: a person's eye level
-SUN_AZ, SUN_EL = 205.0, 40.0               # an early autumn afternoon: the sun in the south-south-west, 40 degrees up
-SUN_RGB, SUN_W = (1.0, 0.93, 0.82), 4.0    # its colour and strength (W/m2, Cycles)
+# one sun for the four lands (section-4-world.md 3, the lands' light): low and warm from just south of east, so land 1,
+# facing north up the Mall, is lit low from frame right as its photo is (its person stands where the sun's line threads
+# both east rows of elms between their trunks); lands 2 and 4 stand in open shade (the arcade,
+# and a tree on the bank between the bridge pose and the sun); land 3 cannot be overcast under one sun and stands in a
+# ring tree's shade instead (the gap is recorded for Sam in the report)
+SUN_AZ, SUN_EL = 100.0, 22.0
+SUN_RGB, SUN_W = (1.0, 0.88, 0.72), 4.6    # its colour and strength (W/m2, Cycles)
 SKY_W = 0.95                               # the world's strength (the shade-to-sun ratio on open ground lands near a third)
 UNIT = 0.70                                # the stored lightmap value of open, sunlit level ground
 L_SUN = Vector((math.sin(math.radians(SUN_AZ)) * math.cos(math.radians(SUN_EL)), math.cos(math.radians(SUN_AZ)) * math.cos(math.radians(SUN_EL)), math.sin(math.radians(SUN_EL))))
+
+def side_plan(east):
+    """a side stair in plan: its head's and foot's corners (W on the vestibule's side, E toward the Mall), the directions
+    up the flight (U) and across it from W to E (V), the runs from the head at which the walls' inner and outer lines
+    meet the drive's south edge (the E line runs on past the foot as the court's wall and meets the arcade's south wall
+    at C), and the footprint the plaza is cut round (convex: the flight, its walls and the court, up to the drive)"""
+    h = math.radians(SIDE_H); U = Vector((math.sin(h), math.cos(h))); V = Vector((-U.y, U.x))
+    W0 = Vector(SIDE_FOOT); E0 = W0 + V * SIDE_W; W1 = W0 + U * SIDE_RUN; E1 = E0 + U * SIDE_RUN
+    at = lambda A, y0: (A.y - y0) / U.y
+    P = dict(r_wi=at(W1, DRIVE[0]), r_ei=at(E1, DRIVE[0]), r_e0=at(E1, ARC_Y[0]), r_wo=at(W1 - V * WALL_T, DRIVE[0]), r_eo=at(E1 + V * WALL_T, DRIVE[0]))
+    P.update(U=U, V=V, W0=W0, E0=E0, W1=W1, E1=E1)
+    if east:
+        for k in ('U', 'V', 'W0', 'E0', 'W1', 'E1'): P[k] = Vector((-P[k].x, P[k].y))
+    U, V, W1, E1 = P['U'], P['V'], P['W1'], P['E1']
+    P['C'] = E1 - U * P['r_e0']
+    P['foot'] = [W1 - U * P['r_wo'] - V * WALL_T, W1 - V * WALL_T, E1 + V * WALL_T, E1 - U * P['r_eo'] + V * WALL_T]
+    P['landing'] = [P['W0'], P['E0'], P['C'], Vector((P['W0'].x, ARC_Y[0]))]
+    return P
+SIDES = [side_plan(False), side_plan(True)]
+def cross2(o, a, b): return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+def orient(poly): return 1.0 if sum(cross2(poly[0], poly[i], poly[i + 1]) for i in range(1, len(poly) - 1)) > 0 else -1.0
+def in_poly(p, poly):
+    s = orient(poly)
+    return all(cross2(poly[i], poly[(i + 1) % len(poly)], p) * s >= -1e-9 for i in range(len(poly)))
+def clip_half(poly, a, b, keep_left):
+    """Sutherland-Hodgman: the part of a convex polygon (2D tuples) on the left (or right) of the line a to b"""
+    out = []
+    side = lambda p: cross2(a, b, p) if keep_left else -cross2(a, b, p)
+    for i in range(len(poly)):
+        p, q = poly[i], poly[(i + 1) % len(poly)]; sp, sq = side(p), side(q)
+        if sp >= 0: out.append(p)
+        if (sp >= 0) != (sq >= 0):
+            t = sp / (sp - sq); out.append((p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t))
+    return out if len(out) >= 3 else []
+def minus(poly, hole):
+    """a convex polygon less a convex hole, as convex pieces: for each of the hole's edges, the part outside it and
+    inside the edges before it"""
+    hole = [tuple(p) for p in hole]; s = orient(hole) > 0; pieces = []
+    for i in range(len(hole)):
+        a, b = hole[i], hole[(i + 1) % len(hole)]
+        piece = clip_half(poly, a, b, not s)
+        for j in range(i):
+            if not piece: break
+            piece = clip_half(piece, hole[j], hole[(j + 1) % len(hole)], s)
+        if piece: pieces.append(piece)
+    return pieces
+def rect_meets(x0, x1, y0, y1, poly):
+    """whether an axis-aligned rectangle overlaps a convex polygon (by separating axes)"""
+    xs, ys = [p[0] for p in poly], [p[1] for p in poly]
+    if max(xs) <= x0 or min(xs) >= x1 or max(ys) <= y0 or min(ys) >= y1: return False
+    s = orient(poly); cs = ((x0, y0), (x1, y0), (x1, y1), (x0, y1))
+    for i in range(len(poly)):
+        if all(cross2(poly[i], poly[(i + 1) % len(poly)], c) * s <= 1e-9 for c in cs): return False
+    return True
 
 # the albedos (linear; image content, not palette colours: E-S4-garden's reading for the park's scene colours)
 ALB = {
     'lawn': lin('#6f9a3e'), 'meadow': lin('#7aa444'), 'forest': lin('#56702f'), 'mud': lin('#77794f'),
     'promenade': lin('#c8beae'), 'path': lin('#86817a'), 'drive': lin('#696764'), 'granite': lin('#a19d95'),
     'stone': lin('#c2ae8d'), 'water': lin('#5a8784'), 'iron': lin('#ddd5c0'), 'deck': lin('#7d6650'),
-    'bark': lin('#5b4c3e'), 'elm': lin('#4f7d2c'), 'plane': lin('#5b8533'), 'willow': lin('#7f9f3f'), 'small': lin('#6c923d'),
+    'bark': lin('#5b4c3e'), 'elm': lin('#4f7d2c'), 'plane': lin('#5b8533'), 'willow': lin('#7f9f3f'), 'round': lin('#6c923d'),
     'far': lin('#4a7232'), 'wood': lin('#7a6448'), 'ironwork': lin('#2e3631'), 'glass': lin('#ece6d6'),
 }
 TILE = [lin('#c98b4a'), lin('#e3d3b0'), lin('#3f7d7a'), lin('#9b4a3a')]   # the arcade's ceiling tiles: ochre, cream, teal, deep red
@@ -120,7 +187,7 @@ def grid_lines(lo, hi, core, step, extra):
     vs.add(hi)
     out = sorted(vs)
     return [v for i, v in enumerate(out) if i == 0 or v - out[i - 1] > 0.35]   # no sliver cells
-XS = grid_lines(-124.0, 68.0, (-104.0, 44.0), 4.0, [-16.4, -16.0, -11.6, -3.9, 3.9, 11.6, 16.0, 16.4])
+XS = grid_lines(-124.0, 68.0, (-104.0, 44.0), 4.0, [-16.4, -16.0, -3.9, 3.9, 16.0, 16.4])
 YS = grid_lines(-96.0, 88.0, (-92.0, 64.0), 4.0, [CUT_Y[0], DRIVE[0], DRIVE[1], BANK_END, TERRACE[3]])
 ZG = [[z_field(x, y) for y in YS] for x in XS]
 
@@ -193,8 +260,10 @@ def blob(g, c, s, rng, base, jit=0.16, var=0.12, flat=0.55):
         g.leaf.add(len(g.faces)); g.face(pts, ctr - c, tuple(min(1.0, x * sh) for x in base))
 
 # ---- the terrain: the lawns, cut around the stairs and the terrace, and left out under the water
-def cell_skipped(cx, cy, zs):
+def cell_skipped(x0, x1, y0, y1, zs):
+    cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
     if CUT_Y[0] < cy < CUT_Y[1] and any(a - WALL_T < cx < b + WALL_T for a, b in CUTS): return True
+    if any(rect_meets(x0, x1, y0, y1, S['foot']) for S in SIDES): return True   # (the plaza's paving covers the rest of the cell)
     if TERRACE[0] < cx < TERRACE[1] and TERRACE[2] < cy < TERRACE[3]: return True
     return max(zs) < WATER - 0.25
 def lawn_col(x, y):
@@ -212,7 +281,7 @@ for i in range(len(XS) - 1):
         x0, x1, y0, y1 = XS[i], XS[i + 1], YS[j], YS[j + 1]
         zs = [ZG[i][j], ZG[i + 1][j], ZG[i + 1][j + 1], ZG[i][j + 1]]
         cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
-        if cell_skipped(cx, cy, zs): continue
+        if cell_skipped(x0, x1, y0, y1, zs): continue
         g = geo('lawn' if CORE[0] <= cx <= CORE[1] and CORE[2] <= cy <= CORE[3] else 'lawn_outer')
         p00, p10, p11, p01 = (x0, y0, zs[0]), (x1, y0, zs[1]), (x1, y1, zs[2]), (x0, y1, zs[3])
         for tri in ((p00, p10, p11), (p00, p11, p01)):
@@ -261,7 +330,7 @@ def ellipse(c, a, b, n=72): return [(c[0] + a * math.cos(2 * math.pi * k / n), c
 (MCX, MCY), (MA, MB) = MEADOW
 PATHS = [   # name, material, width, height above the terrain, centreline, closed
     ('mall', 'promenade', 10.0, 0.050, [(0.0, -94.0), (0.0, -12.0)], False),
-    ('meadow-link', 'path', 3.2, 0.040, [(-21.0, -9.5), (-26.0, -15.5), (-31.5, -22.2), (-41.5, -27.8), (-42.4, -28.3)], False),
+    ('meadow-link', 'path', 3.2, 0.040, [(-26.0, -11.0), (-29.5, -15.0), (-33.5, -20.5), (-41.5, -27.8), (-42.4, -28.3)], False),
     ('meadow-loop', 'path', 3.2, 0.043, ellipse((MCX, MCY), MA + 2.6, MB + 2.6), True),
     ('meadow-north', 'path', 3.0, 0.046, [(-67.0, -19.2), (-67.0, -10.0), (-67.0, -1.4)], False),
     ('mall-west', 'path', 3.0, 0.049, [(-5.0, -72.0), (-14.0, -71.0), (-24.0, -67.5), (-34.6, -60.1), (-35.5, -59.7)], False),
@@ -291,7 +360,11 @@ def curb(y0, y1, x0, x1):
         g.face([(a, y0, za + 0.15), (b, y0, zb + 0.15), (b, y1, zb + 0.15), (a, y1, za + 0.15)], (0, 0, 1))
         g.face([(a, y0, za - 0.05), (b, y0, zb - 0.05), (b, y0, zb + 0.15), (a, y0, za + 0.15)], (0, -1, 0))
         g.face([(a, y1, za - 0.05), (b, y1, zb - 0.05), (b, y1, zb + 0.15), (a, y1, za + 0.15)], (0, 1, 0))
-south_gaps = sorted([(a - WALL_T, b + WALL_T) for a, b in CUTS])
+def band_x(poly, y0, y1):
+    """the x extent of a convex polygon between y0 and y1"""
+    q = clip_half(clip_half([tuple(p) for p in poly], (0.0, y0), (1.0, y0), True), (0.0, y1), (1.0, y1), False)
+    return (min(p[0] for p in q), max(p[0] for p in q))
+south_gaps = sorted([(a - WALL_T, b + WALL_T) for a, b in CUTS] + [band_x(S['foot'], DRIVE[0] - 0.3, DRIVE[0]) for S in SIDES])
 xa = -124.0
 for a, b in south_gaps: curb(DRIVE[0] - 0.3, DRIVE[0], xa, a); xa = b
 curb(DRIVE[0] - 0.3, DRIVE[0], xa, 68.0)
@@ -301,9 +374,11 @@ curb(DRIVE[1], DRIVE[1] + 0.3, -124.0, TERRACE[0] - WALL_T); curb(DRIVE[1], DRIV
 PZ = 0.05
 pv = geo('promenade')
 def flat(g, x0, x1, y0, y1, z, n=(0, 0, 1), col=None): g.face([(x0, y0, z), (x1, y0, z), (x1, y1, z), (x0, y1, z)], n, col)
-flat(pv, -22.0, 22.0, -12.0, CUT_Y[0], PZ)
-xs_pl = [-22.0] + [v for a, b in sorted(CUTS) for v in (a - WALL_T, b + WALL_T)] + [22.0]
-for k in range(0, len(xs_pl), 2): flat(pv, xs_pl[k], xs_pl[k + 1], CUT_Y[0], DRIVE[0] - 0.3, PZ)
+# the plaza: one rectangle up to the drive's curb, less the three stairs' footprints, in convex pieces
+holes = [[(a - WALL_T, CUT_Y[0]), (b + WALL_T, CUT_Y[0]), (b + WALL_T, DRIVE[0]), (a - WALL_T, DRIVE[0])] for a, b in CUTS] + [S['foot'] for S in SIDES]
+pieces = [[(PLAZA[0], PLAZA[2]), (PLAZA[1], PLAZA[2]), (PLAZA[1], PLAZA[3]), (PLAZA[0], PLAZA[3])]]
+for hole in holes: pieces = [q for p_ in pieces for q in minus(p_, hole)]
+for p_ in pieces: pv.face([(x, y, PZ) for x, y in p_], (0, 0, 1))
 
 st = geo('stone')
 NSTEP = 26
@@ -336,6 +411,44 @@ for a, b in CUTS:
         st.face([(xw, DRIVE[0], LOWER), (xw, ARC_Y[0], LOWER), (xw, ARC_Y[0], ARC_CEIL), (xw, DRIVE[0], ARC_CEIL)], (s, 0, 0))
     flat(pv, a, b, DRIVE[0], ARC_Y[0], LOWER)
     flat(st, a, b, DRIVE[0], ARC_Y[0], ARC_CEIL, (0, 0, -1))
+# the side stairs on the diagonal (SIDES; run r measured down the flight from its head): treads and risers; the cheek walls,
+# their inner faces from the line through the steps' inner corners up to the balustrade in the open and to the deck's
+# underside beneath the drive, the E wall running on past the foot as the court's wall to the arcade's south wall; the
+# court and the landing at the floor's level; the drive's balustrade across the opening; the deck's underside over it
+for i_s, S in enumerate(SIDES):
+    U, V, W1, E1, W0 = S['U'], S['V'], S['W1'], S['E1'], S['W0']
+    sg = geo(('steps_w', 'steps_e')[i_s])
+    Wl = lambda r, W1=W1, U=U: W1 - U * r
+    El = lambda r, E1=E1, U=U: E1 - U * r
+    v3 = lambda v: (v.x, v.y, 0.0)
+    zl = lambda r: UPPER - RISE - r * (RISE / RUN)
+    for k in range(NSTEP):
+        r0, r1 = k * RUN, (k + 1) * RUN; ztop, z = UPPER - k * RISE, UPPER - (k + 1) * RISE
+        sg.face([(*Wl(r0), z), (*El(r0), z), (*El(r0), ztop), (*Wl(r0), ztop)], v3(-U))   # the riser
+        sg.face([(*Wl(r0), z), (*El(r0), z), (*El(r1), z), (*Wl(r1), z)], (0, 0, 1))      # the tread
+    def wall(line, r0, r1, bot, top, n):
+        st.face([(*line(r0), bot(r0)), (*line(r1), bot(r1)), (*line(r1), top), (*line(r0), top)], n)
+    floor_ = lambda r: LOWER - 0.05
+    wall(Wl, 0.0, S['r_wi'], zl, BAL_H, v3(V)); wall(Wl, S['r_wi'], SIDE_RUN, zl, ARC_CEIL, v3(V))
+    wall(El, 0.0, SIDE_RUN, zl, BAL_H, v3(-V)); wall(El, SIDE_RUN, S['r_ei'], floor_, BAL_H, v3(-V)); wall(El, S['r_ei'], S['r_e0'], floor_, ARC_CEIL, v3(-V))
+    Wo = lambda r: Wl(r) - V * WALL_T
+    Eo = lambda r: El(r) + V * WALL_T
+    st.face([(*Wl(0.0), BAL_H), (*Wl(S['r_wi']), BAL_H), (*Wo(S['r_wo']), BAL_H), (*Wo(0.0), BAL_H)], (0, 0, 1))     # the caps
+    st.face([(*El(0.0), BAL_H), (*El(S['r_ei']), BAL_H), (*Eo(S['r_eo']), BAL_H), (*Eo(0.0), BAL_H)], (0, 0, 1))
+    wall(Wo, 0.0, S['r_wo'], lambda r: -0.05, BAL_H, v3(-V)); wall(Eo, 0.0, S['r_eo'], lambda r: -0.05, BAL_H, v3(V))   # the outer faces
+    for a_, b_ in ((Wl(0.0), Wo(0.0)), (El(0.0), Eo(0.0))):                                                     # the walls' ends at the head
+        st.face([(*a_, -0.05), (*b_, -0.05), (*b_, BAL_H), (*a_, BAL_H)], v3(U))
+    pv.face([(p_.x, p_.y, LOWER) for p_ in S['landing']], (0, 0, 1))                                             # the court and the landing
+    # the drive's balustrade across the opening, the deck's edge below it, and the deck's underside (two convex pieces)
+    xi = sorted((Wl(S['r_wi']).x, El(S['r_ei']).x)); xo_ = sorted((S['foot'][0].x, S['foot'][3].x))
+    st.face([(xi[0], DRIVE[0], ARC_CEIL), (xi[1], DRIVE[0], ARC_CEIL), (xi[1], DRIVE[0], BAL_H), (xi[0], DRIVE[0], BAL_H)], (0, -1, 0))
+    flat(st, xo_[0], xo_[1], DRIVE[0], DRIVE[0] + WALL_T, BAL_H)
+    st.face([(xo_[0], DRIVE[0] + WALL_T, 0.0), (xo_[1], DRIVE[0] + WALL_T, 0.0), (xo_[1], DRIVE[0] + WALL_T, BAL_H), (xo_[0], DRIVE[0] + WALL_T, BAL_H)], (0, 1, 0))
+    for xe_, nx in ((xo_[0], -1), (xo_[1], 1)):
+        st.face([(xe_, DRIVE[0], 0.0), (xe_, DRIVE[0] + WALL_T, 0.0), (xe_, DRIVE[0] + WALL_T, BAL_H), (xe_, DRIVE[0], BAL_H)], (nx, 0, 0))
+    A_, B_, C_, D_ = Wl(S['r_wi']), El(S['r_ei']), S['C'], Vector((W0.x, ARC_Y[0]))
+    st.face([(p_.x, p_.y, ARC_CEIL) for p_ in (A_, B_, W0)], (0, 0, -1))
+    st.face([(p_.x, p_.y, ARC_CEIL) for p_ in (W0, B_, C_, D_)], (0, 0, -1))
 
 # the arcade's floor and the arches' floor
 flat(pv, -ARC_X, ARC_X, ARC_Y[0], ARC_Y[1], LOWER)
@@ -364,14 +477,14 @@ for k in range(5):
             ax0, ax1 = fx0 + (fx1 - fx0) * i / NI, fx0 + (fx1 - fx0) * (i + 1) / NI
             ay0, ay1 = fy0 + (fy1 - fy0) * j / NJ, fy0 + (fy1 - fy0) * (j + 1) / NJ
             flat(tl, ax0, ax1, ay0, ay1, zr, (0, 0, -1), c)
-# the south wall's inner face, round the Mall's stair opening; the end walls; the vestibules to the side stairs
-for xa_, xb_ in ((-16.0 + 4.0, -3.5), (3.5, 16.0 - 4.0)):
+# the south wall's inner face, from each side stair's landing to the Mall's stair opening; the end walls; the vestibules
+for xa_, xb_ in ((SIDES[0]['C'].x, -3.5), (3.5, SIDES[1]['C'].x)):
     st.face([(xa_, ARC_Y[0], LOWER), (xb_, ARC_Y[0], LOWER), (xb_, ARC_Y[0], ARC_CEIL), (xa_, ARC_Y[0], ARC_CEIL)], (0, 1, 0))
-for s in (-1, 1):   # (the side stairs' feet, y -1 to 0, came with the stair cuts above)
+for s in (-1, 1):   # (the side stairs' landings, south of y 0, came with the stairs above)
     xe = s * ARC_X
     st.face([(xe, 4.5, LOWER), (xe, ARC_Y[1], LOWER), (xe, ARC_Y[1], ARC_CEIL), (xe, 4.5, ARC_CEIL)], (-s, 0, 0))
     xo = s * 16.0
-    st.face([(xo, ARC_Y[0], LOWER), (xo, 4.5, LOWER), (xo, 4.5, ARC_CEIL), (xo, ARC_Y[0], ARC_CEIL)], (-s, 0, 0))   # the vestibule's outer wall
+    st.face([(xo, SIDE_FOOT[1], LOWER), (xo, 4.5, LOWER), (xo, 4.5, ARC_CEIL), (xo, SIDE_FOOT[1], ARC_CEIL)], (-s, 0, 0))   # the vestibule's outer wall
     st.face([(xo, 4.5, LOWER), (xe, 4.5, LOWER), (xe, 4.5, ARC_CEIL), (xo, 4.5, ARC_CEIL)], (0, -1, 0))             # its north wall
     flat(pv, min(xo, xe), max(xo, xe), ARC_Y[0], 4.5, LOWER)
     flat(st, min(xo, xe), max(xo, xe), ARC_Y[0], 4.5, ARC_CEIL, (0, 0, -1))
@@ -571,12 +684,11 @@ def proto_tree(name, seed, kind):
         blob(g, top + Vector((0, 0, 1.1)), (4.1, 4.1, 3.5), rng, leaf, jit=0.18, flat=0.95)
         blob(g, top + Vector((0.4, -0.3, 3.7)), (3.0, 3.0, 1.7), rng, leaf, jit=0.2)
         a = rng.uniform(0, 2 * math.pi); blob(g, top + Vector((2.2 * math.cos(a), 2.2 * math.sin(a), 0.3)), (2.6, 2.6, 2.6), rng, leaf, jit=0.2, flat=0.95)
-    elif kind == 'small':  # small ornamental trees (Cherry Hill's, the terrace's banks)
-        frustum(g, (0, 0, -0.2), (0, 0, 1.9), 0.16, 0.12, 4, bark, cap=False); leaf = ALB['small']
-        blob(g, (0, 0, 3.3), (2.1, 2.1, 1.6), rng, leaf); blob(g, (0.6, -0.4, 4.1), (1.5, 1.5, 1.2), rng, leaf)
-    elif kind == 'far':    # the belts at the park's edges and the Ramble's hill: one cluster on a trunk
+    elif kind == 'round':  # one cluster on a trunk: the belts at the park's edges and the Ramble's hill, and, at about half
+        # the size, the small ornamental trees (Cherry Hill's, the terrace's banks); the belts take their darker leaf from
+        # their instance colour (ROUND_TINT), so one prototype serves both and the park keeps four species
         frustum(g, (0, 0, -0.3), (0, 0, 3.2), 0.35, 0.25, 3, bark, cap=False)
-        blob(g, (0, 0, 7.2), (4.0, 4.0, 4.4), rng, ALB['far'], flat=0.7)
+        blob(g, (0, 0, 7.2), (4.0, 4.0, 4.4), rng, ALB['round'], flat=0.7)
     PROTO[name] = g
 def proto_bench():
     g = Geo(); wd, ic = ALB['wood'], ALB['ironwork']
@@ -593,8 +705,9 @@ def proto_lamp():
     frustum(g, (0, 0, 3.42), (0, 0, 3.6), 0.23, 0.12, 5, gl, cap=False)
     frustum(g, (0, 0, 3.58), (0, 0, 3.8), 0.17, 0.0, 5, ic)
     PROTO['lamp'] = g
-for nm, sd, kd in (('elmA', 11, 'elm'), ('elmB', 12, 'elm'), ('planeA', 21, 'plane'), ('planeB', 22, 'plane'), ('willow', 31, 'willow'), ('small', 41, 'small'), ('far', 51, 'far')):
+for nm, sd, kd in (('elmA', 11, 'elm'), ('elmB', 12, 'elm'), ('planeA', 21, 'plane'), ('planeB', 22, 'plane'), ('willow', 31, 'willow'), ('round', 51, 'round')):
     proto_tree(nm, sd, kd)
+ROUND_TINT = tuple(ALB['far'][i] / ALB['round'][i] for i in range(3))   # the belts' leaf against the small trees' (each channel under 1)
 proto_bench(); proto_lamp()
 DOUBLE = set()   # (no prototype is open underneath: every canopy is a closed cluster)
 
@@ -647,33 +760,49 @@ for name, g in PROTO.items():
     PROTO_LIGHT[name] = {'cols': cols, 'sky': sky_sum, 'sun': sun_sum, 'samples': sorted(samples, key=lambda s: -s[2])}
 
 # ---- the four land poses (catalog order) and the flights between them, in Blender's frame
+def side_at(x, y):
+    """(the side stair, the run from its head, the distance across from its W line) for a point on a side stair's flight,
+    or the stair and None on its court or landing, or None"""
+    p = Vector((x, y))
+    for S in SIDES:
+        r, v = (S['W1'] - p).dot(S['U']), (p - S['W1']).dot(S['V'])
+        if 0.0 <= r <= SIDE_RUN and 0.0 <= v <= SIDE_W: return S, r, v
+        if in_poly(p, S['landing']): return S, None, None
+    return None
 def floor_at(x, y):
     """the walking surface under (x, y): the stairs, the arcade and its vestibules, the terrace, the bridge, else the ground and its path"""
     for a, b in CUTS:
         if a < x < b and CUT_Y[0] < y < CUT_Y[1]: return stair_z(y)
+    sd = side_at(x, y)
+    if sd: return LOWER if sd[1] is None else UPPER - (min(NSTEP - 1, int(sd[1] / RUN)) + 1) * RISE
     if -16.0 < x < 16.0 and DRIVE[0] < y < FACADE[1]: return LOWER
     if TERRACE[0] < x < TERRACE[1] and TERRACE[2] <= y < TERRACE[3]: return LOWER
     if abs(x - BRIDGE['x']) < BRIDGE['w'] / 2 and BRIDGE['y0'] <= y <= BRIDGE['y1']: return deck_z(y)
     return zmesh(x, y) + 0.05
+def walk_z(x, y):
+    """the surface a flight follows: the floor, but on a stair the line through its nosings (so the curve does not bob step by step)"""
+    for a, b in CUTS:
+        if a < x < b and CUT_Y[0] < y < CUT_Y[1]: return UPPER - (y - CUT_Y[0]) / RUN * RISE
+    sd = side_at(x, y)
+    if sd and sd[1] is not None: return UPPER - sd[1] / RUN * RISE
+    return floor_at(x, y)
 def bearing(b, pitch=0.0):
     b, p = math.radians(b), math.radians(pitch)
     return Vector((math.sin(b) * math.cos(p), math.cos(b) * math.cos(p), math.sin(p)))
 NEAR = 1.6     # the subject's distance in the pictures (a medium shot of a person holding the product)
-POSES = [   # id (ROOM_PRODUCTS), place, (x, y), compass bearing, pitch, vertical FOV
-    ('case', 'the Mall, under the elms', (0.0, -60.0), 0.0, 2.0, 32.0),
-    ('wallet', "Bethesda Terrace's arcade", (0.3, 3.4), 290.0, 8.0, 34.0),
-    ('lenskin', 'Sheep Meadow, the skyline beyond', (-41.0, -36.0), 255.0, 3.0, 32.0),
-    ('airpods', 'Bow Bridge over the Lake', (-55.0, 23.0), 40.0, 2.0, 32.0),
+SW_ = SIDES[0]; SFC = (SW_['W0'] + SW_['E0']) / 2   # the west side stair's foot on its axis (the second flight climbs the axis)
+P3 = SFC + SW_['U'] * 44.0                          # the meadow's pose stands on that axis carried on, inside the meadow's north-east edge
+POSES = [   # id (ROOM_PRODUCTS), place, (x, y), compass bearing, pitch, vertical FOV, the light the land's picture has (section 3)
+    ('case', 'the Mall, under the elms', (0.0, -61.4), 0.0, 2.0, 32.0, 'sun'),
+    ('wallet', "Bethesda Terrace's arcade", (1.0, 3.0), 300.0, 6.0, 34.0, 'shade'),
+    ('lenskin', 'Sheep Meadow, the skyline beyond', (P3.x, P3.y), 275.0, 3.0, 32.0, 'overcast'),
+    ('airpods', 'Bow Bridge over the Lake', (-55.0, 23.0), 40.0, 2.0, 32.0, 'shade'),
 ]
 POSE = []
-for pid, place, (x, y), b, p, fov in POSES:
-    pos = Vector((x, y, floor_at(x, y) + EYE)); POSE.append({'id': pid, 'place': place, 'pos': pos, 'target': pos + bearing(b, p) * NEAR, 'fov': fov, 'bearing': b})
-FLIGHT_H = 1.65   # the walking camera between the places
-FLIGHTS = [   # control points between the poses: (x, y), each lifted to FLIGHT_H over the surface under it
-    [(0.0, -48.0), (0.0, -32.0), (0.0, -17.0), (0.0, -10.6), (0.0, -6.5), (0.0, -2.4), (0.15, 0.9)],
-    [(-3.6, 3.1), (-8.0, 2.8), (-11.6, 2.4), (-13.6, 0.9), (-14.0, -1.8), (-14.0, -5.6), (-14.2, -10.4), (-17.5, -14.6), (-24.0, -20.2), (-30.5, -26.3), (-36.5, -32.2)],
-    [(-49.0, -38.0), (-58.5, -35.0), (-64.8, -27.5), (-67.0, -17.0), (-67.0, -5.0), (-66.6, 4.0), (-64.6, 11.5), (-61.0, 17.0), (-57.6, 20.8)],
-]
+for pid, place, (x, y), b, p, fov, light in POSES:
+    pos = Vector((x, y, floor_at(x, y) + EYE))
+    POSE.append({'id': pid, 'place': place, 'pos': pos, 'target': pos + bearing(b, p) * NEAR, 'fov': fov, 'bearing': b, 'pitch': p, 'light': light})
+FLIGHT_H = 1.65   # the camera's height over the surface between the places
 
 def cr3(P, t):
     """three's CatmullRomCurve3 'centripetal' getPoint(t), ported, so the checks fly the runtime's curve"""
@@ -693,26 +822,105 @@ def cr3(P, t):
         c0, c1_, c2, c3 = x1, t1, -3 * x1 + 3 * x2 - 2 * t1 - t2, 2 * x1 - 2 * x2 + t1 + t2
         out[c] = c0 + c1_ * w + c2 * w * w + c3 * w * w * w
     return out
-def sample(P, n=600): return [cr3(P, k / n) for k in range(n + 1)]
+class Curve:
+    """a CatmullRomCurve3 with three's arc-length table (Curve.getLengths, 200 divisions) and getUtoTmapping, ported"""
+    def __init__(self, pts):
+        self.P = [Vector(p) for p in pts]; self.L = [0.0]; last = self.at(0.0)
+        for k in range(1, 201):
+            cur = self.at(k / 200); self.L.append(self.L[-1] + (cur - last).length); last = cur
+    def at(self, t): return cr3(self.P, t)
+    def u2t(self, u):
+        A = self.L; il = len(A); tgt = u * A[-1]; lo, hi = 0, il - 1; i = 0
+        while lo <= hi:
+            i = (lo + hi) // 2; c = A[i] - tgt
+            if c < 0: lo = i + 1
+            elif c > 0: hi = i - 1
+            else: hi = i; break
+        i = hi
+        if A[i] == tgt: return i / (il - 1)
+        return (i + (tgt - A[i]) / (A[i + 1] - A[i])) / (il - 1)
+    def at_u(self, u): return self.at(self.u2t(u))   # getPointAt(u)
+
+# The flights (section-4-world.md 2 "Option B", 'landTravelMs' 2600 ms by default, 4500 at most). How travel-park.ts flies
+# one, and what the checks below fly: at the travel's normalised time tau (0 to 1), the camera stands at
+# points.getPointAt(easeInOutCubic(tau)) on the control points' curve, and looks at look.getPoint(tau) through the look
+# keys, one every 1/26 of the travel, far out (so the camera's own motion does not turn the view); back is tau run from 1
+# to 0. The keys come from the look designed here in time: toward the curve 7 m ahead, held to the poses' views at the
+# ends, smoothed (least squares against the second difference, weighted by the camera's speed so it keeps to the
+# direction of travel where it moves fast) just enough that the view never turns faster than 82 degrees a second at
+# 2600 ms; the check's line is 90. The camera never rolls (lookAt with the world's up).
+TRAVEL_MS, TRAVEL_MS_MAX, KEYS, LOOK_FAR, LOOK_AHEAD, LOOK_PITCH, HOLD, RATE_DESIGN, RATE_MAX = 2600, 4500, 27, 120.0, 7.0, 0.35, 0.10, 82.0, 90.0
+def ease(x): return 4 * x * x * x if x < 0.5 else 1 - (-2 * x + 2) ** 3 / 2   # easeInOutCubic (src/scripts/hero/util/math.ts)
+def smoothv(e0, e1, x): t = np.clip((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t)
+def lsq(yd, w, lam, ya, yb):
+    M = len(yd); D2 = np.zeros((M - 2, M))
+    for k in range(M - 2): D2[k, k:k + 3] = (1.0, -2.0, 1.0)
+    A = np.diag(w) + lam * (D2.T @ D2); b = w * yd
+    for k, v in ((0, ya), (1, ya), (M - 2, yb), (M - 1, yb)): A[k, k] += 1e9; b[k] += 1e9 * v
+    return np.linalg.solve(A, b)
+def design_look(C, A, B):
+    M = 261; tau = np.linspace(0.0, 1.0, M); Ltot = C.L[-1]
+    u = np.array([ease(t) for t in tau]); pos = [C.at_u(x) for x in u]
+    dB = bearing(B['bearing'], B['pitch']); yd, pd = [], []
+    for k in range(M):
+        sa = u[k] * Ltot + LOOK_AHEAD
+        ahead = C.at_u(sa / Ltot) if sa <= Ltot else pos[-1] + dB * (sa - Ltot)
+        d = ahead - pos[k]; d.z *= LOOK_PITCH
+        yd.append(math.degrees(math.atan2(d.x, d.y))); pd.append(math.degrees(math.atan2(d.z, math.hypot(d.x, d.y))))
+    yaw = np.degrees(np.unwrap(np.radians([A['bearing']] + yd + [B['bearing']]))); ya, yb = yaw[0], yaw[-1]; yaw = yaw[1:-1]
+    wa, wb = 1 - smoothv(0, HOLD, tau), smoothv(1 - HOLD, 1, tau)
+    yd = yaw * (1 - wa - wb) + ya * wa + yb * wb; pd = np.array(pd) * (1 - wa - wb) + A['pitch'] * wa + B['pitch'] * wb
+    sp = np.gradient(u * Ltot, tau); w = (sp / sp.max()) ** 2 + 0.04; dt = TRAVEL_MS / 1000 / (M - 1)
+    lo, hi = 1e-6, 1e9
+    for _ in range(60):
+        lam = math.sqrt(lo * hi); y = lsq(yd, w, lam, ya, yb); p = lsq(pd, w, lam, A['pitch'], B['pitch'])
+        if np.max(np.hypot(np.diff(y), np.diff(p)) / dt) > RATE_DESIGN: lo = lam
+        else: hi = lam
+    y = lsq(yd, w, hi, ya, yb); p = lsq(pd, w, hi, A['pitch'], B['pitch'])
+    idx = [round(k * (M - 1) / (KEYS - 1)) for k in range(KEYS)]
+    kpos = [pos[i] for i in idx]
+    return {'kpos': kpos, 'kyaw': [float(y[i]) for i in idx], 'kpitch': [float(p[i]) for i in idx], 'keys': [kpos[j] + bearing(float(y[i]), float(p[i])) * LOOK_FAR for j, i in enumerate(idx)]}
+def fly(f, ms, fps=60):
+    """the runtime's frames: (tau, position, view direction) at fps over ms"""
+    n = round(ms / 1000 * fps); L = f['keys']; out = []
+    for k in range(n + 1):
+        tau = k / n; p = f['curve'].at_u(ease(tau)); d = (cr3(L, tau) - p).normalized(); out.append((tau, p, d))
+    return out
+def lifted(x, y): return Vector((x, y, walk_z(x, y) + FLIGHT_H))
+# the control points between the poses (lifted to FLIGHT_H over the surface): the Mall, down its stair into the arcade;
+# west along the arcade and round to the west side stair's axis, up it and on along it to the meadow; north from the
+# meadow over the drive and down the bank to the lakeside under Bow Bridge
+def arc_onto_axis(y0, R, axis_p, U):
+    """from heading west at y0, a left arc of radius R that ends on the axis through axis_p along U, heading along U"""
+    a = math.radians(270.0 - SIDE_H)
+    best = None
+    for k in range(400):
+        xs = -1.0 - k * 0.025; e = Vector((xs - R * math.sin(a), y0 - R * (1 - math.cos(a))))
+        c = abs(cross2(axis_p, axis_p + U, e))
+        if best is None or c < best[0]: best = (c, xs)
+    xs = best[1]
+    return [(xs - R * math.sin(a * k / 3), y0 - R * (1 - math.cos(a * k / 3))) for k in range(4)]
+F2_ARC = arc_onto_axis(2.8, 12.0, SFC, SW_['U'])
+FLIGHTS = [
+    [(0.0, -48.0), (0.0, -32.0), (0.0, -17.0), (0.0, -10.6), (0.0, -6.5), (0.0, -2.4), (0.5, 0.9)],
+    [(-1.5, 2.8)] + F2_ARC + [tuple(SFC + SW_['U'] * r) for r in (0.0, 4.5, 9.0, 14.0, 20.0, 26.0, 32.0, 38.0)],
+    [(-53.8, -21.8), (-56.0, -13.5), (-57.6, -4.5), (-58.8, 4.5), (-59.0, 12.0), (-58.0, 18.0)],
+]
 FL = []
 for i, ctl in enumerate(FLIGHTS):
     a, b = POSE[i], POSE[i + 1]
-    pts = [a['pos'].copy()] + [Vector((x, y, floor_at(x, y) + FLIGHT_H)) for x, y in ctl] + [b['pos'].copy()]
-    S = sample(pts)
-    arc = [0.0]
-    for i_ in range(len(S) - 1): arc.append(arc[-1] + (S[i_ + 1] - S[i_]).length)
-    look = []   # where the camera looks at each control point: the poses' targets at the ends; between, toward the point 6 m on
-    for k, p in enumerate(pts):   # along the curve (so it turns into a stair before it meets the wall), 4 m out, its pitch eased
-        if k == 0: look.append(a['target'].copy()); continue
-        if k == len(pts) - 1: look.append(b['target'].copy()); continue
-        i_ = round(k / (len(pts) - 1) * (len(S) - 1)); s_ = arc[i_] + 6.0
-        j_ = min(len(S) - 1, bisect.bisect_left(arc, s_)); d = S[j_] - p; d.z *= 0.6
-        look.append(p + d.normalized() * 4.0)
-    FL.append({'from': i, 'to': i + 1, 'pts': pts, 'look': look, 'samples': S})
+    pts = [a['pos'].copy()] + [lifted(x, y) for x, y in ctl] + [b['pos'].copy()]
+    C = Curve(pts); f = {'from': i, 'to': i + 1, 'pts': pts, 'curve': C}
+    f.update(design_look(C, a, b))
+    f['samples'] = [C.at_u(k / 600) for k in range(601)]
+    FL.append(f)
 
 # ---- the instances: where each tree, bench and lamp stands
-INST = []   # (proto, x, y, yaw, s, sz)
-def put(p, x, y, yaw, s=1.0, sz=1.0): INST.append((p, x, y, yaw, s, sz))
+INST, KIND = [], []   # (proto, x, y, yaw, s, sz) and what kind of tree, bench or lamp it is
+TREES = {'small': 'round', 'far': 'round'}            # the kinds the round prototype serves
+def put(k, x, y, yaw, s=1.0, sz=1.0):
+    if k == 'small': s, sz = s * 0.52, sz * 0.52      # (a small tree is the round one at about half its size)
+    INST.append((TREES.get(k, k), x, y, yaw, s, sz)); KIND.append(k)
 R = random.Random(20261020)
 CLEAR = {'elmA': 2.0, 'elmB': 2.0, 'planeA': 2.4, 'planeB': 2.4, 'willow': 5.5, 'small': 3.6, 'far': 3.0}
 SPACE = {'elmA': 6.5, 'elmB': 6.5, 'planeA': 8.0, 'planeB': 8.0, 'willow': 8.0, 'small': 5.0, 'far': 6.2}
@@ -721,17 +929,22 @@ def seg_d(px, py, ax, ay, bx_, by_):
     t = 0.0 if L2 == 0 else max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / L2))
     return math.hypot(px - ax - t * dx, py - ay - t * dy)
 FLY2D = [(p.x, p.y) for f in FL for p in f['samples'][::4]] + [(P_['pos'].x, P_['pos'].y) for P_ in POSE]
+SUBJ = [P_['pos'] + bearing(P_['bearing']) * NEAR for P_ in POSE]   # where each picture's person stands
+SUN2 = Vector((L_SUN.x, L_SUN.y)).normalized()
+# land 1's photo is in direct sun: no tree on the sun's line from its person until the line is above the trees
+SUN_LANE = [(Vector((SUBJ[k].x, SUBJ[k].y)), Vector((SUBJ[k].x, SUBJ[k].y)) + SUN2 * 40.0) for k, P_ in enumerate(POSE) if P_['light'] == 'sun']
 def free(p, x, y):
     if any(seg_d(x, y, *a, *b_) < w / 2 + CLEAR[p] * 0.8 for _, w, pts in PATH_LINES for a, b_ in zip(pts, pts[1:])): return False
     if any(math.hypot(x - fx_, y - fy_) < CLEAR[p] + 1.2 for fx_, fy_ in FLY2D): return False
+    if any(seg_d(x, y, a.x, a.y, b_.x, b_.y) < 7.0 for a, b_ in SUN_LANE): return False
     if in_meadow(x, y, 1.08): return False
-    if -24.0 < x < 24.0 and -14.0 < y < 30.0: return False      # the plaza, the arcade's block and the terrace
+    if PLAZA[0] - 2 < x < PLAZA[1] + 2 and -14.0 < y < 30.0: return False      # the plaza, the arcade's block and the terrace
     if DRIVE[0] - 2.0 < y < DRIVE[1] + 2.0: return False
     ys, yn = shores(x)
     if yn - ys > 0.5 and ys - (1.5 if p == 'willow' else 3.0) < y < yn + (1.5 if p == 'willow' else 3.0): return False
     if abs(x - BRIDGE['x']) < 7.0 and BRIDGE['y0'] - 5 < y < BRIDGE['y1'] + 5: return False
     if not (XS[0] + 2 < x < XS[-1] - 2 and YS[0] + 2 < y < YS[-1] - 2): return False
-    for q, qx, qy, *_ in INST:
+    for q, (_, qx, qy, *_r) in zip(KIND, INST):
         lim = (SPACE[q] + SPACE[p]) / 2 if q in SPACE else 1.2
         if math.hypot(x - qx, y - qy) < lim: return False
     return True
@@ -743,6 +956,14 @@ for k in range(11):
 # willows at the water's edge, placed by hand: flanking Bow Bridge's far end in the fourth land's view, and along the shores
 for x, y in ((-30.0, 27.6), (-67.0, 25.6), (-47.5, 54.2), (-32.5, 53.8), (24.0, 26.6), (40.0, 26.0), (-88.0, 27.0)):
     put('willow', x, y, R.uniform(-0.35, 0.35), R.uniform(0.92, 1.08), R.uniform(0.95, 1.05))
+# the shade the lands' pictures stand in (section 3's light): a plane on the sun's side of each person, about where its
+# canopy crosses the low sun's line, for land 4 on the bank and for land 3 in the meadow's ring (the open shade an
+# overcast picture comes closest to under one sun); placed by hand, clear of the flights
+SHADE_AT = {}
+for k, P_ in enumerate(POSE):
+    if P_['light'] not in ('shade', 'overcast') or P_['id'] == 'wallet': continue   # (the arcade is open shade already)
+    o = Vector((SUBJ[k].x, SUBJ[k].y)) + SUN2 * 15.0
+    put('planeA', o.x, o.y, R.uniform(-0.2, 0.2), 1.08, 1.08); SHADE_AT[P_['id']] = (round(o.x, 2), round(o.y, 2))
 def scatter(region, kinds, n, tries=4000):
     placed = 0
     for _ in range(tries):
@@ -853,10 +1074,13 @@ def build(name, g, mat, layer=None, uv=None, weld=True, obj_name=None, lit=None)
         for f in bm.faces:
             c = f.calc_center_median(); ox, oy = math.floor(c.x / 32) * 1000.0, math.floor(c.y / 32) * 1000.0
             for l_ in f.loops: l_[ul].uv = (l_.vert.co.x + ox, l_.vert.co.y + oy)
-    elif uv == 'diag':   # the stairs: projected along the flight's diagonal, so each stair's treads and risers are one island
+    elif uv == 'diag' or isinstance(uv, tuple):   # a stair: projected along its flight's diagonal (the Mall's runs down to the
+        # north; a side stair's up along its U), so each stair's treads and risers are one island
+        ax = uv[1] if isinstance(uv, tuple) else Vector((0.0, -1.0))
         ul = bm.loops.layers.uv.new('lightmap')
         for f in bm.faces:
-            for l_ in f.loops: l_[ul].uv = (l_.vert.co.x, (l_.vert.co.y - l_.vert.co.z) * 0.7071)
+            for l_ in f.loops:
+                c = l_.vert.co; l_[ul].uv = (c.x * -ax.y + c.y * ax.x, (-(c.x * ax.x + c.y * ax.y) - c.z) * 0.7071)
     elif uv: bm.loops.layers.uv.new('lightmap')
     me = bpy.data.meshes.new(obj_name or name); bm.to_mesh(me); bm.free()
     ob = bpy.data.objects.new(obj_name or name, me); ob.data.materials.append(mat); sc.collection.objects.link(ob)
@@ -866,10 +1090,11 @@ def build(name, g, mat, layer=None, uv=None, weld=True, obj_name=None, lit=None)
 LM = {   # name: (albedo, colour layer, uv, weight)
     'lawn': ((1, 1, 1), 'Col', 'planar', 1.0), 'lawn_outer': ((1, 1, 1), 'Col', 'planar', 0.32),
     'promenade': (ALB['promenade'], None, 'planar', 1.9), 'path': (ALB['path'], None, 'planar', 1.25), 'drive': (ALB['drive'], None, 'planar', 0.7),
-    'granite': (ALB['granite'], None, 'smart', 1.2), 'stone': (ALB['stone'], None, 'smart', 2.1), 'steps': (ALB['stone'], None, 'diag', 2.1), 'tile': ((1, 1, 1), 'Col', 'smart', 1.6),
+    'granite': (ALB['granite'], None, 'smart', 1.2), 'stone': (ALB['stone'], None, 'smart', 2.1), 'steps': (ALB['stone'], None, 'diag', 2.1),
+    'steps_w': (ALB['stone'], None, ('axis', SIDES[0]['U']), 2.1), 'steps_e': (ALB['stone'], None, ('axis', SIDES[1]['U']), 2.1), 'tile': ((1, 1, 1), 'Col', 'smart', 1.6),
     'water': (ALB['water'], None, 'planar', 0.42), 'iron': (ALB['iron'], None, 'smart', 2.6), 'deck': (ALB['deck'], None, 'smart', 2.3),
 }
-MAT_OF = {'lawn_outer': 'lawn', 'steps': 'stone'}
+MAT_OF = {'lawn_outer': 'lawn', 'steps': 'stone', 'steps_w': 'stone', 'steps_e': 'stone'}
 OBJ = {}
 material('lawn', (1, 1, 1), 'Col')
 for name, (rgb, layer, uv, w) in LM.items():
@@ -985,10 +1210,17 @@ def add_world(ob, owner, albedo=None):
         TUV.append([tuple(uvl.data[l].uv) for l in t.loops] if uvl else None)
         TCOL.append([tuple(cl.data[l].color)[:3] for l in t.loops] if cl else [albedo] * 3)
     ob.evaluated_get(dg).to_mesh_clear()
-for name, (rgb, layer, uv, w) in LM.items(): add_world(OBJ[name], -1, rgb)
+for name, (rgb, layer, uv, w) in LM.items(): add_world(OBJ[name], -3 if name.startswith('steps') else -1, rgb)   # (-3: a stair's treads and risers)
 for name in IN_PLACE: add_world(OBJ[name], -2)
 for k, ob in enumerate(INST_OB): add_world(ob, k)
 PARK = BVHTree.FromPolygons(WV, WP, all_triangles=True, epsilon=0.0)
+# the unlit far meshes (the sky dome, the skyline cards, the far ground) on their own, for what a view shows past the park
+FV, FP, FCOL = [], [], []
+for name in UNLIT:
+    me = OBJ[name].data; me.calc_loop_triangles(); cl = me.color_attributes['Col']; i0 = len(FV)
+    FV.extend(OBJ[name].matrix_world @ v.co for v in me.vertices)
+    for t in me.loop_triangles: FP.append([i0 + v for v in t.vertices]); FCOL.append([tuple(cl.data[l].color)[:3] for l in t.loops])
+FAR = BVHTree.FromPolygons(FV, FP, all_triangles=True, epsilon=0.0)
 # the in-place meshes' faces: the sun by ray, the sky by the same 48 rays (what they meet bounces a little light back)
 for name, rgb in IN_PLACE.items():
     me = OBJ[name].data; ca = me.color_attributes['Col']; alb = Vector(rgb)
@@ -1035,44 +1267,106 @@ for k, (p, x, y, yaw, s, sz) in enumerate(INST):
     f = (info['sky'] * fk + info['sun'] * fs) / tot if tot > 0 else 1.0
     tint = 1.0 + R.uniform(-0.07, 0.07)
     hue = (1.0 + R.uniform(-0.04, 0.04), 1.0, 1.0 + R.uniform(-0.05, 0.03)) if p not in ('bench', 'lamp') else (1, 1, 1)
-    SHADE.append([round(min(1.0, max(0.22, f * tint * h)), 4) for h in hue])
+    tk = ROUND_TINT if KIND[k] == 'far' else (1.0, 1.0, 1.0)   # the belts' darker leaf (the round prototype carries the small trees')
+    SHADE.append([round(min(1.0, max(0.22, f * tint * h)) * tk[i], 4) for i, h in enumerate(hue)])
 
-# ---- each pose's exposure: the view's mean displayed luminance away from the sky, from rays through a 16:10 frame (the
-# lightmap's stored values x the albedo / UNIT, the props' lit colour x their shade), brought up toward a photograph's
-# exposure where the place is in shade (the arcade above all); never below 1, so a sunlit land shows as baked
-def shade_at(hit, idx):
-    a, b_, c = (WV[i] for i in WP[idx])
+# ---- exposure, as the runtime draws it: each lightmapped or baked colour x the scene's exposure, each unlit one (the sky,
+# the skyline, the far ground) x the sky's own. A view is metered through a 16:10 frame of rays: the scene's exposure
+# brings the mean displayed luminance off the sky toward a photograph's (EXPO_TARGET, at most EXPO_MAX, for the shaded
+# places to read as the pictures will), but never so far that more than CLIP_AIM of the frame clips (any channel at CLIP_AT
+# or over: 8-bit output shows 0.9955 as 255, and the lightmap's 8-bit, lossy encoding moves a bright texel by up to about
+# 2 percent, so a wall the bake puts at 0.99 can show as 255), in
+# the 16:10 frame or the phone's 390 x 844 one at the same vertical FOV; the sky's is the scene's, held under 0.92 on the
+# brightest unlit channel in view, so the sky never clips
+def bary(V_, P_, i, hit):
+    a, b_, c = (V_[j] for j in P_[i])
     v0, v1, v2 = b_ - a, c - a, hit - a
     d00, d01, d11, d20, d21 = v0.dot(v0), v0.dot(v1), v1.dot(v1), v2.dot(v0), v2.dot(v1)
     den = d00 * d11 - d01 * d01 or 1e-12
-    wb = (d11 * d20 - d01 * d21) / den; wc = (d00 * d21 - d01 * d20) / den; wa = 1 - wb - wc
+    wb = (d11 * d20 - d01 * d21) / den; wc = (d00 * d21 - d01 * d20) / den
+    return 1 - wb - wc, wb, wc
+def shade_at(hit, idx):
+    wa, wb, wc = bary(WV, WP, idx, hit)
     col = [TCOL[idx][0][i] * wa + TCOL[idx][1][i] * wb + TCOL[idx][2][i] * wc for i in range(3)]
     if WO[idx] == -2: return col
     if WO[idx] >= 0: return [col[i] * SHADE[WO[idx]][i] for i in range(3)]
     uv = [TUV[idx][0][i] * wa + TUV[idx][1][i] * wb + TUV[idx][2][i] * wc for i in range(2)]
     px_ = LMV[min(SIZE - 1, max(0, int(uv[1] * SIZE))), min(SIZE - 1, max(0, int(uv[0] * SIZE)))]
     return [col[i] * float(px_[i]) / UNIT for i in range(3)]
-EXPO_TARGET, EXPO_MAX = 0.14, 2.4
+def far_at(hit, idx):
+    wa, wb, wc = bary(FV, FP, idx, hit)
+    return [FCOL[idx][0][i] * wa + FCOL[idx][1][i] * wb + FCOL[idx][2][i] * wc for i in range(3)]
+EXPO_TARGET, EXPO_MAX, EXPO_MIN, CLIP_AIM, CLIP_MAX, CLIP_AT, SKY_TOP, PHONE = 0.14, 2.4, 0.8, 0.01, 0.02, 0.97, 0.92, 390 / 844
+def frame(pos, fwd, fov, nx=48, ny=30, aspect=1.6):
+    """a frame's rays from pos along fwd (16:10 unless told): the scene's colours (unexposed) and the unlit ones"""
+    right = fwd.cross(Vector((0, 0, 1))).normalized(); up = right.cross(fwd); th = math.tan(math.radians(fov) / 2)
+    scene, far = [], []
+    for i in range(nx):
+        for j in range(ny):
+            d = (fwd + right * ((i + 0.5) / nx * 2 - 1) * th * aspect + up * ((j + 0.5) / ny * 2 - 1) * th).normalized()
+            h = PARK.ray_cast(pos, d, 1500.0)
+            if h[0] is not None: scene.append(shade_at(h[0], h[2])); continue
+            h = FAR.ray_cast(pos, d, 4000.0)
+            far.append(far_at(h[0], h[2]) if h[0] is not None else [0.0, 0.0, 0.0])
+    return scene, far
+def clip_limit(scene, far):
+    """the most exposure the frame takes before more than CLIP_AIM of it clips"""
+    top = sorted((max(c) for c in scene), reverse=True); allow = int(CLIP_AIM * (len(scene) + len(far)))
+    return 0.999 * CLIP_AT / top[allow] if allow < len(top) and top[allow] > 0 else EXPO_MAX
+def frames(pos, fwd, fov, nx, ny):
+    """the 16:10 frame and the phone's portrait one (at about the same ray density)"""
+    return frame(pos, fwd, fov, nx, ny), frame(pos, fwd, fov, max(8, round(nx * PHONE / 1.6 * 2)), ny * 2, PHONE)
+def meter(views):
+    """(the scene's exposure, the sky's, the mean) for a view's frames: toward EXPO_TARGET on the wide frame, never under 1
+    on that count (a sunlit land shows as baked), under 1 only so far as the frames need to stay unclipped"""
+    scene = views[0][0]; mean = sum(lum(c) for c in scene) / max(1, len(scene))
+    e = max(EXPO_MIN, min(max(1.0, min(EXPO_MAX, EXPO_TARGET / max(mean, 1e-4))), *(clip_limit(sc_, fa_) for sc_, fa_ in views)))
+    fmax = max((max(c) for _, fa_ in views for c in fa_), default=0.0)
+    return e, (min(e, SKY_TOP / fmax) if fmax > 0 else e), mean
+def clipped(scene, far, e, es):
+    n = len(scene) + len(far)
+    return (sum(1 for c in scene if max(c) * e >= CLIP_AT) + sum(1 for c in far if max(c) * es >= CLIP_AT)) / max(1, n)
 for P_ in POSE:
-    fwd = (P_['target'] - P_['pos']).normalized(); right = fwd.cross(Vector((0, 0, 1))).normalized(); up = right.cross(fwd)
-    th = math.tan(math.radians(P_['fov']) / 2); tot, n_hit, n_all = 0.0, 0, 0
-    for i in range(32):
-        for j in range(20):
-            sx, sy = (i + 0.5) / 16 - 1, (j + 0.5) / 10 - 1
-            d = (fwd + right * sx * th * 1.6 + up * sy * th).normalized(); n_all += 1
-            hit = PARK.ray_cast(P_['pos'], d, 600.0)
-            if hit[0] is None: continue
-            tot += lum(shade_at(hit[0], hit[2])); n_hit += 1
-    mean = tot / max(1, n_hit)
-    P_['exposure'] = round(max(1.0, min(EXPO_MAX, EXPO_TARGET / max(mean, 1e-4))), 2); P_['mean_lum'] = round(mean, 4); P_['sky_share'] = round(1 - n_hit / n_all, 3)
-print('EXPOSURE', [(P_['id'], P_['mean_lum'], P_['exposure'], P_['sky_share']) for P_ in POSE])
+    vw = frames(P_['pos'], (P_['target'] - P_['pos']).normalized(), P_['fov'], 64, 40)
+    P_['exposure'], P_['sky_exposure'], P_['mean_lum'] = meter(vw)
+    sc_, fa_ = vw[0]; P_['sky_share'] = len(fa_) / (len(sc_) + len(fa_))
+    P_['clip'], P_['clip_phone'] = (clipped(a_, b_, P_['exposure'], P_['sky_exposure']) for a_, b_ in vw)
+print('EXPOSURE', [(P_['id'], round(P_['mean_lum'], 4), round(P_['exposure'], 3), round(P_['sky_exposure'], 3), round(P_['clip'], 4)) for P_ in POSE])
+# the flights' exposures, one per look key: the two lands' exposures carried across (in stops), lowered only where a
+# key's own view would clip, the dips eased (a three-key minimum, then two passes of a 1-2-1 blur, which stay under the
+# limits) so the frame does not pump; the sky's held under its limit the same way
+for f in FL:
+    a, b = POSE[f['from']], POSE[f['to']]
+    f['kfov'] = [a['fov'] + (b['fov'] - a['fov']) * k / (KEYS - 1) for k in range(KEYS)]
+    lim, slim = [], []
+    for k in range(KEYS):
+        vw = frames(f['kpos'][k], (f['keys'][k] - f['kpos'][k]).normalized(), f['kfov'][k], 40, 25)
+        fmax = max((max(c) for _, fa_ in vw for c in fa_), default=0.0); lim.append(min(clip_limit(a_, b_) for a_, b_ in vw)); slim.append(SKY_TOP / fmax if fmax > 0 else EXPO_MAX)
+    def ease_down(base, cap_):
+        lg = np.minimum(np.log2(base), np.log2(cap_)); want = lg.copy()
+        lg[1:-1] = np.minimum(np.minimum(lg[:-2], lg[1:-1]), lg[2:])
+        for _ in range(2): lg[1:-1] = (lg[:-2] + 2 * lg[1:-1] + lg[2:]) / 4
+        return [2 ** float(v) for v in np.minimum(lg, want)]
+    t_ = np.arange(KEYS) / (KEYS - 1)
+    base = 2 ** (np.log2(a['exposure']) * (1 - t_) + np.log2(b['exposure']) * t_)
+    f['kexp'] = ease_down(base, np.array(lim)); f['kexp'][0], f['kexp'][-1] = a['exposure'], b['exposure']
+    sbase = 2 ** (np.log2(a['sky_exposure']) * (1 - t_) + np.log2(b['sky_exposure']) * t_)
+    f['ksky'] = ease_down(np.minimum(sbase, f['kexp']), np.array(slim)); f['ksky'][0], f['ksky'][-1] = a['sky_exposure'], b['sky_exposure']
+print('FLIGHT EXPOSURE', [[round(v, 2) for v in f['kexp']] for f in FL])
 
-# ---- the checks: each flight's height over the surface under it, its clearance, its turn; each pose's view
+# ---- the checks. Each flight, at 2600 ms (the default) and 4500 ms (the most): the view's peak turn rate at 60 fps
+# (the line is RATE_MAX, roll none), its pitch, how far the look strays from the direction of travel while the camera
+# moves fast and how much room the view has ahead then, the camera's height over the surface, clearance and headroom, and
+# the share of its 16:10 frames that clip under the keys' exposures; each pose, the same frame and the light on the
+# picture's person against the land's table (sun, or shade; an overcast picture can only be matched by shade)
 def nearest(p):
     r = PARK.find_nearest(p, 50.0); return r[3] if r[0] is not None else 50.0
+def lerp_keys(vals, tau): x = tau * (KEYS - 1); i = min(KEYS - 2, int(x)); return vals[i] + (vals[i + 1] - vals[i]) * (x - i)
+FAILS = []
 CHECK = []
 for f in FL:
-    S = f['samples']; hmin, hmax, cmin, ceil_min = 9, 0, 9, 9; length = sum((S[i + 1] - S[i]).length for i in range(len(S) - 1))
+    name = f"flight {f['from'] + 1} to {f['to'] + 1}"
+    S = f['samples']; hmin, hmax, cmin, ceil_min = 9, 0, 9, 9; length = f['curve'].L[-1]
     for p in S:
         hit = PARK.ray_cast(p, Vector((0, 0, -1)), 30.0)
         h = (p - hit[0]).length if hit[0] is not None else 9
@@ -1080,14 +1374,55 @@ for f in FL:
         up = PARK.ray_cast(p, Vector((0, 0, 1)), 30.0)
         if up[0] is not None: ceil_min = min(ceil_min, (up[0] - p).length)
         cmin = min(cmin, nearest(p))
-    yaw = [math.degrees(math.atan2(S[i + 1].x - S[i].x, S[i + 1].y - S[i].y)) for i in range(len(S) - 1)]
-    turn = sum(abs((yaw[i + 1] - yaw[i] + 180) % 360 - 180) for i in range(len(yaw) - 1))
-    CHECK.append({'from': f['from'], 'to': f['to'], 'length_m': round(length, 1), 'eye_over_surface_m': [round(hmin, 2), round(hmax, 2)], 'clearance_m': round(cmin, 2), 'headroom_m': round(ceil_min, 2) if ceil_min < 9 else None, 'path_turn_deg': round(turn)})
+    rate = {}
+    for ms in (TRAVEL_MS, TRAVEL_MS_MAX):
+        F = fly(f, ms); peak, at = 0.0, 0.0
+        for k in range(1, len(F)):
+            r = math.degrees(math.acos(max(-1.0, min(1.0, F[k][2].dot(F[k - 1][2]))))) * 60
+            if r > peak: peak, at = r, F[k][0]
+        rate[str(ms)] = {'peakDegPerS': round(peak, 1), 'atTau': round(at, 3)}
+    F = fly(f, TRAVEL_MS); sp = [((F[k + 1][1] - F[k][1]).length * 60) for k in range(len(F) - 1)] + [0.0]; vmax = max(sp)
+    pitch = max(abs(math.degrees(math.asin(max(-1.0, min(1.0, d.z))))) for _, _, d in F)
+    stray, room, room_at, clip_max, clip_at, clip_phone = 0.0, 1e9, 0.0, 0.0, 0.0, 0.0
+    hlow = min(((p - PARK.ray_cast(p, Vector((0, 0, -1)), 30.0)[0]).length, tau) for tau, p, _ in F if PARK.ray_cast(p, Vector((0, 0, -1)), 30.0)[0] is not None)
+    for k in range(len(F) - 1):
+        tau, p, d = F[k]; mv = F[k + 1][1] - p
+        if sp[k] > 0.5 * vmax and mv.length > 1e-6:
+            h2, m2 = Vector((d.x, d.y)).normalized(), Vector((mv.x, mv.y)).normalized()
+            stray = max(stray, math.degrees(math.acos(max(-1.0, min(1.0, h2.dot(m2))))))
+        if sp[k] > 0.25 * vmax:   # (a stair the camera climbs or descends is the view ahead, not a wall in its way)
+            h = PARK.ray_cast(p, d, 400.0); rm = (h[0] - p).length if h[0] is not None else 400.0
+            if rm < room and not (h[0] is not None and WO[h[2]] == -3): room, room_at = rm, tau
+        if k % 2 == 0:
+            vw = frames(p, d, lerp_keys(f['kfov'], tau), 40, 25)
+            c, cp = (clipped(a_, b_, lerp_keys(f['kexp'], tau), lerp_keys(f['ksky'], tau)) for a_, b_ in vw)
+            if c > clip_max: clip_max, clip_at = c, tau
+            clip_phone = max(clip_phone, cp)
+    row = {'from': f['from'], 'to': f['to'], 'length_m': round(length, 1), 'eye_over_surface_m': [round(hmin, 2), round(hmax, 2)], 'clearance_m': round(cmin, 2),
+           'headroom_m': round(ceil_min, 2) if ceil_min < 9 else None, 'viewRate': rate, 'rollDeg': 0, 'pitchMaxDeg': round(pitch, 1),
+           'peakSpeedMps': round(vmax, 1), 'lookStrayFastDeg': round(stray, 1), 'roomAheadFastM': round(room, 2), 'roomAtTau': round(room_at, 3), 'eyeLowAtTau': round(hlow[1], 3), 'clipMax': round(clip_max, 4), 'clipAtTau': round(clip_at, 3), 'clipMaxPhone': round(clip_phone, 4)}
+    CHECK.append(row)
+    if rate[str(TRAVEL_MS)]['peakDegPerS'] > RATE_MAX: FAILS.append(f"{name}: the view turns {rate[str(TRAVEL_MS)]['peakDegPerS']} degrees a second at {TRAVEL_MS} ms, over {RATE_MAX}")
+    if clip_max > CLIP_MAX: FAILS.append(f'{name}: {clip_max:.1%} of a 16:10 frame clips at tau {clip_at:.2f}, over {CLIP_MAX:.0%}')
+    if clip_phone > CLIP_MAX: FAILS.append(f"{name}: {clip_phone:.1%} of a phone's frame clips, over {CLIP_MAX:.0%}")
+    if cmin < 1.0 or hmin < 1.0: FAILS.append(f'{name}: clearance {cmin:.2f} m, eye over the surface {hmin:.2f} m')
+    if room < 3.0: FAILS.append(f'{name}: the view has {room:.1f} m of room ahead while the camera moves fast')
 POSE_CHECK = []
-for P_ in POSE:
+for k, P_ in enumerate(POSE):
     d = (P_['target'] - P_['pos']).normalized(); hit = PARK.ray_cast(P_['pos'], d, 400.0)
-    POSE_CHECK.append({'id': P_['id'], 'free_ahead_m': round((hit[0] - P_['pos']).length, 2) if hit[0] is not None else None, 'clearance_m': round(nearest(P_['pos']), 2), 'eye_over_floor_m': round(P_['pos'].z - floor_at(P_['pos'].x, P_['pos'].y), 2)})
+    fl = floor_at(SUBJ[k].x, SUBJ[k].y)
+    hits = [PARK.ray_cast(Vector((SUBJ[k].x, SUBJ[k].y, fl + hgt)), L_SUN, 400.0) for hgt in (1.0, 1.5)]
+    lit = [h[0] is None for h in hits]
+    got = 'sun' if all(lit) else ('shade' if not any(lit) else 'part sun')
+    by = sorted(set(('the park' if WO[h[2]] < 0 else INST[WO[h[2]]][0]) + f' at {round((h[0] - SUBJ[k].to_3d()).length, 1)} m' for h in hits if h[0] is not None))
+    want = 'shade' if P_['light'] == 'overcast' else P_['light']
+    POSE_CHECK.append({'id': P_['id'], 'free_ahead_m': round((hit[0] - P_['pos']).length, 2) if hit[0] is not None else None, 'clearance_m': round(nearest(P_['pos']), 2),
+                       'eye_over_floor_m': round(P_['pos'].z - floor_at(P_['pos'].x, P_['pos'].y), 2), 'clip': round(P_['clip'], 4), 'clipPhone': round(P_['clip_phone'], 4),
+                       'light': {'picture': P_['light'], 'person': got, 'shadedBy': by, **({'gap': 'an overcast picture under the one sun: the person stands in a tree\'s open shade, the view beyond in sun'} if P_['light'] == 'overcast' else {})}})
+    if max(P_['clip'], P_['clip_phone']) > CLIP_MAX: FAILS.append(f"pose {P_['id']}: {max(P_['clip'], P_['clip_phone']):.1%} of a frame clips, over {CLIP_MAX:.0%}")
+    if got != want: FAILS.append(f"pose {P_['id']}: the picture's person is in {got}, the land's light is {P_['light']}")
 print('CHECKS', json.dumps(CHECK), json.dumps(POSE_CHECK))
+print('FAILS', FAILS if FAILS else 'none')
 
 # ---- optional Cycles look renders from the four poses (the path-traced reference for the runtime's look)
 if LOOKS:
@@ -1120,15 +1455,23 @@ instances = {}
 for k, (p, x, y, yaw, s, sz) in enumerate(INST):
     z = INST_OB[k].location.z
     instances.setdefault(p, []).append({'t': Y((x, y, z)), 'r': [0.0, round(math.sin(yaw / 2), 6), 0.0, round(math.cos(yaw / 2), 6)], 's': [round(s, 4), round(sz, 4), round(s, 4)], 'c': SHADE[k]})
+R4 = lambda v: round(float(v), 4)
 report = {
     'size': SIZE, 'samples': SAMPLES, 'bake_s': round(t2 - t1, 1), 'total_s': round(time.time() - t0, 1),
-    'light': {'unit': UNIT, 'eOpen': E_OPEN, 'eOpenProps': [round(c, 5) for c in E_OPEN_A], 'shadeRatio': round(lum(E_OPEN['sky']) / EL, 3), 'sun': {'dir': Y(L_SUN), 'azimuth': SUN_AZ, 'elevation': SUN_EL, 'rgb': SUN_RGB},
-              'exposure': {'target': EXPO_TARGET, 'measured': {P_['id']: {'meanLum': P_['mean_lum'], 'skyShare': P_['sky_share']} for P_ in POSE}}},
-    'objects': objects, 'instances': instances, 'scatter': counts,
-    'poses': [{'id': P_['id'], 'place': P_['place'], 'position': Y(P_['pos']), 'target': Y(P_['target']), 'fov': P_['fov'], 'near': NEAR, 'exposure': P_['exposure']} for P_ in POSE],
-    'flights': [{'from': f['from'], 'to': f['to'], 'points': [Y(p) for p in f['pts']], 'look': [Y(p) for p in f['look']]} for f in FL],
-    'checks': {'flights': CHECK, 'poses': POSE_CHECK},
+    'light': {'unit': UNIT, 'eOpen': E_OPEN, 'eOpenProps': [round(c, 5) for c in E_OPEN_A], 'shadeRatio': round(lum(E_OPEN['sky']) / EL, 3), 'sun': {'dir': Y(L_SUN), 'azimuth': SUN_AZ, 'elevation': SUN_EL, 'rgb': SUN_RGB,
+                      'note': "for Sam: section 3's table gives land 1 direct afternoon sun, and its photo is lit low from frame right; with land 1 facing north up the Mall toward Bethesda, light from frame right is an eastern sun, so the park's one sun is a low morning sun in its own frame (the picture cannot show the hour); land 3's overcast is matched by a tree's open shade"},
+              'exposure': {'target': EXPO_TARGET, 'max': EXPO_MAX, 'min': EXPO_MIN, 'clipAim': CLIP_AIM, 'clipMax': CLIP_MAX, 'clipAt': CLIP_AT, 'skyTop': SKY_TOP,
+                           'measured': {P_['id']: {'meanLum': R4(P_['mean_lum']), 'skyShare': R4(P_['sky_share'])} for P_ in POSE}}},
+    'objects': objects, 'instances': instances, 'scatter': counts, 'shadeTrees': SHADE_AT,
+    'poses': [{'id': P_['id'], 'place': P_['place'], 'position': Y(P_['pos']), 'target': Y(P_['target']), 'fov': P_['fov'], 'near': NEAR,
+               'exposure': round(P_['exposure'], 3), 'skyExposure': round(P_['sky_exposure'], 3), 'light': P_['light']} for P_ in POSE],
+    'travel': {'ms': TRAVEL_MS, 'msMax': TRAVEL_MS_MAX, 'ease': 'easeInOutCubic', 'keys': KEYS, 'rateMaxDegPerS': RATE_MAX, 'rateDesignDegPerS': RATE_DESIGN},
+    'flights': [{'from': f['from'], 'to': f['to'], 'points': [Y(p) for p in f['pts']], 'look': [Y(p) for p in f['keys']],
+                 'exposure': [round(v, 3) for v in f['kexp']], 'skyExposure': [round(v, 3) for v in f['ksky']], 'fov': [round(v, 2) for v in f['kfov']]} for f in FL],
+    'checks': {'pass': not FAILS, 'failures': FAILS, 'flights': CHECK, 'poses': POSE_CHECK},
     'glb_bytes': os.path.getsize(glb),
 }
 json.dump(report, open(os.path.join(OUT, 'park-report.json'), 'w'), indent=1)
 print('DONE', json.dumps({k: report[k] for k in ('size', 'samples', 'bake_s', 'total_s', 'glb_bytes')}), 'instances', {k: len(v) for k, v in instances.items()})
+if FAILS:   # the report is written either way; the run fails, so pack.mjs is not run on a park that fails its checks
+    print('CHECKS FAILED:\n  ' + '\n  '.join(FAILS)); sys.exit(1)

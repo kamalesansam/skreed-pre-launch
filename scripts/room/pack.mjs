@@ -127,16 +127,25 @@ if (!PARK) writeFileSync(MANIFEST, JSON.stringify(manifest, null, 1) + '\n');
  *     prototype's quantised frame (the node's dequantisation applies after the instance's transform, so t' = (t + R(K lo)
  *     - lo) / step puts each copy where park.py stood it);
  *   - EXT_meshopt_compression on every buffer view (the vendored pure-JS decoder reads it: no WebAssembly);
- *   - materials with KHR_materials_unlit, the albedo as baseColorFactor (linear) and extras.light naming the light:
- *     'lightmap' (albedo x baseColor x COLOR_0 x the map / unit), 'baked' (COLOR_0 is the lit colour, x the instance's
- *     shade) or 'unlit' (COLOR_0 is the final colour). With three's stock materials as GLTFLoader makes them
- *     (MeshBasicMaterial), only the lightmapped ones need the map: lightMap.channel = 1 and lightMapIntensity = PI / unit.
+ *   - materials with KHR_materials_unlit, the albedo as baseColorFactor (linear) and extras.light naming the light, and
+ *     what the runtime multiplies in (park.json's exposures: a pose's, or a flight's keys' read at the travel's time):
+ *     'lightmap' (baseColor x COLOR_0 where the mesh has one x the map / unit, x the scene's exposure), 'baked' (COLOR_0
+ *     is the lit colour, x the instance's shade, x the scene's exposure) or 'unlit' (COLOR_0 is the final colour, x the
+ *     sky's exposure, never the scene's: the sky, the skyline and the far ground). With three's stock materials as
+ *     GLTFLoader makes them (MeshBasicMaterial): lightMap with channel 1, colorSpace sRGB and flipY false, and
+ *     lightMapIntensity = PI / unit x exposure; material.color set to the exposure on 'baked' and to the sky's on 'unlit'.
+ *   - colour space: three 0.165 converts to display values only when it draws to the screen; into a render target it
+ *     writes linear values (WebGLPrograms, outputColorSpace of a target). world.ts draws into an 8-bit target and writes
+ *     display values by hand (section-4-world.md 5, "Its target"), so there these materials must convert in their own
+ *     shader (assets.ts's TO_SRGB through onBeforeCompile) or be ShaderMaterials as hall.ts's are; drawn as they come,
+ *     the park comes out dark and banded.
  */
 async function packPark(src) {
   const sharp = (await import('sharp')).default;
   const OUTDIR = 'src/assets/room/park';
   const { json, bin } = readGlb(readFileSync(join(src, 'park-raw.glb')));
   const report = JSON.parse(readFileSync(join(src, 'park-report.json'), 'utf8'));
+  if (!report.checks?.pass) throw new Error(`park: park.py's checks failed, not packed:\n  ${(report.checks?.failures ?? ['no checks in the report']).join('\n  ')}`);
   const readF = (i) => {   // an accessor as floats, normalised integers brought to 0..1
     const a = json.accessors[i], raw = read(json, bin, i), out = new Float32Array(raw.length);
     const k = !a.normalized ? 1 : a.componentType === 5121 ? 1 / 255 : a.componentType === 5123 ? 1 / 65535 : 1;
@@ -299,8 +308,16 @@ async function packPark(src) {
     lightmap: { size: 1024, unit: report.light.unit, avif: { bytes: avif.b.length, quality: avif.q }, webp: { bytes: webp.b.length, quality: webp.q }, bake: { size: report.size, samples: report.samples } },
     light: report.light,
     camera: { near: 0.1, far: 1600, eye: 1.5 },
+    // each pose's fov and near are option A's too (section-4-world.md 2 and 3): they live here until ROOM_LANDS exists in
+    // config/room.ts, and the integrator moves them there (tests/unit/room-park.test.ts pins them meanwhile)
     poses: report.poses,
-    flights: report.flights.map((f) => ({ ...f, curve: 'CatmullRomCurve3, centripetal; points and look share each control point\'s parameter (getPoint(t)), the position read at constant speed (getUtoTmapping)' })),
+    travel: {
+      ...report.travel,
+      how: 'at the travel\'s normalised time tau (0 to 1, back runs it from 1 to 0): position = new CatmullRomCurve3(points, false, \'centripetal\').getPointAt(easeInOutCubic(tau)); '
+        + 'camera.lookAt(new CatmullRomCurve3(look, false, \'centripetal\').getPoint(tau)) with the world\'s up (no roll); exposure, skyExposure and fov read from their keys, '
+        + 'one every 1 / (keys - 1) of the travel, linearly; easeInOutCubic is src/scripts/hero/util/math.ts\'s. The checks fly exactly this.',
+    },
+    flights: report.flights,
     checks: report.checks,
   };
   writeFileSync(join(OUTDIR, 'park.json'), JSON.stringify(park, null, 1) + '\n');
