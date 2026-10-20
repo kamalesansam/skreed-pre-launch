@@ -52,7 +52,8 @@ export function parkTravelAlias(pick, tune, dir = SECTION4) {
 }
 
 // the pick, checked here first so a typo fails the build before anything is bundled; written back so the client reads the
-// same pick as import.meta.env.PUBLIC_PARK_TRAVEL (ROOM_PARAMS.parkTravel's default) when the variable was not set at all
+// same pick as import.meta.env.PUBLIC_PARK_TRAVEL when the variable was not set at all (ROOM_PARAMS.parkTravel is to
+// default from it, the director's change)
 const PICK = readPick([], process.env);
 process.env.PUBLIC_PARK_TRAVEL = PICK;
 
