@@ -334,7 +334,8 @@ export type WorldLayer =
   | { kind: 'land'; i: number; /** scene units into the land along its view */ push: number; alpha?: number; /** degrees of yaw and pitch (option A's slight sway) */ sway?: readonly [number, number] }
   | { kind: 'points'; alpha?: number }   // the morph's landed points as they stand (the push's first 0.25 s)
   | { kind: 'stream'; /** option A's (stream.ts) */ stream: WorldStream; from: number; to: number; p: number; fromPush: number; toPush: number; fromSway?: readonly [number, number]; alpha?: number }
-  | { kind: 'garden' };   // the tunnel at the glide's end pose (a failed picture's fallback; the garden is decoded again if it was freed)
+  | { kind: 'garden' }   // the tunnel at the glide's end pose (a failed picture's fallback; the garden is decoded again if it was freed)
+  | { kind: 'draw'; /** an option's own scene (option B's park): drawn by the option into the bound target, display values, with its own camera framed for the target's w x h device px; opaque (a land layer over it fades) */ draw(renderer: WebGLRenderer, w: number, h: number): void };
 
 export interface EntryFrame { phase: 'glide' | 'morph' | 'push' | 'rest'; done: boolean; arrive: number; passes: readonly number[] }
 
@@ -754,6 +755,7 @@ export function createWorld(o: WorldOptions): WorldScene {
           renderer.clearDepth();
           if (l.kind === 'garden') { if (points.object.parent !== cloudHolder) cloudHolder.add(points.object); glideTo(tl.arrive); points.cloud(); points.object.renderOrder = cloudOrder; points.alpha(1); renderer.render(tunnel, cam); continue; }
           if (l.kind === 'land') { const v = lands.get(l.i); if (!v) continue; aimLand(v, l.push, l.alpha ?? 1, l.sway); renderer.render(landScene, landCam); continue; }
+          if (l.kind === 'draw') { l.draw(renderer, W, H); continue; }
           // points over the land, drawn through the land camera the land layer before set: the morph's landed points as
           // they stand, or option A's stream between two resident lands (its shader projects each end with its own camera)
           let obj: Object3D = points.object;

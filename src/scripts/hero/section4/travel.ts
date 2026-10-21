@@ -19,6 +19,8 @@ export interface TravelContext {
   /** the still3d tier: every travel is the cross-fade (spec 4), so an option is never created there */
   readonly reduced: boolean;
   readonly dpr: number;
+  /** the image format the island picked at boot (the hero poster's): an option's own images in AVIF, else WebP (B's lightmap) */
+  readonly avif: boolean;
   /** land i's view while it is resident (the director keeps the previous, current and next), else null */
   view(i: number): LandView | null;
   /** the picture class in use */
