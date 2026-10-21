@@ -27,7 +27,7 @@ import { createScrollFollower } from '../scroll/scrollMap.ts';
 import { clamp01, easeInOutCubic, lerpFPS } from '../util/math.ts';
 import { createHall, type HallScene } from './hall.ts';
 import { BUBBLE, bubbleAt, createTransition, type TransitionPass } from './transition.ts';
-import { FADE_MS, fadeLayers, loadTravel, restLayer, type Travel, type TravelContext } from './travel.ts';
+import { FADE_MS, fadeLayers, loadTravel, restLayer, unlockMedia, type Travel, type TravelContext } from './travel.ts';
 import type { LandView, WorldLayer, WorldParams, WorldScene } from './world.ts';
 
 type WorldModule = typeof import('./world.ts');
@@ -268,6 +268,8 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
     entryT = 0; seekT = -1; endNow = false; hallFrozen = false; hallStale = false;
     hall.entering(true);
     setState('entering');
+    // option C's video elements, unlocked in the press's own task (travel.ts unlockMedia); on Tune builds for any pick, as Tune can switch to C
+    if (!reduced && N > 1 && (travelOption(params()) === 'C' || import.meta.env.PUBLIC_TUNE === '1')) unlockMedia(N - 1);
     loadOption(travelOption(params()));
     say('entering');
   }
@@ -287,9 +289,11 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   function requestTravel(to: number, byKey: boolean): boolean {
     if (state !== 'world' || sub !== 'rest' || to < 0 || to >= N || to === land) return false;
     landArmed = false;
-    if (settled(to)) { beginTravel(land, to); return true; }
+    // the option's own part of the land being in (C: its clip fully fetched), waited on with the pictures
+    const more = travel && travelOpt === travelOption(params()) && travel.ready && !travel.failed ? travel.pending?.(land, to) ?? null : null;
+    if (settled(to) && !more) { beginTravel(land, to); return true; }
     waitTo = to; waitAt = performance.now(); waitByKey = byKey; setSub('wait');
-    void ensureLand(to).then(() => { if (sub === 'wait' && waitTo === to && !disposed) beginTravel(land, to); });
+    void Promise.all([ensureLand(to), more]).then(() => { if (sub === 'wait' && waitTo === to && !disposed) beginTravel(land, to); });
     return true;
   }
   function beginTravel(from: number, to: number) {
