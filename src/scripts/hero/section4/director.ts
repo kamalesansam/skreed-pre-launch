@@ -48,7 +48,7 @@ export interface RoomPlan {
   groundNeeded: boolean;
   /** the fourth wipe's progress over the loop screen (the section's frame to the hero at rest); 0 off it */
   loop: number;
-  /** the logotype over the section: Urban Slate over the garden and the lands, Pearl in the hall */
+  /** the logotype over the section: Pearl in the hall, Urban Slate over the garden, each land by its crop's tone (LAND_COPY) */
   toneDark: boolean;
 }
 
@@ -147,6 +147,8 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   const toPoster = () => { pendingEnter = false; if (root) root.dataset.tier = 'poster'; };
   const look = { yaw: 0, pitch: 0 };
   const cls = (): LandClass => (curW < curH ? 'portrait' : 'wide');
+  /** the logotype over land i: Urban Slate (dark) unless the land's crop in use says Pearl */
+  const landDark = (i: number): boolean => ROOM_LANDS[i]?.tone[cls()] !== 'pearl';
   const view = (i: number): LandView | null => slots.get(i)?.view ?? null;
   const settled = (i: number) => { const s = slots.get(i); return !!s && (!!s.view || s.failed) && !s.job; };
   const worldReady = () => !!world?.ready && settled(0);
@@ -441,6 +443,8 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
                 toneDark = b.done;
               }
             }
+            // once the morph has handed over to land 1's picture (the push, then rest), the logotype takes that land's tone
+            if (ef.phase === 'push' || ef.phase === 'rest') toneDark = landDark(0);
             if ((ef.done && seekT < 0) || endNow) finishEnter();
           } else if (endNow) finishEnter();
           on = inRoom;
@@ -478,7 +482,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
             setSub('rest');
           }
           tex = w.out;
-          toneDark = ROOM_LANDS[sub === 'travel' ? tTo : land]?.tone !== 'pearl';
+          toneDark = landDark(sub === 'travel' ? tTo : land);
         }
         on = inRoom && q > 0 && !!w?.ready;
       }

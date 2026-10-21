@@ -79,8 +79,13 @@ test("the lands' copy (spec 3): the product by name, the case by its family, the
     }
     assert.doesNotMatch(c.alt, /central park|new york|\bwoman\b|\bman\b|\bgirl\b|\bboy\b|\bher\b|\bhis\b|customer/i, `${p.id}: ${c.alt}`);
     assert.match(c.alt, /^A person /);
-    assert.equal(c.tone, 'slate', `${p.id}: the logotype is Urban Slate over the land unless the land says Pearl`);
   }
+  // the logotype's tone per crop class, measured on the approved pictures where it sits (top left): Pearl over the case's
+  // dark elms in both crops and the wallet's arcade in the wide, Urban Slate over the light corners elsewhere
+  assert.deepEqual(Object.fromEntries(Object.entries(LAND_COPY).map(([id, c]) => [id, c.tone])), {
+    case: { portrait: 'pearl', wide: 'pearl' }, wallet: { portrait: 'slate', wide: 'pearl' }, lenskin: { portrait: 'slate', wide: 'slate' }, airpods: { portrait: 'slate', wide: 'slate' },
+  });
+  assert.match(read('src/scripts/hero/section4/director.ts'), /const landDark = \(i: number\): boolean => ROOM_LANDS\[i\]\?\.tone\[cls\(\)\] !== 'pearl';/, 'the director reads the tone by the crop class in use');
   assert.equal(LAND_COPY.case.family, 'A Mellow Yellow case');
   assert.equal(LAND_COPY.wallet.family, 'Desert, on a Blissful Blue case');
   assert.equal(fill(ROOM_COPY.count, { n: 2, N: 4 }), '2 / 4');

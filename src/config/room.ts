@@ -111,13 +111,15 @@ export const ROOM_PRODUCTS: readonly RoomProduct[] = Object.freeze([
  * name, never anything about the person). fov: the picture's vertical field of view in degrees and near: its near
  * distance in scene units, both shared with option B's park (src/assets/room/park/park.json's poses, by eye); far: the
  * depth map's far distance, so a pixel of disparity d sits at 1 / mix(1 / far, 1 / near, d). tone: the logotype over the
- * land (Urban Slate unless the land says Pearl).
+ * land per crop class, read where it sits, top left: Pearl where that corner of the approved picture is dark (the case's
+ * elms in both crops, the wallet's arcade in the wide), Urban Slate elsewhere (spec 5, "The logotype's tone").
  */
-export const LAND_COPY: Readonly<Record<RoomProduct['id'], { family: string; alt: string; fov: number; near: number; far: number; tone: 'slate' | 'pearl' }>> = Object.freeze({
-  case: { family: 'A Mellow Yellow case', alt: 'A person under tall elms in a sunlit park holds a phone in a Mellow Yellow case.', fov: 32, near: 1.6, far: 30, tone: 'slate' },
-  wallet: { family: 'Desert, on a Blissful Blue case', alt: 'A person in the shade of a stone arcade holds a phone in a Blissful Blue case with a Desert MagSafe wallet on its back.', fov: 34, near: 1.6, far: 30, tone: 'slate' },
-  lenskin: { family: 'Sage, on a Go Green case', alt: 'A person on a wide lawn under a soft grey sky holds a phone in a Go Green case with a Sage Lenskin around its camera.', fov: 32, near: 1.6, far: 30, tone: 'slate' },
-  airpods: { family: 'Sage, beside a Vivid Violet case', alt: 'A person on a bridge over a lake holds a phone in a Vivid Violet case and an open Sage AirPods case with its earbuds inside.', fov: 32, near: 1.6, far: 30, tone: 'slate' },
+type LandTone = 'slate' | 'pearl';
+export const LAND_COPY: Readonly<Record<RoomProduct['id'], { family: string; alt: string; fov: number; near: number; far: number; tone: Readonly<Record<LandClass, LandTone>> }>> = Object.freeze({
+  case: { family: 'A Mellow Yellow case', alt: 'A person under tall elms in a sunlit park holds a phone in a Mellow Yellow case.', fov: 32, near: 1.6, far: 30, tone: { portrait: 'pearl', wide: 'pearl' } },
+  wallet: { family: 'Desert, on a Blissful Blue case', alt: 'A person in the shade of a stone arcade holds a phone in a Blissful Blue case with a Desert MagSafe wallet on its back.', fov: 34, near: 1.6, far: 30, tone: { portrait: 'slate', wide: 'pearl' } },
+  lenskin: { family: 'Sage, on a Go Green case', alt: 'A person on a wide lawn under a soft grey sky holds a phone in a Go Green case with a Sage Lenskin around its camera.', fov: 32, near: 1.6, far: 30, tone: { portrait: 'slate', wide: 'slate' } },
+  airpods: { family: 'Sage, beside a Vivid Violet case', alt: 'A person on a bridge over a lake holds a phone in a Vivid Violet case and an open Sage AirPods case with its earbuds inside.', fov: 32, near: 1.6, far: 30, tone: { portrait: 'slate', wide: 'slate' } },
 });
 
 /** the picture classes (spec 3, "The crops"): the portrait on phones, the wide on laptops, at their encoded sizes */
@@ -136,7 +138,8 @@ export interface RoomLand {
   readonly fov: number;
   readonly near: number;
   readonly far: number;
-  readonly tone: 'slate' | 'pearl';
+  /** the logotype's tone over the land, per crop class */
+  readonly tone: Readonly<Record<LandClass, LandTone>>;
   /** the picture per class, AVIF and WebP (the lands pipeline's land-<id>-portrait.* and land-<id>-wide.*) */
   readonly pics: Readonly<Record<LandClass, LandFiles>>;
   /** option A's depth map per class (land-<id>-<class>-depth.*), quarter size, single channel; null where it is not encoded */
