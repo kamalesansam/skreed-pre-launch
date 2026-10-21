@@ -173,7 +173,7 @@ const lines = [], faults = [];
 const line = (name, bytes, limitKB, { enforced = true, note = '', pendingKB = 0 } = {}) => lines.push({ name, bytes, limit: limitKB * KB, pending: pendingKB * KB, enforced, note });
 const SCRIPT = { A: 38, B: 45, C: 40 };
 line(`section 4's script, option ${pick} shipped (gzip)`, roomScript, SCRIPT[pick], pick === 'A'
-  ? { pendingKB: 30, note: "Sam's 30 KB line, pending him (spec 11, item 1: move it to 38 KB, or replace three's model loader); the build stops above the spec's likely 38 KB" }
+  ? { pendingKB: 30, note: "Sam's 30 KB line, pending him (spec 11, item 1: move it to 38 KB; three's model loader is already gone); the build stops above the spec's likely 38 KB" }
   : { note: `the spec's figure for option ${pick}` });
 for (const o of PICKS) if (chunksOf(o).size) {
   if (!tune && o !== pick) line(`option ${o}'s chunk in a ${BUILD} whose pick is ${pick} (gzip)`, ownOf(o), 0, { note: 'never in production until picked: astro.config.mjs aliases it to travel-stub.ts' });

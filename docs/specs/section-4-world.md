@@ -197,9 +197,9 @@ The same sequence, with these differences:
 The listing photos are family photos, so the case is named by its family, never a single shade the photo cannot be shown to be.
 - **Land 1:** `PHONE CASE` / `A MELLOW YELLOW CASE` / the Tough case's line / `1 / 4`.
 - **Land 2:** `MAGSAFE WALLET` / `DESERT, ON A BLISSFUL BLUE CASE` / the wallet's line / `2 / 4`.
-- **Lands 3 and 4:** the same pattern: Lenskin in Crimson on a Go Green case, and the AirPods case in Sage beside a Vivid Violet case.
+- **Lands 3 and 4:** the same pattern: Lenskin in Sage on a Go Green case, and the AirPods case in Sage beside a Vivid Violet case.
 
-The accessories' shades are `ROOM_PRODUCTS`' (Desert, Crimson, Sage) unless Sam picks others when he approves. The shade rendered is the shade named.
+The accessories' shades are `ROOM_PRODUCTS`' (Desert, Sage, Sage): Sam picked Sage (`go-green-09`, #96a880) for the Lenskin on 2026-10-20, approving sheet-v2. The shade rendered is the shade named.
 
 **How each master is made** (W11; `docs/research/05-assets-and-creative-tooling.md:58`, "never let a generator draw the case"):
 1. **The background.** It is replaced by a masked inpaint (Higgsfield `nano_banana_2_1` inpaint at 2k). The mask protects the person, the hands, the phone and the case, so the generator never redraws the product. The prompt names the place and the light above.
@@ -368,7 +368,7 @@ The loop screen's progress is held at 0 in `entering`, during a travel, in `sett
   - **The rings.** Generated at load from a seed, about 2,000 triangles per ring, with no asset. Each shard carries its centre, a random spin and its shade index.
   - **The pictures.** Untagged (bytes in, display values out), mipmapped, decoded by `createImageBitmap`, and uploaded in row strips across frames. The depth maps are uploaded as single-channel data.
   - **What stays resident.** Only the previous, current and next lands.
-  - **The logotype's tone.** Urban Slate over the garden and the lands, unless a land's config says Pearl.
+  - **The logotype's tone.** Urban Slate over the garden. Over a land, the tone its config gives for the crop class in use (`LAND_COPY.tone`), measured where the logotype sits, top left: Pearl over the case in both crops and the wallet's wide, Urban Slate elsewhere.
 - **The travel modules.** `section4/travel-depth.ts` (A), `travel-park.ts` (B) and `travel-video.ts` (C): one lazy chunk each, under the build modes above.
 - **`section4/director.ts`:**
   - the states `hall`, `entering` and `world`;
@@ -430,7 +430,7 @@ The product GLBs move out of `public/` into `scripts/room/models/` as Blender re
 
 | Part | Line | Note |
 |---|---|---|
-| Section 4's script, option A shipped | **30 KB, over and pending Sam (section 11, item 1); about 38 KB measured likely** | Today 36.3 KB, of which three's GLTFLoader is 13.5 KB. Minus the universe and the products DOM (about 9 KB), plus about 11 KB new: the bubble 1, the rings 3, the glide 1.5, the morph 2.5, the lands DOM and keys 2, option A 1. |
+| Section 4's script, option A shipped | **30 KB, over and pending Sam (section 11, item 1); about 38 KB measured likely** | Today 36.3 KB, of which three's GLTFLoader is 13.5 KB. Minus the universe and the products DOM (about 9 KB), plus about 11 KB new: the bubble 1, the rings 3, the glide 1.5, the morph 2.5, the lands DOM and keys 2, option A 1. Measured 2026-10-21 (N = 0, option A's placeholder): 44.5 KB with the loader, 32.1 KB with the hall read from `hall.bin` (`scripts/room/hall-bin.mjs`) and the catalog's own lines moved to a test fixture. |
 | ... option B shipped | about 45 KB | B adds the park's loader path, the meshopt decoder (about 1.5 KB) and its flight. |
 | ... option C shipped | about 40 KB | C adds the video texture and its states. |
 | Options in Tune builds | about 8 KB each, never in production until picked | Then the other two are deleted. |
@@ -562,7 +562,7 @@ The product GLBs move out of `public/` into `scripts/room/models/` as Blender re
 ## 8. Out of scope
 
 - The hall, the walk, the door, the third wipe and the loop's mechanics (section-4.md stands).
-- Replacing three's GLTFLoader in the hall with a raw binary to win back 13.5 KB: a separate change, proposed to Sam with the script line.
+- Replacing three's GLTFLoader in the hall with a raw binary to win back 13.5 KB: proposed as a separate change, then made on `s4/world-wire` (2026-10-21) because total JS left no room for option A: the hall ships as `hall.bin`, 16,980 B against the GLB's 35,868.
 - Sound.
 - A link from a land to its family page (CHECKLIST G21): section 4 links nowhere today. It is offered to Sam in section 11; it is not built here.
 - Any person's identity: no identity model, no names, no quotes.
@@ -631,7 +631,7 @@ This section is the only text for every E-S4 id. Those Sam's own words already c
 
 ## 11. For Sam
 
-1. **The section's script line.** The rework lands at about 38 KB against the 30 KB line, mostly three's model loader (13.5 KB) the hall already uses. Move the line to 38 KB, or have the loader replaced (a separate change, about a day)?
+1. **The section's script line.** The loader is replaced (2026-10-21): the section measures 32.1 KB against the 30 KB line before option A's own code. Move the line to 38 KB?
 2. **Pick A, B or C** on staging with Tune's "Section 4" group (`parkTravel`). The other two are then deleted, and the pick moves into the production build.
 3. **The pace.** The first land arrives about 9.4 s after the press at the defaults: a 2 s bubble, an 8 s glide whose last 2 s overlap the morph, then the push. Every beat is on Tune; Skip is there throughout.
 4. **A link from each land** to its family page (CHECKLIST G21)? Plain text, for example `SEE MELLOW YELLOW`. Not built unless you say.
