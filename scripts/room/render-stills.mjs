@@ -118,12 +118,13 @@ if (framesDir) {
     // the poster tier's column: the still with the prompt over it, then each land on its own screen after the press
     const pc = await browser.newContext(SETUPS[setup]), pp = await pc.newPage();
     await pp.goto(new URL('/?tier=poster', base).href, { waitUntil: 'load' });
-    await pp.locator('#room').scrollIntoViewIfNeeded(); await pp.waitForTimeout(1500);
+    // each frame with its element's top at the viewport's top, as a visitor scrolling down reaches it
+    await pp.evaluate(() => document.getElementById('room').scrollIntoView({ block: 'start', behavior: 'instant' })); await pp.waitForTimeout(1500);
     await shot(pp, f('poster-hall'));
     await pp.locator('#rmEnter').click();
     await pp.waitForFunction(() => document.getElementById('room')?.dataset.state === 'world', null, { timeout: 20_000 });
     for (const [k, li] of (await pp.locator('.rm-land').all()).entries()) {
-      await li.scrollIntoViewIfNeeded();
+      await li.evaluate((el) => el.scrollIntoView({ block: 'start', behavior: 'instant' }));
       await pp.waitForFunction((i) => { const img = document.querySelector(`.rm-land[data-i="${i}"] img`); return !!img && img.complete && img.naturalWidth > 0; }, k, { timeout: 30_000 }).catch(() => console.warn(`  poster land ${k + 1}: its picture did not decode`));
       await pp.waitForTimeout(400);
       await shot(pp, f(`poster-land-${k + 1}`));
