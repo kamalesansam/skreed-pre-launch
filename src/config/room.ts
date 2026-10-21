@@ -83,9 +83,8 @@ export function relLuminance(hex: string): number {
 export interface RoomProduct {
   readonly id: 'case' | 'wallet' | 'lenskin' | 'airpods';
   readonly name: string;
-  /** the catalog's sentence with rule 17's words dropped, and the catalog's own words */
+  /** the catalog's sentence with rule 17's words dropped; the catalog's own is a test fixture, never shipped */
   readonly line: string;
-  readonly lineCatalog: string;
   /** the accessory's own shade by id (the case's: the family pages' Cobalt model, which no land shows) and its finish */
   readonly shade: string;
   readonly hex: string;
@@ -99,10 +98,10 @@ export interface RoomProduct {
  * scripts/room/lands.py reads each entry's id, shade, hex and finish from this block, one entry to a line.
  */
 export const ROOM_PRODUCTS: readonly RoomProduct[] = Object.freeze([
-  { id: 'case', name: 'Phone case', line: 'Enhanced dual-layered protection with a tough Polycarbonate exterior and a flexible TPU core. Available in 240 shades. Matte or gloss.', lineCatalog: 'Enhanced dual-layered protection with a tough Polycarbonate exterior and a flexible TPU core. The perfect balance of style, strength, and functionality. Available in 240 shades. Finish: Matte, Gloss.', shade: 'blissful-blue-11', hex: '#1040ca', finish: 'matte' },
-  { id: 'wallet', name: 'MagSafe wallet', line: 'Sleek and secure MagSafe-compatible phone wallet for convenient card storage without the bulk. Available in 240 shades. Matte, gloss, metallic matte or metallic gloss.', lineCatalog: 'Sleek and secure MagSafe-compatible phone wallet for convenient card storage without the bulk. Designed to blend seamlessly with your phone case for a clean and minimal look. Available in 240 shades. Finish: Matte, Gloss, Metallic Matte, Metallic Gloss.', shade: 'basic-brown-04', hex: '#c6a884', finish: 'matte' },
-  { id: 'lenskin', name: 'Lenskin', line: "Sleek metal accent for the latest iPhone's camera lens area, designed to personalize your look. Available in a range of contrasting solid shades and patterns. Matte, metallic matte or metallic gloss.", lineCatalog: "Sleek metal accent designed to elevate the latest iPhone's camera lens area and personalize your look. Available in a range of contrasting solid shades and patterns. Finish: Matte, Metallic Matte, Metallic Gloss.", shade: 'go-green-09', hex: '#96a880', finish: 'metallic' },
-  { id: 'airpods', name: 'AirPods case', line: 'Durable polycarbonate case with a sleek profile and precise cut-outs for charging. Includes a carabiner ring for easy attachment to bags. Available in 240 shades. Matte or gloss.', lineCatalog: 'Durable polycarbonate case with a sleek profile and precise cut-outs for seamless charging and functionality. Includes a convenient carabiner ring for easy attachment to bags. Available in 240 shades. Finish: Matte, Gloss.', shade: 'go-green-09', hex: '#96a880', finish: 'gloss' },
+  { id: 'case', name: 'Phone case', line: 'Enhanced dual-layered protection with a tough Polycarbonate exterior and a flexible TPU core. Available in 240 shades. Matte or gloss.', shade: 'blissful-blue-11', hex: '#1040ca', finish: 'matte' },
+  { id: 'wallet', name: 'MagSafe wallet', line: 'Sleek and secure MagSafe-compatible phone wallet for convenient card storage without the bulk. Available in 240 shades. Matte, gloss, metallic matte or metallic gloss.', shade: 'basic-brown-04', hex: '#c6a884', finish: 'matte' },
+  { id: 'lenskin', name: 'Lenskin', line: "Sleek metal accent for the latest iPhone's camera lens area, designed to personalize your look. Available in a range of contrasting solid shades and patterns. Matte, metallic matte or metallic gloss.", shade: 'go-green-09', hex: '#96a880', finish: 'metallic' },
+  { id: 'airpods', name: 'AirPods case', line: 'Durable polycarbonate case with a sleek profile and precise cut-outs for charging. Includes a carabiner ring for easy attachment to bags. Available in 240 shades. Matte or gloss.', shade: 'go-green-09', hex: '#96a880', finish: 'gloss' },
 ]);
 
 /**

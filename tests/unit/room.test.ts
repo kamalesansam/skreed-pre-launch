@@ -11,6 +11,7 @@ import { SHADES } from '../../src/config/shades.gen.ts';
 import { URBAN_SLATE } from '../../src/config/tokens.ts';
 import { WORLD_DEFAULTS, WORLD_RANGES } from '../../src/scripts/hero/section4/world.ts';
 import PARK from '../../src/assets/room/park/park.json' with { type: 'json' };
+import { ROOM_CATALOG_LINES } from '../fixtures/room-catalog.ts';
 
 const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const byId = new Map(SHADES.map((s) => [s.id, s]));
@@ -201,7 +202,10 @@ test('the DOM (spec 5): the prompt, the pad, Skip, the lines, the lands list, th
 
 test('copy: sentence case, no em or en dash, no emoji, no banned words (CLAUDE.md 3, 4, 16, 17)', () => {
   const lines = [...Object.entries(ROOM_COPY).filter(([k]) => k !== 'key').map(([, v]) => v), ...ROOM_PRODUCTS.flatMap((p) => [p.name, p.line]), ...Object.values(LAND_COPY).flatMap((c) => [c.family, c.alt])];
-  for (const p of ROOM_PRODUCTS) assert.notEqual(p.line, p.lineCatalog, `${p.id}: the trimmed line differs from the catalog's`);
+  for (const p of ROOM_PRODUCTS) assert.notEqual(p.line, ROOM_CATALOG_LINES[p.id], `${p.id}: the trimmed line differs from the catalog's`);
+  // the catalog's own sentences stay in the test fixture: neither they nor rule 17's words are in the client's config
+  for (const p of ROOM_PRODUCTS) assert.ok(!('lineCatalog' in p), `${p.id}: no catalog line in the client`);
+  assert.doesNotMatch(read('src/config/room.ts'), /\b(seamless|seamlessly|elevate)\b/i, 'room.ts carries none of rule 17\'s words');
   for (const s of lines) {
     assert.doesNotMatch(s, /[\u2013\u2014]/, s);
     assert.doesNotMatch(s, /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u, s);
