@@ -39,9 +39,8 @@ BLENDER = '/Applications/Blender.app/Contents/MacOS/Blender'
 RENDER = os.path.join(REPO, 'scripts/room/render-products.py')
 SHADES = os.path.join(REPO, 'docs/data/shades-240.json')
 ROOM_TS = os.path.join(REPO, 'src/config/room.ts')   # ROOM_PRODUCTS: each accessory's shade id and finish, typed once there
-# the shipped GLBs, read where the site serves them; they move to scripts/room/models in the integration that deletes
-# universe.ts (the last reader of their public url)
-MODELS = os.path.join(REPO, 'public/models')
+# Sam's models as cleaned GLBs: Blender references only since universe.ts went, kept out of public/ (spec 6)
+MODELS = os.path.join(REPO, 'scripts/room/models')
 SIDE = 2500                       # the listing photos are 2500 x 2500
 PORTRAIT_W = 1406                 # 9:16 of the square's height
 WIDE16x9, WIDE16x10 = 4444, 4000  # at the square's height

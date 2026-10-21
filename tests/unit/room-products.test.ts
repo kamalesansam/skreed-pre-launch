@@ -28,6 +28,15 @@ test('the manifest names the three products, each file present with its hash and
   }
 });
 
+test('the lands pipeline reads the models from scripts/room/models/ (lands.py MODELS, render-products.py), never public/', () => {
+  const lands = readFileSync(new URL('../../scripts/room/lands.py', import.meta.url), 'utf8'), render = readFileSync(new URL('../../scripts/room/render-products.py', import.meta.url), 'utf8');
+  assert.match(lands, /^MODELS = os\.path\.join\(REPO, 'scripts\/room\/models'\)$/m);
+  for (const src of [lands, render]) assert.doesNotMatch(src, /public\/models/);
+  const named = [...lands.matchAll(/'model': '([a-z]+\.[0-9a-f]{8}\.glb)'/g)].map((m) => m[1]);
+  assert.ok(named.length >= 2, 'lands.py names the wallet and the Lenskin');
+  for (const n of named) assert.ok(ENTRIES.some(([, e]) => e.path === `scripts/room/models/${n}`), `${n} is in the manifest, in scripts/room/models/`);
+});
+
 test('only quantisation and meshopt, no materials, images, colours or UVs (the CSP and the island\'s own materials)', () => {
   for (const [k, e] of ENTRIES) {
     const buf = file(e.path), jl = buf.readUInt32LE(12), json = JSON.parse(buf.subarray(20, 20 + jl).toString('utf8'));
