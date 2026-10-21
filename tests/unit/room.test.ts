@@ -244,3 +244,7 @@ test('render colours (AC3, E-S4-light): the hall clears to Urban Slate from the 
   assert.ok(!existsSync(new URL('../../src/scripts/hero/section4/universe.ts', import.meta.url)), 'universe.ts is gone');
   assert.match(read('src/scripts/hero/section4/hall.ts'), /entering\(on\) \{ clear = on \? CLEAR_ENTERING : CLEAR;/);
 });
+
+test('GPU memory (spec 6): land 1 reached by Skip, Escape or a hook frees the garden, as the entry clock does', () => {
+  assert.match(read('src/scripts/hero/section4/director.ts'), /function finishEnter\(\) \{[^}]*world\?\.releaseGarden\(\);/);
+});

@@ -6,7 +6,8 @@
 // 50 and 90 percent, each ring pass and the morph at 30 and 80 percent; each land's text at rest; each travel at half
 // (the arriving land's text boxes over the travel's frame, the text itself being wiped out then); and the failed-picture
 // case (a land whose pictures are refused, its text on the garden). It also reads the renderer's resident geometries,
-// textures and programs (window.__skreedGpu) at land 1 at rest. Serve a hooks build (build:test) first:
+// textures and programs (window.__skreedGpu) at land 1 at rest at 390 x 844, with the world's own byte count of what it
+// holds (its target, the garden, the lands' pictures and depth maps, the bloom). Serve a hooks build (build:test) first:
 //   node scripts/room/contrast.mjs [base=http://127.0.0.1:4322/] [--json <file>]
 // at 390 x 844 and 1280 x 800, device pixel ratio 1 (a CSS pixel is a pixel of the shot), WebGL on the Metal GPU
 // (SKREED_GL=swiftshader for the test harness's flags).
@@ -101,7 +102,7 @@ for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
     await page.waitForFunction((j) => window.__s4.state().resident.some((r) => r.i === j && (r.ready || r.failed)), i, { timeout: 60_000 });
     await page.evaluate((j) => window.__s4.land(j), i);
     await sleep(3200);
-    if (i === 0 && vp.width === 390) memory.push({ vp: `${vp.width}x${vp.height}`, at: 'land 1 at rest', ...(await page.evaluate(() => window.__skreedGpu?.() ?? null)), resident: (await state(page)).resident });
+    if (i === 0 && vp.width === 390) { const st = await state(page); memory.push({ vp: `${vp.width}x${vp.height}`, at: 'land 1 at rest', ...(await page.evaluate(() => window.__skreedGpu?.() ?? null)), world: st.world?.memory ?? null, resident: st.resident }); }
     landBoxes[i] = await boxesOf(page, `.rm-land[data-i="${i}"] :is(.rm-land-name, .rm-land-family, .rm-land-line, .rm-land-count, .rm-land-hint)`);
     await measure(page, vp, `land ${i + 1} at rest`, landBoxes[i]);
   }

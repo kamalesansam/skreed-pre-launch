@@ -276,6 +276,9 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   function finishEnter() {
     seekT = -1; endNow = false;
     world?.scissor(null);
+    // the garden serves only the entry (and a failed picture, which decodes it again): the world frees it when its clock
+    // reaches land 1, and Skip, Escape and the hooks end the clock before that, so it is freed here for them too
+    world?.releaseGarden();
     hall.swing(0, params().door);
     land = 0; landArmed = false; waitTo = -1; restKey = '';
     setState('world'); setSub('rest');
