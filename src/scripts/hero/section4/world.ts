@@ -33,7 +33,8 @@
 // - A land is its picture on a displaced grid seen from its capture pose (positions from gl_VertexID, the depth fetched in
 //   the vertex shader by the disparity rule), so at the capture pose it is the picture, cover-fit, pixel for pixel; the
 //   push after the morph moves the camera 0.15 of the land's near distance into it, and that pose is the land's rest.
-// - Option A's stream (stream.ts) is drawn here as a layer handed in by option A's travel module, which alone imports it.
+// - Option A's stream (stream.ts) is drawn here as a layer handed in by option A's travel module, which alone imports it;
+//   option C's clip as an image layer, its video texture cover-fit over the frame by the morph picture's shader.
 // One 8-bit target with depth, display values written by hand (toSrgb) under NoToneMapping set and restored around the
 // draw, as the hall's; no output pass, and on laptops at most the screened bloom with everything else of post.ts off,
 // never on a land at rest. Loading runs one step a frame (spec 5 "Loading, in phases") and stops at once if the world is
@@ -334,6 +335,7 @@ export type WorldLayer =
   | { kind: 'land'; i: number; /** scene units into the land along its view */ push: number; alpha?: number; /** degrees of yaw and pitch (option A's slight sway) */ sway?: readonly [number, number] }
   | { kind: 'points'; alpha?: number }   // the morph's landed points as they stand (the push's first 0.25 s)
   | { kind: 'stream'; /** option A's (stream.ts) */ stream: WorldStream; from: number; to: number; p: number; fromPush: number; toPush: number; fromSway?: readonly [number, number]; alpha?: number }
+  | { kind: 'image'; /** display values (option C's clip, a VideoTexture), cover-fit over the frame */ texture: Texture; /** its width over its height */ aspect: number; /** magnified about the frame's centre (1 cover-fit) */ zoom?: number; alpha?: number }
   | { kind: 'garden' };   // the tunnel at the glide's end pose (a failed picture's fallback; the garden is decoded again if it was freed)
 
 export interface EntryFrame { phase: 'glide' | 'morph' | 'push' | 'rest'; done: boolean; arrive: number; passes: readonly number[] }
@@ -553,6 +555,10 @@ export function createWorld(o: WorldOptions): WorldScene {
   const picU = { tPic: { value: null as Texture | null }, uCover: { value: new Vector2(1, 1) }, uAlpha: { value: 0 } };
   const picMesh = new Mesh(fsGeo, new ShaderMaterial({ uniforms: picU, vertexShader: PIC_VERT, fragmentShader: PIC_FRAG, transparent: true, depthTest: false, depthWrite: false }));
   picMesh.frustumCulled = false; picMesh.renderOrder = 200; picMesh.visible = false; tunnel.add(picMesh);
+  // an image layer (option C's clip): the same shader and state on a scene of its own, so three reuses the morph's program
+  const imgU = { tPic: { value: null as Texture | null }, uCover: { value: new Vector2(1, 1) }, uAlpha: { value: 1 } };
+  const imgScene = new Scene(), imgMesh = new Mesh(fsGeo, new ShaderMaterial({ uniforms: imgU, vertexShader: PIC_VERT, fragmentShader: PIC_FRAG, transparent: true, depthTest: false, depthWrite: false }));
+  imgMesh.frustumCulled = false; imgScene.add(imgMesh);
 
   // the garden: the plate (drawn first, at infinity) then garden.json's cards, each a unit quad shown once its texture is in
   interface Card { mesh: Mesh; mat: ShaderMaterial; tex: DataTexture | null }
@@ -754,6 +760,7 @@ export function createWorld(o: WorldOptions): WorldScene {
           renderer.clearDepth();
           if (l.kind === 'garden') { if (points.object.parent !== cloudHolder) cloudHolder.add(points.object); glideTo(tl.arrive); points.cloud(); points.object.renderOrder = cloudOrder; points.alpha(1); renderer.render(tunnel, cam); continue; }
           if (l.kind === 'land') { const v = lands.get(l.i); if (!v) continue; aimLand(v, l.push, l.alpha ?? 1, l.sway); renderer.render(landScene, landCam); continue; }
+          if (l.kind === 'image') { const cv = coverScale(W / H, l.aspect), z = l.zoom ?? 1; imgU.tPic.value = l.texture; imgU.uCover.value.set(cv[0] / z, cv[1] / z); imgU.uAlpha.value = l.alpha ?? 1; renderer.render(imgScene, landCam); continue; }
           // points over the land, drawn through the land camera the land layer before set: the morph's landed points as
           // they stand, or option A's stream between two resident lands (its shader projects each end with its own camera)
           let obj: Object3D = points.object;
@@ -779,7 +786,7 @@ export function createWorld(o: WorldOptions): WorldScene {
       disposed = true; ac.abort(); ready = false;
       rt?.dispose(); rt = null; post?.dispose(); post = null;
       rings.geometry.dispose(); fields.geometry.dispose();
-      ringMat.dispose(); ffMat.dispose(); points.dispose(); (picMesh.material as ShaderMaterial).dispose();
+      ringMat.dispose(); ffMat.dispose(); points.dispose(); (picMesh.material as ShaderMaterial).dispose(); (imgMesh.material as ShaderMaterial).dispose(); imgU.tPic.value = null;
       for (const c of cards) { c.tex?.dispose(); c.tex = null; c.mat.dispose(); }
       unit.dispose(); gridMat.dispose(); gridGeo.dispose(); ramp.dispose(); lands.clear();
     },
