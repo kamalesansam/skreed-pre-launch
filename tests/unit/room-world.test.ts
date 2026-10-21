@@ -14,8 +14,9 @@
 // A's stream, replayed on the CPU from its own uniforms, starts and ends on each land's cells for two lands of different
 // FOV and push and stays inside the fill bound across the travel; the landed points stay inside it too; every scene colour
 // is a key shade by id or a blend of two neighbouring ones (or Urban Slate, seen only when the garden is withdrawn), with
-// no raw colour in the scene files; the hooks and Tune's guard sit behind their build flags; and the cloud, replayed from
-// its own hash, shows each patch of the frame one colour at any turn.
+// no raw colour in the scene files; the hooks and Tune's guard sit behind their build flags; the cloud, replayed from its
+// own hash, shows each patch of the frame one colour at any turn; and a ring's face turned from the sun keeps its shade's
+// colour, darker.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -275,7 +276,7 @@ test('the garden from garden.json: rendered from the glide\'s end, each card on 
   assert.match(src, /const SUN = new Vector3\(\.\.\.\(L\?\.sun \?\? SUN_BEHIND\)\)/);
   assert.doesNotMatch(src, /0\.28017|0\.57358|0\.76975/, 'no sun hard-coded from garden.json');
   // the rings are lit by it: the shards' shader takes uSun for the diffuse and for the highlight's half vector
-  assert.match(src, /uSun: \{ value: SUN \}/); assert.match(src, /normalize\(uSun \+ v\)/); assert.match(src, /max\(dot\(n, uSun\), 0\.0\)/);
+  assert.match(src, /uSun: \{ value: SUN \}/); assert.match(src, /normalize\(uSun \+ v\)/); assert.match(src, /max\(dot\(n, uSun\) \+ 0\.25, 0\.0\)/);
 });
 
 test('garden.json\'s format (check item 3): the one garden.py writes is read as it stands; a file without its numbers fails the load instead of placing at NaN', () => {
@@ -474,4 +475,35 @@ test('the cloud (world check item 1): every point a patch of the frame shows car
     assert.ok(spread.own >= 0.1, `turn ${spin}, roll ${roll}: by each point's own longitude ${spread.own.toFixed(3)}`);
   }
   assert.match(read('src/scripts/hero/section4/cloud.ts'), /vec2 o = \(pos\.xy \* \(mid\.z \/ pos\.z\) - mid\.xy\) \/ uR;\n\s*vec3 f = transpose\(mat3\(modelViewMatrix\)\) \* vec3\(o, sqrt\(max\(0\.0, 1\.0 - dot\(o, o\)\)\)\);/);
+});
+
+test('the rings\' shade (world check item 2): a face turned from the sun keeps its shade\'s colour, darker, never grey, where the old ambient and white sheen greyed it', () => {
+  // RING_FRAG's light replayed for the underside of a shard seen at a grazing 10 degrees under garden.json's sun, with a
+  // stand-in garden as harsh as any (the Lawn key shade below, Sky above): its colour in OKLab against the shade's own
+  const lin = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4), enc = (c: number) => (c <= 0.0031308 ? c * 12.92 : 1.055 * c ** (1 / 2.4) - 0.055);
+  type V = [number, number, number];
+  const add = (a: V, b: V): V => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], mul = (a: V, b: V): V => [a[0] * b[0], a[1] * b[1], a[2] * b[2]], sc = (a: V, k: number): V => [a[0] * k, a[1] * k, a[2] * k];
+  const dot = (a: V, b: V) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2], unit = (a: V): V => sc(a, 1 / Math.hypot(...a)), lum = (c: V) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  const tint = (c: V, k: number): V => c.map((x) => 1 + (x / Math.max(lum(c), 1e-3) - 1) * k) as V, toLin = (c: V): V => c.map(lin) as V, out = (c: V): V => c.map((x) => enc(Math.min(1, Math.max(0, x)))) as V;
+  const sky = display(ROOM_BAYS[1].hex) as V, ground = display(ROOM_BAYS[8].hex) as V, hemi = (y: number): V => toLin(add(sc(ground, 0.5 - 0.5 * y), sc(sky, 0.5 + 0.5 * y)));
+  const sun = unit(garden.sun.direction as V), n: V = [0, -1, 0], v = unit([0, -Math.sin(Math.PI / 18), Math.cos(Math.PI / 18)]), r = add(sc(v, -1), sc(n, 2 * dot(n, v)));
+  const nh = Math.max(dot(n, unit(add(sun, v))), 0), fr = 0.04 + 0.96 * (1 - Math.max(dot(n, v), 0)) ** 5, spec = 0.7 * nh ** 220 + 0.035 * nh ** 16;
+  const ratio = (c: Lab) => chroma(c) / c[0], hueOff = (c: Lab, s: Lab) => Math.abs(((hueOf(c) - hueOf(s) + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
+  let oldGrey = 0;
+  for (const b of ROOM_BAYS) {
+    const shade = toOklab(display(b.hex)), alb = toLin(display(b.hex) as V);
+    if (chroma(shade) < BLEND.neutral) continue;   // Snow and Silver have no colour to keep
+    const now = toOklab(out(add(mul(alb, sc(tint(hemi(n[1]), 0.25), 0.42)), add(sc(alb, (0.62 * Math.max(dot(n, sun) + 0.25, 0)) / 1.25), add([spec, spec, spec], mul(sc(hemi(r[1]), 0.15 * fr), tint(alb, 0.6)))))));
+    const old = toOklab(out(add(sc(alb, 0.28 + 0.12 * n[1] + 0.66 * Math.max(dot(n, sun), 0)), sc([1, 1, 1], spec + 0.15 * fr * (0.6 + 0.4 * r[1])))));
+    assert.ok(ratio(now) >= 0.6 * ratio(shade), `${b.name}: chroma for its lightness ${ratio(now).toFixed(3)} against the shade's ${ratio(shade).toFixed(3)}`);
+    assert.ok(hueOff(now, shade) < (30 * Math.PI) / 180, `${b.name}: hue off by ${((hueOff(now, shade) * 180) / Math.PI).toFixed(0)} degrees`);
+    assert.ok(now[0] < shade[0] && now[0] > 0.5 * shade[0], `${b.name}: darker (${now[0].toFixed(2)} against ${shade[0].toFixed(2)}), not black`);
+    if (ratio(old) < 0.6 * ratio(shade)) oldGrey++;
+  }
+  assert.ok(oldGrey >= 3, `the old light greyed ${oldGrey} shades`);
+  // the replay is RING_FRAG's: the fill, the wrapped sun and the tinted sheen, as written there
+  const src = read('src/scripts/hero/section4/world.ts');
+  assert.match(src, /vec3 c = alb \* \(0\.42 \* tint\(h, 0\.25\) \+ 0\.62 \* max\(dot\(n, uSun\) \+ 0\.25, 0\.0\) \/ 1\.25\) \* ao;/);
+  assert.match(src, /c \+= ao \* \(0\.7 \* pow\(nh, 220\.0\) \+ 0\.035 \* pow\(nh, 16\.0\) \+ 0\.15 \* fr \* hemi\(reflect\(-v, n\)\.y\) \* tint\(alb, 0\.6\)\);/);
+  assert.match(src, /vec3 tint\(vec3 c, float k\) \{ return mix\(vec3\(1\.0\), c \/ max\(0\.2126 \* c\.r \+ 0\.7152 \* c\.g \+ 0\.0722 \* c\.b, 1e-3\), k\); \}/);
 });

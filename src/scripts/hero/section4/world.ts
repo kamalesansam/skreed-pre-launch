@@ -407,9 +407,12 @@ const LIN = /* glsl */`vec3 toLinear(vec3 c) { return mix(c / 12.92, pow((c + 0.
 // the shards: thrown by the camera's distance to their ring (the falloff of W2), each on its own window of it, spun about
 // their own axis, shrunk and pushed out along their centre and toward the camera. Their colour is the ramp's at their arc
 // coordinate (the shades blended round the ring, blend.ts) times their own value, the lattice the ramp's one arc on (the
-// next family's); lit as glazed lacquer under the garden's sun in white light: ambient brighter toward the sky, the sun's
-// diffuse, the seams' occlusion (half, over uSeam, fading as the shard is thrown), a sharp and a broad highlight toward
-// the sun and the clear coat's Fresnel reflection of the sky
+// next family's); lit as glazed lacquer under the garden's sun: a fill from the garden's own light (hemi, tHemi: its sky
+// and treetops above, its lawn below, at unit brightness and a quarter of their colour, tint) that never falls under
+// 0.42, so a face turned from the sun reads as its shade darker, never grey; the sun's diffuse wrapped a quarter past
+// the terminator; the seams' occlusion (half, over uSeam, fading as the shard is thrown); a sharp and a broad highlight
+// toward the sun; and the clear coat's Fresnel reflection of the garden in the reflected direction, in its colours
+// carried most of the way to the shade's own hue, so a grazing face keeps its colour
 const RING_VERT = /* glsl */`
   attribute vec3 aCentre, aTone; attribute vec4 aSpin, aFling; attribute vec2 aLat;
   uniform vec2 uAsm; uniform float uBreak;
@@ -424,18 +427,33 @@ const RING_VERT = /* glsl */`
     gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
   }`;
 const RING_FRAG = /* glsl */`
-  uniform sampler2D tRamp, tTri; uniform vec3 uSun; uniform float uTri, uSeam;
+  uniform sampler2D tRamp, tTri, tHemi; uniform vec3 uSun; uniform float uTri, uSeam;
   varying vec3 vN, vW, vTone; varying vec2 vLat; varying float vB;
   ${TO_SRGB} ${LIN}
   vec3 ramp(float a) { return texture(tRamp, vec2(a * 0.1, 0.5)).rgb; }
+  vec3 hemi(float y) { return toLinear(mix(texture(tHemi, vec2(0.75, 0.5)).rgb, texture(tHemi, vec2(0.25, 0.5)).rgb, 0.5 + 0.5 * y)); }
+  vec3 tint(vec3 c, float k) { return mix(vec3(1.0), c / max(0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b, 1e-3), k); }
   void main() {
     vec3 alb = toLinear(mix(ramp(vTone.x), ramp(vTone.x + 1.0), clamp(uTri * texture(tTri, vLat).r * 1.25, 0.0, 1.0)) * (1.0 + vTone.z));
-    vec3 n = normalize(gl_FrontFacing ? vN : -vN), v = normalize(cameraPosition - vW);
+    vec3 n = normalize(gl_FrontFacing ? vN : -vN), v = normalize(cameraPosition - vW), h = hemi(n.y);
     float nh = max(dot(n, normalize(uSun + v)), 0.0), fr = 0.04 + 0.96 * pow(1.0 - max(dot(n, v), 0.0), 5.0);
     float ao = 1.0 - 0.55 * (1.0 - vB) * (1.0 - smoothstep(0.0, uSeam, vTone.y));
-    vec3 c = alb * (0.28 + 0.12 * n.y + 0.66 * max(dot(n, uSun), 0.0)) * ao;
-    c += ao * (0.7 * pow(nh, 220.0) + 0.035 * pow(nh, 16.0) + 0.15 * fr * (0.6 + 0.4 * reflect(-v, n).y));
+    vec3 c = alb * (0.42 * tint(h, 0.25) + 0.62 * max(dot(n, uSun) + 0.25, 0.0) / 1.25) * ao;
+    c += ao * (0.7 * pow(nh, 220.0) + 0.035 * pow(nh, 16.0) + 0.15 * fr * hemi(reflect(-v, n).y) * tint(alb, 0.6));
     gl_FragColor = vec4(toSrgb(clamp(c, 0.0, 1.0)), 1.0);
+  }`;
+
+// the garden's light (hemi): the plate's mean colour, averaged as light, above the horizon (texel 0) and below it
+// (texel 1), skipping a sixth of each side next to the horizon; without a plate, uNone (Urban Slate) for both
+const HEMI_FRAG = /* glsl */`
+  uniform sampler2D tPlate; uniform float uHas, uHorizon; uniform vec3 uNone;
+  ${TO_SRGB} ${LIN}
+  void main() {
+    if (uHas < 0.5) { gl_FragColor = vec4(uNone, 1.0); return; }
+    vec2 band = gl_FragCoord.x < 1.0 ? vec2(uHorizon + (1.0 - uHorizon) / 6.0, 1.0) : vec2(0.0, uHorizon * 5.0 / 6.0);
+    vec3 c = vec3(0.0);
+    for (int j = 0; j < 8; j++) for (int i = 0; i < 12; i++) c += toLinear(textureLod(tPlate, vec2((float(i) + 0.5) / 12.0, mix(band.x, band.y, (float(j) + 0.5) / 8.0)), 0.0).rgb);
+    gl_FragColor = vec4(toSrgb(c / 96.0), 1.0);
   }`;
 
 // the forcefields: one quad a ring, the disc drawn in the fragment; its colour the ramp's at the arc behind it, by angle
@@ -515,7 +533,13 @@ export function createWorld(o: WorldOptions): WorldScene {
   const alive = () => { if (disposed) throw GONE; };
 
   // the rings: one mesh for all of them, regenerated when Tune's ringCount changes
-  const ringU = { tRamp: { value: ramp }, uSun: { value: SUN }, uSeam: { value: RING.seamAo * S }, tTri: { value: o.tTri }, uTri: { value: lat }, uAsm: { value: new Vector2(GLIDE.assemble[0] * S, GLIDE.assemble[1] * S) }, uBreak: { value: o.reduced ? 0 : 1 } };
+  // the garden's light (HEMI_FRAG), made again whenever the plate is uploaded, before the next frame binds its target
+  const hemi = new WebGLRenderTarget(2, 1, { depthBuffer: false }), hemiScene = new Scene();
+  const hemiU = { tPlate: { value: null as Texture | null }, uHas: { value: 0 }, uHorizon: { value: 0.5 }, uNone: { value: new Vector3(...display(URBAN_SLATE)) } };
+  const hemiMesh = new Mesh(fsGeo, new ShaderMaterial({ uniforms: hemiU, vertexShader: PIC_VERT, fragmentShader: HEMI_FRAG, depthTest: false, depthWrite: false, toneMapped: false }));
+  hemiMesh.frustumCulled = false; hemiScene.add(hemiMesh); hemi.texture.colorSpace = NoColorSpace;
+  let hemiDirty = true;
+  const ringU = { tRamp: { value: ramp }, tHemi: { value: hemi.texture }, uSun: { value: SUN }, uSeam: { value: RING.seamAo * S }, tTri: { value: o.tTri }, uTri: { value: lat }, uAsm: { value: new Vector2(GLIDE.assemble[0] * S, GLIDE.assemble[1] * S) }, uBreak: { value: o.reduced ? 0 : 1 } };
   const ringMat = new ShaderMaterial({ uniforms: ringU, vertexShader: RING_VERT, fragmentShader: RING_FRAG });
   const ffU = { tRamp: { value: ramp }, tTri: { value: o.tTri }, uTri: { value: lat }, uRad: { value: GLIDE.forcefield[0] * S }, uLat: { value: RING.fieldLattice }, uGain: { value: 0.5 }, uS: { value: S } };
   const ffMat = new ShaderMaterial({ uniforms: ffU, vertexShader: FF_VERT, fragmentShader: FF_FRAG, transparent: true, depthWrite: false, blending: AdditiveBlending });
@@ -565,7 +589,7 @@ export function createWorld(o: WorldOptions): WorldScene {
   const plateAt: [number, number] = [0, 0];
   if (L) { const plate = gardenQuad(true); plate.mesh.renderOrder = -1; cards.push(plate, ...L.cards.map(() => gardenQuad(false))); }
   /** the plate's quad over the tangent bounds of the rows its texture kept, at GARDEN.far; glideTo keeps it at the camera */
-  const placePlate = (tb: number, tt: number) => { const [l, r] = L!.plateTan; cards[0].mesh.scale.set((r - l) * GARDEN.far, (tt - tb) * GARDEN.far, 1); plateAt[0] = (l + r) / 2; plateAt[1] = (tb + tt) / 2; };
+  const placePlate = (tb: number, tt: number) => { const [l, r] = L!.plateTan; cards[0].mesh.scale.set((r - l) * GARDEN.far, (tt - tb) * GARDEN.far, 1); plateAt[0] = (l + r) / 2; plateAt[1] = (tb + tt) / 2; hemiU.uHorizon.value = clamp01(-tb / (tt - tb)); };
   let cloudOrder = 0;
   // the cards and the cloud placed for n rings and drawn far to near (the cloud sits between the first two cards)
   function place(n: number) {
@@ -595,6 +619,7 @@ export function createWorld(o: WorldOptions): WorldScene {
           while (!up.step()) { await frame(); alive(); }
           if (band) placePlate(...band.tan);
           const c = cards[i]; c.tex?.dispose(); c.tex = up.texture; c.mat.uniforms.tMap.value = up.texture; c.mesh.visible = true;
+          if (i === 0) { hemiU.tPlate.value = up.texture; hemiU.uHas.value = 1; hemiDirty = true; }
           up = null; bmp = null;
           await frame(); alive();
         }
@@ -674,7 +699,7 @@ export function createWorld(o: WorldOptions): WorldScene {
           await loadGarden();
           // one program a frame, with an 8 px target bound; the cards share one program, the points one across both scenes
           warming = true; alloc(8, 8);
-          const steps: [Object3D, PerspectiveCamera, Scene][] = [[rings, cam, tunnel], [fields, cam, tunnel], [points.object, cam, tunnel], [picMesh, cam, tunnel], [grid, landCam, landScene]];
+          const steps: [Object3D, PerspectiveCamera, Scene][] = [[rings, cam, tunnel], [fields, cam, tunnel], [points.object, cam, tunnel], [picMesh, cam, tunnel], [grid, landCam, landScene], [hemiMesh, cam, hemiScene]];
           if (cards.length > 1) steps.push([cards[0].mesh, cam, tunnel], [cards[1].mesh, cam, tunnel]);
           for (const [obj, c, sc] of steps) { await compile(obj, c, sc); await frame(); alive(); }
           // the laptops' bloom, when it is on at load, compiled by a first run (Tune turning it on later compiles it then)
@@ -740,6 +765,7 @@ export function createWorld(o: WorldOptions): WorldScene {
     scissor(r) { scissorRect = r; },
     render() {
       if (!rt || !ready) return;
+      if (hemiDirty) { hemiDirty = false; renderer.setRenderTarget(hemi); renderer.render(hemiScene, cam); renderer.setRenderTarget(null); }
       const pc = renderer.getClearColor(_cc), pa = renderer.getClearAlpha(), tm = renderer.toneMapping, ac = renderer.autoClear;
       renderer.toneMapping = NoToneMapping; renderer.autoClear = false;
       if (scissorRect) { rt.scissor.set(scissorRect.x, scissorRect.y, scissorRect.w, scissorRect.h); rt.scissorTest = true; } else rt.scissorTest = false;
@@ -782,6 +808,7 @@ export function createWorld(o: WorldOptions): WorldScene {
       ringMat.dispose(); ffMat.dispose(); points.dispose(); (picMesh.material as ShaderMaterial).dispose();
       for (const c of cards) { c.tex?.dispose(); c.tex = null; c.mat.dispose(); }
       unit.dispose(); gridMat.dispose(); gridGeo.dispose(); ramp.dispose(); lands.clear();
+      hemi.dispose(); (hemiMesh.material as ShaderMaterial).dispose();
     },
   };
 
