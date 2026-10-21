@@ -1,9 +1,10 @@
 ---
 // The scroll cue (part "cue") and, as the last element of body (part "script"), the countdown and cue script
 // (hero-architecture.md 4.3): LAUNCH and the live-link copy are prepended as JSON.
-// The cue is ciao's side icon re-created (Sam, 2026-10-14; docs/specs/hero.md 14): two 17.5 x 73 px columns of three
-// five-dot chevrons, one at each side, drawn top down, held and wiped on a 2.5 s cycle (shell.css). Our own SVG and CSS,
-// timed by measurement; nothing of ciao's ships. Decorative: aria-hidden, no text (the loader's and the intro's gates hide it).
+// The cue is ciao's side icon re-created (Sam, 2026-10-14; docs/specs/hero.md 12.3): one 17.5 x 73 px column of three
+// five-dot chevrons at the bottom centre (Sam, 2026-10-20: "put only one in the middle", the two side ones clashed with the
+// countdown), drawn top down, held and wiped on a 2.5 s cycle (shell.css). Our own SVG and CSS, timed by measurement;
+// nothing of ciao's ships. Decorative: aria-hidden, no text (the loader's and the intro's gates hide it).
 import countdown from '../../inline/countdown.inline.js?raw';
 import { COPY } from '../../config/copy.ts';
 import { LAUNCH_ISO, LIVE_URL } from '../../config/site.ts';
@@ -35,5 +36,5 @@ const svg = `<svg viewBox="0 0 35 146" width="100%" xmlns="http://www.w3.org/200
     </g>
   </svg>`;
 ---
-{part === 'cue' && <Fragment><div class="scrollcue is-left" id="cue" aria-hidden="true" set:html={svg} /><div class="scrollcue is-right" id="cue2" aria-hidden="true" set:html={svg} /></Fragment>}
+{part === 'cue' && <div class="scrollcue" id="cue" aria-hidden="true" set:html={svg} />}
 {part === 'script' && <script is:inline set:html={code}></script>}

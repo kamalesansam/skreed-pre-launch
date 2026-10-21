@@ -230,7 +230,7 @@ Every string. `{Family}`, `{Shade}`, `{NNN}` (three-digit catalog number), `{n}`
 | Where | String |
 |---|---|
 | `<title>` | "{Family}, all 24 shades. Skreed" (G3) |
-| Meta description | "All 24 {Family} shades, from {First} to {Last}, on a Skreed case in matte or gloss. Doors open Nov 1." (G4; first and last from the table in 2.1) |
+| Meta description | "All 24 {Family} shades, from {First} to {Last}, on a Skreed case in matte or gloss. Doors open Nov 15." (Nov 1 until Sam moved the launch, 2026-10-20) (G4; first and last from the table in 2.1) |
 | Header | SKRD mark, accessible name "Skreed home"; button "Families" |
 | Eyebrow | "{ordinal} / 10 Families", e.g. "02 / 10 Families" |
 | h1 | "{Family}", as the data spells it, e.g. "Blissful Blue" |

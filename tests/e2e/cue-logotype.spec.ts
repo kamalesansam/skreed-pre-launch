@@ -22,24 +22,32 @@ const keyframes = (page: Page, name: string) => page.evaluate((n) => {
   return null;
 }, name);
 
-test("AC5.1 cue: ciao's side icon re-created, both sides: the v11.4 prototype keyframes, 2.5 s linear infinite, 15 dots a side", async ({ page, browser }) => {
+test("AC5.1 cue: ciao's side icon re-created, one at the bottom centre: the v11.4 prototype keyframes, 2.5 s linear infinite, 15 dots", async ({ page, browser }) => {
   await page.goto('/?tier=poster');
-  for (const id of ['cue', 'cue2']) {
-    for (const [cls, name] of [['chev-top', 'cue-top'], ['chev-mid', 'cue-mid'], ['chev-bottom', 'cue-bottom']]) {
-      const st = await page.locator(`#${id} .${cls}`).evaluate((e) => { const c = getComputedStyle(e); return [c.animationName, c.animationDuration, c.animationIterationCount, c.animationTimingFunction, c.animationFillMode]; });
-      expect(st, `${id} ${cls}`).toEqual([name, '2.5s', 'infinite', 'linear', 'both']);
-    }
-    expect(await page.locator(`#${id} .chev circle`).count()).toBe(15);
-    expect(await page.locator(`#${id}`).evaluate((e) => getComputedStyle(e).color)).toBe('rgb(247, 246, 243)');   // Pearl Whisper (rule 23), the prototype's #fff
+  for (const [cls, name] of [['chev-top', 'cue-top'], ['chev-mid', 'cue-mid'], ['chev-bottom', 'cue-bottom']]) {
+    const st = await page.locator(`#cue .${cls}`).evaluate((e) => { const c = getComputedStyle(e); return [c.animationName, c.animationDuration, c.animationIterationCount, c.animationTimingFunction, c.animationFillMode]; });
+    expect(st, cls).toEqual([name, '2.5s', 'infinite', 'linear', 'both']);
   }
-  // geometry (hero.md 14): 17.5 px wide, 4 percent plus 3.5 px from each edge, 172.75 px up
-  const vp = page.viewportSize()!;
-  const g = await page.evaluate(() => { const a = document.getElementById('cue')!.getBoundingClientRect(), b = document.getElementById('cue2')!.getBoundingClientRect(); return { w: a.width, h: a.height, lc: a.x + a.width / 2, rc: b.x + b.width / 2, up: innerHeight - a.bottom, up2: innerHeight - b.bottom }; });
-  expect(Math.abs(g.w - 17.5)).toBeLessThan(0.6);
-  expect(Math.abs(g.h - 73)).toBeLessThan(1);
-  expect(Math.abs(g.lc - (0.04 * vp.width + 3.5))).toBeLessThan(0.6);
-  expect(Math.abs(g.rc - (vp.width - 0.04 * vp.width - 3.5))).toBeLessThan(0.6);
-  expect(Math.abs(g.up - 172.75)).toBeLessThan(0.6); expect(Math.abs(g.up2 - 172.75)).toBeLessThan(0.6);
+  expect(await page.locator('#cue .chev circle').count()).toBe(15);
+  expect(await page.locator('#cue').evaluate((e) => getComputedStyle(e).color)).toBe('rgb(247, 246, 243)');   // Pearl Whisper (rule 23), the prototype's #fff
+  // one cue (Sam, 2026-10-20: "put only one in the middle"): 17.5 x 73 px, centred, its bottom on --inset
+  await expect(page.locator('.scrollcue')).toHaveCount(1);
+  for (const [w, h] of [[390, 844], [1100, 800], [1280, 800]]) {
+    await page.setViewportSize({ width: w, height: h });
+    const g = await page.evaluate(() => {
+      const a = document.getElementById('cue')!.getBoundingClientRect();
+      const inset = parseFloat(getComputedStyle(document.getElementById('heroCopy')!).paddingLeft);   // the copy's side padding is --inset
+      // the countdown's own text (eyebrow, numerals, unit labels), not its full-width flex box
+      const parts = Array.from(document.querySelectorAll('#cdEyebrow, #count .n, #count .l')).map((e) => { const r = document.createRange(); r.selectNodeContents(e); return r.getBoundingClientRect(); });
+      const clash = parts.some((q) => q.left < a.right && q.right > a.left && q.top < a.bottom && q.bottom > a.top);
+      return { w: a.width, h: a.height, c: a.x + a.width / 2, up: innerHeight - a.bottom, inset, clash };
+    });
+    expect(Math.abs(g.w - 17.5), `${w}`).toBeLessThan(0.6);
+    expect(Math.abs(g.h - 73), `${w}`).toBeLessThan(1);
+    expect(Math.abs(g.c - w / 2), `${w}`).toBeLessThan(0.6);
+    expect(Math.abs(g.up - g.inset), `${w}`).toBeLessThan(0.6);
+    expect(g.clash, `${w}: the cue overlaps the countdown`).toBe(false);
+  }
   // keyframes and easings identical to the v11.4 prototype's
   const ctx = await browser.newContext();
   await servePrototype(ctx, { three: false, version: 'v11.4' });
@@ -51,12 +59,12 @@ test("AC5.1 cue: ciao's side icon re-created, both sides: the v11.4 prototype ke
 
 test('AC5.2 cue visibility: scroll past 8 px, nothing below, while loading, reduced motion', async ({ page, browser, baseURL }) => {
   await page.goto('/?tier=poster');
-  const cue = page.locator('#cue'), cue2 = page.locator('#cue2');
+  const cue = page.locator('#cue');
   await expect(cue).not.toHaveClass(/is-off/);            // every build has content below (section 3, the quiz)
   await page.evaluate(() => scrollTo(0, 9));
-  await expect(cue).toHaveClass(/is-off/); await expect(cue2).toHaveClass(/is-off/);
+  await expect(cue).toHaveClass(/is-off/);
   await page.evaluate(() => scrollTo(0, 8));
-  await expect(cue).not.toHaveClass(/is-off/); await expect(cue2).not.toHaveClass(/is-off/);
+  await expect(cue).not.toHaveClass(/is-off/);
   await page.evaluate(() => scrollTo(0, 0));
   await page.evaluate(() => { document.getElementById('main')?.remove(); document.getElementById('families')?.remove(); dispatchEvent(new Event('resize')); });   // the quiz section and, in hooks builds, the family links below the fold
   await expect(cue).toHaveClass(/is-off/);                 // nothing to scroll to

@@ -48,6 +48,9 @@ test('the Tough case (Cobalt): both LODs pass every check and match the manifest
 test('exactly the manifest files in public/models, nothing stale', () => {
   const glbs = readdirSync(new URL('public/models/', root)).filter((f) => f.endsWith('.glb')).sort();
   const listed = [manifest.lod0, manifest.lod1, ...(manifest.magtough ? [manifest.magtough.lod0, manifest.magtough.lod1] : [])];
+  // section 4's products (the wallet, the AirPods case and the lens skin) share the folder; their own manifest lists them
+  const room = JSON.parse(readFileSync(new URL('src/data/room-products.json', root), 'utf8')) as Record<string, { url: string }>;
+  listed.push(...Object.values(room).map((r) => r.url));
   assert.deepEqual(glbs, listed.map((p) => p.slice(8)).sort());
 });
 

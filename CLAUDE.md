@@ -1,6 +1,6 @@
 # Skreed pre-launch site: rules for Claude Code
 
-This repo is the skreed.in pre-launch teaser (live until Oct 31 2026, then skreed.in redirects to skreed.com). Read `docs/00-IDEATION.md` for the plan and `docs/data/shades-240.json` for the shade system before touching UI.
+This repo is the skreed.in pre-launch teaser (live until 14 November 2026, then skreed.in redirects to skreed.com at the launch, 15 November 2026 00:00 IST). Read `docs/00-IDEATION.md` for the plan and `docs/data/shades-240.json` for the shade system before touching UI.
 
 ## Brand facts (from the 2026-27 catalog, `docs/brand/`)
 - 240 shades, exactly 24 per family. Families in catalog order, by their site names (singular, Sam 2026-10-14): Frosty White, Blissful Blue, Playful Pink, Vivid Violet, Mellow Yellow, Basic Brown, Blushing Coral, Stormy Grey, Go Green, Roaring Red (ids `frosty-white` ... `basic-brown` ... `roaring-red`). The 2026-27 catalog prints the plural names (Frosty Whites, Earthy Browns), kept as `catalogName` in `shades-240.json` and never shown on the site. Use the display names in `shades-240.json` (e.g. "Sky", not "Sky Blue").
