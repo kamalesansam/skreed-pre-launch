@@ -116,7 +116,7 @@ test('copy: sentence case strings with no em dash, no emoji, real names; the fou
   assert.equal(FAM_COPY.allFamilies, 'All families');
   assert.ok(!('reserve' in FAM_COPY) && !('eyebrow' in FAM_COPY) && !('number' in FAM_COPY), 'no Reserve, no eyebrow, no index line (round 3)');
   assert.equal(FAM_COPY.title('Blissful Blue'), 'Blissful Blue, all 24 shades. Skreed');
-  assert.equal(FAM_COPY.description('Blissful Blue', 'Electric', 'Midnight'), 'All 24 Blissful Blue shades, from Electric to Midnight, on a Skreed case in matte or gloss. Doors open Nov 1.');
+  assert.equal(FAM_COPY.description('Blissful Blue', 'Electric', 'Midnight'), 'All 24 Blissful Blue shades, from Electric to Midnight, on a Skreed case in matte or gloss. Doors open Nov 15.');
   assert.equal(FAM_COPY.live(s0, 'Blissful Blue'), 'Sky. Blissful Blue. Shade 32 of 240.');
   assert.equal(FAM_COPY.scrubberText(s0), 'Sky, 8 of 24');
 });

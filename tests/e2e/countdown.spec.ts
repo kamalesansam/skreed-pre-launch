@@ -7,7 +7,7 @@ import { pauseClockAt } from '../harness/settle.ts';
 const digits = (page: Page) => page.evaluate(() => ['cd-d', 'cd-h', 'cd-m', 'cd-s'].map((i) => document.getElementById(i)!.textContent).join(' '));
 
 test.describe('AC4.1 values', () => {
-  for (const [iso, want] of [['2026-10-09T09:00:00+05:30', '22 15 00 00'], ['2026-10-31T23:59:59+05:30', '00 00 00 01']]) {
+  for (const [iso, want] of [['2026-10-09T09:00:00+05:30', '36 15 00 00'], ['2026-11-14T23:59:59+05:30', '00 00 00 01']]) {
     test(`reads ${want} at ${iso}`, async ({ page }) => {
       await pauseClockAt(page, iso);
       await page.goto('/?tier=poster');
@@ -17,7 +17,7 @@ test.describe('AC4.1 values', () => {
 
   test('at zero: the live line with a real link, and no numerals', async ({ page, context }) => {
     await context.route('https://skreed.com/**', (r) => r.fulfill({ body: '<!doctype html><title>skreed.com</title>', contentType: 'text/html' }));
-    await pauseClockAt(page, '2026-11-01T00:00:00+05:30');
+    await pauseClockAt(page, '2026-11-15T00:00:00+05:30');
     await page.goto('/?tier=poster');
     await expect(page.locator('#cdEyebrow')).toHaveText('Skreed is live. skreed.com');
     expect(await page.locator('#count').evaluate((e) => getComputedStyle(e).display)).toBe('none');
@@ -57,11 +57,11 @@ test('AC4.2 numerals: Open Sans 600 tabular, two digits, 2ch, hidden until the f
   });
   expect(rules).toEqual({ minWidth: '2ch', hidden: 'hidden' });
   expect(await page.locator('#count').getAttribute('data-ready')).toBe('');
-  expect(await digits(page)).toBe('22 14 59 59');
+  expect(await digits(page)).toBe('36 14 59 59');
   await page.clock.runFor(590);
-  expect(await digits(page)).toBe('22 14 59 59');   // the next tick waits for the wall-clock second (plus 5 ms)
+  expect(await digits(page)).toBe('36 14 59 59');   // the next tick waits for the wall-clock second (plus 5 ms)
   await page.clock.runFor(20);
-  expect(await digits(page)).toBe('22 14 59 58');
+  expect(await digits(page)).toBe('36 14 59 58');
 });
 
 test('AC4.3 semantics: role timer with its label', async ({ page }) => {
@@ -78,9 +78,9 @@ test('AC4.3 without JavaScript: one line with a <time>, no eyebrow, numerals or 
   for (const sel of ['#cdEyebrow', '#count', '#cue']) expect(await page.locator(sel).evaluate((e) => getComputedStyle(e).display), sel).toBe('none');
   const line = page.locator('#heroCopy p.eyebrow:not(#cdEyebrow)');
   await expect(line).toBeVisible();
-  await expect(line).toHaveText('Launching 1 November 2026');
-  await expect(line.locator('time')).toHaveAttribute('datetime', '2026-11-01T00:00+05:30');
-  await expect(line.locator('time')).toHaveText('1 November 2026');
+  await expect(line).toHaveText('Launching 15 November 2026');
+  await expect(line.locator('time')).toHaveAttribute('datetime', '2026-11-15T00:00+05:30');
+  await expect(line.locator('time')).toHaveText('15 November 2026');
   await ctx.close();
 });
 
@@ -93,9 +93,9 @@ test('AC4.4 independence: runs with WebGL2 removed and with every module script 
     await pauseClockAt(page, '2026-10-09T09:00:00.400+05:30');
     await page.goto(baseURL!);
     if (mode === 'no-webgl2') await expect(page.locator('html')).toHaveClass(/\bposter\b/);
-    expect(await digits(page), mode).toBe('22 14 59 59');
+    expect(await digits(page), mode).toBe('36 14 59 59');
     await page.clock.runFor(610);
-    expect(await digits(page), mode).toBe('22 14 59 58');
+    expect(await digits(page), mode).toBe('36 14 59 58');
     await ctx.close();
   }
 });
@@ -110,14 +110,14 @@ test('AC4.5 reduced motion hides the seconds group', async ({ page }) => {
 test('AC4.7 v10 hooks: data-hold stops digit writes, __skreedCountV carries the four strings', async ({ page }) => {
   await pauseClockAt(page, '2026-10-09T09:00:00.400+05:30');
   await page.goto('/?tier=poster');
-  expect(await page.evaluate(() => window.__skreedCountV)).toEqual(['22', '14', '59', '59']);
+  expect(await page.evaluate(() => window.__skreedCountV)).toEqual(['36', '14', '59', '59']);
   await page.evaluate(() => { document.getElementById('count')!.dataset.hold = '1'; });
   await page.clock.runFor(1610);   // ticks at 0.605 s and 1.605 s
-  expect(await digits(page)).toBe('22 14 59 59');
-  expect(await page.evaluate(() => window.__skreedCountV)).toEqual(['22', '14', '59', '57']);
+  expect(await digits(page)).toBe('36 14 59 59');
+  expect(await page.evaluate(() => window.__skreedCountV)).toEqual(['36', '14', '59', '57']);
   await page.evaluate(() => { delete document.getElementById('count')!.dataset.hold; });
   await page.clock.runFor(1000);
-  expect(await digits(page)).toBe('22 14 59 56');
+  expect(await digits(page)).toBe('36 14 59 56');
 });
 
 // AC4.6 on the poster path: the poster is the rest frame with the locked terrain (provisional at stage 1). The text is
@@ -152,7 +152,7 @@ test('AC4.6 at zero: the link two-tone focus ring over the poster', async ({ bro
   const dsf = 2;
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: dsf, bypassCSP: true });
   const page = await ctx.newPage();
-  await pauseClockAt(page, '2026-11-01T00:00:00+05:30');
+  await pauseClockAt(page, '2026-11-15T00:00:00+05:30');
   await page.goto(new URL('/?tier=poster', baseURL).href);
   await page.evaluate(async () => { await document.fonts.ready; await (document.getElementById('posterImg') as HTMLImageElement).decode(); });
   await page.keyboard.press('Tab');   // the logotype

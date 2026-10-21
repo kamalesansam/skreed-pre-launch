@@ -20,11 +20,12 @@ body{color:var(--pearl-whisper);font-family:var(--font-ui);margin:0;font-synthes
 .count .l{font-weight:600;font-size:.875rem;color:var(--pearl-whisper)}
 .count:not([data-ready]) .n{visibility:hidden}   /* no false value before the first tick */
 @media (prefers-reduced-motion:reduce){.count .sec{display:none}}   /* a digit changing every second is motion too */
-@media (max-width:1100px){.copy{padding-bottom:calc(var(--inset) + 84px + env(safe-area-inset-bottom,0px))}}   /* below 1100 px the cue would share the countdown's row, so the countdown lifts by the cue's height */
-/* the side scroll cue, after ciao's (measured, docs/specs/hero.md 14): three chevrons of five dots drawn top down, held, wiped top down, 2.5 s a cycle;
-   17.5 x 73 px, 4 percent plus 3.5 px from each edge, 172.75 px up; hidden while the loader and the intro run and once the pull-back starts. Pearl Whisper, not white (rule 23). */
-.scrollcue{position:fixed;z-index:2;bottom:calc(172.75px + env(safe-area-inset-bottom,0px));width:17.5px;color:var(--pearl-whisper);pointer-events:none;transition:opacity .5s cubic-bezier(.333,0,.667,1),visibility 0s .5s}
-.scrollcue.is-left{left:calc(4% + 3.5px + env(safe-area-inset-left,0px));transform:translateX(-50%)}.scrollcue.is-right{right:calc(4% + 3.5px + env(safe-area-inset-right,0px));transform:translateX(50%)}
+@media (max-width:1100px){.copy{padding-bottom:calc(var(--inset) + 84px + env(safe-area-inset-bottom,0px))}}   /* below 1100 px the countdown reaches the middle, so it lifts by the cue's height plus 11 px and the cue sits under it */
+/* the scroll cue, ciao's side icon re-created (measured, docs/specs/hero.md 12.3): three chevrons of five dots drawn top down, held, wiped top down, 2.5 s a cycle;
+   17.5 x 73 px. One, at the bottom centre on --inset (Sam, 2026-10-20: "put only one in the middle", the two side ones clashed with the countdown): from
+   1100 px on the row the countdown sits on, right of its numerals; below that under the lifted countdown. Hidden while the loader and the intro run and once
+   the pull-back starts. Pearl Whisper, not white (rule 23). */
+.scrollcue{position:fixed;z-index:2;left:50%;bottom:calc(var(--inset) + env(safe-area-inset-bottom,0px));width:17.5px;transform:translateX(-50%);color:var(--pearl-whisper);pointer-events:none;transition:opacity .5s cubic-bezier(.333,0,.667,1),visibility 0s .5s}
 .scrollcue svg{display:block;width:100%;height:auto}
 .scrollcue.is-off,html.loading .scrollcue,html.uh3 .scrollcue{opacity:0;visibility:hidden}
 .intro.po~.scrollcue{opacity:1!important;visibility:visible!important}
