@@ -1,0 +1,431 @@
+{
+ "//": "Option C's clips (docs/specs/section-4-world.md 3 \"Option C's clips\"; the evidence and the ledger in docs/specs/evidence/section-4-world-clips.md). Every kling_o3_flf call with its job id, credits, prompt and the raw file it returned (assets-src/room/clips/raw, gitignored; sums in its SHA256SUMS), and per encoded clip the attempt it takes, why, its encode and AC5's flash check. approval stays 'pending' until Sam approves the clip (spec 3, step 4).",
+ "model": "kling_o3_flf",
+ "params": {
+  "duration": 3,
+  "mode": "std",
+  "sound": "off",
+  "multi_shots": false
+ },
+ "cap": 45,
+ "credits": 33,
+ "frames": {
+  "portrait": "the land portrait crops (assets-src/room/lands/out/land-<id>-portrait.png) at 1080 x 1920",
+  "wide": "the land wide crops on their 16:9 canvas (out/land-<id>-wide.png with work/wide169v2-<id>.png's right 444 columns) at 1920 x 1080"
+ },
+ "attempts": [
+  {
+   "clip": "case-wallet-portrait",
+   "attempt": 1,
+   "job": "36a13627-fc48-454f-b3e8-389df4916a30",
+   "credits": 3,
+   "aspect": "9:16",
+   "at": "2026-10-21T10:27:14+05:30",
+   "raw": "raw/case-wallet-portrait-a1-36a13627.mp4",
+   "sha256": "a1bc3671a8f75806ec8e9d14f14bc6b33b98f2d845261347e28b1cfa4d73bdec",
+   "prompt": "One continuous shot in Central Park, New York. The camera starts on the woman holding a yellow phone under the tall elms of the Mall, in warm direct afternoon sun, then glides forward down the tree-lined promenade and passes under the arches of the terrace arcade, and arrives on the woman in a blue sweater holding her phone in the sandstone arcade of Bethesda Terrace, in soft open shade, framed exactly as the last image. A smooth, steady forward camera move, natural daylight, realistic photography, gentle parallax in the trees. No other people, no text, no logos, no cuts."
+  },
+  {
+   "clip": "case-wallet-wide",
+   "attempt": 1,
+   "job": "e728708b-9ec1-4461-8cd5-53b35f793c93",
+   "credits": 3,
+   "aspect": "16:9",
+   "at": "2026-10-21T10:27:51+05:30",
+   "raw": "raw/case-wallet-wide-a1-e728708b.mp4",
+   "sha256": "8236a0d22b967a7e959122fa4a5ed7c448897abca5156f2c2f53ae5ed7c5a773",
+   "prompt": "One continuous shot in Central Park, New York. The camera starts on the woman holding a yellow phone under the tall elms of the Mall, in warm direct afternoon sun, then glides forward down the tree-lined promenade and passes under the arches of the terrace arcade, and arrives on the woman in a blue sweater holding her phone in the sandstone arcade of Bethesda Terrace, in soft open shade, framed exactly as the last image. A smooth, steady forward camera move, natural daylight, realistic photography, gentle parallax in the trees. No other people, no text, no logos, no cuts."
+  },
+  {
+   "clip": "wallet-lenskin-portrait",
+   "attempt": 1,
+   "job": "28c42dca-38f2-4aaf-9eae-98b219debf01",
+   "credits": 3,
+   "aspect": "9:16",
+   "at": "2026-10-21T10:28:17+05:30",
+   "raw": "raw/wallet-lenskin-portrait-a1-28c42dca.mp4",
+   "sha256": "776434e7beaf680d1bbe51f0d363092ba6b17b9bf91193ac0375b599e64a8bae",
+   "prompt": "One continuous shot in Central Park, New York. The camera starts on the woman in a blue sweater holding her phone in the sandstone arcade of Bethesda Terrace, in soft open shade, then glides forward out of the arcade, along a park path between trees and onto the open meadow, and arrives on the man in a grey blazer holding a green phone on the wide lawn of Sheep Meadow, the city skyline beyond, under a soft overcast sky, framed exactly as the last image. A smooth, steady forward camera move, natural daylight, realistic photography, gentle parallax in the trees. No other people, no text, no logos, no cuts."
+  },
+  {
+   "clip": "wallet-lenskin-wide",
+   "attempt": 1,
+   "job": "146142de-3078-44c0-bc92-61f756401422",
+   "credits": 3,
+   "aspect": "16:9",
+   "at": "2026-10-21T10:28:33+05:30",
+   "raw": "raw/wallet-lenskin-wide-a1-146142de.mp4",
+   "sha256": "252eabe93769e9c7503c73e3bc9a59c786ff0b28c8aa62b962a8fb2cc77d6e97",
+   "prompt": "One continuous shot in Central Park, New York. The camera starts on the woman in a blue sweater holding her phone in the sandstone arcade of Bethesda Terrace, in soft open shade, then glides forward out of the arcade, along a park path between trees and onto the open meadow, and arrives on the man in a grey blazer holding a green phone on the wide lawn of Sheep Meadow, the city skyline beyond, under a soft overcast sky, framed exactly as the last image. A smooth, steady forward camera move, natural daylight, realistic photography, gentle parallax in the trees. No other people, no text, no logos, no cuts."
+  },
+  {
+   "clip": "lenskin-airpods-portrait",
+   "attempt": 1,
+   "job": "e4c52b57-d7f3-4e69-bd4b-a34381010615",
+   "credits": 3,
+   "aspect": "9:16",
+   "at": "2026-10-21T10:28:47+05:30",
+   "raw": "raw/lenskin-airpods-portrait-a1-e4c52b57.mp4",
+   "sha256": "ac32724c4ab44830fc41da82b48bb3f8aa0c96160ab8eda56ae2a31f637513b3",
+   "prompt": "One continuous shot in Central Park, New York. The camera starts on the man in a grey blazer holding a green phone on the wide lawn of Sheep Meadow, the city skyline beyond, under a soft overcast sky, then glides forward across the lawn, along a path through the trees and down to the lakeside by the bridge, and arrives on the woman in a black jacket holding a violet phone on Bow Bridge over the Lake, in soft open shade, framed exactly as the last image. A smooth, steady forward camera move, natural daylight, realistic photography, gentle parallax in the trees. No other people, no text, no logos, no cuts."
+  },
+  {
+   "clip": "lenskin-airpods-wide",
+   "attempt": 1,
+   "job": "86e1510d-9274-4eb2-a675-2a309f0687d1",
+   "credits": 3,
+   "aspect": "16:9",
+   "at": "2026-10-21T10:29:02+05:30",
+   "raw": "raw/lenskin-airpods-wide-a1-86e1510d.mp4",
+   "sha256": "f92fda77a612028064a78bb9d6ef9320c32c09218e3f142fb9ac8b9e9d77cd5d",
+   "prompt": "One continuous shot in Central Park, New York. The camera starts on the man in a grey blazer holding a green phone on the wide lawn of Sheep Meadow, the city skyline beyond, under a soft overcast sky, then glides forward across the lawn, along a path through the trees and down to the lakeside by the bridge, and arrives on the woman in a black jacket holding a violet phone on Bow Bridge over the Lake, in soft open shade, framed exactly as the last image. A smooth, steady forward camera move, natural daylight, realistic photography, gentle parallax in the trees. No other people, no text, no logos, no cuts."
+  },
+  {
+   "clip": "case-wallet-portrait",
+   "attempt": 2,
+   "job": "f7430109-fab1-422f-85e7-c313b5e776f8",
+   "credits": 3,
+   "aspect": "9:16",
+   "at": "2026-10-21T10:35:05+05:30",
+   "raw": "raw/case-wallet-portrait-a2-f7430109.mp4",
+   "sha256": "8fdca661c70a55a861f1341fc8f1769485b5de5f02d2957c1027feaa07105e4a",
+   "prompt": "One continuous shot in Central Park, New York. The camera slides to the right past the woman with the yellow phone under the elm, leaving her behind out of frame, glides forward down the tree-lined promenade of the Mall, down the wide stone stairs and into the sandstone arcade of Bethesda Terrace, where a different woman in a blue sweater stands ahead in the soft open shade; the camera moves toward her until that person is framed exactly as in the last image. One unbroken, smooth forward camera move: no cuts, no dissolves, and never morph one person into the other. Natural daylight, realistic photography. No other people, no text, no logos."
+  },
+  {
+   "clip": "case-wallet-wide",
+   "attempt": 2,
+   "job": "71199ea3-02ef-4197-9bd4-5dc540a109b6",
+   "credits": 3,
+   "aspect": "16:9",
+   "at": "2026-10-21T10:35:22+05:30",
+   "raw": "raw/case-wallet-wide-a2-71199ea3.mp4",
+   "sha256": "dc03e0c41f90fe90fad60299151ea5b4f2da0528b8c52f33f09b3da7d44dbcca",
+   "prompt": "One continuous shot in Central Park, New York. The camera slides to the right past the woman with the yellow phone under the elm, leaving her behind out of frame, glides forward down the tree-lined promenade of the Mall, down the wide stone stairs and into the sandstone arcade of Bethesda Terrace, where a different woman in a blue sweater stands ahead in the soft open shade; the camera moves toward her until that person is framed exactly as in the last image. One unbroken, smooth forward camera move: no cuts, no dissolves, and never morph one person into the other. Natural daylight, realistic photography. No other people, no text, no logos."
+  },
+  {
+   "clip": "wallet-lenskin-portrait",
+   "attempt": 2,
+   "job": "6ca4f676-7a77-483f-a67e-cc017bed46c9",
+   "credits": 3,
+   "aspect": "9:16",
+   "at": "2026-10-21T10:35:40+05:30",
+   "raw": "raw/wallet-lenskin-portrait-a2-6ca4f676.mp4",
+   "sha256": "1fb3dc551324f289bf8fb0e231e85a3b3ad921fb8b5deb7a0056cd2a33c5c74b",
+   "prompt": "One continuous shot in Central Park, New York. The camera rises and drifts back out of the sandstone arcade, leaving the woman in the blue sweater behind out of frame, flies forward along a park path between tall trees and out over the open lawn of Sheep Meadow, the city skyline beyond under a soft overcast sky, where a different man in a grey blazer holding a green phone is ahead; the camera glides down toward him until that person is framed exactly as in the last image. One unbroken, smooth forward camera move: no cuts, no dissolves, and never morph one person into the other. Natural daylight, realistic photography. No other people, no text, no logos."
+  },
+  {
+   "clip": "wallet-lenskin-wide",
+   "attempt": 2,
+   "job": "3eaacab3-c838-4340-83b0-bc0535d2dfb5",
+   "credits": 3,
+   "aspect": "16:9",
+   "at": "2026-10-21T10:35:53+05:30",
+   "raw": "raw/wallet-lenskin-wide-a2-3eaacab3.mp4",
+   "sha256": "f217ed5e5ca6e7b7eea9b4309ade3caeb32df5ca33de5db300908dd10f2dba4d",
+   "prompt": "One continuous shot in Central Park, New York. The camera rises and drifts back out of the sandstone arcade, leaving the woman in the blue sweater behind out of frame, flies forward along a park path between tall trees and out over the open lawn of Sheep Meadow, the city skyline beyond under a soft overcast sky, where a different man in a grey blazer holding a green phone is ahead; the camera glides down toward him until that person is framed exactly as in the last image. One unbroken, smooth forward camera move: no cuts, no dissolves, and never morph one person into the other. Natural daylight, realistic photography. No other people, no text, no logos."
+  },
+  {
+   "clip": "lenskin-airpods-wide",
+   "attempt": 2,
+   "job": "32452206-9183-4f4f-8038-f647cf0ddb77",
+   "credits": 3,
+   "aspect": "16:9",
+   "at": "2026-10-21T10:36:06+05:30",
+   "raw": "raw/lenskin-airpods-wide-a2-32452206.mp4",
+   "sha256": "40465fd7f7c84238308bcf0ef673072bd085ec6de02f82d5d4927e3718a5a393",
+   "prompt": "One continuous shot in Central Park, New York. The camera lifts away from the man on the lawn, leaving him behind out of frame, flies forward over the meadow and through the trees, down to the Lake and along the water toward Bow Bridge, where a different woman in a black jacket holding a violet phone stands on the bridge ahead; the camera glides toward her until that person is framed exactly as in the last image. One unbroken, smooth forward camera move: no cuts, no dissolves, and never morph one person into the other. Natural daylight, realistic photography. No other people, no text, no logos."
+  }
+ ],
+ "clips": [
+  {
+   "file": "clip-case-wallet-portrait.mp4",
+   "from": "case",
+   "to": "wallet",
+   "class": "portrait",
+   "pick": {
+    "attempt": 2,
+    "job": "f7430109-fab1-422f-85e7-c313b5e776f8",
+    "raw": "raw/case-wallet-portrait-a2-f7430109.mp4"
+   },
+   "attempts": [
+    "attempt 1 morphs the first woman and her yellow case into the second woman",
+    "attempt 2 leaves her, runs down the Mall and through the arcade to the second woman; two or three small figures far down the arcade at 1.5 to 2 s"
+   ],
+   "encoded": {
+    "bytes": 647396,
+    "sha256": "3a6fd88442fd10f60279a6a6599dd135c17c3834e233515f5d9dbcf5a582edcc",
+    "crf": 27,
+    "size": [
+     720,
+     1280
+    ],
+    "frames": 72,
+    "fps": 24
+   },
+   "flash": [
+    {
+     "viewport": [
+      390,
+      844
+     ],
+     "frames": 102,
+     "pixelMost": 17,
+     "regionShare": 63.6,
+     "regionTurns": 4,
+     "redShare": 1.2,
+     "redTurns": 0,
+     "verdict": "pass"
+    }
+   ],
+   "approval": "pending"
+  },
+  {
+   "file": "clip-case-wallet-wide.mp4",
+   "from": "case",
+   "to": "wallet",
+   "class": "wide",
+   "pick": {
+    "attempt": 2,
+    "job": "71199ea3-02ef-4197-9bd4-5dc540a109b6",
+    "raw": "raw/case-wallet-wide-a2-71199ea3.mp4"
+   },
+   "attempts": [
+    "attempt 1 morphs the first woman into the second at 1.5 s",
+    "attempt 2 runs down the promenade, then the arcade comes in with a half dissolve at 1.5 s; no morph of a person"
+   ],
+   "encoded": {
+    "bytes": 659655,
+    "sha256": "2db3e7578914b49eb8a388ddf9704b5dbb571cf282f5cd759342e40d72095789",
+    "crf": 29,
+    "size": [
+     1280,
+     800
+    ],
+    "frames": 72,
+    "fps": 24
+   },
+   "flash": [
+    {
+     "viewport": [
+      1280,
+      800
+     ],
+     "frames": 102,
+     "pixelMost": 20,
+     "regionShare": 72.0,
+     "regionTurns": 4,
+     "redShare": 3.1,
+     "redTurns": 0,
+     "verdict": "pass"
+    },
+    {
+     "viewport": [
+      844,
+      390
+     ],
+     "frames": 102,
+     "pixelMost": 19,
+     "regionShare": 57.2,
+     "regionTurns": 2,
+     "redShare": 1.0,
+     "redTurns": 0,
+     "verdict": "pass"
+    }
+   ],
+   "approval": "pending"
+  },
+  {
+   "file": "clip-wallet-lenskin-portrait.mp4",
+   "from": "wallet",
+   "to": "lenskin",
+   "class": "portrait",
+   "pick": {
+    "attempt": 2,
+    "job": "6ca4f676-7a77-483f-a67e-cc017bed46c9",
+    "raw": "raw/wallet-lenskin-portrait-a2-6ca4f676.mp4"
+   },
+   "attempts": [
+    "attempt 1 pushes into the phone, then a ghosted dissolve to the man at 2 s",
+    "attempt 2 leaves through the arches onto the meadow and skyline; a ghosted dissolve into the man at 2.5 s"
+   ],
+   "encoded": {
+    "bytes": 641734,
+    "sha256": "26d0759873469719b5ac5798db569088e15536465c0802d09448482bb6083415",
+    "crf": 26,
+    "size": [
+     720,
+     1280
+    ],
+    "frames": 72,
+    "fps": 24
+   },
+   "flash": [
+    {
+     "viewport": [
+      390,
+      844
+     ],
+     "frames": 102,
+     "pixelMost": 17,
+     "regionShare": 51.2,
+     "regionTurns": 4,
+     "redShare": 0.7,
+     "redTurns": 0,
+     "verdict": "pass"
+    }
+   ],
+   "approval": "pending"
+  },
+  {
+   "file": "clip-wallet-lenskin-wide.mp4",
+   "from": "wallet",
+   "to": "lenskin",
+   "class": "wide",
+   "pick": {
+    "attempt": 2,
+    "job": "3eaacab3-c838-4340-83b0-bc0535d2dfb5",
+    "raw": "raw/wallet-lenskin-wide-a2-3eaacab3.mp4"
+   },
+   "attempts": [
+    "attempt 1 is a plain dissolve at 1.5 s, with no travel",
+    "attempt 2 travels down a tree-lined path; the woman and the phone ghost over it at 1 to 1.5 s and the man fades in at 2 s"
+   ],
+   "encoded": {
+    "bytes": 701325,
+    "sha256": "7c7cb7be656fb5f5943d027ace876402588cac8580fbfb3e63b1eac92c7b7e9b",
+    "crf": 25,
+    "size": [
+     1280,
+     800
+    ],
+    "frames": 72,
+    "fps": 24
+   },
+   "flash": [
+    {
+     "viewport": [
+      1280,
+      800
+     ],
+     "frames": 102,
+     "pixelMost": 15,
+     "regionShare": 74.5,
+     "regionTurns": 3,
+     "redShare": 1.1,
+     "redTurns": 0,
+     "verdict": "pass"
+    },
+    {
+     "viewport": [
+      844,
+      390
+     ],
+     "frames": 102,
+     "pixelMost": 14,
+     "regionShare": 40.6,
+     "regionTurns": 2,
+     "redShare": 0.4,
+     "redTurns": 0,
+     "verdict": "pass"
+    }
+   ],
+   "approval": "pending"
+  },
+  {
+   "file": "clip-lenskin-airpods-portrait.mp4",
+   "from": "lenskin",
+   "to": "airpods",
+   "class": "portrait",
+   "pick": {
+    "attempt": 1,
+    "job": "e4c52b57-d7f3-4e69-bd4b-a34381010615",
+    "raw": "raw/lenskin-airpods-portrait-a1-e4c52b57.mp4"
+   },
+   "attempts": [
+    "attempt 1 leaves the man, crosses the lawn and the trees and arrives at the woman on Bow Bridge: one move, no ghosting"
+   ],
+   "encoded": {
+    "bytes": 654038,
+    "sha256": "5a063dbb0adbfdc071d1e28c5bf25a68edf831b60d5d87921829921b2d726ac1",
+    "crf": 28,
+    "size": [
+     720,
+     1280
+    ],
+    "frames": 72,
+    "fps": 24
+   },
+   "flash": [
+    {
+     "viewport": [
+      390,
+      844
+     ],
+     "frames": 102,
+     "pixelMost": 19,
+     "regionShare": 56.7,
+     "regionTurns": 4,
+     "redShare": 1.0,
+     "redTurns": 0,
+     "verdict": "pass"
+    }
+   ],
+   "approval": "pending"
+  },
+  {
+   "file": "clip-lenskin-airpods-wide.mp4",
+   "from": "lenskin",
+   "to": "airpods",
+   "class": "wide",
+   "pick": {
+    "attempt": 2,
+    "job": "32452206-9183-4f4f-8038-f647cf0ddb77",
+    "raw": "raw/lenskin-airpods-wide-a2-32452206.mp4"
+   },
+   "attempts": [
+    "attempt 1 drops the man out of frame and cuts to the bridge at 2 s",
+    "attempt 2 leaves the man over the meadow, past the Lake and to the woman on the bridge, one move"
+   ],
+   "encoded": {
+    "bytes": 697685,
+    "sha256": "cb4fd1dfc100f4b73ad893efd2dbeb6a01c759a4364155bd63c6d81d4cb42c92",
+    "crf": 30,
+    "size": [
+     1280,
+     800
+    ],
+    "frames": 72,
+    "fps": 24
+   },
+   "flash": [
+    {
+     "viewport": [
+      1280,
+      800
+     ],
+     "frames": 102,
+     "pixelMost": 17,
+     "regionShare": 100.0,
+     "regionTurns": 5,
+     "redShare": 2.3,
+     "redTurns": 0,
+     "verdict": "pass"
+    },
+    {
+     "viewport": [
+      844,
+      390
+     ],
+     "frames": 102,
+     "pixelMost": 17,
+     "regionShare": 78.7,
+     "regionTurns": 3,
+     "redShare": 1.1,
+     "redTurns": 0,
+     "verdict": "pass"
+    }
+   ],
+   "approval": "pending"
+  }
+ ]
+}
