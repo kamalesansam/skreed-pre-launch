@@ -247,4 +247,6 @@ test('render colours (AC3, E-S4-light): the hall clears to Urban Slate from the 
 
 test('GPU memory (spec 6): land 1 reached by Skip, Escape or a hook frees the garden, as the entry clock does', () => {
   assert.match(read('src/scripts/hero/section4/director.ts'), /function finishEnter\(\) \{[^}]*world\?\.releaseGarden\(\);/);
+  // a failed picture's land is drawn again once the garden it stands on has decoded again
+  assert.match(read('src/scripts/hero/section4/director.ts'), /view\(j\) \? 'pic' : world\?\.gardenReady \? 'garden' : 'garden-loading'/);
 });

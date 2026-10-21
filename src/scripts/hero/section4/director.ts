@@ -332,9 +332,10 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   };
   window.__skreedRoom = island;
 
-  /** the frame the composite shows for land j at rest, drawn only when it changes (no idle drift, WCAG 2.2.2) */
+  /** the frame the composite shows for land j at rest, drawn only when it changes (no idle drift, WCAG 2.2.2); a land
+   * whose picture failed stands on the garden, drawn again once the garden, freed after the entry, has decoded again */
   function drawRest(j: number) {
-    const key = `${j}|${curW}x${curH}|${view(j) ? 'pic' : 'garden'}`;
+    const key = `${j}|${curW}x${curH}|${view(j) ? 'pic' : world?.gardenReady ? 'garden' : 'garden-loading'}`;
     if (key === restKey || !world) return;
     restKey = key;
     world.scissor(null);

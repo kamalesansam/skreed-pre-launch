@@ -276,6 +276,8 @@ test('section 4 at 390 x 844, AC10: a slow network, a blocked land picture, a bl
   await expect(page.locator('.rm-land[data-i="2"]')).toHaveClass(/is-on/);
   await expect.poll(() => said(page, '.rm-land[data-i="2"] .rm-land-name'), { timeout: 10_000 }).not.toBe('');
   await expect(page.locator('.rm-land[data-i="2"] .rm-land-name .dc')).toBeVisible();
+  // the garden it stands on, freed after the entry, is decoded again (the plate and its three depth cards)
+  await expect.poll(() => page.evaluate(() => (window.__s4!.state() as { world: { garden: number } | null }).world?.garden ?? 0), { timeout: 60_000 }).toBe(4);
   // a refused play() never shows a clip: on a Tune build where C's module carries a travel, the visible line says so
   const opt = await page.evaluate(() => window.__s4!.option?.() as unknown as { option: string; module: boolean });
   if (tune && opt.option === 'C' && opt.module) await expect.poll(() => said(page, '.rm-land[data-i="2"] .rm-land-more'), { timeout: 10_000 }).toBe('Clip blocked');
