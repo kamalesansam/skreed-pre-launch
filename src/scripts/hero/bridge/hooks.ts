@@ -44,6 +44,8 @@ export function installHooks(ctx: HeroContext, loop: Loop, extra: { skyClass: ()
   // v11: the scroll followers pinned (frame tests), section 2's state, and the intro's seek
   window.__skreedSnap = (v: number) => loop.snap(v);
   window.__skreedPrograms = () => ctx.renderer.info.programs?.length ?? 0;
+  // the one renderer's resident geometries and textures (section-4-world.md 6, "GPU memory": recorded in the review)
+  window.__skreedGpu = () => ({ ...ctx.renderer.info.memory, programs: ctx.renderer.info.programs?.length ?? 0 });
   window.__s2 = () => ctx.section2?.hooks?.() ?? null;
   const h = ctx.intro.hooks;
   if (h) window.__skreedIntro = {
