@@ -68,7 +68,7 @@
 .rm-land.is-on .rm-land-text { position: absolute; left: var(--inset); bottom: calc(var(--inset) + env(safe-area-inset-bottom, 0px)); width: calc(100% - 2 * var(--inset)); max-width: 520px; }
 .rm-land-name { font-size: var(--rm-fs-q); line-height: 1.25; text-wrap: balance; }
 .rm-land-count { font-variant-numeric: tabular-nums; }
-.rm-land-more[hidden] { display: none; }
+.rm-land :is(.rm-land-more, .rm-land-hint)[hidden] { display: none; }
 /* the travel buttons: visually hidden (the clip pattern), for browse mode; each runs the same travel as the keys */
 .room :is(.rm-prev, .rm-next) { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; background: none; border: 0; appearance: none; }
 .room :is(.rm-prev, .rm-next)[hidden] { display: none; }

@@ -198,6 +198,12 @@ test('the DOM (spec 5): the prompt, the pad, Skip, the lines, the lands list, th
   assert.match(astro, /class="rm-prev" id="rmPrev" hidden>\{R\.prev\}/);
   assert.match(astro, /class="rm-next" id="rmNext" hidden>\{R\.next\}/);
   assert.match(astro, /<p class="sr-only" id="rmLive" aria-live="polite"><\/p>/);
+  // one announcement per arrival (AC6): land 1's travel hint is its own line with no live role; the status line under a
+  // land's text carries only the Loading wait and the option's note
+  assert.match(astro, /<p class="rm-land-more" role="status" hidden><\/p>\s*\{l\.i === 0 && N > 1 && <p class="rm-land-hint" hidden><\/p>\}/);
+  const walk = read('src/scripts/room/walk.ts');
+  assert.match(walk, /setLine\(l\.hint, hintText\(\)\)/);
+  assert.doesNotMatch(walk, /setMore\([^)]*hintText/);
   // every land picture with its formats and its size, lazily on the 3D path (data-srcset) and in the noscript column
   assert.equal((astro.match(/data-srcset=\{l\.pics\.(portrait|wide)\.(avif|webp)\}/g) ?? []).length, 3);
   assert.match(astro, /<img data-src=\{l\.pics\.wide\.webp\} alt=\{l\.alt\} width=\{Wd\.width\} height=\{Wd\.height\} loading="lazy"/);
