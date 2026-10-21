@@ -14,7 +14,8 @@
 // A's stream, replayed on the CPU from its own uniforms, starts and ends on each land's cells for two lands of different
 // FOV and push and stays inside the fill bound across the travel; the landed points stay inside it too; every scene colour
 // is a key shade by id or a blend of two neighbouring ones (or Urban Slate, seen only when the garden is withdrawn), with
-// no raw colour in the scene files; and the hooks and Tune's guard sit behind their build flags.
+// no raw colour in the scene files; the hooks and Tune's guard sit behind their build flags; and the cloud, replayed from
+// its own hash, shows each patch of the frame one colour at any turn.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -434,12 +435,43 @@ test('colours (AC3): every scene colour is a key shade by id or a blend of two n
   }
   // the shades reach the shaders as one ramp made from ROOM_BAYS' hexes (blend.ts, display values: the target is read as
   // sRGB), read at an arc coordinate: the shards at theirs and one arc on for the lattice, the forcefields by their angle,
-  // the cloud by its longitude; no shader indexes a shade any more
+  // the cloud by the longitude of its front surface (the cloud's own test replays it); no shader indexes a shade any more
   const world = read('src/scripts/hero/section4/world.ts'), cloud = read('src/scripts/hero/section4/cloud.ts');
   assert.match(world, /new DataTexture\(ringRamp\(ROOM_BAYS\.map\(\(b\) => b\.hex\)\), 10 \* BLEND\.perArc, 1, RGBAFormat, UnsignedByteType\)/);
   assert.match(world, /ramp\.wrapS = RepeatWrapping; ramp\.minFilter = ramp\.magFilter = LinearFilter;/);
   assert.match(world, /mix\(ramp\(vTone\.x\), ramp\(vTone\.x \+ 1\.0\), /);
   assert.match(world, /texture\(tRamp, vec2\(\(deg \/ 36\.0 - vRing\) \* 0\.1, 0\.5\)\)/);
-  assert.match(cloud, /textureLod\(tRamp, vec2\(ph \/ 6\.2831853, 0\.5\), 0\.0\)/);
+  assert.match(cloud, /textureLod\(tRamp, vec2\(atan\(f\.z, f\.x\) \/ 6\.2831853, 0\.5\), 0\.0\)/);
   for (const src of [world, cloud]) assert.doesNotMatch(src, /uShades/);
+});
+
+test('the cloud (world check item 1): every point a patch of the frame shows carries nearly that patch\'s colour, at any turn and roll; coloured by its own longitude, each patch mixed every longitude facing its way', () => {
+  // the cloud's vertex shader (cloud.ts) replayed from its own hash: the ball 5 units ahead, turned and rolled, its points
+  // binned into 24 x 24 patches across it, each patch's spread of OKLab colour about its mean (the confetti a pixel can
+  // show), inside 0.8 of the radius (the limb turns through longitudes fastest)
+  const ramp = ringRamp(HEX), nr = 10 * BLEND.perArc, G = 24, D = 5, R = CLOUD.radius * S;
+  const rampAt = (a: number) => { const x = a * nr - 0.5, i0 = Math.floor(x), t = x - i0, c0 = ((i0 % nr) + nr) % nr, c1 = (c0 + 1) % nr; return [0, 1, 2].map((k) => (ramp[c0 * 4 + k] * (1 - t) + ramp[c1 * 4 + k] * t) / 255) as [number, number, number]; };
+  for (const [spin, roll] of [[0, 0], [1.24, 0], [0.7, 30], [2.9, -20]]) {
+    const cs = Math.cos(spin), ss = Math.sin(spin), cr = Math.cos((roll * Math.PI) / 180), sr = Math.sin((roll * Math.PI) / 180);
+    const turn = (x: number, y: number, z: number) => { const x1 = cs * x + ss * z, z1 = -ss * x + cs * z; return [cr * x1 - sr * y, sr * x1 + cr * y, z1]; };
+    const back = (x: number, y: number, z: number) => { const x1 = cr * x + sr * y, y1 = -sr * x + cr * y; return [cs * x1 - ss * z, y1, ss * x1 + cs * z]; };
+    const spread: Record<string, number> = {};
+    for (const mode of ['front', 'own']) {
+      const bins = Array.from({ length: G * G }, () => [0, 0, 0, 0, 0]);
+      for (let i = 0; i < CLOUD.touchCount; i++) {
+        const u = rnd(i, 0), cz = rnd(i, 1) * 2 - 1, ph = rnd(i, 2) * 2 * Math.PI, sz = Math.sqrt(1 - cz * cz), r = R * u ** 0.45;
+        const [x, y, z0] = turn(sz * Math.cos(ph) * r, cz * r, sz * Math.sin(ph) * r), z = z0 - D, ox = (x * (-D / z)) / R, oy = (y * (-D / z)) / R;
+        const f = back(ox, oy, Math.sqrt(Math.max(0, 1 - ox * ox - oy * oy))), lab = toOklab(rampAt(mode === 'front' ? Math.atan2(f[2], f[0]) / (2 * Math.PI) : ph / (2 * Math.PI)));
+        const bx = Math.floor(((ox + 1) / 2) * G), by = Math.floor(((oy + 1) / 2) * G);
+        if (bx < 0 || by < 0 || bx >= G || by >= G || Math.hypot((bx + 0.5) / G * 2 - 1, (by + 0.5) / G * 2 - 1) > 0.8) continue;
+        const b = bins[by * G + bx]; b[0] += lab[0]; b[1] += lab[1]; b[2] += lab[2]; b[3] += lab[0] ** 2 + lab[1] ** 2 + lab[2] ** 2; b[4]++;
+      }
+      let sum = 0, n = 0;
+      for (const b of bins) if (b[4] >= 10) { sum += Math.sqrt(Math.max(0, b[3] / b[4] - (b[0] ** 2 + b[1] ** 2 + b[2] ** 2) / b[4] ** 2)); n++; }
+      spread[mode] = sum / n;
+    }
+    assert.ok(spread.front <= 0.04, `turn ${spin}, roll ${roll}: a patch spreads ${spread.front.toFixed(3)}`);
+    assert.ok(spread.own >= 0.1, `turn ${spin}, roll ${roll}: by each point's own longitude ${spread.own.toFixed(3)}`);
+  }
+  assert.match(read('src/scripts/hero/section4/cloud.ts'), /vec2 o = \(pos\.xy \* \(mid\.z \/ pos\.z\) - mid\.xy\) \/ uR;\n\s*vec3 f = transpose\(mat3\(modelViewMatrix\)\) \* vec3\(o, sqrt\(max\(0\.0, 1\.0 - dot\(o, o\)\)\)\);/);
 });

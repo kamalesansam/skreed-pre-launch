@@ -2,9 +2,12 @@
 // points (32,768 on touch) with no buffers at all, every point's place and colour computed in the vertex shader from
 // gl_VertexID and one progress value, so there is no simulation, no float target and no worker (W8). Two modes:
 // - the cloud: igloo's vanishing-point target kept as ours (W12), a ball of radius 0.2 S, denser at its
-//   middle, each point the blend of the two key shades nearest its longitude (the rings' ramp, blend.ts: ten arcs round
-//   the ball, each blending into the next in OKLab, W13), so the cloud shifts smoothly from colour to colour; turned
-//   slowly about its vertical axis by the caller;
+//   middle, turned slowly about its vertical axis by the caller. Its colour is the rings' ramp (blend.ts: ten arcs round
+//   the ball, each blending into the next in OKLab, W13) at the longitude of the ball's front surface over each point
+//   as the camera sees it: every point a pixel can show carries that pixel's colour, so the cloud shifts smoothly from
+//   shade to shade across the frame whatever order the points are drawn in, and the colours turn with the ball. (Taken
+//   at a point's own longitude, a column left of the ball's centre held every longitude facing left and one right of
+//   it every longitude facing right, and the colour split in two down the middle.)
 // - the morph: each point leaves the cloud on a curved path, a swirl about the view axis that unwinds as it lands, the
 //   frame's centre first, onto its cell of a jittered grid over the frame (never a regular dot grid, rule 43), taking
 //   the cell's average colour from the picture's mip chain (textureLod at the cell's size in texels): an antialiased
@@ -72,10 +75,12 @@ export const CELL_GLSL = /* glsl */`
     return (vec2(float(i % cols), float(i / cols)) + 0.5 + (vec2(rnd(4), rnd(5)) - 0.5) * uJitter) / uGrid;
   }`;
 
-// the morph's flight eases away from rest (a smoothstep) and onto the cell decelerating (a cubic out), so the cloud opens
-// at once and every point settles; ahead() takes a frame uv to a view-space point dist ahead of whatever camera draws
-// it (the projection holds its FOV and zoom); the morph lands centre first with a swirl that unwinds on landing, the
-// colour taken over the flight's middle
+// the cloud's colour: f, the direction of the ball's front surface over the point (where the camera's ray through the
+// point crosses the plane of the ball's centre, from that centre in radii, lifted onto the sphere toward the camera),
+// back in the ball's own turning frame, and the ramp at its longitude. The morph's flight eases away from rest (a
+// smoothstep) and onto the cell decelerating (a cubic out), so the cloud opens at once and every point settles; ahead()
+// takes a frame uv to a view-space point dist ahead of whatever camera draws it (the projection holds its FOV and zoom);
+// the morph lands centre first with a swirl that unwinds on landing, the colour taken over the flight's middle
 const VERT = /* glsl */`
   uniform float uMode, uP, uR, uPx, uCap, uAlpha, uLod, uCellPx, uSize, uSwirl, uSpread, uD, uAspect;
   uniform vec2 uCover; uniform sampler2D tPic, tRamp;
@@ -85,8 +90,11 @@ const VERT = /* glsl */`
   vec3 ahead(vec2 suv, float dist) { vec2 n = suv * 2.0 - 1.0; return vec3(n.x * dist / projectionMatrix[0][0], n.y * dist / projectionMatrix[1][1], -dist); }
   void main() {
     float u = rnd(0), cz = rnd(1) * 2.0 - 1.0, ph = rnd(2) * 6.2831853, sz = sqrt(1.0 - cz * cz);
-    vec3 col = textureLod(tRamp, vec2(ph / 6.2831853, 0.5), 0.0).rgb;
     vec3 pos = (modelViewMatrix * vec4(vec3(sz * cos(ph), cz, sz * sin(ph)) * uR * pow(u, 0.45), 1.0)).xyz;
+    vec3 mid = modelViewMatrix[3].xyz;
+    vec2 o = (pos.xy * (mid.z / pos.z) - mid.xy) / uR;
+    vec3 f = transpose(mat3(modelViewMatrix)) * vec3(o, sqrt(max(0.0, 1.0 - dot(o, o))));
+    vec3 col = textureLod(tRamp, vec2(atan(f.z, f.x) / 6.2831853, 0.5), 0.0).rgb;
     float px = uPx * 5.0 / max(0.05, -pos.z);
     if (uMode > 0.5) {
       vec2 suv = cellUv(), n = suv * 2.0 - 1.0;
