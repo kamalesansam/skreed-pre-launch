@@ -160,8 +160,8 @@ test('clipsAllowed: never under Save-Data, on 2g, at deviceMemory 2 or less, or 
   assert.equal(clipsAllowed({ reduced: true }), false);
 });
 
-test('only travel-video.ts names the clips (travel-stub.ts second rule)', () => {
+test('only travel-video.ts names the clips (travel-stub.ts second rule); part three\'s video.ts may name .mp4 too (section-4-flux.md 5, "The island modules")', () => {
   const walk = (d: URL): string[] => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(new URL(`${e.name}/`, d)) : [new URL(e.name, d).pathname]));
   const hits = walk(new URL('../../src/', import.meta.url)).filter((p) => /\.(ts|astro|mjs|js)$/.test(p) && /clips\/clip-|\.mp4/.test(readFileSync(p, 'utf8')));
-  assert.deepEqual(hits.map((p) => p.split('/src/')[1]), ['scripts/hero/section4/travel-video.ts']);
+  assert.deepEqual(hits.map((p) => p.split('/src/')[1]).sort(), ['scripts/hero/section4/travel-video.ts', 'scripts/hero/section4/video.ts']);
 });
