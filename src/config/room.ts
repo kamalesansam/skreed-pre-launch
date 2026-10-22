@@ -83,9 +83,8 @@ export function relLuminance(hex: string): number {
 export interface RoomProduct {
   readonly id: 'case' | 'wallet' | 'lenskin' | 'airpods';
   readonly name: string;
-  /** the catalog's sentence with rule 17's words dropped, and the catalog's own words */
+  /** the catalog's sentence with rule 17's words dropped; the catalog's own is a test fixture, never shipped */
   readonly line: string;
-  readonly lineCatalog: string;
   /** the accessory's own shade by id (the case's: the family pages' Cobalt model, which no land shows) and its finish */
   readonly shade: string;
   readonly hex: string;
@@ -99,10 +98,10 @@ export interface RoomProduct {
  * scripts/room/lands.py reads each entry's id, shade, hex and finish from this block, one entry to a line.
  */
 export const ROOM_PRODUCTS: readonly RoomProduct[] = Object.freeze([
-  { id: 'case', name: 'Phone case', line: 'Enhanced dual-layered protection with a tough Polycarbonate exterior and a flexible TPU core. Available in 240 shades. Matte or gloss.', lineCatalog: 'Enhanced dual-layered protection with a tough Polycarbonate exterior and a flexible TPU core. The perfect balance of style, strength, and functionality. Available in 240 shades. Finish: Matte, Gloss.', shade: 'blissful-blue-11', hex: '#1040ca', finish: 'matte' },
-  { id: 'wallet', name: 'MagSafe wallet', line: 'Sleek and secure MagSafe-compatible phone wallet for convenient card storage without the bulk. Available in 240 shades. Matte, gloss, metallic matte or metallic gloss.', lineCatalog: 'Sleek and secure MagSafe-compatible phone wallet for convenient card storage without the bulk. Designed to blend seamlessly with your phone case for a clean and minimal look. Available in 240 shades. Finish: Matte, Gloss, Metallic Matte, Metallic Gloss.', shade: 'basic-brown-04', hex: '#c6a884', finish: 'matte' },
-  { id: 'lenskin', name: 'Lenskin', line: "Sleek metal accent for the latest iPhone's camera lens area, designed to personalize your look. Available in a range of contrasting solid shades and patterns. Matte, metallic matte or metallic gloss.", lineCatalog: "Sleek metal accent designed to elevate the latest iPhone's camera lens area and personalize your look. Available in a range of contrasting solid shades and patterns. Finish: Matte, Metallic Matte, Metallic Gloss.", shade: 'go-green-09', hex: '#96a880', finish: 'metallic' },
-  { id: 'airpods', name: 'AirPods case', line: 'Durable polycarbonate case with a sleek profile and precise cut-outs for charging. Includes a carabiner ring for easy attachment to bags. Available in 240 shades. Matte or gloss.', lineCatalog: 'Durable polycarbonate case with a sleek profile and precise cut-outs for seamless charging and functionality. Includes a convenient carabiner ring for easy attachment to bags. Available in 240 shades. Finish: Matte, Gloss.', shade: 'go-green-09', hex: '#96a880', finish: 'gloss' },
+  { id: 'case', name: 'Phone case', line: 'Enhanced dual-layered protection with a tough Polycarbonate exterior and a flexible TPU core. Available in 240 shades. Matte or gloss.', shade: 'blissful-blue-11', hex: '#1040ca', finish: 'matte' },
+  { id: 'wallet', name: 'MagSafe wallet', line: 'Sleek and secure MagSafe-compatible phone wallet for convenient card storage without the bulk. Available in 240 shades. Matte, gloss, metallic matte or metallic gloss.', shade: 'basic-brown-04', hex: '#c6a884', finish: 'matte' },
+  { id: 'lenskin', name: 'Lenskin', line: "Sleek metal accent for the latest iPhone's camera lens area, designed to personalize your look. Available in a range of contrasting solid shades and patterns. Matte, metallic matte or metallic gloss.", shade: 'go-green-09', hex: '#96a880', finish: 'metallic' },
+  { id: 'airpods', name: 'AirPods case', line: 'Durable polycarbonate case with a sleek profile and precise cut-outs for charging. Includes a carabiner ring for easy attachment to bags. Available in 240 shades. Matte or gloss.', shade: 'go-green-09', hex: '#96a880', finish: 'gloss' },
 ]);
 
 /**
@@ -112,13 +111,15 @@ export const ROOM_PRODUCTS: readonly RoomProduct[] = Object.freeze([
  * name, never anything about the person). fov: the picture's vertical field of view in degrees and near: its near
  * distance in scene units, both shared with option B's park (src/assets/room/park/park.json's poses, by eye); far: the
  * depth map's far distance, so a pixel of disparity d sits at 1 / mix(1 / far, 1 / near, d). tone: the logotype over the
- * land (Urban Slate unless the land says Pearl).
+ * land per crop class, read where it sits, top left: Pearl where that corner of the approved picture is dark (the case's
+ * elms in both crops, the wallet's arcade in the wide), Urban Slate elsewhere (spec 5, "The logotype's tone").
  */
-export const LAND_COPY: Readonly<Record<RoomProduct['id'], { family: string; alt: string; fov: number; near: number; far: number; tone: 'slate' | 'pearl' }>> = Object.freeze({
-  case: { family: 'A Mellow Yellow case', alt: 'A person under tall elms in a sunlit park holds a phone in a Mellow Yellow case.', fov: 32, near: 1.6, far: 30, tone: 'slate' },
-  wallet: { family: 'Desert, on a Blissful Blue case', alt: 'A person in the shade of a stone arcade holds a phone in a Blissful Blue case with a Desert MagSafe wallet on its back.', fov: 34, near: 1.6, far: 30, tone: 'slate' },
-  lenskin: { family: 'Sage, on a Go Green case', alt: 'A person on a wide lawn under a soft grey sky holds a phone in a Go Green case with a Sage Lenskin around its camera.', fov: 32, near: 1.6, far: 30, tone: 'slate' },
-  airpods: { family: 'Sage, beside a Vivid Violet case', alt: 'A person on a bridge over a lake holds a phone in a Vivid Violet case and an open Sage AirPods case with its earbuds inside.', fov: 32, near: 1.6, far: 30, tone: 'slate' },
+type LandTone = 'slate' | 'pearl';
+export const LAND_COPY: Readonly<Record<RoomProduct['id'], { family: string; alt: string; fov: number; near: number; far: number; tone: Readonly<Record<LandClass, LandTone>> }>> = Object.freeze({
+  case: { family: 'A Mellow Yellow case', alt: 'A person under tall elms in a sunlit park holds a phone in a Mellow Yellow case.', fov: 32, near: 1.6, far: 30, tone: { portrait: 'pearl', wide: 'pearl' } },
+  wallet: { family: 'Desert, on a Blissful Blue case', alt: 'A person in the shade of a stone arcade holds a phone in a Blissful Blue case with a Desert MagSafe wallet on its back.', fov: 34, near: 1.6, far: 30, tone: { portrait: 'slate', wide: 'pearl' } },
+  lenskin: { family: 'Sage, on a Go Green case', alt: 'A person on a wide lawn under a soft grey sky holds a phone in a Go Green case with a Sage Lenskin around its camera.', fov: 32, near: 1.6, far: 30, tone: { portrait: 'slate', wide: 'slate' } },
+  airpods: { family: 'Sage, beside a Vivid Violet case', alt: 'A person on a bridge over a lake holds a phone in a Vivid Violet case and an open Sage AirPods case with its earbuds inside.', fov: 32, near: 1.6, far: 30, tone: { portrait: 'slate', wide: 'slate' } },
 });
 
 /** the picture classes (spec 3, "The crops"): the portrait on phones, the wide on laptops, at their encoded sizes */
@@ -137,7 +138,8 @@ export interface RoomLand {
   readonly fov: number;
   readonly near: number;
   readonly far: number;
-  readonly tone: 'slate' | 'pearl';
+  /** the logotype's tone over the land, per crop class */
+  readonly tone: Readonly<Record<LandClass, LandTone>>;
   /** the picture per class, AVIF and WebP (the lands pipeline's land-<id>-portrait.* and land-<id>-wide.*) */
   readonly pics: Readonly<Record<LandClass, LandFiles>>;
   /** option A's depth map per class (land-<id>-<class>-depth.*), quarter size, single channel; null where it is not encoded */

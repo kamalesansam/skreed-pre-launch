@@ -1,5 +1,5 @@
 /* countdown to launch: plain script, so it runs even if the 3D module never starts. LAUNCH and LIVE are prepended by ScrollCue.astro. */
-(function(){var T=LAUNCH;   /* 1 November 2026, 00:00 IST (skreed.in hands over to skreed.com) */
+(function(){var T=LAUNCH;   /* 15 November 2026, 00:00 IST (skreed.in hands over to skreed.com) */
 var el=['cd-d','cd-h','cd-m','cd-s'].map(function(i){return document.getElementById(i)}),box=document.getElementById('count'),eyebrow=document.getElementById('cdEyebrow');
 function pad(n){return(n<10?'0':'')+n}
 function live(){var a=document.createElement('a');a.href=LIVE.href;a.textContent=LIVE.link;eyebrow.textContent=LIVE.lead;eyebrow.appendChild(a)}
@@ -9,10 +9,10 @@ box.setAttribute('data-ready','');
 if(T-Date.now()<=0){live();box.hidden=true;return false;}return true;}
 function loop(){if(tick())setTimeout(loop,1000-Date.now()%1000+5);}   /* aligned to the wall-clock second, so no value is skipped */
 loop();
-/* scroll cue (both sides): hides as soon as the page moves, or when there is nothing below to scroll to, in this plain script so it
+/* scroll cue (the one at the bottom centre): hides as soon as the page moves, or when there is nothing below to scroll to, in this plain script so it
    also works without WebGL and under reduced motion */
-var cue=document.getElementById('cue'),cue2=document.getElementById('cue2'),R=document.documentElement;
-function cueCheck(){var off=scrollY>8||R.scrollHeight<=innerHeight+8;cue.classList.toggle('is-off',off);cue2.classList.toggle('is-off',off);}
+var cue=document.getElementById('cue'),R=document.documentElement;
+function cueCheck(){var off=scrollY>8||R.scrollHeight<=innerHeight+8;cue.classList.toggle('is-off',off);}
 addEventListener('scroll',cueCheck,{passive:true});addEventListener('resize',cueCheck);cueCheck();
 new MutationObserver(cueCheck).observe(R,{attributes:true,attributeFilter:['class']});   /* the loader and the intro lock the page (overflow hidden, so nothing is below until they end) */
 /* the last script in body: everything behind the loader becomes inert while it shows (D16) */

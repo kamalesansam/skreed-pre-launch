@@ -1,19 +1,20 @@
-// Section 4's entrance hall (docs/specs/section-4.md 2 and 5; the numbers from docs/specs/evidence/section-4-measurements.md).
-// Our own model (src/assets/room/hall.glb, scripts/room/hall.py) lit by our own baked lightmap, drawn unlit: albedo times
-// the light, with the measured seams and the concrete's grain procedural in the shader, the fixtures emissive, the
-// door's seam of light brightening toward the door station, the leaves on hinges for the transition. One pass into an
-// 8-bit target, then the measured output pass (post.ts) into the frame the composite reads as tB of the third wipe and
-// as the whole frame after it. The camera walks the measured hall by the section's scroll progress; the pointer sways
-// the head on laptops. Everything here renders under NoToneMapping into sRGB, as section 3's fog ground does. From the
-// press (section-4-world.md 2, "The press") the clear colour is Urban Slate, so the doorway behind the opening leaves
-// reads dark, not white; the director stops drawing the hall once its glide ends and reuses its last frame as the
-// bubble's outside.
+// Section 4's entrance hall (docs/specs/section-4.md 2 and 5; the numbers from
+// docs/specs/evidence/section-4-measurements.md). Our own model (scripts/room/hall.py's hall.glb, shipped as
+// src/assets/room/hall.bin by scripts/room/hall-bin.mjs) lit by our own baked lightmap, drawn unlit: albedo times the
+// light, with the measured seams and the concrete's grain procedural in the shader, the fixtures emissive, the door's
+// seam of light brightening toward the door station, the leaves on hinges for the transition. One pass into an 8-bit
+// target, then the measured output pass (post.ts) into the frame the composite reads as tB of the third wipe and as the
+// whole frame after it. The camera walks the measured hall by the section's scroll progress; the pointer sways the head
+// on laptops. Everything here renders under NoToneMapping into sRGB, as section 3's fog ground does. From the press
+// (section-4-world.md 2, "The press") the clear colour is Urban Slate, so the doorway behind the opening leaves reads
+// dark, not white; the director stops drawing the hall once its glide ends and reuses its last frame as the bubble's
+// outside.
 import { Color, CubeCamera, Group, LinearMipmapLinearFilter, Mesh, MeshBasicMaterial, NoToneMapping, PerspectiveCamera, Scene, ShaderMaterial, Texture, Vector3, WebGLCubeRenderTarget, WebGLRenderTarget, type CubeTexture, type Object3D, type WebGLRenderer } from 'three';
-import hallUrl from '../../../assets/room/hall.glb?url';
+import hallUrl from '../../../assets/room/hall.bin?url';
 import lightAvifUrl from '../../../assets/room/hall-lightmap.avif?url';
 import lightWebpUrl from '../../../assets/room/hall-lightmap.webp?url';
 import { HALL, RENDER_COLOURS, roomParams, type RoomParams } from '../../../config/room.ts';
-import { LIGHT_VERT, TO_SRGB, loadLightmap, loadModel } from './assets.ts';
+import { LIGHT_VERT, TO_SRGB, loadHall, loadLightmap } from './assets.ts';
 import { createOutputPass } from './post.ts';
 
 /** the head: yaw and pitch in degrees (the pointer's sway, the keys' turn, the drag); anchorYaw the part the prompt keeps (the keys and the drag, not the sway) */
@@ -155,7 +156,7 @@ export function createHall(o: HallOptions): HallScene {
     async load() {
       if (started) return; started = true;
       try {
-        const [root, tex] = await Promise.all([loadModel(hallUrl, 'hall'), loadLightmap(lightAvifUrl, lightWebpUrl, o.avif, 'hall')]);
+        const [root, tex] = await Promise.all([loadHall(hallUrl), loadLightmap(lightAvifUrl, lightWebpUrl, o.avif, 'hall')]);
         model = root; lightmap = tex; U.tLight.value = tex;
         build(root);
         renderer.initTexture(tex);

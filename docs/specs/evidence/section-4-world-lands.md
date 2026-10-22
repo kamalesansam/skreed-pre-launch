@@ -1,10 +1,10 @@
 # The four lands' pictures, made (evidence for docs/specs/section-4-world.md)
 
-Made 2026-10-20 by `scripts/room/lands.py` (the driver) and `scripts/room/render-products.py` (the accessories in Blender), on the branch `s4/lands-pipeline`. Sam reviewed the first sheet and asked for fixes (section 8), then approved the second, `sheet-v2.jpg`, with the seams to be blended and the Lenskin in option 3, Sage (section 9). The third round's masters are encoded into `src/assets/room/lands/` by `scripts/room/encode-lands.mjs`; `ROOM_LANDS` is the integration's to write (spec section 3, "Approval"; CHECKLIST F2). The masters are gitignored in `assets-src/room/lands/`, with their `SHA256SUMS` committed beside the folder's `.gitignore`.
+Made 2026-10-20 and 2026-10-21 by `scripts/room/lands.py` (the driver) and `scripts/room/render-products.py` (the accessories in Blender), on the branch `s4/lands-pipeline`. Sam reviewed the first sheet and asked for fixes (section 8), approved the second, `sheet-v2.jpg`, with the seams to be blended and the Lenskin in option 3, Sage (section 9), and on 2026-10-21 approved `sheet-final.jpg`, the encoded files: "this works, build it" (section 10). The masters are encoded into `src/assets/room/lands/` by `scripts/room/encode-lands.mjs`; `ROOM_LANDS` is the integration's to write (spec section 3, "Approval"; CHECKLIST F2). The masters are gitignored in `assets-src/room/lands/`, with their `SHA256SUMS` committed beside the folder's `.gitignore`.
 
 **Credits: 45.0 of the 100 this builder was given** (the account read 1,800 before the first call and 1,755 after the last, so no other call was charged to it meanwhile). Every call is in section 4 with its job id.
 
-**The second round** (Sam's review of the first sheet, 2026-10-20) is section 8: **28.0 of its 40 credits** (the account read 1,755 before and 1,727 after). **The third** (his approval of sheet-v2, the same day) is section 9, and made no call: 73.0 credits in all. Sections 1 to 7 describe the first round; where section 8 or 9 differs, the later holds. In `src/data/room-lands.json` every land records round 1 as reviewed on 2026-10-20 with fixes asked, and sheet-v2 as approved by Sam on 2026-10-20 with the seams to be blended; land 3 adds Lenskin option 3 (Sage).
+**The second round** (Sam's review of the first sheet, 2026-10-20) is section 8: **28.0 of its 40 credits** (the account read 1,755 before and 1,727 after). **The third** (his approval of sheet-v2, the same day) is section 9, and made no call: 73.0 credits in all. **The fourth** (his approval of sheet-final, 2026-10-21) is section 10: four depth calls, **6.0 of its 8 credits**, 79.0 in all. Sections 1 to 7 describe the first round; where a later section differs, the later holds. In `src/data/room-lands.json` every land records three reviews: round 1 reviewed on 2026-10-20 with fixes asked, sheet-v2 approved on 2026-10-20 with the seams to be blended (land 3 adds Lenskin option 3, Sage), and sheet-final approved on 2026-10-21, "this works, build it".
 
 ## 1. The result
 
@@ -309,7 +309,7 @@ The third round makes each wide again (`seamed_wide`), with the weights in `SEAM
   - The wides now: 15.44 / 3.01, 10.78 / 2.33, 9.37 / 3.03, 12.73 / 3.03 (round 2: 16.22 / 3.09, 11.35 / 2.34, 9.82 / 3.03, 11.87 / 3.00).
   - Every median passes 4.5:1 but land 3's portrait (4.40). The lightest 5 percent stays under 3:1 on land 2's two crops and land 3's portrait, as in round 2.
 
-**9.5 Depth (`depthseams`; no call).**
+**9.5 Depth (`depthseams`; no call; replaced in the fourth round, section 10).**
 - **Land 1.** Its wide now keeps the elm's trunk up to about 200 px further left than the depth map made in round 2, which had the trunk end at x 948 and the far park beyond. So inside the mask, the share of the picture the seams took from the pad takes each row's depth just right of the edge (the median over x 960 to 1000, the trunk's, which fills every row there). That is 6.0 percent of the map.
 - **Lands 2, 3 and 4.** Their wide depth maps stay as made. The same carry drew blocks with straight tops where a silhouette crosses those columns. Their round-2 maps already hold the jacket (land 3), the sleeve within about 20 px of its edge in the picture (land 2) and the water (land 4).
 - **The portraits' maps** are the round-2 ones, and every portrait is unchanged byte for byte, but land 3's (the plate).
@@ -343,8 +343,70 @@ The third round makes each wide again (`seamed_wide`), with the weights in `SEAM
 ```
 python3 -I scripts/room/lands.py lenskinpick --root <run> --land lenskin
 python3 -I scripts/room/lands.py seams       --root <run>
-python3 -I scripts/room/lands.py depthseams  --root <run>
 python3 -I scripts/room/lands.py steps|check|contrast|sums|record --root <run>
 node scripts/room/encode-lands.mjs --decoded <run>/out/decoded
 python3 -I scripts/room/lands.py sheetfinal  --root <run>
+```
+
+The third round also ran `depthseams` (9.5) between `seams` and `steps`; the fourth round removed that stage.
+
+## 10. The fourth round (Sam, 2026-10-21)
+
+Sam on `sheet-final.jpg`, the encoded files decoded back: **"this works, build it"**. The four lands are approved as encoded, with land 1's wide at AVIF q48 and WebP q64. Every land in `room-lands.json` now records this as its third review (round 3, 2026-10-21, `sheet-final.jpg`, "approved", his words in `words`). Its `approval` reads `Sam 2026-10-21 (sheet-final.jpg, the encoded files): "this works, build it"`, and land 3 adds ", Lenskin option 3 (Sage)".
+
+**10.1 The wides' depth maps, made again (4 calls, 6.0 credits; 79.0 in all).**
+- **Why.** The wides' maps were made in round 2. The third round then blended the seams, so the pictures changed in 1.7 to 8.5 percent of the frame, and land 1's map was a local carry across the trunk (9.5). The spec (3, "Option A's depth maps") asks for each map to be the depth model's output on its own crop.
+- **How.** `lands.py depth --crop wide`: `depth_anything_video`, VDA-Small, `--max_frames 1`, greyscale, on a one-frame clip of each final wide at 1920 x 1200. Each call is costed first, with the cap at 81 (73 spent plus this round's 8). Each map is extracted as 1920 x 1200 8-bit grey: the same name and size as before.
+- **What is kept.** The `depthseams` stage and land 1's `depth_carry` are gone from `lands.py`. The third round's four maps are kept in `work/v3/` (land 1's patched one; the other three are the round-2 maps). Nothing else changed: the other 16 masters keep their sums.
+
+| Land | Job | Seconds | Mean change, code values | Pixels changed by more than 8 |
+|---|---|---|---|---|
+| 1 case | `f676a4b7-5a23-4f17-8d7e-a0ee9a707876` | 207 | 2.30 | 2.3 percent |
+| 2 wallet | `ac3d1275-e984-45ff-99b6-bbe277e5e0af` | 12 | 0.98 | 1.1 percent |
+| 3 lenskin | `7cc5ec47-6106-458a-94b0-ceaba916637c` | 11 | 0.82 | 0.2 percent |
+| 4 airpods | `243d4b82-b9c5-467c-8a71-a6e4c57c9308` | 16 | 1.78 | 4.0 percent |
+
+- **The account.** Other sessions share it, so its balance is not this round's alone: it read 1,711 before and 1,664 after. Its transactions show this round's four 1.5-credit charges, at 05:02:55, 05:07:03, 05:07:24 and 05:07:47 UTC.
+
+**10.2 The maps against their pictures.** The edges of each map (Canny on the map, blurred 1 px, at 12 and 30) were measured against the edges in its wide (Canny on the grey picture, blurred 1.5 px, at the median's usual bounds), both at 1920 x 1200. The table gives the median distance from a depth edge to the nearest picture edge, and the share within 4 px:
+
+| Land | Round 3's map | Round 4's map |
+|---|---|---|
+| 1 case | 2.8 px, 57 percent | 1.4 px, 80 percent |
+| 2 wallet | 1.4 px, 79 percent | 1.4 px, 80 percent |
+| 3 lenskin | 1.4 px, 74 percent | 1.4 px, 76 percent |
+| 4 airpods | 3.0 px, 59 percent | 2.2 px, 64 percent |
+
+- **Land 1.** The trunk's left edge in the new map is sharp, at the bark's own edge. The carry had drawn it as a soft ramp about 200 px wide.
+- **Land 4.** The balustrade meeting her jacket at the lower right now has its own depth. Round 2's map was made before the seams were blended, so it put that edge where the round-2 picture had it.
+- **Lands 2 and 3.** These change least. Their edges were already within a few px of the picture's, and they still are.
+- **The frames.** `depth-edges-r3-r4.jpg` (each map's edges over its wide, round 3 left, round 4 right), `depth-maps-r3-r4.jpg` and `case-depth-compare.jpg` are in this round's scratch folder, `wave2b/lands-pipeline/probe/`. Sam still checks the displaced-grid frame of each land when option A is wired (spec 3).
+
+**10.3 The encoder's quality floor (`scripts/room/encode-lands.mjs`).**
+- **The floor.** Each format still starts at q60 (AVIF) and q80 (WebP) and steps down by 1, but now it stops at its floor, **AVIF q45 and WebP q60**. A file that does not fit its line by then throws.
+- **Accepted files.** A file may go lower only if `room-lands.json`'s `encoding.accepted` names it with Sam's acceptance, a quality, the master and the master's sum. A named file is held to that: it must come from that master (by sum) and be written at exactly that quality, or the run throws. An acceptance for a file the run does not write also throws.
+- **What `encoded.json` records.** Each file's `floor`, and `accepted` where there is one.
+- **Land 1's wide.** It is recorded as accepted under Sam's approval of 2026-10-21: `land-case-wide.avif` at q48 and `land-case-wide.webp` at q64, from `land-case-wide.png` (`8518f158...`), with sheet-final and his words. Both qualities are above the new floors, so the record is what pins them: q48 is under the brief's AVIF q50, and q64 is the only WebP under q80. If the master changes, or the file stops fitting at exactly those qualities, the encoder stops and asks for a new acceptance.
+- **Checked against altered records** (land 1 only, from a copy of `room-lands.json`; logs in `wave2b/lands-pipeline/enc-neg/`):
+  - **Accepted at q50.** It throws: "written at q48, room-lands.json records Sam's acceptance at q50".
+  - **Floor raised to q50, nothing accepted.** It throws: "nothing from q60 to the floor q50 fits 112640 B".
+  - **Floor raised to q50, q48 accepted.** It passes, at q48 and q64.
+  - **An acceptance naming another master's sum.** It throws before encoding.
+  - **The record as committed.** It gives land 1's eight files byte for byte.
+- **The re-encode.** It wrote all 32 files. 24 are byte for byte as before; only the eight wide depth files changed (AVIF 2.9 to 3.1 KB, WebP 2.7 to 2.9 KB, against lines of 12 and 20). The pictures' qualities are as in 9.6, and the poster-tier totals are unchanged. The depth AVIFs decode with flat chroma; the WebPs decode within 2 code values across the channels, as the unchanged portrait maps do.
+
+**10.4 The Lenskin's shade in `ROOM_PRODUCTS`.**
+- **The change.** `src/config/room.ts` names the Lenskin `go-green-09` (Sage, `#96a880`), Sam's pick, the shade its masters carry. It is the same values as the `s4/world-wire` branch's change; only the shade and the hex change on this branch's line.
+- **The scripts.** `lands.py` now refuses a run where `ROOM_PRODUCTS` and `LENSKIN_PICK` differ, and `room-lands.json` no longer carries `room_ts`.
+- **The test.** `tests/unit/room-lands.test.ts` asserts plainly that each accessory's shade and hex in `room-lands.json` equal `ROOM_PRODUCTS'`: the wallet's Desert, the Lenskin's Sage and the AirPods case's Sage. It also asserts the Lenskin is `go-green-09` / `#96a880` and Sam's pick. The todo is gone. With room.ts set back to Crimson the test fails, as it should: "lenskin: the shade rendered is the shade ROOM_PRODUCTS names".
+- **Lands 3 and 4.** Both now carry Sage, the Lenskin on land 3 and the AirPods case on land 4.
+
+**10.5 The masters, kept twice.**
+- **The sums.** `SHA256SUMS` now has 80 lines (76 plus `work/v3/`'s four), and `work/SHA256SUMS` lists 355 files. Both check OK in the worktree.
+- **The main checkout.** Both also check OK in the main checkout's `assets-src/room/lands/`, after `rsync -a` with nothing deleted.
+
+```
+python3 -I scripts/room/lands.py depth --root <run> --crop wide --cap 81
+python3 -I scripts/room/lands.py sums|record --root <run>
+node scripts/room/encode-lands.mjs --decoded <scratch>/decoded
 ```

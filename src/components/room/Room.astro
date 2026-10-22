@@ -67,6 +67,7 @@ const P = LAND_SIZE.portrait, Wd = LAND_SIZE.wide;
                 <p class="rm-land-line">{l.line}</p>
                 <p class="rm-land-count">{fill(R.count, { n: l.i + 1, N })}</p>
                 <p class="rm-land-more" role="status" hidden></p>
+                {l.i === 0 && N > 1 && <p class="rm-land-hint" hidden></p>}
               </div>
               <p class="sr-only rm-land-alt" id={`rmAlt-${l.id}`}>{l.alt}</p>
             </li>

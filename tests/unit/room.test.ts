@@ -11,6 +11,7 @@ import { SHADES } from '../../src/config/shades.gen.ts';
 import { URBAN_SLATE } from '../../src/config/tokens.ts';
 import { WORLD_DEFAULTS, WORLD_RANGES } from '../../src/scripts/hero/section4/world.ts';
 import PARK from '../../src/assets/room/park/park.json' with { type: 'json' };
+import { ROOM_CATALOG_LINES } from '../fixtures/room-catalog.ts';
 
 const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const byId = new Map(SHADES.map((s) => [s.id, s]));
@@ -78,8 +79,13 @@ test("the lands' copy (spec 3): the product by name, the case by its family, the
     }
     assert.doesNotMatch(c.alt, /central park|new york|\bwoman\b|\bman\b|\bgirl\b|\bboy\b|\bher\b|\bhis\b|customer/i, `${p.id}: ${c.alt}`);
     assert.match(c.alt, /^A person /);
-    assert.equal(c.tone, 'slate', `${p.id}: the logotype is Urban Slate over the land unless the land says Pearl`);
   }
+  // the logotype's tone per crop class, measured on the approved pictures where it sits (top left): Pearl over the case's
+  // dark elms in both crops and the wallet's arcade in the wide, Urban Slate over the light corners elsewhere
+  assert.deepEqual(Object.fromEntries(Object.entries(LAND_COPY).map(([id, c]) => [id, c.tone])), {
+    case: { portrait: 'pearl', wide: 'pearl' }, wallet: { portrait: 'slate', wide: 'pearl' }, lenskin: { portrait: 'slate', wide: 'slate' }, airpods: { portrait: 'slate', wide: 'slate' },
+  });
+  assert.match(read('src/scripts/hero/section4/director.ts'), /const landDark = \(i: number\): boolean => ROOM_LANDS\[i\]\?\.tone\[cls\(\)\] !== 'pearl';/, 'the director reads the tone by the crop class in use');
   assert.equal(LAND_COPY.case.family, 'A Mellow Yellow case');
   assert.equal(LAND_COPY.wallet.family, 'Desert, on a Blissful Blue case');
   assert.equal(fill(ROOM_COPY.count, { n: 2, N: 4 }), '2 / 4');
@@ -192,6 +198,12 @@ test('the DOM (spec 5): the prompt, the pad, Skip, the lines, the lands list, th
   assert.match(astro, /class="rm-prev" id="rmPrev" hidden>\{R\.prev\}/);
   assert.match(astro, /class="rm-next" id="rmNext" hidden>\{R\.next\}/);
   assert.match(astro, /<p class="sr-only" id="rmLive" aria-live="polite"><\/p>/);
+  // one announcement per arrival (AC6): land 1's travel hint is its own line with no live role; the status line under a
+  // land's text carries only the Loading wait and the option's note
+  assert.match(astro, /<p class="rm-land-more" role="status" hidden><\/p>\s*\{l\.i === 0 && N > 1 && <p class="rm-land-hint" hidden><\/p>\}/);
+  const walk = read('src/scripts/room/walk.ts');
+  assert.match(walk, /setLine\(l\.hint, hintText\(\)\)/);
+  assert.doesNotMatch(walk, /setMore\([^)]*hintText/);
   // every land picture with its formats and its size, lazily on the 3D path (data-srcset) and in the noscript column
   assert.equal((astro.match(/data-srcset=\{l\.pics\.(portrait|wide)\.(avif|webp)\}/g) ?? []).length, 3);
   assert.match(astro, /<img data-src=\{l\.pics\.wide\.webp\} alt=\{l\.alt\} width=\{Wd\.width\} height=\{Wd\.height\} loading="lazy"/);
@@ -201,7 +213,10 @@ test('the DOM (spec 5): the prompt, the pad, Skip, the lines, the lands list, th
 
 test('copy: sentence case, no em or en dash, no emoji, no banned words (CLAUDE.md 3, 4, 16, 17)', () => {
   const lines = [...Object.entries(ROOM_COPY).filter(([k]) => k !== 'key').map(([, v]) => v), ...ROOM_PRODUCTS.flatMap((p) => [p.name, p.line]), ...Object.values(LAND_COPY).flatMap((c) => [c.family, c.alt])];
-  for (const p of ROOM_PRODUCTS) assert.notEqual(p.line, p.lineCatalog, `${p.id}: the trimmed line differs from the catalog's`);
+  for (const p of ROOM_PRODUCTS) assert.notEqual(p.line, ROOM_CATALOG_LINES[p.id], `${p.id}: the trimmed line differs from the catalog's`);
+  // the catalog's own sentences stay in the test fixture: neither they nor rule 17's words are in the client's config
+  for (const p of ROOM_PRODUCTS) assert.ok(!('lineCatalog' in p), `${p.id}: no catalog line in the client`);
+  assert.doesNotMatch(read('src/config/room.ts'), /\b(seamless|seamlessly|elevate)\b/i, 'room.ts carries none of rule 17\'s words');
   for (const s of lines) {
     assert.doesNotMatch(s, /[\u2013\u2014]/, s);
     assert.doesNotMatch(s, /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u, s);
@@ -228,4 +243,10 @@ test('render colours (AC3, E-S4-light): the hall clears to Urban Slate from the 
   }
   assert.ok(!existsSync(new URL('../../src/scripts/hero/section4/universe.ts', import.meta.url)), 'universe.ts is gone');
   assert.match(read('src/scripts/hero/section4/hall.ts'), /entering\(on\) \{ clear = on \? CLEAR_ENTERING : CLEAR;/);
+});
+
+test('GPU memory (spec 6): land 1 reached by Skip, Escape or a hook frees the garden, as the entry clock does', () => {
+  assert.match(read('src/scripts/hero/section4/director.ts'), /function finishEnter\(\) \{[^}]*world\?\.releaseGarden\(\);/);
+  // a failed picture's land is drawn again once the garden it stands on has decoded again
+  assert.match(read('src/scripts/hero/section4/director.ts'), /view\(j\) \? 'pic' : world\?\.gardenReady \? 'garden' : 'garden-loading'/);
 });

@@ -81,7 +81,7 @@ const H = '[A-Za-z0-9_-]+', IMG = 'avif|webp|jpe?g|png|gif';
 const LAND = new RegExp(`^land-([a-z0-9-]+?)-(portrait|wide)\\.${H}\\.(${IMG})$`);
 const DEPTH = new RegExp(`^land-([a-z0-9-]+?)(?:-(portrait|wide))?-depth\\.${H}\\.(${IMG})$`);
 const STILL = new RegExp(`^hall-(portrait|wide)\\.${H}\\.(${IMG})$`);
-const HALL_GLB = new RegExp(`^hall\\.${H}\\.glb$`), HALL_LIGHT = new RegExp(`^hall-lightmap\\.${H}\\.(${IMG})$`);
+const HALL_MODEL = new RegExp(`^hall\\.${H}\\.(?:bin|glb)$`), HALL_LIGHT = new RegExp(`^hall-lightmap\\.${H}\\.(${IMG})$`);
 /** the formats a picture may ship in (AC8), and a name's extension as the format key (jpg and jpeg alike) */
 const SHIPS = new Set(['avif', 'webp']);
 const fmtOf = (ext) => ext.toLowerCase().replace(/^jpg$/, 'jpeg');
@@ -95,7 +95,7 @@ for (const n of astroFiles) {
   else if ((m = DEPTH.exec(n))) addFile('room depth', p, { id: m[1], cls: m[2], fmt: fmtOf(m[3]) });
   else if (isParkAsset(n)) addFile('room park', p, { kind: n.endsWith('.glb') ? 'glb' : /lightmap/.test(n) ? 'lightmap' : 'other', fmt: fmtOf(n.split('.').pop()) });
   else if ((m = STILL.exec(n))) addFile('room still', p, { cls: m[1], fmt: fmtOf(m[2]) });
-  else if (HALL_GLB.test(n)) addFile('room data', p, { hall: 'glb' });
+  else if (HALL_MODEL.test(n)) addFile('room data', p, { hall: 'model' });
   else if ((m = HALL_LIGHT.exec(n))) addFile('room data', p, { hall: 'light', fmt: fmtOf(m[1]) });
 }
 for (const p of files(dist).filter((f) => /\.mp4$/i.test(f))) addFile('room clip', p, { cls: /portrait/.test(basename(p)) ? 'portrait' : /wide/.test(basename(p)) ? 'wide' : null });
@@ -113,7 +113,7 @@ if (existsSync(gardenDir)) for (const src of files(gardenDir)) {
 // universe.ts, so anything left here is new and shows in the table
 for (const p of graph.keys()) {
   const src = readFileSync(join(dist, p), 'utf8');
-  for (const d of new Set([...src.matchAll(/[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.(?:glb|avif|webp)\b/g)].map((m) => m[0]))) if (existsSync(join(dist, '_astro', d)) && !rows.some((x) => x.name.endsWith('/' + d))) add('room data', '/_astro/' + d, join(dist, '_astro', d));
+  for (const d of new Set([...src.matchAll(/[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.(?:bin|glb|avif|webp)\b/g)].map((m) => m[0]))) if (existsSync(join(dist, '_astro', d)) && !rows.some((x) => x.name.endsWith('/' + d))) add('room data', '/_astro/' + d, join(dist, '_astro', d));
 }
 
 const dataSeen = new Set();
@@ -155,7 +155,7 @@ const roomScript = gzOf(reach(new Set(PICKS.filter((o) => o !== pick).flatMap((o
 const posterScript = gzOf(reach(new Set(), pageRoots, true));
 const storedOf = (pred) => room.filter(pred).reduce((a, f) => a + f.stored, 0);
 const maxOf = (pred) => room.filter(pred).reduce((a, f) => Math.max(a, f.stored), 0);
-const hallGlb = storedOf((f) => f.hall === 'glb'), hallLight = (fmt) => storedOf((f) => f.hall === 'light' && f.fmt === fmt);
+const hallModel = storedOf((f) => f.hall === 'model'), hallLight = (fmt) => storedOf((f) => f.hall === 'light' && f.fmt === fmt);
 const garden = (fmt, part) => storedOf((f) => f.group === 'room garden' && f.fmt === fmt && (!part || f.part === part));
 const pic = (id, cls, fmt) => maxOf((f) => f.group === 'room land' && f.id === id && f.cls === cls && f.fmt === fmt);
 const depth = (id, cls, fmt) => maxOf((f) => f.group === 'room depth' && f.id === id && (!f.cls || f.cls === cls) && f.fmt === fmt);
@@ -173,7 +173,7 @@ const lines = [], faults = [];
 const line = (name, bytes, limitKB, { enforced = true, note = '', pendingKB = 0 } = {}) => lines.push({ name, bytes, limit: limitKB * KB, pending: pendingKB * KB, enforced, note });
 const SCRIPT = { A: 38, B: 45, C: 40 };
 line(`section 4's script, option ${pick} shipped (gzip)`, roomScript, SCRIPT[pick], pick === 'A'
-  ? { pendingKB: 30, note: "Sam's 30 KB line, pending him (spec 11, item 1: move it to 38 KB, or replace three's model loader); the build stops above the spec's likely 38 KB" }
+  ? { pendingKB: 30, note: "Sam's 30 KB line, pending him (spec 11, item 1: move it to 38 KB; three's model loader is already gone); the build stops above the spec's likely 38 KB" }
   : { note: `the spec's figure for option ${pick}` });
 for (const o of PICKS) if (chunksOf(o).size) {
   if (!tune && o !== pick) line(`option ${o}'s chunk in a ${BUILD} whose pick is ${pick} (gzip)`, ownOf(o), 0, { note: 'never in production until picked: astro.config.mjs aliases it to travel-stub.ts' });
@@ -203,7 +203,7 @@ if (room.some((f) => f.group === 'room park')) {
 for (const f of room.filter((x) => x.group === 'room clip')) line(`option C: clip ${basename(f.name)}`, f.stored, 700);
 // to the first land on the 3D tier: the script, the hall (model and lightmap), the garden, land 1 with its depth map
 for (const [fmt, limits] of [['avif', { portrait: 355, wide: 385 }], ['webp', { portrait: 560, wide: 610 }]]) for (const cls of CLASSES) {
-  const bytes = roomScript + hallGlb + hallLight(fmt) + garden(fmt) + (land1 ? pic(land1, cls, fmt) + depth(land1, cls, fmt) : 0);
+  const bytes = roomScript + hallModel + hallLight(fmt) + garden(fmt) + (land1 ? pic(land1, cls, fmt) + depth(land1, cls, fmt) : 0);
   line(`to the first land, 3D tier, ${pick}, ${cls}, ${fmt === 'avif' ? 'AVIF' : 'WebP-only browsers'}`, bytes, limits[cls], { note: land1 ? `land 1 is ${land1}` : 'no land yet' });
 }
 // the whole section by the pick, AVIF: the first-land row, every land with its depth map (A; B and C keep land 1's only),
@@ -212,7 +212,7 @@ const WHOLE = { A: { portrait: 630, wide: 750 }, B: { portrait: 1020, wide: 1140
 for (const cls of CLASSES) {
   const depths = (pick === 'A' ? lands : lands.slice(0, 1)).reduce((a, id) => a + depth(id, cls, 'avif'), 0);
   const extra = pick === 'B' ? storedOf((f) => f.group === 'room park' && (f.kind === 'glb' || (f.kind === 'lightmap' && f.fmt === 'avif'))) : pick === 'C' ? storedOf((f) => f.group === 'room clip' && (!f.cls || f.cls === cls)) : 0;
-  const bytes = roomScript + hallGlb + hallLight('avif') + garden('avif') + lands.reduce((a, id) => a + pic(id, cls, 'avif'), 0) + depths + extra;
+  const bytes = roomScript + hallModel + hallLight('avif') + garden('avif') + lands.reduce((a, id) => a + pic(id, cls, 'avif'), 0) + depths + extra;
   line(`the whole section, option ${pick}, ${cls}, AVIF`, bytes, WHOLE[pick][cls], { note: `${lands.length} land(s)` });
 }
 // the poster tier: the hall's still and every land's picture, one class

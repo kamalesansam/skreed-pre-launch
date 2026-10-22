@@ -5,7 +5,7 @@
 export const SITE_COPY = {
   notFound: {
     title: '404. This shade does not exist. Skreed',
-    description: 'This page is not on skreed.in. Doors open Nov 1.',
+    description: 'This page is not on skreed.in. Doors open Nov 15.',
     h1: '404. This shade does not exist.',
     line: 'These 240 do.',
     swatch: 'vivid-violet-03',   // Mauve, the one real swatch (type-system role 16)

@@ -70,6 +70,7 @@ interface Window {
   /** v11: both scroll followers at once */
   __skreedSnap?: (v: number) => void;
   __skreedPrograms?: () => number;
+  __skreedGpu?: () => { geometries: number; textures: number; programs: number };
   /** section 2's state (ready, failed, live, S, L per gem, active, labels shown) */
   __s2?: () => unknown;
   /** the intro: seek(x, t0?) pins the shot at x seconds and renders that frame; play() resumes; replay() runs it again */

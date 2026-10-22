@@ -33,6 +33,10 @@
 // - A land is its picture on a displaced grid seen from its capture pose (positions from gl_VertexID, the depth fetched in
 //   the vertex shader by the disparity rule), so at the capture pose it is the picture, cover-fit, pixel for pixel; the
 //   push after the morph moves the camera 0.15 of the land's near distance into it, and that pose is the land's rest.
+//   The grid reads a prepared copy of the depth map (depth.ts), made once a land: the near side carried over each real
+//   edge so a silhouette moves rigidly, an uncovering step spread over the background beside it, an occluding one kept
+//   sharp and cut at the picture's own contour with what lies behind drawn by a second, back pass. No cell stretches
+//   across a step (no seam, no staircase), and each fragment takes the picture's pixel on the capture ray through it.
 // - Option A's stream (stream.ts) is drawn here as a layer handed in by option A's travel module, which alone imports it.
 // One 8-bit target with depth, display values written by hand (toSrgb) under NoToneMapping set and restored around the
 // draw, as the hall's; no output pass, and on laptops at most the screened bloom with everything else of post.ts off,
@@ -40,7 +44,7 @@
 // disposed meanwhile: the rings' generation, each garden image decoded with at most the next one decoding ahead and
 // uploaded in row strips, one compile a frame with the target bound, the laptops' bloom when it is on, a warm draw.
 // The test hooks ship only in hooks builds and Tune's guard only in Tune builds (both folded away in production).
-import { AdditiveBlending, BufferGeometry, Color, DataTexture, DoubleSide, Float32BufferAttribute, Group, LinearFilter, LinearMipmapLinearFilter, Mesh, NoColorSpace, NoToneMapping, NormalBlending, PerspectiveCamera, PlaneGeometry, RedFormat, RepeatWrapping, RGBAFormat, Scene, ShaderMaterial, Sphere, Uint16BufferAttribute, Uint32BufferAttribute, UnsignedByteType, Vector2, Vector3, Vector4, WebGLRenderTarget, type Object3D, type Texture, type WebGLRenderer } from 'three';
+import { AdditiveBlending, BufferGeometry, Color, DataTexture, DoubleSide, Float32BufferAttribute, Group, LessDepth, LessEqualDepth, LinearFilter, LinearMipmapLinearFilter, Mesh, NoColorSpace, NoToneMapping, NormalBlending, PerspectiveCamera, PlaneGeometry, RedFormat, RepeatWrapping, RGBAFormat, Scene, ShaderMaterial, Sphere, Uint16BufferAttribute, Uint32BufferAttribute, UnsignedByteType, Vector2, Vector3, Vector4, WebGLRenderTarget, type Object3D, type Texture, type WebGLRenderer } from 'three';
 import { ROOM_BAYS } from '../../../config/room.ts';
 import { URBAN_SLATE } from '../../../config/tokens.ts';
 import { fsGeo } from '../section2/background.ts';
@@ -48,6 +52,7 @@ import { clamp01, easeInOutCubic } from '../util/math.ts';
 import { TO_SRGB } from './assets.ts';
 import { BLEND, display, ringRamp } from './blend.ts';
 import { CLOUD, coverScale, createPoints, type CloudPoints } from './cloud.ts';
+import { createDepthPrep } from './depth.ts';
 import { createOutputPass, type OutputPass } from './post.ts';
 import { RING, generateRings, type RingArrays } from './rings.ts';
 import type { WorldStream } from './stream.ts';
@@ -328,6 +333,8 @@ export function stripUpload(renderer: WebGLRenderer, bmp: ImageBitmap, o: { red?
  * over height), its capture's vertical FOV in degrees, and the disparity rule's near and far distances.
  */
 export interface LandView { picture: Texture; depth: Texture | null; aspect: number; fov: number; near: number; far: number }
+/** a land as the grid draws it: depth the prepared copy (depth.ts: red the front depth, green the cut, blue the back depth), raw the source */
+type GridView = LandView & { raw?: Texture | null };
 
 /** a layer of a land frame, drawn in order over the one before (the depth cleared between) */
 export type WorldLayer =
@@ -408,9 +415,12 @@ const LIN = /* glsl */`vec3 toLinear(vec3 c) { return mix(c / 12.92, pow((c + 0.
 // the shards: thrown by the camera's distance to their ring (the falloff of W2), each on its own window of it, spun about
 // their own axis, shrunk and pushed out along their centre and toward the camera. Their colour is the ramp's at their arc
 // coordinate (the shades blended round the ring, blend.ts) times their own value, the lattice the ramp's one arc on (the
-// next family's); lit as glazed lacquer under the garden's sun in white light: ambient brighter toward the sky, the sun's
-// diffuse, the seams' occlusion (half, over uSeam, fading as the shard is thrown), a sharp and a broad highlight toward
-// the sun and the clear coat's Fresnel reflection of the sky
+// next family's); lit as glazed lacquer under the garden's sun: a fill from the garden's own light (hemi, tHemi: its sky
+// and treetops above, its lawn below, at unit brightness and a quarter of their colour, tint) that never falls under
+// 0.42, so a face turned from the sun reads as its shade darker, never grey; the sun's diffuse wrapped a quarter past
+// the terminator; the seams' occlusion (half, over uSeam, fading as the shard is thrown); a sharp and a broad highlight
+// toward the sun; and the clear coat's Fresnel reflection of the garden in the reflected direction, in its colours
+// carried most of the way to the shade's own hue, so a grazing face keeps its colour
 const RING_VERT = /* glsl */`
   attribute vec3 aCentre, aTone; attribute vec4 aSpin, aFling; attribute vec2 aLat;
   uniform vec2 uAsm; uniform float uBreak;
@@ -425,18 +435,33 @@ const RING_VERT = /* glsl */`
     gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
   }`;
 const RING_FRAG = /* glsl */`
-  uniform sampler2D tRamp, tTri; uniform vec3 uSun; uniform float uTri, uSeam;
+  uniform sampler2D tRamp, tTri, tHemi; uniform vec3 uSun; uniform float uTri, uSeam;
   varying vec3 vN, vW, vTone; varying vec2 vLat; varying float vB;
   ${TO_SRGB} ${LIN}
   vec3 ramp(float a) { return texture(tRamp, vec2(a * 0.1, 0.5)).rgb; }
+  vec3 hemi(float y) { return toLinear(mix(texture(tHemi, vec2(0.75, 0.5)).rgb, texture(tHemi, vec2(0.25, 0.5)).rgb, 0.5 + 0.5 * y)); }
+  vec3 tint(vec3 c, float k) { return mix(vec3(1.0), c / max(0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b, 1e-3), k); }
   void main() {
     vec3 alb = toLinear(mix(ramp(vTone.x), ramp(vTone.x + 1.0), clamp(uTri * texture(tTri, vLat).r * 1.25, 0.0, 1.0)) * (1.0 + vTone.z));
-    vec3 n = normalize(gl_FrontFacing ? vN : -vN), v = normalize(cameraPosition - vW);
+    vec3 n = normalize(gl_FrontFacing ? vN : -vN), v = normalize(cameraPosition - vW), h = hemi(n.y);
     float nh = max(dot(n, normalize(uSun + v)), 0.0), fr = 0.04 + 0.96 * pow(1.0 - max(dot(n, v), 0.0), 5.0);
     float ao = 1.0 - 0.55 * (1.0 - vB) * (1.0 - smoothstep(0.0, uSeam, vTone.y));
-    vec3 c = alb * (0.28 + 0.12 * n.y + 0.66 * max(dot(n, uSun), 0.0)) * ao;
-    c += ao * (0.7 * pow(nh, 220.0) + 0.035 * pow(nh, 16.0) + 0.15 * fr * (0.6 + 0.4 * reflect(-v, n).y));
+    vec3 c = alb * (0.42 * tint(h, 0.25) + 0.62 * max(dot(n, uSun) + 0.25, 0.0) / 1.25) * ao;
+    c += ao * (0.7 * pow(nh, 220.0) + 0.035 * pow(nh, 16.0) + 0.15 * fr * hemi(reflect(-v, n).y) * tint(alb, 0.6));
     gl_FragColor = vec4(toSrgb(clamp(c, 0.0, 1.0)), 1.0);
+  }`;
+
+// the garden's light (hemi): the plate's mean colour, averaged as light, above the horizon (texel 0) and below it
+// (texel 1), skipping a sixth of each side next to the horizon; without a plate, uNone (Urban Slate) for both
+const HEMI_FRAG = /* glsl */`
+  uniform sampler2D tPlate; uniform float uHas, uHorizon; uniform vec3 uNone;
+  ${TO_SRGB} ${LIN}
+  void main() {
+    if (uHas < 0.5) { gl_FragColor = vec4(uNone, 1.0); return; }
+    vec2 band = gl_FragCoord.x < 1.0 ? vec2(uHorizon + (1.0 - uHorizon) / 6.0, 1.0) : vec2(0.0, uHorizon * 5.0 / 6.0);
+    vec3 c = vec3(0.0);
+    for (int j = 0; j < 8; j++) for (int i = 0; i < 12; i++) c += toLinear(textureLod(tPlate, vec2((float(i) + 0.5) / 12.0, mix(band.x, band.y, (float(j) + 0.5) / 8.0)), 0.0).rgb);
+    gl_FragColor = vec4(toSrgb(c / 96.0), 1.0);
   }`;
 
 // the forcefields: one quad a ring, the disc drawn in the fragment; its colour the ramp's at the arc behind it, by angle
@@ -474,20 +499,34 @@ const PIC_FRAG = /* glsl */`uniform sampler2D tPic; uniform vec2 uCover; uniform
   void main() { gl_FragColor = vec4(texture(tPic, 0.5 + (vUv - 0.5) * uCover).rgb, uAlpha); }`;
 
 // a land: a cols x rows grid of two triangles a cell from gl_VertexID alone, each vertex on the capture camera's ray
-// through its uv at the depth of the disparity rule (d 1 at near, 0 at far: z = 1 / mix(1 / far, 1 / near, d))
+// through its uv at the depth of the disparity rule (d 1 at near, 0 at far: z = 1 / mix(1 / far, 1 / near, d)), each
+// fragment the picture's pixel on the capture camera's ray through its own point (so the capture pose shows the picture
+// pixel for pixel, whatever the cells' depths). The depth is the prepared copy's (depth.ts): the front pass at its red
+// (the near side carried over each real edge, an uncovering step spread toward the centre), dropping a fragment drawn
+// above an occluding edge's cut (green) whose own pixel's source depth, filtered over about a texel, lies below it (the
+// margin's sliver of what is behind); then the back pass at its blue (the far side's own depth there), drawn only where
+// nothing as near was, so what lies behind the silhouette shows where the front pass cut
 const GRID_VERT = /* glsl */`
-  uniform sampler2D tDepth; uniform vec2 uGrid; uniform vec4 uCap; uniform float uHasDepth;
-  varying vec2 vUv;
+  uniform sampler2D tDepth; uniform vec2 uGrid; uniform vec4 uCap; uniform float uHasDepth, uBack;
+  varying vec3 vP; varying float vD;
   const vec2 CORNER[6] = vec2[6](vec2(0.0, 0.0), vec2(1.0, 0.0), vec2(0.0, 1.0), vec2(0.0, 1.0), vec2(1.0, 0.0), vec2(1.0, 1.0));
   void main() {
     int q = gl_VertexID / 6, cols = int(uGrid.x);
     vec2 uv = (vec2(float(q % cols), float(q / cols)) + CORNER[gl_VertexID - q * 6]) / uGrid;
-    float d = uHasDepth > 0.5 ? textureLod(tDepth, uv, 0.0).r : 1.0, z = 1.0 / mix(1.0 / uCap.w, 1.0 / uCap.z, d);
-    vUv = uv;
-    gl_Position = projectionMatrix * viewMatrix * vec4((uv * 2.0 - 1.0) * uCap.xy * z, -z, 1.0);
+    vec3 t = textureLod(tDepth, uv, 0.0).rgb;
+    float d = uHasDepth > 0.5 ? (uBack > 0.5 ? t.b : t.r) : 1.0, z = 1.0 / mix(1.0 / uCap.w, 1.0 / uCap.z, d);
+    vP = vec3((uv * 2.0 - 1.0) * uCap.xy * z, -z); vD = d;
+    gl_Position = projectionMatrix * viewMatrix * vec4(vP, 1.0);
   }`;
-const GRID_FRAG = /* glsl */`uniform sampler2D tPic; uniform float uAlpha; varying vec2 vUv;
-  void main() { gl_FragColor = vec4(texture(tPic, vUv).rgb, uAlpha); }`;
+const GRID_FRAG = /* glsl */`uniform sampler2D tPic, tDepth, tRaw; uniform vec4 uCap; uniform float uAlpha, uHasDepth, uBack; varying vec3 vP; varying float vD;
+  void main() {
+    vec2 uv = 0.5 + 0.5 * vP.xy / (-vP.z * uCap.xy);
+    float cut = uHasDepth > 0.5 && uBack < 0.5 ? texture(tDepth, uv).g : 0.0;
+    vec2 e = 0.75 / vec2(textureSize(tRaw, 0));
+    float raw = 0.25 * (texture(tRaw, uv + e).r + texture(tRaw, uv - e).r + texture(tRaw, uv + vec2(e.x, -e.y)).r + texture(tRaw, uv - vec2(e.x, -e.y)).r);
+    if (vD > cut && raw < cut) discard;
+    gl_FragColor = vec4(texture(tPic, uv).rgb, uAlpha);
+  }`;
 
 // ---------------------------------------------------------------- the scene
 
@@ -516,7 +555,13 @@ export function createWorld(o: WorldOptions): WorldScene {
   const alive = () => { if (disposed) throw GONE; };
 
   // the rings: one mesh for all of them, regenerated when Tune's ringCount changes
-  const ringU = { tRamp: { value: ramp }, uSun: { value: SUN }, uSeam: { value: RING.seamAo * S }, tTri: { value: o.tTri }, uTri: { value: lat }, uAsm: { value: new Vector2(GLIDE.assemble[0] * S, GLIDE.assemble[1] * S) }, uBreak: { value: o.reduced ? 0 : 1 } };
+  // the garden's light (HEMI_FRAG), made again whenever the plate is uploaded, before the next frame binds its target
+  const hemi = new WebGLRenderTarget(2, 1, { depthBuffer: false }), hemiScene = new Scene();
+  const hemiU = { tPlate: { value: null as Texture | null }, uHas: { value: 0 }, uHorizon: { value: 0.5 }, uNone: { value: new Vector3(...display(URBAN_SLATE)) } };
+  const hemiMesh = new Mesh(fsGeo, new ShaderMaterial({ uniforms: hemiU, vertexShader: PIC_VERT, fragmentShader: HEMI_FRAG, depthTest: false, depthWrite: false, toneMapped: false }));
+  hemiMesh.frustumCulled = false; hemiScene.add(hemiMesh); hemi.texture.colorSpace = NoColorSpace;
+  let hemiDirty = true;
+  const ringU = { tRamp: { value: ramp }, tHemi: { value: hemi.texture }, uSun: { value: SUN }, uSeam: { value: RING.seamAo * S }, tTri: { value: o.tTri }, uTri: { value: lat }, uAsm: { value: new Vector2(GLIDE.assemble[0] * S, GLIDE.assemble[1] * S) }, uBreak: { value: o.reduced ? 0 : 1 } };
   const ringMat = new ShaderMaterial({ uniforms: ringU, vertexShader: RING_VERT, fragmentShader: RING_FRAG });
   const ffU = { tRamp: { value: ramp }, tTri: { value: o.tTri }, uTri: { value: lat }, uRad: { value: GLIDE.forcefield[0] * S }, uLat: { value: RING.fieldLattice }, uGain: { value: 0.5 }, uS: { value: S } };
   const ffMat = new ShaderMaterial({ uniforms: ffU, vertexShader: FF_VERT, fragmentShader: FF_FRAG, transparent: true, depthWrite: false, blending: AdditiveBlending });
@@ -566,7 +611,7 @@ export function createWorld(o: WorldOptions): WorldScene {
   const plateAt: [number, number] = [0, 0];
   if (L) { const plate = gardenQuad(true); plate.mesh.renderOrder = -1; cards.push(plate, ...L.cards.map(() => gardenQuad(false))); }
   /** the plate's quad over the tangent bounds of the rows its texture kept, at GARDEN.far; glideTo keeps it at the camera */
-  const placePlate = (tb: number, tt: number) => { const [l, r] = L!.plateTan; cards[0].mesh.scale.set((r - l) * GARDEN.far, (tt - tb) * GARDEN.far, 1); plateAt[0] = (l + r) / 2; plateAt[1] = (tb + tt) / 2; };
+  const placePlate = (tb: number, tt: number) => { const [l, r] = L!.plateTan; cards[0].mesh.scale.set((r - l) * GARDEN.far, (tt - tb) * GARDEN.far, 1); plateAt[0] = (l + r) / 2; plateAt[1] = (tb + tt) / 2; hemiU.uHorizon.value = clamp01(-tb / (tt - tb)); };
   let cloudOrder = 0;
   // the cards and the cloud placed for n rings and drawn far to near (the cloud sits between the first two cards)
   function place(n: number) {
@@ -596,6 +641,7 @@ export function createWorld(o: WorldOptions): WorldScene {
           while (!up.step()) { await frame(); alive(); }
           if (band) placePlate(...band.tan);
           const c = cards[i]; c.tex?.dispose(); c.tex = up.texture; c.mat.uniforms.tMap.value = up.texture; c.mesh.visible = true;
+          if (i === 0) { hemiU.tPlate.value = up.texture; hemiU.uHas.value = 1; hemiDirty = true; }
           up = null; bmp = null;
           await frame(); alive();
         }
@@ -611,18 +657,39 @@ export function createWorld(o: WorldOptions): WorldScene {
 
   // the lands: one grid material, its uniforms set per layer; the grid follows the depth map's size (two texels a cell).
   // Always transparent and single-pass, so one program serves every alpha (three keys an opaque material apart).
-  const lands = new Map<number, LandView>();
-  const gridU = { tPic: { value: null as Texture | null }, tDepth: { value: null as Texture | null }, uGrid: { value: new Vector2(8, 8) }, uCap: { value: new Vector4(1, 1, 1, 10) }, uHasDepth: { value: 0 }, uAlpha: { value: 1 } };
+  // Each land's depth map is drawn through its prepared copy (depth.ts), made on its first frame and kept with it; the
+  // grid and option A's stream both read its front depth, so the stream's points land where the grid draws.
+  const lands = new Map<number, LandView>(), depthPrep = createDepthPrep(renderer);
+  const prepared = new Map<number, { base: LandView; rt: WebGLRenderTarget; view: GridView }>();
+  const forget = (i: number) => { prepared.get(i)?.rt.dispose(); prepared.delete(i); };
+  /** land i's view with its prepared depth, made the first time it is asked for (render asks before it binds its target) */
+  function landView(i: number): GridView | undefined {
+    const v = lands.get(i), p = prepared.get(i);
+    if (!v?.depth) return v;
+    if (p?.base === v) return p.view;
+    if (p?.base.depth === v.depth) { p.base = v; p.view = { ...v, depth: p.rt.texture, raw: v.depth }; return p.view; }
+    forget(i);
+    const img = v.depth.image as { width: number; height: number }, rt = depthPrep.run(v.depth, img.width, img.height, cam);
+    prepared.set(i, { base: v, rt, view: { ...v, depth: rt.texture, raw: v.depth } });
+    return prepared.get(i)!.view;
+  }
+  const gridU = { tPic: { value: null as Texture | null }, tDepth: { value: null as Texture | null }, tRaw: { value: null as Texture | null }, uGrid: { value: new Vector2(8, 8) }, uCap: { value: new Vector4(1, 1, 1, 10) }, uHasDepth: { value: 0 }, uBack: { value: 0 }, uAlpha: { value: 1 } };
   const gridMat = new ShaderMaterial({ uniforms: gridU, vertexShader: GRID_VERT, fragmentShader: GRID_FRAG, side: DoubleSide, transparent: true, forceSinglePass: true });
   const gridGeo = new BufferGeometry(); gridGeo.boundingSphere = new Sphere(new Vector3(), 1e4);
   const grid = new Mesh(gridGeo, gridMat); grid.frustumCulled = false; landScene.add(grid);
+  /** land v drawn at push (scene units along its view), cover-fit to the target: the front pass, then (with a depth map) the back */
+  function drawLand(v: GridView, push: number, alpha: number, sway?: readonly [number, number]) {
+    aimLand(v, push, alpha, sway);
+    gridU.uBack.value = 0; gridMat.depthFunc = LessEqualDepth; renderer.render(landScene, landCam);
+    if (gridU.uHasDepth.value) { gridU.uBack.value = 1; gridMat.depthFunc = LessDepth; renderer.render(landScene, landCam); gridU.uBack.value = 0; gridMat.depthFunc = LessEqualDepth; }
+  }
   /** set the grid and the land camera for land v at push (scene units along its view), cover-fit to the target */
-  function aimLand(v: LandView, push: number, alpha: number, sway?: readonly [number, number]) {
+  function aimLand(v: GridView, push: number, alpha: number, sway?: readonly [number, number]) {
     landCamera(landCam, v, W / H, push, sway);
     const img = v.depth?.image as { width?: number; height?: number } | undefined, ty = Math.tan((v.fov * Math.PI) / 360);
     const cols = img?.width ? Math.min(256, Math.max(16, Math.round(img.width / 2))) : 8, rows = img?.height ? Math.min(256, Math.max(16, Math.round(img.height / 2))) : 8;
     gridU.uGrid.value.set(cols, rows); gridGeo.setDrawRange(0, cols * rows * 6);
-    gridU.tPic.value = v.picture; gridU.tDepth.value = v.depth; gridU.uHasDepth.value = v.depth ? 1 : 0;
+    gridU.tPic.value = v.picture; gridU.tDepth.value = v.depth; gridU.tRaw.value = v.raw ?? null; gridU.uHasDepth.value = v.depth && v.raw ? 1 : 0;
     gridU.uCap.value.set(ty * v.aspect, ty, v.near, v.far); gridU.uAlpha.value = alpha;
   }
 
@@ -675,7 +742,7 @@ export function createWorld(o: WorldOptions): WorldScene {
           await loadGarden();
           // one program a frame, with an 8 px target bound; the cards share one program, the points one across both scenes
           warming = true; alloc(8, 8);
-          const steps: [Object3D, PerspectiveCamera, Scene][] = [[rings, cam, tunnel], [fields, cam, tunnel], [points.object, cam, tunnel], [picMesh, cam, tunnel], [grid, landCam, landScene]];
+          const steps: [Object3D, PerspectiveCamera, Scene][] = [[rings, cam, tunnel], [fields, cam, tunnel], [points.object, cam, tunnel], [picMesh, cam, tunnel], [grid, landCam, landScene], ...depthPrep.steps.map((s): [Object3D, PerspectiveCamera, Scene] => [s.mesh, cam, s.scene]), [hemiMesh, cam, hemiScene]];
           if (cards.length > 1) steps.push([cards[0].mesh, cam, tunnel], [cards[1].mesh, cam, tunnel]);
           for (const [obj, c, sc] of steps) { await compile(obj, c, sc); await frame(); alive(); }
           // the laptops' bloom, when it is on at load, compiled by a first run (Tune turning it on later compiles it then)
@@ -692,7 +759,7 @@ export function createWorld(o: WorldOptions): WorldScene {
     releaseGarden,
     async warm(obj) { if (rt && !disposed) await compile(obj, landCam, landScene); },
     resize(w, h) { wantW = Math.max(1, w); wantH = Math.max(1, h); if (!warming && !disposed) alloc(wantW, wantH); },
-    setLand(i, v) { if (v) lands.set(i, v); else lands.delete(i); },
+    setLand(i, v) { if (v) lands.set(i, v); else { lands.delete(i); forget(i); } },
     restPush(i) { return ENTRY.pushRest * (lands.get(i)?.near ?? 0); },
     entry(t, params) {
       let p = params;
@@ -741,6 +808,8 @@ export function createWorld(o: WorldOptions): WorldScene {
     scissor(r) { scissorRect = r; },
     render() {
       if (!rt || !ready) return;
+      for (const i of lands.keys()) landView(i);   // a new land's prepared depth, made before the target is bound
+      if (hemiDirty) { hemiDirty = false; renderer.setRenderTarget(hemi); renderer.render(hemiScene, cam); renderer.setRenderTarget(null); }
       const pc = renderer.getClearColor(_cc), pa = renderer.getClearAlpha(), tm = renderer.toneMapping, ac = renderer.autoClear;
       renderer.toneMapping = NoToneMapping; renderer.autoClear = false;
       if (scissorRect) { rt.scissor.set(scissorRect.x, scissorRect.y, scissorRect.w, scissorRect.h); rt.scissorTest = true; } else rt.scissorTest = false;
@@ -748,19 +817,19 @@ export function createWorld(o: WorldOptions): WorldScene {
       if (plan.kind === 'tunnel') {
         if (points.object.parent !== cloudHolder) cloudHolder.add(points.object);
         if (plan.cross < 1) renderer.render(tunnel, cam);
-        const v = lands.get(0);
-        if (plan.cross > 0 && v) { renderer.clearDepth(); aimLand(v, api.restPush(0), plan.cross); renderer.render(landScene, landCam); }
+        const v = landView(0);
+        if (plan.cross > 0 && v) { renderer.clearDepth(); drawLand(v, api.restPush(0), plan.cross); }
       } else {
         for (const l of plan.list) {
           renderer.clearDepth();
           if (l.kind === 'garden') { if (points.object.parent !== cloudHolder) cloudHolder.add(points.object); glideTo(tl.arrive); points.cloud(); points.object.renderOrder = cloudOrder; points.alpha(1); renderer.render(tunnel, cam); continue; }
-          if (l.kind === 'land') { const v = lands.get(l.i); if (!v) continue; aimLand(v, l.push, l.alpha ?? 1, l.sway); renderer.render(landScene, landCam); continue; }
+          if (l.kind === 'land') { const v = landView(l.i); if (v) drawLand(v, l.push, l.alpha ?? 1, l.sway); continue; }
           if (l.kind === 'draw') { l.draw(renderer, W, H); continue; }
           // points over the land, drawn through the land camera the land layer before set: the morph's landed points as
           // they stand, or option A's stream between two resident lands (its shader projects each end with its own camera)
           let obj: Object3D = points.object;
           if (l.kind === 'stream') {
-            const a = lands.get(l.from), b = lands.get(l.to);
+            const a = landView(l.from), b = landView(l.to);
             if (!a || !b) continue;
             l.stream.update(l.p, { view: a, push: l.fromPush, sway: l.fromSway }, { view: b, push: l.toPush }, W, H); l.stream.alpha(l.alpha ?? 1);
             obj = l.stream.object;
@@ -784,11 +853,14 @@ export function createWorld(o: WorldOptions): WorldScene {
       ringMat.dispose(); ffMat.dispose(); points.dispose(); (picMesh.material as ShaderMaterial).dispose();
       for (const c of cards) { c.tex?.dispose(); c.tex = null; c.mat.dispose(); }
       unit.dispose(); gridMat.dispose(); gridGeo.dispose(); ramp.dispose(); lands.clear();
+      for (const i of [...prepared.keys()]) forget(i);
+      depthPrep.dispose(); hemi.dispose(); (hemiMesh.material as ShaderMaterial).dispose();
     },
   };
 
   if (import.meta.env.PUBLIC_HERO_HOOKS === '1') {
-    // GPU bytes: the target's colour (RGBA8) and depth (24 bits, stored in 4 bytes), each texture with its mip chain
+    // GPU bytes: the target's colour (RGBA8) and depth (24 bits, stored in 4 bytes), each texture with its mip chain, each
+    // land's depth map five times over (the source, one byte a texel, and its prepared copy, four)
     const bytes = (t: Texture | null | undefined) => { const i = t?.image as { width?: number; height?: number } | undefined; return i?.width && i.height ? i.width * i.height * ((t as DataTexture).format === RedFormat ? 1 : 4) * (t!.generateMipmaps ? 4 / 3 : 1) : 0; };
     api.hooks = () => {
       const b = (z: number) => { const f = clamp01((cam.position.z - z - GLIDE.assemble[0] * S) / ((GLIDE.assemble[1] - GLIDE.assemble[0]) * S)); return +(o.reduced ? 0 : f).toFixed(3); };
@@ -797,7 +869,7 @@ export function createWorld(o: WorldOptions): WorldScene {
         cam: { z: +cam.position.z.toFixed(3), fov: +cam.fov.toFixed(2), zoom: +cam.zoom.toFixed(3), roll: +((cam.rotation.z * 180) / Math.PI).toFixed(2) },
         rings: nRings, triangles: ringData?.triangles ?? [], shards: ringData?.shards ?? [], broken: tl.rings.map(b),
         points: points.count, garden: cards.filter((c) => c.tex).length, lands: [...lands.keys()], passes: tl.passes.map((x) => +x.toFixed(3)), arrive: +tl.arrive.toFixed(3), size: [W, H],
-        memory: { target: rt ? W * H * 8 : 0, garden: Math.round(cards.reduce((s, c) => s + bytes(c.tex), 0)), lands: Math.round([...lands.values()].reduce((s, v) => s + bytes(v.picture) + bytes(v.depth), 0)), bloom: usedBloom || post ? postW * postH * 4 : 0 },
+        memory: { target: rt ? W * H * 8 : 0, garden: Math.round(cards.reduce((s, c) => s + bytes(c.tex), 0)), lands: Math.round([...lands.values()].reduce((s, v) => s + bytes(v.picture) + 5 * bytes(v.depth), 0)), bloom: usedBloom || post ? postW * postH * 4 : 0 },
       };
     };
   }

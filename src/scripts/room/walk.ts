@@ -5,8 +5,9 @@
 // the prompt at the door's handle, placed by a transform from its cached size, decoded in from 2.8 m out (in the Tab
 // order throughout; a keyboard focus on it while it is clipped snaps to the station) and absent with no land; Skip from
 // the press to land 1 (an activation within 350 ms of its showing is dropped); each land's name, family line, catalog
-// line and count on arrival, one after another, the travel hint on land 1, the Loading line while a travel waits; the
-// visually hidden travel buttons; the live region (one announcement per arrival, only when focus does not move); and
+// line and count on arrival, one after another, the travel hint on land 1 (its own line, never live), the Loading line
+// while a travel waits (the land's status line, with the option's note); the visually hidden travel buttons; the live
+// region (one announcement per arrival, only when focus does not move); and
 // the keys while the pad or a control of the section has focus (WCAG 2.1.4): in the hall the walk (scroll is the one
 // source of movement, so the keys scroll the page), the head's turn and E; while entering Escape, Enter and Space skip;
 // in the world single presses of Down or S and Up or W travel, Escape lands at once or blurs. Every element whose wipe
@@ -42,6 +43,7 @@ export function mountRoom(root: HTMLElement): void {
   const items = list ? [...list.querySelectorAll<HTMLLIElement>('li.rm-land')] : [];
   const lands = items.map((li) => ({
     li, name: li.querySelector<HTMLElement>('.rm-land-name')!, alt: li.querySelector<HTMLElement>('.rm-land-alt'), more: li.querySelector<HTMLElement>('.rm-land-more')!,
+    hint: li.querySelector<HTMLElement>('.rm-land-hint'),
     lines: [...li.querySelectorAll<HTMLElement>('.rm-land-name, .rm-land-family, .rm-land-line, .rm-land-count')],
   }));
   const H = document.documentElement;
@@ -59,7 +61,7 @@ export function mountRoom(root: HTMLElement): void {
 
   let viewed = false, walked = false, arrived = false, near = false, nearShown = false, startX: number | null = null, lastQ = 0, lastFrameAt = 0, topReached = false;
   let loadingSince = -1, busySince = -1, viaKeys = false, opacity = 1, skipAt = 0, shownLand = -1, hinted = false, travelled = false, lastSub = '', lastTravel = '', moreText = '';
-  let promptW = 0, promptH = 0, inset = 16, busyText = '', moreIsHint = false;
+  let promptW = 0, promptH = 0, inset = 16, busyText = '';
   /** set around the script's own focus calls, so the focus listeners do not take them for the visitor's */
   let selfFocus = false;
   const focusQuietly = (el: HTMLElement | null | undefined) => { if (!el) return; selfFocus = true; try { el.focus({ preventScroll: true }); } finally { selfFocus = false; } };
@@ -143,19 +145,21 @@ export function mountRoom(root: HTMLElement): void {
     lastTravel = tr;
     // arrival: the land's text decodes in once a travel (or the entry) has ended on it
     if (f.sub !== 'travel' && f.land !== shownLand) arrive(f.land);
-    // the line under the land's text: the Loading line while a travel waits (Still loading at 8 s), the option's note, or land 1's hint
+    // the status line under the land's text: the Loading line while a travel waits (Still loading at 8 s) or the option's
+    // note; land 1's hint, on its own line, wipes out when it comes
     const l = lands[f.land];
     if (l) {
       const want = f.sub === 'wait' ? (f.waitMs > SLOW_MS ? R.still : R.loadingLand) : f.note ? f.note : '';
-      if (want && want !== moreText) setMore(l.more, want);
-      else if (!want && moreText && !moreIsHint) setMore(l.more, '');
+      if (want && want !== moreText) { setMore(l.more, want); if (l.hint && !l.hint.hidden) setLine(l.hint, ''); }
+      else if (!want && moreText) setMore(l.more, '');
     }
     lastSub = f.sub;
   }
   const hintText = () => (keys && root.contains(document.activeElement) && keyboarding() ? R.landHintKeys : R.landHintTouch);
-  function setMore(el: HTMLElement, text: string, isHint = false) {
-    moreText = text; moreIsHint = isHint;
-    if (!text) { void dec.hide(el).then(() => { if (!moreText) el.hidden = true; }); return; }
+  function setMore(el: HTMLElement, text: string) { moreText = text; setLine(el, text, () => !moreText); }
+  /** a line decoded in with its text, or wiped out and hidden (when gone() still holds once the wipe ends) */
+  function setLine(el: HTMLElement, text: string, gone = () => true) {
+    if (!text) { void dec.hide(el).then(() => { if (gone()) el.hidden = true; }); return; }
     el.hidden = false; dec.set(el, text); dec.conceal(el); void dec.show(el);
   }
 
@@ -167,7 +171,7 @@ export function mountRoom(root: HTMLElement): void {
     // the land's text wipes out (0.2 s) and is clipped again; a keyboard user's focus moves to the pad
     if (root.contains(document.activeElement) && document.activeElement !== pad) letGo(document.activeElement);
     moreText = '';
-    void dec.hideAll([...from.lines, from.more]).then(() => { if (shownLand !== tv.from) from.li.classList.remove('is-on'); from.more.hidden = true; });
+    void dec.hideAll([...from.lines, from.more, ...(from.hint ? [from.hint] : [])]).then(() => { if (shownLand !== tv.from) from.li.classList.remove('is-on'); from.more.hidden = true; if (from.hint) from.hint.hidden = true; });
     shownLand = -2;
     setTravelButtons(-1);
   }
@@ -179,7 +183,7 @@ export function mountRoom(root: HTMLElement): void {
     shownLand = i;
     l.li.classList.add('is-on');
     for (const el of l.lines) dec.conceal(el);
-    l.more.hidden = true; moreText = '';
+    l.more.hidden = true; moreText = ''; if (l.hint) l.hint.hidden = true;
     track('room_land', { id: ROOM_LANDS[i]?.id ?? '' });
     pad.setAttribute('aria-label', R.worldAria);
     // focus: a keyboard user's on the pad (or Skip) goes to the land's name, which speaks for itself; else one polite announcement
@@ -190,7 +194,7 @@ export function mountRoom(root: HTMLElement): void {
     setTravelButtons(i);
     void dec.showAll(l.lines, LAND_STEP).then(() => {
       // land 1's hint, once its text has settled, until the first travel
-      if (shownLand === i && i === 0 && !travelled && !hinted && N > 1 && !moreText) { hinted = true; setMore(l.more, hintText(), true); }
+      if (shownLand === i && i === 0 && !travelled && !hinted && N > 1 && !moreText && l.hint) { hinted = true; setLine(l.hint, hintText()); }
     });
   }
   function setTravelButtons(i: number) {
@@ -263,7 +267,7 @@ export function mountRoom(root: HTMLElement): void {
       enter.hidden = N === 0; enter.inert = false; dec.conceal(keyEl); dec.conceal(enterText);
       skip.hidden = true; skip.inert = true; dec.conceal(skip);
       if (list) list.inert = !isPoster();
-      for (const l of lands) { l.li.classList.remove('is-on'); l.more.hidden = true; }
+      for (const l of lands) { l.li.classList.remove('is-on'); l.more.hidden = true; if (l.hint) l.hint.hidden = true; }
       startX = null; arrived = false; walked = false; hint.hidden = true; dec.conceal(hint);
       viaKeys = false; shownLand = -1; hinted = false; travelled = false; moreText = '';
       pad.setAttribute('aria-label', R.stageAria); setTravelButtons(-1);
@@ -414,7 +418,7 @@ export function mountRoom(root: HTMLElement): void {
     const s = root.dataset.state;
     enter.hidden = N === 0 || s === 'world'; enter.inert = false; enter.classList.add('is-near'); unbusy();
     skip.hidden = true; showLoading(false); stage.style.opacity = '';
-    for (const l of lands) { l.li.classList.remove('is-on'); l.more.hidden = true; }
+    for (const l of lands) { l.li.classList.remove('is-on'); l.more.hidden = true; if (l.hint) l.hint.hidden = true; }
     posterLines(); describe(); setTravelButtons(-1);
     if (s === 'world' || s === 'entering') { root.dataset.state = 'hall'; posterEnter(); }
     else loadPosterPictures();
