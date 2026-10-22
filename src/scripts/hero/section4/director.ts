@@ -247,7 +247,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
     if (reduced || N < 2 || !world) return;
     if (travelOpt === opt && optJob) return;
     travel?.dispose(); travel = null; travelOpt = opt;
-    const ctx: TravelContext = { renderer, world, touch: o.touch, reduced, dpr: o.dpr, view, cls, params };
+    const ctx: TravelContext = { renderer, world, touch: o.touch, reduced, dpr: o.dpr, avif: o.avif, view, cls, params };
     const job: Promise<void> = (optJob = loadTravel(opt).then(async (entry) => {
       if (optJob !== job || disposed) return;
       const t = entry?.createTravel(ctx) ?? null;
