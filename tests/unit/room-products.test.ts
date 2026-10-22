@@ -1,8 +1,9 @@
 // Section 4's product models (docs/specs/section-4.md 12; scripts/room/products.py and pack.mjs), Blender references only
-// since the universe went (section-4-world.md 6: scripts/room/models/, never in public/): each file in the manifest
-// exists with its hash, uses only the extensions the site can decode without WebAssembly, carries no
-// materials, images or colours, and decodes through three's GLTFLoader with the vendored pure-JS meshopt decoder to the
-// named parts at the manifest's life size (metres, standing on y = 0).
+// (scripts/room/models/, never in public/): each file in the manifest exists with its hash, uses only the extensions the
+// site can decode without WebAssembly, carries no materials, images or colours, and decodes through three's GLTFLoader
+// with the vendored pure-JS meshopt decoder to the named parts at the manifest's life size (metres, standing on y = 0).
+// What the page draws is src/assets/room/flux/products.bin, written from these GLBs by scripts/room/products-bin.mjs
+// (section-4-flux.md 9 X-7; tests/unit/room-products-bin.test.ts holds the bin to them byte for byte).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -28,13 +29,11 @@ test('the manifest names the three products, each file present with its hash and
   }
 });
 
-test('the lands pipeline reads the models from scripts/room/models/ (lands.py MODELS, render-products.py), never public/', () => {
-  const lands = readFileSync(new URL('../../scripts/room/lands.py', import.meta.url), 'utf8'), render = readFileSync(new URL('../../scripts/room/render-products.py', import.meta.url), 'utf8');
-  assert.match(lands, /^MODELS = os\.path\.join\(REPO, 'scripts\/room\/models'\)$/m);
-  for (const src of [lands, render]) assert.doesNotMatch(src, /public\/models/);
-  const named = [...lands.matchAll(/'model': '([a-z]+\.[0-9a-f]{8}\.glb)'/g)].map((m) => m[1]);
-  assert.ok(named.length >= 2, 'lands.py names the wallet and the Lenskin');
-  for (const n of named) assert.ok(ENTRIES.some(([, e]) => e.path === `scripts/room/models/${n}`), `${n} is in the manifest, in scripts/room/models/`);
+test('render-products.py and products-bin.mjs read the models from scripts/room/models/, never public/', () => {
+  const render = readFileSync(new URL('../../scripts/room/render-products.py', import.meta.url), 'utf8'), bin = readFileSync(new URL('../../scripts/room/products-bin.mjs', import.meta.url), 'utf8');
+  assert.doesNotMatch(render, /public\/models/);
+  assert.match(bin, /scripts\/room\/models/);
+  for (const [k, e] of ENTRIES) assert.ok(bin.includes(e.path) || bin.includes(e.path.split('/').pop()!.split('.')[0]), `${k}: products-bin.mjs names ${e.path}`);
 });
 
 test('only quantisation and meshopt, no materials, images, colours or UVs (the CSP and the island\'s own materials)', () => {

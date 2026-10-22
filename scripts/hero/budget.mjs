@@ -3,29 +3,30 @@
 // imports (critical JS), the island chunk and its data (the 3D path), the lazy quiz chunk (section 3's deck, fetched
 // once the section is within a screen), the fonts and the posters. First view per class: poster tier = page + Open Sans
 // + the class's AVIF poster; 3D tier = poster tier + every JS chunk + the island's data. The hero's lines are printed.
-// Section 4 (docs/specs/section-4-world.md 6 and AC8) has its own groups: its lazy chunks, the world chunk, each travel
-// option's chunk, the garden (the files of src/assets/room/garden as shipped), the land pictures (land-<id>-portrait.*,
-// land-<id>-wide.*), their depth maps (land-<id>-<class>-depth.*), the park (park.*, park-*) and the clips (.mp4). Every
-// byte line of its section 6 is a threshold: scripts count at gzip, everything else as stored (the bytes a visitor fetches
-// when the edge does not compress them), gzip printed beside it for reference. AC8's formats are checked too: each picture
-// in AVIF with its WebP twin and in no other format (a land picture, depth map, still or lightmap in JPEG, PNG or GIF is
-// found by its name all the same, and stops the build), each land's <img> with width and height. Any line broken or check failed exits 1 after the
-// whole report. A line Sam has still to rule on prints "over, pending Sam" past his figure and stops the build only past
-// the spec's hard figure. What it cannot read from a dist (pixel sizes, the clips' tracks, GPU memory) is printed as such.
-// The mode (build, test, staging: which npm script made the dist) and the pick (PUBLIC_PARK_TRAVEL, A, B or C) come from
-// --mode and --pick, else from the environment (scripts/room/guards.mjs); npm run build and build:staging pass them.
-//   node scripts/hero/budget.mjs [dist] [--mode build|test|staging] [--pick A|B|C]
+// Section 4 (docs/specs/section-4-flux.md 6 and AC8) has its own groups: its lazy chunks (the director's and the walk
+// script's, by their markers), the page scroll chunk (section4/scroll.ts, by its marker skreed:scroll), the ten scene
+// loops ((cove|grove|ember|palace|dawn)-(wide|portrait).<hash>.mp4), the twenty poster stills (the same stems in AVIF and
+// WebP), products.bin, the hall's model, lightmap and stills. Every byte line of its section 6 is a threshold: scripts
+// count at gzip, everything else as stored (the bytes a visitor fetches when the edge does not compress them), gzip
+// printed beside it for reference. AC8's formats are checked too: each picture in AVIF with its WebP twin and in no other
+// format (a scene still, a hall still or a lightmap in JPEG, PNG or GIF is found by its name all the same, and stops the
+// build), each scene's <img> with width and height. Any line broken or check failed exits 1 after the whole report. A
+// line Sam has still to rule on prints "over, pending Sam" past his figure and stops the build only past the spec's hard
+// figure. What it cannot read from a dist (pixel sizes, the loops' tracks, GPU memory) is printed as such. The mode
+// (build, test, staging: which npm script made the dist) comes from --mode, else from the environment
+// (scripts/room/guards.mjs); npm run build and build:staging pass it.
+//   node scripts/hero/budget.mjs [dist] [--mode build|test|staging]
 import { readFileSync, statSync, existsSync, readdirSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import { join, basename, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MODE_NAMES, PICKS, isParkAsset, readMode, readPick, travelChunkOption } from '../room/guards.mjs';
+import { CLASSES, LOOP_NAME, MODE_NAMES, SCENE_IDS, isLandAsset, readMode } from '../room/guards.mjs';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const args = process.argv.slice(2);
 const dist = args.find((a, i) => !a.startsWith('--') && !args[i - 1]?.startsWith('--')) || 'dist';
-let mode, pick;
-try { mode = readMode(); pick = readPick(); } catch (e) { console.error(`budget: ${e.message}`); process.exit(1); }
+let mode;
+try { mode = readMode(); } catch (e) { console.error(`budget: ${e.message}`); process.exit(1); }
 const gz = (p) => gzipSync(readFileSync(p), { level: 9 }).length;
 const raw = (p) => statSync(p).size;
 const html = readFileSync(join(dist, 'index.html'), 'utf8');
@@ -53,35 +54,33 @@ for (const h of heroChunk) walkIsland(h);
 // the island; the deck chunk by name, or any such chunk that imports config/quiz. Its own static imports not already counted follow it.
 for (const p of [...dynamic].filter((p) => !seen.has(p) && !isHero(p) && existsSync(join(dist, p)))) if (/deck/.test(p) || /config\/quiz/.test(readFileSync(join(dist, p), 'utf8'))) walk(p, 'quiz js (lazy)');
 
-// section 4's lazy chunks (section-4.md 6, section-4-world.md 5) as a graph. The entries: the island's own import() of the
-// section's director and the page's import() of the walk script, each named the section's by its bridge names (they
-// survive minification). Everything they import in turn, statically or by import(), is the section's too (the world, the
-// travel options, the stub, the loaders) unless the page, the island or the quiz counted it first. The world and the
-// travel chunks are also found by the names Vite gives them (world.<hash>.js, travel-depth.<hash>.js), so an import the
-// walk cannot read still lands in its group.
+// section 4's lazy chunks (section-4.md 6, section-4-flux.md 5 and 6) as a graph. The entries: the island's own import()
+// of the section's director and the page's import() of the walk script, each named the section's by its bridge names
+// (they survive minification). Everything they import in turn, statically or by import(), is the section's too unless the
+// page, the island or the quiz counted it first. The page scroll chunk is the island's other import(), named by its
+// marker skreed:scroll; it is counted on its own line and in the total, never in the section's script.
 const isRoom = (p) => /skreed:room|__skreedRoom|__skreedRoomFrame/.test(readFileSync(join(dist, p), 'utf8'));
+const isScroll = (p) => /skreed:scroll/.test(readFileSync(join(dist, p), 'utf8'));
 const usable = (p) => !seen.has(p) && !isHero(p) && existsSync(join(dist, p));
 const islandDyn = new Set(heroChunk.flatMap((h) => jsRefs(readFileSync(join(dist, h), 'utf8')).dyn));
+const scrollRoots = [...islandDyn].filter((p) => usable(p) && isScroll(p) && !isRoom(p));
 const roomRoots = [...new Set([...islandDyn, ...dynamic])].filter((p) => usable(p) && isRoom(p));
 const pageRoots = roomRoots.filter((p) => dynamic.has(p) && !islandDyn.has(p));
-const graph = new Map();
-const grow = (roots) => { for (const q = [...roots]; q.length;) { const p = q.shift(); if (graph.has(p) || !usable(p)) continue; const refs = jsRefs(readFileSync(join(dist, p), 'utf8')); graph.set(p, refs); q.push(...refs.stat, ...refs.dyn); } };
-grow(roomRoots);
 const astroFiles = existsSync(join(dist, '_astro')) ? readdirSync(join(dist, '_astro')) : [];
-for (const p of astroFiles.filter((n) => /^(?:world|travel-[a-z]+)\.[A-Za-z0-9_-]+\.js$/.test(n)).map((n) => '/_astro/' + n)) if (!graph.has(p) && usable(p)) { grow([p]); roomRoots.push(p); }
-const roomGroup = (p) => { const opt = travelChunkOption(basename(p)); return /^world\./.test(basename(p)) ? 'room world js' : opt ? `room travel ${opt} js` : 'room js (lazy)'; };
-for (const p of graph.keys()) add(roomGroup(p), p, join(dist, p));
+const graph = new Map(), scrollGraph = new Map();
+const grow = (roots, into, skip = new Set()) => { for (const q = [...roots]; q.length;) { const p = q.shift(); if (into.has(p) || skip.has(p) || !usable(p)) continue; const refs = jsRefs(readFileSync(join(dist, p), 'utf8')); into.set(p, refs); q.push(...refs.stat, ...refs.dyn); } };
+grow(scrollRoots, scrollGraph);
+grow(roomRoots, graph, new Set(scrollGraph.keys()));
+for (const p of scrollGraph.keys()) add('scroll js (lazy)', p, join(dist, p));
+for (const p of graph.keys()) add('room js (lazy)', p, join(dist, p));
 
-// section 4's files. By name in dist/_astro: the lands and their depth maps, the park, the hall and its stills; the clips
-// anywhere in dist; the garden as the files of src/assets/room/garden that ship byte for byte (a far plate has "plate" in
-// its name, every other file there is a depth card). The rest of what the section's chunks name stays "room data". A
-// picture is found by its name in any image format (IMG), so one in a format AC8 does not allow is counted and refused
-// rather than missed.
+// section 4's files. By name in dist/_astro: the scene loops and stills (the ten stems of section 3), products.bin, the
+// hall's model, lightmap and stills. A picture is found by its name in any image format (IMG), so one in a format AC8
+// does not allow is counted and refused rather than missed. The rest of what the section's chunks name stays "room data".
 const H = '[A-Za-z0-9_-]+', IMG = 'avif|webp|jpe?g|png|gif';
-const LAND = new RegExp(`^land-([a-z0-9-]+?)-(portrait|wide)\\.${H}\\.(${IMG})$`);
-const DEPTH = new RegExp(`^land-([a-z0-9-]+?)(?:-(portrait|wide))?-depth\\.${H}\\.(${IMG})$`);
+const SCENE = new RegExp(`^(${SCENE_IDS.join('|')})-(${CLASSES.join('|')})\\.${H}\\.(${IMG})$`);
 const STILL = new RegExp(`^hall-(portrait|wide)\\.${H}\\.(${IMG})$`);
-const HALL_MODEL = new RegExp(`^hall\\.${H}\\.(?:bin|glb)$`), HALL_LIGHT = new RegExp(`^hall-lightmap\\.${H}\\.(${IMG})$`);
+const HALL_MODEL = new RegExp(`^hall\\.${H}\\.(?:bin|glb)$`), HALL_LIGHT = new RegExp(`^hall-lightmap\\.${H}\\.(${IMG})$`), PRODUCTS = new RegExp(`^products\\.${H}\\.bin$`);
 /** the formats a picture may ship in (AC8), and a name's extension as the format key (jpg and jpeg alike) */
 const SHIPS = new Set(['avif', 'webp']);
 const fmtOf = (ext) => ext.toLowerCase().replace(/^jpg$/, 'jpeg');
@@ -91,26 +90,17 @@ const addFile = (group, p, extra) => { const name = '/' + relative(dist, p); add
 for (const n of astroFiles) {
   const p = join(dist, '_astro', n);
   let m;
-  if ((m = LAND.exec(n))) addFile('room land', p, { id: m[1], cls: m[2], fmt: fmtOf(m[3]) });
-  else if ((m = DEPTH.exec(n))) addFile('room depth', p, { id: m[1], cls: m[2], fmt: fmtOf(m[3]) });
-  else if (isParkAsset(n)) addFile('room park', p, { kind: n.endsWith('.glb') ? 'glb' : /lightmap/.test(n) ? 'lightmap' : 'other', fmt: fmtOf(n.split('.').pop()) });
+  if ((m = LOOP_NAME.exec(n))) addFile('room loop', p, { id: m[1], cls: m[2] });
+  else if ((m = SCENE.exec(n))) addFile('room scene', p, { id: m[1], cls: m[2], fmt: fmtOf(m[3]) });
   else if ((m = STILL.exec(n))) addFile('room still', p, { cls: m[1], fmt: fmtOf(m[2]) });
   else if (HALL_MODEL.test(n)) addFile('room data', p, { hall: 'model' });
   else if ((m = HALL_LIGHT.exec(n))) addFile('room data', p, { hall: 'light', fmt: fmtOf(m[1]) });
+  else if (PRODUCTS.test(n)) addFile('room data', p, { products: true });
+  else if (isLandAsset(n)) addFile('room stray', p, { stray: true });
 }
-for (const p of files(dist).filter((f) => /\.mp4$/i.test(f))) addFile('room clip', p, { cls: /portrait/.test(basename(p)) ? 'portrait' : /wide/.test(basename(p)) ? 'wide' : null });
-const gardenDir = join(ROOT, 'src/assets/room/garden');
-// the garden's pictures in src/, each with the dist files that carry its name and whether one of them is its bytes
-const gardenPics = [];
-if (existsSync(gardenDir)) for (const src of files(gardenDir)) {
-  const stem = basename(src).replace(/\.[^.]+$/, ''), ext = src.split('.').pop(), bytes = readFileSync(src);
-  const re = new RegExp(`^${stem.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\.${H}\\.${ext}$`);
-  const named = astroFiles.filter((f) => re.test(f)), same = named.filter((f) => readFileSync(join(dist, '_astro', f)).equals(bytes));
-  for (const n of same) addFile('room garden', join(dist, '_astro', n), { part: /plate/.test(stem) ? 'plate' : 'card', fmt: ext });
-  if (/^(?:avif|webp)$/.test(ext)) gardenPics.push({ file: basename(src), named: named.length, matched: same.length > 0 });
-}
-// the rest of what the section's chunks name (counted as stored): the universe and its product models went with
-// universe.ts, so anything left here is new and shows in the table
+// a video anywhere else in dist, or a stray asset: counted so the guard's hit shows here too
+for (const p of files(dist).filter((f) => /\.mp4$/i.test(f) && !LOOP_NAME.test(basename(f)))) addFile('room stray', p, { stray: true });
+// the rest of what the section's chunks name (counted as stored)
 for (const p of graph.keys()) {
   const src = readFileSync(join(dist, p), 'utf8');
   for (const d of new Set([...src.matchAll(/[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.(?:bin|glb|avif|webp)\b/g)].map((m) => m[0]))) if (existsSync(join(dist, '_astro', d)) && !rows.some((x) => x.name.endsWith('/' + d))) add('room data', '/_astro/' + d, join(dist, '_astro', d));
@@ -142,116 +132,79 @@ for (const cls of ['portrait', 'wide']) {
   console.log(`first view, 3D tier, ${cls}: + all JS + island data:           ${fmt(page + openSans + poster(cls) + totalJs + island)}`);
 }
 
-// ---- section 4's lines (section-4-world.md 6), each a threshold ----
-const KB = 1024, CLASSES = ['portrait', 'wide'], tune = mode === 'staging';
+// ---- section 4's lines (section-4-flux.md 6), each a threshold ----
+const KB = 1024, tune = mode === 'staging';
 const BUILD = MODE_NAMES[mode];
-// the chunks a build ships: everything the entries reach, less what only the skipped travel chunks reach
-const reach = (skip, roots = roomRoots, staticOnly = false) => { const out = new Set(); for (const q = [...roots]; q.length;) { const p = q.shift(); if (out.has(p) || skip.has(p) || !graph.has(p)) continue; out.add(p); const { stat, dyn } = graph.get(p); q.push(...stat, ...(staticOnly ? [] : dyn)); } return out; };
-const gzOf = (set) => rows.filter((r) => set.has(r.name) && graph.has(r.name)).reduce((a, r) => a + r.gz, 0);
-const chunksOf = (opt) => new Set([...graph.keys()].filter((p) => travelChunkOption(basename(p)) === opt));
-const everything = reach(new Set());
-const ownOf = (opt) => { const rest = reach(chunksOf(opt)); return gzOf(new Set([...everything].filter((p) => !rest.has(p)))); };
-const roomScript = gzOf(reach(new Set(PICKS.filter((o) => o !== pick).flatMap((o) => [...chunksOf(o)]))));
-const posterScript = gzOf(reach(new Set(), pageRoots, true));
+const gzOf = (map) => rows.filter((r) => map.has(r.name)).reduce((a, r) => a + r.gz, 0);
+const reach = (roots, staticOnly) => { const out = new Set(); for (const q = [...roots]; q.length;) { const p = q.shift(); if (out.has(p) || !graph.has(p)) continue; out.add(p); const { stat, dyn } = graph.get(p); q.push(...stat, ...(staticOnly ? [] : dyn)); } return out; };
+const roomScript = gzOf(graph), scrollScript = gzOf(scrollGraph);
+const posterScript = gzOf(reach(pageRoots, true));
 const storedOf = (pred) => room.filter(pred).reduce((a, f) => a + f.stored, 0);
 const maxOf = (pred) => room.filter(pred).reduce((a, f) => Math.max(a, f.stored), 0);
-const hallModel = storedOf((f) => f.hall === 'model'), hallLight = (fmt) => storedOf((f) => f.hall === 'light' && f.fmt === fmt);
-const garden = (fmt, part) => storedOf((f) => f.group === 'room garden' && f.fmt === fmt && (!part || f.part === part));
-const pic = (id, cls, fmt) => maxOf((f) => f.group === 'room land' && f.id === id && f.cls === cls && f.fmt === fmt);
-const depth = (id, cls, fmt) => maxOf((f) => f.group === 'room depth' && f.id === id && (!f.cls || f.cls === cls) && f.fmt === fmt);
+const hallModel = storedOf((f) => f.hall === 'model'), hallLight = (fmt) => storedOf((f) => f.hall === 'light' && f.fmt === fmt), productsBin = storedOf((f) => f.products);
+const loop = (id, cls) => maxOf((f) => f.group === 'room loop' && f.id === id && f.cls === cls);
+const pic = (id, cls, fmt) => maxOf((f) => f.group === 'room scene' && f.id === id && f.cls === cls && f.fmt === fmt);
 const still = (cls, fmt) => maxOf((f) => f.group === 'room still' && f.cls === cls && f.fmt === fmt);
-// the lands, land 1 first: in the order the page names them (ROOM_LANDS' order), else the largest first, so the
-// first-land lines are never measured on a smaller land than the real first
-const landIds = [...new Set(room.filter((f) => f.group === 'room land').map((f) => f.id))];
-const htmlOrder = [...new Set([...html.matchAll(/land-([a-z0-9-]+?)-(?:portrait|wide)\./g)].map((m) => m[1]))].filter((id) => landIds.includes(id));
-const lands = [...htmlOrder, ...landIds.filter((id) => !htmlOrder.includes(id)).sort((a, b) => pic(b, 'wide', 'avif') - pic(a, 'wide', 'avif'))];
-const land1 = lands[0];
+// the scenes in the poster column's order (the page names them in ROOM_SCENES' order), scene 1 first; a scene with no
+// file in dist stays in the order at 0 bytes, so a missing loop or still reads as such on its line
+const htmlOrder = [...new Set([...html.matchAll(new RegExp(`\\b(${SCENE_IDS.join('|')})-(?:portrait|wide)\\.`, 'g'))].map((m) => m[1]))];
+const scenes = [...htmlOrder, ...SCENE_IDS.filter((id) => !htmlOrder.includes(id))];
+const scene1 = scenes[0];
+const FMT = { avif: 'AVIF', webp: 'WebP', jpeg: 'JPEG', png: 'PNG', gif: 'GIF' };
 
 const lines = [], faults = [];
 // pendingKB: Sam's figure for a line he has still to rule on; past it the line prints "over, pending Sam", and only past
 // limitKB (the spec's hard figure) does it stop the build
 const line = (name, bytes, limitKB, { enforced = true, note = '', pendingKB = 0 } = {}) => lines.push({ name, bytes, limit: limitKB * KB, pending: pendingKB * KB, enforced, note });
-const SCRIPT = { A: 38, B: 45, C: 40 };
-line(`section 4's script, option ${pick} shipped (gzip)`, roomScript, SCRIPT[pick], pick === 'A'
-  ? { pendingKB: 30, note: "Sam's 30 KB line, pending him (spec 11, item 1: move it to 38 KB; three's model loader is already gone); the build stops above the spec's likely 38 KB" }
-  : { note: `the spec's figure for option ${pick}` });
-for (const o of PICKS) if (chunksOf(o).size) {
-  if (!tune && o !== pick) line(`option ${o}'s chunk in a ${BUILD} whose pick is ${pick} (gzip)`, ownOf(o), 0, { note: 'never in production until picked: astro.config.mjs aliases it to travel-stub.ts' });
-  // option B's chunk carries three's GLTFLoader (13.5 KB) since the hall left it for hall.bin, so its line is 21 KB
-  else line(`option ${o}'s own chunks (gzip)`, ownOf(o), o === 'B' ? 21 : 8, { note: o === 'B' ? 'about 8 KB plus the GLTFLoader the park needs' : 'about 8 KB each' });
-}
-line('total JS with section 4 (gzip)', totalJs + roomScript, 250, { enforced: !tune, note: tune ? "production's line; this staging build carries Tune" : 'production' });
+line("section 4's script (director, carousel, video, assets, walk, lazy; gzip)", roomScript, 38, { pendingKB: 30, note: "Sam's 30 KB line, pending him (spec 11, item 1); the build stops above the spec's 38 KB" });
+line('scroll.ts (its own chunk, marker skreed:scroll; gzip)', scrollScript, 4, { note: 'counted in total JS, not critical JS' });
+line('total JS with section 4 and scroll.ts (gzip)', totalJs + roomScript + scrollScript, 250, { enforced: !tune, note: tune ? "production's line; this staging build carries Tune" : 'production' });
 line('section 4 on the poster tier: its script (gzip)', posterScript, 8.5);
-// the world ships once its chunk does, or a file named as a garden picture; before that the garden is not in the build
-const worldShips = [...graph.keys()].some((p) => /^world\./.test(basename(p))) || gardenPics.some((g) => g.named);
-const gardenNote = worldShips ? '' : 'not in this build yet: no world chunk';
-line('the garden: far plate, AVIF', garden('avif', 'plate'), 110, { note: gardenNote });
-line('the garden: far plate, WebP', garden('webp', 'plate'), 180, { note: gardenNote });
-line('the garden: three depth cards together, AVIF', garden('avif', 'card'), 60, { note: gardenNote });
-line('the garden: three depth cards together, WebP', garden('webp', 'card'), 100, { note: gardenNote });
-// each land's picture and depth map; "each further land" (92 and 122 KB AVIF, 148 and 196 WebP) is the sum of the two lines
-const PIC = { portrait: { avif: 80, webp: 128 }, wide: { avif: 110, webp: 176 } };
-for (const f of room.filter((x) => x.group === 'room land' && SHIPS.has(x.fmt))) line(`land ${f.id}: ${f.cls}, ${f.fmt.toUpperCase()}`, f.stored, PIC[f.cls][f.fmt], { note: f.name });
-for (const f of room.filter((x) => x.group === 'room depth' && SHIPS.has(x.fmt))) line(`land ${f.id}: depth map${f.cls ? `, ${f.cls}` : ''}, ${f.fmt.toUpperCase()}`, f.stored, f.fmt === 'avif' ? 12 : 20, { note: f.name });
-if (!lands.length) console.log('\n(section 4: no land pictures in this build; N = 0)');
-// option B's park: its caps apply once B is picked (spec 6); before that they are printed
-const parkOn = pick === 'B', parkNote = parkOn ? '' : 'applies once B is picked';
-if (room.some((f) => f.group === 'room park')) {
-  line('option B: the park, GLB', storedOf((f) => f.group === 'room park' && f.kind === 'glb'), 300, { enforced: parkOn, note: parkNote });
-  line('option B: the park, lightmap, AVIF', storedOf((f) => f.group === 'room park' && f.kind === 'lightmap' && f.fmt === 'avif'), 120, { enforced: parkOn, note: parkNote });
-  line('option B: the park, lightmap, WebP', storedOf((f) => f.group === 'room park' && f.kind === 'lightmap' && f.fmt === 'webp'), 190, { enforced: parkOn, note: parkNote });
+// each loop, each still, products.bin
+const PIC = { wide: { avif: 110, webp: 176 }, portrait: { avif: 80, webp: 128 } };
+for (const id of scenes) for (const cls of CLASSES) line(`loop ${id}, ${cls} (${cls === 'wide' ? '1328 x 692' : '720 x 1280'}, 5.0 s)`, loop(id, cls), 1200, { note: loop(id, cls) ? '' : 'not in this build' });
+for (const f of room.filter((x) => x.group === 'room scene' && SHIPS.has(x.fmt))) line(`still ${f.id}: ${f.cls}, ${FMT[f.fmt]}`, f.stored, PIC[f.cls][f.fmt], { note: f.name });
+line('products.bin', productsBin, 270, { note: productsBin ? 'u16 positions, i8 normals, u16 indices' : 'not in this build' });
+// to the press (script excluded): products.bin, scene 1's loop and still, hall.bin and its lightmap, per class and format
+for (const fmt of ['avif', 'webp']) for (const cls of CLASSES) {
+  line(`to the press, ${cls}, ${fmt === 'avif' ? 'AVIF' : 'WebP-only browsers'} (script excluded)`, productsBin + loop(scene1, cls) + pic(scene1, cls, fmt) + hallModel + hallLight(fmt), 1700, { note: `scene 1 is ${scene1}` });
 }
-for (const f of room.filter((x) => x.group === 'room clip')) line(`option C: clip ${basename(f.name)}`, f.stored, 700);
-// to the first land on the 3D tier: the script, the hall (model and lightmap), the garden, land 1 with its depth map
-for (const [fmt, limits] of [['avif', { portrait: 355, wide: 385 }], ['webp', { portrait: 560, wide: 610 }]]) for (const cls of CLASSES) {
-  const bytes = roomScript + hallModel + hallLight(fmt) + garden(fmt) + (land1 ? pic(land1, cls, fmt) + depth(land1, cls, fmt) : 0);
-  line(`to the first land, 3D tier, ${pick}, ${cls}, ${fmt === 'avif' ? 'AVIF' : 'WebP-only browsers'}`, bytes, limits[cls], { note: land1 ? `land 1 is ${land1}` : 'no land yet' });
+// the whole section in dist: the ten loops, the twenty stills, products.bin, the hall (its model, lightmap and stills in both formats)
+line('the whole section in dist', storedOf((f) => f.group === 'room loop' || f.group === 'room scene' || f.group === 'room still' || !!f.hall || !!f.products), 15000, { note: `${room.filter((f) => f.group === 'room loop').length} loop(s), ${room.filter((f) => f.group === 'room scene').length} still(s)` });
+// one visit, per class and format: the class's five loops and five stills, products.bin, the hall
+for (const fmt of ['avif', 'webp']) for (const cls of CLASSES) {
+  const bytes = scenes.reduce((a, id) => a + loop(id, cls) + pic(id, cls, fmt), 0) + productsBin + hallModel + hallLight(fmt);
+  line(`one visit, ${cls}, ${FMT[fmt]}`, bytes, 7300);
 }
-// the whole section by the pick, AVIF: the first-land row, every land with its depth map (A; B and C keep land 1's only),
-// plus the park (B) or the clips of the class (C)
-const WHOLE = { A: { portrait: 630, wide: 750 }, B: { portrait: 1020, wide: 1140 }, C: { portrait: 2700, wide: 2820 } };
-for (const cls of CLASSES) {
-  const depths = (pick === 'A' ? lands : lands.slice(0, 1)).reduce((a, id) => a + depth(id, cls, 'avif'), 0);
-  const extra = pick === 'B' ? storedOf((f) => f.group === 'room park' && (f.kind === 'glb' || (f.kind === 'lightmap' && f.fmt === 'avif'))) : pick === 'C' ? storedOf((f) => f.group === 'room clip' && (!f.cls || f.cls === cls)) : 0;
-  const bytes = roomScript + hallModel + hallLight('avif') + garden('avif') + lands.reduce((a, id) => a + pic(id, cls, 'avif'), 0) + depths + extra;
-  line(`the whole section, option ${pick}, ${cls}, AVIF`, bytes, WHOLE[pick][cls], { note: `${lands.length} land(s)` });
-}
-// the poster tier: the hall's still and every land's picture, one class
-for (const [fmt, limits] of [['avif', { portrait: 337, wide: 459 }], ['webp', { portrait: 529, wide: 724 }]]) for (const cls of CLASSES) {
-  line(`the poster tier, ${cls}, ${fmt === 'avif' ? 'AVIF' : 'WebP'}: the hall's still and the lands`, still(cls, fmt) + lands.reduce((a, id) => a + pic(id, cls, fmt), 0), limits[cls]);
-}
-// AC8's formats. Each picture of the section ships as AVIF with its WebP twin, by the name before the hash: the lands, their
-// depth maps, the garden, the hall's stills and the park's lightmap. Each <img> in the page that names a land picture (its
-// own src or srcset, or a <source> of its <picture>) carries width and height.
+// the poster tier: the hall's still and the five scene stills, one class, one format
+const POSTER = { avif: { portrait: 420, wide: 570 }, webp: { portrait: 660, wide: 900 } };
+for (const fmt of ['avif', 'webp']) for (const cls of CLASSES) line(`the poster tier, ${cls}, ${FMT[fmt]}: the hall's still and the five scenes`, still(cls, fmt) + scenes.reduce((a, id) => a + pic(id, cls, fmt), 0), POSTER[fmt][cls]);
+// AC8's formats. Each picture of the section ships as AVIF with its WebP twin, by the name before the hash: the scene
+// stills, the hall's stills and its lightmap. Each <img> in the page that names a scene still (its own src or srcset, or a
+// <source> of its <picture>) carries width and height.
 const stemOf = (name) => basename(name).replace(new RegExp(`\\.${H}\\.(?:${IMG})$`, 'i'), '');
-const pics = room.filter((f) => ['room land', 'room depth', 'room garden', 'room still'].includes(f.group) || (f.group === 'room park' && f.kind === 'lightmap') || (f.hall === 'light'));
+const pics = room.filter((f) => ['room scene', 'room still'].includes(f.group) || f.hall === 'light');
 const byStem = new Map();
-const FMT = { avif: 'AVIF', webp: 'WebP', jpeg: 'JPEG', png: 'PNG', gif: 'GIF' };
 for (const f of pics) {
   // a picture in any other format is refused, and kept out of the lines and the twin check (AC8: AVIF with WebP only)
   if (!SHIPS.has(f.fmt)) { faults.push(`${basename(f.name)}: ${FMT[f.fmt] ?? f.fmt} is not a format the section ships (AC8: each picture AVIF with its WebP twin)`); continue; }
   byStem.set(stemOf(f.name), new Set([...(byStem.get(stemOf(f.name)) ?? []), f.fmt]));
 }
 for (const [stem, fmts] of byStem) for (const [has, lacks] of [['avif', 'webp'], ['webp', 'avif']]) if (fmts.has(has) && !fmts.has(lacks)) faults.push(`${stem}: ${FMT[has]} without its ${FMT[lacks]} twin (AC8: the pictures are AVIF with WebP)`);
-const LAND_REF = new RegExp(`land-[a-z0-9-]+?-(?:portrait|wide)\\.${H}\\.(?:${IMG})`, 'i');
+for (const f of room.filter((x) => x.stray)) faults.push(`${basename(f.name)}: not a file the section ships (the ten loops, their stills, products.bin and the hall)`);
+const SCENE_REF = new RegExp(`(?:${SCENE_IDS.join('|')})-(?:portrait|wide)\\.${H}\\.(?:${IMG})`, 'i');
 const sized = (img) => /\swidth=/.test(img) && /\sheight=/.test(img);
-let landImgs = 0;
+let sceneImgs = 0;
 const pictureBlocks = [...html.matchAll(/<picture\b[\s\S]*?<\/picture>/g)].map((m) => m[0]);
-for (const block of pictureBlocks.filter((b) => LAND_REF.test(b))) {
+for (const block of pictureBlocks.filter((b) => SCENE_REF.test(b))) {
   const img = block.match(/<img\b[^>]*>/)?.[0];
-  landImgs++;
-  if (!img || !sized(img)) faults.push(`a <picture> of ${block.match(LAND_REF)[0]}: its <img> has no width and height (AC8)`);
+  sceneImgs++;
+  if (!img || !sized(img)) faults.push(`a <picture> of ${block.match(SCENE_REF)[0]}: its <img> has no width and height (AC8)`);
 }
-for (const img of [...html.replace(/<picture\b[\s\S]*?<\/picture>/g, '').matchAll(/<img\b[^>]*>/g)].map((m) => m[0]).filter((t) => LAND_REF.test(t))) {
-  landImgs++;
-  if (!sized(img)) faults.push(`an <img> of ${img.match(LAND_REF)[0]} has no width and height (AC8)`);
+for (const img of [...html.replace(/<picture\b[\s\S]*?<\/picture>/g, '').matchAll(/<img\b[^>]*>/g)].map((m) => m[0]).filter((t) => SCENE_REF.test(t))) {
+  sceneImgs++;
+  if (!sized(img)) faults.push(`an <img> of ${img.match(SCENE_REF)[0]} has no width and height (AC8)`);
 }
-// the garden is found by its bytes, so a garden that ships re-encoded or renamed would read 0 KB on its four lines and pass.
-// Once the world ships, every garden picture in src/ must be in dist as is.
-const unmatched = gardenPics.filter((g) => !g.matched);
-if (worldShips && unmatched.length) faults.push(unmatched.length === gardenPics.length
-  ? `the garden: the world ships, but none of the ${gardenPics.length} pictures in src/assets/room/garden is in dist byte for byte (re-encoded or renamed?), so its lines cannot be measured`
-  : `the garden: ${unmatched.map((g) => `${g.file}${g.named ? ' (in dist, but not these bytes)' : ''}`).join(', ')} not in dist byte for byte, so its lines are short`);
 
 // the first view: the section's markup as built (its noscript copies included) and room.css, minified from the source here
 // because the build inlines it into the one stylesheet with every other section's
@@ -262,7 +215,7 @@ const cssPath = join(ROOT, 'src/styles/room.css');
 const css = existsSync(cssPath) ? readFileSync(cssPath, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').replace(/\s*([{};,>])\s*/g, '$1').replace(/;}/g, '}') : '';
 line("the first view: section 4's markup and room.css (gzip)", gzipSync(markup + css, { level: 9 }).length, 4, { note: `markup ${markup.length} B, room.css about ${css.length} B` });
 
-console.log(`\nsection 4 (section-4-world.md 6; the ${BUILD}, pick ${pick}; scripts at gzip, everything else as stored; KB = 1024 B)`);
+console.log(`\nsection 4 (section-4-flux.md 6; the ${BUILD}; scripts at gzip, everything else as stored; KB = 1024 B)`);
 const PENDING = 'over, pending Sam';
 for (const l of lines) {
   const over = l.bytes > l.limit, waits = !over && l.pending > 0 && l.bytes > l.pending;
@@ -270,13 +223,13 @@ for (const l of lines) {
   const tail = [l.note, over && !l.enforced ? 'not enforced here' : ''].filter(Boolean).join('; ');
   console.log(`  ${status.padEnd(PENDING.length)} ${fmt(l.bytes)} of ${fmt(over ? l.limit : l.pending || l.limit)}  ${l.name}${tail ? `  (${tail})` : ''}`);
 }
-console.log(`  ${(faults.length ? 'FAIL' : 'ok').padEnd(PENDING.length)} formats: ${byStem.size} picture(s) by name, AVIF with WebP; ${landImgs} land <img> in the page, with width and height${worldShips ? `; the garden, ${gardenPics.length - unmatched.length} of ${gardenPics.length} pictures shipped as they are in src/` : ''}`);
+console.log(`  ${(faults.length ? 'FAIL' : 'ok').padEnd(PENDING.length)} formats: ${byStem.size} picture(s) by name, AVIF with WebP; ${sceneImgs} scene <img> in the page, with width and height`);
 for (const f of faults) console.log(`  ${''.padEnd(PENDING.length)} ${f}`);
-console.log("  not measured here: the pixel sizes (720 x 1280, 1920 x 1200, the 2048 px plate, the 1024 px lightmap), the clips' count (3 per class), length (3 s), codec (H.264 720p) and missing audio track, the park's triangles and draws, the GPU memory (the review reads renderer.info), the frame cost (the probe), the Higgsfield credits (the ledger), the rings and the cloud (generated, 0 B)");
+console.log("  not measured here: the pixel sizes (the loops 1328 x 692 and 720 x 1280, the stills 1280 x 666 and 720 x 1280, the 1024 px lightmap), the loops' length (5.0 s), frames (120), codec (H.264 High) and missing audio track (tests/unit/room-flux.test.ts reads them), the GPU memory (the review reads __s4.state().memory), the frame cost (the probe), the Higgsfield credits (the ledger), the cloud (generated, 0 B)");
 const broken = lines.filter((l) => l.enforced && l.bytes > l.limit), waiting = lines.filter((l) => l.bytes <= l.limit && l.pending > 0 && l.bytes > l.pending);
 const pendingNote = waiting.length ? `; ${waiting.length} over Sam's figure, pending him: ${waiting.map((l) => `${l.name} at ${fmt(l.bytes).trim()} against his ${fmt(l.pending).trim()}`).join(', ')}` : '';
 if (broken.length || faults.length) {
-  console.error(`\nbudget: section-4-world.md 6 and AC8 do not hold:\n${[...broken.map((l) => `  ${l.name}: ${fmt(l.bytes).trim()} over ${fmt(l.limit).trim()}`), ...faults.map((f) => `  ${f}`)].join('\n')}${pendingNote ? `\n(and${pendingNote.slice(1)})` : ''}`);
+  console.error(`\nbudget: section-4-flux.md 6 and AC8 do not hold:\n${[...broken.map((l) => `  ${l.name}: ${fmt(l.bytes).trim()} over ${fmt(l.limit).trim()}`), ...faults.map((f) => `  ${f}`)].join('\n')}${pendingNote ? `\n(and${pendingNote.slice(1)})` : ''}`);
   process.exit(1);
 }
-console.log(`\nbudget: every enforced line of section-4-world.md 6 holds (${lines.filter((l) => l.enforced).length} enforced) and AC8's formats check${pendingNote}`);
+console.log(`\nbudget: every enforced line of section-4-flux.md 6 holds (${lines.filter((l) => l.enforced).length} enforced) and AC8's formats check${pendingNote}`);

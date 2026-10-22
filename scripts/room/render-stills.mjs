@@ -1,14 +1,15 @@
-// Section 4's still and review frames (docs/specs/section-4.md 2 "poster path"; docs/specs/section-4-world.md AC1),
+// Section 4's still and review frames (docs/specs/section-4.md 2 "poster path"; docs/specs/section-4-flux.md AC1),
 // rendered from our own build: a hooks build (the dev server, or a test or staging build) driven through __s4 and the
-// section's q, in Playwright's Chromium. Run with a server up:
+// section's q, in Playwright's Chromium, with the glue off (?glue=0) so a scrollTo lands where it is sent. Run with a
+// server up:
 //   node scripts/room/render-stills.mjs [base=http://127.0.0.1:4322/]            the hall's still into src/assets/room/stills/
 //   node scripts/room/render-stills.mjs [base] --frames <dir>                    the review frames at 390 x 844 and 1280 x 800
 // The frames, each by a named hook (AC1): the hall at the station with the prompt; the entry clock held by __s4.seek at
-// the bubble's 25, 50 and 90 percent, each ring pass, the morph's 30, 50 and 80 percent and the push's end; each land at
-// rest with its text (__s4.land); each travel at half (__s4.travel); the true pair either side of the loop's jump (the
-// fourth wipe held at 0.99, just short of the jump at 0.995, then the first frame the jump lands on, the page's frames
-// held there for the shot); and the poster tier's column (?tier=poster: the still with its prompt, then each land on its
-// screen after the press). A frame the build cannot show (no land in it) is reported and skipped. SKREED_GL=swiftshader runs WebGL on SwiftShader (the
+// the bubble's 25, 50 and 90 percent; each scene at rest with its four lines (__s4.scene); a mid-step frame of each class
+// (__s4.step, shot about a third of the way in); the hold past scene 5; the exit seam's cover (the raw scroll across
+// 12.8, shot during the cover-in) and the first frame after the jump; the wrap from the top onto scene 5 (__s4.wrap) at
+// full cover and at rest; the way back from scene 1 at its half; and the poster tier's column (?tier=poster: the still
+// with its prompt, then each scene on its screen after the press). SKREED_GL=swiftshader runs WebGL on SwiftShader (the
 // test harness's flags) when the GPU path is not available.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -20,9 +21,9 @@ const base = args.find((a) => /^https?:/.test(a)) ?? 'http://127.0.0.1:4322/';
 const fi = args.indexOf('--frames'), framesDir = fi >= 0 ? args[fi + 1] : null;
 const GL = process.env.SKREED_GL === 'swiftshader' ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] : ['--use-angle=metal', '--ignore-gpu-blocklist', '--enable-gpu'];
 const SETUPS = { phone: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }, laptop: { viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1.5 } };
-// the entry's beats at the defaults (config/room.ts ROOM_PARAMS, world.ts GLIDE): the bubble from 0.35 s for 2 s, the
-// morph from 75 percent of the 8 s glide for 1.8 s, then the 1.2 s push
-const BUBBLE_AT = 0.35, BUBBLE_S = 2.0, MORPH_S = 1.8, PUSH_S = 1.2;
+// the entry's beats at the defaults (config/room.ts ROOM_PARAMS, transition.ts BUBBLE): the bubble from 0.35 s for 2 s; the
+// step 770 ms; the scenes at q 10 to 12 at a step of 0.5, the hold to 12.8
+const BUBBLE_AT = 0.35, BUBBLE_S = 2.0, STEP_MS = 770, SCENES = 5, LOOP_START = 12.8;
 
 const browser = await chromium.launch({ args: GL });
 
@@ -30,7 +31,7 @@ async function open(setup) {
   const ctx = await browser.newContext(SETUPS[setup]);
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.warn(`[${setup}] page error:`, e.message));
-  await page.goto(new URL('/?tier=hero3d', base).href, { waitUntil: 'load' });
+  await page.goto(new URL('/?tier=hero3d&glue=0', base).href, { waitUntil: 'load' });
   await page.waitForFunction(() => window.__heroStarted && !document.documentElement.classList.contains('loading'), null, { timeout: 240_000 });
   await page.evaluate(() => window.__skreedIntro?.skip?.());
   const gl = await page.evaluate(() => { const c = document.createElement('canvas').getContext('webgl2'); const x = c?.getExtension('WEBGL_debug_renderer_info'); return x ? c.getParameter(x.UNMASKED_RENDERER_WEBGL) : 'unknown'; });
@@ -48,11 +49,17 @@ async function go(page, q, settle = 900) {
   await page.waitForTimeout(settle);
 }
 const state = (page) => page.evaluate(() => window.__s4.state());
-/** the entry clock held at sec seconds after the press (entering first, once the world and land 1 are in) */
+/** the entry clock held at sec seconds after the press (entering first, once products.bin and scene 1's loop are in) */
 async function seek(page, sec, settle = 700) {
   await page.waitForFunction(() => window.__s4?.state()?.worldReady, null, { timeout: 180_000 });
   await page.evaluate((s) => window.__s4.seek(s), sec);
   await page.waitForTimeout(settle);
+}
+/** scene i at rest, its loop in (or failed) and its lines decoded */
+async function scene(page, i) {
+  await page.evaluate((j) => window.__s4.scene(j), i);
+  await page.waitForFunction((j) => { const s = window.__s4.state(); return s.state === 'world' && s.scene === j && !s.busy && s.loops.some((l) => l.i === j && (l.in || l.state === 'failed' || !s.video)); }, i, { timeout: 120_000 }).catch(() => console.warn(`  scene ${i + 1}: its loop did not settle`));
+  await page.waitForTimeout(2200);
 }
 
 const shot = async (page, file) => { await page.screenshot({ path: file }); console.log('  ', file); };
@@ -65,57 +72,40 @@ if (framesDir) {
     // the hall: the start, and the station with the prompt decoded in
     await go(page, 1, 1500); await shot(page, f('hall-start'));
     await go(page, 4, 300); await go(page, 9.5, 2200); await shot(page, f('hall-station-prompt'));
-    const lands = (await state(page)).lands;
-    if (!lands) { console.warn(`[${setup}] no land in this build: the press does nothing new, so the entry's frames are skipped`); await ctx.close(); continue; }
-    // the entry, held by its clock
+    // the entry, held by its clock: the bubble over scene 1 with its loop playing
     for (const pct of [25, 50, 90]) { await seek(page, BUBBLE_AT + (BUBBLE_S * pct) / 100); await shot(page, f(`bubble-${pct}`)); }
-    const s = await state(page), passes = s.world?.passes ?? [], arrive = s.world?.arrive ?? s.arrive;
-    console.log(`[${setup}] passes ${JSON.stringify(passes)}, arrive ${arrive}`);
-    for (const [k, t] of passes.entries()) { await seek(page, t); await shot(page, f(`ring-${k + 1}-pass`)); }
-    const m1 = arrive - PUSH_S, m0 = m1 - MORPH_S;
-    for (const pct of [30, 50, 80]) { await seek(page, m0 + ((m1 - m0) * pct) / 100); await shot(page, f(`morph-${pct}`)); }
-    await seek(page, arrive - 0.02); await shot(page, f('push-end'));
-    // land 1 at rest, its text decoded in, the page at its station
+    const arrive = (await state(page)).arrive;
     await seek(page, arrive + 0.1, 400);
     await page.waitForFunction(() => window.__s4.state().state === 'world', null, { timeout: 20_000 });
     await page.waitForTimeout(2600);
-    await shot(page, f('land-1-rest'));
-    // the other lands at rest, and each travel at half (the cross-fade until the options are built)
-    for (let i = 1; i < lands; i++) {
-      await page.evaluate((j) => window.__s4.land(j), i);
-      await page.waitForFunction((j) => window.__s4.state().resident.some((r) => r.i === j && (r.ready || r.failed)), i, { timeout: 60_000 });
-      await page.evaluate((j) => window.__s4.land(j), i);
-      await page.waitForTimeout(2600); await shot(page, f(`land-${i + 1}-rest`));
-    }
-    for (let i = 0; i + 1 < lands; i++) {
-      await page.evaluate((j) => window.__s4.land(j), i); await page.waitForTimeout(600);
-      await page.waitForFunction((j) => window.__s4.state().resident.some((r) => r.i === j + 1 && (r.ready || r.failed)), i, { timeout: 60_000 });
-      await page.evaluate((j) => window.__s4.travel(j, j + 1, 0.5), i); await page.waitForTimeout(500);
-      await shot(page, f(`travel-${i + 1}-${i + 2}-half`));
-      await page.evaluate((j) => window.__s4.travel(j, j + 1, -1), i); await page.waitForTimeout(800);
-    }
-    // the loop: the last land, the fourth wipe half way, then the pair either side of the jump
-    await page.evaluate((j) => window.__s4.land(j), lands - 1); await page.waitForTimeout(1500);
-    const loop0 = 9 + 2 * lands;
-    await go(page, loop0 + 0.5, 1200); await shot(page, f('loop-half'));
-    await go(page, loop0 + 0.99, 1200); await shot(page, f('loop-before-jump'));
-    // the first frame after the jump: the director's frame that reports the jump stops the page's frames (its own rAF
-    // callbacks are held from then on), so the shot shows that frame and no later one; then everything runs on
-    await page.evaluate(() => {
-      const raf = window.requestAnimationFrame.bind(window), held = [], on = window.__skreedRoomFrame;
-      let hold = false;
-      window.requestAnimationFrame = (cb) => (hold ? (held.push(cb), 0) : raf(cb));
-      window.__skreedRoomFrame = (fr) => { on?.(fr); if (fr.jumped) hold = true; };
-      window.__s4Release = () => { window.requestAnimationFrame = raf; window.__skreedRoomFrame = on; for (const cb of held.splice(0)) raf(cb); };
-    });
-    await page.evaluate((q) => { const room = document.getElementById('room'), top = room.getBoundingClientRect().top + scrollY, y = top + q * innerHeight; scrollTo({ top: y, behavior: 'instant' }); window.__skreedSnap?.(y / innerHeight); window.__skreedRoom?.snap(q); }, loop0 + 0.999);
+    await shot(page, f('scene-1-rest'));
+    // the other scenes at rest, and a mid-step frame (about a third of the step in, on this class's arc)
+    for (let i = 1; i < SCENES; i++) { await scene(page, i); await shot(page, f(`scene-${i + 1}-rest`)); }
+    await scene(page, 1);
+    await page.evaluate(() => window.__s4.step(1)); await page.waitForTimeout(STEP_MS / 3); await shot(page, f('step-2-3-mid'));
+    await page.waitForTimeout(STEP_MS);
+    // the hold past scene 5, then the exit seam: the cover a tenth of a second in, and the first frame after the jump
+    await scene(page, SCENES - 1);
+    await go(page, 12.5, 1200); await shot(page, f('hold'));
+    await page.evaluate((q) => { const room = document.getElementById('room'), top = room.getBoundingClientRect().top + scrollY; scrollTo({ top: top + q * innerHeight, behavior: 'instant' }); window.__skreedSnap?.((top + q * innerHeight) / innerHeight); }, LOOP_START + 0.05);
+    await page.waitForTimeout(100); await shot(page, f('exit-cover-in'));
     await page.waitForFunction(() => scrollY < 2, null, { timeout: 20_000, polling: 50 }).catch(() => console.warn('  no jump within 20 s'));
-    await page.waitForTimeout(300);
-    await shot(page, f('loop-after-jump'));
-    await page.evaluate(() => window.__s4Release?.());
-    console.log(`[${setup}] scrollY after the loop: ${await page.evaluate(() => scrollY)}; state ${JSON.stringify(await page.evaluate(() => ({ sb: window.__skreedState?.().sb, s4: window.__s4?.state()?.state })))}`);
+    await page.waitForTimeout(120); await shot(page, f('exit-after-jump'));
+    await page.waitForTimeout(1200);
+    console.log(`[${setup}] scrollY after the exit: ${await page.evaluate(() => scrollY)}; state ${JSON.stringify(await page.evaluate(() => ({ sb: window.__skreedState?.().sb, s4: window.__s4?.state()?.state })))}`);
+    // the wrap from the top: full cover over the hero, then scene 5 at rest with the wrap's line
+    await page.evaluate(() => window.__s4.wrap());
+    await page.waitForFunction(() => { const s = window.__s4.state(); return s.seam && (s.seam.phase === 'hold' || s.seam.phase === 'out'); }, null, { timeout: 10_000 }).catch(() => console.warn('  the wrap did not reach full cover'));
+    await shot(page, f('wrap-cover'));
+    await page.waitForFunction(() => window.__s4.state().state === 'world', null, { timeout: 20_000 }).catch(() => console.warn('  the wrap did not land'));
+    await page.waitForTimeout(2600); await shot(page, f('wrap-scene-5'));
+    // the way back from scene 1: the circle at its half, then the hall at the station
+    await scene(page, 0);
+    await page.evaluate(() => window.__s4.back()); await page.waitForTimeout(500); await shot(page, f('back-half'));
+    await page.waitForFunction(() => window.__s4.state().state === 'hall', null, { timeout: 20_000 }).catch(() => console.warn('  the way back did not end'));
+    await page.waitForTimeout(1500); await shot(page, f('back-hall'));
     await ctx.close();
-    // the poster tier's column: the still with the prompt over it, then each land on its own screen after the press
+    // the poster tier's column: the still with the prompt over it, then each scene on its own screen after the press
     const pc = await browser.newContext(SETUPS[setup]), pp = await pc.newPage();
     await pp.goto(new URL('/?tier=poster', base).href, { waitUntil: 'load' });
     // each frame with its element's top at the viewport's top, as a visitor scrolling down reaches it
@@ -123,11 +113,11 @@ if (framesDir) {
     await shot(pp, f('poster-hall'));
     await pp.locator('#rmEnter').click();
     await pp.waitForFunction(() => document.getElementById('room')?.dataset.state === 'world', null, { timeout: 20_000 });
-    for (const [k, li] of (await pp.locator('.rm-land').all()).entries()) {
+    for (const [k, li] of (await pp.locator('.rm-scene').all()).entries()) {
       await li.evaluate((el) => el.scrollIntoView({ block: 'start', behavior: 'instant' }));
-      await pp.waitForFunction((i) => { const img = document.querySelector(`.rm-land[data-i="${i}"] img`); return !!img && img.complete && img.naturalWidth > 0; }, k, { timeout: 30_000 }).catch(() => console.warn(`  poster land ${k + 1}: its picture did not decode`));
+      await pp.waitForFunction((i) => { const img = document.querySelector(`.rm-scene[data-i="${i}"] img`); return !!img && img.complete && img.naturalWidth > 0; }, k, { timeout: 30_000 }).catch(() => console.warn(`  poster scene ${k + 1}: its still did not decode`));
       await pp.waitForTimeout(400);
-      await shot(pp, f(`poster-land-${k + 1}`));
+      await shot(pp, f(`poster-scene-${k + 1}`));
     }
     await pc.close();
   }
