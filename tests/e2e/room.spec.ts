@@ -9,13 +9,17 @@
 // focused); AC14's states (spec 5's table): a blocked loop route (the still stays, the loading line, Still loading at 8 s),
 // a rejected play() (the still stays, no line in production, clipBlocked on a Tune build), products.bin blocked (the
 // scenes without a product, the press never blocked after it), and __skreedLoseContext() in the scenes (the poster
-// path's column); and the poster tier's still and column. The 3D path runs on SwiftShader here (?tier=hero3d), so the
-// island specs drive the section by its hooks (__s4, __skreedRoom) at device pixel ratio 1, skip the intro and turn the
-// glue off (?glue=0: every q is set by scrollTo). Not run in this change (no wrangler here): kept coherent with the hooks.
+// path's column); and the poster tier's still and column; AC15's further cases: the way back from a fresh press (the
+// prompt visible and focused again), a cold first-visit wrap (the seam held until its lock ends, the carousel under the
+// cloud, the prompt out of the Tab order), the glue at section 4's seam with a Tab into the quiz that never settles,
+// Ctrl+wheel in range and a one-finger pan at visualViewport.scale 2 that never step, and the still3d path under reduced
+// motion. The 3D path runs on SwiftShader here (?tier=hero3d), so the island specs drive the section by its hooks (__s4,
+// __skreedRoom) at device pixel ratio 1, skip the intro and turn the glue off (?glue=0: every q is set by scrollTo)
+// except the glue's own case. Not run in this change (no wrangler here): kept coherent with the hooks.
 import { test, expect, type Page } from '@playwright/test';
 
 type Ev = { name: string; props: Record<string, string | number> };
-type S4 = { state: string; under: string; scene: number; step: number; busy: boolean; lock: boolean; inRange: boolean; q: number; qRaw: number; arrive: number; worldReady: boolean; products: string; loops: { i: number; state: string; in: boolean; refused: boolean; playing: boolean }[]; seam: { kind: string; phase: string } | null; memory: number };
+type S4 = { state: string; under: string; draws: string; seamDraws: string[]; scene: number; step: number; busy: boolean; lock: boolean; inRange: boolean; q: number; qRaw: number; arrive: number; worldReady: boolean; products: string; video: boolean; loops: { i: number; state: string; in: boolean; refused: boolean; playing: boolean }[]; seam: { kind: string; phase: string } | null; memory: number };
 const events = (page: Page): Promise<string[]> => page.evaluate(() => ((window as unknown as { __skreedEvents?: Ev[] }).__skreedEvents ?? []).map((e) => e.name));
 const s4 = (page: Page): Promise<S4> => page.evaluate(() => window.__s4!.state() as S4);
 const N = 5, LOOP_START = 12.8;
@@ -119,6 +123,28 @@ test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scene
   expect(await events(page)).toEqual(expect.arrayContaining(['room_enter', 'room_scene']));
   await expect.poll(() => said(page, '.rm-scene[data-i="0"] .rm-scene-shade'), { timeout: 10_000 }).toBe('Lilac, vivid violet');
 
+  // the way back from this fresh press (AC13): the circle shrinks into the hall at the station, the prompt is back (its
+  // wipe at the entry undone), visible, in the Tab order and focused, the scenes inert again; then E enters once more
+  await page.focus('#rmPad');
+  expect(await page.evaluate(() => window.__s4!.back())).toBe(true);
+  await expect.poll(async () => (await s4(page)).state, { timeout: 30_000 }).toBe('hall');
+  await expect.poll(() => pageQ(page), { timeout: 10_000 }).toBeCloseTo(9.5, 1);
+  expect(await events(page)).toContain('room_back');
+  await expect(page.locator('#rmEnter')).toHaveClass(/is-near/, { timeout: 10_000 });
+  await expect(page.locator('#rmEnter')).toBeVisible();
+  expect(await page.evaluate(() => { const e = document.getElementById('rmEnter')!; return e.hidden || e.inert; })).toBe(false);
+  await expect(page.locator('#rmEnter')).toBeFocused({ timeout: 10_000 });
+  await expect(page.locator('#rmEnter .rm-enter-text .sr-only')).toHaveText('Enter Skreed universe');
+  expect(await page.evaluate(() => document.getElementById('rmScenes')!.inert)).toBe(true);
+  await expect(page.locator('#rmNav')).toBeHidden();
+  await page.keyboard.press('e');
+  await expect.poll(async () => (await s4(page)).state, { timeout: 20_000 }).toBe('entering');
+  await page.evaluate((t) => { window.__s4!.seek(t); window.__s4!.seek(-1); }, Math.max(0, arrive - 0.3));
+  await expect.poll(async () => (await s4(page)).state, { timeout: 60_000 }).toBe('world');
+  await expect.poll(() => pageQ(page), { timeout: 10_000 }).toBeCloseTo(10, 1);
+  expect((await s4(page)).scene).toBe(0);
+  expect(await page.evaluate(() => { const e = document.getElementById('rmEnter')!; return e.hidden && e.inert; })).toBe(true);
+
   // five scenes by four steps: each one whole step (busy through it and 150 ms after), the page snapped to the scene's q, the lines decoded in
   for (let to = 1; to < N; to++) {
     await page.waitForFunction((k) => { const st = window.__s4!.state() as { loops: { i: number; in: boolean; state: string }[] }; return st.loops.some((l) => l.i === k && (l.in || l.state === 'failed')); }, to, { timeout: 120_000, polling: 250 }).catch(() => {});
@@ -156,11 +182,21 @@ test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scene
   await expect.poll(() => page.evaluate(() => window.__skreedState!().sb), { timeout: 20_000 }).toBeLessThan(0.01);
   expect(await events(page)).toContain('room_loop');
   await expect.poll(async () => (await s4(page)).state, { timeout: 10_000 }).toBe('hall');
+  // the seam held the section's frame under the forming cloud: every cover-in frame drew the carousel, never the hall (X-15)
+  expect((await s4(page)).seamDraws).toEqual(['scenes']);
+  // the new lap: the prompt is back in the Tab order for the next walk
+  expect(await page.evaluate(() => { const e = document.getElementById('rmEnter')!; return e.hidden || e.inert; })).toBe(false);
 
-  // the wrap from the top: the reverse seam onto scene 5 with the followers snapped, room_wrap and the wrap's own line
+  // the wrap from the top: the reverse seam onto scene 5 with the followers snapped (the state seam until its lock ends,
+  // the carousel drawn under the cloud from the landing), room_wrap and the wrap's own line, the prompt out of the Tab order
   await page.evaluate(() => window.__s4!.wrap());
+  await expect.poll(async () => (await s4(page)).under, { timeout: 30_000 }).toBe('world');
+  expect((await s4(page)).state).toBe('seam');
+  expect((await s4(page)).draws).toBe('scenes');
+  expect((await s4(page)).lock).toBe(true);
   await expect.poll(async () => (await s4(page)).state, { timeout: 30_000 }).toBe('world');
   expect((await s4(page)).scene).toBe(N - 1);
+  expect(await page.evaluate(() => { const e = document.getElementById('rmEnter')!; return e.hidden && e.inert; })).toBe(true);
   await expect.poll(() => pageQ(page), { timeout: 10_000 }).toBeCloseTo(12, 1);
   await expect.poll(() => page.evaluate(() => Math.abs(window.__skreedState!().sb - scrollY / innerHeight)), { timeout: 20_000 }).toBeLessThan(0.05);
   expect(await events(page)).toContain('room_wrap');
@@ -258,6 +294,151 @@ test('section 4 at 390 x 844, AC14: a blocked loop, a rejected play(), products.
   await expect(page.locator('#rmScenes')).toBeVisible();
   expect(await page.locator('.rm-scene:visible').count()).toBe(N);
   expect(await noHScroll(page)).toBe(true);
+  expect(errors).toEqual([]);
+  await ctx.close();
+});
+
+test('section 4 at 390 x 844: a cold first-visit wrap from the top lands on scene 5 under the cloud before the hall is in, the seam held until its lock ends, the next gesture unlocking the loops', async ({ browser, baseURL }) => {
+  test.setTimeout(900_000);
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+  const page = await ctx.newPage();
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await open3d(page, baseURL);
+  // at scroll 0 with the intro over and nothing of the section loaded: the wrap imports the director first, waits for the cloud, then runs
+  expect(await page.evaluate(() => scrollY)).toBe(0);
+  await page.evaluate(() => window.__s4!.wrap());
+  await expect.poll(async () => (await s4(page))?.state ?? null, { timeout: 60_000 }).toBe('seam');
+  // once landed the frame is the carousel at scene 5 under the cloud while the state stays seam through the hold, the cover-out and the lock
+  await expect.poll(async () => (await s4(page)).under, { timeout: 60_000 }).toBe('world');
+  expect((await s4(page)).state).toBe('seam');
+  expect((await s4(page)).draws).toBe('scenes');
+  expect((await s4(page)).lock).toBe(true);
+  await expect.poll(async () => (await s4(page)).state, { timeout: 60_000 }).toBe('world');
+  expect((await s4(page)).scene).toBe(N - 1);
+  await expect(page.locator('#room')).toHaveAttribute('data-scene', '4');
+  await expect.poll(() => pageQ(page), { timeout: 10_000 }).toBeCloseTo(12, 1);
+  await expect.poll(() => page.evaluate(() => Math.abs(window.__skreedState!().sb - scrollY / innerHeight)), { timeout: 20_000 }).toBeLessThan(0.05);
+  expect(await events(page)).toContain('room_wrap');
+  await expect(page.locator('.rm-scene[data-i="4"]')).toHaveClass(/is-on/);
+  expect(await page.evaluate(() => document.getElementById('rmScenes')!.inert)).toBe(false);
+  // the prompt is out of the Tab order while the scenes stand (AC13); the hall loads behind for the way back
+  expect(await page.evaluate(() => { const e = document.getElementById('rmEnter')!; return e.hidden && e.inert; })).toBe(true);
+  // the next gesture after a wrap unlocks the loop elements (AC7): no error, and scene 5's loop settles in or failed
+  await page.mouse.click(200, 300);
+  await expect.poll(async () => (await s4(page)).loops[N - 1]?.state ?? '', { timeout: 120_000 }).toMatch(/^(in|failed)$/);
+  await page.waitForFunction(() => window.__s4?.ready, null, { timeout: 300_000, polling: 500 });
+  expect(errors).toEqual([]);
+  await ctx.close();
+});
+
+test('section 4 at 390 x 844: the glue at section 4\'s seam settles a visitor\'s wheel run to the nearer end, and a Shift+Tab into the quiz never settles (AC4)', async ({ browser, baseURL }) => {
+  test.setTimeout(900_000);
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+  const page = await ctx.newPage();
+  // the glue on: no ?glue=0 here
+  await page.goto(new URL('/?tier=hero3d', baseURL).href);
+  await page.waitForFunction(() => window.__heroStarted && !!window.__skreedIntro, null, { timeout: 540_000, polling: 500 });
+  await page.evaluate(() => (window.__skreedIntro as unknown as { skip(): void }).skip());
+  await page.waitForFunction(() => !document.documentElement.classList.contains('loading'), null, { timeout: 300_000, polling: 500 });
+  await page.waitForTimeout(2500);   // the page scroll chunk is imported once the intro ends
+  const span = await page.evaluate(() => { const top = document.getElementById('room')!.getBoundingClientRect().top + scrollY; return { start: top - innerHeight, end: top + innerHeight, mid: top }; });
+  const y = () => page.evaluate(() => scrollY);
+  // a wheel run stopping 200 px into the span (its lower half) settles to the span's start after 150 ms still and the 0.5 s settle
+  await page.evaluate((t) => scrollTo({ top: t, behavior: 'instant' }), span.start - 300);
+  await page.waitForTimeout(400);
+  await page.mouse.move(200, 400);
+  await page.mouse.wheel(0, 500);
+  await expect.poll(y, { timeout: 5_000 }).toBeCloseTo(span.start, 0);
+  await page.waitForTimeout(800);
+  expect(await y()).toBeCloseTo(span.start, 0);
+  // past the middle: to the span's end, the hall fully in (q 1); the hero's followers follow the page as they do today
+  await page.mouse.wheel(0, span.mid - span.start + 200);
+  await expect.poll(y, { timeout: 5_000 }).toBeCloseTo(span.end, 0);
+  await page.waitForTimeout(800);
+  expect(await y()).toBeCloseTo(span.end, 0);
+  // a Shift+Tab from the section's prompt into the quiz: the browser's own focus scroll, and no settle follows it
+  await page.evaluate((t) => scrollTo({ top: t, behavior: 'instant' }), span.start + 300);
+  await page.waitForTimeout(400);
+  await page.evaluate(() => document.getElementById('rmEnter')!.focus({ preventScroll: true }));
+  await page.keyboard.press('Shift+Tab');
+  await page.waitForTimeout(150);
+  const after = await y();
+  expect(await page.evaluate(() => !!document.activeElement && !!document.activeElement.closest('#find'))).toBe(true);
+  await page.waitForTimeout(1000);
+  expect(await y()).toBe(after);
+  await ctx.close();
+});
+
+test('section 4 at 390 x 844: Ctrl+wheel in range is the browser\'s zoom and never steps; a one-finger pan at visualViewport.scale 2 never steps (AC3)', async ({ browser, baseURL }) => {
+  test.setTimeout(900_000);
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, hasTouch: true });
+  const page = await ctx.newPage();
+  await open3d(page, baseURL);
+  await page.evaluate(() => { const f = document.getElementById('find')!; scrollTo({ top: f.getBoundingClientRect().top + scrollY, behavior: 'instant' }); });
+  await page.waitForFunction(() => window.__s4?.ready, null, { timeout: 300_000, polling: 500 });
+  await goQ(page, 4); await goQ(page, 9.5);
+  await page.waitForFunction(() => (window.__s4!.state() as { worldReady: boolean }).worldReady, null, { timeout: 600_000, polling: 500 });
+  await page.evaluate(() => window.__s4!.scene(2));
+  await expect.poll(async () => (await s4(page)).scene, { timeout: 30_000 }).toBe(2);
+  await expect.poll(async () => (await s4(page)).inRange, { timeout: 10_000 }).toBe(true);
+  await expect.poll(async () => (await s4(page)).busy, { timeout: 10_000 }).toBe(false);
+  // Ctrl+wheel (a pinch on a trackpad): never captured, so no step either way
+  await page.mouse.move(200, 400);
+  await page.keyboard.down('Control');
+  await page.mouse.wheel(0, 120); await page.waitForTimeout(300); await page.mouse.wheel(0, -120);
+  await page.keyboard.up('Control');
+  await page.waitForTimeout(1200);
+  expect((await s4(page)).scene).toBe(2);
+  // a one-finger pan with the page zoomed to scale 2: the page's own, never a step
+  const cdp = await ctx.newCDPSession(page);
+  await cdp.send('Emulation.setPageScaleFactor', { pageScaleFactor: 2 });
+  await expect.poll(() => page.evaluate(() => visualViewport?.scale ?? 1), { timeout: 5_000 }).toBeGreaterThan(1.5);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 200, y: 500 }] });
+  for (const ty of [490, 470, 440, 400]) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 200, y: ty }] });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await page.waitForTimeout(1200);
+  expect((await s4(page)).scene).toBe(2);
+  await cdp.send('Emulation.setPageScaleFactor', { pageScaleFactor: 1 });
+  await ctx.close();
+});
+
+test('section 4 at 390 x 844 under reduced motion (still3d): no loop elements, the dissolve entry, a step as a cut, an instant exit seam and an instant wrap (AC11)', async ({ browser, baseURL }) => {
+  test.setTimeout(900_000);
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, reducedMotion: 'reduce' });
+  const page = await ctx.newPage();
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await open3d(page, baseURL);
+  await page.evaluate(() => { const f = document.getElementById('find')!; scrollTo({ top: f.getBoundingClientRect().top + scrollY, behavior: 'instant' }); });
+  await page.waitForFunction(() => window.__s4?.ready, null, { timeout: 300_000, polling: 500 });
+  await goQ(page, 4); await goQ(page, 9.5);
+  await page.waitForFunction(() => (window.__s4!.state() as { worldReady: boolean }).worldReady, null, { timeout: 600_000, polling: 500 });
+  expect((await s4(page)).video).toBe(false);   // stills on every plane: no loop element is made
+  expect((await s4(page)).arrive).toBeCloseTo(0.6, 1);   // the 600 ms dissolve
+  const t0 = Date.now();
+  expect(await page.evaluate(() => window.__s4!.enter())).toBe(true);
+  await expect.poll(async () => (await s4(page)).state, { timeout: 10_000 }).toBe('world');
+  expect(Date.now() - t0).toBeLessThan(2500);
+  await expect.poll(() => pageQ(page), { timeout: 5_000 }).toBeCloseTo(10, 1);
+  // a step is a cut with a 300 ms cross-fade: the next scene well within a second, the page snapped
+  await expect.poll(() => page.evaluate(() => window.__s4!.step(1)), { timeout: 30_000 }).toBe(true);
+  await expect.poll(async () => (await s4(page)).scene, { timeout: 2_000 }).toBe(1);
+  await expect.poll(async () => (await s4(page)).busy, { timeout: 2_000 }).toBe(false);
+  await expect.poll(() => pageQ(page), { timeout: 5_000 }).toBeCloseTo(10.5, 1);
+  // the exit seam is a cut: the jump to the top at once, then its 400 ms lock, then the hall
+  await page.evaluate(() => window.__s4!.scene(4));
+  await expect.poll(async () => (await s4(page)).scene, { timeout: 10_000 }).toBe(4);
+  await page.evaluate((q) => { const room = document.getElementById('room')!, top = room.getBoundingClientRect().top + scrollY; scrollTo({ top: top + q * innerHeight, behavior: 'instant' }); }, LOOP_START + 0.1);
+  await page.waitForFunction(() => scrollY < 2, null, { timeout: 5_000, polling: 50 });
+  expect(await events(page)).toContain('room_loop');
+  await expect.poll(async () => (await s4(page)).state, { timeout: 5_000 }).toBe('hall');
+  // the wrap is a cut too: world at scene 5 once its lock ends
+  await page.evaluate(() => window.__s4!.wrap());
+  await expect.poll(async () => (await s4(page)).state, { timeout: 5_000 }).toBe('world');
+  expect((await s4(page)).scene).toBe(N - 1);
+  await expect.poll(() => pageQ(page), { timeout: 5_000 }).toBeCloseTo(12, 1);
+  expect(await events(page)).toContain('room_wrap');
   expect(errors).toEqual([]);
   await ctx.close();
 });

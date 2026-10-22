@@ -80,6 +80,22 @@ export function mountRoom(root: HTMLElement): void {
     void dec.hide(el).then(() => { if (el.inert) el.hidden = true; });
   }
   function showControl(el: HTMLElement) { el.hidden = false; el.inert = false; void dec.show(el); }
+  /**
+   * The prompt back in the hall (the way back, the reset from the scrollbar, an entry abandoned off screen, the new lap):
+   * in the Tab order again and clipped until the station frame decodes it in, its busy text gone, the scenes inert again.
+   */
+  function restorePrompt() {
+    near = false; nearShown = false; enter.classList.remove('is-near'); unbusy();
+    enter.hidden = false; enter.inert = false; dec.conceal(keyEl); dec.conceal(enterText);
+    if (list) list.inert = !isPoster();
+  }
+  /** the prompt gone while the scenes stand (the wrap's landing): never a hidden stop in the Tab order inside the scenes */
+  function hidePrompt() {
+    if (enter.hidden) return;
+    if (enter.contains(document.activeElement)) letGo(document.activeElement);
+    near = false; nearShown = false; enter.classList.remove('is-near');
+    enter.inert = true; enter.hidden = true; dec.conceal(keyEl); dec.conceal(enterText);
+  }
   const measureInset = () => { inset = parseFloat(getComputedStyle(root).getPropertyValue('--inset')) || 16; };
   measureInset();
   addEventListener('resize', () => { measureInset(); promptW = 0; });
@@ -153,6 +169,9 @@ export function mountRoom(root: HTMLElement): void {
       const a = document.activeElement;
       if (a && a !== pad && root.contains(a) && a !== enter) letGo(a);
     }
+    // the hall again from anywhere (the way back's end, the reset, an abandoned entry, the exit's lock ending): the prompt
+    // back in the Tab order for the station frame to show, Skip gone
+    if (to === 'hall' && from !== 'hall') { restorePrompt(); if (!skip.hidden) wipeControl(skip, null); }
     if (to === 'hall') pad.setAttribute('aria-label', R.stageAria);
     if (to === 'world') { pad.setAttribute('aria-label', R.worldAria); if (list) list.inert = false; }
   }
@@ -267,13 +286,17 @@ export function mountRoom(root: HTMLElement): void {
     } else if (s === 'unbusy') unbusy();
     else if (s === 'loop') track('room_loop');
     else if (s === 'back') {
-      // the way back ended (or the reset from the scrollbar): the hall at the station, a keyboard user's focus on the prompt
+      // the way back ended (or the reset from the scrollbar): the hall at the station, the prompt back for its frame to
+      // show (the entry had wiped it), a keyboard user's focus on it
       track('room_back');
+      restorePrompt();
       if (!skip.hidden) wipeControl(skip, null);
       if (keyboarding() || viaKeys) focusQuietly(enter);
     } else if (s === 'wrap') {
-      // the wrap landed on scene 5 under the cloud: the list leaves inert, the scene arrives with the wrap's own line
+      // the wrap landed on scene 5 under the cloud: the prompt goes (the new lap had put it back), the list leaves inert,
+      // the scene arrives with the wrap's own line
       track('room_wrap');
+      hidePrompt();
       if (list) list.inert = false;
       arrive(N - 1, true);
     }
@@ -285,10 +308,8 @@ export function mountRoom(root: HTMLElement): void {
   function newLap(s: string | undefined = root.dataset.state) {
     down.clear();
     if (s === 'hall') {
-      near = false; nearShown = false; enter.classList.remove('is-near'); unbusy();
-      enter.hidden = false; enter.inert = false; dec.conceal(keyEl); dec.conceal(enterText);
+      restorePrompt();
       skip.hidden = true; skip.inert = true; dec.conceal(skip);
-      if (list) list.inert = !isPoster();
       for (const sc of scenes) { sc.li.classList.remove('is-on'); sc.more.hidden = true; }
       if (sceneHint) { sceneHint.hidden = true; dec.conceal(sceneHint); }
       startX = null; arrived = false; walked = false; hint.hidden = true; dec.conceal(hint);

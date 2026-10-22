@@ -470,3 +470,35 @@ test('scroll.ts imports nothing else from section4 or config/room: the adapter i
   assert.match(src, /\.scale \?\? 1\) > 1\.01/, 'nothing is captured while zoomed');
   assert.match(src, /e\.touches\.length (?:===|!==) 1/, 'one finger only');
 });
+
+test('scroll.ts: the lock turning on with no scroll event (a press at the station): nothing attaches by itself and the first tick leaks; with notify(), which the director\'s every state change calls through the wiring, the wheel, the first touchmove and the keys are swallowed through the bubble, and the bubble\'s end re-evaluates the same way', () => {
+  const page = fakePage(0);
+  try {
+    const room = fakeRoom(page);
+    page.scroll(room.q(-1));                                                   // q 9.5, the station
+    const leak = createPageScroll(options(room));
+    assert.equal(leak.state().capturing, false, 'the hall captures nothing');
+    room.state = 'entering'; room.lockUntil = page.now + 2350;                // the press: the page is at the station already, so no scroll event follows
+    assert.equal(leak.state().capturing, false, 'nothing re-evaluates by itself');
+    assert.equal(page.wheel(100), false, 'without notify the first tick leaks to the page');
+    assert.equal(page.y, room.q(-1) + 100, 'and the page moved under the bubble');
+    leak.dispose();
+    // as wired (hero.ts passes onState, the director calls it from setState): the state change calls notify()
+    room.state = 'hall'; room.lockUntil = -Infinity; page.scroll(room.q(-1)); page.tick(1000);
+    const ps = createPageScroll(options(room));
+    assert.equal(ps.state().capturing, false);
+    room.state = 'entering'; room.lockUntil = page.now + 2350; ps.notify();
+    assert.equal(ps.state().capturing, true, 'attached by the lock, with no scroll event');
+    assert.equal(page.wheel(100), true); assert.equal(page.wheel(-100), true);
+    assert.equal(page.y, room.q(-1), 'the page did not move');
+    page.touch('touchstart', 400); assert.equal(page.touch('touchmove', 300), true, 'the first move of a swipe is prevented'); page.touch('touchend', 300);
+    assert.equal(page.key('PageDown'), true); assert.equal(page.key(' '), true);
+    assert.deepEqual(room.calls, [], 'nothing stepped or wrapped');
+    // the bubble's end: the page snapped to scene 1 by scrollTo (no gesture, no run), the state world; the wiring's notify again
+    page.tick(2350); room.state = 'world'; room.scene = 0; page.y = room.q(0); ps.notify();
+    assert.equal(ps.state().capturing, true, 'then world in range');
+    assert.equal(page.wheel(100), true);
+    assert.deepEqual(room.calls, ['step 1'], 'a tick in range is one step');
+    ps.dispose();
+  } finally { page.restore(); }
+});

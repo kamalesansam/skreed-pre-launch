@@ -207,7 +207,11 @@ export async function startHero(o: StartOptions): Promise<void> {
   let roomImport: Promise<RoomDirector | null> | null = null;
   const loadDirector = () => (roomImport ??= import('./section4/director.ts').then((m) => {
     if (life.dead) return null;
-    const room = m.createRoomDirector({ renderer, avif: data.avif, reduced, touch, dpr, snapHero: (y) => loop.snap(innerHeight > 0 ? y / innerHeight : 0) });
+    const room = m.createRoomDirector({
+      renderer, avif: data.avif, reduced, touch, dpr, snapHero: (y) => loop.snap(innerHeight > 0 ? y / innerHeight : 0),
+      // a state change with no scroll event (a press at the station, a seam's end): the page scroll re-evaluates its capture set now
+      onState: () => pageScroll?.notify(),
+    });
     ctx.room = room; life.onKill(() => room.dispose());
     room.resize(renderer.domElement.width, renderer.domElement.height);
     return room;

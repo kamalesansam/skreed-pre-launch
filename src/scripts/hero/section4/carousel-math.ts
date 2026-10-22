@@ -208,3 +208,20 @@ export function cloudCover(phase: 'in' | 'out' | null, e: number): number {
   }
   return 0;
 }
+
+// ---- the frame under a seam
+
+/** the section's states as the director names them (config/room.ts RoomState, spelt here so this file imports nothing) */
+export type RoomStateName = 'hall' | 'entering' | 'world' | 'back' | 'seam';
+/** what the director's plan carries this frame */
+export type FrameSource = 'hall' | 'entering' | 'back' | 'scenes';
+/**
+ * Which frame the director's plan carries, by the state and by what the frame was when a seam began (under): the hall
+ * in hall, or under a seam that began over the hall; the entry's bubble; the way back; the scenes in world, or under a
+ * seam over them. The exit's cover-in from scene 5 and the wrap's hold, cover-out and lock keep the carousel's frame
+ * under the cloud, so the cut comes at full cover and the hero is never seen through the cloud (spec 9, X-15).
+ */
+export function frameSource(state: RoomStateName, under: 'hall' | 'world'): FrameSource {
+  if (state === 'entering' || state === 'back') return state;
+  return state === 'world' || under === 'world' ? 'scenes' : 'hall';
+}
