@@ -1,0 +1,1750 @@
+{
+ "//": "Section 4's five scene loops (docs/specs/section-4-flux.md; the evidence and the ledger in docs/specs/evidence/section-4-flux-loops.md). Per loop: the masked inpaint that made its clean still and the kling_o3_flf call that animated it, with job ids, credits and prompts; the raw file by its sum and bytes (assets-src/room/flux/raw, gitignored; the sums committed in SHA256SUMS, where the generator's file names are); the encode scripts/room/encode-flux.mjs wrote, its matrix choice with both differences, the probe's checks and the poster stills. flash stays 'pending' until AC5's check runs on the loops; approval is Sam's for all ten.",
+ "model": "kling_o3_flf",
+ "params": {
+  "duration": 5,
+  "mode": "std",
+  "sound": "off",
+  "multi_shots": false,
+  "frames": "the clean still as start_image and end_image, so the loop returns to it"
+ },
+ "stills": {
+  "model": "nano_banana_2_1",
+  "params": {
+   "is_inpaint": true,
+   "resolution": "2k",
+   "thinking_level": "medium",
+   "aspect_ratio": {
+    "wide": "auto",
+    "portrait": "9:16"
+   }
+  },
+  "about": "the wide stills: the round-2 masked inpaints that removed every accessory and changed the floors; the portrait stills: masked inpaints that extend each wide still to 9:16"
+ },
+ "credits": {
+  "per_call": {
+   "kling_o3_flf": 6.25,
+   "nano_banana_2_1": 2
+  },
+  "note": "per call as the account's history showed them; the job records carry no price field. The account read 1420 before round 2 and 1346 after its loops, a drop of 74.",
+  "estimate": {
+   "kling_o3_flf": 5,
+   "nano_banana_2_1": 2,
+   "note": "higgsfield generate cost on 2026-10-22, which creates no job: 5 for a 5 s std frames loop, 2 for a 2k masked inpaint. At those prices the drop of 74 is the ten loops (50) and twelve inpaints (24), one more inpaint than the eleven known; at 6.25 a loop the known calls sum to 84.5, over the drop. Which price was charged is the lead's to settle from the account's history."
+  },
+  "total": 84.5,
+  "account": {
+   "before": 1420,
+   "after": 1346
+  }
+ },
+ "cap": 1228800,
+ "encode": {
+  "codec": "libx264",
+  "preset": "veryslow",
+  "profile": "high",
+  "level": "4.0",
+  "gop": 24,
+  "frames": 120,
+  "fps": 24,
+  "duration": 5,
+  "crf_from": 18,
+  "vui": "colorprim=bt709:transfer=iec61966-2-1:colormatrix=bt709:range=tv",
+  "audio": "none",
+  "faststart": true,
+  "metadata": "none",
+  "size": {
+   "wide": [
+    1328,
+    692
+   ],
+   "portrait": [
+    720,
+    1280
+   ]
+  }
+ },
+ "posters": {
+  "size": {
+   "wide": [
+    1280,
+    666
+   ],
+   "portrait": [
+    720,
+    1280
+   ]
+  },
+  "lines": {
+   "wide": {
+    "avif": 112640,
+    "webp": 180224
+   },
+   "portrait": {
+    "avif": 81920,
+    "webp": 131072
+   }
+  },
+  "start": {
+   "avif": 60,
+   "webp": 80
+  },
+  "floor": {
+   "avif": 45,
+   "webp": 60
+  },
+  "avif": "4:4:4, 8-bit, effort 9",
+  "webp": "smart subsampling, effort 6",
+  "from": "the raw first frame decoded under the matrix chosen, resized to cover"
+ },
+ "loops": [
+  {
+   "id": "cove",
+   "order": 1,
+   "class": "wide",
+   "about": "the pink rock cove with water",
+   "source": {
+    "sums": "assets-src/room/flux/SHA256SUMS",
+    "sha256": "1458c0f9a2ba493fb03510e51ce73ccc1d09bad05420dee91e3e65fbcbf76e00",
+    "bytes": 1285120,
+    "width": 1328,
+    "height": 692,
+    "frames": 121,
+    "tags": "none",
+    "frame120_from_frame0": {
+     "mean": 1.222,
+     "channel": [
+      1.276,
+      1.1,
+      1.289
+     ]
+    },
+    "frame1_from_frame0": {
+     "mean": 0.101,
+     "channel": [
+      0.101,
+      0.093,
+      0.109
+     ]
+    },
+    "still": {
+     "sha256": "591d2badc94c362f888dec207e7e1b19a2088cc43653a63644555417f4b38be6",
+     "bytes": 1659588,
+     "width": 1700,
+     "height": 884,
+     "compared_at": {
+      "width": 1328,
+      "height": 692
+     }
+    }
+   },
+   "jobs": {
+    "inpaint": [
+     {
+      "id": "85afba8b-cf2b-422f-b1cb-85b5c6ac40b4",
+      "job_type": "nano_banana_2_1",
+      "credits": 2,
+      "at": "2026-10-22T10:15:28.309169Z",
+      "prompt": "Remove the bottles, jars and the incense tray from the tops of the two round stone pedestals, leaving the pedestal tops bare and smooth. Keep the pink sunset light, the rock walls, the gold columns, the plant and the rippling water exactly as they are. Photoreal 3D render look matching the scene.",
+      "aspect": "auto",
+      "size": [
+       2830,
+       1472
+      ]
+     }
+    ],
+    "loop": {
+     "id": "2086b7b3-5c6e-412f-a7f7-d53f33f92fe6",
+     "job_type": "kling_o3_flf",
+     "credits": 6.25,
+     "at": "2026-10-22T10:35:06.41893Z",
+     "prompt": "A seamless ambient loop of this exact scene: gentle ripples drift across the calm water with soft reflections, the pink and blue sunset sky glows softly, the plant's leaves barely stir, the gold columns gleam steadily. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+     "aspect": "16:9",
+     "size": [
+      1280,
+      720
+     ]
+    }
+   },
+   "credits": 8.25,
+   "prompt": "A seamless ambient loop of this exact scene: gentle ripples drift across the calm water with soft reflections, the pink and blue sunset sky glows softly, the plant's leaves barely stir, the gold columns gleam steadily. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+   "encoded": {
+    "file": "cove-wide.mp4",
+    "crf": 18,
+    "bytes": 1145970,
+    "sha256": "1aa84e39f65f07e7029059ea9d417014117f0b81ff25fcb0fd7695ac87e22cc9",
+    "width": 1328,
+    "height": 692,
+    "frames": 120,
+    "fps": 24,
+    "duration": 5,
+    "tried": [
+     {
+      "crf": 18,
+      "bytes": 1145970
+     }
+    ]
+   },
+   "matrix": {
+    "chosen": "bt601",
+    "mad_against_still": {
+     "bt601": {
+      "mean": 2.785,
+      "channel": [
+       2.958,
+       2.568,
+       2.829
+      ]
+     },
+     "bt709": {
+      "mean": 3.286,
+      "channel": [
+       2.854,
+       3.506,
+       3.497
+      ]
+     }
+    }
+   },
+   "check": {
+    "boxes": [
+     "ftyp",
+     "moov",
+     "free",
+     "mdat"
+    ],
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "tags": "bt709 iec61966-2-1 bt709 tv",
+    "first_frame_from_raw": {
+     "mean": 1.066,
+     "channel": [
+      1.08,
+      0.908,
+      1.21
+     ]
+    },
+    "last_frame_from_raw": {
+     "mean": 1.57,
+     "channel": [
+      1.615,
+      1.395,
+      1.7
+     ]
+    }
+   },
+   "posters": {
+    "avif": {
+     "file": "cove-wide.avif",
+     "bytes": 29803,
+     "line": 112640,
+     "quality": 60,
+     "floor": 45,
+     "width": 1280,
+     "height": 666
+    },
+    "webp": {
+     "file": "cove-wide.webp",
+     "bytes": 32048,
+     "line": 180224,
+     "quality": 80,
+     "floor": 60,
+     "width": 1280,
+     "height": 666
+    }
+   },
+   "flash": "pending",
+   "approval": {
+    "date": "2026-10-22",
+    "words": "All ten backgrounds are approved."
+   }
+  },
+  {
+   "id": "cove",
+   "order": 1,
+   "class": "portrait",
+   "about": "the pink rock cove with water",
+   "source": {
+    "sums": "assets-src/room/flux/SHA256SUMS",
+    "sha256": "2f8999186955c2b4566f8ed4e22fda70f73cc996fa23e17b9d2b9f9aac05ba55",
+    "bytes": 3832121,
+    "width": 720,
+    "height": 1280,
+    "frames": 121,
+    "tags": "none",
+    "frame120_from_frame0": {
+     "mean": 2.665,
+     "channel": [
+      2.87,
+      2.389,
+      2.736
+     ]
+    },
+    "frame1_from_frame0": {
+     "mean": 1.585,
+     "channel": [
+      1.7,
+      1.505,
+      1.551
+     ]
+    },
+    "still": {
+     "sha256": "3578188dfabeec964ce06487d6fe0fe9e6a7c9466137f46df2f0c6faeda568bc",
+     "bytes": 1368621,
+     "width": 788,
+     "height": 1401,
+     "compared_at": {
+      "width": 720,
+      "height": 1280
+     }
+    }
+   },
+   "jobs": {
+    "inpaint": [
+     {
+      "id": "b112a5a3-c2d0-45f9-960b-adde2649604c",
+      "job_type": "nano_banana_2_1",
+      "credits": 2,
+      "at": "2026-10-22T10:42:57.967036Z",
+      "prompt": "Extend this scene into a tall 9:16 portrait frame, keeping the existing picture exactly in place at its original size in the middle. At the top, continue the pink rock cave ceiling and the glowing light strip naturally; at the bottom, continue the rippling water floor with its reflections. Same materials, same pink sunset lighting, same colours, seamless, photoreal 3D render look. No new objects, no people, no text.",
+      "aspect": "auto",
+      "size": [
+       1536,
+       2752
+      ]
+     }
+    ],
+    "loop": {
+     "id": "c0904a7a-c421-4309-9900-3757058b035f",
+     "job_type": "kling_o3_flf",
+     "credits": 6.25,
+     "at": "2026-10-22T10:51:46.431863Z",
+     "prompt": "A seamless ambient loop of this exact scene: gentle ripples drift across the calm water with soft reflections, the pink and blue sunset sky glows softly, the plant's leaves barely stir, the gold columns gleam steadily. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+     "aspect": "9:16",
+     "size": [
+      720,
+      1280
+     ]
+    }
+   },
+   "credits": 8.25,
+   "prompt": "A seamless ambient loop of this exact scene: gentle ripples drift across the calm water with soft reflections, the pink and blue sunset sky glows softly, the plant's leaves barely stir, the gold columns gleam steadily. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+   "encoded": {
+    "file": "cove-portrait.mp4",
+    "crf": 23,
+    "bytes": 1142902,
+    "sha256": "151cb6d5017d4da2d6b758b0d81c45736861c62fbcbcfdfa57021082dfe8737a",
+    "width": 720,
+    "height": 1280,
+    "frames": 120,
+    "fps": 24,
+    "duration": 5,
+    "tried": [
+     {
+      "crf": 18,
+      "bytes": 2094095
+     },
+     {
+      "crf": 19,
+      "bytes": 1856116
+     },
+     {
+      "crf": 20,
+      "bytes": 1643616
+     },
+     {
+      "crf": 21,
+      "bytes": 1455890
+     },
+     {
+      "crf": 22,
+      "bytes": 1291865
+     },
+     {
+      "crf": 23,
+      "bytes": 1142902
+     }
+    ]
+   },
+   "matrix": {
+    "chosen": "bt601",
+    "mad_against_still": {
+     "bt601": {
+      "mean": 3.005,
+      "channel": [
+       3.212,
+       2.776,
+       3.028
+      ]
+     },
+     "bt709": {
+      "mean": 3.566,
+      "channel": [
+       3.261,
+       3.986,
+       3.45
+      ]
+     }
+    }
+   },
+   "check": {
+    "boxes": [
+     "ftyp",
+     "moov",
+     "free",
+     "mdat"
+    ],
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "tags": "bt709 iec61966-2-1 bt709 tv",
+    "first_frame_from_raw": {
+     "mean": 1.797,
+     "channel": [
+      1.916,
+      1.479,
+      1.995
+     ]
+    },
+    "last_frame_from_raw": {
+     "mean": 3.685,
+     "channel": [
+      4.026,
+      3.293,
+      3.737
+     ]
+    }
+   },
+   "posters": {
+    "avif": {
+     "file": "cove-portrait.avif",
+     "bytes": 47674,
+     "line": 81920,
+     "quality": 60,
+     "floor": 45,
+     "width": 720,
+     "height": 1280
+    },
+    "webp": {
+     "file": "cove-portrait.webp",
+     "bytes": 55226,
+     "line": 131072,
+     "quality": 80,
+     "floor": 60,
+     "width": 720,
+     "height": 1280
+    }
+   },
+   "flash": "pending",
+   "approval": {
+    "date": "2026-10-22",
+    "words": "All ten backgrounds are approved."
+   }
+  },
+  {
+   "id": "grove",
+   "order": 2,
+   "class": "wide",
+   "about": "the green forest",
+   "source": {
+    "sums": "assets-src/room/flux/SHA256SUMS",
+    "sha256": "497c711dae33706eb9bf7f92ebaca0eede7a0afa868964f209ddb64a3cd538a0",
+    "bytes": 1323170,
+    "width": 1328,
+    "height": 692,
+    "frames": 121,
+    "tags": "none",
+    "frame120_from_frame0": {
+     "mean": 1.205,
+     "channel": [
+      1.14,
+      1.144,
+      1.33
+     ]
+    },
+    "frame1_from_frame0": {
+     "mean": 0.15,
+     "channel": [
+      0.147,
+      0.145,
+      0.158
+     ]
+    },
+    "still": {
+     "sha256": "94e058595886371dd376ea77a0200a02c940f6d0b10ebb057fd1c75b117b7463",
+     "bytes": 1967380,
+     "width": 1700,
+     "height": 884,
+     "compared_at": {
+      "width": 1328,
+      "height": 692
+     }
+    }
+   },
+   "jobs": {
+    "inpaint": [
+     {
+      "id": "14de6b54-3354-43a6-a22a-13a08ec0b1f9",
+      "job_type": "nano_banana_2_1",
+      "credits": 2,
+      "at": "2026-10-22T10:27:40.639467Z",
+      "prompt": "Replace the dark bottle and the dark jar at the base of the tree with ferns, moss and broad green leaves continuing the surrounding rainforest undergrowth, so no bottle, jar or container remains. Same green light and mist, photoreal 3D render look. Nothing else changes.",
+      "aspect": "auto",
+      "size": [
+       2830,
+       1472
+      ]
+     },
+     {
+      "id": null,
+      "job_type": "nano_banana_2_1",
+      "credits": 2,
+      "note": "a second masked inpaint on the grove still after the one on record; its record was not kept, so its id is unknown"
+     }
+    ],
+    "loop": {
+     "id": "60f4afba-2291-4fdb-8562-d93e98bb8a71",
+     "job_type": "kling_o3_flf",
+     "credits": 6.25,
+     "at": "2026-10-22T10:41:17.521045Z",
+     "prompt": "A seamless ambient loop of this exact scene: thin mist drifts slowly over the far lake and hills, the ferns and broad leaves sway very gently in a light breeze, the tree's leaves barely stir, the green ring light glows steadily. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+     "aspect": "16:9",
+     "size": [
+      1280,
+      720
+     ]
+    }
+   },
+   "credits": 10.25,
+   "prompt": "A seamless ambient loop of this exact scene: thin mist drifts slowly over the far lake and hills, the ferns and broad leaves sway very gently in a light breeze, the tree's leaves barely stir, the green ring light glows steadily. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+   "encoded": {
+    "file": "grove-wide.mp4",
+    "crf": 18,
+    "bytes": 1158911,
+    "sha256": "54d7512111145bbff5b7c3c8c3f1cf3a9dfc8fb46025cf254055befb31eab4ab",
+    "width": 1328,
+    "height": 692,
+    "frames": 120,
+    "fps": 24,
+    "duration": 5,
+    "tried": [
+     {
+      "crf": 18,
+      "bytes": 1158911
+     }
+    ]
+   },
+   "matrix": {
+    "chosen": "bt601",
+    "mad_against_still": {
+     "bt601": {
+      "mean": 3.427,
+      "channel": [
+       3.651,
+       3.03,
+       3.599
+      ]
+     },
+     "bt709": {
+      "mean": 5.279,
+      "channel": [
+       5.078,
+       6.136,
+       4.623
+      ]
+     }
+    }
+   },
+   "check": {
+    "boxes": [
+     "ftyp",
+     "moov",
+     "free",
+     "mdat"
+    ],
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "tags": "bt709 iec61966-2-1 bt709 tv",
+    "first_frame_from_raw": {
+     "mean": 1.148,
+     "channel": [
+      1.115,
+      1.06,
+      1.269
+     ]
+    },
+    "last_frame_from_raw": {
+     "mean": 1.579,
+     "channel": [
+      1.441,
+      1.554,
+      1.742
+     ]
+    }
+   },
+   "posters": {
+    "avif": {
+     "file": "grove-wide.avif",
+     "bytes": 44231,
+     "line": 112640,
+     "quality": 60,
+     "floor": 45,
+     "width": 1280,
+     "height": 666
+    },
+    "webp": {
+     "file": "grove-wide.webp",
+     "bytes": 50342,
+     "line": 180224,
+     "quality": 80,
+     "floor": 60,
+     "width": 1280,
+     "height": 666
+    }
+   },
+   "flash": "pending",
+   "approval": {
+    "date": "2026-10-22",
+    "words": "All ten backgrounds are approved."
+   }
+  },
+  {
+   "id": "grove",
+   "order": 2,
+   "class": "portrait",
+   "about": "the green forest",
+   "source": {
+    "sums": "assets-src/room/flux/SHA256SUMS",
+    "sha256": "e0cc543c2d19d962a94eeff38bff092172e1ed29126b5a6cd6ac84d475d3d7c3",
+    "bytes": 1684138,
+    "width": 720,
+    "height": 1280,
+    "frames": 121,
+    "tags": "none",
+    "frame120_from_frame0": {
+     "mean": 1.601,
+     "channel": [
+      1.526,
+      1.524,
+      1.752
+     ]
+    },
+    "frame1_from_frame0": {
+     "mean": 0.114,
+     "channel": [
+      0.11,
+      0.109,
+      0.123
+     ]
+    },
+    "still": {
+     "sha256": "378897d2780a8b5b2d2cb38f049647699f0b9b0956e2fb4797bebe2fe00ac8b6",
+     "bytes": 1459726,
+     "width": 788,
+     "height": 1401,
+     "compared_at": {
+      "width": 720,
+      "height": 1280
+     }
+    }
+   },
+   "jobs": {
+    "inpaint": [
+     {
+      "id": "bd12724b-6f41-472c-9242-ca1ab296670a",
+      "job_type": "nano_banana_2_1",
+      "credits": 2,
+      "at": "2026-10-22T10:34:08.466212Z",
+      "prompt": "Extend this scene into a tall portrait frame. At the top, continue the wooden slatted ceiling and the glowing ring light naturally; at the bottom, continue the dense rainforest undergrowth of ferns, moss and broad leaves. Same materials, same soft green light and mist, same colours, seamless, photoreal 3D render look. No new objects, no people, no text.",
+      "aspect": "auto",
+      "size": [
+       1536,
+       2752
+      ]
+     }
+    ],
+    "loop": {
+     "id": "b99020ae-cf85-4e17-ad1e-c3ba31223443",
+     "job_type": "kling_o3_flf",
+     "credits": 6.25,
+     "at": "2026-10-22T10:43:58.602687Z",
+     "prompt": "A seamless ambient loop of this exact scene: thin mist drifts slowly over the far lake and hills, the ferns and broad leaves sway very gently in a light breeze, the tree's leaves barely stir, the green ring light glows steadily. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+     "aspect": "9:16",
+     "size": [
+      720,
+      1280
+     ]
+    }
+   },
+   "credits": 8.25,
+   "prompt": "A seamless ambient loop of this exact scene: thin mist drifts slowly over the far lake and hills, the ferns and broad leaves sway very gently in a light breeze, the tree's leaves barely stir, the green ring light glows steadily. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+   "encoded": {
+    "file": "grove-portrait.mp4",
+    "crf": 19,
+    "bytes": 1138258,
+    "sha256": "3e847c9a5af76464975e3106a5069cd8ea4b42b5041d561af42438b3c79d34fe",
+    "width": 720,
+    "height": 1280,
+    "frames": 120,
+    "fps": 24,
+    "duration": 5,
+    "tried": [
+     {
+      "crf": 18,
+      "bytes": 1308383
+     },
+     {
+      "crf": 19,
+      "bytes": 1138258
+     }
+    ]
+   },
+   "matrix": {
+    "chosen": "bt601",
+    "mad_against_still": {
+     "bt601": {
+      "mean": 3.329,
+      "channel": [
+       3.714,
+       2.826,
+       3.447
+      ]
+     },
+     "bt709": {
+      "mean": 5.492,
+      "channel": [
+       5.361,
+       6.414,
+       4.7
+      ]
+     }
+    }
+   },
+   "check": {
+    "boxes": [
+     "ftyp",
+     "moov",
+     "free",
+     "mdat"
+    ],
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "tags": "bt709 iec61966-2-1 bt709 tv",
+    "first_frame_from_raw": {
+     "mean": 1.339,
+     "channel": [
+      1.307,
+      1.138,
+      1.57
+     ]
+    },
+    "last_frame_from_raw": {
+     "mean": 1.995,
+     "channel": [
+      1.845,
+      1.876,
+      2.262
+     ]
+    }
+   },
+   "posters": {
+    "avif": {
+     "file": "grove-portrait.avif",
+     "bytes": 51135,
+     "line": 81920,
+     "quality": 60,
+     "floor": 45,
+     "width": 720,
+     "height": 1280
+    },
+    "webp": {
+     "file": "grove-portrait.webp",
+     "bytes": 62454,
+     "line": 131072,
+     "quality": 80,
+     "floor": 60,
+     "width": 720,
+     "height": 1280
+    }
+   },
+   "flash": "pending",
+   "approval": {
+    "date": "2026-10-22",
+    "words": "All ten backgrounds are approved."
+   }
+  },
+  {
+   "id": "ember",
+   "order": 3,
+   "class": "wide",
+   "about": "the red sunset",
+   "source": {
+    "sums": "assets-src/room/flux/SHA256SUMS",
+    "sha256": "f46d271c24553603a43fee1998def4c9451dc07c60da91cea7f3b1ccf9c4e517",
+    "bytes": 1023766,
+    "width": 1328,
+    "height": 692,
+    "frames": 121,
+    "tags": "none",
+    "frame120_from_frame0": {
+     "mean": 1.251,
+     "channel": [
+      1.399,
+      1.124,
+      1.23
+     ]
+    },
+    "frame1_from_frame0": {
+     "mean": 0.187,
+     "channel": [
+      0.185,
+      0.172,
+      0.205
+     ]
+    },
+    "still": {
+     "sha256": "d5f479eebb1e104ae26ca6388f31c0006ed34e7ef23ca13ada39d6e5b309f48c",
+     "bytes": 1595814,
+     "width": 1700,
+     "height": 884,
+     "compared_at": {
+      "width": 1328,
+      "height": 692
+     }
+    }
+   },
+   "jobs": {
+    "inpaint": [
+     {
+      "id": "2b636f06-6a1f-49be-9bae-7d0e29830af6",
+      "job_type": "nano_banana_2_1",
+      "credits": 2,
+      "at": "2026-10-22T10:23:43.718713Z",
+      "prompt": "Remove the bottles and jars from the round ledge on the right and the small cup and little side table on the left completely, leaving bare smooth surfaces and bare floor. Keep the sunset, the sea, the leaning stone slab, the wet dark stone floor with its flat slabs, the glass walls and everything else exactly as they are. Photoreal 3D render look matching the scene.",
+      "aspect": "auto",
+      "size": [
+       2830,
+       1472
+      ]
+     }
+    ],
+    "loop": {
+     "id": "e02995d2-feaa-45e1-94b1-1107e536558c",
+     "job_type": "kling_o3_flf",
+     "credits": 6.25,
+     "at": "2026-10-22T10:36:23.934708Z",
+     "prompt": "A seamless ambient loop of this exact scene: soft waves roll slowly on the distant sea, thin clouds drift, the setting sun glows, light shimmers gently on the wet stone floor, the glass walls shimmer faintly. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+     "aspect": "16:9",
+     "size": [
+      1280,
+      720
+     ]
+    }
+   },
+   "credits": 8.25,
+   "prompt": "A seamless ambient loop of this exact scene: soft waves roll slowly on the distant sea, thin clouds drift, the setting sun glows, light shimmers gently on the wet stone floor, the glass walls shimmer faintly. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+   "encoded": {
+    "file": "ember-wide.mp4",
+    "crf": 18,
+    "bytes": 953779,
+    "sha256": "30300ba9d1cb6fbe0376df7318bd5d1676217800117086dbd3df6ad7f8720bb1",
+    "width": 1328,
+    "height": 692,
+    "frames": 120,
+    "fps": 24,
+    "duration": 5,
+    "tried": [
+     {
+      "crf": 18,
+      "bytes": 953779
+     }
+    ]
+   },
+   "matrix": {
+    "chosen": "bt601",
+    "mad_against_still": {
+     "bt601": {
+      "mean": 2.832,
+      "channel": [
+       3.16,
+       2.335,
+       3.002
+      ]
+     },
+     "bt709": {
+      "mean": 5.094,
+      "channel": [
+       5.334,
+       4.732,
+       5.216
+      ]
+     }
+    }
+   },
+   "check": {
+    "boxes": [
+     "ftyp",
+     "moov",
+     "free",
+     "mdat"
+    ],
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "tags": "bt709 iec61966-2-1 bt709 tv",
+    "first_frame_from_raw": {
+     "mean": 1.117,
+     "channel": [
+      1.099,
+      1.018,
+      1.233
+     ]
+    },
+    "last_frame_from_raw": {
+     "mean": 1.592,
+     "channel": [
+      1.622,
+      1.485,
+      1.67
+     ]
+    }
+   },
+   "posters": {
+    "avif": {
+     "file": "ember-wide.avif",
+     "bytes": 27936,
+     "line": 112640,
+     "quality": 60,
+     "floor": 45,
+     "width": 1280,
+     "height": 666
+    },
+    "webp": {
+     "file": "ember-wide.webp",
+     "bytes": 32736,
+     "line": 180224,
+     "quality": 80,
+     "floor": 60,
+     "width": 1280,
+     "height": 666
+    }
+   },
+   "flash": "pending",
+   "approval": {
+    "date": "2026-10-22",
+    "words": "All ten backgrounds are approved."
+   }
+  },
+  {
+   "id": "ember",
+   "order": 3,
+   "class": "portrait",
+   "about": "the red sunset",
+   "source": {
+    "sums": "assets-src/room/flux/SHA256SUMS",
+    "sha256": "e604830d3e565cd142881121c8ed7084765b896f5eb6123ffa9e27a3e5effa6d",
+    "bytes": 895270,
+    "width": 720,
+    "height": 1280,
+    "frames": 121,
+    "tags": "none",
+    "frame120_from_frame0": {
+     "mean": 1.035,
+     "channel": [
+      1.148,
+      0.898,
+      1.06
+     ]
+    },
+    "frame1_from_frame0": {
+     "mean": 0.125,
+     "channel": [
+      0.12,
+      0.111,
+      0.143
+     ]
+    },
+    "still": {
+     "sha256": "a95921673c17735a43d4f868900e5706d984cb71e1222118716476e32d2a72d8",
+     "bytes": 1162726,
+     "width": 788,
+     "height": 1401,
+     "compared_at": {
+      "width": 720,
+      "height": 1280
+     }
+    }
+   },
+   "jobs": {
+    "inpaint": [
+     {
+      "id": "abee60bc-8bce-4276-a554-af51270cc970",
+      "job_type": "nano_banana_2_1",
+      "credits": 2,
+      "at": "2026-10-22T10:30:10.268027Z",
+      "prompt": "Extend this scene into a tall portrait frame. At the top, continue the dark concrete roof slab naturally; at the bottom, continue the wet dark stone floor with its flat slabs and sunset reflections. Same materials, same red sunset lighting, same colours, seamless, photoreal 3D render look. No new objects, no people, no text.",
+      "aspect": "auto",
+      "size": [
+       1536,
+       2752
+      ]
+     }
+    ],
+    "loop": {
+     "id": "8e105771-58b1-47e5-bc91-b09b42fdae2b",
+     "job_type": "kling_o3_flf",
+     "credits": 6.25,
+     "at": "2026-10-22T10:46:23.565372Z",
+     "prompt": "A seamless ambient loop of this exact scene: soft waves roll slowly on the distant sea, thin clouds drift, the setting sun glows, light shimmers gently on the wet stone floor, the glass walls shimmer faintly. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+     "aspect": "9:16",
+     "size": [
+      720,
+      1280
+     ]
+    }
+   },
+   "credits": 8.25,
+   "prompt": "A seamless ambient loop of this exact scene: soft waves roll slowly on the distant sea, thin clouds drift, the setting sun glows, light shimmers gently on the wet stone floor, the glass walls shimmer faintly. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+   "encoded": {
+    "file": "ember-portrait.mp4",
+    "crf": 18,
+    "bytes": 946363,
+    "sha256": "9c572af53538ff0357c2a614f8b0b39d477737358e6c4579bda7e10fa8dd1c9e",
+    "width": 720,
+    "height": 1280,
+    "frames": 120,
+    "fps": 24,
+    "duration": 5,
+    "tried": [
+     {
+      "crf": 18,
+      "bytes": 946363
+     }
+    ]
+   },
+   "matrix": {
+    "chosen": "bt601",
+    "mad_against_still": {
+     "bt601": {
+      "mean": 2.665,
+      "channel": [
+       3.063,
+       2.127,
+       2.805
+      ]
+     },
+     "bt709": {
+      "mean": 4.791,
+      "channel": [
+       4.811,
+       4.515,
+       5.046
+      ]
+     }
+    }
+   },
+   "check": {
+    "boxes": [
+     "ftyp",
+     "moov",
+     "free",
+     "mdat"
+    ],
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "tags": "bt709 iec61966-2-1 bt709 tv",
+    "first_frame_from_raw": {
+     "mean": 1.039,
+     "channel": [
+      0.994,
+      0.962,
+      1.161
+     ]
+    },
+    "last_frame_from_raw": {
+     "mean": 1.376,
+     "channel": [
+      1.376,
+      1.251,
+      1.501
+     ]
+    }
+   },
+   "posters": {
+    "avif": {
+     "file": "ember-portrait.avif",
+     "bytes": 28860,
+     "line": 81920,
+     "quality": 60,
+     "floor": 45,
+     "width": 720,
+     "height": 1280
+    },
+    "webp": {
+     "file": "ember-portrait.webp",
+     "bytes": 30828,
+     "line": 131072,
+     "quality": 80,
+     "floor": 60,
+     "width": 720,
+     "height": 1280
+    }
+   },
+   "flash": "pending",
+   "approval": {
+    "date": "2026-10-22",
+    "words": "All ten backgrounds are approved."
+   }
+  },
+  {
+   "id": "palace",
+   "order": 4,
+   "class": "wide",
+   "about": "the pink marble palace",
+   "source": {
+    "sums": "assets-src/room/flux/SHA256SUMS",
+    "sha256": "a25ca20abfc53a1a4507528e2570756a740fd1b6046abf5ff935a1555b0c2aad",
+    "bytes": 1254815,
+    "width": 1328,
+    "height": 692,
+    "frames": 121,
+    "tags": "none",
+    "frame120_from_frame0": {
+     "mean": 1.225,
+     "channel": [
+      1.315,
+      1.1,
+      1.26
+     ]
+    },
+    "frame1_from_frame0": {
+     "mean": 0.047,
+     "channel": [
+      0.045,
+      0.044,
+      0.053
+     ]
+    },
+    "still": {
+     "sha256": "02152fbf22ad1499294aec78fce99594a6be241d1acdcc92c2d17fe8b09d8d68",
+     "bytes": 1737820,
+     "width": 1700,
+     "height": 884,
+     "compared_at": {
+      "width": 1328,
+      "height": 692
+     }
+    }
+   },
+   "jobs": {
+    "inpaint": [
+     {
+      "id": "278b99ad-91c8-4ecf-ad16-6f5101bf7c7f",
+      "job_type": "nano_banana_2_1",
+      "credits": 2,
+      "at": "2026-10-22T10:18:46.569685Z",
+      "prompt": "Remove every candle and every small bottle completely. Replace the rippling pink water floor with a polished royal palace marble floor: cream and pale rose veined marble with a soft mirror-like sheen reflecting the sunset light, continuing flat under the ledges and between the stone pedestals, no water anywhere. Keep the statues, the columns, the plants, the large white stone, the lattice screens, the ceiling and the sea view exactly as they are. Photoreal 3D render look matching the scene.",
+      "aspect": "auto",
+      "size": [
+       2752,
+       1536
+      ]
+     }
+    ],
+    "loop": {
+     "id": "228de375-0a4e-4af2-9976-39da5fd37443",
+     "job_type": "kling_o3_flf",
+     "credits": 6.25,
+     "at": "2026-10-22T10:37:42.418549Z",
+     "prompt": "A seamless ambient loop of this exact scene: soft waves roll slowly on the distant sea, the pink sunset glows, the plants' leaves barely stir, soft light reflections glide across the polished marble floor. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+     "aspect": "16:9",
+     "size": [
+      1280,
+      720
+     ]
+    }
+   },
+   "credits": 8.25,
+   "prompt": "A seamless ambient loop of this exact scene: soft waves roll slowly on the distant sea, the pink sunset glows, the plants' leaves barely stir, soft light reflections glide across the polished marble floor. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+   "encoded": {
+    "file": "palace-wide.mp4",
+    "crf": 18,
+    "bytes": 1122865,
+    "sha256": "1b8fab6d014447f5c267902b127ba4422a340b1d7740a9f1135c8abd2526816e",
+    "width": 1328,
+    "height": 692,
+    "frames": 120,
+    "fps": 24,
+    "duration": 5,
+    "tried": [
+     {
+      "crf": 18,
+      "bytes": 1122865
+     }
+    ]
+   },
+   "matrix": {
+    "chosen": "bt601",
+    "mad_against_still": {
+     "bt601": {
+      "mean": 3.163,
+      "channel": [
+       3.526,
+       2.697,
+       3.266
+      ]
+     },
+     "bt709": {
+      "mean": 4.56,
+      "channel": [
+       4.264,
+       5.054,
+       4.361
+      ]
+     }
+    }
+   },
+   "check": {
+    "boxes": [
+     "ftyp",
+     "moov",
+     "free",
+     "mdat"
+    ],
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "tags": "bt709 iec61966-2-1 bt709 tv",
+    "first_frame_from_raw": {
+     "mean": 1.182,
+     "channel": [
+      1.229,
+      0.999,
+      1.317
+     ]
+    },
+    "last_frame_from_raw": {
+     "mean": 1.481,
+     "channel": [
+      1.553,
+      1.311,
+      1.579
+     ]
+    }
+   },
+   "posters": {
+    "avif": {
+     "file": "palace-wide.avif",
+     "bytes": 40266,
+     "line": 112640,
+     "quality": 60,
+     "floor": 45,
+     "width": 1280,
+     "height": 666
+    },
+    "webp": {
+     "file": "palace-wide.webp",
+     "bytes": 47174,
+     "line": 180224,
+     "quality": 80,
+     "floor": 60,
+     "width": 1280,
+     "height": 666
+    }
+   },
+   "flash": "pending",
+   "approval": {
+    "date": "2026-10-22",
+    "words": "All ten backgrounds are approved."
+   }
+  },
+  {
+   "id": "palace",
+   "order": 4,
+   "class": "portrait",
+   "about": "the pink marble palace",
+   "source": {
+    "sums": "assets-src/room/flux/SHA256SUMS",
+    "sha256": "73cdefe9a18f6526e35421674d7ec8852e9ea055f9105b2ed7669026c034bda5",
+    "bytes": 2076897,
+    "width": 720,
+    "height": 1280,
+    "frames": 121,
+    "tags": "none",
+    "frame120_from_frame0": {
+     "mean": 1.851,
+     "channel": [
+      1.96,
+      1.709,
+      1.884
+     ]
+    },
+    "frame1_from_frame0": {
+     "mean": 0.157,
+     "channel": [
+      0.152,
+      0.15,
+      0.17
+     ]
+    },
+    "still": {
+     "sha256": "f4d05e4f9c05ddde273a0c9e203ea5af45ab1ef1b43db8b6687cf5428b568ebb",
+     "bytes": 1342971,
+     "width": 788,
+     "height": 1401,
+     "compared_at": {
+      "width": 720,
+      "height": 1280
+     }
+    }
+   },
+   "jobs": {
+    "inpaint": [
+     {
+      "id": "957816a9-acde-4dfc-b6d3-9044ec750310",
+      "job_type": "nano_banana_2_1",
+      "credits": 2,
+      "at": "2026-10-22T10:31:20.83425Z",
+      "prompt": "Extend this scene into a tall portrait frame. At the top, continue the carved stone ceiling around the round skylight naturally; at the bottom, continue the polished cream and rose marble floor with its soft reflections. Same materials, same pink sunset lighting, same colours, seamless, photoreal 3D render look. No new objects, no people, no text.",
+      "aspect": "auto",
+      "size": [
+       1440,
+       2912
+      ]
+     }
+    ],
+    "loop": {
+     "id": "d02c1b78-7bab-4e46-a837-a97004f62c8a",
+     "job_type": "kling_o3_flf",
+     "credits": 6.25,
+     "at": "2026-10-22T10:48:02.527664Z",
+     "prompt": "A seamless ambient loop of this exact scene: soft waves roll slowly on the distant sea, the pink sunset glows, the plants' leaves barely stir, soft light reflections glide across the polished marble floor. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+     "aspect": "9:16",
+     "size": [
+      720,
+      1280
+     ]
+    }
+   },
+   "credits": 8.25,
+   "prompt": "A seamless ambient loop of this exact scene: soft waves roll slowly on the distant sea, the pink sunset glows, the plants' leaves barely stir, soft light reflections glide across the polished marble floor. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+   "encoded": {
+    "file": "palace-portrait.mp4",
+    "crf": 20,
+    "bytes": 1079781,
+    "sha256": "473cf6243f06e08e487ea4abe1bd1e4f9e270347791fc2e0d2c41d3d0c9c8c25",
+    "width": 720,
+    "height": 1280,
+    "frames": 120,
+    "fps": 24,
+    "duration": 5,
+    "tried": [
+     {
+      "crf": 18,
+      "bytes": 1401928
+     },
+     {
+      "crf": 19,
+      "bytes": 1231978
+     },
+     {
+      "crf": 20,
+      "bytes": 1079781
+     }
+    ]
+   },
+   "matrix": {
+    "chosen": "bt601",
+    "mad_against_still": {
+     "bt601": {
+      "mean": 2.901,
+      "channel": [
+       3.066,
+       2.671,
+       2.966
+      ]
+     },
+     "bt709": {
+      "mean": 4.532,
+      "channel": [
+       4.239,
+       5.149,
+       4.209
+      ]
+     }
+    }
+   },
+   "check": {
+    "boxes": [
+     "ftyp",
+     "moov",
+     "free",
+     "mdat"
+    ],
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "tags": "bt709 iec61966-2-1 bt709 tv",
+    "first_frame_from_raw": {
+     "mean": 1.325,
+     "channel": [
+      1.383,
+      1.115,
+      1.475
+     ]
+    },
+    "last_frame_from_raw": {
+     "mean": 2.174,
+     "channel": [
+      2.262,
+      1.98,
+      2.279
+     ]
+    }
+   },
+   "posters": {
+    "avif": {
+     "file": "palace-portrait.avif",
+     "bytes": 39869,
+     "line": 81920,
+     "quality": 60,
+     "floor": 45,
+     "width": 720,
+     "height": 1280
+    },
+    "webp": {
+     "file": "palace-portrait.webp",
+     "bytes": 44588,
+     "line": 131072,
+     "quality": 80,
+     "floor": 60,
+     "width": 720,
+     "height": 1280
+    }
+   },
+   "flash": "pending",
+   "approval": {
+    "date": "2026-10-22",
+    "words": "All ten backgrounds are approved."
+   }
+  },
+  {
+   "id": "dawn",
+   "order": 5,
+   "class": "wide",
+   "about": "the lilac curtains",
+   "source": {
+    "sums": "assets-src/room/flux/SHA256SUMS",
+    "sha256": "cbce6452f9962281c5d02261d265a5c175b1d5bfff72ced5c79167447c2e3cce",
+    "bytes": 523269,
+    "width": 1328,
+    "height": 692,
+    "frames": 121,
+    "tags": "bt709 bt709 bt709 tv",
+    "frame120_from_frame0": {
+     "mean": 0.968,
+     "channel": [
+      1.003,
+      0.819,
+      1.082
+     ]
+    },
+    "frame1_from_frame0": {
+     "mean": 0.12,
+     "channel": [
+      0.125,
+      0.099,
+      0.137
+     ]
+    },
+    "still": {
+     "sha256": "13564bb71c26bb3f1f9702a58db0819b575a5e5446a330b8f9b8c7396903442f",
+     "bytes": 1478648,
+     "width": 1700,
+     "height": 884,
+     "compared_at": {
+      "width": 1328,
+      "height": 692
+     }
+    }
+   },
+   "jobs": {
+    "inpaint": [
+     {
+      "id": "ac67de4f-fe5f-4ab5-8a39-8b729e08c07a",
+      "job_type": "nano_banana_2_1",
+      "credits": 2,
+      "at": "2026-10-22T10:22:12.258551Z",
+      "prompt": "Remove the wall-mounted vanity cabinet, the basin, the tap, the oval mirror, the bottles, the towels and the small plant completely, leaving nothing in their place. Continue the sheer white vertical curtain wall and the soft lilac and peach light behind it seamlessly across the area. Keep everything else exactly as it is. Photoreal 3D render look matching the scene.",
+      "aspect": "auto",
+      "size": [
+       2830,
+       1472
+      ]
+     }
+    ],
+    "loop": {
+     "id": "7325b64e-faf2-47fa-9f93-c5604d090c70",
+     "job_type": "kling_o3_flf",
+     "credits": 6.25,
+     "at": "2026-10-22T10:39:03.675478Z",
+     "prompt": "A seamless ambient loop of this exact scene: the sheer white curtains sway very gently, purple fog drifts slowly along the floor, the birds glide slowly, the stars twinkle faintly, the soft dawn glow breathes. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+     "aspect": "16:9",
+     "size": [
+      1280,
+      720
+     ]
+    }
+   },
+   "credits": 8.25,
+   "prompt": "A seamless ambient loop of this exact scene: the sheer white curtains sway very gently, purple fog drifts slowly along the floor, the birds glide slowly, the stars twinkle faintly, the soft dawn glow breathes. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+   "encoded": {
+    "file": "dawn-wide.mp4",
+    "crf": 18,
+    "bytes": 632997,
+    "sha256": "2023a67f511c032b0f40bce5b5fd5695f1db78562645d520f8d9e9ac1a98444e",
+    "width": 1328,
+    "height": 692,
+    "frames": 120,
+    "fps": 24,
+    "duration": 5,
+    "tried": [
+     {
+      "crf": 18,
+      "bytes": 632997
+     }
+    ]
+   },
+   "matrix": {
+    "chosen": "bt709",
+    "mad_against_still": {
+     "bt601": {
+      "mean": 4.328,
+      "channel": [
+       4.558,
+       5.579,
+       2.845
+      ]
+     },
+     "bt709": {
+      "mean": 2.899,
+      "channel": [
+       3.046,
+       2.61,
+       3.041
+      ]
+     }
+    }
+   },
+   "check": {
+    "boxes": [
+     "ftyp",
+     "moov",
+     "free",
+     "mdat"
+    ],
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "tags": "bt709 iec61966-2-1 bt709 tv",
+    "first_frame_from_raw": {
+     "mean": 0.507,
+     "channel": [
+      0.519,
+      0.407,
+      0.594
+     ]
+    },
+    "last_frame_from_raw": {
+     "mean": 0.999,
+     "channel": [
+      1.034,
+      0.826,
+      1.137
+     ]
+    }
+   },
+   "posters": {
+    "avif": {
+     "file": "dawn-wide.avif",
+     "bytes": 17525,
+     "line": 112640,
+     "quality": 60,
+     "floor": 45,
+     "width": 1280,
+     "height": 666
+    },
+    "webp": {
+     "file": "dawn-wide.webp",
+     "bytes": 20112,
+     "line": 180224,
+     "quality": 80,
+     "floor": 60,
+     "width": 1280,
+     "height": 666
+    }
+   },
+   "flash": "pending",
+   "approval": {
+    "date": "2026-10-22",
+    "words": "All ten backgrounds are approved."
+   }
+  },
+  {
+   "id": "dawn",
+   "order": 5,
+   "class": "portrait",
+   "about": "the lilac curtains",
+   "source": {
+    "sums": "assets-src/room/flux/SHA256SUMS",
+    "sha256": "ca1b3f06bef50b0fc5ae3fbd2ceda539a841ae42b9a9f8579a52c4ac147eb9ca",
+    "bytes": 570938,
+    "width": 720,
+    "height": 1280,
+    "frames": 121,
+    "tags": "none",
+    "frame120_from_frame0": {
+     "mean": 0.965,
+     "channel": [
+      1.002,
+      0.828,
+      1.066
+     ]
+    },
+    "frame1_from_frame0": {
+     "mean": 0.08,
+     "channel": [
+      0.081,
+      0.071,
+      0.09
+     ]
+    },
+    "still": {
+     "sha256": "1701f6f2590744c88eb91440154133b182a5614e125dfbd569bf718c44c9e8d6",
+     "bytes": 1089590,
+     "width": 788,
+     "height": 1401,
+     "compared_at": {
+      "width": 720,
+      "height": 1280
+     }
+    }
+   },
+   "jobs": {
+    "inpaint": [
+     {
+      "id": "a1c0d67d-8c0d-4b81-ab83-0fe9849cbadc",
+      "job_type": "nano_banana_2_1",
+      "credits": 2,
+      "at": "2026-10-22T10:32:32.246997Z",
+      "prompt": "Extend this scene into a tall portrait frame. At the top, continue the dark starry disc ceiling and the soft lilac wall above it naturally; at the bottom, continue the misty reflective floor with the drifting purple fog. Same materials, same soft lilac and peach dawn lighting, same colours, seamless, photoreal 3D render look. No new objects, no people, no text.",
+      "aspect": "auto",
+      "size": [
+       1408,
+       3040
+      ]
+     }
+    ],
+    "loop": {
+     "id": "37e286a6-703b-4203-95ad-182b268bd2dc",
+     "job_type": "kling_o3_flf",
+     "credits": 6.25,
+     "at": "2026-10-22T10:49:17.410534Z",
+     "prompt": "A seamless ambient loop of this exact scene: the sheer white curtains sway very gently, purple fog drifts slowly along the floor, the stars twinkle faintly, the soft dawn glow breathes. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+     "aspect": "9:16",
+     "size": [
+      720,
+      1280
+     ]
+    }
+   },
+   "credits": 8.25,
+   "prompt": "A seamless ambient loop of this exact scene: the sheer white curtains sway very gently, purple fog drifts slowly along the floor, the stars twinkle faintly, the soft dawn glow breathes. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+   "encoded": {
+    "file": "dawn-portrait.mp4",
+    "crf": 18,
+    "bytes": 667127,
+    "sha256": "ed304227c6d3085ac22e27eb65c64dce4c7f2deb4a7104a41323cfc69d01186e",
+    "width": 720,
+    "height": 1280,
+    "frames": 120,
+    "fps": 24,
+    "duration": 5,
+    "tried": [
+     {
+      "crf": 18,
+      "bytes": 667127
+     }
+    ]
+   },
+   "matrix": {
+    "chosen": "bt709",
+    "mad_against_still": {
+     "bt601": {
+      "mean": 2.319,
+      "channel": [
+       2.643,
+       1.949,
+       2.364
+      ]
+     },
+     "bt709": {
+      "mean": 2.045,
+      "channel": [
+       1.775,
+       1.61,
+       2.75
+      ]
+     }
+    }
+   },
+   "check": {
+    "boxes": [
+     "ftyp",
+     "moov",
+     "free",
+     "mdat"
+    ],
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "tags": "bt709 iec61966-2-1 bt709 tv",
+    "first_frame_from_raw": {
+     "mean": 0.379,
+     "channel": [
+      0.388,
+      0.31,
+      0.44
+     ]
+    },
+    "last_frame_from_raw": {
+     "mean": 0.981,
+     "channel": [
+      1.012,
+      0.817,
+      1.116
+     ]
+    }
+   },
+   "posters": {
+    "avif": {
+     "file": "dawn-portrait.avif",
+     "bytes": 17103,
+     "line": 81920,
+     "quality": 60,
+     "floor": 45,
+     "width": 720,
+     "height": 1280
+    },
+    "webp": {
+     "file": "dawn-portrait.webp",
+     "bytes": 18480,
+     "line": 131072,
+     "quality": 80,
+     "floor": 60,
+     "width": 720,
+     "height": 1280
+    }
+   },
+   "flash": "pending",
+   "approval": {
+    "date": "2026-10-22",
+    "words": "All ten backgrounds are approved."
+   }
+  }
+ ]
+}
