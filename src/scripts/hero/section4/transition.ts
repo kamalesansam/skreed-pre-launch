@@ -249,8 +249,13 @@ export interface TransitionPass {
   resize(w: number, h: number): void;
   /** the bubble's centre in device px from the frame's top left, or null for the frame's centre. Set it before the bubble starts: the end radius depends on it */
   centre(c: { x: number; y: number } | null): void;
-  /** the bubble ms after its start (bubbleMs long, clamped to Tune's range), from the hall's frame to the world's; returns the frame (reach for a scissor, done once every corner is the world's) */
-  bubble(from: Texture, to: Texture, ms: number, bubbleMs: number): BubbleFrame;
+  /**
+   * The bubble ms after its start (bubbleMs long, clamped to Tune's range), from the hall's frame to the scenes'; returns
+   * the frame (reach for a scissor, done once every corner is the scenes'). fade scales the outside's grey and dark (1 the
+   * spec's, 0 the hall's own frame): the way back runs the clock down and fades them with the circle's remaining radius,
+   * so nothing pops when the circle is gone (section-4-flux.md 4, "A backward gesture at scene 1").
+   */
+  bubble(from: Texture, to: Texture, ms: number, bubbleMs: number, fade?: number): BubbleFrame;
   /** reduced motion: the dissolve ms after its start (BUBBLE.dissolveMs long); returns its progress, 1 when done */
   dissolve(from: Texture, to: Texture, ms: number): number;
   /** a straight mix of the two frames by p (the fog's 'fade' hand-off) */
@@ -281,10 +286,11 @@ export function createTransition(renderer: WebGLRenderer): TransitionPass {
     get out() { return rt ? rt.texture : null; },
     resize(nw, nh) { w = Math.max(1, nw); h = Math.max(1, nh); rt?.dispose(); rt = new WebGLRenderTarget(w, h, { depthBuffer: false }); U.uRes.value.set(w, h); },
     centre(c) { at = c ? { x: c.x, y: c.y } : null; },
-    bubble(from, to, ms, bubbleMs) {
+    bubble(from, to, ms, bubbleMs, fade = 1) {
       const f = bubbleAt(ms, bubbleMs, at ? { w, h, cx: at.x, cy: at.y } : { w, h });
       bubbleModes(f, BUBBLE, modes);
-      U.uMode.value = 0; U.uR.value = f.R; U.uLens.value = f.lens;
+      const k = clamp01(fade);
+      U.uMode.value = 0; U.uR.value = f.R; U.uLens.value = f.lens; U.uGrey.value = BUBBLE.grey * k; U.uDark.value = 1 - (1 - BUBBLE.dark) * k;
       U.uC.value.set(f.cx, h - f.cy);   // the shader's frame has y up from the bottom
       for (let i = 0; i < 5; i++) U.uM.value[i].set(modes[2 * i], modes[2 * i + 1]);
       draw(from, to);

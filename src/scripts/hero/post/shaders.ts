@@ -51,3 +51,14 @@ export const compositeFrag = (s: CompositeSlots = {}): string => s.full ?? `
       if (cut > 0.0) s2 = ca(tB, vUv + vec2(0.0, parallaxY * cubicIn(1.0 - uProgress) + disp * (1.0 - cutDisp)), modulator, (1.0 - blurDiag) * n.y);
       gl_FragColor = vec4(clamp(mix(s1, s2, cut), 0.0, 1.0), 1.0);${s.fragOut ?? ''}
     }`;
+
+/**
+ * The cover input (docs/specs/section-4-flux.md 5, "The island modules"; hero-architecture.md 11.4 "Render targets and
+ * colour spaces"): the composite given tCloud and uCover, and its final write blending the cloud (premultiplied rgb and
+ * alpha, display values, section 4's carousel target) over its result while uCover is above 0. Both seams of section 4
+ * run through it; the fourth wipe's cut is retired (X-15). Applied to a whole fragment (the v11 composite's literal, so
+ * that literal stays the prototype's for tests/unit/glsl-v11.test.ts); a fragment without the anchors comes back as it is.
+ */
+export const withCover = (frag: string): string => frag
+  .replace('varying vec2 vUv;', 'uniform sampler2D tCloud; uniform float uCover; varying vec2 vUv;')
+  .replace('gl_FragColor = vec4(mix(uFlat, col, uIntro), 1.0); }', 'vec3 fin = mix(uFlat, col, uIntro); if (uCover > 0.0) { vec4 cl = texture2D(tCloud, vUv); fin = fin * (1.0 - cl.a) + cl.rgb; } gl_FragColor = vec4(fin, 1.0); }');

@@ -5,6 +5,8 @@
 // The logo and sky slots recompute the v9.10 output expression instead of reading gl_FragColor back, which gives the
 // same floats (the same operations, in the same order) without reading a fragment output.
 
+import { withCover } from '../post/shaders.ts';
+
 /** igloo's reveal helper, re-expressed in GLSL: a front that sweeps from s to e with a soft margin m, at progress p (iFallS: smooth) */
 export const IGL = `float iLin(float a, float b, float x){ return clamp((x - a) / (b - a), 0.0, 1.0); }
 float iFall(float x, float s, float e, float m, float p){ float M = m * sign(e - s), f = mix(s - M, e, p); return iLin(f + M, f, x); }
@@ -113,6 +115,9 @@ export const COMPOSITE_FRAG_V11 = `
       // section 2: the logo stays (never cut, never sliding), behind whatever section 2 draws in front of it
       if (uKeep > 0.0) { float m = texture2D(tM, vUv).r * (1.0 - texture2D(tS, vUv).a) * uKeep; col = mix(col, texture2D(tH, vUv).rgb, m); }
       gl_FragColor = vec4(mix(uFlat, col, uIntro), 1.0); }`;
+
+/** the v11 composite with section 4's cover input (post/shaders.ts withCover): what the island draws with */
+export const COMPOSITE_FRAG_V11_COVER = withCover(COMPOSITE_FRAG_V11);
 
 // ---- the intro's wire layers: the cage (the shockwave), the outline (the brick-edge wire) and the counting sprites
 export const CAGE_VERT = 'attribute vec3 aC; attribute float aPh; varying vec3 vC; varying float vPh; void main(){ vC = (modelMatrix * vec4(aC, 1.0)).xyz; vPh = aPh; gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0); }';

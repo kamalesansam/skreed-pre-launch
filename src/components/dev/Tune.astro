@@ -79,17 +79,19 @@
     <label for="r-promptChip">[E] before the prompt (0 off, 1 on) <output id="o-r-promptChip"></output><input id="r-promptChip" type="range" min="0" max="1" step="1"></label>
     <label for="r-handoff">Hand-off: 0 wipe, 1 cut, 2 fade <output id="o-r-handoff"></output><input id="r-handoff" type="range" min="0" max="2" step="1"></label>
     <label for="r-mouseLook">Mouse-look drag in the hall (0 off, 1 on) <output id="o-r-mouseLook"></output><input id="r-mouseLook" type="range" min="0" max="1" step="1"></label>
-    <h3>Section 4: the world (docs/specs/section-4-world.md; the entry's ranges are world.ts WORLD_RANGES)</h3>
-    <label for="r-bubbleMs">Bubble (ms) <output id="o-r-bubbleMs"></output><input id="r-bubbleMs" type="range" min="1200" max="2190" step="10"></label>
-    <label for="r-travelMs">Ring glide (ms) <output id="o-r-travelMs"></output><input id="r-travelMs" type="range" min="8000" max="12000" step="100"></label>
-    <label for="r-ringCount">Rings <output id="o-r-ringCount"></output><input id="r-ringCount" type="range" min="2" max="4" step="1"></label>
-    <label for="r-travelRoll">Roll through the rings (deg) <output id="o-r-travelRoll"></output><input id="r-travelRoll" type="range" min="0" max="33" step="1"></label>
-    <label for="r-morphMs">Particle morph (ms) <output id="o-r-morphMs"></output><input id="r-morphMs" type="range" min="1000" max="3000" step="100"></label>
-    <label for="r-enterPushMs">Push into land 1 (ms) <output id="o-r-enterPushMs"></output><input id="r-enterPushMs" type="range" min="600" max="2000" step="100"></label>
-    <label for="r-worldBloom">Bloom over the tunnel on laptops <output id="o-r-worldBloom"></output><input id="r-worldBloom" type="range" min="0" max="1" step="0.05"></label>
-    <label for="r-landTravelMs">Travel between lands (ms) <output id="o-r-landTravelMs"></output><input id="r-landTravelMs" type="range" min="2600" max="4500" step="100"></label>
-    <label for="r-parkTravel">Travel: 0 A depth, 1 B park, 2 C clips <output id="o-r-parkTravel"></output><input id="r-parkTravel" type="range" min="0" max="2" step="1"></label>
-    <label for="r-lapReset">Next lap: 0 stay in the world, 1 walk again <output id="o-r-lapReset"></output><input id="r-lapReset" type="range" min="0" max="1" step="1"></label>
+    <h3>Section 4: the scenes (docs/specs/section-4-flux.md 9 X-13; the ranges are config/room.ts ROOM_RANGES)</h3>
+    <label for="r-bubbleMs">Bubble (ms) <output id="o-r-bubbleMs"></output><input id="r-bubbleMs" type="range" min="1200" max="3200" step="10"></label>
+    <label for="r-stepMs">Step (ms) <output id="o-r-stepMs"></output><input id="r-stepMs" type="range" min="400" max="1200" step="10"></label>
+    <label for="r-sweepDeg">Arc, wide class (deg) <output id="o-r-sweepDeg"></output><input id="r-sweepDeg" type="range" min="40" max="120" step="1"></label>
+    <label for="r-sweepDegPortrait">Arc, portrait stage (deg) <output id="o-r-sweepDegPortrait"></output><input id="r-sweepDegPortrait" type="range" min="12" max="80" step="1"></label>
+    <label for="r-fovStep">Field of view at the pinch (deg) <output id="o-r-fovStep"></output><input id="r-fovStep" type="range" min="36" max="45" step="0.5"></label>
+    <label for="r-fovReturnAt">Pinch returns at (eased t) <output id="o-r-fovReturnAt"></output><input id="r-fovReturnAt" type="range" min="0.4" max="0.9" step="0.05"></label>
+    <label for="r-lightStart">Light-up threshold <output id="o-r-lightStart"></output><input id="r-lightStart" type="range" min="0.2" max="0.8" step="0.05"></label>
+    <label for="r-lightSoft">Light-up softness <output id="o-r-lightSoft"></output><input id="r-lightSoft" type="range" min="0.2" max="1" step="0.02"></label>
+    <label for="r-lightBoost">Light-up boost <output id="o-r-lightBoost"></output><input id="r-lightBoost" type="range" min="0" max="0.5" step="0.01"></label>
+    <label for="r-keyLightMs">Key light fade (ms) <output id="o-r-keyLightMs"></output><input id="r-keyLightMs" type="range" min="300" max="2000" step="50"></label>
+    <label for="r-snapMs">Glue settle (ms) <output id="o-r-snapMs"></output><input id="r-snapMs" type="range" min="200" max="900" step="10"></label>
+    <label for="r-lapReset">Next lap: 0 stay in the scenes, 1 walk again <output id="o-r-lapReset"></output><input id="r-lapReset" type="range" min="0" max="1" step="1"></label>
   </div>
 </details>
 <script>if (new URLSearchParams(location.search).has('tune')) import('../../scripts/dev/tune.ts');</script>

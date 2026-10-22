@@ -20,8 +20,9 @@ async function open(url: string, proto: boolean, opts: BrowserContextOptions): P
   await page.waitForFunction(() => !document.getElementById('intro') && typeof window.__skreedState === 'function', null, { timeout: 900_000, polling: 500 });
   return page;
 }
-// round 3: the port skips the intro here (?intro=0), as the v9.10 prototype has none; the intro has its own checks (island.spec.ts)
-const port = (base: string, q = 'hero3d') => new URL(`/?tier=${q}&intro=0`, base).href;
+// round 3: the port skips the intro here (?intro=0), as the v9.10 prototype has none; the intro has its own checks (island.spec.ts);
+// the glue is off (?glue=0, section-4-flux.md 5 "Build modes"): AC6.1 parks the page a quarter screen into the first wipe's span, which the glue would otherwise settle
+const port = (base: string, q = 'hero3d') => new URL(`/?tier=${q}&intro=0&glue=0`, base).href;
 const DESK: BrowserContextOptions = { viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 };
 const PHONE: BrowserContextOptions = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true };
 

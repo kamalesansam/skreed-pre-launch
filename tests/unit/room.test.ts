@@ -1,118 +1,80 @@
-// Section 4 (docs/specs/section-4.md for the hall, docs/specs/section-4-world.md for the world; AC1, AC2, AC3, AC6, AC11):
-// the scroll map and the track's height per number of lands agree with the stylesheet's literals, the lands are the ones
-// whose four picture files exist and carry the spec's copy, every shade is the catalog's by id, every Tune control exists
-// with its default inside its range and the entry's ranges are world.ts's, the section is plain text (no panels, fills,
-// borders but the focus ring's, or shadows; the quiz's type at the quiz's sizes), and the copy keeps the brand rules.
+// Section 4 (docs/specs/section-4.md 7 for the hall; docs/specs/section-4-flux.md 5, 7 and 9 for the scenes: AC2, AC8,
+// AC10, AC13, AC15, X-13): the scroll map and the 1580svh track with the pinned-screen invariant, the five scenes with
+// their products, catalog shades by id, finishes, key lights, alts and files, every Tune control with its default inside
+// its range and the ranges of X-13 (bubbleMs's from transition.ts), the section as plain text (no panels, fills, borders
+// but the focus ring's, or shadows; the bottom shade in the carousel's shader; the quiz's type at the quiz's sizes), the
+// DOM of section 5, the copy's brand rules over ROOM_COPY and ROOM_SCENES, the render colours, the world's modules gone,
+// and the composite's cover input.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { HALL, LAND_COPY, LAND_SIZE, PRESS, RENDER_COLOURS, ROOM_BAYS, ROOM_COPY, ROOM_HEIGHT, ROOM_HEIGHT_WORLD, ROOM_LANDS, ROOM_PARAMS, ROOM_PRODUCTS, ROOM_SCREENS, STATION_Q, WORLD_START, fill, landQ, landsFrom, loopStart, travelOption, worldHeight, type RoomParams } from '../../src/config/room.ts';
+import { existsSync, readFileSync } from 'node:fs';
+import { HALL, LOOP_START, PRESS, RENDER_COLOURS, ROOM_COPY, ROOM_HEIGHT, ROOM_PARAMS, ROOM_PRODUCTS, ROOM_RANGES, ROOM_SCENES, ROOM_SCREENS, SCENE_COUNT, SCENE_SIZE, SCENES_END, STATION_Q, WORLD_START, fill, productById, sceneQ, shadeLine } from '../../src/config/room.ts';
 import { SHADES } from '../../src/config/shades.gen.ts';
 import { URBAN_SLATE } from '../../src/config/tokens.ts';
-import { WORLD_DEFAULTS, WORLD_RANGES } from '../../src/scripts/hero/section4/world.ts';
-import PARK from '../../src/assets/room/park/park.json' with { type: 'json' };
+import { BUBBLE } from '../../src/scripts/hero/section4/transition.ts';
+import { STEP } from '../../src/scripts/hero/section4/carousel-math.ts';
+import { COMPOSITE_FRAG_V11, COMPOSITE_FRAG_V11_COVER } from '../../src/scripts/hero/v11/glsl.ts';
+import { withCover } from '../../src/scripts/hero/post/shaders.ts';
 import { ROOM_CATALOG_LINES } from '../fixtures/room-catalog.ts';
 
 const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const exists = (p: string) => existsSync(new URL(`../../${p}`, import.meta.url));
 const byId = new Map(SHADES.map((s) => [s.id, s]));
-const LANDS_DIR = new URL('../../src/assets/room/lands/', import.meta.url);
-/** every encoded land file as the build's glob would list it (name to a stand-in URL) */
-const listing = (names: string[]) => Object.fromEntries(names.map((n) => [`../assets/room/lands/${n}`, `/_astro/${n}`]));
-const FOUR = (id: string) => ['portrait', 'wide'].flatMap((c) => ['avif', 'webp'].map((f) => `land-${id}-${c}.${f}`));
 const css = read('src/styles/room.css'), astro = read('src/components/room/Room.astro');
 
-test('the scroll map: 13 screens in the hall, 12 + 2N once entered, each land 0.4 screens either side of its station', () => {
-  assert.equal(ROOM_HEIGHT, 13);
+test('the scroll map (section-4-flux.md 5): the scenes at a step of 0.5 from 10, the hold to 12.8, the loop screen and the tail, 15.8 screens in every state', () => {
+  assert.deepEqual({ ...ROOM_SCREENS }, { wipe: 1, walk: 8, station: 1, step: 0.5, hold: 0.8, loop: 1, tail: 1 });
   assert.equal(STATION_Q, 9.5);
   assert.equal(WORLD_START, 10);
-  assert.equal(loopStart(null), 10);
-  assert.equal(ROOM_SCREENS.hold, 0.4);
-  assert.ok(css.includes(`.room .rm-track { height: ${ROOM_HEIGHT * 100}svh; }`), 'room.css: the hall track height');
-  // the stage is pinned through the loop screen and the tail: the jump's screen ends inside the document
-  assert.ok(loopStart(null) + ROOM_SCREENS.loop + ROOM_SCREENS.tail <= ROOM_HEIGHT - 1);
-  for (let n = 1; n <= ROOM_PRODUCTS.length; n++) {
-    assert.equal(worldHeight(n), 12 + 2 * n, `${n} lands`);
-    assert.equal(loopStart(n), 9 + 2 * n);
-    assert.ok(css.includes(`.room:is([data-state="entering"], [data-state="world"])[data-lands="${n}"] .rm-track { height: ${worldHeight(n) * 100}svh; }`), `room.css: the track for ${n} lands`);
-    assert.ok(loopStart(n) + ROOM_SCREENS.loop + ROOM_SCREENS.tail <= worldHeight(n) - 1, `${n} lands: the loop and the tail inside the pinned track`);
-    for (let i = 0; i < n; i++) {
-      assert.equal(landQ(i), 10 + 2 * i);
-      // each hold zone is clear of the next one's, and the last one's of the loop screen
-      const end = landQ(i) + ROOM_SCREENS.hold, next = i + 1 < n ? landQ(i + 1) - ROOM_SCREENS.hold : loopStart(n);
-      assert.ok(end < next, `land ${i + 1} of ${n}: its hold ends at ${end}, the next begins at ${next}`);
-    }
+  assert.equal(SCENE_COUNT, 5);
+  assert.deepEqual(Array.from({ length: SCENE_COUNT }, (_, i) => sceneQ(i)), [10, 10.5, 11, 11.5, 12]);
+  assert.equal(SCENES_END, 12);
+  assert.equal(LOOP_START, 12.8);
+  assert.equal(ROOM_HEIGHT, 15.8);
+  assert.ok(css.includes(`.room .rm-track { height: ${ROOM_HEIGHT * 100}svh; }`), 'room.css: the track at 1580svh');
+  assert.doesNotMatch(css, /data-lands|1300svh|1400svh|1600svh|1800svh|2000svh/, 'no per-N heights: the track is the same in every state');
+  // the stage is pinned through the loop screen and the tail: the seam's trigger and the jump's screen end inside the document
+  assert.ok(LOOP_START + ROOM_SCREENS.loop + ROOM_SCREENS.tail <= ROOM_HEIGHT - 1, 'the loop and the tail inside the pinned track');
+  assert.ok(SCENES_END + ROOM_SCREENS.hold === LOOP_START, 'the hold ends at the seam');
+});
+
+test('the five scenes (section-4-flux.md 3): the rooms in order, the products, the catalog shades by id, the finishes, the key lights, the alts, the files', () => {
+  assert.deepEqual(ROOM_SCENES.map((s) => s.id), ['cove', 'grove', 'ember', 'palace', 'dawn']);
+  assert.deepEqual(ROOM_SCENES.map((s) => s.i), [0, 1, 2, 3, 4]);
+  assert.deepEqual(ROOM_SCENES.map((s) => s.order), [1, 2, 3, 4, 5]);
+  assert.deepEqual(ROOM_SCENES.map((s) => s.product), ['case', 'airpods', 'wallet', 'lenskin', 'case'], 'scene 5 shows the phone case until the lanyard model lands (X-8)');
+  assert.deepEqual(ROOM_SCENES.map((s) => s.shade), ['vivid-violet-05', 'go-green-09', 'basic-brown-04', 'playful-pink-06', 'vivid-violet-04']);
+  assert.deepEqual(ROOM_SCENES.map((s) => s.finish), ['matte', 'gloss', 'matte', 'metallic', 'matte']);
+  assert.deepEqual(ROOM_SCENES.map((s) => s.keyLight), ['#ffa6c8', '#a8ffe0', '#ffa171', '#ffc9a3', '#cbb0ff'], "the reference's per-scene tints, mapped by its scene order");
+  for (const s of ROOM_SCENES) {
+    const c = byId.get(s.shade);
+    assert.ok(c, s.shade);
+    assert.equal(s.hex.toLowerCase(), c!.hex.toLowerCase(), `${s.id}: the shade's hex is the catalog's`);
+    assert.equal(s.shadeName, c!.name, `${s.id}: the shade's name is the catalog's`);
+    assert.equal(s.family, c!.family.replace(/-/g, ' '), `${s.id}: the family in lower case words`);
+    assert.match(s.alt, /^[A-Z][^.]+\.$/, `${s.id}: one sentence`);
+    assert.doesNotMatch(s.alt, /\b(case|wallet|lenskin|airpods|phone)\b/i, `${s.id}: no product in the still`);
+    assert.doesNotMatch(s.alt, /bath|shower|tub|shampoo/i, `${s.id}: nothing of a bathroom`);
+    assert.ok(Number.isFinite(s.baseYaw));
+    assert.ok(productById(s.product));
+    for (const cls of ['wide', 'portrait'] as const) for (const k of ['loop', 'avif', 'webp'] as const) assert.equal(typeof s.files[cls][k], 'string', `${s.id} ${cls} ${k}: a URL string (empty under Node, the build's glob fills it)`);
   }
-  assert.equal(worldHeight(4) * 100, 2000, 'the spec: 2000svh with four lands');
-  assert.equal(ROOM_HEIGHT_WORLD, worldHeight(ROOM_LANDS.length));
+  assert.deepEqual(SCENE_SIZE, { wide: { width: 1280, height: 666 }, portrait: { width: 720, height: 1280 } });
+  assert.equal(shadeLine(ROOM_SCENES[0]), 'Lilac, vivid violet');
+  assert.equal(fill(ROOM_COPY.count, { n: 2, N: 5 }), '2 / 5');
+  assert.equal(fill(ROOM_COPY.sceneLive, { n: 1, N: 5, name: 'Phone case', shade: 'Lilac, vivid violet' }), '1 of 5. Phone case. Lilac, vivid violet.');
+  assert.equal(fill(ROOM_COPY.wrapLive, { n: 5, N: 5, name: 'Phone case', shade: 'Pastel, vivid violet' }), 'Round to the five scenes. 5 of 5. Phone case. Pastel, vivid violet.');
+  // the encoded files are in the repo (fcd9f9e): the ten loops, the twenty stills and products.bin
+  for (const s of ROOM_SCENES) for (const cls of ['wide', 'portrait']) for (const ext of ['mp' + '4', 'avif', 'webp']) assert.ok(exists(`src/assets/room/flux/${s.id}-${cls}.${ext}`), `${s.id}-${cls}.${ext}`);
+  assert.ok(exists('src/assets/room/flux/products.bin'));
 });
 
-test('the lands: the products whose four picture files exist, in catalog order, with the encoded files present', () => {
-  assert.deepEqual(landsFrom({}), [], 'no files, no lands (production ships N = 0 until Sam approves land 1)');
-  const all = landsFrom(listing(ROOM_PRODUCTS.flatMap((p) => FOUR(p.id))));
-  assert.deepEqual(all.map((l) => l.id), ['case', 'wallet', 'lenskin', 'airpods']);
-  assert.deepEqual(all.map((l) => l.i), [0, 1, 2, 3]);
-  assert.ok(all.every((l) => l.depth.portrait === null && l.depth.wide === null), 'the depth maps are optional');
-  // a land missing any one of its four pictures is out, and the rest close up in catalog order
-  const some = landsFrom(listing([...FOUR('case'), ...FOUR('lenskin').slice(1), ...FOUR('airpods'), 'land-airpods-wide-depth.avif', 'land-airpods-wide-depth.webp', 'land-case-portrait-depth.avif']));
-  assert.deepEqual(some.map((l) => [l.id, l.i]), [['case', 0], ['airpods', 1]]);
-  assert.deepEqual(some[1].depth.wide, { avif: '/_astro/land-airpods-wide-depth.avif', webp: '/_astro/land-airpods-wide-depth.webp' });
-  assert.equal(some[0].depth.portrait, null, 'a depth map needs both formats');
-  // the build's lands: what src/assets/room/lands holds (none in git until Sam approves; the glob is the build's, so
-  // under Node ROOM_LANDS is empty and the listing stands in), and the stylesheet carries that N's height
-  const present = existsSync(LANDS_DIR) ? readdirSync(LANDS_DIR).filter((n) => /^land-.*\.(?:avif|webp)$/.test(n)) : [];
-  const n = landsFrom(listing(present)).length;
-  assert.ok(n === 0 || css.includes(`[data-lands="${n}"] .rm-track { height: ${worldHeight(n) * 100}svh; }`), `room.css carries ${n} lands' height`);
-  assert.deepEqual(LAND_SIZE, { portrait: { width: 720, height: 1280 }, wide: { width: 1920, height: 1200 } });
-});
-
-test("the lands' copy (spec 3): the product by name, the case by its family, the accessory by its shade, and an alt that names neither the park nor the person", () => {
-  const families = new Set(ROOM_BAYS.map((b) => b.family));
-  const want: Record<string, [string, string | null]> = { case: ['Mellow Yellow', null], wallet: ['Blissful Blue', 'basic-brown-04'], lenskin: ['Go Green', 'go-green-09'], airpods: ['Vivid Violet', 'go-green-09'] };
-  for (const p of ROOM_PRODUCTS) {
-    const c = LAND_COPY[p.id], [family, shade] = want[p.id];
-    assert.ok(families.has(family));
-    assert.ok(c.family.includes(`${family} case`), `${p.id}: ${c.family}`);
-    if (shade) {
-      assert.equal(p.shade, shade, `${p.id}: the accessory's shade`);
-      assert.ok(c.family.startsWith(byId.get(shade)!.name + ','), `${p.id}: the family line names the accessory's shade first (${c.family})`);
-      assert.ok(c.alt.includes(byId.get(shade)!.name) && c.alt.includes(family), `${p.id}: the alt names both colours`);
-    }
-    assert.doesNotMatch(c.alt, /central park|new york|\bwoman\b|\bman\b|\bgirl\b|\bboy\b|\bher\b|\bhis\b|customer/i, `${p.id}: ${c.alt}`);
-    assert.match(c.alt, /^A person /);
-  }
-  // the logotype's tone per crop class, measured on the approved pictures where it sits (top left): Pearl over the case's
-  // dark elms in both crops and the wallet's arcade in the wide, Urban Slate over the light corners elsewhere
-  assert.deepEqual(Object.fromEntries(Object.entries(LAND_COPY).map(([id, c]) => [id, c.tone])), {
-    case: { portrait: 'pearl', wide: 'pearl' }, wallet: { portrait: 'slate', wide: 'pearl' }, lenskin: { portrait: 'slate', wide: 'slate' }, airpods: { portrait: 'slate', wide: 'slate' },
-  });
-  assert.match(read('src/scripts/hero/section4/director.ts'), /const landDark = \(i: number\): boolean => ROOM_LANDS\[i\]\?\.tone\[cls\(\)\] !== 'pearl';/, 'the director reads the tone by the crop class in use');
-  assert.equal(LAND_COPY.case.family, 'A Mellow Yellow case');
-  assert.equal(LAND_COPY.wallet.family, 'Desert, on a Blissful Blue case');
-  assert.equal(fill(ROOM_COPY.count, { n: 2, N: 4 }), '2 / 4');
-  assert.equal(fill(ROOM_COPY.landLive, { n: 1, N: 4, name: 'Phone case', family: 'A Mellow Yellow case' }), '1 of 4. Phone case. A Mellow Yellow case.');
-});
-
-test("each land's capture is option B's pose (shared FOV and near distance, spec 2), with a far distance past it", () => {
-  const poses = (PARK as { poses: { id: string; fov: number; near: number }[] }).poses;
-  assert.deepEqual(poses.map((p) => p.id), ROOM_PRODUCTS.map((p) => p.id));
-  for (const p of poses) {
-    const c = LAND_COPY[p.id as keyof typeof LAND_COPY];
-    assert.equal(c.fov, p.fov, `${p.id}: fov`); assert.equal(c.near, p.near, `${p.id}: near`);
-    assert.ok(c.far > c.near * 4, `${p.id}: far`);
-  }
-});
-
-test("the shades by id: the ten key shades, and the products' shades the catalog's (the Lenskin in Sage, Sam 2026-10-20)", () => {
-  assert.deepEqual(ROOM_BAYS.map((b) => b.shade), ['frosty-white-07', 'blissful-blue-08', 'playful-pink-14', 'vivid-violet-07', 'mellow-yellow-01', 'basic-brown-07', 'blushing-coral-04', 'stormy-grey-05', 'go-green-12', 'roaring-red-07']);
-  for (const b of ROOM_BAYS) { const s = byId.get(b.shade); assert.ok(s, b.shade); assert.equal(b.hex.toLowerCase(), s!.hex.toLowerCase(), b.shade); assert.equal(b.name, s!.name, b.shade); }
-  for (const p of ROOM_PRODUCTS) { const s = byId.get(p.shade); assert.ok(s, p.shade); assert.equal(p.hex.toLowerCase(), s!.hex.toLowerCase(), `${p.id} ${p.shade}`); }
-  const lenskin = ROOM_PRODUCTS.find((p) => p.id === 'lenskin')!;
-  assert.deepEqual([lenskin.shade, lenskin.hex, byId.get(lenskin.shade)!.name], ['go-green-09', '#96a880', 'Sage']);
+test('the products: the four by id in catalog order, with their names and trimmed lines', () => {
   assert.deepEqual(ROOM_PRODUCTS.map((p) => p.id), ['case', 'wallet', 'lenskin', 'airpods']);
-  // scripts/room/lands.py reads each product's id, shade, hex and finish from one line of this block
-  const src = read('src/config/room.ts'), block = src.slice(src.indexOf('export const ROOM_PRODUCTS'), src.indexOf(']);', src.indexOf('export const ROOM_PRODUCTS')));
-  const rows = [...block.matchAll(/\{ id: '([a-z]+)',.*?shade: '([a-z0-9-]+)', hex: '(#[0-9a-fA-F]{6})', finish: '([a-z]+)'/g)].map((m) => m[1]);
-  assert.deepEqual(rows, ['case', 'wallet', 'lenskin', 'airpods']);
+  assert.deepEqual(ROOM_PRODUCTS.map((p) => p.name), ['Phone case', 'MagSafe wallet', 'Lenskin', 'AirPods case']);
+  for (const p of ROOM_PRODUCTS) assert.notEqual(p.line, ROOM_CATALOG_LINES[p.id], `${p.id}: the trimmed line differs from the catalog's`);
+  for (const p of ROOM_PRODUCTS) assert.ok(!('lineCatalog' in p) && !('shade' in p), `${p.id}: no catalog line, no shade of its own (the scenes carry the shades)`);
+  assert.doesNotMatch(ROOM_PRODUCTS.find((p) => p.id === 'lenskin')!.line, /240/, 'the catalog gives the Lenskin no shade count');
 });
 
 test('the hall and the press: the stations against the measured frame, and the press as built', () => {
@@ -124,7 +86,7 @@ test('the hall and the press: the stations against the measured frame, and the p
   assert.equal(PRESS.glideFrom + PRESS.glide, PRESS.freeze, 'the hall freezes as its glide ends');
 });
 
-test("Tune: every section 4 parameter has its control with its default inside, the entry's ranges are world.ts's, and the universe's keys are gone", () => {
+test("Tune (X-13): every section 4 parameter has its control with its default inside, the scenes' ranges are ROOM_RANGES, bubbleMs's is the bubble's, the world's and the travels' keys are gone", () => {
   const tune = read('src/components/dev/Tune.astro');
   const range = (k: string) => { const m = tune.match(new RegExp(`<input id="r-${k}" type="range" min="([-\\d.]+)" max="([-\\d.]+)" step="([\\d.]+)">`)); return m ? [+m[1], +m[2], +m[3]] as const : null; };
   for (const [k, v] of Object.entries(ROOM_PARAMS)) {
@@ -133,28 +95,27 @@ test("Tune: every section 4 parameter has its control with its default inside, t
     assert.ok(v >= r![0] && v <= r![1], `${k} = ${v} outside ${r![0]} to ${r![1]}`);
     assert.ok(tune.includes(`<output id="o-r-${k}">`), `Tune has no readout for ${k}`);
   }
-  for (const [k, [a, b, s]] of Object.entries(WORLD_RANGES)) {
-    assert.deepEqual(range(k), [a, b, s], `${k}: Tune's range is WORLD_RANGES' (inside it every value passes the ring-timing rule)`);
-    assert.equal(ROOM_PARAMS[k as keyof typeof ROOM_PARAMS], WORLD_DEFAULTS[k as keyof typeof WORLD_DEFAULTS], `${k}: the default is WORLD_DEFAULTS'`);
+  for (const [k, [a, b, s]] of Object.entries(ROOM_RANGES)) assert.deepEqual(range(k), [a, b, s], `${k}: Tune's range is ROOM_RANGES'`);
+  assert.deepEqual([...ROOM_RANGES.bubbleMs.slice(0, 2)], [...BUBBLE.msRange], "bubbleMs's range is transition.ts's msRange");
+  assert.equal(ROOM_PARAMS.bubbleMs, BUBBLE.ms);
+  // the defaults of X-13, and carousel-math.ts's constants the same
+  assert.deepEqual({ stepMs: ROOM_PARAMS.stepMs, sweepDeg: ROOM_PARAMS.sweepDeg, sweepDegPortrait: ROOM_PARAMS.sweepDegPortrait, fovStep: ROOM_PARAMS.fovStep, fovReturnAt: ROOM_PARAMS.fovReturnAt, lightStart: ROOM_PARAMS.lightStart, lightSoft: ROOM_PARAMS.lightSoft, lightBoost: ROOM_PARAMS.lightBoost, keyLightMs: ROOM_PARAMS.keyLightMs, snapMs: ROOM_PARAMS.snapMs },
+    { stepMs: 770, sweepDeg: 80, sweepDegPortrait: 22, fovStep: 42, fovReturnAt: 0.65, lightStart: 0.5, lightSoft: 0.64, lightBoost: 0.17, keyLightMs: 1100, snapMs: 500 });
+  assert.equal(STEP.ms, ROOM_PARAMS.stepMs); assert.equal(STEP.sweepDeg, ROOM_PARAMS.sweepDeg); assert.equal(STEP.sweepDegPortrait, ROOM_PARAMS.sweepDegPortrait); assert.equal(STEP.fovStep, ROOM_PARAMS.fovStep); assert.equal(STEP.fovReturnAt, ROOM_PARAMS.fovReturnAt); assert.equal(STEP.keyLightMs, ROOM_PARAMS.keyLightMs);
+  assert.deepEqual(ROOM_RANGES.stepMs, [400, 1200, 10]); assert.deepEqual(ROOM_RANGES.sweepDegPortrait, [12, 80, 1]); assert.deepEqual(ROOM_RANGES.snapMs, [200, 900, 10]);
+  for (const k of ['travelMs', 'ringCount', 'travelRoll', 'morphMs', 'enterPushMs', 'worldBloom', 'landTravelMs', 'parkTravel', 'sweepSpeed', 'sweepAngle', 'sweepWidth', 'transitionMs', 'wallsColour', 'catalogWords', 'productScale', 'roomPitch', 'roomExposure', 'roomVignette', 'roomCorners', 'roomBleach', 'productLight', 'labelFloat']) {
+    assert.ok(!(k in ROOM_PARAMS), `${k} is gone`); assert.ok(!tune.includes(`r-${k}"`), `Tune's ${k} is gone`);
   }
-  assert.deepEqual(range('landTravelMs'), [2600, 4500, 100], 'a travel between lands: 2600 ms, at most 4500 (the park is checked across that range)');
-  assert.equal(ROOM_PARAMS.landTravelMs, 2600);
-  assert.deepEqual(range('parkTravel'), [0, 2, 1]);
-  assert.equal(ROOM_PARAMS.parkTravel, 0, 'under Node there is no build pick: A');
-  assert.equal(travelOption({ ...ROOM_PARAMS, parkTravel: 2 } as RoomParams), 'C');
-  for (const k of ['sweepSpeed', 'sweepAngle', 'sweepWidth', 'transitionMs', 'wallsColour', 'catalogWords', 'productScale', 'roomPitch', 'roomExposure', 'roomVignette', 'roomCorners', 'roomBleach', 'productLight', 'labelFloat']) {
-    assert.ok(!(k in ROOM_PARAMS), `the universe's ${k} is gone`); assert.ok(!tune.includes(`r-${k}"`), `Tune's ${k} is gone`);
-  }
-  assert.ok('mouseLook' in ROOM_PARAMS);
+  assert.ok('mouseLook' in ROOM_PARAMS && 'lapReset' in ROOM_PARAMS && 'handoff' in ROOM_PARAMS && 'stationDist' in ROOM_PARAMS && 'door' in ROOM_PARAMS);
 });
 
-test('AC11, plain text: room.css and Room.astro carry no panel, fill, border but the focus ring, or shadow', () => {
+test('AC10, plain text: room.css and Room.astro carry no panel, fill, border but the focus ring, or shadow; the bottom shade lives in the carousel\'s shader', () => {
   const rules = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({ sel: m[1].trim(), body: m[2] }));
   assert.ok(rules.length > 30);
   for (const { sel, body } of rules) {
     for (const d of body.split(';').map((x) => x.trim()).filter(Boolean)) {
       const [prop, ...rest] = d.split(':'), val = rest.join(':').trim();
-      assert.doesNotMatch(prop, /box-shadow|backdrop-filter/, `${sel}: ${d}`);
+      assert.doesNotMatch(prop, /box-shadow|backdrop-filter|filter/, `${sel}: ${d}`);
       if (/border-radius/.test(prop)) assert.equal(val, '0', `${sel}: ${d}`);   // a control's UA corner taken off, nothing rounded
       // the poster column and the loop's fade stand on --night, each picture on a --skeleton box until it decodes (H1)
       // (and a control's UA fill and border taken off: none and 0)
@@ -162,6 +123,8 @@ test('AC11, plain text: room.css and Room.astro carry no panel, fill, border but
       if (/^border(?!-radius)/.test(prop.trim()) && !/^(0|none)$/.test(val)) assert.match(sel, /:focus-visible/, `${sel}: a border outside the focus ring (${d})`);
     }
   }
+  assert.doesNotMatch(css, /gradient/, 'no gradient in the DOM: the bottom shade is the carousel\'s (AC10, AC12)');
+  assert.match(read('src/scripts/hero/section4/carousel.ts'), /uShade/, 'the bottom shade in the plane\'s shader');
   for (const src of [css, astro]) {
     assert.doesNotMatch(src, /rm-pill/);
     assert.doesNotMatch(src, /class="btn|\bbtn\b/);
@@ -173,49 +136,57 @@ test('AC11, plain text: room.css and Room.astro carry no panel, fill, border but
   assert.match(css, /\.rm-pad:focus-visible::after \{[^}]*inset: 4px; border: 2px solid var\(--urban-slate\)/);
 });
 
-test("E-S4-font: section 2's label type, IBM Plex Mono Medium in capitals, at the quiz's own sizes", () => {
+test("E-S4-font: section 2's label type, IBM Plex Mono Medium in capitals, at the quiz's own sizes; the words with the 44 px hit area", () => {
   const quiz = read('src/styles/quiz.css');
   const qv = (name: string) => quiz.match(new RegExp(`--qz-${name}: ([^;]+);`))?.[1], rv = (name: string) => css.match(new RegExp(`--rm-${name}: ([^;]+);`))?.[1];
   for (const n of ['fs', 'fs-q']) { assert.ok(qv(n)); assert.equal(rv(n), qv(n), `--rm-${n} equals the quiz's --qz-${n}`); }
   assert.match(css, /--rm-font: "IBM Plex Mono", ui-monospace, monospace;/);
   assert.match(css, /\.room \{[^}]*font: 500 var\(--rm-fs\) \/ 1\.45 var\(--rm-font\); text-transform: uppercase; letter-spacing: 0;/);
   assert.match(css, /\.room \.sr-only \{ text-transform: none; \}/, 'assistive technology keeps the sentence case');
-  assert.match(css, /\.rm-land-name \{ font-size: var\(--rm-fs-q\)/);
-  // the controls are words: the quiz's link pattern, 44 px to tap
+  assert.match(css, /\.rm-scene-name \{ font-size: var\(--rm-fs-q\)/);
+  // the controls are words: the quiz's link pattern, 44 px to tap; the previous and next words bottom right in the scenes
   assert.match(css, /\.room \.rm-link \{[^}]*min-height: 44px; min-width: 44px;[^}]*text-decoration-line: underline; text-decoration-thickness: 1px; text-underline-offset: 0\.4em;/);
-  for (const id of ['rmEnter', 'rmSkip']) assert.match(astro, new RegExp(`class="rm-[a-z]+ rm-link" id="${id}"`));
+  assert.match(css, /\.room \.rm-nav \{ position: absolute; right: var\(--inset\); bottom: var\(--rm-bottom\);/);
+  assert.match(css, /\.room:not\(\[data-state="world"\]\) \.rm-nav \{ display: none; \}/);
+  assert.match(css, /@media \(orientation: portrait\) \{ \.room \.rm-scene-hint \{ bottom: calc\(var\(--rm-bottom\) \+ 44px \+ var\(--s2\)\); \} \}/, 'the hint one row above the words on a portrait stage');
+  assert.match(css, /\.room \.rm-pause \{ left: var\(--inset\);/, 'the pause control top left');
+  assert.match(css, /\.room:not\(\[data-pause="1"\]\) \.rm-pause/, 'the pause control hidden unless the director shows it');
+  for (const id of ['rmEnter', 'rmSkip', 'rmPrev', 'rmNext', 'rmPause']) assert.match(astro, new RegExp(`class="rm-[a-z]+ rm-link" id="${id}"`));
 });
 
-test('the DOM (spec 5): the prompt, the pad, Skip, the lines, the lands list, the travel buttons and the live region', () => {
-  assert.match(astro, /<button type="button" class="rm-enter rm-link" id="rmEnter" aria-keyshortcuts="E" hidden=\{N === 0\}><span class="rm-key" aria-hidden="true">\{R\.key\}<\/span><span class="rm-enter-text">\{R\.enter\}<\/span><\/button>/);
+test('the DOM (section-4-flux.md 5): the prompt, the pad, Skip, the lines, the scenes list, the words, the pause control, the live region, noscript', () => {
+  assert.match(astro, /<button type="button" class="rm-enter rm-link" id="rmEnter" aria-keyshortcuts="E"><span class="rm-key" aria-hidden="true">\{R\.key\}<\/span><span class="rm-enter-text">\{R\.enter\}<\/span><\/button>/, 'the prompt is never hidden: there are always five scenes');
   assert.match(astro, /<div class="rm-pad" id="rmPad" tabindex="0" role="group" aria-label=\{R\.stageAria\}><\/div>/);
   assert.match(astro, /<p class="rm-line rm-loading" id="rmLoading" role="status" hidden>/);
-  assert.match(astro, /<h2 class="sr-only">\{R\.landsTitle\}<\/h2>/);
-  assert.match(astro, /<ol class="rm-lands" id="rmLands" aria-label=\{R\.landsAria\}/);
-  assert.match(astro, /<h3 class="rm-land-name" id=\{`rmName-\$\{l\.id\}`\} tabindex="-1">/);
-  for (const c of ['rm-land-family', 'rm-land-line', 'rm-land-count']) assert.ok(astro.includes(`<p class="${c}">`), c);
-  assert.match(astro, /<p class="sr-only rm-land-alt" id=\{`rmAlt-\$\{l\.id\}`\}>\{l\.alt\}<\/p>/);
-  assert.match(astro, /class="rm-prev" id="rmPrev" hidden>\{R\.prev\}/);
-  assert.match(astro, /class="rm-next" id="rmNext" hidden>\{R\.next\}/);
+  assert.match(astro, /<p class="rm-line rm-scene-hint" id="rmSceneHint" hidden>\{R\.sceneHintTouch\}<\/p>/);
+  assert.match(astro, /<h2 class="sr-only">\{R\.scenesTitle\}<\/h2>/);
+  assert.match(astro, /<ol class="rm-scenes" id="rmScenes" aria-label=\{R\.scenesAria\}>/);
+  assert.match(astro, /<li class="rm-scene" data-id=\{s\.id\} data-i=\{s\.i\}>/);
+  assert.match(astro, /<h3 class="rm-scene-name" id=\{`rmName-\$\{s\.id\}`\} tabindex="-1">\{s\.name\}<\/h3>/);
+  for (const c of ['rm-scene-shade', 'rm-scene-line', 'rm-scene-count']) assert.ok(astro.includes(`<p class="${c}">`), c);
+  assert.match(astro, /<p class="rm-scene-more" aria-hidden="true" hidden><\/p>/, 'the loading line is no status: one announcement per arrival (AC13)');
+  assert.match(astro, /<p class="sr-only rm-scene-alt" id=\{`rmAlt-\$\{s\.id\}`\}>\{s\.alt\}<\/p>/);
+  assert.match(astro, /<div class="rm-nav" id="rmNav">\s*<button type="button" class="rm-prev rm-link" id="rmPrev">\{R\.prev\}<\/button>\s*<button type="button" class="rm-next rm-link" id="rmNext">\{R\.next\}<\/button>\s*<\/div>/);
+  assert.match(astro, /<button type="button" class="rm-pause rm-link" id="rmPause" hidden>\{R\.pause\}<\/button>/);
   assert.match(astro, /<p class="sr-only" id="rmLive" aria-live="polite"><\/p>/);
-  // one announcement per arrival (AC6): land 1's travel hint is its own line with no live role; the status line under a
-  // land's text carries only the Loading wait and the option's note
-  assert.match(astro, /<p class="rm-land-more" role="status" hidden><\/p>\s*\{l\.i === 0 && N > 1 && <p class="rm-land-hint" hidden><\/p>\}/);
+  assert.match(astro, /<p class="rm-line rm-noscript">\{R\.noscript\}<\/p>/);
+  // every scene still with its formats and its size, lazily on the 3D path (data-srcset) and in the noscript column
+  assert.equal((astro.match(/data-srcset=\{s\.files\.(portrait|wide)\.(avif|webp)\}/g) ?? []).length, 3);
+  assert.match(astro, /<img data-src=\{s\.files\.wide\.webp\} alt=\{s\.alt\} width=\{Wd\.width\} height=\{Wd\.height\} loading="lazy"/);
+  assert.match(astro, /<img src=\{s\.files\.wide\.webp\} alt=\{s\.alt\} width=\{Wd\.width\} height=\{Wd\.height\} loading="lazy"/);
+  for (const gone of ['data-lands', 'rm-land', 'rmLands', 'landsTitle', 'landsAria', 'rmProducts', 'rmLabel', 'universe']) assert.ok(!astro.includes(gone), `${gone} is gone`);
+  // the words are wired to the island's step and the way back; the keys of the scenes are scroll.ts's alone
   const walk = read('src/scripts/room/walk.ts');
-  assert.match(walk, /setLine\(l\.hint, hintText\(\)\)/);
-  assert.doesNotMatch(walk, /setMore\([^)]*hintText/);
-  // every land picture with its formats and its size, lazily on the 3D path (data-srcset) and in the noscript column
-  assert.equal((astro.match(/data-srcset=\{l\.pics\.(portrait|wide)\.(avif|webp)\}/g) ?? []).length, 3);
-  assert.match(astro, /<img data-src=\{l\.pics\.wide\.webp\} alt=\{l\.alt\} width=\{Wd\.width\} height=\{Wd\.height\} loading="lazy"/);
-  assert.match(astro, /<img src=\{l\.pics\.wide\.webp\} alt=\{l\.alt\} width=\{Wd\.width\} height=\{Wd\.height\} loading="lazy"/);
-  for (const gone of ['rmProducts', 'rmLabel', 'rmSkipWrap', 'rm-product', 'universe']) assert.ok(!astro.includes(gone), `${gone} is gone`);
+  assert.match(walk, /prevB\?\.addEventListener\('click'/); assert.match(walk, /nextB\?\.addEventListener\('click'/);
+  assert.match(walk, /isl\.back\(\)/); assert.match(walk, /isl\.step\(-1\)/); assert.match(walk, /step\(1\)/);
+  assert.match(walk, /if \(state !== 'hall'\) return;/, 'no world key branch');
+  assert.doesNotMatch(walk, /FORWARD|BACK\.has/);
+  assert.match(walk, /if \(dir > 0 && lastQRaw >= STATION_Q\) dir = 0;/, 'the pad\'s walk ends at the station');
+  assert.match(read('src/scripts/hero/section4/scroll.ts'), /keyDir\(e\)/, 'scroll.ts owns the keys');
 });
 
-test('copy: sentence case, no em or en dash, no emoji, no banned words (CLAUDE.md 3, 4, 16, 17)', () => {
-  const lines = [...Object.entries(ROOM_COPY).filter(([k]) => k !== 'key').map(([, v]) => v), ...ROOM_PRODUCTS.flatMap((p) => [p.name, p.line]), ...Object.values(LAND_COPY).flatMap((c) => [c.family, c.alt])];
-  for (const p of ROOM_PRODUCTS) assert.notEqual(p.line, ROOM_CATALOG_LINES[p.id], `${p.id}: the trimmed line differs from the catalog's`);
-  // the catalog's own sentences stay in the test fixture: neither they nor rule 17's words are in the client's config
-  for (const p of ROOM_PRODUCTS) assert.ok(!('lineCatalog' in p), `${p.id}: no catalog line in the client`);
+test('copy: sentence case, no em or en dash, no emoji, no banned words (CLAUDE.md 3, 4, 16, 17); the ids of section 3', () => {
+  const lines = [...Object.entries(ROOM_COPY).filter(([k]) => k !== 'key').map(([, v]) => v), ...ROOM_PRODUCTS.flatMap((p) => [p.name, p.line]), ...ROOM_SCENES.flatMap((s) => [s.alt, s.shadeName, s.family, shadeLine(s)])];
   assert.doesNotMatch(read('src/config/room.ts'), /\b(seamless|seamlessly|elevate)\b/i, 'room.ts carries none of rule 17\'s words');
   for (const s of lines) {
     assert.doesNotMatch(s, /[\u2013\u2014]/, s);
@@ -225,7 +196,12 @@ test('copy: sentence case, no em or en dash, no emoji, no banned words (CLAUDE.m
   }
   assert.equal(ROOM_COPY.key, '[E]');
   assert.equal(ROOM_COPY.enter, 'Enter Skreed universe');
-  assert.doesNotMatch(ROOM_PRODUCTS.find((p) => p.id === 'lenskin')!.line, /240/, 'the catalog gives the Lenskin no shade count');
+  for (const k of ['aria', 'stageAria', 'hintTouch', 'hintKeys', 'loading', 'still', 'enter', 'key', 'loadingRoom', 'skip', 'stillHallAlt', 'clipBlocked', 'worldAria', 'sceneHintTouch', 'sceneHintWheel', 'sceneHintKeys', 'loadingScene', 'next', 'prev', 'pause', 'play', 'scenesTitle', 'scenesAria', 'sceneLive', 'wrapLive', 'count', 'noscript']) assert.ok(k in ROOM_COPY, k);
+  for (const k of ['landHintTouch', 'landHintKeys', 'loadingLand', 'landsTitle', 'landsAria', 'landLive']) assert.ok(!(k in ROOM_COPY), `${k} is dropped`);
+  assert.equal(ROOM_COPY.worldAria, 'The five scenes. Use Down and Up to move between them.');
+  assert.equal(ROOM_COPY.next, 'Next scene'); assert.equal(ROOM_COPY.prev, 'Previous scene');
+  assert.equal(ROOM_COPY.pause, 'Pause motion'); assert.equal(ROOM_COPY.play, 'Play motion');
+  assert.equal(ROOM_COPY.noscript, 'The entrance needs JavaScript. The scenes are below.');
 });
 
 test('render colours (AC3, E-S4-light): the hall clears to Urban Slate from the press; the scenes draw only named colours, tokens and shades', () => {
@@ -234,19 +210,39 @@ test('render colours (AC3, E-S4-light): the hall clears to Urban Slate from the 
   RENDER_COLOURS.hallEntering.forEach((v, i) => assert.ok(Math.abs(v - slate[i]) < 1e-9, 'the clear colour while entering is Urban Slate'));
   assert.deepEqual([...RENDER_COLOURS.hallClear], [1, 1, 1]);
   for (const v of [...RENDER_COLOURS.fixture, ...RENDER_COLOURS.floorLight]) assert.ok(v > 0.5 && v <= 1.2);
-  // every Color made in these scene files is white, a named render colour or a token; none carries a raw hex
+  // every Color made in these scene files is white, a named render colour or a token; none carries a raw hex (the carousel's
+  // hexes are the scenes' catalog shades and the reference's tints from config, by name)
   const allowed = /^(|1, 1, 1|\.\.\.RENDER_COLOURS\.\w+|RENDER_COLOURS\.leaf\[0\], RENDER_COLOURS\.leaf\[1\], RENDER_COLOURS\.leaf\[2\]|hex)$/;
-  for (const f of ['hall', 'transition', 'post', 'director', 'travel', 'garden']) {
+  for (const f of ['hall', 'transition', 'post', 'director']) {
     const src = read(`src/scripts/hero/section4/${f}.ts`);
     for (const m of src.matchAll(/new Color\(([^()]*)\)/g)) assert.match(m[1].trim(), allowed, `${f}.ts: new Color(${m[1]})`);
     assert.doesNotMatch(src, /#[0-9a-fA-F]{6}\b|0x[0-9a-fA-F]{6}\b/, `${f}.ts carries a raw hex colour`);
   }
-  assert.ok(!existsSync(new URL('../../src/scripts/hero/section4/universe.ts', import.meta.url)), 'universe.ts is gone');
   assert.match(read('src/scripts/hero/section4/hall.ts'), /entering\(on\) \{ clear = on \? CLEAR_ENTERING : CLEAR;/);
 });
 
-test('GPU memory (spec 6): land 1 reached by Skip, Escape or a hook frees the garden, as the entry clock does', () => {
-  assert.match(read('src/scripts/hero/section4/director.ts'), /function finishEnter\(\) \{[^}]*world\?\.releaseGarden\(\);/);
-  // a failed picture's land is drawn again once the garden it stands on has decoded again
-  assert.match(read('src/scripts/hero/section4/director.ts'), /view\(j\) \? 'pic' : world\?\.gardenReady \? 'garden' : 'garden-loading'/);
+test("the world's modules, assets, data, scripts and tests are gone (X-11); the director keeps the budget's markers and the states of section 5", () => {
+  for (const f of ['world', 'rings', 'blend', 'cloud', 'stream', 'depth', 'garden', 'park-flight', 'travel', 'travel-stub', 'travel-depth', 'travel-park', 'travel-video', 'universe']) assert.ok(!exists(`src/scripts/hero/section4/${f}.ts`), `${f}.ts is gone`);
+  for (const d of ['src/assets/room/lands', 'src/assets/room/park', 'src/assets/room/garden', 'src/assets/room/clips']) assert.ok(!exists(d), `${d} is gone`);
+  for (const f of ['src/data/room-lands.json', 'src/data/room-clips.json', 'src/data/room-lands.ledger.json', 'scripts/room/lands.py', 'scripts/room/park.py', 'scripts/room/garden.py', 'scripts/room/encode-lands.mjs', 'scripts/room/encode-clips.mjs', 'scripts/room/clip-flash.py', 'scripts/room/park-review.mjs']) assert.ok(!exists(f), `${f} is gone`);
+  for (const f of ['room-world', 'room-lands', 'room-park', 'room-travel-park', 'room-video']) assert.ok(!exists(`tests/unit/${f}.test.ts`), `${f}.test.ts is gone`);
+  for (const f of ['src/assets/room/hall.bin', 'src/assets/room/hall-lightmap.avif', 'scripts/room/pack.mjs', 'scripts/room/products.py', 'scripts/room/render-products.py', 'scripts/room/hall.py', 'scripts/room/hall-bin.mjs', 'scripts/room/products-bin.mjs', 'scripts/room/encode-flux.mjs', 'scripts/room/render-stills.mjs', 'scripts/room/contrast.mjs']) assert.ok(exists(f), `${f} stays`);
+  const director = read('src/scripts/hero/section4/director.ts');
+  for (const m of ['skreed:room', '__skreedRoom', '__skreedRoomFrame']) assert.ok(director.includes(m), `the director carries the marker ${m}`);
+  assert.doesNotMatch(director, /world\.ts|travel|garden|ROOM_LANDS|landQ/, 'nothing of the lands in the director');
+  for (const st of ["'entering'", "'world'", "'back'", "'seam'"]) assert.ok(director.includes(`setState(${st})`), `the director enters ${st}`);
+  assert.match(read('src/config/room.ts'), /export type RoomState = 'hall' \| 'entering' \| 'world' \| 'back' \| 'seam';/);
+});
+
+test("the composite's cover input (section-4-flux.md 5, X-15): the v11 literal is the prototype's, its cover variant blends the cloud, the island draws with it", () => {
+  assert.equal(withCover(COMPOSITE_FRAG_V11), COMPOSITE_FRAG_V11_COVER);
+  assert.notEqual(COMPOSITE_FRAG_V11_COVER, COMPOSITE_FRAG_V11);
+  assert.doesNotMatch(COMPOSITE_FRAG_V11, /tCloud|uCover/, 'the literal untouched');
+  assert.match(COMPOSITE_FRAG_V11_COVER, /uniform sampler2D tCloud; uniform float uCover;/);
+  assert.match(COMPOSITE_FRAG_V11_COVER, /if \(uCover > 0\.0\) \{ vec4 cl = texture2D\(tCloud, vUv\); fin = fin \* \(1\.0 - cl\.a\) \+ cl\.rgb; \}/, 'premultiplied over the result');
+  assert.match(read('src/scripts/hero/intro/igloo.ts'), /composite: \{ full: COMPOSITE_FRAG_V11_COVER \}/);
+  const loop = read('src/scripts/hero/loop.ts');
+  assert.match(loop, /C\.uCover\.value = cover; C\.tCloud\.value = cover > 0 \? plan!\.cloud : null;/);
+  assert.doesNotMatch(loop, /rideLoop|inLoop|plan!\.loop/, 'the fourth wipe is retired');
+  assert.match(read('src/scripts/hero/post/composite.ts'), /tCloud: \{ value: null as Texture \| null \}, uCover: \{ value: 0 \}/);
 });

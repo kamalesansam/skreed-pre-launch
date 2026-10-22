@@ -7,8 +7,6 @@ interface ImportMetaEnv {
   readonly PUBLIC_STAGING?: string;
   /** section 3's gift form: on, off, or unset (on in dev, test and staging builds, off in production until its Worker exists) */
   readonly PUBLIC_LEADS?: string;
-  /** section 4's travel between the lands, A, B or C (section-4-world.md 5, "Build modes"); astro.config.mjs sets it to A when it is unset, so every build carries one */
-  readonly PUBLIC_PARK_TRAVEL?: 'A' | 'B' | 'C';
 }
 
 interface SkreedLoaderState { phase: string; mode: string; p: number; tl: number; n: number; ready: boolean; note: string; next: string | undefined }
@@ -50,8 +48,8 @@ interface Window {
   __skreedTop?: () => void;
   /** section 4: the island's side of the bridge, installed with the section's director */
   __skreedRoom?: import('./config/room.ts').RoomIsland;
-  /** hooks builds: section 4's state, entering without the walk, the entry by its clock (seconds), a land at rest, a travel held at p, the option in use */
-  __s4?: { state(): unknown; enter(): boolean; seek(sec: number): void; land(i: number): boolean; travel(i: number, j: number, p: number): boolean; skip(): void; option(): { option: 'A' | 'B' | 'C'; module: boolean } | null; readonly ready: boolean };
+  /** hooks builds: section 4's state, entering without the walk, the entry by its clock (seconds), a scene at rest, one step, the way back, the wrap, the glue on or off (section-4-flux.md 5, "Build modes") */
+  __s4?: { state(): unknown; enter(): boolean; seek(sec: number): void; scene(i: number): boolean; step(dir: 1 | -1): boolean; back(): boolean; wrap(): void; glue(on: boolean): void; skip(): void; readonly ready: boolean };
   // test hooks (test and staging builds only; hero-architecture.md 10)
   __skreedFreeze?: boolean;
   __skreedFrame?: number;
