@@ -17,7 +17,8 @@
 // i16 shifted here by 32768), the case scaled to metres by its scene's unitMM extra (1 unit = 196.43 mm). Each product
 // is recentred so its bounding box centre is the origin; Y stays up as the sources. The part order is the GLB's node
 // order; the product order is PRODUCT_SOURCES. Prints each product's vertex and triangle counts, bytes and bounding box
-// in millimetres, then the file's stored and gzip sizes against the 160 KB line, and writes the manifest
+// in millimetres, then the file's stored and gzip sizes against the brief's 160 KB figure and the 270 KB ceiling the
+// unit test holds the file to (see LINE_KB and CEILING_KB), and writes the manifest
 // src/data/room-products-bin.json (what the unit test pins, with the bin, to this script's output):
 //   node scripts/room/products-bin.mjs [src/assets/room/flux/products.bin] [src/data/room-products-bin.json]
 import { createHash } from 'node:crypto';
@@ -38,7 +39,8 @@ export const PRODUCT_SOURCES = Object.freeze([
   { name: 'case', path: `public${CASE.lod1}` },
 ]);
 export const BIN_PATH = 'src/assets/room/flux/products.bin', MANIFEST_PATH = 'src/data/room-products-bin.json';
-export const LINE_KB = 160;   // the brief's stored line, KB = 1024 B
+export const LINE_KB = 160;      // the brief's stored figure, KB = 1024 B: 106,060 B short of these four models under this encoding
+export const CEILING_KB = 270;   // the line the unit test holds the file to: the four models as measured (263.6 KiB) plus room for a re-export
 const MAGIC = 0x31504853;     // 'SHP1' read as bytes S, H, P, 1
 const pad4 = (n) => (n + 3) & ~3;
 const mm = (v) => Math.round(v * 1e5) / 100 || 0;   // metres to millimetres, two decimals (a -0 would differ from the JSON's 0)
@@ -156,8 +158,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const b = p.boxMm;
     console.log(`${name}: ${p.parts.join(', ')}; ${p.vertices} vertices, ${p.triangles} triangles, ${p.bytes} B; box ${b.min[0]}..${b.max[0]} x ${b.min[1]}..${b.max[1]} x ${b.min[2]}..${b.max[2]} mm (${p.sizeMm.join(' x ')}), centre moved from ${p.centreMovedMm.join(', ')} mm; grid ${p.gridStepMm} mm${p.unitMM ? ` (1 unit = ${p.unitMM} mm)` : ''}`);
   }
-  const gz = gzipSync(bin, { level: 9 }).length, line = LINE_KB * 1024;
+  const gz = gzipSync(bin, { level: 9 }).length, line = LINE_KB * 1024, ceiling = CEILING_KB * 1024;
   console.log(`${binPath}: ${bin.length} B stored (${(bin.length / 1024).toFixed(1)} KiB), gzip ${gz} B; ${manifest.bin.vertices} vertices, ${manifest.bin.triangles} triangles; sha256 ${manifest.bin.sha256.slice(0, 8)}`);
   console.log(bin.length <= line ? `within the ${LINE_KB} KB line (${line} B) by ${line - bin.length} B` : `OVER the ${LINE_KB} KB line (${line} B) by ${bin.length - line} B: u16 positions and i8 normals are 9 B a vertex and u16 indices 6 B a triangle, so these counts cannot fit it`);
+  console.log(bin.length <= ceiling ? `within the ${CEILING_KB} KB ceiling (${ceiling} B) by ${ceiling - bin.length} B` : `OVER the ${CEILING_KB} KB ceiling (${ceiling} B) by ${bin.length - ceiling} B: the unit test will fail`);
   console.log(`${manPath} written`);
 }

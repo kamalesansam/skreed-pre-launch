@@ -2,8 +2,9 @@
 // the committed bin and its manifest are the script's output from the four GLBs byte for byte (so a re-export cannot
 // leave a stale binary), the island's parser reads back every product's parts with the GLBs' own names, triangles,
 // corners and normals (the GLBs decoded here as room-products.test.ts does), each product at the manifests' life size
-// within 1 percent and centred on the origin, unit normals within 1 percent, the file no larger than its payload, and
-// the parser carries no glTF loader and gzips under 2 KB.
+// within 1 percent and centred on the origin, unit normals within 1 percent, the file no larger than its payload and
+// under the 270 KB ceiling, a cut or corrupt file refused with the parser's own error, and the parser carries no glTF
+// loader and gzips under 2 KB.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -12,7 +13,7 @@ import { gzipSync } from 'node:zlib';
 import { Box3, Vector3, type Mesh } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from '../../src/scripts/family/three/vendor/meshopt-decoder-reference.js';
-import { BIN_PATH, LINE_KB, MANIFEST_PATH, PRODUCT_SOURCES, productsBin } from '../../scripts/room/products-bin.mjs';
+import { BIN_PATH, CEILING_KB, LINE_KB, MANIFEST_PATH, PRODUCT_SOURCES, productsBin } from '../../scripts/room/products-bin.mjs';
 import { parseProductsBin } from '../../src/scripts/hero/section4/products-bin.ts';
 import ROOM from '../../src/data/room-products.json' with { type: 'json' };
 import CASE from '../../src/data/case-model.json' with { type: 'json' };
@@ -110,17 +111,35 @@ test('every normal decodes to unit length within 1 percent', () => {
   assert.ok(lo > 0.99 && hi < 1.01, `normal lengths ${lo} to ${hi}`);
 });
 
-test('the file is its payload and head alone, at the manifest\'s size; the 160 KB line is reported', (t) => {
+test('the file is its payload and head alone, at the manifest\'s size, under the 270 KB ceiling; the brief\'s 160 KB figure is reported', (t) => {
   assert.equal(bin.length, MANIFEST.bin.bytes);
   const [, N, P, V, I, L] = new Uint32Array(ab, 0, 6), pad = (n: number) => (n + 3) & ~3;
   assert.equal(N, 4); assert.equal(P, 11); assert.equal(V, MANIFEST.bin.vertices); assert.equal(I, MANIFEST.bin.triangles * 3);
   assert.equal(bin.length, 24 + N * 36 + P * 16 + pad(L) + pad(V * 6) + pad(V * 3) + pad(I * 2), 'no slack beyond the head, the names and the three blocks');
   assert.ok(V <= 65535, 'u16 indices');
-  const gz = gzipSync(bin, { level: 9 }).length, line = LINE_KB * KB;
-  // u16 positions with i8 normals are 9 B a vertex and u16 indices 6 B a triangle: 16,472 vertices and 20,203 triangles
-  // are 269,466 B before the head, so the 160 KB line asked for the file cannot hold these counts; pending the lead
-  t.diagnostic(`products.bin ${bin.length} B stored (${(bin.length / KB).toFixed(1)} KiB), ${gz} B gzip; the ${LINE_KB} KB line (${line} B) is ${bin.length > line ? `over by ${bin.length - line} B, pending` : 'met'}`);
-  assert.ok(bin.length <= 270 * KB, `${bin.length} B: the bin has grown past what these four models measure (263.6 KiB)`);
+  const gz = gzipSync(bin, { level: 9 }).length, line = LINE_KB * KB, ceiling = CEILING_KB * KB;
+  // The line held here is CEILING_KB, 270 KB: the four models as measured (263.6 KiB) plus room for a re-export that
+  // moves a few vertices. The brief's 160 KB figure (LINE_KB) cannot hold these models under this encoding: u16
+  // positions with i8 normals are 9 B a vertex and u16 indices 6 B a triangle, so 16,472 vertices and 20,203 triangles
+  // are 269,466 B before the head, 106,060 B over the figure, and gzip (195,521 B) is over it too. Reaching 160 KB
+  // means fewer triangles (about 12,300 of the 20,203 through meshopt simplification, which breaks the parity with the
+  // GLBs pinned above) or leaving the case out (the three accessories are about 150.5 KiB with the head, but the
+  // carousel would then draw the case through GLTFLoader, 13.5 KB gzip the director's chunk must not carry, see
+  // hall-bin.test.ts). Either is the lead's call and changes the format, so this test holds the ceiling and reports
+  // the figure; the budget line for the bin is the wiring branch's.
+  t.diagnostic(`products.bin ${bin.length} B stored (${(bin.length / KB).toFixed(1)} KiB), ${gz} B gzip; held to the ${CEILING_KB} KB ceiling (${ceiling} B); the brief's ${LINE_KB} KB figure (${line} B) is ${bin.length > line ? `over by ${bin.length - line} B` : 'met'}`);
+  assert.ok(bin.length <= ceiling, `${bin.length} B: the bin has grown past the ${CEILING_KB} KB ceiling (the four models measure 263.6 KiB)`);
+});
+
+test('a buffer cut short, or a part record past the blocks, throws the parser\'s own error, not a view\'s RangeError', () => {
+  const [, N, P] = new Uint32Array(ab, 0, 6), head = 24 + N * 36 + P * 16;
+  for (const n of [0, 8, 23, 24, 100, head, 1000, bin.length - 4, bin.length - 1]) assert.throws(() => parseProductsBin(ab.slice(0, n)), /^Error: products model: truncated$/, `${n} B`);
+  assert.throws(() => parseProductsBin(new ArrayBuffer(64)), /^Error: products model: not products\.bin$/);
+  const part0 = ab.slice(0); new Uint32Array(part0, 24 + N * 36, 4)[1] = MANIFEST.bin.vertices + 1;   // part 0's vertex count past V
+  assert.throws(() => parseProductsBin(part0), /^Error: products model: part out of range$/);
+  const prod0 = ab.slice(0); new Uint32Array(prod0, 24, 9)[8] = P + 1;   // product 0's part count past P
+  assert.throws(() => parseProductsBin(prod0), /^Error: products model: part out of range$/);
+  assert.equal(parseProductsBin(ab.slice(0)).length, 4, 'the whole file still parses');
 });
 
 test('products-bin.ts imports three alone, no glTF loader, no model file, and gzips under 2 KB', () => {

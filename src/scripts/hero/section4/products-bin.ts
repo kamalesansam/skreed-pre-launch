@@ -12,15 +12,20 @@ export interface Product { name: string; /** the bounding box in metres, centred
 
 /** products.bin's layout: a 24-byte head, N 36-byte products, P 16-byte parts, the names, then positions, normals and indices in one block each */
 export function parseProductsBin(buf: ArrayBuffer): Product[] {
-  const [magic, N, P, V, , L] = new Uint32Array(buf, 0, 6);
+  if (buf.byteLength < 24) throw new Error('products model: truncated');
+  const [magic, N, P, V, I, L] = new Uint32Array(buf, 0, 6);
   if (magic !== 0x31504853) throw new Error('products model: not products.bin');
-  const pad = (n: number) => (n + 3) & ~3, pf = new Float32Array(buf, 24, N * 9), pu = new Uint32Array(buf, 24, N * 9), r = new Uint32Array(buf, 24 + N * 36, P * 4);
-  const head = 24 + N * 36 + P * 16, pos = head + pad(L), nrm = pos + pad(V * 6), idx = nrm + pad(V * 3);
+  const pad = (n: number) => Math.ceil(n / 4) * 4, head = 24 + N * 36 + P * 16, pos = head + pad(L), nrm = pos + pad(V * 6), idx = nrm + pad(V * 3);
+  // a body cut short (a proxy can resolve res.ok on a partial response) fails here, not as a view's RangeError
+  if (buf.byteLength < idx + pad(I * 2)) throw new Error('products model: truncated');
+  const pf = new Float32Array(buf, 24, N * 9), pu = new Uint32Array(buf, 24, N * 9), r = new Uint32Array(buf, 24 + N * 36, P * 4);
   const names = new TextDecoder().decode(new Uint8Array(buf, head, L)).split(',');
   return Array.from({ length: N }, (_, k) => {
     const [ox, oy, oz, s, sx, sy, sz] = pf.subarray(k * 9, k * 9 + 7), p0 = pu[k * 9 + 7], pc = pu[k * 9 + 8];
+    if (p0 + pc > P) throw new Error('products model: part out of range');
     const parts = Array.from({ length: pc }, (_, j) => {
       const [v0, vc, i0, ic] = r.subarray((p0 + j) * 4, (p0 + j) * 4 + 4);
+      if (v0 + vc > V || i0 + ic > I) throw new Error('products model: part out of range');
       const q = new Uint16Array(buf, pos + v0 * 6, vc * 3), n = new Int8Array(buf, nrm + v0 * 3, vc * 3), position = new Float32Array(vc * 3), normal = new Float32Array(vc * 3);
       for (let i = 0; i < vc * 3; i += 3) { position[i] = ox + s * q[i]; position[i + 1] = oy + s * q[i + 1]; position[i + 2] = oz + s * q[i + 2]; }
       for (let i = 0; i < vc * 3; i++) normal[i] = n[i] / 127;
