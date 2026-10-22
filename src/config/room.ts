@@ -120,6 +120,12 @@ export interface RoomScene {
   readonly alt: string;
   /** the product's authored presentation yaw at rest, radians (face out) */
   readonly baseYaw: number;
+  /**
+   * The logotype and the Back to top control turn Urban Slate over this scene (true) or stay Pearl Whisper (false): the
+   * frame under their boxes measured on the scene's stills by scripts/room/scene-tone.mjs (the hero's 3:1 rule), the
+   * readings in docs/specs/evidence/section-4-flux-build.md; every scene's top is dark, so all five stay Pearl.
+   */
+  readonly toneDark: boolean;
   /** the loop and the poster still per class */
   readonly files: Readonly<Record<SceneClass, SceneFiles>>;
 }
@@ -139,15 +145,15 @@ export const PRODUCTS_BIN_URL = fluxUrl('products.bin');
 
 type SceneRow = Omit<RoomScene, 'i' | 'files'>;
 const SCENE_ROWS: readonly SceneRow[] = [
-  { id: 'cove', order: 1, product: 'case', shade: 'vivid-violet-05', shadeName: 'Lilac', family: 'vivid violet', hex: '#c988c8', finish: 'matte', keyLight: '#ffa6c8', baseYaw: 0,
+  { id: 'cove', order: 1, product: 'case', shade: 'vivid-violet-05', shadeName: 'Lilac', family: 'vivid violet', hex: '#c988c8', finish: 'matte', keyLight: '#ffa6c8', baseYaw: 0, toneDark: false,
     alt: 'A pink rock cove with gold columns under a sunset sky, water rippling across the floor.' },
-  { id: 'grove', order: 2, product: 'airpods', shade: 'go-green-09', shadeName: 'Sage', family: 'go green', hex: '#96a880', finish: 'gloss', keyLight: '#a8ffe0', baseYaw: 0,
+  { id: 'grove', order: 2, product: 'airpods', shade: 'go-green-09', shadeName: 'Sage', family: 'go green', hex: '#96a880', finish: 'gloss', keyLight: '#a8ffe0', baseYaw: 0, toneDark: false,
     alt: 'A green forest with a dense rainforest floor, a misty lake and a ring of light.' },
-  { id: 'ember', order: 3, product: 'wallet', shade: 'basic-brown-04', shadeName: 'Desert', family: 'basic brown', hex: '#c6a884', finish: 'matte', keyLight: '#ffa171', baseYaw: 0,
+  { id: 'ember', order: 3, product: 'wallet', shade: 'basic-brown-04', shadeName: 'Desert', family: 'basic brown', hex: '#c6a884', finish: 'matte', keyLight: '#ffa171', baseYaw: 0, toneDark: false,
     alt: 'A red sunset over the sea, a leaning slab and a wet stone floor of flat slabs.' },
-  { id: 'palace', order: 4, product: 'lenskin', shade: 'playful-pink-06', shadeName: 'Ballerina', family: 'playful pink', hex: '#efa3af', finish: 'metallic', keyLight: '#ffc9a3', baseYaw: 0,
+  { id: 'palace', order: 4, product: 'lenskin', shade: 'playful-pink-06', shadeName: 'Ballerina', family: 'playful pink', hex: '#efa3af', finish: 'metallic', keyLight: '#ffc9a3', baseYaw: 0, toneDark: false,
     alt: 'A pink palace with a royal marble floor, statues and lattice screens open to the sea.' },
-  { id: 'dawn', order: 5, product: 'case', shade: 'vivid-violet-04', shadeName: 'Pastel', family: 'vivid violet', hex: '#d7b9ed', finish: 'matte', keyLight: '#cbb0ff', baseYaw: 0,
+  { id: 'dawn', order: 5, product: 'case', shade: 'vivid-violet-04', shadeName: 'Pastel', family: 'vivid violet', hex: '#d7b9ed', finish: 'matte', keyLight: '#cbb0ff', baseYaw: 0, toneDark: false,
     alt: 'A lilac dawn through sheer curtains, a starry disc and fog across the floor.' },
 ];
 /**

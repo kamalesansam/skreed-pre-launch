@@ -56,9 +56,18 @@ test('the five scenes (section-4-flux.md 3): the rooms in order, the products, t
     assert.doesNotMatch(s.alt, /\b(case|wallet|lenskin|airpods|phone)\b/i, `${s.id}: no product in the still`);
     assert.doesNotMatch(s.alt, /bath|shower|tub|shampoo/i, `${s.id}: nothing of a bathroom`);
     assert.ok(Number.isFinite(s.baseYaw));
+    assert.equal(typeof s.toneDark, 'boolean', `${s.id}: the logotype's tone over the scene`);
     assert.ok(productById(s.product));
     for (const cls of ['wide', 'portrait'] as const) for (const k of ['loop', 'avif', 'webp'] as const) assert.equal(typeof s.files[cls][k], 'string', `${s.id} ${cls} ${k}: a URL string (empty under Node, the build's glob fills it)`);
   }
+  // the logotype's tone over each scene (D5): scripts/room/scene-tone.mjs on 2026-10-23 measured Pearl Whisper at 5.0 to 18.6:1
+  // and Urban Slate at 1.05 to 1.98:1 under the logotype's and the control's boxes at both viewports, so every scene keeps Pearl
+  assert.deepEqual(ROOM_SCENES.map((s) => s.toneDark), [false, false, false, false, false]);
+  const director = read('src/scripts/hero/section4/director.ts');
+  assert.match(director, /const sceneTone = \(\) => ROOM_SCENES\[carousel\.front\(\)\]\?\.toneDark \?\? false;/, 'the director takes the front scene\'s tone');
+  assert.match(director, /tex = carousel\.out; toneDark = sceneTone\(\);/, 'over the scenes');
+  assert.match(director, /toneDark = b\.done && sceneTone\(\);/, 'once the bubble is done');
+  assert.doesNotMatch(director, /toneDark = true;/, 'never Urban Slate by state alone');
   assert.deepEqual(SCENE_SIZE, { wide: { width: 1280, height: 666 }, portrait: { width: 720, height: 1280 } });
   assert.equal(shadeLine(ROOM_SCENES[0]), 'Lilac, vivid violet');
   assert.equal(fill(ROOM_COPY.count, { n: 2, N: 5 }), '2 / 5');

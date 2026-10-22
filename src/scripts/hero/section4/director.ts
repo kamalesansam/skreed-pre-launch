@@ -58,7 +58,7 @@ export interface RoomPlan {
   /** a seam's cloud cover, 0 to 1: above 0 the composite blends cloud (premultiplied) over its result */
   cover: number;
   cloud: Texture | null;
-  /** the logotype over the section: Pearl in the hall, Urban Slate over the scenes */
+  /** the logotype and the Back to top control over the section: Pearl in the hall; over the scenes the front scene's own tone (ROOM_SCENES toneDark, measured on the stills) */
   toneDark: boolean;
 }
 
@@ -223,6 +223,8 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   const clearStep = () => { stepFrom = stepTo = -1; if (root) delete root.dataset.step; };
   const setScene = (i: number, instant = false) => { carousel.setScene(i, instant); if (root && state === 'world') root.dataset.scene = String(i); };
   const scene = () => carousel.scene();
+  /** the front scene's tone for the logotype (the front switches at eased 0.75 of a step, where the lights change over) */
+  const sceneTone = () => ROOM_SCENES[carousel.front()]?.toneDark ?? false;
   /** scene i's still or loop is resident (a step may start toward it; the wrap's cover may lift) */
   const resident = (i: number): boolean => stillDone[i] || (!!video && video.in(i));
   const loopSettled = (i: number) => loopState[i] === 'in' || loopState[i] === 'failed';
@@ -502,7 +504,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
           carousel.scissor(null); carousel.update(f.t, f.dt, curW, curH);
           const d = hall.out ? trans.dissolve(hall.out, carousel.out, t * 1000) : 1;
           tex = d >= 1 ? carousel.out : trans.out;
-          toneDark = d >= 0.5;
+          toneDark = d >= 0.5 && sceneTone();
           if ((d >= 1 && seekT < 0) || endNow) finishEnter();
         } else if (inRoom) {
           const ms = (t - BUBBLE.start) * 1000;
@@ -514,7 +516,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
             carousel.update(f.t, f.dt, curW, curH);
             if (b.done || !hall.out) tex = carousel.out;
             else { trans.bubble(hall.out, carousel.out, ms, P.bubbleMs); tex = trans.out; }
-            toneDark = b.done;
+            toneDark = b.done && sceneTone();
             if ((b.done && seekT < 0) || endNow) finishEnter();
           } else if (endNow) finishEnter();
         } else if (endNow) finishEnter();
@@ -555,7 +557,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
         }
         const live = state === 'world';
         carousel.look(live ? lookX : 0, live ? lookY : 0, live && pressed);
-        carousel.scissor(null); carousel.update(f.t, f.dt, curW, curH); tex = carousel.out; toneDark = true;
+        carousel.scissor(null); carousel.update(f.t, f.dt, curW, curH); tex = carousel.out; toneDark = sceneTone();
         on = inRoom && qRaw > 0;   // not the hall's q: a wrap may land before the hall is in
       }
       // a seam over the hall's frame, or over the hero after the exit's jump: the carousel steps for the cloud alone

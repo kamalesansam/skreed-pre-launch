@@ -168,3 +168,15 @@ On the served build the lines' glyph boxes (the name, the shade, the catalog lin
 | 5 dawn | Phone case, Pastel, matte | #d7b9ed | #d7baee | 0.32 | 0.1 percent |
 
 Before the fix (the spec's numbers, the white key): 12.93, 13.06, 13.27, 3.73 and 17.35, three faces wholly at 255. The check re-runs with `node scripts/room/product-check.mjs <base>` against a served hooks build; `--try` runs other intensities in one session.
+
+**D5, closed.** `ROOM_SCENES` carries `toneDark` per scene and the director's plan takes the front scene's (the front switches at eased 0.75 of a step, where the lights change over; the bubble's end and the still3d dissolve's half take scene 1's). `scripts/room/scene-tone.mjs` measures each scene's still as drawn at rest (cover-fitted at the 1.01 overscan, the bottom shade in the frame) under the logotype's box (the gutter, 96 x 23.2 px at 390, 136 x 32.9 at 1280) and the control's (its 44 px row top right) at both viewports: the median luminance, and Pearl Whisper's and Urban Slate's contrast against it. Every scene's top is dark, so all five keep Pearl (Urban Slate measured 1.05 to 1.98:1, which is D5's reading):
+
+| Scene | 390 logotype: Pearl / Slate | 390 control | 1280 logotype | 1280 control | The pick |
+|---|---|---|---|---|---|
+| 1 cove | 9.05 / 1.09 | 17.66 / 1.78 | 14.39 / 1.45 | 11.19 / 1.13 | Pearl Whisper |
+| 2 grove | 12.19 / 1.23 | 12.48 / 1.26 | 17.57 / 1.77 | 16.26 / 1.64 | Pearl Whisper |
+| 3 ember | 18.36 / 1.85 | 18.6 / 1.88 | 16.85 / 1.7 | 16.77 / 1.69 | Pearl Whisper |
+| 4 palace | 5.76 / 1.72 | 6.6 / 1.5 | 13.15 / 1.33 | 11.69 / 1.18 | Pearl Whisper |
+| 5 dawn | 12.49 / 1.26 | 10.46 / 1.05 | 5.02 / 1.98 | 9.25 / 1.07 | Pearl Whisper |
+
+The script exits 1 when `ROOM_SCENES` disagrees with its picks; `tests/unit/room.test.ts` holds the five values and the director's use of them.
