@@ -5,7 +5,7 @@
 #   /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python scripts/room/render-products.py -- <spec.json>
 # lands.py writes the spec (one per land); every number in it is in metres and in the photo's own camera axes (OpenCV's:
 # x right, y down, z forward, the camera at the origin), so a pose solved against the photo goes straight in:
-#   which      wallet | lenskin | airpods (the shipped GLBs in public/models/, meshopt and quantisation decoded by
+#   which      wallet | lenskin | airpods (Sam's cleaned GLBs in scripts/room/models/, meshopt and quantisation decoded by
 #              Blender's own importer) | airpods-ref (Sam's source FBX with Apple's case and earbuds kept: the land 4
 #              reference only, E-S4-device; it is rendered here and composited, and never becomes a model the site loads)
 #   model      the GLB (or, for airpods-ref, the FBX)

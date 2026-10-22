@@ -1,8 +1,33 @@
 {
- "about": "Section 4 part two, the four lands (docs/specs/section-4-world.md 3, \"Provenance\"), written by scripts/room/lands.py record. Sam reviewed the first sheet on 2026-10-20 and asked for fixes, then approved sheet-v2 the same day with the seams to be blended and the Lenskin in option 3 (Sage); the masters here carry both. Encoded into src/assets/room/lands/ by scripts/room/encode-lands.mjs; ROOM_LANDS is the integration's to write (CHECKLIST F2).",
+ "about": "Section 4 part two, the four lands (docs/specs/section-4-world.md 3, \"Provenance\"), written by scripts/room/lands.py record. Sam reviewed the first sheet on 2026-10-20 and asked for fixes, approved sheet-v2 the same day with the seams to be blended and the Lenskin in option 3 (Sage), and on 2026-10-21 approved sheet-final, the encoded files (\"this works, build it\"); each wide's depth map was then made again from the crop he approved. Encoded into src/assets/room/lands/ by scripts/room/encode-lands.mjs; ROOM_LANDS is the integration's to write (CHECKLIST F2).",
  "masters": "assets-src/room/lands/ (gitignored; SHA256SUMS committed); work/ there holds every mask and generator output named here",
  "ledger": "src/data/room-lands.ledger.json",
- "credits": 73.0,
+ "credits": 79.0,
+ "encoding": {
+  "about": "the encoded files Sam accepted under the brief's range: scripts/room/encode-lands.mjs stops each format at its floor (AVIF q45, WebP q60) and writes a file named here at exactly the quality named, from the master with the sum named. Land 1's wide fits its lines only at AVIF q48 (the brief's floor was q50) and WebP q64 (every other picture q80)",
+  "accepted": [
+   {
+    "file": "land-case-wide.avif",
+    "quality": 48,
+    "master": "land-case-wide.png",
+    "master_sha256": "8518f158e27fd254988ef88f7578c0ea6cb3f8647c17cc4166adb99896c49ea3",
+    "by": "Sam",
+    "date": "2026-10-21",
+    "sheet": "sheet-final.jpg",
+    "words": "this works, build it"
+   },
+   {
+    "file": "land-case-wide.webp",
+    "quality": 64,
+    "master": "land-case-wide.png",
+    "master_sha256": "8518f158e27fd254988ef88f7578c0ea6cb3f8647c17cc4166adb99896c49ea3",
+    "by": "Sam",
+    "date": "2026-10-21",
+    "sheet": "sheet-final.jpg",
+    "words": "this works, build it"
+   }
+  ]
+ },
  "lands": [
   {
    "id": "case",
@@ -13,7 +38,7 @@
     "from": "Sam's listing photos, ~/Downloads/amazon listing/image listing/lifestyle/17 promax/"
    },
    "accessory": null,
-   "approval": "Sam 2026-10-20 (sheet-v2), with the seams to be blended",
+   "approval": "Sam 2026-10-21 (sheet-final.jpg, the encoded files): \"this works, build it\"",
    "reviews": [
     {
      "round": 1,
@@ -31,6 +56,15 @@
      "by": "Sam",
      "sheet": "sheet-v2.jpg",
      "verdict": "approved, with the seams to be blended"
+    },
+    {
+     "round": 3,
+     "date": "2026-10-21",
+     "by": "Sam",
+     "sheet": "sheet-final.jpg",
+     "verdict": "approved",
+     "words": "this works, build it",
+     "note": "the encoded files decoded back (src/assets/room/lands), land 1's wide at AVIF q48 and WebP q64; after it each wide's depth map was made again from the crop he approved (the fourth round)"
     }
    ],
    "classes": {
@@ -200,31 +234,18 @@
       {
        "stage": "depth",
        "model": "depth_anything_video",
-       "job": "603ab9f4-36ae-4daf-a731-1150ddf51b56",
+       "job": "f676a4b7-5a23-4f17-8d7e-a0ee9a707876",
        "credits": 1.5,
-       "round": 2,
+       "round": 4,
        "variant": "VDA-Small",
        "max_frames": 1,
-       "output": "work/depth-case-wide-603ab9f4.mp4",
+       "output": "work/depth-case-wide-f676a4b7.mp4",
        "note": ""
-      },
-      {
-       "stage": "depthseams",
-       "local": true,
-       "round": 3,
-       "from": "work/v2/land-case-wide-depth.png",
-       "columns": [
-        960,
-        1000
-       ],
-       "changed_frac": 0.0596,
-       "largest_change": 184,
-       "note": "inside the darken mask, the share of the pad the seams kept takes the depth each row has just right of the edge (the trunk's)"
       }
      ],
-     "made_from": "the round-2 crop (work/v2/land-case-wide.png); the third round blended its seams after it",
+     "made_from": "the final crop (land-case-wide.png), as Sam approved it on sheet-final; it replaces the map made in round 2 by job 603ab9f4-36ae-4daf-a731-1150ddf51b56 from the round-2 crop, patched across the trunk in round 3 (work/v3/land-case-wide-depth.png)",
      "file": "land-case-wide-depth.png",
-     "sha256": "9459a13f413b97f3f32a74453f0e50d7da3190840953fc870662d0a7a688dfd8",
+     "sha256": "4ef5ae2c26003986189c0353a9d96f3afbb687387f62ad1b6b7845f09a304016",
      "source": "yellow.png"
     }
    }
@@ -244,7 +265,7 @@
     "render": "scripts/room/render-products.py, Blender 5.2 Cycles on Metal",
     "spec": "work/acc-wallet.json"
    },
-   "approval": "Sam 2026-10-20 (sheet-v2), with the seams to be blended",
+   "approval": "Sam 2026-10-21 (sheet-final.jpg, the encoded files): \"this works, build it\"",
    "reviews": [
     {
      "round": 1,
@@ -262,6 +283,15 @@
      "by": "Sam",
      "sheet": "sheet-v2.jpg",
      "verdict": "approved, with the seams to be blended"
+    },
+    {
+     "round": 3,
+     "date": "2026-10-21",
+     "by": "Sam",
+     "sheet": "sheet-final.jpg",
+     "verdict": "approved",
+     "words": "this works, build it",
+     "note": "the encoded files decoded back (src/assets/room/lands), land 1's wide at AVIF q48 and WebP q64; after it each wide's depth map was made again from the crop he approved (the fourth round)"
     }
    ],
    "classes": {
@@ -431,18 +461,18 @@
       {
        "stage": "depth",
        "model": "depth_anything_video",
-       "job": "91371a3e-1415-4ee5-bf5b-2fec89e90a78",
+       "job": "ac3d1275-e984-45ff-99b6-bbe277e5e0af",
        "credits": 1.5,
-       "round": 2,
+       "round": 4,
        "variant": "VDA-Small",
        "max_frames": 1,
-       "output": "work/depth-wallet-wide-91371a3e.mp4",
+       "output": "work/depth-wallet-wide-ac3d1275.mp4",
        "note": ""
       }
      ],
-     "made_from": "the round-2 crop (work/v2/land-wallet-wide.png); the third round blended its seams after it",
+     "made_from": "the final crop (land-wallet-wide.png), as Sam approved it on sheet-final; it replaces the map made in round 2 by job 91371a3e-1415-4ee5-bf5b-2fec89e90a78 from the round-2 crop (work/v3/land-wallet-wide-depth.png)",
      "file": "land-wallet-wide-depth.png",
-     "sha256": "f35f4ba127e0ba4bbe0ca9f5941bd8038744104aa4410f56da1d8d8ba18bfc63",
+     "sha256": "9b94660a1c05157d0699e27253fb58018b4c1421c65b9950ceb4e3293d050e73",
      "source": "blue.png"
     }
    }
@@ -522,12 +552,11 @@
       "square_frac": 0.0128,
       "portrait_frac": 0.0228,
       "wide_frac": 0.008
-     },
-     "room_ts": "roaring-red-07"
+     }
     },
-    "note": "the masters carry option 3, its plate and sheen set inside the plateau (lenskinpick); ROOM_PRODUCTS takes its shade in the integration. out/lenskin-options/ holds each candidate's square and crops as sheet-v2 showed them"
+    "note": "the masters carry option 3, its plate and sheen set inside the plateau (lenskinpick), and ROOM_PRODUCTS names its shade. out/lenskin-options/ holds each candidate's square and crops as sheet-v2 showed them"
    },
-   "approval": "Sam 2026-10-20 (sheet-v2), with the seams to be blended, Lenskin option 3 (Sage)",
+   "approval": "Sam 2026-10-21 (sheet-final.jpg, the encoded files): \"this works, build it\", Lenskin option 3 (Sage)",
    "reviews": [
     {
      "round": 1,
@@ -548,6 +577,15 @@
      "sheet": "sheet-v2.jpg",
      "verdict": "approved, with the seams to be blended",
      "lenskin": "option 3, go-green-09 (Sage)"
+    },
+    {
+     "round": 3,
+     "date": "2026-10-21",
+     "by": "Sam",
+     "sheet": "sheet-final.jpg",
+     "verdict": "approved",
+     "words": "this works, build it",
+     "note": "the encoded files decoded back (src/assets/room/lands), land 1's wide at AVIF q48 and WebP q64; after it each wide's depth map was made again from the crop he approved (the fourth round)"
     }
    ],
    "classes": {
@@ -730,18 +768,18 @@
       {
        "stage": "depth",
        "model": "depth_anything_video",
-       "job": "a58ad032-83fa-4bf9-9561-5ab28907aae6",
+       "job": "7cc5ec47-6106-458a-94b0-ceaba916637c",
        "credits": 1.5,
-       "round": 2,
+       "round": 4,
        "variant": "VDA-Small",
        "max_frames": 1,
-       "output": "work/depth-lenskin-wide-a58ad032.mp4",
+       "output": "work/depth-lenskin-wide-7cc5ec47.mp4",
        "note": ""
       }
      ],
-     "made_from": "the round-2 crop (work/v2/land-lenskin-wide.png); the third round blended its seams after it; the Sage plate set after it (0.8 percent of the crop)",
+     "made_from": "the final crop (land-lenskin-wide.png), as Sam approved it on sheet-final; it replaces the map made in round 2 by job a58ad032-83fa-4bf9-9561-5ab28907aae6 from the round-2 crop (work/v3/land-lenskin-wide-depth.png)",
      "file": "land-lenskin-wide-depth.png",
-     "sha256": "e92de2a57c6228bbf8b7b4d570bc74e817ace20d50d8452b35e13c46299a0fd1",
+     "sha256": "f25f263bc82359c854afb36866fcce437680d4ac0220c78f5226ca2af7cf6995",
      "source": "green.png"
     }
    }
@@ -761,7 +799,7 @@
     "render": "scripts/room/render-products.py, Blender 5.2 Cycles on Metal",
     "spec": "work/acc-airpods.json"
    },
-   "approval": "Sam 2026-10-20 (sheet-v2), with the seams to be blended",
+   "approval": "Sam 2026-10-21 (sheet-final.jpg, the encoded files): \"this works, build it\"",
    "reviews": [
     {
      "round": 1,
@@ -780,6 +818,15 @@
      "by": "Sam",
      "sheet": "sheet-v2.jpg",
      "verdict": "approved, with the seams to be blended"
+    },
+    {
+     "round": 3,
+     "date": "2026-10-21",
+     "by": "Sam",
+     "sheet": "sheet-final.jpg",
+     "verdict": "approved",
+     "words": "this works, build it",
+     "note": "the encoded files decoded back (src/assets/room/lands), land 1's wide at AVIF q48 and WebP q64; after it each wide's depth map was made again from the crop he approved (the fourth round)"
     }
    ],
    "classes": {
@@ -983,18 +1030,18 @@
       {
        "stage": "depth",
        "model": "depth_anything_video",
-       "job": "1b0befa0-ff24-4a07-885c-846dec5d4b29",
+       "job": "243d4b82-b9c5-467c-8a71-a6e4c57c9308",
        "credits": 1.5,
-       "round": 2,
+       "round": 4,
        "variant": "VDA-Small",
        "max_frames": 1,
-       "output": "work/depth-airpods-wide-1b0befa0.mp4",
+       "output": "work/depth-airpods-wide-243d4b82.mp4",
        "note": ""
       }
      ],
-     "made_from": "the round-2 crop (work/v2/land-airpods-wide.png); the third round blended its seams after it",
+     "made_from": "the final crop (land-airpods-wide.png), as Sam approved it on sheet-final; it replaces the map made in round 2 by job 1b0befa0-ff24-4a07-885c-846dec5d4b29 from the round-2 crop (work/v3/land-airpods-wide-depth.png)",
      "file": "land-airpods-wide-depth.png",
-     "sha256": "26bdb7dd2655c33d187789e5182294cdbe9fe6e09f14d3c53028f9bf2b77ed4e",
+     "sha256": "03f6f084bcf9df2707394b25078f2fa1fa29ddd46fa412e4d58320340aff5c0e",
      "source": "violet.png"
     }
    }

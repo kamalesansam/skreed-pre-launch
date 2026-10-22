@@ -15,7 +15,7 @@ If this file and a source disagree, the source wins and this file is fixed.
 
 - **The idea.** Skreed reads like a paint brand that happens to make phone cases. The product is the colour: 240 shades, 24 per family, ten families. The site's own chrome stays quiet: off-white and charcoal, one orange accent, three typefaces with one job each. The colour on screen comes from the shades themselves, shown as real swatches and real product, never as decoration.
 - **Pages.** Pearl Whisper (#F7F6F3) pages alternate with Urban Slate (#383F43) bands, as in the 2026-27 catalog. Circle swatches sit in a 6 x 4 grid per family. Photography is soft lifestyle on neutral backdrops.
-- **The hero.** The one exception to the flat pages, on purpose. Night (#050506) over a moonlit, igloo-style snowfield with a faint Milky Way and low fog. The SKRD mark stands as ten matte black blocks, each holding one family's shade as a glow inside its cut faces. The chrome is a corner logotype, a countdown to 1 November 2026 and a scroll cue. Scrolling pulls the camera back, then an ice-shard wipe opens the next section.
+- **The hero.** The one exception to the flat pages, on purpose. Night (#050506) over a moonlit, igloo-style snowfield with a faint Milky Way and low fog. The SKRD mark stands as ten matte black blocks, each holding one family's shade as a glow inside its cut faces. The chrome is a corner logotype, a countdown to 15 November 2026 and a scroll cue. Scrolling pulls the camera back, then an ice-shard wipe opens the next section.
 - **Density.** Low. One idea per screen. Short sentences, first person, active voice, sensory colour words. Tagline: "Tech Essentials That Go Beyond Basic." Line: "colour is personal."
 - **Mood words.** Confident, minimal, design-led, quiet, precise. Never hype, never discount.
 
@@ -251,33 +251,34 @@ Source Serif 4 Fallback 600: size-adjust 106.14%; ascent-override 97.61%; descen
 
 Sam, 2026-10-19: "add a back to top button throughout the site which navigates back to main section 1, without reloading". `src/components/shell/BackToTop.astro`, `src/scripts/shell/to-top.ts`, `src/styles/to-top.css`.
 
-- **Element.** A link to `/` (so it works without JavaScript), `aria-label` and `title` "Back to top", one static up chevron (16 px in a 44 px square, rule 45: never animated).
-- **Box.** 44 x 44 px, Pearl Whisper fill, Urban Slate chevron (9.9:1), square corners, no border, no shadow.
-- **Placement.** The landing page: fixed top right at `--inset`, centred on the logotype's row, `z-index: 4` (the logotype's layer). A family page: in the bar's free right end on phones (`z-index: 6`, over the bar), and under "All families" on the family page's wide layout (`(min-width: 900px) and (min-height: 600px)`), clear of the Matte and Gloss switch.
+- **Element.** A link to `/` (so it works without JavaScript) reading "Back to top", which is its accessible name (no `aria-label`, no `title`), then the scroll cue's five-dot chevron (`ScrollCue.astro`) turned to point up, at the cue's own size (17.5 x 9 px, the outer dots at 0.3 and the next at 0.6 as on the cue), static (rule 45: never animated).
+- **Look.** No box. Sam, 2026-10-20, of the 44 px Pearl Whisper square it was: "fix that and make it look a part of the site". It is set as "All families" is on a family page: Open Sans 600 at `--fs-label`, line height 1, no fill, no border, no shadow, in a 44 px tall hit row padded `var(--s2)` at each side, the chevron `var(--s1)` after the words. Its colour is the logotype's: Pearl Whisper, and Urban Slate while the logotype is Urban Slate over the light fog (`to-top.ts` copies the logotype's `data-tone`); on a family page, Pearl Whisper.
+- **Contrast.** Measured on 2026-10-20 (a hooks build, the words against the ground beside them): 18.7 to 19.4:1 on the stars and 18.9:1 on a family page. On the fog, Urban Slate is 4.3 to 4.4:1 at 1280 x 800 and 2.5 to 3.4:1 at 390 x 844; over section 4's light hall, where the logotype stays Pearl Whisper, it is 1.9:1 at 1280 x 800 and 4.0:1 at 390 x 844. Below AA on the fog, the same open item as the quiz's text.
+- **Placement.** The chevron's right edge on `--inset` (the hit row is set out past it by its padding), as the logotype's left edge is. The landing page: fixed top right, centred on the logotype's row, `z-index: 4` (the logotype's layer). A family page: in the bar's free right end on phones (`z-index: 6`, over the bar), and under "All families" on the family page's wide layout (`(min-width: 900px) and (min-height: 600px)`), clear of the Matte and Gloss switch.
 - **When.** The landing page: hidden in its first screen (section 1 is where it leads), shown past it. A family page: always.
 - **Press.** The landing page: a `--night` veil fades in over 250 ms, the page jumps to section 1 in place (the hero's own jump, `window.__skreedTop`: scroll 0, the scroll followers snapped, section 4 reset for its next lap; a plain instant scroll on the poster tier), and the veil lifts once the hero has drawn its rest frame. No reload and no smooth scroll back through the sections. Keyboard focus moves to the logotype. A family page: it steps back through the history to the landing page (the Navigation API's entries, else the referrer and `history.back()`); the browser restores the landing page from its back-forward cache without a reload, and a `sessionStorage` flag makes it jump to section 1 under the veil. With no landing page behind it, the link navigates to `/`, its files from the cache (`public/_headers`).
-- **States.** Press `scale(0.98)` over `--dur-press`; no hover motion (rule 48). The two-tone focus ring (Ember Luxe at 2 px, Urban Slate inside).
-- **Reduced motion.** The cut with no veil; no press scale.
+- **States.** As "All families" (`.press`): hover (`hover: hover`) `translateY(-1px)`, press `scale(0.98)`, both over `--dur-press` on `--ease-standard`; the chevron never moves by itself (rule 45). The two-tone focus ring (Ember Luxe at 2 px, Urban Slate inside).
+- **Reduced motion.** The cut with no veil; no hover lift and no press scale.
 - **Analytics.** `to_top { from }` through section 3's `track()`.
 
 ### Countdown (hero)
 
-- **Placement.** Bottom left at `--inset`. Below 1100 px it sits 84 px higher, so the cue has its own row. On the poster path it sits in the first screen and scrolls away with it.
+- **Placement.** Bottom left at `--inset`. Below 1100 px it would reach the middle, so it sits 84 px higher and the cue sits under it. On the poster path it sits in the first screen and scrolls away with it.
 - **Eyebrow.** "Launch in", Open Sans 600 at 14 px.
 - **Groups.** Four columns (days, hours, minutes, seconds) with gap `clamp(var(--s3), 4vw, 44px)`. Each holds a numeral at `--fs-hero-countdown`, 600, tabular, always two digits, `min-width: 2ch`, with a unit label 600 at 14 px under it, `gap: var(--s1)`. All Pearl Whisper.
 - **Semantics.** `role="timer"`, `aria-label="Time until launch"`.
 - **First tick.** The numerals stay hidden until the first tick, which runs in the same task.
 - **At zero.** The eyebrow reads "Skreed is live. skreed.com", with "skreed.com" a real link: Pearl Whisper, underlined, `pointer-events: auto`, a hit box at least 44 px tall, the two-tone focus ring. The numerals are not displayed (`.count[hidden]{display:none}`).
-- **No JavaScript.** One line, "Launching 1 November 2026", with the date in a `<time>`; the eyebrow and the numerals are not displayed.
+- **No JavaScript.** One line, "Launching 15 November 2026", with the date in a `<time>`; the eyebrow and the numerals are not displayed.
 - **Reduced motion.** The seconds group is hidden.
 
 ### Scroll cue (hero)
 
-- **Placement.** Bottom centre at `--inset`, 64 px wide.
-- **Parts.** "Scroll" in Open Sans 600 at 12 px, 22 px above a 9 px Pearl Whisper ball, over a 26 x 1 px line at opacity 0.6.
-- **Animation.** Three bounces, then rest. Each 1.5 s cycle: the ball drops 22 px on `--ease-gravity`, squashes to 1.38 x 0.62 on landing, stretches to 0.9 x 1.14 on the rebound, and returns; the line widens to 1.12 and dips 1 px under it. The animation runs 2.44 cycles (3.66 s) and ends on a landing, so the ball rests on its line. It starts when the cue becomes visible, and again each time it returns.
-- **Hiding.** It fades out in 0.4 s (`--ease-standard`) once `scrollY` passes 8 px, during the wipe and while loading. It is hidden when there is nothing below to scroll to, and without JavaScript.
-- **Reduced motion.** It is still.
+- **One cue, in the middle.** Sam, 2026-10-20: "put only one in the middle"; the two side cues clashed with the countdown. Bottom centre, its bottom edge on `--inset`. From 1100 px it sits on the countdown's row, right of the numerals. Below 1100 px it sits under the lifted countdown, 11 px clear of it.
+- **Parts.** ciao's side icon re-created (docs/specs/hero.md 12.3): one 17.5 x 73 px column of three five-dot chevrons, our own SVG, in Pearl Whisper. No text.
+- **Animation.** Each chevron is drawn top down, held and wiped top down on a 2.5 s linear cycle (`cue-top`, `cue-mid`, `cue-bottom`). It cycles for as long as it is shown (E-cue-motion).
+- **Hiding.** It fades out in 0.5 s once `scrollY` passes 8 px, during the wipe and while the loader and the intro run. It is hidden when there is nothing below to scroll to, and without JavaScript.
+- **Reduced motion.** It is still, the three chevrons shown.
 - **Not an arrow.** Rule 45 bans animated arrows.
 
 ### Loader (hero, 3D path only; exception E-H1)

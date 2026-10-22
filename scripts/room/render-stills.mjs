@@ -5,8 +5,10 @@
 //   node scripts/room/render-stills.mjs [base] --frames <dir>                    the review frames at 390 x 844 and 1280 x 800
 // The frames, each by a named hook (AC1): the hall at the station with the prompt; the entry clock held by __s4.seek at
 // the bubble's 25, 50 and 90 percent, each ring pass, the morph's 30, 50 and 80 percent and the push's end; each land at
-// rest with its text (__s4.land); each travel at half (__s4.travel); the frame either side of the loop's jump. A frame
-// the build cannot show (no land in it) is reported and skipped. SKREED_GL=swiftshader runs WebGL on SwiftShader (the
+// rest with its text (__s4.land); each travel at half (__s4.travel); the true pair either side of the loop's jump (the
+// fourth wipe held at 0.99, just short of the jump at 0.995, then the first frame the jump lands on, the page's frames
+// held there for the shot); and the poster tier's column (?tier=poster: the still with its prompt, then each land on its
+// screen after the press). A frame the build cannot show (no land in it) is reported and skipped. SKREED_GL=swiftshader runs WebGL on SwiftShader (the
 // test harness's flags) when the GPU path is not available.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -92,16 +94,42 @@ if (framesDir) {
       await shot(page, f(`travel-${i + 1}-${i + 2}-half`));
       await page.evaluate((j) => window.__s4.travel(j, j + 1, -1), i); await page.waitForTimeout(800);
     }
-    // the loop: the last land, the fourth wipe half way, then the frame after the jump
+    // the loop: the last land, the fourth wipe half way, then the pair either side of the jump
     await page.evaluate((j) => window.__s4.land(j), lands - 1); await page.waitForTimeout(1500);
     const loop0 = 9 + 2 * lands;
     await go(page, loop0 + 0.5, 1200); await shot(page, f('loop-half'));
-    await page.evaluate((q) => { const room = document.getElementById('room'), top = room.getBoundingClientRect().top + scrollY; scrollTo({ top: top + q * innerHeight, behavior: 'instant' }); }, loop0 + 1.2);
-    await page.waitForFunction(() => scrollY < 2, null, { timeout: 20_000 }).catch(() => console.warn('  no jump within 20 s'));
-    await page.waitForTimeout(600);
-    await shot(page, f('after-jump'));
+    await go(page, loop0 + 0.99, 1200); await shot(page, f('loop-before-jump'));
+    // the first frame after the jump: the director's frame that reports the jump stops the page's frames (its own rAF
+    // callbacks are held from then on), so the shot shows that frame and no later one; then everything runs on
+    await page.evaluate(() => {
+      const raf = window.requestAnimationFrame.bind(window), held = [], on = window.__skreedRoomFrame;
+      let hold = false;
+      window.requestAnimationFrame = (cb) => (hold ? (held.push(cb), 0) : raf(cb));
+      window.__skreedRoomFrame = (fr) => { on?.(fr); if (fr.jumped) hold = true; };
+      window.__s4Release = () => { window.requestAnimationFrame = raf; window.__skreedRoomFrame = on; for (const cb of held.splice(0)) raf(cb); };
+    });
+    await page.evaluate((q) => { const room = document.getElementById('room'), top = room.getBoundingClientRect().top + scrollY, y = top + q * innerHeight; scrollTo({ top: y, behavior: 'instant' }); window.__skreedSnap?.(y / innerHeight); window.__skreedRoom?.snap(q); }, loop0 + 0.999);
+    await page.waitForFunction(() => scrollY < 2, null, { timeout: 20_000, polling: 50 }).catch(() => console.warn('  no jump within 20 s'));
+    await page.waitForTimeout(300);
+    await shot(page, f('loop-after-jump'));
+    await page.evaluate(() => window.__s4Release?.());
     console.log(`[${setup}] scrollY after the loop: ${await page.evaluate(() => scrollY)}; state ${JSON.stringify(await page.evaluate(() => ({ sb: window.__skreedState?.().sb, s4: window.__s4?.state()?.state })))}`);
     await ctx.close();
+    // the poster tier's column: the still with the prompt over it, then each land on its own screen after the press
+    const pc = await browser.newContext(SETUPS[setup]), pp = await pc.newPage();
+    await pp.goto(new URL('/?tier=poster', base).href, { waitUntil: 'load' });
+    // each frame with its element's top at the viewport's top, as a visitor scrolling down reaches it
+    await pp.evaluate(() => document.getElementById('room').scrollIntoView({ block: 'start', behavior: 'instant' })); await pp.waitForTimeout(1500);
+    await shot(pp, f('poster-hall'));
+    await pp.locator('#rmEnter').click();
+    await pp.waitForFunction(() => document.getElementById('room')?.dataset.state === 'world', null, { timeout: 20_000 });
+    for (const [k, li] of (await pp.locator('.rm-land').all()).entries()) {
+      await li.evaluate((el) => el.scrollIntoView({ block: 'start', behavior: 'instant' }));
+      await pp.waitForFunction((i) => { const img = document.querySelector(`.rm-land[data-i="${i}"] img`); return !!img && img.complete && img.naturalWidth > 0; }, k, { timeout: 30_000 }).catch(() => console.warn(`  poster land ${k + 1}: its picture did not decode`));
+      await pp.waitForTimeout(400);
+      await shot(pp, f(`poster-land-${k + 1}`));
+    }
+    await pc.close();
   }
 } else {
   // the hall's still, from the start station, without the section's DOM or the logotype

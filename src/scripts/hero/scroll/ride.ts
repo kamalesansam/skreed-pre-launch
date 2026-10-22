@@ -15,13 +15,13 @@ export function rideCopy(els: RideEls, tp: number, asp: number, s2ready = false)
     c.style.clipPath = tp > 0 ? clipFor(tp, true, asp) : 'none';
     c.style.visibility = tp >= 1 ? 'hidden' : 'visible';
   }
-  if (tp > 0) { els.cue?.classList.add('is-off'); els.cue2?.classList.add('is-off'); }   // the plain script hides them on scroll; this covers the wipe
+  if (tp > 0) els.cue?.classList.add('is-off');   // the plain script hides it on scroll; this covers the wipe
 }
 
 /**
  * The fourth wipe (section 4's loop screen, docs/specs/section-4.md 5): the composite cuts from the section's frame to the
  * hero at rest, so the countdown rides in behind the cut from below (the region the wipe has reached), the logotype
- * keeps the section's tone until half way and is Pearl after, the cues stay off until the jump brings them back.
+ * keeps the section's tone until half way and is Pearl after, the cue stays off until the jump brings it back.
  */
 export function rideLoop(els: RideEls, p: number, asp: number, sectionLight: boolean): void {
   window.__skreedLogo?.setTone(p < 0.5 ? sectionLight : false);
@@ -31,5 +31,5 @@ export function rideLoop(els: RideEls, p: number, asp: number, sectionLight: boo
     c.style.clipPath = clipFor(p, false, asp);
     c.style.visibility = p > 0 ? 'visible' : 'hidden';
   }
-  els.cue?.classList.add('is-off'); els.cue2?.classList.add('is-off');
+  els.cue?.classList.add('is-off');
 }

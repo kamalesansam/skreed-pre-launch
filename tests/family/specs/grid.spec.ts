@@ -11,7 +11,7 @@ test.describe('1. routes, titles and links', () => {
       expect(res!.status()).toBe(200);
       await expect(page).toHaveTitle(`${NAMES[i]}, all 24 shades. Skreed`);
       const desc = await page.locator('meta[name="description"]').getAttribute('content');
-      expect(desc).toMatch(new RegExp(`^All 24 ${NAMES[i]} shades, from .+ to .+, on a Skreed case in matte or gloss\\. Doors open Nov 1\\.$`));
+      expect(desc).toMatch(new RegExp(`^All 24 ${NAMES[i]} shades, from .+ to .+, on a Skreed case in matte or gloss\\. Doors open Nov 15\\.$`));
       await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `https://skreed.in/shades/${slug}/`);
       await expect(page.locator('a.fh-logo')).toHaveAttribute('href', '/');
       await expect(page.locator('.famnav .fn-all')).toHaveAttribute('href', `/?family=${slug}#wall`);
