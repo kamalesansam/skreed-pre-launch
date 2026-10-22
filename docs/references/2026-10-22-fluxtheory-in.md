@@ -61,8 +61,8 @@ Code read with line pointers: [../specs/evidence/section-4-flux-reference.md](..
 ## Where the capture sits
 
 - The zip: `www.fluxtheory.in.zip` at the repo root, 14,427,471 B. Untracked and named in `.git/info/exclude` (line 11), so `git status` does not list it and `git add -A` cannot stage it; the repo is public and it must never be committed.
-- The unpacked copy, with the six chunks pretty-printed in place so the evidence doc's line pointers hold: `/private/tmp/claude-501/-Users-apple-Library-Application-Support-Claude-scratch-workspaces-b3fc6180-1578-46fe-918e-4706ccd4a481-1b0b6853-ef5f-4ad3-9a28-7fe923b0e694-scratch-2026-10-15-e4b8f1/318fb736-076b-47f9-9186-0e1a8ebc6d54/scratchpad/flux-ref/`, a session scratchpad that may vanish. The zip is the record; unpacking it again and pretty-printing the six files named in the evidence doc restores the pointers.
-- The real scene clips, 14 files, 6,803,005 B, downloaded from the Shopify URLs the chunk names: `/private/tmp/claude-501/-Users-apple-Library-Application-Support-Claude-scratch-workspaces-b3fc6180-1578-46fe-918e-4706ccd4a481-1b0b6853-ef5f-4ad3-9a28-7fe923b0e694-scratch-2026-10-15-e4b8f1/4f1d30e2-96a0-4d42-9276-375f274eaa2e/scratchpad/flux-videos/`, with the stills and the regenerated loops in its subfolders (their record is `docs/specs/evidence/section-4-flux-loops.md`).
+- The unpacked copy, with the six chunks pretty-printed in place so the evidence doc's line pointers hold: `the session scratchpad, folder flux-ref/`, a session scratchpad that may vanish. The zip is the record; unpacking it again and pretty-printing the six files named in the evidence doc restores the pointers.
+- The real scene clips, 14 files, 6,803,005 B, downloaded from the Shopify URLs the chunk names: `the session scratchpad, folder flux-videos/`, with the stills and the regenerated loops in its subfolders (their record is `docs/specs/evidence/section-4-flux-loops.md`).
 - Nothing from the capture is under `assets-src/`, `src/` or `public/`.
 
 ## Open questions
