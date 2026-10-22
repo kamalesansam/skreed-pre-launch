@@ -1,0 +1,7 @@
+# Section 4's five scene loops (docs/specs/section-4-flux.md): the generator's files stay out of git, as the land masters
+# and option C's clips do; their sums are committed, so a copy can be checked with `shasum -a 256 -c SHA256SUMS` from
+# this folder. raw/ holds the ten approved kling_o3_flf loops, the clean stills they were animated from, every job record
+# and the three shell scripts that made them. scripts/room/encode-flux.mjs reads raw/ only after each file's sum matches.
+*
+!.gitignore
+!SHA256SUMS
