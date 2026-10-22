@@ -1,0 +1,162 @@
+{
+ "bin": {
+  "path": "src/assets/room/flux/products.bin",
+  "format": "SHP1",
+  "bytes": 269900,
+  "sha256": "3181b030f039246f8648c37e7fa11a1c02d53209f53424227c25e5ac57df57f6",
+  "products": [
+   "wallet",
+   "airpods",
+   "lenskin",
+   "case"
+  ],
+  "vertices": 16472,
+  "triangles": 20203,
+  "writtenBy": "scripts/room/products-bin.mjs"
+ },
+ "products": {
+  "wallet": {
+   "source": "scripts/room/models/wallet.a15a8ebb.glb",
+   "sha256": "a15a8ebb2864a8b5b1a05cf3f9b84a2d6a06a877d39376459be7fb7503f79caf",
+   "parts": [
+    "edge",
+    "logo",
+    "shell",
+    "trim"
+   ],
+   "vertices": 3528,
+   "triangles": 3925,
+   "bytes": 55302,
+   "sizeMm": [
+    70.94,
+    93.8,
+    4.68
+   ],
+   "boxMm": {
+    "min": [
+     -35.47,
+     -46.9,
+     -2.34
+    ],
+    "max": [
+     35.47,
+     46.9,
+     2.34
+    ]
+   },
+   "centreMovedMm": [
+    -0.04,
+    46.9,
+    0
+   ],
+   "gridStepMm": 0.0057,
+   "unitMM": null
+  },
+  "airpods": {
+   "source": "scripts/room/models/airpods.6fe7a22f.glb",
+   "sha256": "6fe7a22fd392106f49719909c95e065f10956f48105d2ac36b63149b48dae1c2",
+   "parts": [
+    "lid",
+    "shell",
+    "trim"
+   ],
+   "vertices": 4929,
+   "triangles": 5067,
+   "bytes": 74763,
+   "sizeMm": [
+    50.02,
+    53.11,
+    36.26
+   ],
+   "boxMm": {
+    "min": [
+     -25.01,
+     -26.55,
+     -18.13
+    ],
+    "max": [
+     25.01,
+     26.55,
+     18.13
+    ]
+   },
+   "centreMovedMm": [
+    0,
+    26.55,
+    0
+   ],
+   "gridStepMm": 0.0032,
+   "unitMM": null
+  },
+  "lenskin": {
+   "source": "scripts/room/models/lenskin.3831acd1.glb",
+   "sha256": "3831acd1ffd8f45e2e04cf3d33e8987305e2a9f0e90fa6159f174c020d7fd21b",
+   "parts": [
+    "shell"
+   ],
+   "vertices": 1707,
+   "triangles": 1400,
+   "bytes": 23763,
+   "sizeMm": [
+    65.59,
+    38.89,
+    2.4
+   ],
+   "boxMm": {
+    "min": [
+     -32.79,
+     -19.44,
+     -1.2
+    ],
+    "max": [
+     32.79,
+     19.44,
+     1.2
+    ]
+   },
+   "centreMovedMm": [
+    0,
+    19.5,
+    0
+   ],
+   "gridStepMm": 0.004,
+   "unitMM": null
+  },
+  "case": {
+   "source": "public/models/case.lod1.462e2dc8.glb",
+   "sha256": "462e2dc8e5f7d1cc58f7c61746b56d54468aefc21657a3e62aec3bcda5f12550",
+   "parts": [
+    "shell",
+    "trim",
+    "logo"
+   ],
+   "vertices": 6308,
+   "triangles": 9811,
+   "bytes": 115638,
+   "sizeMm": [
+    104.7,
+    196.74,
+    26.56
+   ],
+   "boxMm": {
+    "min": [
+     -52.35,
+     -98.37,
+     -13.28
+    ],
+    "max": [
+     52.35,
+     98.37,
+     13.28
+    ]
+   },
+   "centreMovedMm": [
+    -0.04,
+    -0.16,
+    0.59
+   ],
+   "gridStepMm": 0.003,
+   "unitMM": 196.43
+  }
+ }
+}
