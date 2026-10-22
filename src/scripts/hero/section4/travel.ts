@@ -40,6 +40,12 @@ export interface Travel {
   readonly note: string | null;
   /** whether the travel from land `from` to land `to` can play now (both lands resident; for C, its clip fully fetched) */
   can(from: number, to: number): boolean;
+  /**
+   * The option's own part of land `to` being in, where it has one (C: the clip from `from`, spec 2 "When a land is in"):
+   * a promise that settles, never rejects, once it is in or has failed, so a travel asked for meanwhile waits on the
+   * current land as Loading; null when there is nothing to wait for.
+   */
+  pending?(from: number, to: number): Promise<void> | null;
   /** its length in ms: landTravelMs for A and B, the clip's own for C */
   ms(from: number, to: number, params: RoomParams): number;
   /** the frame at p (0 to 1) of the travel from `from` to `to` as the world's layers; null if it cannot go on (the cross-fade takes the rest) */
@@ -55,6 +61,25 @@ export interface TravelEntry { createTravel(ctx: TravelContext): Travel | null }
 
 /** the cross-fade's length, ms (spec 2: "a failed or refused travel is the 300 ms cross-fade"; spec 4 under still3d) */
 export const FADE_MS = 300;
+
+const media: HTMLVideoElement[] = [];
+/**
+ * n video elements, muted and inline, made once and kept across laps; their play() is called (and paused, its promise's
+ * refusal caught) as they are made. The director asks for them inside the press's own task, while the browser still
+ * counts the press as a gesture, so a browser that wants one before a video may play (iOS in Low Power Mode) has had it
+ * on these elements; option C plays its clips through them (they carry no source until it gives them one). No URL is
+ * named here (travel-stub.ts's second rule).
+ */
+export function unlockMedia(n: number): readonly HTMLVideoElement[] {
+  while (media.length < n) {
+    const v = document.createElement('video');
+    v.muted = true; v.defaultMuted = true; v.playsInline = true; v.disableRemotePlayback = true; v.preload = 'none';
+    v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
+    v.play().catch(() => {}); v.pause();
+    media.push(v);
+  }
+  return media.slice(0, n);
+}
 
 /** land i at rest as a layer, or the garden at the glide's end pose where its picture is not resident (spec 5: a failed land picture shows its text on the garden) */
 export const restLayer = (world: WorldScene, view: LandView | null, i: number, alpha?: number): WorldLayer =>

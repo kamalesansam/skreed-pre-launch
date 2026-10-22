@@ -1,0 +1,7 @@
+# Option C's raw clips and their start and end frames (docs/specs/section-4-world.md 3, "Option C's clips"): the
+# generator's files stay out of git, as the land masters do; their sums are committed, so a copy can be checked with
+# `shasum -a 256 -c SHA256SUMS` from this folder. raw/ holds every attempt as kling_o3_flf returned it, frames/ the start
+# and end pictures sent with each job (the portrait crops at 1080 x 1920, the wide on its 16:9 canvas at 1920 x 1080).
+*
+!.gitignore
+!SHA256SUMS
