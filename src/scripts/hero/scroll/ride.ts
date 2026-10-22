@@ -1,6 +1,7 @@
 // The DOM ride (prototype v11.4 template.html, the end of step(); frame step F16): the countdown is clipped above the wipe
 // edge (and slides up by 0.4 tp^3 screens only while section 2 is not yet built), the corner logotype turns Urban Slate
-// past half the wipe, the two side cues hide during the wipe.
+// past half the wipe, the two side cues hide during the wipe. Section 4's exit is a jump to scroll 0 under the seam's
+// cloud (section-4-flux.md 9 X-15), so there is no ride for a fourth wipe: at scroll 0 this is the hero's own ride.
 // resetRiders (scroll/reset.ts) undoes it on the hard poster path.
 import { clipFor } from './scrollMap.ts';
 import type { RideEls } from './reset.ts';
@@ -16,20 +17,4 @@ export function rideCopy(els: RideEls, tp: number, asp: number, s2ready = false)
     c.style.visibility = tp >= 1 ? 'hidden' : 'visible';
   }
   if (tp > 0) els.cue?.classList.add('is-off');   // the plain script hides it on scroll; this covers the wipe
-}
-
-/**
- * The fourth wipe (section 4's loop screen, docs/specs/section-4.md 5): the composite cuts from the section's frame to the
- * hero at rest, so the countdown rides in behind the cut from below (the region the wipe has reached), the logotype
- * keeps the section's tone until half way and is Pearl after, the cue stays off until the jump brings it back.
- */
-export function rideLoop(els: RideEls, p: number, asp: number, sectionLight: boolean): void {
-  window.__skreedLogo?.setTone(p < 0.5 ? sectionLight : false);
-  const c = els.heroCopy;
-  if (c) {
-    c.style.transform = 'translate3d(0,0,0)';
-    c.style.clipPath = clipFor(p, false, asp);
-    c.style.visibility = p > 0 ? 'visible' : 'hidden';
-  }
-  els.cue?.classList.add('is-off');
 }

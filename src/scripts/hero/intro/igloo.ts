@@ -9,7 +9,7 @@ import { BufferGeometry, CanvasTexture, Color, CustomBlending, DataTexture, Floa
 import { INTRO_POSE } from '../../../config/hero.ts';
 import { PEARL_WHISPER } from '../../../config/tokens.ts';
 import { clamp01, smoothstep } from '../util/math.ts';
-import { CAGE_FRAG, CAGE_VERT, COMPOSITE_FRAG_V11, FLOOR_INTRO_COLOR, IGL, LOGO_FRAG_OUT, LOGO_FRAG_PARS, NUMS_FRAG, NUMS_VERT, OUTLINE_FRAG, OUTLINE_VERT, SKY_FRAG_OUT, SKY_FRAG_PARS, TRI_FRAG, TRI_VERT, floorIntroCommon } from '../v11/glsl.ts';
+import { CAGE_FRAG, CAGE_VERT, COMPOSITE_FRAG_V11_COVER, FLOOR_INTRO_COLOR, IGL, LOGO_FRAG_OUT, LOGO_FRAG_PARS, NUMS_FRAG, NUMS_VERT, OUTLINE_FRAG, OUTLINE_VERT, SKY_FRAG_OUT, SKY_FRAG_PARS, TRI_FRAG, TRI_VERT, floorIntroCommon } from '../v11/glsl.ts';
 import type { ShaderPatch } from '../world/ground.ts';
 import type { HeroContext } from '../types.ts';
 import type { IntroDirector, IntroFrame, IntroHooks } from './types.ts';
@@ -297,7 +297,7 @@ export function createIglooIntro(o: IglooOptions): IntroDirector {
     slots: {
       logo: { fragPars: LOGO_FRAG_PARS, fragOut: LOGO_FRAG_OUT },
       sky: { fragPars: SKY_FRAG_PARS, fragOut: SKY_FRAG_OUT },
-      composite: { full: COMPOSITE_FRAG_V11 },
+      composite: { full: COMPOSITE_FRAG_V11_COVER },
       ground: [floorIntro(false)], stones: [floorIntro(true)],
     },
     logoUniforms,

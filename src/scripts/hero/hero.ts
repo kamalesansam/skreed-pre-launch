@@ -4,7 +4,7 @@
 // hard failure has killed the island. The 27 milestones (config/loader-weights.json) arrive in key order: import, b1 to
 // b10, sky, ground, intro, scene, c1 to c9, compile, frame1, frame2.
 import { PerspectiveCamera, SRGBColorSpace, Scene } from 'three';
-import { DPR_CAP, POSE } from '../../config/hero.ts';
+import { DPR_CAP, POSE, S2T } from '../../config/hero.ts';
 import { heroParams, type HeroParams } from '../../config/params.ts';
 import { hoverNoneMQ, sceneReduced } from '../motion.ts';
 import MOON_META from '../../assets/hero/moon_meta.json';
@@ -38,6 +38,8 @@ import { createLoop } from './loop.ts';
 import { warmUp } from './warmup.ts';
 import { createIglooIntro } from './intro/igloo.ts';
 import type { RideEls } from './scroll/ride.ts';
+import type { RoomDirector } from './section4/director.ts';
+import type { PageScroll } from './section4/scroll.ts';
 import type { HeroContext, HeroUniforms, SkyState } from './types.ts';
 
 export interface StartOptions {
@@ -198,31 +200,64 @@ export async function startHero(o: StartOptions): Promise<void> {
   window.__skreedTop = () => { scrollTo({ top: 0, behavior: 'instant' }); loop.snap(0); ctx.room?.reset(); };
   life.onKill(() => { window.__skreedTop = undefined; });
   if (HOOKS) installHooks(ctx, loop, { skyClass: () => ctx.sky.cls });
-  // section 4 (docs/specs/section-4.md 5, section-4-world.md 5) loads one section ahead: its chunk, the hall's model and
-  // lightmap start when the quiz or the section itself comes into view, so the walk is ready by the time the third wipe
-  // is reached; the world's chunk, the garden and land 1 follow during the walk (section4/director.ts), its rings and
-  // forcefields drawing the intro's triangle lattice (tTri, already on the GPU)
-  let roomImport: Promise<void> | null = null;
-  const loadHall = () => (roomImport ??= import('./section4/director.ts').then((m) => {
-    const room = m.createRoomDirector({ renderer, avif: data.avif, reduced, touch, dpr, tTri: ctx.U.tTri ?? null, onJump: () => loop.snap(0) });
+  // section 4 (docs/specs/section-4.md 5; section-4-flux.md 5, "Loading"): its director chunk comes at idle once the intro
+  // ends (phase 0: the cloud's pass readied, so a wrap from the top has its cover), or when the quiz or the section itself
+  // comes into view (the hall's model and lightmap then, so the walk is ready by the time the third wipe is reached); the
+  // carousel, products.bin and the loops follow during the walk (section4/director.ts)
+  let roomImport: Promise<RoomDirector | null> | null = null;
+  const loadDirector = () => (roomImport ??= import('./section4/director.ts').then((m) => {
+    if (life.dead) return null;
+    const room = m.createRoomDirector({ renderer, avif: data.avif, reduced, touch, dpr, snapHero: (y) => loop.snap(innerHeight > 0 ? y / innerHeight : 0) });
     ctx.room = room; life.onKill(() => room.dispose());
     room.resize(renderer.domElement.width, renderer.domElement.height);
-    return room.load().then(() => { if (room.hall.failed) document.getElementById('room')?.setAttribute('data-tier', 'poster'); });
-  }).catch((e: unknown) => { console.warn('section 4: the section chunk did not load; the stills stand in', e); document.getElementById('room')?.setAttribute('data-tier', 'poster'); }));
+    return room;
+  }).catch((e: unknown) => { console.warn('section 4: the section chunk did not load; the stills stand in', e); document.getElementById('room')?.setAttribute('data-tier', 'poster'); return null; }));
+  const loadHall = () => loadDirector().then((room) => room?.load().then(() => { if (room.hall.failed) document.getElementById('room')?.setAttribute('data-tier', 'poster'); }));
+  // the page scroll (section4/scroll.ts, its own chunk, marker skreed:scroll): the glue over the three seams, the wrap from
+  // the top and the carousel's gestures, from the intro's end; the director is its adapter's other side. One viewport for
+  // the spans is a probe's 100svh (the track is in svh, the hero's map in innerHeights)
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:100svh;visibility:hidden;pointer-events:none';
+  document.body.append(probe); life.onKill(() => probe.remove());
+  const docTop = (id: string) => { const el = document.getElementById(id); return el ? el.getBoundingClientRect().top + scrollY : NaN; };
+  const svh = () => probe.offsetHeight || innerHeight;
+  let pageScroll: PageScroll | null = null, scrollImport: Promise<void> | null = null;
+  const startScroll = () => (scrollImport ??= import('./section4/scroll.ts').then((m) => {
+    if (life.dead) return;
+    pageScroll = m.createPageScroll({
+      reduced, hooks: HOOKS, svh, settleMs: () => tune?.room?.params.snapMs,
+      spans: () => {
+        const vh = innerHeight, one = svh(), quiz = docTop('find'), top = docTop('room');
+        return [{ start: S2T.PULL * vh, end: S2T.W1END * vh }, { start: Math.min(S2T.W2 * vh, quiz - vh), end: quiz }, { start: top - one, end: top + one }].filter((x) => Number.isFinite(x.start) && Number.isFinite(x.end));
+      },
+      room: {
+        inRange: () => !!ctx.room?.inRange(), edge: (d) => ctx.room?.edge(d) ?? null, step: (d) => !!ctx.room?.stepScene(d),
+        back: () => { ctx.room?.back(); }, wrap: () => { void loadDirector().then((r) => r?.wrap()); },
+        canWrap: () => loop.state.introDone && !ctx.room?.lock(), lock: () => !!ctx.room?.lock(), busy: () => !!ctx.room?.busy(),
+      },
+    });
+    life.onKill(() => pageScroll?.dispose());
+  }).catch((e: unknown) => { console.warn('section 4: the page scroll chunk did not load', e); }));
+  const idle = (fn: () => void) => { if ('requestIdleCallback' in window) requestIdleCallback(fn, { timeout: 2000 }); else setTimeout(fn, 2000); };
+  let introOver = false;
+  const afterIntro = () => { if (introOver) return; introOver = true; void startScroll(); idle(() => { if (!life.dead) void loadDirector().then((r) => r?.warmCloud()); }); };
   if (HOOKS) {
     const extra = () => ctx.room as unknown as import('./section4/director.ts').RoomHooks | null;
     window.__s4 = {
       state: () => ctx.room?.hooks() ?? null,
       enter: () => extra()?.enterNow() ?? false,
       seek: (sec) => extra()?.seek(sec),
-      land: (i) => extra()?.land(i) ?? false,
-      travel: (i, j, p) => extra()?.travel(i, j, p) ?? false,
+      scene: (i) => extra()?.scene(i) ?? false,
+      step: (dir) => ctx.room?.stepScene(dir) ?? false,
+      back: () => ctx.room?.back() ?? false,
+      wrap: () => { void loadDirector().then((r) => r?.wrap()); },
+      glue: (on) => pageScroll?.glue(on),
       skip: () => window.__skreedRoom?.skip(),
-      option: () => extra()?.option() ?? null,
       get ready() { return !!ctx.room?.hall.ready; },
     };
   }
-  bridge.onIntroDone(() => loop.introDone());
+  bridge.onIntroDone(() => { loop.introDone(); afterIntro(); });
+  if (initiallyIntroDone) afterIntro();
   if (import.meta.env.PUBLIC_TUNE === '1' && tune) {
     const apply = () => {
       U.uGlow.value = P.glow; U.uRest.value = P.rest; U.uTint.value = P.tint; U.uGrad.value = P.grad; U.uTex.value = P.tex; U.uRelief.value = P.relief; U.uKey.value = P.key;

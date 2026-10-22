@@ -2,7 +2,8 @@
 // night): one full-screen shader wipes from the hero's frame (tA) to section 2's (tB) along igloo's diagonal of ice
 // shards and tech blocks, with parallax, displacement and a five-tap chromatic aberration. uCalm (reduced motion) takes
 // out the parallax, the displacement and the aberration. With the v11 fragment (slots.full) the uniforms gain uIntro and
-// uFlat (the intro) and tH, tM, tS, uKeep, uParA (section 2: the hero frame, the logo mask, section 2's cover).
+// uFlat (the intro) and tH, tM, tS, uKeep, uParA (section 2: the hero frame, the logo mask, section 2's cover), and
+// tCloud, uCover (section 4's seams: the carousel's cloud, premultiplied, over the result while uCover is above 0).
 import { DataTexture, Mesh, OrthographicCamera, PlaneGeometry, RGBAFormat, Scene, ShaderMaterial, Vector2, Vector3, WebGLRenderTarget, type Texture } from 'three';
 import { COMPOSITE_VERT, compositeFrag, type CompositeSlots } from './shaders.ts';
 
@@ -12,6 +13,7 @@ export function createComposite(scrollTex: Texture, calm: boolean, slots: Compos
     uProgress: { value: 0 }, uAspect: { value: 1 }, uNoiseOff: { value: new Vector2() }, uCalm: { value: calm ? 1 : 0 },
     uIntro: { value: 1 }, uFlat: { value: new Vector3(5 / 255, 5 / 255, 6 / 255) },   // the loader's night, in output sRGB
     tH: { value: null as Texture | null }, tM: { value: null as Texture | null }, tS: { value: null as Texture | null }, uKeep: { value: 0 }, uParA: { value: 1 },
+    tCloud: { value: null as Texture | null }, uCover: { value: 0 },
   };
   const mesh = new Mesh(new PlaneGeometry(2, 2), new ShaderMaterial({
     uniforms: C, depthTest: false, depthWrite: false,

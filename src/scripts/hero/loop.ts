@@ -6,7 +6,7 @@ import { lerpFPS } from './util/math.ts';
 import { updateBlocks } from './logo/motion.ts';
 import { updateFogLogoRect } from './world/fog.ts';
 import { createScrollFollower, mapScroll, PULL } from './scroll/scrollMap.ts';
-import { rideCopy, rideLoop } from './scroll/ride.ts';
+import { rideCopy } from './scroll/ride.ts';
 import { ghostTarget, type Pointer } from './interaction/pointer.ts';
 import type { Labels } from './interaction/labels.ts';
 import type { HeroContext } from './types.ts';
@@ -57,10 +57,10 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
     scroll.update(pr, ratio);
     if (S2 && !S2.started && intro.done) void S2.build();
     if (S2 && !S2.ready && !S2.failed && scroll.b > PULL) scroll.b = PULL;   // section 2 is still being built: the wipe waits
-    // section 4's loop screen (docs/specs/section-4.md 5): while the fourth wipe crosses the screen the hero's steps F5 to
-    // F13 run as at scroll 0 (the rest pose, live t, live pointer), so the jump to the top shows the frame the wipe arrived at
-    const room = ctx.room, inLoop = room ? room.begin(ratio).loop > 0 : false;
-    const hb = inLoop ? 0 : scroll.b;
+    // section 4 (section-4-flux.md 5): its own followers first; its exit jumps the page to scroll 0 under the seam's cloud,
+    // so the hero's rest pose is the page's own at 0 and no loop screen holds the followers (X-15)
+    const room = ctx.room; room?.begin(ratio);
+    const hb = scroll.b;
     const { s, tp, tp2, heroOn } = mapScroll(hb, reduced);
 
     // F7: pointer target: real pointer, or a slow sweep on touch when idle
@@ -74,8 +74,8 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
     updateBlocks(blocks, U, P, { t, ratio, live, heroOn, mouse, logoY: logo.position.y, floor: ctx.moon.visible, groundAt: ctx.groundAt, stoneTopAt: ctx.stoneTopAt, breath: iv.breath, paused: intro.paused });   // F8
     if (S2) for (let i = 0; i < blocks.length; i++) if (S2.hidden(i, hb)) U.uOff.value[i].set(0, -500, 0);   // a block that has left for section 2 is gone from the logo
     logo.updateMatrixWorld();                                                    // F9
-    labels.update(dt, !inLoop && !!target && heroOn > 0.5 && tp <= 0 && live > 0.5 && iv.breath >= 1, mouse);   // F10: igloo's labels wait for the breath gate
-    if (els.labels) els.labels.style.visibility = tp > 0 || inLoop ? 'hidden' : 'visible';
+    labels.update(dt, !!target && heroOn > 0.5 && tp <= 0 && live > 0.5 && iv.breath >= 1, mouse);   // F10: igloo's labels wait for the breath gate
+    if (els.labels) els.labels.style.visibility = tp > 0 ? 'hidden' : 'visible';
 
     ctx.rig.update({ s, t, ratio, live, reduced, b: hb, curve: true, crane: iv.crane, pointerActive: pointer.active, target, follow: ctx.sky.dome });   // F11
     // F12; past the second wipe section 2 keeps updating for half a second (its labels fade out over 0.2 s and the hover is dropped), then rests under the quiz
@@ -84,15 +84,15 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
     fogGround.update(hb, t);
     if (ctx.moon.visible) updateFogLogoRect(ctx.FOG, camA, logo.position.y, renderer);   // F13
 
-    // section 4 (docs/specs/section-4.md 5, section-4-world.md 5, section4/director.ts): the hall, the bubble or the world
-    // into their own targets, and the plan for the composite: the third wipe from the fog, the section's frame, the fourth wipe
+    // section 4 (docs/specs/section-4.md 5, section-4-flux.md 5, section4/director.ts): the hall, the bubble or the carousel
+    // into their own targets, and the plan for the composite: the third wipe from the fog, the section's frame, a seam's cover
     const plan = room ? room.step({ t, dt, ratio, pointer, touch: ctx.touch, mouseRate: P.mouse, fog: fogGround.out }) : null;
-    const roomOn = !!plan && plan.on && !!plan.tex;
+    const roomOn = !!plan && plan.on && !!plan.tex, cover = plan?.cover ?? 0;
 
     // F14: hero, then section 2 (its own targets), then section 3's ground (the fog alone); the composite wipes hero to
     // section 2, then section 2 to the ground, which stays the whole frame under section 3 (quiz.md 5)
     if (!iv.hold) {
-      const s2on = !!S2 && S2.ready && tp > 0 && tp2 < 1, keep = s2on && tp2 <= 0 && S2!.logoLeft(), groundOn = ((tp2 > 0 || (tp > 0 && !(S2 && S2.ready))) && !(roomOn && !plan!.groundNeeded)) || (inLoop && !roomOn);
+      const s2on = !!S2 && S2.ready && tp > 0 && tp2 < 1, keep = s2on && tp2 <= 0 && S2!.logoLeft(), groundOn = (tp2 > 0 || (tp > 0 && !(S2 && S2.ready))) && !(roomOn && !plan!.groundNeeded);
       ctx.moon.visible = tp < 1;   // once the first wipe has covered the scene only the logo is seen: the ground and sky are skipped
       if (tp < 1 || keep) composerA.c.render(dt);
       if (s2on) S2!.render();
@@ -104,26 +104,19 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
       else { C.tA.value = composerA.c.readBuffer.texture; C.tB.value = s2on ? S2!.out : groundTex; C.uProgress.value = tp; C.uParA.value = s2on ? 0 : 1; }
       if (roomOn) {
         const rt = plan!.tex;
-        // the fourth wipe: the section's frame holds still under the cut and the hero at rest comes in (uParA 0, as section 2's cut)
-        if (inLoop) { C.tA.value = rt; C.tB.value = composerA.c.readBuffer.texture; C.uProgress.value = plan!.loop; C.uParA.value = 0; }
         // the third wipe: the fog holds still under the cut and the hall slides in; past it the section is the whole frame
-        else if (plan!.wipeIn < 1) { C.tA.value = groundTex; C.tB.value = rt; C.uProgress.value = plan!.wipeIn; C.uParA.value = 0; }
+        if (plan!.wipeIn < 1) { C.tA.value = groundTex; C.tB.value = rt; C.uProgress.value = plan!.wipeIn; C.uParA.value = 0; }
         else { C.tA.value = rt; C.tB.value = rt; C.uProgress.value = 0; }
-      } else if (inLoop) {   // the loop screen before the hall has arrived: the fog holds under the cut to the hero at rest
-        C.tA.value = groundTex; C.tB.value = composerA.c.readBuffer.texture; C.uProgress.value = plan?.loop ?? 0; C.uParA.value = 0;
       }
+      // a seam of section 4: its cloud over whatever the frame is (the section's frame, or the hero at rest after the jump)
+      C.uCover.value = cover; C.tCloud.value = cover > 0 ? plan!.cloud : null;
       C.tH.value = composerA.c.readBuffer.texture; C.tM.value = mask.rt.texture; C.tS.value = s2on ? S2!.out : mask.black; C.uKeep.value = keep ? 1 : 0;
       C.uNoiseOff.value.set(Math.random(), Math.random());
       renderer.setRenderTarget(null); renderer.render(composite.scene, composite.camera);
       intro.afterRender(now, ctx, tex.ok);                                       // F15
     }
-    room?.after();                                                               // section 4: the jump to the top once the fourth wipe has crossed
-
-    if (inLoop) rideLoop(els, plan?.loop ?? 0, innerWidth / innerHeight, !!plan?.toneDark);
-    else {
-      rideCopy(els, tp, innerWidth / innerHeight, !!S2 && S2.ready);             // F16
-      if (roomOn && plan!.wipeIn >= 0.5) window.__skreedLogo?.setTone(plan!.toneDark);   // the logotype over the section: Pearl on the hall, Urban Slate over the garden and the lands
-    }
+    rideCopy(els, tp, innerWidth / innerHeight, !!S2 && S2.ready);               // F16
+    if (roomOn && plan!.wipeIn >= 0.5) window.__skreedLogo?.setTone(plan!.toneDark);   // the logotype over the section: Pearl on the hall, Urban Slate over the scenes
   }
   function frame() {
     raf = requestAnimationFrame(frame);                                          // F1: the request first, so one bad frame can never stop the loop

@@ -53,6 +53,8 @@ export interface PageScrollOptions {
   reduced: boolean;
   /** a hooks build: ?glue=0 turns the glue off */
   hooks: boolean;
+  /** the settle's length in ms when Tune sets one (snapMs, X-13); GLUE.settleMs otherwise */
+  settleMs?: () => number | undefined;
 }
 
 export interface PageScrollState { armed: boolean; settling: boolean; capturing: boolean }
@@ -104,11 +106,11 @@ export function createPageScroll(o: PageScrollOptions): PageScroll {
   const settle = (from: number, to: number) => {
     if (o.reduced) { scrollTo({ top: to, behavior: 'instant' }); return; }
     settling = true;
-    const t0 = now();
+    const t0 = now(), ms = o.settleMs?.() || GLUE.settleMs;
     const frame = () => {
       raf = 0;
       if (!settling) return;
-      const p = Math.min(1, (now() - t0) / GLUE.settleMs);
+      const p = Math.min(1, (now() - t0) / ms);
       const y = p >= 1 ? to : from + (to - from) * easeStandard(p);
       wrote = y;
       scrollTo({ top: y, behavior: 'instant' });
