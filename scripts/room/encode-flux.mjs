@@ -1,7 +1,8 @@
 // Section 4's five scene loops (docs/specs/section-4-flux.md; the evidence in docs/specs/evidence/section-4-flux-loops.md):
 // each approved kling_o3_flf loop encoded for the site, after encode-clips.mjs. H.264 at the raw file's own size (the wide
 // 1328 x 692, the portrait 720 x 1280: no rescale), its first 120 frames (5.000 s at 24 fps; the raw file's frame 120
-// duplicates frame 0, so the cut makes the loop seamless), no audio track, -movflags +faststart, at most 1,200 KB each:
+// returns to the start image within 1 to 2.7 code values, so the cut at 120 spares the loop two frames of the same
+// picture; the wrap step itself is the generator's), no audio track, -movflags +faststart, at most 1,200 KB each:
 // the lowest CRF that fits, from 18 up. Nine of the ten raw files carry no colour tags, so each file's matrix is decided
 // by its own first frame: decoded once as BT.601 and once as BT.709 and compared with the clean still the loop was
 // animated from (resized to the frame), the closer wins; a BT.601 file has its matrix converted to BT.709 (the colorspace
@@ -169,7 +170,7 @@ async function main() {
       if (rp.width !== w || rp.height !== h) throw new Error(`${loop.path}: ${rp.width} x ${rp.height}, want ${w} x ${h}`);
       if (rp.frames !== FRAMES + 1 || rp.fps !== `${FPS}/1`) throw new Error(`${loop.path}: ${rp.frames} frames at ${rp.fps}, want ${FRAMES + 1} at ${FPS}/1`);
       // the matrix: the first frame under each, against the still
-      const stillRgb = await rgb(still.path, w, h), first = {};
+      const stillRgb = await rgb(still.path, w, h), stillMeta = await sharp(still.path).metadata(), first = {};
       const diffs = {};
       for (const m of ['bt601', 'bt709']) {
         first[m] = await rgb(decodeFrame(loop.path, 0, m, join(WORK, `${scene.id}-${cls}-f0-${m}.png`)));
@@ -214,7 +215,7 @@ async function main() {
       const inpaint = [inpaintJob, ...(LOST[scene.id]?.[cls] ? [{ id: null, ...LOST[scene.id][cls] }] : [])];
       loops.push({
         id: scene.id, order: scene.order, class: cls, about: scene.about,
-        source: { sums: SUMS, sha256: loop.sha256, bytes: loop.bytes, width: rp.width, height: rp.height, frames: rp.frames, tags: rp.tags, frame120_from_frame0: dup, frame1_from_frame0: step, still: { sha256: still.sha256, bytes: still.bytes, width: stillRgb.width, height: stillRgb.height } },
+        source: { sums: SUMS, sha256: loop.sha256, bytes: loop.bytes, width: rp.width, height: rp.height, frames: rp.frames, tags: rp.tags, frame120_from_frame0: dup, frame1_from_frame0: step, still: { sha256: still.sha256, bytes: still.bytes, width: stillMeta.width, height: stillMeta.height, compared_at: { width: stillRgb.width, height: stillRgb.height } } },
         jobs: { inpaint, loop: loopJob },
         credits: inpaint.reduce((a, j) => a + j.credits, 0) + loopJob.credits,
         prompt: loopJob.prompt,

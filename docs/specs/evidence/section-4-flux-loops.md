@@ -20,7 +20,7 @@ The scene ids are ours, in page order; the reference site's names are the raw fi
 
 **Round 2 (2026-10-22, Sam's request: no bathroom left).** Every bathroom accessory removed and the floors changed, by one masked `nano_banana_2_1` inpaint per scene on the round-1 stills (2k, `is_inpaint`, aspect auto, thinking medium; the mask white where the generator may paint): bottles, jars and the incense tray off the cove's pedestals; the bottle and jar at the grove's tree replaced by ferns and moss; the ember's bottles, cup and side table off its ledge and floor; the palace's candles and bottles removed and its rippling water floor replaced by polished cream and rose marble; the dawn's vanity, basin, tap, mirror, bottles, towels and plant removed and its curtain wall continued. The grove still took a second inpaint after the one on record; that call's record was not kept, so its id is unknown. The results are the wide stills `<raw>-clean2.png`, 1700 x 884.
 
-**The portrait stills.** One masked `nano_banana_2_1` inpaint per scene (aspect 9:16) that extends the wide still into a tall frame, the picture kept in place and the ceiling and floor continued above and below: `p-<raw>-clean.png`, 788 x 1401.
+**The portrait stills.** One masked `nano_banana_2_1` inpaint per scene (the call asked for aspect 9:16; the service's record says `auto`, the tall shape coming from the canvas and the mask) that extends the wide still into a tall frame, the picture kept in place and the ceiling and floor continued above and below: `p-<raw>-clean.png`, 788 x 1401.
 
 **The loops.** One `kling_o3_flf` call per still, 5 s, mode std, sound off, `multi_shots` false, the still as both the start and the end image, aspect 16:9 for the wide and 9:16 for the portrait, each prompt a locked camera and an ambient loop that returns to its first frame (the prompts are in section 7 and in `src/data/room-flux.json`). Each came back as H.264 Main, yuv420p, 121 frames at 24 fps (5.0417 s), no audio, moov first: the wide 1328 x 692, the portrait 720 x 1280. Nine of the ten carry no colour tags; the dawn wide alone is tagged BT.709, limited range.
 
@@ -106,7 +106,7 @@ The residual under the chosen matrix (2.0 to 3.4) is the generator's own drift f
 
 Read plainly: the encoded first frame is 0.4 to 1.8 from the raw one, which is the x264 compression at CRF 18 to 23 plus the matrix conversion's rounding. The raw frame 120 is not a pixel duplicate of frame 0: it returns to the start image to within 1.0 to 2.7 code values, while two neighbouring frames differ by 0.05 to 0.19 (the cove portrait by 1.59, its water moving fastest). So the wrap from frame 119 back to frame 0 is a step of about 1 to 2 code values on nine loops and 3.7 on the cove portrait, five to thirty times the usual frame step. Whether any of that reads as a hitch is for Sam to see on staging; it is the generator's return to its start image, not the encode, and cutting at 120 rather than 121 neither adds nor removes it (frame 120 is as far from frame 0 as frame 119 is). The flash check (AC5, WCAG 2.3.1) has not been run on the loops: `scripts/room/clip-flash.py` composes a travel, not a loop under a carousel, so every loop's `flash` stays `pending` in `src/data/room-flux.json` until a loop-and-wipe version runs.
 
-**The guards and tests.** `node scripts/room/guards.mjs` reports nothing of the reference in `public/` or `src/`; `node --test tests/unit/room-video.test.ts` passes 10 of 10, including the rule that only `travel-video.ts` names a `.mp4` among the `.ts`, `.astro`, `.mjs` and `.js` files under `src/` (the data file is JSON and the encoder lives in `scripts/`). A grep for the raw names and `fluxtheory` over `src/` and `public/` finds nothing.
+**The guards and tests.** `node scripts/room/guards.mjs` passes (it checks the earlier reference's names only; the grep below is this branch's check for the raw names and fluxtheory); `node --test tests/unit/room-video.test.ts` passes 10 of 10, including the rule that only `travel-video.ts` names a `.mp4` among the `.ts`, `.astro`, `.mjs` and `.js` files under `src/` (the data file is JSON and the encoder lives in `scripts/`). A grep for the raw names and `fluxtheory` over `src/` and `public/` finds nothing.
 
 ## 4. Every Higgsfield call
 
@@ -120,16 +120,16 @@ The job records (`<raw>-job.json`, `p-<raw>-job.json`, `<raw>-r2-job.json`, `p-<
 | 4 | still | ember | wide | `2b636f06-6a1f-49be-9bae-7d0e29830af6` | `nano_banana_2_1` 2k inpaint | 2 | 10:23:43 |
 | 5 | still | grove | wide | `14de6b54-3354-43a6-a22a-13a08ec0b1f9` | `nano_banana_2_1` 2k inpaint | 2 | 10:27:40 |
 | 6 | still | grove | wide | record lost: the second inpaint on the grove still, id unknown | `nano_banana_2_1` 2k inpaint | 2 | unknown |
-| 7 | still | ember | portrait | `abee60bc-8bce-4276-a554-af51270cc970` | `nano_banana_2_1` 2k inpaint, 9:16 | 2 | 10:30:10 |
-| 8 | still | palace | portrait | `957816a9-acde-4dfc-b6d3-9044ec750310` | `nano_banana_2_1` 2k inpaint, 9:16 | 2 | 10:31:20 |
-| 9 | still | dawn | portrait | `a1c0d67d-8c0d-4b81-ab83-0fe9849cbadc` | `nano_banana_2_1` 2k inpaint, 9:16 | 2 | 10:32:32 |
-| 10 | still | grove | portrait | `bd12724b-6f41-472c-9242-ca1ab296670a` | `nano_banana_2_1` 2k inpaint, 9:16 | 2 | 10:34:08 |
+| 7 | still | ember | portrait | `abee60bc-8bce-4276-a554-af51270cc970` | `nano_banana_2_1` 2k inpaint, 9:16 asked, `auto` recorded | 2 | 10:30:10 |
+| 8 | still | palace | portrait | `957816a9-acde-4dfc-b6d3-9044ec750310` | `nano_banana_2_1` 2k inpaint, 9:16 asked, `auto` recorded | 2 | 10:31:20 |
+| 9 | still | dawn | portrait | `a1c0d67d-8c0d-4b81-ab83-0fe9849cbadc` | `nano_banana_2_1` 2k inpaint, 9:16 asked, `auto` recorded | 2 | 10:32:32 |
+| 10 | still | grove | portrait | `bd12724b-6f41-472c-9242-ca1ab296670a` | `nano_banana_2_1` 2k inpaint, 9:16 asked, `auto` recorded | 2 | 10:34:08 |
 | 11 | loop | cove | wide | `2086b7b3-5c6e-412f-a7f7-d53f33f92fe6` | `kling_o3_flf` 5 s std 16:9 | 6.25 | 10:35:06 |
 | 12 | loop | ember | wide | `e02995d2-feaa-45e1-94b1-1107e536558c` | `kling_o3_flf` 5 s std 16:9 | 6.25 | 10:36:23 |
 | 13 | loop | palace | wide | `228de375-0a4e-4af2-9976-39da5fd37443` | `kling_o3_flf` 5 s std 16:9 | 6.25 | 10:37:42 |
 | 14 | loop | dawn | wide | `7325b64e-faf2-47fa-9f93-c5604d090c70` | `kling_o3_flf` 5 s std 16:9 | 6.25 | 10:39:03 |
 | 15 | loop | grove | wide | `60f4afba-2291-4fdb-8562-d93e98bb8a71` | `kling_o3_flf` 5 s std 16:9 | 6.25 | 10:41:17 |
-| 16 | still | cove | portrait | `b112a5a3-c2d0-45f9-960b-adde2649604c` | `nano_banana_2_1` 2k inpaint, 9:16 | 2 | 10:42:57 |
+| 16 | still | cove | portrait | `b112a5a3-c2d0-45f9-960b-adde2649604c` | `nano_banana_2_1` 2k inpaint, 9:16 asked, `auto` recorded | 2 | 10:42:57 |
 | 17 | loop | grove | portrait | `b99020ae-cf85-4e17-ad1e-c3ba31223443` | `kling_o3_flf` 5 s std 9:16 | 6.25 | 10:43:58 |
 | 18 | loop | ember | portrait | `8e105771-58b1-47e5-bc91-b09b42fdae2b` | `kling_o3_flf` 5 s std 9:16 | 6.25 | 10:46:23 |
 | 19 | loop | palace | portrait | `d02c1b78-7bab-4e46-a837-a97004f62c8a` | `kling_o3_flf` 5 s std 9:16 | 6.25 | 10:48:02 |
