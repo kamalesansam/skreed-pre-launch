@@ -2,8 +2,8 @@
 // media-src each mode needs, run on a tiny dist in a temporary folder, both on its own and through package.json's own
 // script text with astro build left out; astro.config.mjs's alias, in a real Vite build of a module graph in miniature,
 // resolves the travel options that are not the pick to travel-stub.ts by the file an import resolves to (every spelling),
-// keeps their ?url files out, and resolves nothing with Tune on; optimizeDeps no longer carries RoomEnvironment, gone
-// with universe.ts; the post-build guard refuses a clip, a park asset or another option's chunk where the mode does not allow it;
+// keeps their ?url files out, and resolves nothing with Tune on; optimizeDeps carries RoomEnvironment again because part
+// three's carousel.ts imports it; the post-build guard refuses a clip, a park asset or another option's chunk where the mode does not allow it;
 // scripts/hero/budget.mjs exits 1 on a broken line or a failed format check, prints Sam's pending line as such, measures
 // the garden or stops the build, and keeps a land picture out of the hero's posters.
 import { after, test } from 'node:test';
@@ -155,7 +155,7 @@ test("the alias: an option not written yet is stubbed unless it is the pick or T
   await assert.rejects(bundle(shared, 'B', false), /MISSING_EXPORT|createTravel/);
 });
 
-test("astro.config.mjs: the alias is wired with the environment's pick and Tune; RoomEnvironment is out of optimizeDeps and of src/", async () => {
+test("astro.config.mjs: the alias is wired with the environment's pick and Tune; RoomEnvironment is in optimizeDeps because carousel.ts imports it", async () => {
   type Resolve = (this: unknown, s: string, i?: string, o?: object) => Promise<string | null>;
   const plugins = (config.vite?.plugins ?? []) as unknown as { name?: string; resolveId?: Resolve }[];
   const alias = plugins.find((p) => p?.name === 'skreed:park-travel');
@@ -165,16 +165,18 @@ test("astro.config.mjs: the alias is wired with the environment's pick and Tune;
   const pick = process.env.PUBLIC_PARK_TRAVEL ?? 'A', tune = process.env.PUBLIC_TUNE === '1';
   const ctx = { resolve: async () => null };
   for (const opt of PICKS) assert.equal(await alias.resolveId.call(ctx, `./${TRAVEL[opt]}`, join(ROOT, 'src/scripts/hero/section4/director.ts'), {}), tune || opt === pick ? null : TRAVEL_STUB, TRAVEL[opt]);
-  // universe.ts lit its products with RoomEnvironment and was its only importer: it left optimizeDeps with universe.ts.
-  // Should anything in src/ import it again, it must be pre-bundled again (dev answers open tabs with "504 Outdated
-  // Optimize Dep" otherwise), so the list still follows what src/ imports
+  // universe.ts lit its products with RoomEnvironment and left optimizeDeps with it; section 4 part three's carousel.ts
+  // imports it again (its products under a PMREM of it, section-4-flux.md 3 "Materials and lights"), so it is
+  // pre-bundled again: with an importer in src/ and the addon out of the list, dev discovers it at request time,
+  // re-optimises, and answers open tabs with "504 Outdated Optimize Dep" until a reload. The list follows what src/
+  // imports: carousel.ts alone today
   const ENV = 'three/addons/environments/RoomEnvironment.js';
   const walk = (d: string): string[] => readdirSync(d).flatMap((n) => statSync(join(d, n)).isDirectory() ? walk(join(d, n)) : [join(d, n)]);
   const imports = new RegExp(`^\\s*import\\s+(?!type\\b)[^;]*?from\\s*['"]${ENV.replace(/[./]/g, '\\$&')}['"]`, 'm');
   const importers = walk(join(ROOT, 'src')).filter((f) => /\.(?:ts|js|mjs|astro)$/.test(f) && imports.test(readFileSync(f, 'utf8'))).map((f) => basename(f));
   const included = (config.vite?.optimizeDeps?.include ?? []).includes(ENV);
-  assert.deepEqual(importers, [], 'nothing in src/ imports RoomEnvironment since universe.ts went');
-  assert.equal(included, false, 'RoomEnvironment is out of optimizeDeps');
+  assert.deepEqual(importers, ['carousel.ts'], 'carousel.ts alone imports RoomEnvironment');
+  assert.equal(included, true, 'RoomEnvironment is in optimizeDeps while src/ imports it');
   assert.ok(!existsSync(join(ROOT, 'src/scripts/hero/section4/universe.ts')), 'universe.ts is gone');
 });
 
