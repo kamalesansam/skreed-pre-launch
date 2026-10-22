@@ -290,6 +290,8 @@ export interface RoomFrame {
   /** the door's handle in CSS pixels of the canvas, or null when the hall is not drawn */
   prompt: { x: number; y: number } | null;
   state: RoomState;
+  /** what a seam returns to (the hall after the exit's lap reset, the scenes with Tune's lapReset 0 or after the wrap) */
+  under: 'hall' | 'world';
   /** products.bin and scene 1's loop (or its still where loops never play) are in: a press can start the entry */
   worldReady: boolean;
   /** seconds since the press while entering */

@@ -216,8 +216,8 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   }
   /** the loops in order, one at a time, each after its still where one is on its way (spec 5, "Loading", phases 4 and 5) */
   const queueLoops = (order: readonly number[]) => { for (const i of order) loopChain = loopChain.then(() => stillJob[i] ?? null).then(() => fetchLoop(i)).catch(() => {}); };
-  /** phase 2 (past the third wipe): the carousel's programs, products.bin, scene 1's still and loop */
-  function loadScenes(): Promise<void> {
+  /** phase 2 (past the third wipe): the carousel's programs, products.bin, the first scene's still and loop (scene 1 from the walk; scene 5 after a wrap-first visit) */
+  function loadScenes(first = 0): Promise<void> {
     return (phase2 ??= (async () => {
       void api.warmCloud(); void carousel.warm();
       productsJob ??= (async () => {
@@ -226,8 +226,8 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
         catch (e) { if (disposed) return; console.warn('section 4: products.bin did not load; the scenes show without a product', e); productsState = 'failed'; }
         afterReady();
       })();
-      carousel.prepare(0);
-      queueLoops([0]);
+      carousel.prepare(first);
+      queueLoops([first]);
       await productsJob;
     })());
   }
@@ -240,7 +240,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
     }
   }
   /** the other scenes after arrival at scene i: the nearer first, then the rest in order (2, 3, 4, 5 from scene 1; 5, 4, 3, 2, 1 after a wrap) */
-  const loadRest = (i: number) => { void loadScenes(); queueLoops(i === 0 ? [1, 2, 3, 4] : [i, i - 1, i - 2, i - 3, i - 4].filter((k) => k >= 0 && k < N)); };
+  const loadRest = (i: number) => { void loadScenes(i); queueLoops(i === 0 ? [1, 2, 3, 4] : [i, i - 1, i - 2, i - 3, i - 4].filter((k) => k >= 0 && k < N)); };
 
   function snap(qq: number) {
     if (!measured) measure();
@@ -297,6 +297,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
 
   // ---- the seams (section-4-flux.md 4: the exit at LOOP_START, the wrap from scroll 0; cuts under reduced motion)
   function startExit(t: number) {
+    clearStep();
     if (reduced) {
       scrollTo({ top: 0, behavior: 'instant' }); o.snapHero(0);
       say('loop'); resetLap(true);
@@ -532,7 +533,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       const sc = scene();
       const stepping = state === 'world' && stepTo >= 0;
       window.__skreedRoomFrame?.({
-        q, qRaw, x, nearDoor, ready: hall.ready, failed: hall.failed, inView: inRoom && qRaw > 0, prompt, state,
+        q, qRaw, x, nearDoor, ready: hall.ready, failed: hall.failed, inView: inRoom && qRaw > 0, prompt, state, under,
         worldReady: worldReady(), entry: state === 'entering' ? entryT : 0,
         scene: sc, stepping, stepTo: stepping ? stepTo : -1,
         loading: !!video && state === 'world' && (loopState[sc] === 'idle' || loopState[sc] === 'fetching'),

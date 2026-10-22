@@ -158,7 +158,7 @@ test('the DOM (section-4-flux.md 5): the prompt, the pad, Skip, the lines, the s
   assert.match(astro, /<button type="button" class="rm-enter rm-link" id="rmEnter" aria-keyshortcuts="E"><span class="rm-key" aria-hidden="true">\{R\.key\}<\/span><span class="rm-enter-text">\{R\.enter\}<\/span><\/button>/, 'the prompt is never hidden: there are always five scenes');
   assert.match(astro, /<div class="rm-pad" id="rmPad" tabindex="0" role="group" aria-label=\{R\.stageAria\}><\/div>/);
   assert.match(astro, /<p class="rm-line rm-loading" id="rmLoading" role="status" hidden>/);
-  assert.match(astro, /<p class="rm-line rm-scene-hint" id="rmSceneHint" data-touch=\{R\.sceneHintTouch\} data-wheel=\{R\.sceneHintWheel\} data-keys=\{R\.sceneHintKeys\} hidden>/);
+  assert.match(astro, /<p class="rm-line rm-scene-hint" id="rmSceneHint" hidden>\{R\.sceneHintTouch\}<\/p>/);
   assert.match(astro, /<h2 class="sr-only">\{R\.scenesTitle\}<\/h2>/);
   assert.match(astro, /<ol class="rm-scenes" id="rmScenes" aria-label=\{R\.scenesAria\}>/);
   assert.match(astro, /<li class="rm-scene" data-id=\{s\.id\} data-i=\{s\.i\}>/);

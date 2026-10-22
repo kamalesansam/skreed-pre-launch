@@ -43,7 +43,8 @@ const kb = (n: number) => Buffer.alloc(n * 1024, 1);
 const loops = (n = 2) => Object.fromEntries(SCENE_IDS.flatMap((id) => CLASSES.map((cls) => [`_astro/${id}-${cls}.Ab3_x9Zq.mp4`, kb(n)])));
 
 test("csp.mjs: media-src 'self' in every mode, with no flag and whatever the environment; a second run replaces its line", () => {
-  for (const env of [{}, { PUBLIC_TUNE: '1' }, { PUBLIC_HERO_HOOKS: '1' }, { PUBLIC_PARK_TRAVEL: 'A' }]) {
+  const envs: Record<string, string>[] = [{}, { PUBLIC_TUNE: '1' }, { PUBLIC_HERO_HOOKS: '1' }, { PUBLIC_PARK_TRAVEL: 'A' }];
+  for (const env of envs) {
     const dist = fixture();
     const r = run(['scripts/csp.mjs', '--dist', dist], env);
     assert.equal(r.status, 0, r.stderr);

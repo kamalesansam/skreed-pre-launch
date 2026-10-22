@@ -52,7 +52,7 @@ const scenes = ROOM_SCENES.map((s) => ({ ...s, name: productById(s.product).name
       <button type="button" class="rm-pause rm-link" id="rmPause" hidden>{R.pause}</button>
       <p class="rm-line rm-hint" id="rmHint" data-touch={R.hintTouch} data-keys={R.hintKeys} hidden>{R.hintTouch}</p>
       <p class="rm-line rm-loading" id="rmLoading" role="status" hidden>{R.loading}</p>
-      <p class="rm-line rm-scene-hint" id="rmSceneHint" data-touch={R.sceneHintTouch} data-wheel={R.sceneHintWheel} data-keys={R.sceneHintKeys} hidden>{R.sceneHintTouch}</p>
+      <p class="rm-line rm-scene-hint" id="rmSceneHint" hidden>{R.sceneHintTouch}</p>
       <h2 class="sr-only">{R.scenesTitle}</h2>
       <ol class="rm-scenes" id="rmScenes" aria-label={R.scenesAria}>
         {scenes.map((s) => (
