@@ -636,7 +636,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
         products: productsState, loops: loopState.map((s, i) => ({ i, state: s, in: !!video && video.in(i), refused: !!video && video.refused(i), playing: !!video && video.playing(i) })),
         stills: stillDone.map((d, i) => ({ i, settled: d, loading: !!stillJob[i] })), cls, video: !!video, cloudReady, memory: carousel.memory(),
         sceneQ: Array.from({ length: N }, (_, i) => sceneQ(i)), loopStart: LOOP_START, hall: hall.hooks(),
-        layout: lay.layout ? { ...lay.layout } : null,
+        layout: lay.layout ? { ...lay.layout } : null, product: carousel.place(),
       };
     },
     dispose() {

@@ -15,7 +15,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { BufferAttribute, BufferGeometry, Color, Group, Scene, Texture, type Object3D, type WebGLRenderer } from 'three';
-import { LIGHT, LOOP_ASPECT, STEP, anglesAt, cloudCover, coverFit, easeStep, fovAt, frameSource, keyLight, lightGain, lightTarget, lightUp, loopShouldPlay, loopShouldReset, planeCoverage, productFit, productScale, productYaw, proximity, ringPlace, smoothstep, type LoopClass } from '../../src/scripts/hero/section4/carousel-math.ts';
+import { LIGHT, LINES, LOOP_ASPECT, PLACE, STEP, anglesAt, boxOverlap, cloudCover, coverFit, easeStep, fovAt, frameSource, insetPx, keyLight, lightGain, lightTarget, lightUp, linesBox, loopShouldPlay, loopShouldReset, planeCoverage, productFit, productPlacement, productScale, productScreenBox, productYaw, proximity, ringPlace, smoothstep, toView, type LoopClass } from '../../src/scripts/hero/section4/carousel-math.ts';
 import { VIDEO, allowed, create as createPool, wholeBuffered, type VideoElement, type VideoHost, type VideoPool } from '../../src/scripts/hero/section4/video.ts';
 import { CLASS_FILL, CLOUD, EXHIBIT, FINISH, LIGHTS, PARTS, SHADE, createCarousel, type CarouselTune, type SceneDef } from '../../src/scripts/hero/section4/carousel.ts';
 
@@ -359,7 +359,9 @@ test('the resume rule (spec 4, AC7): a loop the carousel wants plays again on a 
 
 test("carousel.ts's constants: the exhibit factors, the class scale's lines, the physical finishes, the lights, the parts, the shade, the cloud's tones", () => {
   assert.deepEqual(EXHIBIT, { case: 1, wallet: 1.55, airpods: 1.75, lenskin: 2.2 });
-  assert.deepEqual(CLASS_FILL, { height: 0.55, width: 0.62 });
+  assert.deepEqual(CLASS_FILL, { height: 0.55, width: 0.62, centre: null });
+  assert.deepEqual(PLACE, { wide: { height: 0.55, width: 0.62, centre: null }, portrait: { height: 0.50, width: 0.62, centre: 0.60 } });
+  assert.deepEqual(LINES, { insetMin: 16, insetVw: 0.035, insetMax: 56, column: 520, block: 0.34, gap: 2 });
   assert.deepEqual(FINISH, { matte: { roughness: 0.62, metalness: 0, specularIntensity: 0.2 }, gloss: { roughness: 0.62, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.03, specularIntensity: 0.2 }, metallic: { roughness: 0.38, metalness: 1 } });
   assert.deepEqual(LIGHTS, { key: 1.6, keyMix: 0.6, keyFrom: [0.1, 0.8, 0.6], fill: 0.2, fillTint: '#dfe6ea', fillFrom: [-0.6, 0.2, 0.8], env: 0.575, blur: 0.04 });
   assert.deepEqual(PARTS, { trim: [0.073, 0.077, 0.077], trimRoughness: 0.55, logoTint: 0.8468 });
@@ -447,20 +449,58 @@ test('the step waits on the next scene\'s still (spec 5, "Loading"): refused whi
   c.dispose();
 }));
 
-test('the class scale on both shapes: the case at most 0.55 of the view height and 0.62 of its width whatever the class, so a visit that started portrait and turned to 844 x 390 keeps the case in the frame', async () => quiet(async () => {
-  const [cw, ch] = [0.1047, 0.19674], viewH = 2 * Math.tan((45 * DEG) / 2) * Math.hypot(0.2, 3.4);
-  for (const [w, h, cls] of [[844, 390, 'portrait'], [390, 844, 'wide'], [1280, 800, 'wide'], [390, 844, 'portrait']] as const) {
+test('the class scale and the place on both shapes (D3): by the stage\'s shape whatever the loop class, so a visit that started portrait and turned to 844 x 390 keeps the case in the frame; the holder raised on a portrait stage, moved right on a wide one only as far as the lines\' column needs', async () => quiet(async () => {
+  const [cw, ch] = [0.1047, 0.19674];
+  const sizes = products().map((p) => { const e = EXHIBIT[p.name]; return [p.size[0] * e, p.size[1] * e, p.size[2] * e] as const; });
+  for (const [w, h, cls, dpr] of [[844, 390, 'portrait', 1], [390, 844, 'wide', 1], [1280, 800, 'wide', 1], [390, 844, 'portrait', 1], [780, 1688, 'portrait', 2], [1920, 1200, 'wide', 1.5]] as const) {
     const rig = stubRenderer();
-    const c = createCarousel({ renderer: rig.renderer, scenes: sceneDefs(async () => new Texture()), products: products(), video: null, cls, reduced: false, tune: () => TUNE, dpr: 1 });
+    const c = createCarousel({ renderer: rig.renderer, scenes: sceneDefs(async () => new Texture()), products: products(), video: null, cls, reduced: false, tune: () => TUNE, dpr });
     c.setScene(0, true); await tick(); c.update(0.016, 0.016, w, h);
     const g = rig.shown();
     assert.ok(g, 'the case is in front');
-    const s = g!.scale.x, hs = (s * ch) / viewH, ws = (s * cw) / (viewH * (w / h));
-    near(s, productFit(viewH, w / h, cw, ch, CLASS_FILL), 1e-9, `${w} x ${h} (${cls} class): the class scale`);
-    assert.ok(hs <= 0.55 + 1e-9 && ws <= 0.62 + 1e-9, `${w} x ${h} (${cls} class): ${hs.toFixed(3)} of the height, ${ws.toFixed(3)} of the width`);
+    const want = productPlacement(w / dpr, h / dpr, cw, ch, sizes), p = c.place();
+    near(g!.scale.x, want.scale, 1e-9, `${w} x ${h} (${cls} class): the class scale`);
+    near(g!.parent!.position.x, want.x, 1e-9, `${w} x ${h}: the holder's x`); near(g!.parent!.position.y, want.y, 1e-9, `${w} x ${h}: the holder's y`);
+    assert.equal(p.cls, h > w ? 'portrait' : 'wide', 'the class is the stage\'s shape');
+    near(p.scale, want.scale, 1e-9); assert.ok(p.box && p.box.x1 > p.box.x0 && p.box.y1 > p.box.y0, 'the shown product\'s box');
+    if (h > w) assert.ok(want.y > 0 && want.x === 0, `${w} x ${h}: raised, centred`); else assert.ok(want.y === 0 && want.x >= 0, `${w} x ${h}: the centre kept, the holder never left of it`);
     c.dispose();
   }
 }));
+
+test('D3: at rest every scene\'s product clears the lines\' box (the bottom 34 percent of the stage, the column at the gutter and at most 520 px wide) at 390 x 844 and 1280 x 800: zero overlap, the boxes printed; the stylesheets carry the column\'s numbers', (t) => {
+  const bin = JSON.parse(readFileSync(new URL('../../src/data/room-products-bin.json', import.meta.url), 'utf8')) as { products: Record<string, { sizeMm: [number, number, number] }> };
+  const sizeOf = (name: string): readonly [number, number, number] => { const e = EXHIBIT[name], m = bin.products[name].sizeMm; return [(m[0] / 1000) * e, (m[1] / 1000) * e, (m[2] / 1000) * e]; };
+  const caseM = bin.products.case.sizeMm.map((v) => v / 1000);
+  const order = ['case', 'airpods', 'wallet', 'lenskin', 'case'];
+  const sizes = ['wallet', 'airpods', 'lenskin', 'case'].map(sizeOf);
+  for (const [w, h] of [[390, 844], [1280, 800]] as const) {
+    const p = productPlacement(w, h, caseM[0], caseM[1], sizes), lines = linesBox(w, h);
+    const px = (b: { x0: number; y0: number; x1: number; y1: number }) => `x ${Math.round(b.x0 * w)} to ${Math.round(b.x1 * w)}, y ${Math.round(b.y0 * h)} to ${Math.round(b.y1 * h)}`;
+    t.diagnostic(`${w} x ${h} (${p.cls}): the holder at x ${p.x.toFixed(3)}, y ${p.y.toFixed(3)}, scale ${p.scale.toFixed(3)}; the lines' box ${px(lines)}`);
+    for (const [i, name] of order.entries()) {
+      const box = productScreenBox(p, sizeOf(name), w, h), over = boxOverlap(box, lines, w, h);
+      t.diagnostic(`  scene ${i + 1} ${name}: ${px(box)} (${((box.y1 - box.y0) * 100).toFixed(1)} percent of the height), overlap ${over.toFixed(1)} px squared`);
+      assert.equal(over, 0, `${w} x ${h}: scene ${i + 1}'s ${name} crosses the lines' box`);
+    }
+    // the case's height against its cap (the near face projects a little larger than the centre's depth), the widest product inside the stage
+    const caseBox = productScreenBox(p, sizeOf('case'), w, h);
+    assert.ok(caseBox.y1 - caseBox.y0 <= PLACE[p.cls].height * 1.04 && caseBox.y1 - caseBox.y0 >= PLACE[p.cls].height * 0.97, `${w} x ${h}: the case at its cap (${(caseBox.y1 - caseBox.y0).toFixed(3)})`);
+    for (const name of order) { const b = productScreenBox(p, sizeOf(name), w, h); assert.ok(b.x0 >= 0 && b.x1 <= 1 && b.y0 >= 0 && b.y1 <= 1, `${w} x ${h}: ${name} inside the stage`); }
+  }
+  // the portrait centre: the case's centre projects to 0.60 of the view's height from the bottom; the wide centre is the ring's own
+  const pp = productPlacement(390, 844, caseM[0], caseM[1], sizes), v = toView(0, pp.y, STEP.productZ);
+  near((v.vy / (v.depth * Math.tan((45 * DEG) / 2)) + 1) / 2, 0.60, 1e-9, 'the raised centre');
+  assert.equal(productPlacement(1280, 800, caseM[0], caseM[1], sizes).y, 0);
+  // the gutter and the column as the stylesheets have them
+  assert.equal(insetPx(390), 16); near(insetPx(1280), 44.8); assert.equal(insetPx(2000), 56);
+  const tokens = readFileSync(new URL('../../src/styles/tokens.css', import.meta.url), 'utf8'), css = readFileSync(new URL('../../src/styles/room.css', import.meta.url), 'utf8');
+  assert.match(tokens, /--inset: clamp\(16px, 3\.5vw, 56px\);/);
+  assert.match(css, /\.rm-scene\.is-on \.rm-scene-text \{[^}]*left: var\(--inset\); bottom: var\(--rm-bottom\); width: calc\(100% - 2 \* var\(--inset\)\); max-width: 520px;/);
+  const l390 = linesBox(390, 844);
+  near(l390.x0, 16 / 390); near(l390.x1, 374 / 390); near(l390.y0, 0.66); assert.equal(l390.y1, 1);
+  near(linesBox(1280, 800).x1, 564.8 / 1280);
+});
 
 test('the reduced path: a step is a 300 ms cut with a cross-fade, the front switches at once, the product is swapped at once and faces out on every frame (its base yaw, no half turn), no look', async () => quiet(async () => {
   const rig = stubRenderer();

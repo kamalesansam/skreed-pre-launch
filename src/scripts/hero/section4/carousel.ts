@@ -11,9 +11,11 @@
 // plane swings out on the arc of the stage's shape (80 degrees wide, 22 portrait, X-1), the incoming swings in from the
 // other side, the field of view pinches from 45 to fovStep and back by fovReturnAt, the front index switches at eased
 // 0.75, the lights follow proximity and its direction, the loops play and reset by it (at most two at once, their two
-// textures resident), and the product in front (z minus 4.4, life size times its exhibit factor times the class scale:
-// the case at most 0.55 of the view's height and 0.62 of its width) turns half a turn and is swapped edge-on at the
-// half with its scale easing over 0.35 to 0.65. The product is a MeshPhysicalMaterial per finish (render-products.py's
+// textures resident), and the product in front (z minus 4.4, life size times its exhibit factor times the class scale,
+// placed by carousel-math.ts productPlacement: on the wide class the case at most 0.55 of the view's height and 0.62
+// of its width, the centre kept and the holder moved right only as far as the lines' column needs; on the portrait
+// class at most 0.50 of the height, its centre raised to 0.60 of the view's height, so the four lines' block stays
+// clear of it) turns half a turn and is swapped edge-on at the half with its scale easing over 0.35 to 0.65. The product is a MeshPhysicalMaterial per finish (render-products.py's
 // numbers, the family page's calibration) in the scene's catalog shade, the trim dark and the logo a share of the
 // shade as the old universe drew them, under a PMREM of three's RoomEnvironment at 0.575, one DirectionalLight (the
 // key, from above and in front at 1.6, white mixed 60 percent toward the scene's tint, cross-faded over keyLightMs from
@@ -30,7 +32,7 @@ import { BufferGeometry, Camera, Color, DirectionalLight, DoubleSide, Float32Buf
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import type { Product } from './products-bin.ts';
 import type { VideoPool } from './video.ts';
-import { LIGHT, LOOP_ASPECT, STEP, anglesAt, cloudCover, coverFit, easeStep, fovAt, keyLight, lightUp, loopShouldPlay, loopShouldReset, productFit, productScale, productYaw, proximity, ringPlace, type LightConfig, type LoopClass, type ProductFill } from './carousel-math.ts';
+import { LIGHT, LOOP_ASPECT, PLACE, STEP, anglesAt, cloudCover, coverFit, easeStep, fovAt, keyLight, lightUp, loopShouldPlay, loopShouldReset, productPlacement, productScale, productScreenBox, productYaw, proximity, ringPlace, type Box, type LightConfig, type LoopClass, type Placement } from './carousel-math.ts';
 
 export type Finish = 'matte' | 'gloss' | 'metallic';
 
@@ -110,6 +112,8 @@ export interface Carousel {
   scissor(r: { x: number; y: number; w: number; h: number } | null): void;
   /** the bottom shade, for AC12's tuning: how dark at the bottom edge (0 to 1) and its height as a share of the frame */
   shade(dark: number, height?: number): void;
+  /** the product's placement at the stage's CSS size, and the shown product's box on the stage (shares, x from the left, y from the top), or null with no product */
+  place(): Placement & { box: Box | null };
   /** products.bin arrived (or changed): the slots rebuilt in each scene's shade, the class scale from the case; their programs compiled one a frame if the rest has warmed */
   setProducts(products: readonly Product[]): void;
   /** the cloud's pass and target, one compile with the target bound (spec 5, "Loading", phase 0: readied at idle, before any seam); warm() starts with it */
@@ -125,8 +129,8 @@ export interface Carousel {
 
 /** each product's exhibit factor over life size (section-4.md's, spec 3 "Size and pose") */
 export const EXHIBIT: Readonly<Record<string, number>> = Object.freeze({ case: 1, wallet: 1.55, airpods: 1.75, lenskin: 2.2 });
-/** the class scale's rule (spec 3): the life-size case at most this share of the view's height and of its width at its distance, fov 45, whichever bites first */
-export const CLASS_FILL: Readonly<ProductFill> = Object.freeze({ height: 0.55, width: 0.62 });
+/** the class scale's rule on the wide class (spec 3; carousel-math.ts PLACE carries both classes): the life-size case at most this share of the view's height and of its width at its distance, fov 45, whichever bites first */
+export const CLASS_FILL = PLACE.wide;
 /** the finishes, MeshPhysicalMaterial each (render-products.py's numbers, the family page's calibration; spec 3 "Materials and lights") */
 export const FINISH = Object.freeze({
   matte: { roughness: 0.62, metalness: 0, specularIntensity: 0.2 },
@@ -141,8 +145,8 @@ export const PARTS = Object.freeze({ trim: [0.073, 0.077, 0.077] as const, trimR
 export const SHADE = Object.freeze({ dark: 0.85, height: 0.24 });
 /** the cloud's target is capped at this DPR (reference 8.4); the cloud's two tones as display values: the reference's shadow and Pearl Whisper (E-S4-colour) */
 export const CLOUD = Object.freeze({ dpr: 1.5, shadow: [0.80, 0.84, 0.93] as const, light: [0xf7 / 255, 0xf6 / 255, 0xf3 / 255] as const });
-/** the case's width and height in metres where products.bin lacks it (src/data/room-products-bin.json) */
-const CASE_M = [0.1047, 0.19674] as const;
+/** the case's width, height and depth in metres where products.bin lacks it (src/data/room-products-bin.json) */
+const CASE_M = [0.1047, 0.19674, 0.02656] as const;
 /** a proximity change under this is neither rising nor falling (the reference's) */
 const PROX_EPS = 5e-4;
 
@@ -214,7 +218,7 @@ interface Plane {
   still: Texture | null; stillJob: Promise<void> | null; settled: boolean;
   showing: 'none' | 'still' | 'loop'; mixT0: number;
 }
-interface Slot { group: Group; mats: MeshPhysicalMaterial[]; exhibit: number }
+interface Slot { group: Group; mats: MeshPhysicalMaterial[]; exhibit: number; /** the product's life size times its exhibit factor, metres */ size: readonly [number, number, number] }
 interface Tween { from: number; to: number; dir: 1 | -1; t0: number; ms: number }
 
 export function createCarousel(o: CarouselOptions): Carousel {
@@ -247,6 +251,7 @@ export function createCarousel(o: CarouselOptions): Carousel {
   let products: readonly Product[] = o.products ?? [];
   let slots: (Slot | null)[] = scenes.map(() => null);
   let caseW: number = CASE_M[0], caseH: number = CASE_M[1], classScale = 1;
+  let placement: Placement = { cls: o.cls, scale: 1, x: 0, y: 0 };
   const compiledPrograms = new Set<string>();
   function buildSlots() {
     for (const s of slots) if (s) { holder.remove(s.group); for (const m of s.mats) m.dispose(); }
@@ -262,14 +267,17 @@ export function createCarousel(o: CarouselOptions): Carousel {
         mesh.frustumCulled = false; group.add(mesh);
       }
       group.visible = false; holder.add(group);
-      return { group, mats: [body, logo, trim], exhibit: EXHIBIT[s.product] ?? 1 };
+      const e = EXHIBIT[s.product] ?? 1;
+      return { group, mats: [body, logo, trim], exhibit: e, size: [p.size[0] * e, p.size[1] * e, p.size[2] * e] as const };
     });
     measure();
   }
-  /** the class scale from the stage's shape (spec 3, "Size and pose") */
+  /** the class scale and the holder's place from the stage's shape and size in CSS px (spec 3, "Size and pose"; carousel-math.ts productPlacement) */
   function measure() {
-    const d = Math.hypot(STEP.cam.x, STEP.cam.y, STEP.cam.z - STEP.productZ), viewH = 2 * Math.tan((STEP.fovBase * Math.PI) / 360) * d;
-    classScale = productFit(viewH, W / H, caseW, caseH, CLASS_FILL);
+    const sizes = slots.filter((s): s is Slot => !!s).map((s) => s.size);
+    placement = productPlacement(W / dpr, H / dpr, caseW, caseH, sizes.length ? sizes : [[caseW, caseH, CASE_M[2]]]);
+    classScale = placement.scale;
+    holder.position.set(placement.x, placement.y, STEP.productZ);
   }
 
   // the lights: the key from above and in front, tinted per scene; the cool fill from the other side (spec 3)
@@ -500,6 +508,7 @@ export function createCarousel(o: CarouselOptions): Carousel {
     degrade(half) { cloudHalf = half; if (cloudRt) allocCloud(); },
     scissor(r) { scissorRect = r; },
     shade(dark, height = SHADE.height) { shared.uShade.value = clamp01(dark); shared.uShadeH.value = Math.max(1e-3, height); },
+    place() { const sh = slots[shownIdx]; return { ...placement, box: sh ? productScreenBox(placement, sh.size, W / dpr, H / dpr) : null }; },
     setProducts(list) {
       if (disposed) return;
       products = list; buildSlots();
