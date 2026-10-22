@@ -61,28 +61,32 @@ export function glueDecision(scrollY: number, spans: readonly Span[], innerHeigh
 
 // ---- the wheel burst filter and the wheel's decision
 
+/** A wheel burst: when its last event came, its largest delta so far, and whether a step or a wrap has run in it. */
 export interface BurstState { last: number; peak: number; consumed: boolean }
 export const createBurst = (): BurstState => ({ last: -Infinity, peak: 0, consumed: false });
 
 /**
- * One wheel event. fresh: this event begins a burst (after BURST.silenceMs of silence, or a delta that ends a consumed
- * burst); pass: the event may act (false for a consumed burst's tail under half its peak). A step or a wrap that runs
- * marks the burst consumed with burstConsume.
+ * One wheel event, the reference's filter (Scene.v2 343-368): fed for every wheel event, in range or not, so the clock
+ * never goes stale. A burst ends after BURST.silenceMs of silence (the peak and the consumed flag reset); the peak is
+ * the burst's largest delta, swallowed events included. fresh: this event begins a burst after silence (the wrap's
+ * trigger). pass: the event may act. An unconsumed burst always passes. A consumed burst (a step or a wrap ran in it,
+ * burstConsume) is swallowed without a half-peak test while busy (a step runs, its cooldown runs or the lock holds), and
+ * after that its tail under half the peak is swallowed; a delta of at least half the peak ends the consumed burst and
+ * becomes the new peak, which passes (one more step for the carousel) but is not fresh (never a wrap). Mutates b.
  */
-export function burstFeed(b: BurstState, delta: number, now: number): { fresh: boolean; pass: boolean } {
+export function burstFeed(b: BurstState, delta: number, now: number, busy = false): { fresh: boolean; pass: boolean } {
   const a = Math.abs(delta);
   const fresh = now - b.last > BURST.silenceMs;
   b.last = now;
   if (fresh) { b.peak = 0; b.consumed = false; }
-  if (b.consumed) {
-    if (a < BURST.keep * b.peak) return { fresh: false, pass: false };
-    b.consumed = false; b.peak = a;                           // a larger delta ends the burst and becomes the new peak
-    return { fresh: true, pass: true };
-  }
   b.peak = Math.max(b.peak, a);
-  return { fresh, pass: true };
+  if (!b.consumed) return { fresh, pass: true };
+  if (busy || a < BURST.keep * b.peak) return { fresh: false, pass: false };
+  b.consumed = false; b.peak = a;
+  return { fresh: false, pass: true };
 }
 
+/** a step or a wrap ran in this burst, or the burst was swallowed by a running step, its cooldown or the lock */
 export const burstConsume = (b: BurstState): void => { b.consumed = true; };
 
 export interface WheelContext {
@@ -90,8 +94,10 @@ export interface WheelContext {
   readonly atTop: boolean;
   /** the intro is over and no seam runs (the adapter's canWrap) */
   readonly canWrap: boolean;
-  /** a seam or the way back is running (the adapter's lock): swallowed without stepping */
+  /** the entry, the way back or a seam with its 400 ms is running (the adapter's lock): swallowed without stepping */
   readonly locked: boolean;
+  /** a step runs or its 150 ms cooldown (the adapter's busy): swallowed, and the burst consumed */
+  readonly busy: boolean;
   /** scene 5 is front: a forward gesture is the page's */
   readonly edgeForward: boolean;
   /** scene 1 is front: a backward gesture is the way back */
@@ -103,18 +109,26 @@ export interface WheelContext {
 export type WheelVerdict = { kind: 'page' } | { kind: 'swallow' } | { kind: 'wrap' } | { kind: 'back' } | { kind: 'step'; dir: 1 | -1 };
 const PAGE: WheelVerdict = { kind: 'page' }, SWALLOW: WheelVerdict = { kind: 'swallow' };
 
-/** What one wheel event does: the page's own scroll, swallowed, the wrap (a new burst at scroll 0 moving up), the way back, or one step. */
+/**
+ * What one wheel event does: the page's own scroll, swallowed, the wrap (a burst beginning at scroll 0 after silence,
+ * moving up), the way back, or one step. The lock is checked before canWrap at the top (a seam's cover and its 400 ms
+ * swallow, then the intro leaves the page to itself), and the lock and busy before the edges in range, as the
+ * reference's he() does; an event they swallow marks the burst consumed. The caller consumes the burst for a wrap, the
+ * way back and a step the adapter accepts.
+ */
 export function wheelDecision(b: BurstState, deltaY: number, now: number, ctx: WheelContext): WheelVerdict {
   if (ctx.ctrl) return PAGE;
   const dir: 1 | -1 | 0 = deltaY > 0 ? 1 : deltaY < 0 ? -1 : 0;
   if (dir === 0) return PAGE;                                 // a horizontal wheel: the page's, and no part of a burst
-  const r = burstFeed(b, deltaY, now);
+  const held = ctx.locked || ctx.busy;
+  const r = burstFeed(b, deltaY, now, held);
   if (ctx.atTop) {
+    if (ctx.locked) { burstConsume(b); return SWALLOW; }     // a seam's cover over the hero and the 400 ms after it
     if (!ctx.canWrap) return PAGE;                            // the intro: its own lock
-    if (ctx.locked) return SWALLOW;                           // the 400 ms after a seam
-    return dir === -1 && r.fresh ? { kind: 'wrap' } : PAGE;   // only a burst that begins here, moving up, wraps
+    return dir === -1 && r.fresh ? { kind: 'wrap' } : PAGE;   // only a burst that begins here after silence, moving up, wraps
   }
-  if (ctx.locked || !r.pass) return SWALLOW;
+  if (held) { burstConsume(b); return SWALLOW; }              // a step, its cooldown, a seam or the way back: swallowed before the edges
+  if (!r.pass) return SWALLOW;                                // a consumed burst's tail
   if (dir === 1 && ctx.edgeForward) return PAGE;              // scene 5: the page scrolls on into the hold
   if (dir === -1 && ctx.edgeBack) return { kind: 'back' };
   return { kind: 'step', dir };
