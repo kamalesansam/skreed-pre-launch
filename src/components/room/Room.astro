@@ -4,8 +4,8 @@
 // screens with a sticky stage over the hero's canvas, which draws the hall, the bubble and the carousel; the stage holds
 // only what the section needs over it, all plain text on the scene in section 2's label type (Sam, 2026-10-20): the
 // prompt at the door (the section's first tabbable element, never hidden in the hall), the pad that takes the keys,
-// Skip, the hint and the loading lines, the five scenes as a list (each its poster still, its four lines, the scene hint
-// under scene 1's count, the loading line and its alt),
+// Skip, the hint and the loading lines, the five scenes as a list (each its poster still, its four lines with the scene
+// hint above scene 1's count, the loading line and its alt),
 // the previous and next words bottom right, the "Pause motion" control (hidden unless E-S4-loops is declined) and the
 // live region. On the poster tier the hall's still, then the scenes in a column; without JavaScript the same from the
 // noscript copies. scripts/room/walk.ts drives it (lazy, when the section nears). No style attributes (the CSP has no
@@ -67,9 +67,10 @@ const scenes = ROOM_SCENES.map((s) => ({ ...s, name: productById(s.product).name
               <h3 class="rm-scene-name" id={`rmName-${s.id}`} tabindex="-1">{s.name}</h3>
               <p class="rm-scene-shade">{s.shadeText}</p>
               <p class="rm-scene-line">{s.line}</p>
-              <p class="rm-scene-count">{s.count}</p>
-              {/* the scene hint, a line under the count on scene 1's first visit (as the lands' hint was), on both classes */}
+              {/* the scene hint, a row of scene 1's lines on its first visit, on both classes: above the count, whose row the
+                  previous and next words share at 390 (a row under the count would cross them) */}
               {s.i === 0 && <p class="rm-scene-hint" id="rmSceneHint" hidden>{R.sceneHintTouch}</p>}
+              <p class="rm-scene-count">{s.count}</p>
               <p class="rm-scene-more" aria-hidden="true" hidden></p>
             </div>
             <p class="sr-only rm-scene-alt" id={`rmAlt-${s.id}`}>{s.alt}</p>

@@ -5,7 +5,7 @@
 // the prompt at the door's handle, placed by a transform from its cached size, decoded in from 2.8 m out (in the Tab
 // order throughout; a keyboard focus on it while it is clipped snaps to the station); Skip from the press to scene 1
 // (an activation within 350 ms of its showing is dropped); each scene's four lines on arrival, one after another, wiped
-// at a step's start; the scene hint under scene 1's count on its first visit (touch, wheel or keys by the device and the
+// at a step's start; the scene hint above scene 1's count on its first visit (touch, wheel or keys by the device and the
 // last key), gone at the first step and whenever the scene changes without one; the
 // loading line under the lines while a loop is expected; the previous and next words bottom right, wired to the
 // island's step and the way back; the "Pause motion" control where E-S4-loops is declined; the live region (one
