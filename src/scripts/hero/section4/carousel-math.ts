@@ -29,8 +29,8 @@ export const STEP = Object.freeze({
   overscan: 1.01,
   /** the product's place on the ring's front and its look from a pressed pointer, radians per unit of the pointer */
   productZ: -4.4, lookRad: 0.3,
-  /** the lights: the light-up value may change by at most dt over this many seconds (X-4) */
-  lightRateS: 0.68,
+  /** the lights: the light-up value moves toward its target by at most dt over this many seconds, dt capped (X-4) */
+  lightRateS: 0.68, lightDtCap: 0.1,
   /** the loops: play above this proximity (or while falling), paused and reset at or under the other */
   playAbove: 0.3, resetAt: 0.02,
   /** the key light's cross-fade from the front switch, ms (Tune keyLightMs) */
@@ -48,6 +48,9 @@ export type LoopClass = keyof typeof LOOP_ASPECT;
 /** the light-up's parameters (Tune lightStart, lightSoft, lightBoost; the floor is the reference's) */
 export interface LightConfig { start: number; soft: number; boost: number; floor: number }
 export const LIGHT: Readonly<LightConfig> = Object.freeze({ start: 0.5, soft: 0.64, boost: 0.17, floor: 0.01 });
+
+/** the product's share of the view at its distance (spec 3, "Size and pose"): the case at most this much of the view's height and of its width, whichever bites first */
+export interface ProductFill { height: number; width: number }
 
 const clamp01 = (x: number): number => Math.min(1, Math.max(0, x));
 /** the cubic smoothstep of x over [a, b] */
@@ -88,26 +91,45 @@ export function coverFit(fovDeg: number, distance: number, viewportAspect: numbe
 export const proximity = (step: number, i: number): number => clamp01(1 - Math.abs(step - i));
 
 /**
- * The plane's light-up value, the reference's intro-less path (X-4): its target is proximity times (1 plus boost)
- * through a cubic smoothstep from start to start plus soft (so proximity 1 lands exactly on 1 with the defaults, the
- * lights are down by proximity 0.43 and up from 0.5, the first and the second half of a step), never below the floor,
- * and the value moves from prev by at most dt over lightRateS a frame. The shader (carousel.ts) then leads each pixel
- * by its luminance, lightGain.
+ * The plane's light-up target, the reference's intro-less path (X-4, spec 4 "Proximity"): S from the proximity h and
+ * the direction it moves in, rising (h minus start) over (1 minus start), falling h over (1 minus start), clamped, then
+ * the cubic smoothstep. So the room leaving stays lit until its proximity drops to start (0.5, the step's half) and
+ * the room arriving is dark until it rises past it: both change over the step's second half.
  */
-export function lightUp(prev: number, prox: number, dt: number, cfg: Readonly<LightConfig>): number {
-  const target = Math.max(cfg.floor, smoothstep(cfg.start, cfg.start + cfg.soft, clamp01(prox) * (1 + cfg.boost)));
-  const rate = Math.max(0, dt) / STEP.lightRateS;
+export function lightTarget(prox: number, rising: boolean, start: number): number {
+  const x = Math.max(1 - start, 1e-3), h = clamp01(prox);
+  return smoothstep(0, 1, rising ? (h - start) / x : h / x);
+}
+
+/**
+ * The plane's light-up value this frame: it moves from prev toward lightTarget by at most dt over lightRateS (0.68 s),
+ * dt capped at lightDtCap (0.1 s, so a long frame cannot jump it). No mount ramp: a plane parked by setScene takes its
+ * target at once (carousel.ts). The shader (carousel.ts) then builds each pixel's gain from the value, lightGain.
+ */
+export function lightUp(prev: number, prox: number, rising: boolean, dt: number, cfg: Readonly<LightConfig>): number {
+  const target = lightTarget(prox, rising, cfg.start);
+  const rate = Math.min(Math.max(0, dt), STEP.lightDtCap) / STEP.lightRateS;
   return prev + Math.max(-rate, Math.min(rate, target - prev));
 }
 
 /**
- * The per-pixel gain the plane's shader applies, on the CPU for the test: the light-up value v (0 at the floor, 1 at
- * rest) shifted by boost times (v plus luminance minus 1), so the brightest areas come up first and go down last, the
- * frame is whole at v 1 and at the floor at v 0 whatever the pixel.
+ * The per-pixel gain the plane's shader applies to the decoded (linear) pixel, on the CPU for the test (the reference's
+ * reveal, evidence 14): with the pixel's luminance L as its square root, an edge at (1 plus soft) times (1 minus value)
+ * reveals the pixel through a smoothstep of width soft (the brightest areas first), an ambient term smoothstep(0.4, 1,
+ * value) times value lifts the rest as the value nears 1, the boost scales the revealed areas while the value is under
+ * 1, and nothing goes below the floor. Whole (1) at value 1 for every pixel, the floor at value 0 for every pixel.
  */
 export function lightGain(light: number, lum: number, cfg: Readonly<LightConfig>): number {
-  const v = (light - cfg.floor) / (1 - cfg.floor);
-  return cfg.floor + (1 - cfg.floor) * clamp01(v + cfg.boost * (v + lum - 1));
+  const v = clamp01(light), l = Math.sqrt(clamp01(lum));
+  const edge = (1 + cfg.soft) * (1 - v);
+  const reveal = smoothstep(edge, edge + cfg.soft, l);
+  const ambient = smoothstep(0.4, 1, v) * v;
+  return Math.max(Math.max(reveal, ambient) * (1 + cfg.boost * reveal * (1 - v)), cfg.floor);
+}
+
+/** the class scale (spec 3, "Size and pose"): the life-size case (caseW by caseH) at most fill.height of the view's height viewH and fill.width of its width, whichever bites first */
+export function productFit(viewH: number, viewportAspect: number, caseW: number, caseH: number, fill: Readonly<ProductFill>): number {
+  return Math.min((fill.height * viewH) / caseH, (fill.width * viewH * viewportAspect) / caseW);
 }
 
 /** a loop plays while its proximity is above 0.3, or while it is falling (the room leaving keeps moving until it is reset) */
