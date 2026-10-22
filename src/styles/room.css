@@ -53,17 +53,16 @@
 .room.rm-nochip .rm-key { display: none; }
 @media (hover: none) { .room .rm-key { display: none; } }
 
-/* Skip, the hints and the loading lines: bottom centre, inside the gutters, above the safe area */
+/* Skip, the hall's hint and the loading line: bottom centre, inside the gutters, above the safe area */
 .room :is(.rm-skip, .rm-line) { position: absolute; left: 50%; bottom: var(--rm-bottom); transform: translateX(-50%); max-width: calc(100% - 2 * var(--inset)); text-align: center; z-index: 3; }
 .room .rm-line { width: max-content; min-height: 44px; display: flex; align-items: center; justify-content: center; }
 .room .rm-line[hidden] { display: none; }
-/* the scene hint (scene 1, the first visit): one row above the previous and next words when the stage is taller than
-   wide, so it never crosses them (section-4-flux.md 2) */
-@media (orientation: portrait) { .room .rm-scene-hint { bottom: calc(var(--rm-bottom) + 44px + var(--s2)); } }
 
 /* the scenes: all in the accessibility tree from the entry, the unreached ones clipped (never hidden); only the scene on
-   screen shows its four lines, bottom left inside the gutters and above the safe area, within 520 px. The pictures are
-   the carousel's on the 3D path, so the DOM's are never fetched there. */
+   screen shows its four lines, bottom left inside the gutters and above the safe area, within 520 px, with the scene
+   hint (scene 1's first visit, on both classes) and the loading line as rows under the count, so neither crosses the
+   catalog line or the previous and next words. The pictures are the carousel's on the 3D path, so the DOM's are never
+   fetched there. */
 .rm-scenes { list-style: none; padding: 0; }
 .rm-scene { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .rm-scene.is-on { inset: 0; width: auto; height: auto; margin: 0; overflow: visible; clip-path: none; white-space: normal; pointer-events: none; z-index: 2; }
@@ -71,7 +70,7 @@
 .rm-scene.is-on .rm-scene-text { position: absolute; left: var(--inset); bottom: var(--rm-bottom); width: calc(100% - 2 * var(--inset)); max-width: 520px; }
 .rm-scene-name { font-size: var(--rm-fs-q); line-height: 1.25; text-wrap: balance; }
 .rm-scene-count { font-variant-numeric: tabular-nums; }
-.rm-scene .rm-scene-more[hidden] { display: none; }
+.rm-scene :is(.rm-scene-hint, .rm-scene-more)[hidden] { display: none; }
 /* the previous and next words: bottom right, visible in the scenes (data-state world) and hidden otherwise; each a word
    with the 44 px hit area and the two-tone ring on focus; "Next scene" at scene 5 is aria-disabled */
 .room .rm-nav { position: absolute; right: var(--inset); bottom: var(--rm-bottom); z-index: 3; display: flex; gap: var(--s3); }
