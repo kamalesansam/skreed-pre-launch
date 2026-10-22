@@ -1,7 +1,10 @@
 // Section 4's still and review frames (docs/specs/section-4.md 2 "poster path"; docs/specs/section-4-flux.md AC1),
 // rendered from our own build: a hooks build (the dev server, or a test or staging build) driven through __s4 and the
-// section's q, in Playwright's Chromium, with the glue off (?glue=0) so a scrollTo lands where it is sent. Run with a
-// server up:
+// section's q, with the glue off (?glue=0) so a scrollTo lands where it is sent. The browser is the installed Chrome
+// (Playwright's channel 'chrome', which decodes H.264, so the loops play) when it is present, else Playwright's own
+// Chromium (no H.264: every loop is refused and the planes show the stills). Before the first snap the script waits
+// for the section's layout to have been read after the intro (the hooks report it; a reading under the intro's layout
+// lands every snap 13,784 px short at 390 x 844, the build record's D1). Run with a server up:
 //   node scripts/room/render-stills.mjs [base=http://127.0.0.1:4322/]            the hall's still into src/assets/room/stills/
 //   node scripts/room/render-stills.mjs [base] --frames <dir>                    the review frames at 390 x 844 and 1280 x 800
 // The frames, each by a named hook (AC1): the hall at the station with the prompt; the entry clock held by __s4.seek at
@@ -25,7 +28,15 @@ const SETUPS = { phone: { viewport: { width: 390, height: 844 }, deviceScaleFact
 // step 770 ms; the scenes at q 10 to 12 at a step of 0.5, the hold to 12.8
 const BUBBLE_AT = 0.35, BUBBLE_S = 2.0, STEP_MS = 770, SCENES = 5, LOOP_START = 12.8;
 
-const browser = await chromium.launch({ args: GL });
+/** the installed Chrome when Playwright finds it, else its own Chromium */
+async function launch(args) {
+  try { const b = await chromium.launch({ channel: 'chrome', args }); console.log('browser: the installed Chrome (channel chrome)'); return b; }
+  catch (e) { console.warn(`browser: no installed Chrome (${String(e.message ?? e).split('\n')[0]}); Playwright's Chromium, which decodes no H.264`); return chromium.launch({ args }); }
+}
+const browser = await launch(GL);
+
+/** the section's layout as the director holds it, read after the intro: a snap before that lands short (D1) */
+const layoutRead = () => { const s = window.__s4?.state(); return !!s && !!s.layout && !s.layout.intro && !document.documentElement.classList.contains('intro'); };
 
 async function open(setup) {
   const ctx = await browser.newContext(SETUPS[setup]);
@@ -34,6 +45,7 @@ async function open(setup) {
   await page.goto(new URL('/?tier=hero3d&glue=0', base).href, { waitUntil: 'load' });
   await page.waitForFunction(() => window.__heroStarted && !document.documentElement.classList.contains('loading'), null, { timeout: 240_000 });
   await page.evaluate(() => window.__skreedIntro?.skip?.());
+  await page.waitForFunction(() => !document.documentElement.classList.contains('intro'), null, { timeout: 30_000 }).catch(() => console.warn(`[${setup}] the intro class did not leave within 30 s`));
   const gl = await page.evaluate(() => { const c = document.createElement('canvas').getContext('webgl2'); const x = c?.getExtension('WEBGL_debug_renderer_info'); return x ? c.getParameter(x.UNMASKED_RENDERER_WEBGL) : 'unknown'; });
   console.log(`[${setup}] renderer: ${gl}`);
   return { ctx, page };
@@ -41,11 +53,15 @@ async function open(setup) {
 
 /** puts the page at the section's q (its own screens), the followers snapped, and waits for frames to settle */
 async function go(page, q, settle = 900) {
+  // the director's own reading of the layout, taken after the intro, before its snap is trusted (the director is made at
+  // idle after the intro or when the quiz nears, so the page is scrolled to the section first, by the live rect)
   await page.evaluate((qq) => {
     const room = document.getElementById('room'), top = room.getBoundingClientRect().top + scrollY, y = top + qq * innerHeight;
-    scrollTo({ top: y, behavior: 'instant' }); window.__skreedSnap?.(y / innerHeight); window.__skreedRoom?.snap(qq);
+    scrollTo({ top: y, behavior: 'instant' }); window.__skreedSnap?.(y / innerHeight);
   }, q);
   await page.waitForFunction(() => window.__s4?.ready, null, { timeout: 120_000 });
+  await page.waitForFunction(layoutRead, null, { timeout: 30_000 }).catch(() => console.warn('  the section\'s layout was not read after the intro within 30 s; the snap may land short'));
+  await page.evaluate((qq) => { window.__skreedRoom?.snap(qq); }, q);
   await page.waitForTimeout(settle);
 }
 const state = (page) => page.evaluate(() => window.__s4.state());

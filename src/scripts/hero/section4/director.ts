@@ -24,8 +24,9 @@
 //   hall with this chunk (load); past the third wipe the carousel's programs, products.bin, scene 1's still and loop;
 //   the five elements unlocked in the press task; on arrival the other loops one at a time, 2 to 5, each still before
 //   its loop; after a wrap 5 first, then 4, 3, 2, 1.
-// The section's layout is cached (its document top and height, re-read by a ResizeObserver on the quiz and the section
-// and on resize), so a frame reads only scrollY and never forces layout under the quiz. The DOM side
+// The section's layout is cached (layout.ts: its document top and height, re-read when html's class changes, when the
+// document, the quiz or the section changes size, and on resize; a reading taken under the intro's layout is replaced
+// once the intro ends), so a frame reads only scrollY and never forces layout under the quiz. The DOM side
 // (scripts/room/walk.ts) gets one frame object per step through window.__skreedRoomFrame and drives the scene through
 // window.__skreedRoom.
 import { LinearFilter, NoColorSpace, Texture, type WebGLRenderer } from 'three';
@@ -38,6 +39,7 @@ import { createCarousel, type Carousel, type CarouselTune, type SceneDef } from 
 import { STEP, cloudCover, frameSource } from './carousel-math.ts';
 import { allowed, create as createPool, type VideoPool } from './video.ts';
 import { fetchProductsBin } from './products-bin.ts';
+import { watchLayout } from './layout.ts';
 
 export interface RoomStepIn { t: number; dt: number; ratio: number; pointer: { active: boolean; ndc: { x: number; y: number } }; touch: boolean; mouseRate: number;
   /** section 3's fog ground, the third wipe's near side (the 'fade' hand-off mixes from it) */
@@ -99,6 +101,8 @@ export interface DirectorOptions {
   snapHero(y: number): void;
   /** every state change, as it happens (a press at the station changes the state with no scroll event, so the page scroll re-evaluates its capture set from here) */
   onState?(state: RoomState): void;
+  /** every reading of the section's layout (the intro ending, the document growing, a resize): the page scroll re-evaluates its range from here */
+  onLayout?(): void;
 }
 
 /** the review hooks beyond hooks() (hero.ts installs them as window.__s4 in hooks builds) */
@@ -152,13 +156,19 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   const follow = createScrollFollower();
   let state: RoomState = 'hall', under: 'hall' | 'world' = 'hall', disposed = false;
   const ac = new AbortController();
-  // the section's layout, cached: its top in document pixels and its height
-  let top = 0, height = 1, measured = false;
-  const measure = () => { if (!root) return; const r = root.getBoundingClientRect(); top = r.top + scrollY; height = Math.max(1, r.height); measured = true; };
-  const ro = 'ResizeObserver' in window ? new ResizeObserver(() => measure()) : null;
-  if (root && ro) { ro.observe(root); const find = document.getElementById('find'); if (find) ro.observe(find); }
-  addEventListener('resize', measure);
   const H = document.documentElement;
+  // the section's layout, cached (layout.ts): its top in document pixels and its height; a reading under the intro's
+  // layout is replaced when the intro ends, and the page scroll hears of every reading
+  let top = 0, height = 1, measured = false;
+  const lay = watchLayout({
+    html: H,
+    read: () => { if (!root) return null; const r = root.getBoundingClientRect(); return { top: r.top + scrollY, height: r.height }; },
+    watch: [root, document.getElementById('find'), H],
+    onMeasure: (l) => { top = l.top; height = l.height; measured = true; o.onLayout?.(); },
+  });
+  const measure = () => { lay.measure(); };
+  /** the layout for this frame: a reading under the intro is read again once the intro has ended */
+  const current = () => { if (!measured) measure(); else lay.get(); };
   const poster = () => root?.dataset.tier === 'poster' || !H.classList.contains('hero3d') || H.classList.contains('poster');
   const say = (detail: string) => window.dispatchEvent(new CustomEvent('skreed:room-state', { detail }));
   const sayScene = (i: number) => window.dispatchEvent(new CustomEvent('skreed:room-scene', { detail: { i } }));
@@ -254,7 +264,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   const loadRest = (i: number) => { void loadScenes(i); queueLoops(i === 0 ? [1, 2, 3, 4] : [i, i - 1, i - 2, i - 3, i - 4].filter((k) => k >= 0 && k < N)); };
 
   function snap(qq: number) {
-    if (!measured) measure();
+    current();
     const y = Math.round(top + qq * screenPx());
     scrollTo({ top: y, behavior: 'instant' }); follow.snap(qq); q = qAll = qq; qRaw = prevRaw = qq; snapped = true;
     return y;
@@ -317,7 +327,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       seam = { kind: 'exit', phase: 'lock', t0: t, holdY: 0 }; setState('seam'); say('seam');
       return;
     }
-    if (!measured) measure();
+    current();
     seam = { kind: 'exit', phase: 'in', t0: t, holdY: Math.round(top + LOOP_START * screenPx()) };
     setState('seam'); say('seam');
     carousel.seam('in', 0);
@@ -412,7 +422,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
     get state() { return state; },
     begin(ratio) {
       if (!root) return;
-      if (!measured) measure();
+      current();
       const rTop = top - scrollY;
       inRoom = rTop < innerHeight && rTop + height > 0;
       qRaw = -rTop / screenPx();
@@ -581,6 +591,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
     warmCloud() { return carousel.warmCloud().then(() => { cloudReady = true; }); },
     inRange() {
       if (state !== 'world' || !measured) return false;
+      current();
       const r = (scrollY - top) / screenPx(), eps = 2 / screenPx();
       return r >= WORLD_START - eps && r <= SCENES_END + eps;
     },
@@ -625,12 +636,13 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
         products: productsState, loops: loopState.map((s, i) => ({ i, state: s, in: !!video && video.in(i), refused: !!video && video.refused(i), playing: !!video && video.playing(i) })),
         stills: stillDone.map((d, i) => ({ i, settled: d, loading: !!stillJob[i] })), cls, video: !!video, cloudReady, memory: carousel.memory(),
         sceneQ: Array.from({ length: N }, (_, i) => sceneQ(i)), loopStart: LOOP_START, hall: hall.hooks(),
+        layout: lay.layout ? { ...lay.layout } : null,
       };
     },
     dispose() {
       disposed = true; ac.abort();
       unlockOff?.();
-      ro?.disconnect(); removeEventListener('resize', measure);
+      lay.dispose();
       removeEventListener('pointerdown', onDown); removeEventListener('pointermove', onMove); removeEventListener('pointerup', onUp); removeEventListener('pointercancel', onUp); removeEventListener('blur', onUp);
       video?.dispose(); carousel.dispose();
       hall.dispose(); trans.dispose(); mix?.dispose();

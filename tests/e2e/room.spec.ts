@@ -19,7 +19,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
 type Ev = { name: string; props: Record<string, string | number> };
-type S4 = { state: string; under: string; draws: string; seamDraws: string[]; scene: number; step: number; busy: boolean; lock: boolean; inRange: boolean; q: number; qRaw: number; arrive: number; worldReady: boolean; products: string; video: boolean; loops: { i: number; state: string; in: boolean; refused: boolean; playing: boolean }[]; seam: { kind: string; phase: string } | null; memory: number };
+type S4 = { state: string; under: string; draws: string; seamDraws: string[]; scene: number; step: number; busy: boolean; lock: boolean; inRange: boolean; q: number; qRaw: number; arrive: number; worldReady: boolean; products: string; video: boolean; loops: { i: number; state: string; in: boolean; refused: boolean; playing: boolean }[]; seam: { kind: string; phase: string } | null; memory: number; layout: { top: number; height: number; intro: boolean } | null };
 const events = (page: Page): Promise<string[]> => page.evaluate(() => ((window as unknown as { __skreedEvents?: Ev[] }).__skreedEvents ?? []).map((e) => e.name));
 const s4 = (page: Page): Promise<S4> => page.evaluate(() => window.__s4!.state() as S4);
 const N = 5, LOOP_START = 12.8;
@@ -61,6 +61,10 @@ test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scene
   // the hall loads one section ahead; the section is 15.8 screens in every state
   await page.waitForFunction(() => window.__s4?.ready, null, { timeout: 300_000, polling: 500 });
   expect(await page.evaluate(() => document.getElementById('room')!.offsetHeight)).toBeCloseTo(15.8 * H, -1);
+  // the director's cached layout is a reading taken after the intro, at the section's real top (D1: a reading under
+  // html.intro, with the hero's track collapsed, is replaced when the intro ends)
+  await expect.poll(async () => (await s4(page)).layout?.intro, { timeout: 10_000 }).toBe(false);
+  expect((await s4(page)).layout!.top).toBeCloseTo(await page.evaluate(() => document.getElementById('room')!.getBoundingClientRect().top + scrollY), 0);
   await goQ(page, 0.5);
   await expect.poll(() => events(page), { timeout: 30_000 }).toContain('room_view');
   expect(await noHScroll(page)).toBe(true);
