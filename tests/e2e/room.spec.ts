@@ -93,6 +93,8 @@ test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scene
   await expect.poll(async () => (await s4(page)).q, { timeout: 20_000 }).toBeGreaterThan(9);
   await expect(page.locator('#rmEnter')).toHaveClass(/is-near/, { timeout: 20_000 });
   await expect(page.locator('#rmEnter .rm-enter-text .sr-only')).toHaveText('Enter Skreed universe');
+  await expect(page.locator('#rmEnter')).toHaveAccessibleName('Enter Skreed universe');
+  const promptBox = (await page.locator('#rmEnter').boundingBox())!;
   // the scenes are inert in the hall, every one in the tree with its name, lines and alt
   expect(await page.evaluate(() => document.getElementById('rmScenes')!.inert)).toBe(true);
   for (const li of await page.locator('.rm-scene').all()) {
@@ -138,7 +140,13 @@ test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scene
   await expect(page.locator('#rmEnter')).toBeVisible();
   expect(await page.evaluate(() => { const e = document.getElementById('rmEnter')!; return e.hidden || e.inert; })).toBe(false);
   await expect(page.locator('#rmEnter')).toBeFocused({ timeout: 10_000 });
+  // the prompt intact (D2): its [E] and text spans in place, decoded in, the same name and the same box as on the first lap
   await expect(page.locator('#rmEnter .rm-enter-text .sr-only')).toHaveText('Enter Skreed universe');
+  expect(await page.locator('#rmEnter > .rm-key').count()).toBe(1);
+  expect(await page.locator('#rmEnter > .rm-enter-text').count()).toBe(1);
+  await expect(page.locator('#rmEnter')).toHaveAccessibleName('Enter Skreed universe');
+  await expect.poll(() => page.evaluate(() => [...document.querySelectorAll<HTMLElement>('#rmEnter .rm-enter-text .dc > span')].every((s) => s.style.opacity === '')), { timeout: 5_000 }).toBe(true);
+  expect(Math.abs((await page.locator('#rmEnter').boundingBox())!.width - promptBox.width)).toBeLessThan(2);
   expect(await page.evaluate(() => document.getElementById('rmScenes')!.inert)).toBe(true);
   await expect(page.locator('#rmNav')).toBeHidden();
   await page.keyboard.press('e');

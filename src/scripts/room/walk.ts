@@ -81,6 +81,18 @@ export function mountRoom(root: HTMLElement): void {
   }
   function showControl(el: HTMLElement) { el.hidden = false; el.inert = false; void dec.show(el); }
   /**
+   * The prompt's wipe at the entry: its focus goes first (to `to`, or the pad for a keyboard user), then it is inert and
+   * its two spans wipe out, then it is hidden. Never the button itself through the decode: the button is no prepared
+   * line, so a hide of it would split its whole text afresh (the two spans' copies run together, "[E][E]Enter...")
+   * and detach the spans the way back restores (the build record's D2).
+   */
+  function wipePrompt(to?: HTMLElement | null) {
+    if (enter.hidden) return;
+    if (enter.contains(document.activeElement)) { if (to) focusQuietly(to); else letGo(document.activeElement); }
+    enter.inert = true;
+    void Promise.all([dec.hide(keyEl), dec.hide(enterText)]).then(() => { if (enter.inert) enter.hidden = true; });
+  }
+  /**
    * The prompt back in the hall (the way back, the reset from the scrollbar, an entry abandoned off screen, the new lap):
    * in the Tab order again and clipped until the station frame decodes it in, its busy text gone, the scenes inert again.
    */
@@ -279,7 +291,7 @@ export function mountRoom(root: HTMLElement): void {
       const hadFocus = root.contains(document.activeElement) || viaKeys;
       near = false;
       skipAt = performance.now(); showControl(skip);
-      wipeControl(enter, hadFocus ? skip : null);
+      wipePrompt(hadFocus ? skip : null);
       if (hadFocus) focusQuietly(skip);
       void dec.hide(hint).then(() => { hint.hidden = true; });
       if (list) list.inert = false;
