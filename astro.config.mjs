@@ -66,8 +66,8 @@ export default defineConfig({
     plugins: [parkTravelAlias(PICK, process.env.PUBLIC_TUNE === '1')],
     // every three.js entry the islands import, pre-bundled up front: Vite otherwise discovers them one lazy chunk at a
     // time, re-optimises, and answers open tabs with "504 Outdated Optimize Dep" until a reload (seen 2026-10-16).
-    // RoomEnvironment left with universe.ts, its only importer; tests/unit/build-modes.test.ts holds the list to what
-    // src/ imports
-    optimizeDeps: { include: ['three', 'three/addons/loaders/GLTFLoader.js', 'three/addons/utils/BufferGeometryUtils.js', 'three/addons/postprocessing/EffectComposer.js', 'three/addons/postprocessing/RenderPass.js', 'three/addons/postprocessing/ShaderPass.js', 'three/addons/postprocessing/SavePass.js', 'three/addons/postprocessing/UnrealBloomPass.js', 'three/addons/postprocessing/OutputPass.js'] },
+    // RoomEnvironment left with universe.ts and is back with section 4 part three's carousel.ts, which lights its
+    // products under a PMREM of it; tests/unit/build-modes.test.ts holds the list to what src/ imports
+    optimizeDeps: { include: ['three', 'three/addons/loaders/GLTFLoader.js', 'three/addons/utils/BufferGeometryUtils.js', 'three/addons/environments/RoomEnvironment.js', 'three/addons/postprocessing/EffectComposer.js', 'three/addons/postprocessing/RenderPass.js', 'three/addons/postprocessing/ShaderPass.js', 'three/addons/postprocessing/SavePass.js', 'three/addons/postprocessing/UnrealBloomPass.js', 'three/addons/postprocessing/OutputPass.js'] },
   },
 });
