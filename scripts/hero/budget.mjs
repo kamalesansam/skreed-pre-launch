@@ -177,7 +177,8 @@ line(`section 4's script, option ${pick} shipped (gzip)`, roomScript, SCRIPT[pic
   : { note: `the spec's figure for option ${pick}` });
 for (const o of PICKS) if (chunksOf(o).size) {
   if (!tune && o !== pick) line(`option ${o}'s chunk in a ${BUILD} whose pick is ${pick} (gzip)`, ownOf(o), 0, { note: 'never in production until picked: astro.config.mjs aliases it to travel-stub.ts' });
-  else line(`option ${o}'s own chunks (gzip)`, ownOf(o), 8, { note: 'about 8 KB each' });
+  // option B's chunk carries three's GLTFLoader (13.5 KB) since the hall left it for hall.bin, so its line is 21 KB
+  else line(`option ${o}'s own chunks (gzip)`, ownOf(o), o === 'B' ? 21 : 8, { note: o === 'B' ? 'about 8 KB plus the GLTFLoader the park needs' : 'about 8 KB each' });
 }
 line('total JS with section 4 (gzip)', totalJs + roomScript, 250, { enforced: !tune, note: tune ? "production's line; this staging build carries Tune" : 'production' });
 line('section 4 on the poster tier: its script (gzip)', posterScript, 8.5);
