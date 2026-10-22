@@ -130,8 +130,12 @@
     "still": {
      "sha256": "591d2badc94c362f888dec207e7e1b19a2088cc43653a63644555417f4b38be6",
      "bytes": 1659588,
-     "width": 1328,
-     "height": 692
+     "width": 1700,
+     "height": 884,
+     "compared_at": {
+      "width": 1328,
+      "height": 692
+     }
     }
    },
    "jobs": {
@@ -287,8 +291,12 @@
     "still": {
      "sha256": "3578188dfabeec964ce06487d6fe0fe9e6a7c9466137f46df2f0c6faeda568bc",
      "bytes": 1368621,
-     "width": 720,
-     "height": 1280
+     "width": 788,
+     "height": 1401,
+     "compared_at": {
+      "width": 720,
+      "height": 1280
+     }
     }
    },
    "jobs": {
@@ -464,8 +472,12 @@
     "still": {
      "sha256": "94e058595886371dd376ea77a0200a02c940f6d0b10ebb057fd1c75b117b7463",
      "bytes": 1967380,
-     "width": 1328,
-     "height": 692
+     "width": 1700,
+     "height": 884,
+     "compared_at": {
+      "width": 1328,
+      "height": 692
+     }
     }
    },
    "jobs": {
@@ -627,8 +639,12 @@
     "still": {
      "sha256": "378897d2780a8b5b2d2cb38f049647699f0b9b0956e2fb4797bebe2fe00ac8b6",
      "bytes": 1459726,
-     "width": 720,
-     "height": 1280
+     "width": 788,
+     "height": 1401,
+     "compared_at": {
+      "width": 720,
+      "height": 1280
+     }
     }
    },
    "jobs": {
@@ -788,8 +804,12 @@
     "still": {
      "sha256": "d5f479eebb1e104ae26ca6388f31c0006ed34e7ef23ca13ada39d6e5b309f48c",
      "bytes": 1595814,
-     "width": 1328,
-     "height": 692
+     "width": 1700,
+     "height": 884,
+     "compared_at": {
+      "width": 1328,
+      "height": 692
+     }
     }
    },
    "jobs": {
@@ -945,8 +965,12 @@
     "still": {
      "sha256": "a95921673c17735a43d4f868900e5706d984cb71e1222118716476e32d2a72d8",
      "bytes": 1162726,
-     "width": 720,
-     "height": 1280
+     "width": 788,
+     "height": 1401,
+     "compared_at": {
+      "width": 720,
+      "height": 1280
+     }
     }
    },
    "jobs": {
@@ -1102,8 +1126,12 @@
     "still": {
      "sha256": "02152fbf22ad1499294aec78fce99594a6be241d1acdcc92c2d17fe8b09d8d68",
      "bytes": 1737820,
-     "width": 1328,
-     "height": 692
+     "width": 1700,
+     "height": 884,
+     "compared_at": {
+      "width": 1328,
+      "height": 692
+     }
     }
    },
    "jobs": {
@@ -1259,8 +1287,12 @@
     "still": {
      "sha256": "f4d05e4f9c05ddde273a0c9e203ea5af45ab1ef1b43db8b6687cf5428b568ebb",
      "bytes": 1342971,
-     "width": 720,
-     "height": 1280
+     "width": 788,
+     "height": 1401,
+     "compared_at": {
+      "width": 720,
+      "height": 1280
+     }
     }
    },
    "jobs": {
@@ -1424,8 +1456,12 @@
     "still": {
      "sha256": "13564bb71c26bb3f1f9702a58db0819b575a5e5446a330b8f9b8c7396903442f",
      "bytes": 1478648,
-     "width": 1328,
-     "height": 692
+     "width": 1700,
+     "height": 884,
+     "compared_at": {
+      "width": 1328,
+      "height": 692
+     }
     }
    },
    "jobs": {
@@ -1581,8 +1617,12 @@
     "still": {
      "sha256": "1701f6f2590744c88eb91440154133b182a5614e125dfbd569bf718c44c9e8d6",
      "bytes": 1089590,
-     "width": 720,
-     "height": 1280
+     "width": 788,
+     "height": 1401,
+     "compared_at": {
+      "width": 720,
+      "height": 1280
+     }
     }
    },
    "jobs": {
