@@ -1,18 +1,18 @@
 ---
-// Section 4, the entrance and the Skreed world (docs/specs/section-4.md 2 and 5 for the hall, docs/specs/section-4-world.md
-// 2, 3 and 5 "The DOM" for the rest), in the hero's after-track slot after the quiz. On the 3D path a track of 13 screens
-// (12 + 2N once entered, N the lands Sam has approved) with a sticky stage over the hero's canvas, which draws the hall,
-// the bubble and the world; the stage holds only what the section needs over it, all plain text on the scene in section
-// 2's label type (Sam, 2026-10-20): the prompt at the door (the section's first tabbable element, never hidden in the
-// hall, and absent with no land), the pad that takes the keys, Skip, the hints and the loading lines, the lands as a list
-// (each its picture, its name, family line, catalog line and count, and its alt), the visually hidden travel buttons and
-// the live region. On the poster tier the hall's still, then the lands in a column; without JavaScript the same from the
+// Section 4, the entrance and the five scenes (docs/specs/section-4.md 2 and 5 for the hall, docs/specs/section-4-flux.md
+// 2, 3 and 5 "The DOM" for the rest), in the hero's after-track slot after the quiz. On the 3D path a track of 15.8
+// screens with a sticky stage over the hero's canvas, which draws the hall, the bubble and the carousel; the stage holds
+// only what the section needs over it, all plain text on the scene in section 2's label type (Sam, 2026-10-20): the
+// prompt at the door (the section's first tabbable element, never hidden in the hall), the pad that takes the keys,
+// Skip, the hints and the loading lines, the five scenes as a list (each its poster still, its four lines and its alt),
+// the previous and next words bottom right, the "Pause motion" control (hidden unless E-S4-loops is declined) and the
+// live region. On the poster tier the hall's still, then the scenes in a column; without JavaScript the same from the
 // noscript copies. scripts/room/walk.ts drives it (lazy, when the section nears). No style attributes (the CSP has no
 // style-src-attr): positions are set through the CSSOM.
-import { LAND_SIZE, ROOM_COPY as R, ROOM_LANDS, fill } from '../../config/room.ts';
+import { ROOM_COPY as R, ROOM_SCENES, SCENE_COUNT, SCENE_SIZE, fill, productById, shadeLine } from '../../config/room.ts';
 import '../../styles/room.css';
 
-const lands = ROOM_LANDS, N = lands.length;
+const N = SCENE_COUNT;
 // the poster tier's still of the hall (scripts/room/render-stills.mjs renders it from our own build); absent files render nothing
 const files = import.meta.glob<string>('../../assets/room/stills/hall-*.{avif,webp}', { eager: true, query: '?url', import: 'default' });
 const still = (name: string) => {
@@ -20,9 +20,10 @@ const still = (name: string) => {
   return avif && webp ? { avif, webp } : null;
 };
 const hp = still('hall-portrait'), hw = still('hall-wide'), hall = hp && hw ? { portrait: hp, wide: hw } : null;
-const P = LAND_SIZE.portrait, Wd = LAND_SIZE.wide;
+const P = SCENE_SIZE.portrait, Wd = SCENE_SIZE.wide;
+const scenes = ROOM_SCENES.map((s) => ({ ...s, name: productById(s.product).name, line: productById(s.product).line, shadeText: shadeLine(s), count: fill(R.count, { n: s.order, N }) }));
 ---
-<section class="room" id="room" aria-label={R.aria} data-state="hall" data-lands={N}>
+<section class="room" id="room" aria-label={R.aria} data-state="hall">
   <div class="rm-track">
     <div class="rm-stage" id="rmStage">
       {/* the still loads only on the poster tier, when the section nears (walk.ts swaps data-srcset in), so the first view and
@@ -45,55 +46,54 @@ const P = LAND_SIZE.portrait, Wd = LAND_SIZE.wide;
           </picture>
         )}
       </noscript>
-      <button type="button" class="rm-enter rm-link" id="rmEnter" aria-keyshortcuts="E" hidden={N === 0}><span class="rm-key" aria-hidden="true">{R.key}</span><span class="rm-enter-text">{R.enter}</span></button>
+      <button type="button" class="rm-enter rm-link" id="rmEnter" aria-keyshortcuts="E"><span class="rm-key" aria-hidden="true">{R.key}</span><span class="rm-enter-text">{R.enter}</span></button>
       <div class="rm-pad" id="rmPad" tabindex="0" role="group" aria-label={R.stageAria}></div>
       <button type="button" class="rm-skip rm-link" id="rmSkip" hidden>{R.skip}</button>
+      <button type="button" class="rm-pause rm-link" id="rmPause" hidden>{R.pause}</button>
       <p class="rm-line rm-hint" id="rmHint" data-touch={R.hintTouch} data-keys={R.hintKeys} hidden>{R.hintTouch}</p>
       <p class="rm-line rm-loading" id="rmLoading" role="status" hidden>{R.loading}</p>
-      {N > 0 && <h2 class="sr-only">{R.landsTitle}</h2>}
-      {N > 0 && (
-        <ol class="rm-lands" id="rmLands" aria-label={R.landsAria} data-hint-touch={R.landHintTouch} data-hint-keys={R.landHintKeys}>
-          {lands.map((l) => (
-            <li class="rm-land" data-id={l.id} data-i={l.i}>
-              <picture class="rm-land-pic" data-lazy>
-                <source media="(orientation: portrait)" data-srcset={l.pics.portrait.avif} type="image/avif" width={P.width} height={P.height} />
-                <source media="(orientation: portrait)" data-srcset={l.pics.portrait.webp} type="image/webp" width={P.width} height={P.height} />
-                <source data-srcset={l.pics.wide.avif} type="image/avif" />
-                <img data-src={l.pics.wide.webp} alt={l.alt} width={Wd.width} height={Wd.height} loading="lazy" decoding="async" />
-              </picture>
-              <div class="rm-land-text">
-                <h3 class="rm-land-name" id={`rmName-${l.id}`} tabindex="-1">{l.name}</h3>
-                <p class="rm-land-family">{l.family}</p>
-                <p class="rm-land-line">{l.line}</p>
-                <p class="rm-land-count">{fill(R.count, { n: l.i + 1, N })}</p>
-                <p class="rm-land-more" role="status" hidden></p>
-                {l.i === 0 && N > 1 && <p class="rm-land-hint" hidden></p>}
-              </div>
-              <p class="sr-only rm-land-alt" id={`rmAlt-${l.id}`}>{l.alt}</p>
-            </li>
-          ))}
-        </ol>
-      )}
-      {N > 1 && <button type="button" class="rm-prev" id="rmPrev" hidden>{R.prev}</button>}
-      {N > 1 && <button type="button" class="rm-next" id="rmNext" hidden>{R.next}</button>}
+      <p class="rm-line rm-scene-hint" id="rmSceneHint" data-touch={R.sceneHintTouch} data-wheel={R.sceneHintWheel} data-keys={R.sceneHintKeys} hidden>{R.sceneHintTouch}</p>
+      <h2 class="sr-only">{R.scenesTitle}</h2>
+      <ol class="rm-scenes" id="rmScenes" aria-label={R.scenesAria}>
+        {scenes.map((s) => (
+          <li class="rm-scene" data-id={s.id} data-i={s.i}>
+            <picture class="rm-scene-pic" data-lazy>
+              <source media="(orientation: portrait)" data-srcset={s.files.portrait.avif} type="image/avif" width={P.width} height={P.height} />
+              <source media="(orientation: portrait)" data-srcset={s.files.portrait.webp} type="image/webp" width={P.width} height={P.height} />
+              <source data-srcset={s.files.wide.avif} type="image/avif" />
+              <img data-src={s.files.wide.webp} alt={s.alt} width={Wd.width} height={Wd.height} loading="lazy" decoding="async" />
+            </picture>
+            <div class="rm-scene-text">
+              <h3 class="rm-scene-name" id={`rmName-${s.id}`} tabindex="-1">{s.name}</h3>
+              <p class="rm-scene-shade">{s.shadeText}</p>
+              <p class="rm-scene-line">{s.line}</p>
+              <p class="rm-scene-count">{s.count}</p>
+              <p class="rm-scene-more" aria-hidden="true" hidden></p>
+            </div>
+            <p class="sr-only rm-scene-alt" id={`rmAlt-${s.id}`}>{s.alt}</p>
+          </li>
+        ))}
+      </ol>
+      <div class="rm-nav" id="rmNav">
+        <button type="button" class="rm-prev rm-link" id="rmPrev">{R.prev}</button>
+        <button type="button" class="rm-next rm-link" id="rmNext">{R.next}</button>
+      </div>
       <p class="sr-only" id="rmLive" aria-live="polite"></p>
       <noscript>
         <p class="rm-line rm-noscript">{R.noscript}</p>
-        {N > 0 && (
-          <ol class="rm-lands rm-lands-static" aria-label={R.landsAria}>
-            {lands.map((l) => (
-              <li class="rm-land">
-                <picture class="rm-land-pic">
-                  <source media="(orientation: portrait)" srcset={l.pics.portrait.avif} type="image/avif" width={P.width} height={P.height} />
-                  <source media="(orientation: portrait)" srcset={l.pics.portrait.webp} type="image/webp" width={P.width} height={P.height} />
-                  <source srcset={l.pics.wide.avif} type="image/avif" />
-                  <img src={l.pics.wide.webp} alt={l.alt} width={Wd.width} height={Wd.height} loading="lazy" decoding="async" />
-                </picture>
-                <div class="rm-land-text"><h3 class="rm-land-name">{l.name}</h3><p class="rm-land-family">{l.family}</p><p class="rm-land-line">{l.line}</p><p class="rm-land-count">{fill(R.count, { n: l.i + 1, N })}</p></div>
-              </li>
-            ))}
-          </ol>
-        )}
+        <ol class="rm-scenes rm-scenes-static" aria-label={R.scenesAria}>
+          {scenes.map((s) => (
+            <li class="rm-scene">
+              <picture class="rm-scene-pic">
+                <source media="(orientation: portrait)" srcset={s.files.portrait.avif} type="image/avif" width={P.width} height={P.height} />
+                <source media="(orientation: portrait)" srcset={s.files.portrait.webp} type="image/webp" width={P.width} height={P.height} />
+                <source srcset={s.files.wide.avif} type="image/avif" />
+                <img src={s.files.wide.webp} alt={s.alt} width={Wd.width} height={Wd.height} loading="lazy" decoding="async" />
+              </picture>
+              <div class="rm-scene-text"><h3 class="rm-scene-name">{s.name}</h3><p class="rm-scene-shade">{s.shadeText}</p><p class="rm-scene-line">{s.line}</p><p class="rm-scene-count">{s.count}</p></div>
+            </li>
+          ))}
+        </ol>
       </noscript>
     </div>
   </div>

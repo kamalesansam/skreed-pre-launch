@@ -1,16 +1,19 @@
-/* Section 4, the entrance and the Skreed world (docs/specs/section-4.md 2 and 5, docs/specs/section-4-world.md 2 and 5
+/* Section 4, the entrance and the five scenes (docs/specs/section-4.md 2 and 5, docs/specs/section-4-flux.md 2, 3 and 5
    "The DOM"; tokens from DESIGN.md). On the 3D path the section is a tall track with a sticky stage over the hero's fixed
-   canvas, which draws the hall, the bubble and the world; the DOM here is what the section needs over it, and all of it
-   is plain text on the scene (Sam, 2026-10-19 and 2026-10-20: "just plain text on the fog backround with the same
+   canvas, which draws the hall, the bubble and the carousel; the DOM here is what the section needs over it, and all of
+   it is plain text on the scene (Sam, 2026-10-19 and 2026-10-20: "just plain text on the fog backround with the same
    animation, no boxes or anything"; "Yes, all of it"): section 2's label type, IBM Plex Mono Medium in capitals, Pearl
    Whisper, at the quiz's sizes (E-S4-font), decoded in and out by section 3's decode (walk.ts). No panels, no fills, no
-   borders but the focus ring's, no shadows, no blur; the controls are words, underlined as the quiz's links are. On the
-   poster tier (html:not(.hero3d), html.poster, or the section's own data-tier=poster after a failed asset) and without
-   JavaScript the hall's still and the lands' column stand in, on --night. */
+   borders but the focus ring's, no shadows, no blur; the controls are words, underlined as the quiz's links are. The
+   bottom shade under the scene lines lives in the carousel's shader, never here (AC10, AC12). On the poster tier
+   (html:not(.hero3d), html.poster, or the section's own data-tier=poster after a failed asset) and without JavaScript the
+   hall's still and the scenes' column stand in, on --night. */
 .room {
   --rm-font: "IBM Plex Mono", ui-monospace, monospace;
   /* the quiz's type scale (quiz.css --qz-fs and --qz-fs-q; tests/unit/room.test.ts holds the two equal) */
   --rm-fs: clamp(15px, min(calc(0.6rem + 0.95vw), 2.6vh), 22px); --rm-fs-q: clamp(24px, min(calc(1rem + 2.3vw), 5vh), 52px);
+  /* the safe area's bottom inset, the place of every line and word along the bottom edge */
+  --rm-bottom: calc(var(--inset) + env(safe-area-inset-bottom, 0px));
   position: relative; z-index: 2; color: var(--pearl-whisper); font: 500 var(--rm-fs) / 1.45 var(--rm-font); text-transform: uppercase; letter-spacing: 0; font-synthesis: none;
 }
 .room *, .room *::before, .room *::after { box-sizing: border-box; }
@@ -18,30 +21,27 @@
 .room .dc { white-space: normal; }
 :where(.room) :where(p, h2, h3, ol) { margin: 0; }
 :where(.room) :where(h2, h3) { font: inherit; }
-/* the track: 13 screens in the hall (the wipe, the walk, the station, the loop screen, the tail and the pinned screen
-   after it), 12 + 2N from the press with N lands (each land's two screens); tests/unit/room.test.ts reads these against
-   config/room.ts ROOM_HEIGHT and worldHeight(N) */
-.room .rm-track { height: 1300svh; }
-.room:is([data-state="entering"], [data-state="world"])[data-lands="1"] .rm-track { height: 1400svh; }
-.room:is([data-state="entering"], [data-state="world"])[data-lands="2"] .rm-track { height: 1600svh; }
-.room:is([data-state="entering"], [data-state="world"])[data-lands="3"] .rm-track { height: 1800svh; }
-.room:is([data-state="entering"], [data-state="world"])[data-lands="4"] .rm-track { height: 2000svh; }
+/* the track: 15.8 screens in every state (the wipe, the walk, the station, the five scenes at half a screen each, the
+   hold, the loop screen, the tail and the pinned screen after it); tests/unit/room.test.ts reads this against
+   config/room.ts ROOM_HEIGHT */
+.room .rm-track { height: 1580svh; }
 .rm-stage { position: sticky; top: 0; height: 100svh; overflow: clip; }
-.rm-loopend, .rm-still, .rm-land-pic { display: none; }
+.rm-loopend, .rm-still, .rm-scene-pic { display: none; }
 
 /* the pad under the controls: focusable, takes the keys; the stage clips, so its two-tone ring is drawn inside it */
 .rm-pad { position: absolute; inset: 0; outline: none; -webkit-tap-highlight-color: transparent; }
 
 /* the words that are controls: the quiz's link pattern (quiz.css .qz-link), a 44 px hit area, the underline thickening on hover */
 .room .rm-link { position: absolute; z-index: 3; display: inline-flex; align-items: center; gap: 0.6em; min-height: 44px; min-width: 44px; margin: 0; padding: 0; background: none; border: 0; border-radius: 0; color: inherit; font: inherit; text-transform: inherit; letter-spacing: inherit; white-space: nowrap; text-decoration-line: underline; text-decoration-thickness: 1px; text-underline-offset: 0.4em; cursor: pointer; -webkit-tap-highlight-color: transparent; appearance: none; }
-.room .rm-link[aria-disabled="true"] { cursor: progress; }
+.room .rm-link[aria-disabled="true"] { cursor: default; text-decoration-line: none; }
+.room .rm-enter[aria-disabled="true"] { cursor: progress; text-decoration-line: underline; }
 @media (hover: hover) { .room .rm-link:hover:not([aria-disabled="true"]) { text-decoration-thickness: 2px; } }
 .room .rm-link[hidden] { display: none; }
 
 /* focus (DESIGN.md 4): the Ember Luxe outline at 2 px with the Urban Slate ring inside it, on keyboard focus only */
 .room :focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }
 .room .rm-link:focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
-.room .rm-land-name:focus { outline: none; }   /* the name takes focus only from script (tabindex -1), so it is announced; it is no control */
+.room .rm-scene-name:focus { outline: none; }   /* the name takes focus only from script (tabindex -1), so it is announced; it is no control */
 .room .rm-pad:focus-visible { outline: none; }
 .room .rm-pad:focus-visible::before { content: ""; position: absolute; inset: 0; border: 2px solid var(--urban-slate); outline: 2px solid var(--ember-luxe); outline-offset: -4px; pointer-events: none; }
 .room .rm-pad:focus-visible::after { content: ""; position: absolute; inset: 4px; border: 2px solid var(--urban-slate); pointer-events: none; }
@@ -54,53 +54,62 @@
 @media (hover: none) { .room .rm-key { display: none; } }
 
 /* Skip, the hints and the loading lines: bottom centre, inside the gutters, above the safe area */
-.room :is(.rm-skip, .rm-line) { position: absolute; left: 50%; bottom: calc(var(--inset) + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); max-width: calc(100% - 2 * var(--inset)); text-align: center; z-index: 3; }
+.room :is(.rm-skip, .rm-line) { position: absolute; left: 50%; bottom: var(--rm-bottom); transform: translateX(-50%); max-width: calc(100% - 2 * var(--inset)); text-align: center; z-index: 3; }
 .room .rm-line { width: max-content; min-height: 44px; display: flex; align-items: center; justify-content: center; }
 .room .rm-line[hidden] { display: none; }
+/* the scene hint (scene 1, the first visit): one row above the previous and next words when the stage is taller than
+   wide, so it never crosses them (section-4-flux.md 2) */
+@media (orientation: portrait) { .room .rm-scene-hint { bottom: calc(var(--rm-bottom) + 44px + var(--s2)); } }
 
-/* the lands: all in the accessibility tree from the entry, the unreached ones clipped (never hidden); only the land on
-   screen shows its text, bottom left inside the gutters and above the safe area, within 520 px. The pictures are the
-   island's on the 3D path, so the DOM's are never fetched there. */
-.rm-lands { list-style: none; padding: 0; }
-.rm-land { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.rm-land.is-on { inset: 0; width: auto; height: auto; margin: 0; overflow: visible; clip-path: none; white-space: normal; pointer-events: none; z-index: 2; }
-.rm-land-text { display: grid; gap: var(--s1); }
-.rm-land.is-on .rm-land-text { position: absolute; left: var(--inset); bottom: calc(var(--inset) + env(safe-area-inset-bottom, 0px)); width: calc(100% - 2 * var(--inset)); max-width: 520px; }
-.rm-land-name { font-size: var(--rm-fs-q); line-height: 1.25; text-wrap: balance; }
-.rm-land-count { font-variant-numeric: tabular-nums; }
-.rm-land :is(.rm-land-more, .rm-land-hint)[hidden] { display: none; }
-/* the travel buttons: visually hidden (the clip pattern), for browse mode; each runs the same travel as the keys */
-.room :is(.rm-prev, .rm-next) { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; background: none; border: 0; appearance: none; }
-.room :is(.rm-prev, .rm-next)[hidden] { display: none; }
+/* the scenes: all in the accessibility tree from the entry, the unreached ones clipped (never hidden); only the scene on
+   screen shows its four lines, bottom left inside the gutters and above the safe area, within 520 px. The pictures are
+   the carousel's on the 3D path, so the DOM's are never fetched there. */
+.rm-scenes { list-style: none; padding: 0; }
+.rm-scene { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.rm-scene.is-on { inset: 0; width: auto; height: auto; margin: 0; overflow: visible; clip-path: none; white-space: normal; pointer-events: none; z-index: 2; }
+.rm-scene-text { display: grid; gap: var(--s1); }
+.rm-scene.is-on .rm-scene-text { position: absolute; left: var(--inset); bottom: var(--rm-bottom); width: calc(100% - 2 * var(--inset)); max-width: 520px; }
+.rm-scene-name { font-size: var(--rm-fs-q); line-height: 1.25; text-wrap: balance; }
+.rm-scene-count { font-variant-numeric: tabular-nums; }
+.rm-scene .rm-scene-more[hidden] { display: none; }
+/* the previous and next words: bottom right, visible in the scenes (data-state world) and hidden otherwise; each a word
+   with the 44 px hit area and the two-tone ring on focus; "Next scene" at scene 5 is aria-disabled */
+.room .rm-nav { position: absolute; right: var(--inset); bottom: var(--rm-bottom); z-index: 3; display: flex; gap: var(--s3); }
+.room .rm-nav .rm-link { position: relative; }
+.room:not([data-state="world"]) .rm-nav { display: none; }
+/* the "Pause motion" control (E-S4-loops's default if declined; the director sets data-pause only then): top left, from
+   the press on the 3D path, absent on the poster tier */
+.room .rm-pause { left: var(--inset); top: calc(var(--inset) + env(safe-area-inset-top, 0px)); }
+.room:not([data-pause="1"]) .rm-pause, .room:is([data-state="hall"]) .rm-pause { display: none; }
 
 /* the fade of the poster tier's loop (through --night to the first screen) */
 .rm-fade { position: fixed; inset: 0; z-index: 5; background: var(--night); pointer-events: none; }
 .rm-fade[hidden] { display: none; }
 
 /* the poster tier and no JavaScript: the track collapses to the still's one screen with the prompt over it at once; the
-   press cross-fades the still to land 1's picture (300 ms, walk.ts) and the lands stand one per screen in a column, each
-   its picture over its text, every picture on a --skeleton box of its aspect ratio until it decodes */
+   press cross-fades the still to scene 1's picture (300 ms, walk.ts) and the scenes stand one per screen in a column,
+   each its still over its four lines, every picture on a --skeleton box of its aspect ratio until it decodes */
 :is(html:not(.hero3d), html.poster) .room .rm-track, .room[data-tier="poster"] .rm-track { height: auto; }
 :is(html:not(.hero3d), html.poster) .rm-stage, .room[data-tier="poster"] .rm-stage { position: relative; height: auto; min-height: 100svh; overflow: visible; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; background: var(--night); }
 :is(html:not(.hero3d), html.poster) .rm-still, .room[data-tier="poster"] .rm-still { display: block; grid-area: 1 / 1; z-index: 1; width: 100%; height: 100svh; background: var(--skeleton); }
 :is(html:not(.hero3d), html.poster) .rm-still img, .room[data-tier="poster"] .rm-still img { display: block; width: 100%; height: 100%; object-fit: cover; }
 :is(html:not(.hero3d), html.poster) .room[data-state="world"] .rm-still, .room[data-tier="poster"][data-state="world"] .rm-still { visibility: hidden; }
-:is(html:not(.hero3d), html.poster) :is(.rm-pad, .rm-hint, .rm-loading, .rm-skip), .room[data-tier="poster"] :is(.rm-pad, .rm-hint, .rm-loading, .rm-skip) { display: none; }
+:is(html:not(.hero3d), html.poster) :is(.rm-pad, .rm-hint, .rm-loading, .rm-skip, .rm-scene-hint, .rm-nav, .rm-pause), .room[data-tier="poster"] :is(.rm-pad, .rm-hint, .rm-loading, .rm-skip, .rm-scene-hint, .rm-nav, .rm-pause) { display: none; }
 :is(html:not(.hero3d), html.poster) .room .rm-enter, .room[data-tier="poster"] .rm-enter { left: 50%; top: 50svh; transform: translate(-50%, -50%); clip-path: none; }
 :is(html:not(.hero3d), html.poster) .room[data-state="world"] .rm-enter, .room[data-tier="poster"][data-state="world"] .rm-enter { display: none; }
-:is(html:not(.hero3d), html.poster) .rm-lands, .room[data-tier="poster"] .rm-lands { display: none; grid-area: 1 / 1; }
-:is(html:not(.hero3d), html.poster) .room[data-state="world"] .rm-lands, .room[data-tier="poster"][data-state="world"] .rm-lands, html:not(.js) .rm-lands-static { display: grid; }
-:is(html:not(.hero3d), html.poster) .rm-land, .room[data-tier="poster"] .rm-land, .rm-lands-static .rm-land { position: static; width: auto; height: auto; min-height: 100svh; margin: 0; overflow: visible; clip-path: none; white-space: normal; display: grid; align-content: start; gap: var(--s3); padding-bottom: calc(var(--inset) + env(safe-area-inset-bottom, 0px)); }
-:is(html:not(.hero3d), html.poster) .rm-land-pic, .room[data-tier="poster"] .rm-land-pic, .rm-lands-static .rm-land-pic { display: block; width: 100%; aspect-ratio: 9 / 16; max-height: 76svh; background: var(--skeleton); }
-@media (orientation: landscape) { :is(html:not(.hero3d), html.poster) .rm-land-pic, .room[data-tier="poster"] .rm-land-pic, .rm-lands-static .rm-land-pic { aspect-ratio: 16 / 10; } }
-:is(html:not(.hero3d), html.poster) .rm-land-pic img, .room[data-tier="poster"] .rm-land-pic img, .rm-lands-static .rm-land-pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
-:is(html:not(.hero3d), html.poster) .rm-land-text, .room[data-tier="poster"] .rm-land-text, .rm-lands-static .rm-land-text { padding: 0 var(--inset); max-width: calc(520px + 2 * var(--inset)); }
-:is(html:not(.hero3d), html.poster) .rm-land-alt, .room[data-tier="poster"] .rm-land-alt { display: none; }
+:is(html:not(.hero3d), html.poster) .rm-scenes, .room[data-tier="poster"] .rm-scenes { display: none; grid-area: 1 / 1; }
+:is(html:not(.hero3d), html.poster) .room[data-state="world"] .rm-scenes, .room[data-tier="poster"][data-state="world"] .rm-scenes, html:not(.js) .rm-scenes-static { display: grid; }
+:is(html:not(.hero3d), html.poster) .rm-scene, .room[data-tier="poster"] .rm-scene, .rm-scenes-static .rm-scene { position: static; width: auto; height: auto; min-height: 100svh; margin: 0; overflow: visible; clip-path: none; white-space: normal; display: grid; align-content: start; gap: var(--s3); padding-bottom: var(--rm-bottom); }
+:is(html:not(.hero3d), html.poster) .rm-scene-pic, .room[data-tier="poster"] .rm-scene-pic, .rm-scenes-static .rm-scene-pic { display: block; width: 100%; aspect-ratio: 9 / 16; max-height: 76svh; background: var(--skeleton); }
+@media (orientation: landscape) { :is(html:not(.hero3d), html.poster) .rm-scene-pic, .room[data-tier="poster"] .rm-scene-pic, .rm-scenes-static .rm-scene-pic { aspect-ratio: 1280 / 666; } }
+:is(html:not(.hero3d), html.poster) .rm-scene-pic img, .room[data-tier="poster"] .rm-scene-pic img, .rm-scenes-static .rm-scene-pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
+:is(html:not(.hero3d), html.poster) .rm-scene-text, .room[data-tier="poster"] .rm-scene-text, .rm-scenes-static .rm-scene-text { padding: 0 var(--inset); max-width: calc(520px + 2 * var(--inset)); }
+:is(html:not(.hero3d), html.poster) .rm-scene-alt, .room[data-tier="poster"] .rm-scene-alt { display: none; }
 :is(html:not(.hero3d), html.poster) .rm-loopend, .room[data-tier="poster"] .rm-loopend { display: block; height: 100svh; }
 html:not(.js) .room .rm-track { height: auto; }
 html:not(.js) .rm-stage { position: relative; height: auto; overflow: visible; display: grid; grid-template-columns: minmax(0, 1fr); background: var(--night); }
 html:not(.js) .rm-still { display: block; grid-area: auto; }
 html:not(.js) .rm-still[data-lazy] { display: none; }
 html:not(.js) .rm-loopend { display: none; }
-html:not(.js) .room :is(.rm-enter, .rm-pad), html:not(.js) .rm-lands:not(.rm-lands-static) { display: none; }
+html:not(.js) .room :is(.rm-enter, .rm-pad, .rm-nav, .rm-pause), html:not(.js) .rm-scenes:not(.rm-scenes-static) { display: none; }
 html:not(.js) .room .rm-noscript { position: static; transform: none; margin: var(--s3) auto; }

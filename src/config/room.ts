@@ -1,18 +1,19 @@
-// Section 4, the entrance and the Skreed world (docs/specs/section-4.md for the hall, docs/specs/section-4-world.md for
-// everything after the door): every string by id, the hall's measured frame, the lands Sam has approved (the encoded
-// files present in src/assets/room/lands/), the scroll map in screens, and the tunable parameters (Tune's "Section 4"
-// group, PUBLIC_TUNE builds) with the spec's defaults. Plain data, read by Room.astro at build and by the island and the
-// walk script at runtime; the unit tests import it under Node, where import.meta.glob and import.meta.env do not exist.
+// Section 4, the entrance and the five scenes (docs/specs/section-4.md for the hall, docs/specs/section-4-world.md 2 for
+// the press and the bubble, docs/specs/section-4-flux.md for everything after the bubble): every string by id, the
+// hall's measured frame, the five scenes with their products, shades, key lights and files, the scroll map in screens,
+// and the tunable parameters (Tune's "Section 4" group, PUBLIC_TUNE builds) with the spec's defaults. Plain data, read by
+// Room.astro at build and by the island and the walk script at runtime; the unit tests import it under Node, where
+// import.meta.glob and import.meta.env do not exist.
 
 /**
- * The copy (section-4-world.md 3, "Copy"), in sentence case: the decode prints it in capitals, as section 2 and the quiz
- * do, and the accessible names keep the sentence case through the decode's visually hidden copy. The lands' own lines
- * (the family line and the alt, by catalog order) follow ROOM_PRODUCTS; landLive and count are patterns for fill().
+ * The copy (section-4-flux.md 3, "Copy"), in sentence case: the decode prints it in capitals, as section 2 and the quiz
+ * do, and the accessible names keep the sentence case through the decode's visually hidden copy. sceneLive, wrapLive
+ * and count are patterns for fill().
  */
 export const ROOM_COPY = Object.freeze({
   aria: 'Section 4: the entrance to the Skreed world',
   stageAria: 'The entrance. Use the arrow keys to walk to the door.',
-  worldAria: 'The Skreed world. Use Down and Up to travel.',
+  worldAria: 'The five scenes. Use Down and Up to move between them.',
   hintTouch: 'Scroll to walk to the door.',
   hintKeys: 'Scroll or use the arrow keys to walk to the door.',
   loading: 'Loading the entrance...',
@@ -21,18 +22,22 @@ export const ROOM_COPY = Object.freeze({
   key: '[E]',
   loadingRoom: 'Loading...',
   skip: 'Skip',
-  landHintTouch: 'Scroll to travel',
-  landHintKeys: 'Scroll or press Down to travel',
-  loadingLand: 'Loading...',
-  next: 'Next land',
-  prev: 'Previous land',
-  landsTitle: 'The Skreed world',
-  landsAria: 'Our products, out in the park',
-  landLive: '{n} of {N}. {name}. {family}.',
+  sceneHintTouch: 'Swipe to the next scene',
+  sceneHintWheel: 'Scroll to the next scene',
+  sceneHintKeys: 'Scroll or press Down to the next scene',
+  loadingScene: 'Loading...',
+  next: 'Next scene',
+  prev: 'Previous scene',
+  pause: 'Pause motion',
+  play: 'Play motion',
+  scenesTitle: 'The five scenes',
+  scenesAria: 'Our products, in five rooms',
+  sceneLive: '{n} of {N}. {name}. {shade}.',
+  wrapLive: 'Round to the five scenes. {n} of {N}. {name}. {shade}.',
   count: '{n} / {N}',
   clipBlocked: 'Clip blocked',
   stillHallAlt: 'A long grey concrete hall under five cool ceiling lights, with a row of warm floor lights along each wall and a closed dark door at its end.',
-  noscript: 'The entrance needs JavaScript. The lands are below.',
+  noscript: 'The entrance needs JavaScript. The scenes are below.',
 });
 
 /** a copy pattern with its {fields} filled */
@@ -60,117 +65,100 @@ export const HALL = Object.freeze({
  */
 export const PRESS = Object.freeze({ swing: 0.9, glideFrom: 0.3, glide: 0.9, dolly: 1.6, freeze: 1.2 });
 
-/** The ten families' key shades by id, in catalog order (the gems' colours, shades.gen.ts BLOCK_SHADES): the rings, the lattice, the cloud and the garden's beds carry them. */
-export const ROOM_BAYS: readonly { readonly family: string; readonly name: string; readonly shade: string; readonly hex: string }[] = Object.freeze([
-  { family: 'Frosty White', name: 'Snow', shade: 'frosty-white-07', hex: '#f0f4f5' },
-  { family: 'Blissful Blue', name: 'Sky', shade: 'blissful-blue-08', hex: '#08bcf4' },
-  { family: 'Playful Pink', name: 'Rouge', shade: 'playful-pink-14', hex: '#f2638f' },
-  { family: 'Vivid Violet', name: 'Amethyst', shade: 'vivid-violet-07', hex: '#8554d1' },
-  { family: 'Mellow Yellow', name: 'Sunbeam', shade: 'mellow-yellow-01', hex: '#fff164' },
-  { family: 'Basic Brown', name: 'Cinnamon', shade: 'basic-brown-07', hex: '#ba7237' },
-  { family: 'Blushing Coral', name: 'Mango', shade: 'blushing-coral-04', hex: '#ff9f40' },
-  { family: 'Stormy Grey', name: 'Silver', shade: 'stormy-grey-05', hex: '#acacac' },
-  { family: 'Go Green', name: 'Lawn', shade: 'go-green-12', hex: '#4aa325' },
-  { family: 'Roaring Red', name: 'Crimson', shade: 'roaring-red-07', hex: '#d20000' },
-]);
-
 /** relative luminance of an sRGB hex (WCAG 2.x) */
 export function relLuminance(hex: string): number {
   const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
   return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
 }
 
+export type ProductId = 'case' | 'wallet' | 'lenskin' | 'airpods';
 export interface RoomProduct {
-  readonly id: 'case' | 'wallet' | 'lenskin' | 'airpods';
+  readonly id: ProductId;
   readonly name: string;
   /** the catalog's sentence with rule 17's words dropped; the catalog's own is a test fixture, never shipped */
   readonly line: string;
-  /** the accessory's own shade by id (the case's: the family pages' Cobalt model, which no land shows) and its finish */
-  readonly shade: string;
-  readonly hex: string;
-  readonly finish: 'matte' | 'gloss' | 'metallic';
 }
 
 /**
- * Sam's four products (2026-10-16) in the catalog's order (pages 15 to 19), one land each (W7); the lines are the
- * catalog's own sentences. The accessories' shades are the ones the lands render (spec 3: "The shade rendered is the
- * shade named"): the wallet in Desert, the Lenskin in Sage (Sam, 2026-10-20) and the AirPods case in Sage.
- * scripts/room/lands.py reads each entry's id, shade, hex and finish from this block, one entry to a line.
+ * Sam's four products (2026-10-16) in the catalog's order (pages 15 to 19): the names the scenes' first lines carry and
+ * the catalog lines their third. Each scene's shade is the scene's own (ROOM_SCENES); products.bin carries the meshes
+ * (scripts/room/products-bin.mjs).
  */
 export const ROOM_PRODUCTS: readonly RoomProduct[] = Object.freeze([
-  { id: 'case', name: 'Phone case', line: 'Enhanced dual-layered protection with a tough Polycarbonate exterior and a flexible TPU core. Available in 240 shades. Matte or gloss.', shade: 'blissful-blue-11', hex: '#1040ca', finish: 'matte' },
-  { id: 'wallet', name: 'MagSafe wallet', line: 'Sleek and secure MagSafe-compatible phone wallet for convenient card storage without the bulk. Available in 240 shades. Matte, gloss, metallic matte or metallic gloss.', shade: 'basic-brown-04', hex: '#c6a884', finish: 'matte' },
-  { id: 'lenskin', name: 'Lenskin', line: "Sleek metal accent for the latest iPhone's camera lens area, designed to personalize your look. Available in a range of contrasting solid shades and patterns. Matte, metallic matte or metallic gloss.", shade: 'go-green-09', hex: '#96a880', finish: 'metallic' },
-  { id: 'airpods', name: 'AirPods case', line: 'Durable polycarbonate case with a sleek profile and precise cut-outs for charging. Includes a carabiner ring for easy attachment to bags. Available in 240 shades. Matte or gloss.', shade: 'go-green-09', hex: '#96a880', finish: 'gloss' },
+  { id: 'case', name: 'Phone case', line: 'Enhanced dual-layered protection with a tough Polycarbonate exterior and a flexible TPU core. Available in 240 shades. Matte or gloss.' },
+  { id: 'wallet', name: 'MagSafe wallet', line: 'Sleek and secure MagSafe-compatible phone wallet for convenient card storage without the bulk. Available in 240 shades. Matte, gloss, metallic matte or metallic gloss.' },
+  { id: 'lenskin', name: 'Lenskin', line: "Sleek metal accent for the latest iPhone's camera lens area, designed to personalize your look. Available in a range of contrasting solid shades and patterns. Matte, metallic matte or metallic gloss." },
+  { id: 'airpods', name: 'AirPods case', line: 'Durable polycarbonate case with a sleek profile and precise cut-outs for charging. Includes a carabiner ring for easy attachment to bags. Available in 240 shades. Matte or gloss.' },
 ]);
+/** a product by id */
+export const productById = (id: ProductId): RoomProduct => ROOM_PRODUCTS.find((p) => p.id === id)!;
 
-/**
- * Each land's own copy and capture (spec 3, "The lands"; one per product, in ROOM_PRODUCTS' order). family: the line
- * that names the pictured case by its family and the accessory by its shade (the listing photos are family photos, so
- * never a single shade of the case); alt: the scene and the products by name and colour, nothing more (never the park's
- * name, never anything about the person). fov: the picture's vertical field of view in degrees and near: its near
- * distance in scene units, both shared with option B's park (src/assets/room/park/park.json's poses, by eye); far: the
- * depth map's far distance, so a pixel of disparity d sits at 1 / mix(1 / far, 1 / near, d). tone: the logotype over the
- * land per crop class, read where it sits, top left: Pearl where that corner of the approved picture is dark (the case's
- * elms in both crops, the wallet's arcade in the wide), Urban Slate elsewhere (spec 5, "The logotype's tone").
- */
-type LandTone = 'slate' | 'pearl';
-export const LAND_COPY: Readonly<Record<RoomProduct['id'], { family: string; alt: string; fov: number; near: number; far: number; tone: Readonly<Record<LandClass, LandTone>> }>> = Object.freeze({
-  case: { family: 'A Mellow Yellow case', alt: 'A person under tall elms in a sunlit park holds a phone in a Mellow Yellow case.', fov: 32, near: 1.6, far: 30, tone: { portrait: 'pearl', wide: 'pearl' } },
-  wallet: { family: 'Desert, on a Blissful Blue case', alt: 'A person in the shade of a stone arcade holds a phone in a Blissful Blue case with a Desert MagSafe wallet on its back.', fov: 34, near: 1.6, far: 30, tone: { portrait: 'slate', wide: 'pearl' } },
-  lenskin: { family: 'Sage, on a Go Green case', alt: 'A person on a wide lawn under a soft grey sky holds a phone in a Go Green case with a Sage Lenskin around its camera.', fov: 32, near: 1.6, far: 30, tone: { portrait: 'slate', wide: 'slate' } },
-  airpods: { family: 'Sage, beside a Vivid Violet case', alt: 'A person on a bridge over a lake holds a phone in a Vivid Violet case and an open Sage AirPods case with its earbuds inside.', fov: 32, near: 1.6, far: 30, tone: { portrait: 'slate', wide: 'slate' } },
-});
+/** the loop classes (section-4-flux.md 2, "Portrait rule"): the wide set on laptops and landscape phones, the portrait set on phones; the poster stills' sizes */
+export const SCENE_SIZE = Object.freeze({ wide: { width: 1280, height: 666 }, portrait: { width: 720, height: 1280 } } as const);
+export type SceneClass = keyof typeof SCENE_SIZE;
+/** one scene's files of a class: the loop and its poster still in both formats (hashed URLs; empty under Node) */
+export interface SceneFiles { readonly loop: string; readonly avif: string; readonly webp: string }
+export type Finish = 'matte' | 'gloss' | 'metallic';
 
-/** the picture classes (spec 3, "The crops"): the portrait on phones, the wide on laptops, at their encoded sizes */
-export const LAND_SIZE = Object.freeze({ portrait: { width: 720, height: 1280 }, wide: { width: 1920, height: 1200 } } as const);
-export type LandClass = keyof typeof LAND_SIZE;
-export interface LandFiles { avif: string; webp: string }
-
-export interface RoomLand {
-  readonly id: RoomProduct['id'];
-  /** 0 to N - 1, its place among the approved lands */
+export interface RoomScene {
+  readonly id: 'cove' | 'grove' | 'ember' | 'palace' | 'dawn';
+  /** 0 to 4, its place in the carousel */
   readonly i: number;
-  readonly name: string;
+  /** 1 to 5, the count line's number */
+  readonly order: number;
+  /** the product in front (ROOM_PRODUCTS by id); the lanyard takes scene 5's slot when Sam's model lands (X-8) */
+  readonly product: ProductId;
+  /** the product's shade: the catalog id, its name, its family in lower case words and its hex (SHADES; tests/unit/room.test.ts holds them to the catalog) */
+  readonly shade: string;
+  readonly shadeName: string;
   readonly family: string;
-  readonly line: string;
+  readonly hex: string;
+  readonly finish: Finish;
+  /** the key light's tint over the scene (the reference's per-scene tints, spec 3) */
+  readonly keyLight: string;
+  /** one sentence describing the room (no product in the still), the poster column's alt */
   readonly alt: string;
-  readonly fov: number;
-  readonly near: number;
-  readonly far: number;
-  /** the logotype's tone over the land, per crop class */
-  readonly tone: Readonly<Record<LandClass, LandTone>>;
-  /** the picture per class, AVIF and WebP (the lands pipeline's land-<id>-portrait.* and land-<id>-wide.*) */
-  readonly pics: Readonly<Record<LandClass, LandFiles>>;
-  /** option A's depth map per class (land-<id>-<class>-depth.*), quarter size, single channel; null where it is not encoded */
-  readonly depth: Readonly<Record<LandClass, LandFiles | null>>;
+  /** the product's authored presentation yaw at rest, radians (face out) */
+  readonly baseYaw: number;
+  /** the loop and the poster still per class */
+  readonly files: Readonly<Record<SceneClass, SceneFiles>>;
 }
 
+// the encoded files as the build emits them (Vite's glob, each a hashed URL): the ten loops, the twenty stills and
+// products.bin in src/assets/room/flux/; under Node (the unit tests) there is no glob, and every URL is empty
+let FLUX_FILES: Record<string, string> = {};
+try { FLUX_FILES = import.meta.glob<string>('../assets/room/flux/*', { eager: true, query: '?url', import: 'default' }); } catch { FLUX_FILES = {}; }
+/** the URL of a file in src/assets/room/flux/ by its name, '' where the build did not emit it */
+export const fluxUrl = (name: string): string => Object.entries(FLUX_FILES).find(([k]) => k.endsWith(`/${name}`) || k === name)?.[1] ?? '';
+const files = (id: string): Readonly<Record<SceneClass, SceneFiles>> => {
+  const one = (cls: SceneClass): SceneFiles => Object.freeze({ loop: fluxUrl(`${id}-${cls}.${'mp4'}`), avif: fluxUrl(`${id}-${cls}.avif`), webp: fluxUrl(`${id}-${cls}.webp`) });
+  return Object.freeze({ wide: one('wide'), portrait: one('portrait') });
+};
+/** products.bin's URL (the four meshes, section-4-flux.md 9 X-7) */
+export const PRODUCTS_BIN_URL = fluxUrl('products.bin');
+
+type SceneRow = Omit<RoomScene, 'i' | 'files'>;
+const SCENE_ROWS: readonly SceneRow[] = [
+  { id: 'cove', order: 1, product: 'case', shade: 'vivid-violet-05', shadeName: 'Lilac', family: 'vivid violet', hex: '#c988c8', finish: 'matte', keyLight: '#ffa6c8', baseYaw: 0,
+    alt: 'A pink rock cove with gold columns under a sunset sky, water rippling across the floor.' },
+  { id: 'grove', order: 2, product: 'airpods', shade: 'go-green-09', shadeName: 'Sage', family: 'go green', hex: '#96a880', finish: 'gloss', keyLight: '#a8ffe0', baseYaw: 0,
+    alt: 'A green forest with a dense rainforest floor, a misty lake and a ring of light.' },
+  { id: 'ember', order: 3, product: 'wallet', shade: 'basic-brown-04', shadeName: 'Desert', family: 'basic brown', hex: '#c6a884', finish: 'matte', keyLight: '#ffa171', baseYaw: 0,
+    alt: 'A red sunset over the sea, a leaning slab and a wet stone floor of flat slabs.' },
+  { id: 'palace', order: 4, product: 'lenskin', shade: 'playful-pink-06', shadeName: 'Ballerina', family: 'playful pink', hex: '#efa3af', finish: 'metallic', keyLight: '#ffc9a3', baseYaw: 0,
+    alt: 'A pink palace with a royal marble floor, statues and lattice screens open to the sea.' },
+  { id: 'dawn', order: 5, product: 'case', shade: 'vivid-violet-04', shadeName: 'Pastel', family: 'vivid violet', hex: '#d7b9ed', finish: 'matte', keyLight: '#cbb0ff', baseYaw: 0,
+    alt: 'A lilac dawn through sheer curtains, a starry disc and fog across the floor.' },
+];
 /**
- * The lands from a listing of the encoded files (URL by file name): every product, in catalog order, whose four picture
- * files exist (both classes in AVIF and WebP). A land Sam has not approved has no files in src/assets/room/lands/ and is
- * not among them (CHECKLIST F2); the depth maps are taken where both formats are there.
+ * The five scenes (section-4-flux.md 3, "The scenes"), in the carousel's order: the room, the product in front with
+ * its catalog shade and finish, the key light's tint, the still's alt and the files of both classes. The ids are ours
+ * (X-12); the reference's names never reach src/ (scripts/room/guards.mjs).
  */
-export function landsFrom(files: Readonly<Record<string, string>>): readonly RoomLand[] {
-  const url = (name: string) => Object.entries(files).find(([k]) => k.endsWith(`/${name}`) || k === name)?.[1];
-  const pair = (stem: string): LandFiles | null => { const avif = url(`${stem}.avif`), webp = url(`${stem}.webp`); return avif && webp ? { avif, webp } : null; };
-  const out: RoomLand[] = [];
-  for (const p of ROOM_PRODUCTS) {
-    const portrait = pair(`land-${p.id}-portrait`), wide = pair(`land-${p.id}-wide`);
-    if (!portrait || !wide) continue;
-    const c = LAND_COPY[p.id];
-    out.push(Object.freeze({ id: p.id, i: out.length, name: p.name, family: c.family, line: p.line, alt: c.alt, fov: c.fov, near: c.near, far: c.far, tone: c.tone,
-      pics: Object.freeze({ portrait, wide }), depth: Object.freeze({ portrait: pair(`land-${p.id}-portrait-depth`), wide: pair(`land-${p.id}-wide-depth`) }) }));
-  }
-  return Object.freeze(out);
-}
-
-// the encoded files as the build emits them (Vite's glob, each a hashed URL); under Node (the unit tests) there is no
-// glob, and the lands are none
-let LAND_FILES: Record<string, string> = {};
-try { LAND_FILES = import.meta.glob<string>('../assets/room/lands/land-*.{avif,webp}', { eager: true, query: '?url', import: 'default' }); } catch { LAND_FILES = {}; }
-/** The approved lands, N of them (spec 5: production ships with N = 0 until Sam has approved land 1). */
-export const ROOM_LANDS: readonly RoomLand[] = landsFrom(LAND_FILES);
+export const ROOM_SCENES: readonly RoomScene[] = Object.freeze(SCENE_ROWS.map((r, i) => Object.freeze({ ...r, i, files: files(r.id) })));
+export const SCENE_COUNT = ROOM_SCENES.length;
+/** a scene's shade line, "Lilac, vivid violet" (spec 3, "Each scene's four lines") */
+export const shadeLine = (s: RoomScene): string => `${s.shadeName}, ${s.family}`;
 
 /**
  * The render colours that are not tokens or shades (E-S4-light, spec section 10; read back by tests/unit/room.test.ts), as
@@ -185,44 +173,35 @@ export const RENDER_COLOURS = Object.freeze({
 });
 
 /**
- * The scroll map of the section in screens of its own height (section-4.md 2 for the hall; section-4-world.md 5, "The
- * scroll map", once entered). In the hall: the third wipe 0 to 1, the walk 1 to 9, the station 9 to 10, the loop screen
- * 10 to 11, the tail 11 to 12 and one more screen. Once entered with N lands: land i's station at 10 + 2i, each held
- * 0.4 screens either side, the loop screen 9 + 2N to 10 + 2N, then the tail and one more screen.
+ * The scroll map of the section in screens of its own height (section-4.md 2 for the hall; section-4-flux.md 5, "The
+ * scroll map"): the third wipe 0 to 1, the walk 1 to 9, the station 9 to 10, the five scenes from 10 at a step of 0.5
+ * (10, 10.5, 11, 11.5, 12), the hold 12 to 12.8, the exit seam at 12.8, the loop screen 12.8 to 13.8, the tail to 14.8
+ * and one pinned screen. The same map in every state: in the hall q 10 to 12.8 holds the station frame and the seam at
+ * 12.8 runs over the hall as it does over scene 5.
  */
-export const ROOM_SCREENS = Object.freeze({ wipe: 1, walk: 8, station: 1, loop: 1, tail: 1, land: 2, hold: 0.4 });
+export const ROOM_SCREENS = Object.freeze({ wipe: 1, walk: 8, station: 1, step: 0.5, hold: 0.8, loop: 1, tail: 1 });
 /** the door station's q, mid-screen of the station */
 export const STATION_Q = ROOM_SCREENS.wipe + ROOM_SCREENS.walk + 0.5;
-/** where the world's map starts (q 10): land 1's station */
+/** where the scenes start (q 10): scene 1's position */
 export const WORLD_START = ROOM_SCREENS.wipe + ROOM_SCREENS.walk + ROOM_SCREENS.station;
-/** land i's station */
-export const landQ = (i: number): number => WORLD_START + ROOM_SCREENS.land * i;
-/** the loop screen's start: after the station in the hall (lands null), after the last land once entered with n lands */
-export const loopStart = (lands: number | null): number => (lands === null || lands < 1 ? WORLD_START : WORLD_START - 1 + ROOM_SCREENS.land * lands);
+/** scene i's position (the reference's 50 vh a step) */
+export const sceneQ = (i: number): number => WORLD_START + ROOM_SCREENS.step * i;
+/** the last scene's position: the carousel is in range while the raw q is within 2 px of [WORLD_START, SCENES_END] */
+export const SCENES_END = sceneQ(SCENE_COUNT - 1);
+/** the exit seam's trigger: the raw scroll crossing it downward runs the cloud and the jump to the top */
+export const LOOP_START = SCENES_END + ROOM_SCREENS.hold;
 /**
- * The track's height in screens in the hall, and once entered with n lands: a sticky 100svh stage inside an H-screen
- * track is pinned for q 0 to H - 1, so one screen beyond the tail keeps the stage pinned through the loop screen and the
- * tail, and the jump fires while the raw scroll is still inside the document (1300svh; 2000svh with four lands).
- * src/styles/room.css carries the literal per n under [data-lands], and tests/unit/room.test.ts reads them back.
+ * The track's height in screens: a sticky 100svh stage inside an H-screen track is pinned for q 0 to H - 1, so one screen
+ * beyond the tail keeps the stage pinned through the loop screen and the tail, and the seam fires while the raw scroll is
+ * still inside the document. src/styles/room.css carries the literal (1580svh) and tests/unit/room.test.ts reads it back.
  */
-export const ROOM_HEIGHT = ROOM_SCREENS.wipe + ROOM_SCREENS.walk + ROOM_SCREENS.station + ROOM_SCREENS.loop + ROOM_SCREENS.tail + 1;
-export const worldHeight = (n: number): number => ROOM_HEIGHT - 1 + ROOM_SCREENS.land * n;
-export const ROOM_HEIGHT_WORLD = worldHeight(ROOM_LANDS.length);
-
-/** the travel options (spec 2, "The travel between lands"), by Tune's parkTravel: 0 A, 1 B, 2 C */
-export const TRAVEL_OPTIONS = Object.freeze(['A', 'B', 'C'] as const);
-export type TravelOption = (typeof TRAVEL_OPTIONS)[number];
-// the build's pick (astro.config.mjs writes it back, A when unset); under Node there is no import.meta.env
-let PICK: string | undefined;
-try { PICK = import.meta.env.PUBLIC_PARK_TRAVEL; } catch { PICK = undefined; }
-const PICK_INDEX = Math.max(0, TRAVEL_OPTIONS.indexOf((PICK ?? 'A') as TravelOption));
+export const ROOM_HEIGHT = LOOP_START + ROOM_SCREENS.loop + ROOM_SCREENS.tail + 1;
 
 /**
  * The tunable parameters (Tune, "Section 4"): the spec's defaults. Numbers only, as HERO_PARAMS, so the panel binds them
- * the same way; the choices are 0 or 1 (or small integers) with their meaning in the comment. The world's (bubbleMs to
- * worldBloom) are world.ts's WORLD_DEFAULTS, and Tune's ranges for them are its WORLD_RANGES, inside which every
- * combination passes the ring-timing rule (spec 2; tests/unit/room-world.test.ts walks them, room.test.ts holds Tune to
- * them).
+ * the same way; the choices are 0 or 1 (or small integers) with their meaning in the comment. The carousel's keys are
+ * section-4-flux.md 9 X-13 with the ranges in ROOM_RANGES; bubbleMs's range is transition.ts's BUBBLE.msRange (the growth
+ * is proven across it, tests/unit/room-bubble.test.ts).
  */
 export const ROOM_PARAMS = Object.freeze({
   // the camera
@@ -250,20 +229,37 @@ export const ROOM_PARAMS = Object.freeze({
   seamGlow: 1.0,       // the seam's brightness at the door station
   promptChip: 1,       // 1 shows [E] before the prompt on a device that can hover
   handoff: 0,          // the hand-off from the fog: 0 the ice-shard wipe, 1 a cut, 2 a fade
-  // the entry (world.ts WORLD_DEFAULTS)
-  bubbleMs: 2000,      // the bubble's growth from the screen's centre past the farthest corner
-  travelMs: 8000,      // the ring glide
-  ringCount: 3,        // igloo's three rings
-  travelRoll: 30,      // degrees of roll, held through the passes
-  morphMs: 1800,       // the particle morph onto land 1's picture
-  enterPushMs: 1200,   // the push into land 1 through its depth map
-  worldBloom: 0,       // laptops: the screened bloom over the tunnel and the push (0 off; never on a land at rest)
-  // the lands
-  landTravelMs: 2600,  // a travel between two lands (C: the clip's own length)
-  parkTravel: PICK_INDEX,   // how a travel looks: 0 A the pictures in depth, 1 B the modelled park, 2 C the clips (default: the build's PUBLIC_PARK_TRAVEL)
+  // the entry
+  bubbleMs: 2000,      // the bubble's growth from the screen's centre past the farthest corner (the way back takes half)
+  // the carousel (section-4-flux.md 4 and 9 X-13)
+  stepMs: 770,         // one step, on power2.out
+  sweepDeg: 80,        // the arc on the wide class, degrees
+  sweepDegPortrait: 22,   // the arc when the stage is taller than wide (X-1)
+  fovStep: 42,         // the pinch's bottom, from 45
+  fovReturnAt: 0.65,   // the eased t at which the pinch bottoms and turns back
+  lightStart: 0.5,     // the light-up's threshold on proximity
+  lightSoft: 0.64,     // its softness
+  lightBoost: 0.17,    // its boost on the revealed areas
+  keyLightMs: 1100,    // the key light's cross-fade from the front switch
+  snapMs: 500,         // the glue's settle (scroll.ts)
   // the loop
-  lapReset: 1,         // after the jump to the top: 1 the next lap walks the hall again, 0 the world stays entered
+  lapReset: 1,         // after the jump to the top: 1 the next lap walks the hall again, 0 the scenes stay entered
 });
+
+/** Tune's ranges for the keys this part sets (X-13; min, max, step): room.test.ts holds Tune.astro to them */
+export const ROOM_RANGES = Object.freeze({
+  bubbleMs: [1200, 3200, 10],
+  stepMs: [400, 1200, 10],
+  sweepDeg: [40, 120, 1],
+  sweepDegPortrait: [12, 80, 1],
+  fovStep: [36, 45, 0.5],
+  fovReturnAt: [0.4, 0.9, 0.05],
+  lightStart: [0.2, 0.8, 0.05],
+  lightSoft: [0.2, 1, 0.02],
+  lightBoost: [0, 0.5, 0.01],
+  keyLightMs: [300, 2000, 50],
+  snapMs: [200, 900, 10],
+} as const satisfies Partial<Record<keyof typeof ROOM_PARAMS, readonly [number, number, number]>>);
 
 export type RoomParams = { -readonly [K in keyof typeof ROOM_PARAMS]: number };
 export type RoomParamKey = keyof typeof ROOM_PARAMS;
@@ -275,18 +271,15 @@ export function liveRoomParams(): RoomParams {
   const t = typeof window !== 'undefined' ? window.__skreedTune?.room?.params : undefined;
   return t ?? DEFAULTS;
 }
-/** the travel option in use: Tune's pick where Tune is on, else the build's */
-export const travelOption = (p: RoomParams): TravelOption => TRAVEL_OPTIONS[Math.min(2, Math.max(0, Math.round(p.parkTravel)))];
 
-/** section#room[data-state] (spec 5, "States"): the walk; the door, the bubble, the glide, the morph and the push on one clock; the lands */
-export type RoomState = 'hall' | 'entering' | 'world';
-/** what a land is doing in the world: at rest, waiting on the next land's pictures, travelling, or settling the page after a travel */
-export type LandSub = 'rest' | 'wait' | 'travel' | 'settling';
+/** section#room[data-state] (section-4-flux.md 5, "States"): the walk; the door and the bubble on one clock; the scenes; the way back; either seam */
+export type RoomState = 'hall' | 'entering' | 'world' | 'back' | 'seam';
 
 /** What the island hands the walk script every frame (scripts/room/walk.ts): the section's progress and the anchors. */
 export interface RoomFrame {
-  /** the section's smoothed progress in screens of its own height */
+  /** the section's smoothed progress in screens of its own height, and the raw position */
   q: number;
+  qRaw: number;
   /** the camera's place along the hall, metres */
   x: number;
   /** 0 far from the door, 1 at the door station */
@@ -297,24 +290,21 @@ export interface RoomFrame {
   /** the door's handle in CSS pixels of the canvas, or null when the hall is not drawn */
   prompt: { x: number; y: number } | null;
   state: RoomState;
-  /** the lands in this build (0: the prompt is never shown) */
-  lands: number;
-  /** the world's chunk, its scene and land 1 are in (a press can start the entry) */
+  /** products.bin and scene 1's loop (or its still where loops never play) are in: a press can start the entry */
   worldReady: boolean;
-  /** seconds since the press while entering, and the entry clock's end */
+  /** seconds since the press while entering */
   entry: number;
-  arrive: number;
-  /** the land on screen (0 to N - 1) once entered, and what it is doing */
-  land: number;
-  sub: LandSub;
-  /** while a travel runs: from, to, its progress 0 to 1, and how it plays (the option, or the cross-fade standing in) */
-  travel: { from: number; to: number; p: number; option: TravelOption | 'fade' } | null;
-  /** a travel waits on the next land's pictures since this many ms (the Loading line under the land's text) */
-  waitMs: number;
-  /** the option's visible line where a travel did not play as the option (C's refused clip on a Tune build), else null */
+  /** the scene at rest (0 to 4); while a step runs, the one it left */
+  scene: number;
+  /** a step runs, and the scene it goes to (minus 1 otherwise) */
+  stepping: boolean;
+  stepTo: number;
+  /** the scene's loop is expected and not in (the loading line under its lines; never on the still paths nor after a refusal) */
+  loading: boolean;
+  /** the visible line where a loop was refused (Tune builds only: clipBlocked), else null */
   note: string | null;
-  /** the fourth wipe's progress over the loop screen, 0 off it */
-  loop: number;
+  /** a seam's cloud cover, 0 to 1 */
+  cover: number;
   /** true on the frame the page jumped back to the top */
   jumped: boolean;
 }
@@ -323,12 +313,18 @@ export interface RoomFrame {
 export interface RoomIsland {
   /** scrolls the page to the top of q (instant) and snaps the section's followers there */
   snap(q: number): void;
-  /** starts the entry; false while the world is still loading (the prompt goes busy and enters by itself) or there is no land */
+  /** starts the entry; false while the scenes are still loading (the prompt goes busy and enters by itself) */
   enter(): boolean;
-  /** ends the entry at once: land 1 at rest, the page at its station; during a travel between lands, lands at once */
+  /** ends the entry at once: scene 1 at rest, the page at its position */
   skip(): void;
-  /** a travel to the next land (+1) or the previous (-1), as the triggers start it; false when there is none */
-  travel(dir: 1 | -1): boolean;
+  /** one whole step to the next scene (+1) or the previous (-1); false when refused */
+  step(dir: 1 | -1): boolean;
+  /** the way back from scene 1 into the hall; false when not at scene 1 at rest */
+  back(): boolean;
+  /** the reverse seam from scroll 0 onto scene 5; false while another seam, the entry or the way back runs */
+  wrap(): boolean;
+  /** the loops and the cloud's clock run (true) or hold (false): the "Pause motion" control (E-S4-loops) */
+  motion(on: boolean): void;
   /** -2 holds the head's sway while the pointer is over the prompt, -1 lets it go */
   setHover(i: number): void;
 }
