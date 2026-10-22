@@ -1,7 +1,7 @@
 // Section 4's lightmaps, models and garden into src/assets/room/ (docs/specs/section-4.md 6, section-4-world.md 6): a
 // bake's PNG becomes a 1024 AVIF (q50) with a WebP (q82) fallback through sharp, the GLB is copied as it is (the
-// exporter's float32 attributes; 35 KB for the hall, under its 40 KB line, so no quantisation step yet). Run after
-// scripts/room/hall.py, universe.py or garden.py:
+// exporter's float32 attributes), and the hall's is written again as hall.bin (scripts/room/hall-bin.mjs), the file
+// that ships, so the island needs no glTF loader. Run after scripts/room/hall.py, universe.py or garden.py:
 //   node scripts/room/encode.mjs scripts/room/out          (the hall: hall.glb, hall-lightmap.png, report.json)
 //   node scripts/room/encode.mjs scripts/room/out room     (the universe: room.glb, room-lightmap.png, room-report.json)
 //   node scripts/room/encode.mjs scripts/room/out/garden garden   (the garden: garden-plate.png, garden-card-{1,2,3}.png,
@@ -10,6 +10,7 @@
 import { copyFileSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
+import { hallBin } from './hall-bin.mjs';
 
 const src = process.argv[2] ?? 'scripts/room/out';
 const mode = process.argv[3] === 'room' ? 'room' : process.argv[3] === 'garden' ? 'garden' : 'hall';
@@ -25,6 +26,7 @@ async function lightmap(src, which) {
   writeFileSync(join(dst, `${which}-lightmap.avif`), avif);
   writeFileSync(join(dst, `${which}-lightmap.webp`), webp);
   copyFileSync(join(src, `${which}.glb`), join(dst, `${which}.glb`));
+  if (which === 'hall') writeFileSync(join(dst, 'hall.bin'), hallBin(readFileSync(join(dst, 'hall.glb'))));
   const report = JSON.parse(readFileSync(join(src, which === 'room' ? 'room-report.json' : 'report.json'), 'utf8'));
   const meta = { scale: report.scale, faces: report.faces, samples: report.samples, bakeSize: report.size, lightmap: report.out, bakeSeconds: report.bake_s };
   if (which === 'room') Object.assign(meta, { median: report.median, radius: report.radius, height: report.height, doorX: report.door_x, pedestals: report.pedestals, ceiling: report.ceiling });

@@ -50,8 +50,8 @@ interface Window {
   __skreedTop?: () => void;
   /** section 4: the island's side of the bridge, installed with the section's director */
   __skreedRoom?: import('./config/room.ts').RoomIsland;
-  /** hooks builds: section 4's state, entering without the walk, and the transition by its clock (seconds) */
-  __s4?: { state(): unknown; enter(): boolean; seek(sec: number): void; skip(): void; readonly ready: boolean };
+  /** hooks builds: section 4's state, entering without the walk, the entry by its clock (seconds), a land at rest, a travel held at p, the option in use */
+  __s4?: { state(): unknown; enter(): boolean; seek(sec: number): void; land(i: number): boolean; travel(i: number, j: number, p: number): boolean; skip(): void; option(): { option: 'A' | 'B' | 'C'; module: boolean } | null; readonly ready: boolean };
   // test hooks (test and staging builds only; hero-architecture.md 10)
   __skreedFreeze?: boolean;
   __skreedFrame?: number;
@@ -70,6 +70,7 @@ interface Window {
   /** v11: both scroll followers at once */
   __skreedSnap?: (v: number) => void;
   __skreedPrograms?: () => number;
+  __skreedGpu?: () => { geometries: number; textures: number; programs: number };
   /** section 2's state (ready, failed, live, S, L per gem, active, labels shown) */
   __s2?: () => unknown;
   /** the intro: seek(x, t0?) pins the shot at x seconds and renders that frame; play() resumes; replay() runs it again */

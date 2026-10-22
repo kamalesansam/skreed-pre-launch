@@ -198,23 +198,27 @@ export async function startHero(o: StartOptions): Promise<void> {
   window.__skreedTop = () => { scrollTo({ top: 0, behavior: 'instant' }); loop.snap(0); ctx.room?.reset(); };
   life.onKill(() => { window.__skreedTop = undefined; });
   if (HOOKS) installHooks(ctx, loop, { skyClass: () => ctx.sky.cls });
-  // section 4 (docs/specs/section-4.md 5) loads one section ahead: its chunk, the hall's model and lightmap start when
-  // the quiz or the section itself comes into view, so the walk is ready by the time the third wipe is reached; the
-  // universe's assets follow during the walk (section4/director.ts)
+  // section 4 (docs/specs/section-4.md 5, section-4-world.md 5) loads one section ahead: its chunk, the hall's model and
+  // lightmap start when the quiz or the section itself comes into view, so the walk is ready by the time the third wipe
+  // is reached; the world's chunk, the garden and land 1 follow during the walk (section4/director.ts), its rings and
+  // forcefields drawing the intro's triangle lattice (tTri, already on the GPU)
   let roomImport: Promise<void> | null = null;
   const loadHall = () => (roomImport ??= import('./section4/director.ts').then((m) => {
-    const room = m.createRoomDirector({ renderer, avif: data.avif, reduced, touch, onJump: () => loop.snap(0) });
+    const room = m.createRoomDirector({ renderer, avif: data.avif, reduced, touch, dpr, tTri: ctx.U.tTri ?? null, onJump: () => loop.snap(0) });
     ctx.room = room; life.onKill(() => room.dispose());
     room.resize(renderer.domElement.width, renderer.domElement.height);
     return room.load().then(() => { if (room.hall.failed) document.getElementById('room')?.setAttribute('data-tier', 'poster'); });
   }).catch((e: unknown) => { console.warn('section 4: the section chunk did not load; the stills stand in', e); document.getElementById('room')?.setAttribute('data-tier', 'poster'); }));
   if (HOOKS) {
-    type S4Extra = { seek(sec: number): void; enterNow(): boolean };
+    const extra = () => ctx.room as unknown as import('./section4/director.ts').RoomHooks | null;
     window.__s4 = {
       state: () => ctx.room?.hooks() ?? null,
-      enter: () => (ctx.room as unknown as S4Extra | null)?.enterNow() ?? false,
-      seek: (sec) => (ctx.room as unknown as S4Extra | null)?.seek(sec),
+      enter: () => extra()?.enterNow() ?? false,
+      seek: (sec) => extra()?.seek(sec),
+      land: (i) => extra()?.land(i) ?? false,
+      travel: (i, j, p) => extra()?.travel(i, j, p) ?? false,
       skip: () => window.__skreedRoom?.skip(),
+      option: () => extra()?.option() ?? null,
       get ready() { return !!ctx.room?.hall.ready; },
     };
   }

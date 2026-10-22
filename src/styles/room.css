@@ -1,99 +1,106 @@
-/* Section 4, the entrance and the Skreed universe (docs/specs/section-4.md 2 and 5; tokens from DESIGN.md). On the 3D path
-   the section is a tall track with a sticky stage over the hero's fixed canvas, which draws the hall, the transition and
-   the universe; the DOM here is what the section needs over it. Pearl Whisper panels with Urban Slate text (9.9:1), the
-   primary button at the door, square corners, no shadows, no blur. On the poster tier (html:not(.hero3d), or the section's
-   own data-tier=poster after a failed asset) and without JavaScript the stills and the products list stand in. */
-.room { position: relative; z-index: 2; color: var(--urban-slate); font-family: var(--font-ui); font-size: var(--fs-label); line-height: var(--lh-ui); }
+/* Section 4, the entrance and the Skreed world (docs/specs/section-4.md 2 and 5, docs/specs/section-4-world.md 2 and 5
+   "The DOM"; tokens from DESIGN.md). On the 3D path the section is a tall track with a sticky stage over the hero's fixed
+   canvas, which draws the hall, the bubble and the world; the DOM here is what the section needs over it, and all of it
+   is plain text on the scene (Sam, 2026-10-19 and 2026-10-20: "just plain text on the fog backround with the same
+   animation, no boxes or anything"; "Yes, all of it"): section 2's label type, IBM Plex Mono Medium in capitals, Pearl
+   Whisper, at the quiz's sizes (E-S4-font), decoded in and out by section 3's decode (walk.ts). No panels, no fills, no
+   borders but the focus ring's, no shadows, no blur; the controls are words, underlined as the quiz's links are. On the
+   poster tier (html:not(.hero3d), html.poster, or the section's own data-tier=poster after a failed asset) and without
+   JavaScript the hall's still and the lands' column stand in, on --night. */
+.room {
+  --rm-font: "IBM Plex Mono", ui-monospace, monospace;
+  /* the quiz's type scale (quiz.css --qz-fs and --qz-fs-q; tests/unit/room.test.ts holds the two equal) */
+  --rm-fs: clamp(15px, min(calc(0.6rem + 0.95vw), 2.6vh), 22px); --rm-fs-q: clamp(24px, min(calc(1rem + 2.3vw), 5vh), 52px);
+  position: relative; z-index: 2; color: var(--pearl-whisper); font: 500 var(--rm-fs) / 1.45 var(--rm-font); text-transform: uppercase; letter-spacing: 0; font-synthesis: none;
+}
 .room *, .room *::before, .room *::after { box-sizing: border-box; }
+.room .sr-only { text-transform: none; }   /* assistive technology gets the sentence case: Chrome names elements from the rendered text */
+.room .dc { white-space: normal; }
+:where(.room) :where(p, h2, h3, ol) { margin: 0; }
+:where(.room) :where(h2, h3) { font: inherit; }
 /* the track: 13 screens in the hall (the wipe, the walk, the station, the loop screen, the tail and the pinned screen
-   after it), 15 once the universe is entered (its two screens of pan); tests/unit/room.test.ts reads these against
-   config/room.ts ROOM_HEIGHT and ROOM_HEIGHT_ENTERED */
+   after it), 12 + 2N from the press with N lands (each land's two screens); tests/unit/room.test.ts reads these against
+   config/room.ts ROOM_HEIGHT and worldHeight(N) */
 .room .rm-track { height: 1300svh; }
-.room[data-state="universe"] .rm-track { height: 1500svh; }
+.room:is([data-state="entering"], [data-state="world"])[data-lands="1"] .rm-track { height: 1400svh; }
+.room:is([data-state="entering"], [data-state="world"])[data-lands="2"] .rm-track { height: 1600svh; }
+.room:is([data-state="entering"], [data-state="world"])[data-lands="3"] .rm-track { height: 1800svh; }
+.room:is([data-state="entering"], [data-state="world"])[data-lands="4"] .rm-track { height: 2000svh; }
 .rm-stage { position: sticky; top: 0; height: 100svh; overflow: clip; }
-.rm-loopend, .rm-still { display: none; }
+.rm-loopend, .rm-still, .rm-land-pic { display: none; }
 
-/* the pad under the controls: focusable, takes the walking keys and the taps; its ring is drawn inside the stage */
+/* the pad under the controls: focusable, takes the keys; the stage clips, so its two-tone ring is drawn inside it */
 .rm-pad { position: absolute; inset: 0; outline: none; -webkit-tap-highlight-color: transparent; }
-.room[data-state="universe"] .rm-pad.is-over { cursor: pointer; }
 
-/* the panels: a line of Open Sans 600 on Pearl Whisper, inside the gutters, above the safe area; bottom centre */
-.rm-pill { position: absolute; left: 50%; bottom: calc(var(--inset) + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); margin: 0; width: max-content; max-width: calc(100% - 2 * var(--inset)); min-height: 44px; display: flex; align-items: center; padding: var(--s2) var(--s3); background: var(--pearl-whisper); color: var(--urban-slate); font-weight: var(--w-ui-strong); border-radius: var(--radius-none); text-align: center; z-index: 2; }
-.rm-pill[hidden] { display: none; }
-.rm-hint.is-gone { opacity: 0; transition: opacity var(--dur-out) var(--ease-standard); pointer-events: none; }
+/* the words that are controls: the quiz's link pattern (quiz.css .qz-link), a 44 px hit area, the underline thickening on hover */
+.room .rm-link { position: absolute; z-index: 3; display: inline-flex; align-items: center; gap: 0.6em; min-height: 44px; min-width: 44px; margin: 0; padding: 0; background: none; border: 0; border-radius: 0; color: inherit; font: inherit; text-transform: inherit; letter-spacing: inherit; white-space: nowrap; text-decoration-line: underline; text-decoration-thickness: 1px; text-underline-offset: 0.4em; cursor: pointer; -webkit-tap-highlight-color: transparent; appearance: none; }
+.room .rm-link[aria-disabled="true"] { cursor: progress; }
+@media (hover: hover) { .room .rm-link:hover:not([aria-disabled="true"]) { text-decoration-thickness: 2px; } }
+.room .rm-link[hidden] { display: none; }
 
-/* the prompt (DESIGN.md 4, the primary button): anchored to the door's handle by the walk script; in the Tab order for
-   the whole hall, visually hidden (the clip pattern) until the visitor is within 2.2 m, then a 200 ms fade (E-S4-motion) */
-.room .btn { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 3; display: inline-flex; align-items: center; gap: var(--s2); min-height: 48px; padding: 0 var(--s4) 0 var(--s2); background: var(--ember-luxe); color: #383F43; font: var(--w-ui-strong) var(--fs-button) / var(--lh-solid) var(--font-ui); text-decoration: none; border: 0; border-radius: var(--radius-none); cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
-.room .rm-enter { opacity: 0; clip-path: inset(50%); transition: opacity 200ms var(--ease-standard), clip-path 0s linear 200ms, transform var(--dur-press) var(--ease-standard); }
-.room .rm-enter.is-near { opacity: 1; clip-path: none; transition: opacity 200ms var(--ease-standard), clip-path 0s, transform var(--dur-press) var(--ease-standard); }
-.room .rm-enter[hidden] { display: none; }
-.room .rm-enter[aria-disabled="true"] { cursor: progress; }
-@media (hover: hover) { .room .rm-enter.is-near:not([aria-disabled="true"]):hover { transform: translate(-50%, calc(-50% - 1px)); } }
-.room .rm-enter:not([aria-disabled="true"]):active { transform: translate(-50%, -50%) scale(0.98); }
-.room :focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }   /* DESIGN.md 4: Ember at 2 px, hugging the Urban Slate ring inside it */
-/* the pad fills the stage, which clips: its two-tone ring is drawn inside it */
-.room .rm-pad:focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: -4px; box-shadow: inset 0 0 0 6px var(--urban-slate); }
-.room :is(.btn, .txtbtn, .rm-product):focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
-.rm-key { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 1px solid var(--urban-slate); background: var(--pearl-whisper); color: var(--urban-slate); font-size: var(--fs-label); line-height: 1; }
+/* focus (DESIGN.md 4): the Ember Luxe outline at 2 px with the Urban Slate ring inside it, on keyboard focus only */
+.room :focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }
+.room .rm-link:focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
+.room .rm-land-name:focus { outline: none; }   /* the name takes focus only from script (tabindex -1), so it is announced; it is no control */
+.room .rm-pad:focus-visible { outline: none; }
+.room .rm-pad:focus-visible::before { content: ""; position: absolute; inset: 0; border: 2px solid var(--urban-slate); outline: 2px solid var(--ember-luxe); outline-offset: -4px; pointer-events: none; }
+.room .rm-pad:focus-visible::after { content: ""; position: absolute; inset: 4px; border: 2px solid var(--urban-slate); pointer-events: none; }
+
+/* the prompt: at the door's handle, placed by a transform from its cached size (walk.ts); in the Tab order for the whole
+   hall, clipped until the visitor is within 2.8 m, then decoded in; [E] only where the device can hover */
+.room .rm-enter { left: 0; top: 0; }
+.room .rm-enter:not(.is-near) { clip-path: inset(50%); }
 .room.rm-nochip .rm-key { display: none; }
-.room.rm-nochip .btn { padding-left: var(--s4); }
-@media (hover: none) { .rm-key { display: none; } .room .btn { padding-left: var(--s4); } }
+@media (hover: none) { .room .rm-key { display: none; } }
 
-/* the skip: a text button on its square Pearl Whisper panel, bottom centre, from the transition's first frame */
-.rm-skipwrap { position: absolute; left: 50%; bottom: calc(var(--inset) + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 4; min-height: 44px; display: flex; background: var(--pearl-whisper); border-radius: var(--radius-none); }
-.rm-skipwrap[hidden] { display: none; }
-.room .txtbtn { position: relative; background: none; border: 0; padding: var(--s2) var(--s4); min-height: 44px; color: var(--urban-slate); font: var(--w-ui-strong) var(--fs-button) / var(--lh-solid) var(--font-ui); cursor: pointer; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; -webkit-tap-highlight-color: transparent; }   /* the quiz's text button (DESIGN.md 4): the underline colours in on hover and focus */
-@media (hover: hover) { .room .txtbtn:hover { text-decoration-color: currentColor; } }
-.room .txtbtn:focus-visible { text-decoration-color: currentColor; }
+/* Skip, the hints and the loading lines: bottom centre, inside the gutters, above the safe area */
+.room :is(.rm-skip, .rm-line) { position: absolute; left: 50%; bottom: calc(var(--inset) + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); max-width: calc(100% - 2 * var(--inset)); text-align: center; z-index: 3; }
+.room .rm-line { width: max-content; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+.room .rm-line[hidden] { display: none; }
 
-/* the products: one panel each, real buttons; the shown one is the bottom panel on phones and floats over its product on
-   laptops (the walk script places it); the others are visually hidden but stay in the accessibility tree */
-.rm-products { list-style: none; margin: 0; padding: 0; }
-.rm-item { position: absolute; left: var(--inset); right: var(--inset); bottom: calc(var(--inset) + env(safe-area-inset-bottom, 0px)); z-index: 2; display: flex; justify-content: center; pointer-events: none; }
-.rm-item:not(.is-shown) { width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.rm-item[hidden] { display: none; }
-.rm-item.is-float { left: 0; right: auto; bottom: auto; width: max-content; max-width: min(320px, calc(100vw - 2 * var(--inset))); transform: translate(-50%, -100%); }
-.rm-product { position: relative; pointer-events: auto; display: grid; gap: var(--s1); width: 100%; max-width: 480px; min-height: 44px; margin: 0; padding: var(--s3); background: var(--pearl-whisper); color: var(--urban-slate); border: 0; border-radius: var(--radius-none); text-align: left; font: inherit; cursor: default; -webkit-tap-highlight-color: transparent; }
-.rm-name { font: var(--w-display) var(--fs-clause) / var(--lh-h2) var(--font-display); }
-.rm-line { font: var(--w-ui) var(--fs-legal) / var(--lh-ui) var(--font-ui); }
-
-/* on the 3D path, before the walk script runs, the list is out of the Tab order too (the inline script sets inert; this is the
-   belt for a slow module) */
-html.hero3d:not(.poster) .room:not([data-tier="poster"]):not([data-state="universe"]) .rm-products { visibility: hidden; }
+/* the lands: all in the accessibility tree from the entry, the unreached ones clipped (never hidden); only the land on
+   screen shows its text, bottom left inside the gutters and above the safe area, within 520 px. The pictures are the
+   island's on the 3D path, so the DOM's are never fetched there. */
+.rm-lands { list-style: none; padding: 0; }
+.rm-land { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.rm-land.is-on { inset: 0; width: auto; height: auto; margin: 0; overflow: visible; clip-path: none; white-space: normal; pointer-events: none; z-index: 2; }
+.rm-land-text { display: grid; gap: var(--s1); }
+.rm-land.is-on .rm-land-text { position: absolute; left: var(--inset); bottom: calc(var(--inset) + env(safe-area-inset-bottom, 0px)); width: calc(100% - 2 * var(--inset)); max-width: 520px; }
+.rm-land-name { font-size: var(--rm-fs-q); line-height: 1.25; text-wrap: balance; }
+.rm-land-count { font-variant-numeric: tabular-nums; }
+.rm-land :is(.rm-land-more, .rm-land-hint)[hidden] { display: none; }
+/* the travel buttons: visually hidden (the clip pattern), for browse mode; each runs the same travel as the keys */
+.room :is(.rm-prev, .rm-next) { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; background: none; border: 0; appearance: none; }
+.room :is(.rm-prev, .rm-next)[hidden] { display: none; }
 
 /* the fade of the poster tier's loop (through --night to the first screen) */
 .rm-fade { position: fixed; inset: 0; z-index: 5; background: var(--night); pointer-events: none; }
 .rm-fade[hidden] { display: none; }
 
-/* the poster tier and no JavaScript: the track collapses to the still's one screen, the prompt shows at once over the
-   door, a press swaps the hall's still for the universe's (a 300 ms cross-fade) and the products stand as a list under it */
+/* the poster tier and no JavaScript: the track collapses to the still's one screen with the prompt over it at once; the
+   press cross-fades the still to land 1's picture (300 ms, walk.ts) and the lands stand one per screen in a column, each
+   its picture over its text, every picture on a --skeleton box of its aspect ratio until it decodes */
 :is(html:not(.hero3d), html.poster) .room .rm-track, .room[data-tier="poster"] .rm-track { height: auto; }
 :is(html:not(.hero3d), html.poster) .rm-stage, .room[data-tier="poster"] .rm-stage { position: relative; height: auto; min-height: 100svh; overflow: visible; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; background: var(--night); }
-:is(html:not(.hero3d), html.poster) .rm-still, .room[data-tier="poster"] .rm-still { display: block; grid-area: 1 / 1; width: 100%; aspect-ratio: 9 / 16; background: var(--skeleton); }
-@media (orientation: landscape) { :is(html:not(.hero3d), html.poster) .rm-still, .room[data-tier="poster"] .rm-still { aspect-ratio: 16 / 10; max-height: 100svh; } }
+:is(html:not(.hero3d), html.poster) .rm-still, .room[data-tier="poster"] .rm-still { display: block; grid-area: 1 / 1; z-index: 1; width: 100%; height: 100svh; background: var(--skeleton); }
 :is(html:not(.hero3d), html.poster) .rm-still img, .room[data-tier="poster"] .rm-still img { display: block; width: 100%; height: 100%; object-fit: cover; }
-:is(html:not(.hero3d), html.poster) .rm-still[data-which="universe"], .room[data-tier="poster"] .rm-still[data-which="universe"] { opacity: 0; transition: opacity 300ms var(--ease-standard); }
-:is(html:not(.hero3d), html.poster) .room[data-state="universe"] .rm-still[data-which="universe"], .room[data-tier="poster"][data-state="universe"] .rm-still[data-which="universe"] { opacity: 1; }
-:is(html:not(.hero3d), html.poster) .rm-pad, .room[data-tier="poster"] .rm-pad, :is(html:not(.hero3d), html.poster) .rm-hint, .room[data-tier="poster"] .rm-hint, :is(html:not(.hero3d), html.poster) .rm-label, .room[data-tier="poster"] .rm-label { display: none; }
-:is(html:not(.hero3d), html.poster) .room .rm-enter, .room[data-tier="poster"] .rm-enter { position: absolute; left: 50%; top: 50svh; opacity: 1; clip-path: none; }
-:is(html:not(.hero3d), html.poster) .room[data-state="universe"] .rm-enter, .room[data-tier="poster"][data-state="universe"] .rm-enter { display: none; }
-:is(html:not(.hero3d), html.poster) .rm-products, .room[data-tier="poster"] .rm-products { display: none; gap: var(--s2); padding: var(--s3) var(--inset) var(--s5); }
-:is(html:not(.hero3d), html.poster) .room[data-state="universe"] .rm-products, .room[data-tier="poster"][data-state="universe"] .rm-products, html:not(.js) .rm-products { display: grid; }
-:is(html:not(.hero3d), html.poster) .rm-item, .room[data-tier="poster"] .rm-item, html:not(.js) .rm-item { position: static; width: auto; height: auto; margin: 0; overflow: visible; clip-path: none; white-space: normal; pointer-events: auto; transform: none; }
+:is(html:not(.hero3d), html.poster) .room[data-state="world"] .rm-still, .room[data-tier="poster"][data-state="world"] .rm-still { visibility: hidden; }
+:is(html:not(.hero3d), html.poster) :is(.rm-pad, .rm-hint, .rm-loading, .rm-skip), .room[data-tier="poster"] :is(.rm-pad, .rm-hint, .rm-loading, .rm-skip) { display: none; }
+:is(html:not(.hero3d), html.poster) .room .rm-enter, .room[data-tier="poster"] .rm-enter { left: 50%; top: 50svh; transform: translate(-50%, -50%); clip-path: none; }
+:is(html:not(.hero3d), html.poster) .room[data-state="world"] .rm-enter, .room[data-tier="poster"][data-state="world"] .rm-enter { display: none; }
+:is(html:not(.hero3d), html.poster) .rm-lands, .room[data-tier="poster"] .rm-lands { display: none; grid-area: 1 / 1; }
+:is(html:not(.hero3d), html.poster) .room[data-state="world"] .rm-lands, .room[data-tier="poster"][data-state="world"] .rm-lands, html:not(.js) .rm-lands-static { display: grid; }
+:is(html:not(.hero3d), html.poster) .rm-land, .room[data-tier="poster"] .rm-land, .rm-lands-static .rm-land { position: static; width: auto; height: auto; min-height: 100svh; margin: 0; overflow: visible; clip-path: none; white-space: normal; display: grid; align-content: start; gap: var(--s3); padding-bottom: calc(var(--inset) + env(safe-area-inset-bottom, 0px)); }
+:is(html:not(.hero3d), html.poster) .rm-land-pic, .room[data-tier="poster"] .rm-land-pic, .rm-lands-static .rm-land-pic { display: block; width: 100%; aspect-ratio: 9 / 16; max-height: 76svh; background: var(--skeleton); }
+@media (orientation: landscape) { :is(html:not(.hero3d), html.poster) .rm-land-pic, .room[data-tier="poster"] .rm-land-pic, .rm-lands-static .rm-land-pic { aspect-ratio: 16 / 10; } }
+:is(html:not(.hero3d), html.poster) .rm-land-pic img, .room[data-tier="poster"] .rm-land-pic img, .rm-lands-static .rm-land-pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
+:is(html:not(.hero3d), html.poster) .rm-land-text, .room[data-tier="poster"] .rm-land-text, .rm-lands-static .rm-land-text { padding: 0 var(--inset); max-width: calc(520px + 2 * var(--inset)); }
+:is(html:not(.hero3d), html.poster) .rm-land-alt, .room[data-tier="poster"] .rm-land-alt { display: none; }
 :is(html:not(.hero3d), html.poster) .rm-loopend, .room[data-tier="poster"] .rm-loopend { display: block; height: 100svh; }
-@media (orientation: landscape) { :is(html:not(.hero3d), html.poster) .rm-stage, .room[data-tier="poster"] .rm-stage { justify-items: center; } :is(html:not(.hero3d), html.poster) .rm-still, .room[data-tier="poster"] .rm-still { width: 100%; } }
 html:not(.js) .room .rm-track { height: auto; }
-html:not(.js) .rm-stage { position: relative; height: auto; overflow: visible; display: grid; grid-template-columns: minmax(0, 1fr); }
+html:not(.js) .rm-stage { position: relative; height: auto; overflow: visible; display: grid; grid-template-columns: minmax(0, 1fr); background: var(--night); }
 html:not(.js) .rm-still { display: block; grid-area: auto; }
 html:not(.js) .rm-still[data-lazy] { display: none; }
 html:not(.js) .rm-loopend { display: none; }
-html:not(.js) .rm-still[data-which="universe"] { opacity: 1; }
-html:not(.js) .rm-enter, html:not(.js) .rm-pad { display: none; }
-html:not(.js) .rm-noscript { position: static; transform: none; margin: var(--s3) auto; }
-
-@media (prefers-reduced-motion: reduce) {
-  .room .rm-enter, .room .rm-enter.is-near, .rm-hint.is-gone, .rm-still { transition: none; }
-  :is(html:not(.hero3d), html.poster) .rm-still[data-which="universe"], .room[data-tier="poster"] .rm-still[data-which="universe"] { transition: none; }
-  .room .rm-enter.is-near:hover { transform: translate(-50%, -50%); }
-}
+html:not(.js) .room :is(.rm-enter, .rm-pad), html:not(.js) .rm-lands:not(.rm-lands-static) { display: none; }
+html:not(.js) .room .rm-noscript { position: static; transform: none; margin: var(--s3) auto; }

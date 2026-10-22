@@ -52,8 +52,8 @@ export function parkTravelAlias(pick, tune, dir = SECTION4) {
 }
 
 // the pick, checked here first so a typo fails the build before anything is bundled; written back so the client reads the
-// same pick as import.meta.env.PUBLIC_PARK_TRAVEL when the variable was not set at all (ROOM_PARAMS.parkTravel is to
-// default from it, the director's change)
+// same pick as import.meta.env.PUBLIC_PARK_TRAVEL when the variable was not set at all (ROOM_PARAMS.parkTravel defaults
+// from it)
 const PICK = readPick([], process.env);
 process.env.PUBLIC_PARK_TRAVEL = PICK;
 
@@ -66,8 +66,8 @@ export default defineConfig({
     plugins: [parkTravelAlias(PICK, process.env.PUBLIC_TUNE === '1')],
     // every three.js entry the islands import, pre-bundled up front: Vite otherwise discovers them one lazy chunk at a
     // time, re-optimises, and answers open tabs with "504 Outdated Optimize Dep" until a reload (seen 2026-10-16).
-    // RoomEnvironment is universe.ts's (the products' light): it leaves this list in the change that deletes universe.ts,
-    // and tests/unit/build-modes.test.ts holds the list to what src/ imports
-    optimizeDeps: { include: ['three', 'three/addons/loaders/GLTFLoader.js', 'three/addons/utils/BufferGeometryUtils.js', 'three/addons/postprocessing/EffectComposer.js', 'three/addons/postprocessing/RenderPass.js', 'three/addons/postprocessing/ShaderPass.js', 'three/addons/postprocessing/SavePass.js', 'three/addons/postprocessing/UnrealBloomPass.js', 'three/addons/postprocessing/OutputPass.js', 'three/addons/environments/RoomEnvironment.js'] },
+    // RoomEnvironment left with universe.ts, its only importer; tests/unit/build-modes.test.ts holds the list to what
+    // src/ imports
+    optimizeDeps: { include: ['three', 'three/addons/loaders/GLTFLoader.js', 'three/addons/utils/BufferGeometryUtils.js', 'three/addons/postprocessing/EffectComposer.js', 'three/addons/postprocessing/RenderPass.js', 'three/addons/postprocessing/ShaderPass.js', 'three/addons/postprocessing/SavePass.js', 'three/addons/postprocessing/UnrealBloomPass.js', 'three/addons/postprocessing/OutputPass.js'] },
   },
 });

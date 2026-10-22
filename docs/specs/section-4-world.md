@@ -55,7 +55,7 @@ There are no panels, no fills and no borders anywhere in the section (DESIGN.md'
 - `SKIP` decodes in at the bottom centre and stays until the first land. It takes focus when focus was in the section or the press came from the keyboard.
 - There is no white-out and there are no bands.
 
-**The bubble, from 0.35 s for `bubbleMs` (Tune, default 2000 ms, 1200 to 3200).**
+**The bubble, from 0.35 s for `bubbleMs` (Tune, default 2000 ms, 1200 to 2190: past 2190 ms the first of four rings is passed before the bubble clears on the shortest glide).**
 - **Shape.** A wavy circle opens from the screen's centre and grows until its edge has cleared the farthest corner.
 - **Inside.** The garden tunnel is already moving: the camera glide of the next beat runs from the bubble's first frame ("the inner part ... is colorful").
 - **Outside.** The hall's own frame, greyed and darkened at full strength from the bubble's first frame ("the exterior is dark and grey"): luminance mixed halfway toward Urban Slate, then multiplied by 0.6. On the hall's darker greys and the Urban Slate doorway this measures below 0.06 relative luminance (AC4). It is the hall's pixels, not a new colour.
@@ -66,12 +66,12 @@ There are no panels, no fills and no borders anywhere in the section (DESIGN.md'
 
 **The ring travel, from 0.35 s for `travelMs` (Tune, default 8000 ms).** Sam: "instead of scrolling it automatically moves towards all those circle blocks".
 - **The camera** flies level along the tunnel by itself and ignores the page's scroll. Its ease is igloo's own, `cubic-bezier(0.6, 0, 0, 1)` (evidence 4).
-- **Three rings** (igloo's count; `ringCount` Tune 2 to 5) stand across the flight path, S = 2.5 units apart. They have igloo's proportions (evidence 8): outer radius 0.16 S, inner about 0.116 S, thickness 0.052 S.
+- **Three rings** (igloo's count; `ringCount` Tune 2 to 4: five rings put two passes under 0.4 s apart at any glide Tune offers) stand across the flight path, S = 2.5 units apart. They have igloo's proportions (evidence 8): outer radius 0.16 S, inner about 0.116 S, thickness 0.052 S.
 - **The path.** The camera starts 0.71 S before the first ring, igloo's approach pose, where the ring fills about 116 percent of the laptop frame's height and more than the phone's width. It ends 0.5 S past the last ring.
 - **The ring passes** fall at 2.70, 3.20 and 4.40 s after the press: every gap at least 0.5 s, and the first after the bubble has cleared (2.35 s). A unit test computes the passes from `ROOM_PARAMS` and Tune's ranges and fails on any gap under 0.4 s or a first pass before `0.35 + bubbleMs`; Tune's ranges are clamped to what passes.
 - **The ten families.** Each ring carries the ten families' key shades by id, in catalog order clockwise: the gems' ten, and the old universe's ten bays. Each ring is turned 36 degrees from the one before.
 - **Blended, never blocks** (Sam, 2026-10-20: "wherever there are colors involved, make gradient blends besides each color, so it doesnt look like a kids coloring book, make it realistic and add gradient beside each other").
-  - Each shade blends softly into the next over the outer 40 percent of its 36 degrees on either side. The mix is in OKLab, so a blend stays clean and never passes through grey.
+  - Each shade blends softly into the next over the outer 40 percent of its 36 degrees on either side. The mix is in OKLab's polar form: the lightness and the chroma run straight from one shade to the next and the hue turns the short way round, so a blend stays clean and never passes through grey (OKLab's straight line from Amethyst to Sunbeam would fall to a grey beige). A pair with a neutral end (Snow, Silver) has no hue to turn and mixes on OKLab's straight line, a tint or a shade of the other end. A mix outside sRGB keeps its lightness and hue and loses chroma until it fits.
   - The shards vary slightly in value (plus or minus 6 percent).
   - The shards are lit by the garden's sun, with soft ambient occlusion in their seams and a soft specular sheen, so they read as a glazed, lacquered material, not flat fill.
 - **Assembly.** A ring far ahead is broken: shards pushed outward along their own centre vector, spun about a random axis and shrunk. It pulls together between 1.4 S and 1.0 S from the camera and is whole as the camera passes through it. That is what igloo shows on screen (evidence 5: "far rings are spread apart and they come together between about 3.5 and 2.5 units").
@@ -81,7 +81,7 @@ There are no panels, no fills and no borders anywhere in the section (DESIGN.md'
   - a forward plate covering 64 degrees around the flight's axis: the sky, the far trees and the lawn;
   - in front of it three depth cards at 2, 4 and 7 S beyond the last ring (clipped hedges, flower beds, near trees), which slide against each other as the camera flies, so the garden has parallax.
 - **The lens.** The FOV opens from 22 to 30 degrees over the glide (evidence 2), with the portrait zoom `min(1, aspect x 1.5)`.
-- **The roll** is gentle: up to `travelRoll` (Tune, default 30 degrees, 0 to 90), reached before the first ring and unwound after the last. It is held steady through the passes and never turns faster than 30 degrees a second. igloo turns half a turn; that is a vestibular risk on a phone.
+- **The roll** is gentle: up to `travelRoll` (Tune, default 30 degrees, 0 to 33: a larger roll cannot come up before the first of four rings at 30 degrees a second on the shortest glide and morph), reached before the first ring and unwound after the last. It is held steady through the passes and never turns faster than 30 degrees a second. igloo turns half a turn; that is a vestibular risk on a phone.
 - **No flash.** There is no glitch flash at the rings (WCAG 2.3.1).
 
 **The particle morph, for `morphMs` (Tune, default 1800 ms).** Sam: "by the end of the travel we will have a particle morphism animation which will transition into a 2d picture".
@@ -197,9 +197,9 @@ The same sequence, with these differences:
 The listing photos are family photos, so the case is named by its family, never a single shade the photo cannot be shown to be.
 - **Land 1:** `PHONE CASE` / `A MELLOW YELLOW CASE` / the Tough case's line / `1 / 4`.
 - **Land 2:** `MAGSAFE WALLET` / `DESERT, ON A BLISSFUL BLUE CASE` / the wallet's line / `2 / 4`.
-- **Lands 3 and 4:** the same pattern: Lenskin in Crimson on a Go Green case, and the AirPods case in Sage beside a Vivid Violet case.
+- **Lands 3 and 4:** the same pattern: Lenskin in Sage on a Go Green case, and the AirPods case in Sage beside a Vivid Violet case.
 
-The accessories' shades are `ROOM_PRODUCTS`' (Desert, Crimson, Sage) unless Sam picks others when he approves. The shade rendered is the shade named.
+The accessories' shades are `ROOM_PRODUCTS`' (Desert, Sage, Sage): Sam picked Sage (`go-green-09`, #96a880) for the Lenskin on 2026-10-20, approving sheet-v2. The shade rendered is the shade named.
 
 **How each master is made** (W11; `docs/research/05-assets-and-creative-tooling.md:58`, "never let a generator draw the case"):
 1. **The background.** It is replaced by a masked inpaint (Higgsfield `nano_banana_2_1` inpaint at 2k). The mask protects the person, the hands, the phone and the case, so the generator never redraws the product. The prompt names the place and the light above.
@@ -368,7 +368,7 @@ The loop screen's progress is held at 0 in `entering`, during a travel, in `sett
   - **The rings.** Generated at load from a seed, about 2,000 triangles per ring, with no asset. Each shard carries its centre, a random spin and its shade index.
   - **The pictures.** Untagged (bytes in, display values out), mipmapped, decoded by `createImageBitmap`, and uploaded in row strips across frames. The depth maps are uploaded as single-channel data.
   - **What stays resident.** Only the previous, current and next lands.
-  - **The logotype's tone.** Urban Slate over the garden and the lands, unless a land's config says Pearl.
+  - **The logotype's tone.** Urban Slate over the garden. Over a land, the tone its config gives for the crop class in use (`LAND_COPY.tone`), measured where the logotype sits, top left: Pearl over the case in both crops and the wallet's wide, Urban Slate elsewhere.
 - **The travel modules.** `section4/travel-depth.ts` (A), `travel-park.ts` (B) and `travel-video.ts` (C): one lazy chunk each, under the build modes above.
 - **`section4/director.ts`:**
   - the states `hall`, `entering` and `world`;
@@ -430,7 +430,7 @@ The product GLBs move out of `public/` into `scripts/room/models/` as Blender re
 
 | Part | Line | Note |
 |---|---|---|
-| Section 4's script, option A shipped | **30 KB, over and pending Sam (section 11, item 1); about 38 KB measured likely** | Today 36.3 KB, of which three's GLTFLoader is 13.5 KB. Minus the universe and the products DOM (about 9 KB), plus about 11 KB new: the bubble 1, the rings 3, the glide 1.5, the morph 2.5, the lands DOM and keys 2, option A 1. |
+| Section 4's script, option A shipped | **30 KB, over and pending Sam (section 11, item 1); about 38 KB measured likely** | Today 36.3 KB, of which three's GLTFLoader is 13.5 KB. Minus the universe and the products DOM (about 9 KB), plus about 11 KB new: the bubble 1, the rings 3, the glide 1.5, the morph 2.5, the lands DOM and keys 2, option A 1. Measured 2026-10-21 (N = 0, option A's placeholder): 44.5 KB with the loader, 32.1 KB with the hall read from `hall.bin` (`scripts/room/hall-bin.mjs`) and the catalog's own lines moved to a test fixture. |
 | ... option B shipped | about 45 KB | B adds the park's loader path, the meshopt decoder (about 1.5 KB) and its flight. |
 | ... option C shipped | about 40 KB | C adds the video texture and its states. |
 | Options in Tune builds | about 8 KB each, never in production until picked | Then the other two are deleted. |
@@ -448,7 +448,7 @@ The product GLBs move out of `public/` into `scripts/room/models/` as Blender re
 | The whole section, by option, AVIF | A: portrait 630, wide 750 KB. B: about 1,020 / 1,140 KB. C: about 2,700 / 2,820 KB | A: the first-land row plus three further lands. B: A plus the park (420) and B's extra script (7), less A's depth maps after land 1 (about 36). C: A plus three clips (2,100), C's extra script (2), less A's depth maps after land 1. |
 | The poster tier | the hall still (16.5 / 18.1 KB) plus four pictures: 337 KB portrait, 459 KB wide (AVIF); 529 and 724 KB (WebP); script 8.5 KB | lazy, one land ahead under Save-Data |
 | The first view | +0 B fetched; inline markup and `room.css` 4 KB gzip or less, `<noscript>` copies included | |
-| GPU memory, phone | section 4's resident set 48 MiB or less | the world target and depth about 2 MiB; three pictures with mips about 15 MiB; the garden about 24 MiB; A's grid and points about 2 MiB. Beside the hero sky's 34 to 45 MiB, which stays resident. `renderer.info.memory` is recorded in the review. |
+| GPU memory, phone | section 4's resident set 48 MiB or less | the world target about 3.9 MiB, colour plus depth (1.96 MiB each at 390 x 844 and DPR 1.25); three pictures with mips about 15 MiB; the garden about 24 MiB; A's grid and points about 2 MiB. Beside the hero sky's 34 to 45 MiB, which stays resident. `renderer.info.memory` is recorded in the review. |
 | Higgsfield credits | **300 or less** | see the credit plan below |
 
 **The credit plan** (unit costs from `higgsfield generate cost`, 2026-10-19 and 2026-10-20).
@@ -562,7 +562,7 @@ The product GLBs move out of `public/` into `scripts/room/models/` as Blender re
 ## 8. Out of scope
 
 - The hall, the walk, the door, the third wipe and the loop's mechanics (section-4.md stands).
-- Replacing three's GLTFLoader in the hall with a raw binary to win back 13.5 KB: a separate change, proposed to Sam with the script line.
+- Replacing three's GLTFLoader in the hall with a raw binary to win back 13.5 KB: proposed as a separate change, then made on `s4/world-wire` (2026-10-21) because total JS left no room for option A: the hall ships as `hall.bin`, 16,980 B against the GLB's 35,868.
 - Sound.
 - A link from a land to its family page (CHECKLIST G21): section 4 links nowhere today. It is offered to Sam in section 11; it is not built here.
 - Any person's identity: no identity model, no names, no quotes.
@@ -589,7 +589,7 @@ The product GLBs move out of `public/` into `scripts/room/models/` as Blender re
 This section is the only text for every E-S4 id. Those Sam's own words already cover are recorded as approved, with his words, as CLAUDE.md does for E-S3; the rest are pending.
 
 **Approved by Sam's words**
-- **E-S4-colour (rewritten; the universe's walls are gone).** The rings, their lattice, the forcefield lines, the cloud and the garden's flower beds carry the ten key shades by id as scene surfaces and lines (rule 24; A2 by id), each blending softly into its neighbours. That blending waives rules 1 and 21 (no gradient as a device; no harsh gradients) for these scene surfaces only: the blends are soft, in OKLab, and never harsh. Never a neon or pastel shade as a ring's dominant colour (rules 49, 50). Sam, 2026-10-19: "we will make it colorful instead, all the mini geometrical grids and lines everything will be colorfull"; 2026-10-20: "wherever there are colors involved, make gradient blends besides each color, so it doesnt look like a kids coloring book, make it realistic and add gradient beside each other". *Default if withdrawn:* the rings and the lattice in Pearl Whisper as light (igloo's white).
+- **E-S4-colour (rewritten; the universe's walls are gone).** The rings, their lattice, the forcefield lines, the cloud and the garden's flower beds carry the ten key shades by id as scene surfaces and lines (rule 24; A2 by id), each blending softly into its neighbours. That blending waives rules 1 and 21 (no gradient as a device; no harsh gradients) for these scene surfaces only: the blends are soft and never harsh, mixed in OKLab's polar form (the lightness and chroma straight, the hue the short way round; straight where one end is neutral; the chroma reduced to fit sRGB). Never a neon or pastel shade as a ring's dominant colour (rules 49, 50). Sam, 2026-10-19: "we will make it colorful instead, all the mini geometrical grids and lines everything will be colorfull"; 2026-10-20: "wherever there are colors involved, make gradient blends besides each color, so it doesnt look like a kids coloring book, make it realistic and add gradient beside each other". *Default if withdrawn:* the rings and the lattice in Pearl Whisper as light (igloo's white).
 - **E-S4-garden (new).** The tunnel's backdrop is our own Blender garden in daylight. Its colours are image content (A2, as E-A2b), and its sky's fall-off is a natural gradient (rules 1, 21, as E-1/21/40). Never clipped to #ffffff across the frame (rule 23), and no grain (rule 20). Sam, 2026-10-19: "even the backround will be like a bright beautiful day garden kind of area". *Default if withdrawn:* the rings over Urban Slate.
 - **E-S4-portal (new; replaces E-S4-sweep).** The wavy circle that opens over the hall: rule 42 while it is small, rule 21 for its antialiased edge, rule 12 for the motion. Sam, 2026-10-19: "have a wavy circle zooming from centre to the end of the screen". *Default if withdrawn:* a 300 ms cross-fade.
 - **E-S4-font (new).** Section 2's label type for every line of section 4: IBM Plex Mono Medium in capitals, against rules 4 and 19, the brand facts' typography line, `docs/brand/type-system.md` (the three families; no all-caps), DESIGN.md's type rules and CHECKLIST A3. As E-S3-font for the quiz. Sizes are the quiz's: `--qz-fs` 13 px, `--qz-fs-q` 22 px, 12 and 18 px under `max-aspect-ratio: 9/10` (`quiz.css:9, 13`). The two existing files, `ibm-plex-mono-500-caps.woff2` and `ibm-plex-mono-500-rest.woff2`, carry it. Sam, 2026-10-20: "Yes, all of it". *Default if withdrawn:* Open Sans and Poppins, still with no panels.
@@ -631,7 +631,7 @@ This section is the only text for every E-S4 id. Those Sam's own words already c
 
 ## 11. For Sam
 
-1. **The section's script line.** The rework lands at about 38 KB against the 30 KB line, mostly three's model loader (13.5 KB) the hall already uses. Move the line to 38 KB, or have the loader replaced (a separate change, about a day)?
+1. **The section's script line.** The loader is replaced (2026-10-21): the section measures 32.1 KB against the 30 KB line before option A's own code. Move the line to 38 KB?
 2. **Pick A, B or C** on staging with Tune's "Section 4" group (`parkTravel`). The other two are then deleted, and the pick moves into the production build.
 3. **The pace.** The first land arrives about 9.4 s after the press at the defaults: a 2 s bubble, an 8 s glide whose last 2 s overlap the morph, then the push. Every beat is on Tune; Skip is there throughout.
 4. **A link from each land** to its family page (CHECKLIST G21)? Plain text, for example `SEE MELLOW YELLOW`. Not built unless you say.

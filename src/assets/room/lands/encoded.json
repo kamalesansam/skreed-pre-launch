@@ -1,0 +1,327 @@
+{
+ "about": "scripts/room/encode-lands.mjs, from the masters src/data/room-lands.json names (assets-src/room/lands/, sums in its SHA256SUMS)",
+ "files": {
+  "land-case-portrait.avif": {
+   "bytes": 67028,
+   "line": 81920,
+   "quality": 60,
+   "floor": 45,
+   "width": 720,
+   "height": 1280,
+   "from": "land-case-portrait.png",
+   "from_sha256": "4f74f3d6e59fd619b5b6567f11015843e4d54ac16b9a591b00709b9e6662a483"
+  },
+  "land-case-portrait.webp": {
+   "bytes": 85244,
+   "line": 131072,
+   "quality": 80,
+   "floor": 60,
+   "width": 720,
+   "height": 1280,
+   "from": "land-case-portrait.png",
+   "from_sha256": "4f74f3d6e59fd619b5b6567f11015843e4d54ac16b9a591b00709b9e6662a483"
+  },
+  "land-case-portrait-depth.avif": {
+   "bytes": 2017,
+   "line": 12288,
+   "quality": 60,
+   "floor": 45,
+   "width": 180,
+   "height": 320,
+   "from": "land-case-portrait-depth.png",
+   "from_sha256": "b2d57cbf810c15712eacf81b9ee26456a96e22350223394bdcf6f05946c498ee"
+  },
+  "land-case-portrait-depth.webp": {
+   "bytes": 1902,
+   "line": 20480,
+   "quality": 80,
+   "floor": 60,
+   "width": 180,
+   "height": 320,
+   "from": "land-case-portrait-depth.png",
+   "from_sha256": "b2d57cbf810c15712eacf81b9ee26456a96e22350223394bdcf6f05946c498ee"
+  },
+  "land-case-wide.avif": {
+   "bytes": 109526,
+   "line": 112640,
+   "quality": 48,
+   "floor": 45,
+   "accepted": "Sam 2026-10-21 (sheet-final.jpg)",
+   "width": 1920,
+   "height": 1200,
+   "from": "land-case-wide.png",
+   "from_sha256": "8518f158e27fd254988ef88f7578c0ea6cb3f8647c17cc4166adb99896c49ea3"
+  },
+  "land-case-wide.webp": {
+   "bytes": 179142,
+   "line": 180224,
+   "quality": 64,
+   "floor": 60,
+   "accepted": "Sam 2026-10-21 (sheet-final.jpg)",
+   "width": 1920,
+   "height": 1200,
+   "from": "land-case-wide.png",
+   "from_sha256": "8518f158e27fd254988ef88f7578c0ea6cb3f8647c17cc4166adb99896c49ea3"
+  },
+  "land-case-wide-depth.avif": {
+   "bytes": 3142,
+   "line": 12288,
+   "quality": 60,
+   "floor": 45,
+   "width": 480,
+   "height": 300,
+   "from": "land-case-wide-depth.png",
+   "from_sha256": "4ef5ae2c26003986189c0353a9d96f3afbb687387f62ad1b6b7845f09a304016"
+  },
+  "land-case-wide-depth.webp": {
+   "bytes": 2948,
+   "line": 20480,
+   "quality": 80,
+   "floor": 60,
+   "width": 480,
+   "height": 300,
+   "from": "land-case-wide-depth.png",
+   "from_sha256": "4ef5ae2c26003986189c0353a9d96f3afbb687387f62ad1b6b7845f09a304016"
+  },
+  "land-wallet-portrait.avif": {
+   "bytes": 74543,
+   "line": 81920,
+   "quality": 60,
+   "floor": 45,
+   "width": 720,
+   "height": 1280,
+   "from": "land-wallet-portrait.png",
+   "from_sha256": "92fe7369b2eb09d8e003ee79fd340d2820ae5b46501079b501334d4ba3014447"
+  },
+  "land-wallet-portrait.webp": {
+   "bytes": 92740,
+   "line": 131072,
+   "quality": 80,
+   "floor": 60,
+   "width": 720,
+   "height": 1280,
+   "from": "land-wallet-portrait.png",
+   "from_sha256": "92fe7369b2eb09d8e003ee79fd340d2820ae5b46501079b501334d4ba3014447"
+  },
+  "land-wallet-portrait-depth.avif": {
+   "bytes": 2207,
+   "line": 12288,
+   "quality": 60,
+   "floor": 45,
+   "width": 180,
+   "height": 320,
+   "from": "land-wallet-portrait-depth.png",
+   "from_sha256": "6df18e305d7ff91b1d07eded7af8c8a257c9c2437bea86ab2d5c6dc98e1e79e2"
+  },
+  "land-wallet-portrait-depth.webp": {
+   "bytes": 2228,
+   "line": 20480,
+   "quality": 80,
+   "floor": 60,
+   "width": 180,
+   "height": 320,
+   "from": "land-wallet-portrait-depth.png",
+   "from_sha256": "6df18e305d7ff91b1d07eded7af8c8a257c9c2437bea86ab2d5c6dc98e1e79e2"
+  },
+  "land-wallet-wide.avif": {
+   "bytes": 112258,
+   "line": 112640,
+   "quality": 57,
+   "floor": 45,
+   "width": 1920,
+   "height": 1200,
+   "from": "land-wallet-wide.png",
+   "from_sha256": "88d64f4a39ef5710e0468364867a51b1b0e16528e5b1ce5591c847f7cea1c2cd"
+  },
+  "land-wallet-wide.webp": {
+   "bytes": 179332,
+   "line": 180224,
+   "quality": 80,
+   "floor": 60,
+   "width": 1920,
+   "height": 1200,
+   "from": "land-wallet-wide.png",
+   "from_sha256": "88d64f4a39ef5710e0468364867a51b1b0e16528e5b1ce5591c847f7cea1c2cd"
+  },
+  "land-wallet-wide-depth.avif": {
+   "bytes": 2996,
+   "line": 12288,
+   "quality": 60,
+   "floor": 45,
+   "width": 480,
+   "height": 300,
+   "from": "land-wallet-wide-depth.png",
+   "from_sha256": "9b94660a1c05157d0699e27253fb58018b4c1421c65b9950ceb4e3293d050e73"
+  },
+  "land-wallet-wide-depth.webp": {
+   "bytes": 2772,
+   "line": 20480,
+   "quality": 80,
+   "floor": 60,
+   "width": 480,
+   "height": 300,
+   "from": "land-wallet-wide-depth.png",
+   "from_sha256": "9b94660a1c05157d0699e27253fb58018b4c1421c65b9950ceb4e3293d050e73"
+  },
+  "land-lenskin-portrait.avif": {
+   "bytes": 43739,
+   "line": 81920,
+   "quality": 60,
+   "floor": 45,
+   "width": 720,
+   "height": 1280,
+   "from": "land-lenskin-portrait.png",
+   "from_sha256": "a1e41a2f069600ae482f77fa8c4c108129a73037484477b48f5e431316f45e9c"
+  },
+  "land-lenskin-portrait.webp": {
+   "bytes": 53938,
+   "line": 131072,
+   "quality": 80,
+   "floor": 60,
+   "width": 720,
+   "height": 1280,
+   "from": "land-lenskin-portrait.png",
+   "from_sha256": "a1e41a2f069600ae482f77fa8c4c108129a73037484477b48f5e431316f45e9c"
+  },
+  "land-lenskin-portrait-depth.avif": {
+   "bytes": 1704,
+   "line": 12288,
+   "quality": 60,
+   "floor": 45,
+   "width": 180,
+   "height": 320,
+   "from": "land-lenskin-portrait-depth.png",
+   "from_sha256": "932889bab3b2cfa20552c923a059ba6c30d7f901b35adcf577376eb8d615d9ea"
+  },
+  "land-lenskin-portrait-depth.webp": {
+   "bytes": 1520,
+   "line": 20480,
+   "quality": 80,
+   "floor": 60,
+   "width": 180,
+   "height": 320,
+   "from": "land-lenskin-portrait-depth.png",
+   "from_sha256": "932889bab3b2cfa20552c923a059ba6c30d7f901b35adcf577376eb8d615d9ea"
+  },
+  "land-lenskin-wide.avif": {
+   "bytes": 107914,
+   "line": 112640,
+   "quality": 58,
+   "floor": 45,
+   "width": 1920,
+   "height": 1200,
+   "from": "land-lenskin-wide.png",
+   "from_sha256": "d5d4774f447bd1a45120ffeebd83708a57b87aa5ec494db875635a160cbaa009"
+  },
+  "land-lenskin-wide.webp": {
+   "bytes": 152364,
+   "line": 180224,
+   "quality": 80,
+   "floor": 60,
+   "width": 1920,
+   "height": 1200,
+   "from": "land-lenskin-wide.png",
+   "from_sha256": "d5d4774f447bd1a45120ffeebd83708a57b87aa5ec494db875635a160cbaa009"
+  },
+  "land-lenskin-wide-depth.avif": {
+   "bytes": 3128,
+   "line": 12288,
+   "quality": 60,
+   "floor": 45,
+   "width": 480,
+   "height": 300,
+   "from": "land-lenskin-wide-depth.png",
+   "from_sha256": "f25f263bc82359c854afb36866fcce437680d4ac0220c78f5226ca2af7cf6995"
+  },
+  "land-lenskin-wide-depth.webp": {
+   "bytes": 2990,
+   "line": 20480,
+   "quality": 80,
+   "floor": 60,
+   "width": 480,
+   "height": 300,
+   "from": "land-lenskin-wide-depth.png",
+   "from_sha256": "f25f263bc82359c854afb36866fcce437680d4ac0220c78f5226ca2af7cf6995"
+  },
+  "land-airpods-portrait.avif": {
+   "bytes": 51283,
+   "line": 81920,
+   "quality": 60,
+   "floor": 45,
+   "width": 720,
+   "height": 1280,
+   "from": "land-airpods-portrait.png",
+   "from_sha256": "a0c43c4122e3c97d249f2bdb2b5363cfc14f2be5db7a57874dc84392fd159ebe"
+  },
+  "land-airpods-portrait.webp": {
+   "bytes": 62406,
+   "line": 131072,
+   "quality": 80,
+   "floor": 60,
+   "width": 720,
+   "height": 1280,
+   "from": "land-airpods-portrait.png",
+   "from_sha256": "a0c43c4122e3c97d249f2bdb2b5363cfc14f2be5db7a57874dc84392fd159ebe"
+  },
+  "land-airpods-portrait-depth.avif": {
+   "bytes": 2165,
+   "line": 12288,
+   "quality": 60,
+   "floor": 45,
+   "width": 180,
+   "height": 320,
+   "from": "land-airpods-portrait-depth.png",
+   "from_sha256": "05464b61ec2cf7f5354aa00b2a829065ea1a25666ebf056bbef0b5aa2f7ec59c"
+  },
+  "land-airpods-portrait-depth.webp": {
+   "bytes": 2056,
+   "line": 20480,
+   "quality": 80,
+   "floor": 60,
+   "width": 180,
+   "height": 320,
+   "from": "land-airpods-portrait-depth.png",
+   "from_sha256": "05464b61ec2cf7f5354aa00b2a829065ea1a25666ebf056bbef0b5aa2f7ec59c"
+  },
+  "land-airpods-wide.avif": {
+   "bytes": 90412,
+   "line": 112640,
+   "quality": 60,
+   "floor": 45,
+   "width": 1920,
+   "height": 1200,
+   "from": "land-airpods-wide.png",
+   "from_sha256": "64fabd4a9a673a3b8beef3b4069453ac261563d88b71b120915b2a62e107ab86"
+  },
+  "land-airpods-wide.webp": {
+   "bytes": 117948,
+   "line": 180224,
+   "quality": 80,
+   "floor": 60,
+   "width": 1920,
+   "height": 1200,
+   "from": "land-airpods-wide.png",
+   "from_sha256": "64fabd4a9a673a3b8beef3b4069453ac261563d88b71b120915b2a62e107ab86"
+  },
+  "land-airpods-wide-depth.avif": {
+   "bytes": 3115,
+   "line": 12288,
+   "quality": 60,
+   "floor": 45,
+   "width": 480,
+   "height": 300,
+   "from": "land-airpods-wide-depth.png",
+   "from_sha256": "03f6f084bcf9df2707394b25078f2fa1fa29ddd46fa412e4d58320340aff5c0e"
+  },
+  "land-airpods-wide-depth.webp": {
+   "bytes": 3004,
+   "line": 20480,
+   "quality": 80,
+   "floor": 60,
+   "width": 480,
+   "height": 300,
+   "from": "land-airpods-wide-depth.png",
+   "from_sha256": "03f6f084bcf9df2707394b25078f2fa1fa29ddd46fa412e4d58320340aff5c0e"
+  }
+ }
+}

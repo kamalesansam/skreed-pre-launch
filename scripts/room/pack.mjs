@@ -3,7 +3,9 @@
 // models load: KHR_mesh_quantization (positions as 16-bit integers dequantised by each node's translation and uniform
 // scale, normals as 8-bit normalised) and EXT_meshopt_compression (decoded by the vendored pure-JS reference decoder,
 // so the CSP's no-WebAssembly rule holds). No materials, textures, colours or UVs survive: the island draws its own.
-// Writes public/models/<which>.<sha8>.glb (content-hashed; older copies removed) and src/data/room-products.json.
+// Writes scripts/room/models/<which>.<sha8>.glb (content-hashed; older copies removed) and src/data/room-products.json.
+// They are Blender references only since the universe went (section-4-world.md 6): the lands' accessories are rendered
+// from them (scripts/room/render-products.py), and nothing on the site loads them.
 //   node scripts/room/pack.mjs <dir with <which>-raw.glb and <which>-report.json> wallet airpods lenskin
 // The park mode (docs/specs/section-4-world.md 3 "Option B's park", 6) packs what scripts/room/park.py wrote into
 // src/assets/room/park/: park.glb, park-lightmap.avif and .webp (1024), and park.json (the poses, the flights, the light):
@@ -17,7 +19,7 @@ import { MeshoptEncoder } from 'meshoptimizer';
 const [dir, ...which] = process.argv.slice(2);
 const PARK = dir === 'park';
 await MeshoptEncoder.ready;
-const MANIFEST = 'src/data/room-products.json';
+const MANIFEST = 'src/data/room-products.json', MODELS = 'scripts/room/models';
 const manifest = existsSync(MANIFEST) ? JSON.parse(readFileSync(MANIFEST, 'utf8')) : {};
 const COMP = { 5120: [Int8Array, 1], 5121: [Uint8Array, 1], 5122: [Int16Array, 2], 5123: [Uint16Array, 2], 5125: [Uint32Array, 4], 5126: [Float32Array, 4] };
 const N = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4 };
@@ -104,9 +106,10 @@ for (const w of PARK ? [] : which) {
   glb.writeUInt32LE(js.length, 12); glb.writeUInt32LE(0x4e4f534a, 16); js.copy(glb, 20);
   glb.writeUInt32LE(binOut.length, 20 + js.length); glb.writeUInt32LE(0x004e4942, 24 + js.length); binOut.copy(glb, 28 + js.length);
   const sha = createHash('sha256').update(glb).digest('hex'), name = `${w}.${sha.slice(0, 8)}.glb`;
-  for (const f of readdirSync('public/models')) if (f.startsWith(`${w}.`) && f.endsWith('.glb') && f !== name) rmSync(join('public/models', f));
-  writeFileSync(join('public/models', name), glb);
-  manifest[w] = { url: `/models/${name}`, sha256: sha, bytes: glb.length, tris, sizeMm: report.size_mm, parts: prims.map((p) => p.name), source: report.source ?? `Sam's ${w} FBX (2026-10-16), cleaned by scripts/room/products.py` };
+  mkdirSync(MODELS, { recursive: true });
+  for (const f of readdirSync(MODELS)) if (f.startsWith(`${w}.`) && f.endsWith('.glb') && f !== name) rmSync(join(MODELS, f));
+  writeFileSync(join(MODELS, name), glb);
+  manifest[w] = { path: `${MODELS}/${name}`, sha256: sha, bytes: glb.length, tris, sizeMm: report.size_mm, parts: prims.map((p) => p.name), source: report.source ?? `Sam's ${w} FBX (2026-10-16), cleaned by scripts/room/products.py` };
   console.log(`${w}: ${name} ${glb.length} B (raw float ${readFileSync(join(dir, `${w}-raw.glb`)).length} B), ${tris} triangles, parts ${prims.map((p) => p.name).join(', ')}, ${report.size_mm.join(' x ')} mm`);
 }
 if (!PARK) writeFileSync(MANIFEST, JSON.stringify(manifest, null, 1) + '\n');

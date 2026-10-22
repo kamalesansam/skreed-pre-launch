@@ -1,16 +1,20 @@
-// Section 4's entrance hall (docs/specs/section-4.md 2 and 5; the numbers from docs/specs/evidence/section-4-measurements.md).
-// Our own model (src/assets/room/hall.glb, scripts/room/hall.py) lit by our own baked lightmap, drawn unlit: albedo times
-// the light, with the measured seams and the concrete's grain procedural in the shader, the fixtures emissive, the
-// door's seam of light brightening toward the door station, the leaves on hinges for the transition. One pass into an
-// 8-bit target, then the measured output pass (post.ts) into the frame the composite reads as tB of the third wipe and
-// as the whole frame after it. The camera walks the measured hall by the section's scroll progress; the pointer sways
-// the head on laptops. Everything here renders under NoToneMapping into sRGB, as section 3's fog ground does.
+// Section 4's entrance hall (docs/specs/section-4.md 2 and 5; the numbers from
+// docs/specs/evidence/section-4-measurements.md). Our own model (scripts/room/hall.py's hall.glb, shipped as
+// src/assets/room/hall.bin by scripts/room/hall-bin.mjs) lit by our own baked lightmap, drawn unlit: albedo times the
+// light, with the measured seams and the concrete's grain procedural in the shader, the fixtures emissive, the door's
+// seam of light brightening toward the door station, the leaves on hinges for the transition. One pass into an 8-bit
+// target, then the measured output pass (post.ts) into the frame the composite reads as tB of the third wipe and as the
+// whole frame after it. The camera walks the measured hall by the section's scroll progress; the pointer sways the head
+// on laptops. Everything here renders under NoToneMapping into sRGB, as section 3's fog ground does. From the press
+// (section-4-world.md 2, "The press") the clear colour is Urban Slate, so the doorway behind the opening leaves reads
+// dark, not white; the director stops drawing the hall once its glide ends and reuses its last frame as the bubble's
+// outside.
 import { Color, CubeCamera, Group, LinearMipmapLinearFilter, Mesh, MeshBasicMaterial, NoToneMapping, PerspectiveCamera, Scene, ShaderMaterial, Texture, Vector3, WebGLCubeRenderTarget, WebGLRenderTarget, type CubeTexture, type Object3D, type WebGLRenderer } from 'three';
-import hallUrl from '../../../assets/room/hall.glb?url';
+import hallUrl from '../../../assets/room/hall.bin?url';
 import lightAvifUrl from '../../../assets/room/hall-lightmap.avif?url';
 import lightWebpUrl from '../../../assets/room/hall-lightmap.webp?url';
 import { HALL, RENDER_COLOURS, roomParams, type RoomParams } from '../../../config/room.ts';
-import { LIGHT_VERT, TO_SRGB, loadLightmap, loadModel } from './assets.ts';
+import { LIGHT_VERT, TO_SRGB, loadHall, loadLightmap } from './assets.ts';
 import { createOutputPass } from './post.ts';
 
 /** the head: yaw and pitch in degrees (the pointer's sway, the keys' turn, the drag); anchorYaw the part the prompt keeps (the keys and the drag, not the sway) */
@@ -30,6 +34,8 @@ export interface HallScene {
   update(x: number, look: HallLook, nearDoor: number, t: number, params: RoomParams): void;
   /** the door: s 0 closed to 1 open; mode 0 two leaves swinging inward 95 degrees, 1 one slab sliding aside, 2 no door */
   swing(s: number, mode: number): void;
+  /** from the press (true) the clear colour is Urban Slate; back in the hall (false) white again */
+  entering(on: boolean): void;
   render(): void;
   /** a scene point to CSS pixels of the canvas, or null when behind the camera */
   project(p: readonly [number, number, number]): { x: number; y: number } | null;
@@ -105,7 +111,8 @@ export function createHall(o: HallOptions): HallScene {
   // each leaf on a hinge group at its jamb (the leaves' vertices are in world space, so the mesh is offset back by the hinge)
   const hinges: { group: Group; sign: number; z0: number }[] = []; let seamMesh: Mesh | null = null;
   const _cc = new Color(), _v = new Vector3();
-  const CLEAR = new Color(...RENDER_COLOURS.hallClear);   // white: the hall's open ends, the room before it draws
+  const CLEAR = new Color(...RENDER_COLOURS.hallClear), CLEAR_ENTERING = new Color(...RENDER_COLOURS.hallEntering);   // white: the hall's open ends; Urban Slate from the press
+  let clear = CLEAR;
   const anchorCam = new PerspectiveCamera(D.fov, 1, 0.05, 30);   // the camera without the pointer's sway, for the prompt's anchor
   let curX: number = HALL.start, curNear = 0, curSwing = 0;
 
@@ -149,7 +156,7 @@ export function createHall(o: HallOptions): HallScene {
     async load() {
       if (started) return; started = true;
       try {
-        const [root, tex] = await Promise.all([loadModel(hallUrl, 'hall'), loadLightmap(lightAvifUrl, lightWebpUrl, o.avif, 'hall')]);
+        const [root, tex] = await Promise.all([loadHall(hallUrl), loadLightmap(lightAvifUrl, lightWebpUrl, o.avif, 'hall')]);
         model = root; lightmap = tex; U.tLight.value = tex;
         build(root);
         renderer.initTexture(tex);
@@ -197,7 +204,7 @@ export function createHall(o: HallOptions): HallScene {
       if (!rtScene || !ready && !started) return;
       const pc = renderer.getClearColor(_cc), pa = renderer.getClearAlpha(), tm = renderer.toneMapping;
       renderer.toneMapping = NoToneMapping;
-      renderer.setClearColor(CLEAR, 1);
+      renderer.setClearColor(clear, 1);
       if (!cubeDone && ready) {   // once: the hall seen from its centre, without its own reflection, for the floor's gloss
         cubeDone = true; U.uEnvOn.value = 0; const sv = seamMesh?.visible;
         for (const h of hinges) h.group.visible = true;
@@ -215,7 +222,8 @@ export function createHall(o: HallOptions): HallScene {
       const w = renderer.domElement.clientWidth || innerWidth, h = renderer.domElement.clientHeight || innerHeight;
       return { x: (_v.x * 0.5 + 0.5) * w, y: (-_v.y * 0.5 + 0.5) * h };
     },
-    hooks() { return { started, ready, failed, x: +curX.toFixed(3), nearDoor: +curNear.toFixed(3), swing: +curSwing.toFixed(3), fov: cam.fov, size: [W, H] }; },
+    entering(on) { clear = on ? CLEAR_ENTERING : CLEAR; (scene.background as Color).copy(clear); },
+    hooks() { return { started, ready, failed, x: +curX.toFixed(3), nearDoor: +curNear.toFixed(3), swing: +curSwing.toFixed(3), fov: cam.fov, size: [W, H], clear: clear === CLEAR ? 'white' : 'urban-slate' }; },
     dispose() {
       rtScene?.dispose(); rtScene = null; post.dispose();
       litMat.dispose(); fixtureMat.dispose(); spotMat.dispose(); leafMat.dispose(); seamMat.dispose();

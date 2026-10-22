@@ -4,7 +4,7 @@
 import { test, expect, type BrowserContext, type Request } from '@playwright/test';
 import { statSync, readdirSync } from 'node:fs';
 
-const ISLAND = /three|hero\.|pieces|\.bin|sky\.|ground|boot|hall\.|lightmap|room\.[^/]*\.glb|\/models\/|director\.|universe\./;   // section 4: its 3D chunks, models and lightmaps are the island's too (not the walk script or the stills: the poster tier uses them)
+const ISLAND = /three|hero\.|pieces|\.bin|sky\.|ground|boot|hall\.|lightmap|\/models\/|director\.|world\.|garden|travel-|-depth\./;   // section 4: its 3D chunks (the director, the world, the garden, the travel options), the hall's model and lightmap and the lands' depth maps are the island's too (not the walk script, the hall's still or the lands' pictures: the poster tier uses them)
 
 const GATE_CASES: Record<string, (ctx: BrowserContext) => Promise<void>> = {
   'WebGL2RenderingContext deleted': (ctx) => ctx.addInitScript(() => { delete (window as unknown as Record<string, unknown>).WebGL2RenderingContext; }),
@@ -53,7 +53,7 @@ test('AC8.1 (test build, no override): boot.ts finds the software renderer and l
   await expect(page.locator('html')).toHaveClass('js poster');
   await expect(page.locator('#intro')).toHaveCount(0);
   expect(await page.locator('[inert]').count()).toBe(0);
-  expect(reqs.filter((u) => /hero\.|three|pieces|\.bin|sky\.|ground|hall\.|lightmap|room\.[^/]*\.glb|\/models\/|director\.|universe\./.test(new URL(u).pathname))).toEqual([]);
+  expect(reqs.filter((u) => /hero\.|three|pieces|\.bin|sky\.|ground|hall\.|lightmap|\/models\/|director\.|world\.|garden|travel-|-depth\./.test(new URL(u).pathname))).toEqual([]);
   expect(logs.filter((l) => !/Failed to load resource/.test(l))).toEqual(['warning: [hero] no hardware WebGL2']);
   await ctx.close();
 });
