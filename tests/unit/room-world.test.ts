@@ -14,13 +14,17 @@
 // A's stream, replayed on the CPU from its own uniforms, starts and ends on each land's cells for two lands of different
 // FOV and push and stays inside the fill bound across the travel; the landed points stay inside it too; every scene colour
 // is a key shade by id or a blend of two neighbouring ones (or Urban Slate, seen only when the garden is withdrawn), with
-// no raw colour in the scene files; and the hooks and Tune's guard sit behind their build flags.
+// no raw colour in the scene files; the hooks and Tune's guard sit behind their build flags; a land's grid, replayed on
+// the CPU from its prepared depth (depth.ts), keeps a silhouette rigid, spreads an uncovering step and cuts an occluding
+// one, and leaves a smooth surface alone; the cloud, replayed from its own hash, shows each patch of the frame one colour
+// at any turn; and a ring's face turned from the sun keeps its shade's colour, darker.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { DataTexture, PerspectiveCamera, Vector3, type Matrix4, type Vector4 } from 'three';
 import { ROOM_BAYS } from '../../src/config/room.ts';
-import { ENTRY, GARDEN, GLIDE, GLIDE_EASE, LAND_CLIP, S, SCENE_COLOURS, WORLD_DEFAULTS, WORLD_RANGES, bandRows, clampEntry, cubicBezier, entryProblems, entryTimeline, fovAt, frameReach, gardenLayout, glideZoom, pushLayers, rollAt, type EntryTimeline, type GardenJson, type LandView, type WorldParams } from '../../src/scripts/hero/section4/world.ts';
+import { ENTRY, GARDEN, GLIDE, GLIDE_EASE, LAND_CLIP, S, SCENE_COLOURS, WORLD_DEFAULTS, WORLD_RANGES, bandRows, clampEntry, cubicBezier, entryProblems, entryTimeline, fovAt, frameReach, gardenLayout, glideZoom, landCamera, pushLayers, rollAt, type EntryTimeline, type GardenJson, type LandView, type WorldParams } from '../../src/scripts/hero/section4/world.ts';
+import { FAN, LAND_DEPTH, REACH, softenDepth } from '../../src/scripts/hero/section4/depth.ts';
 import { RING, arcAt, arcCoord, generateRings } from '../../src/scripts/hero/section4/rings.ts';
 import { BLEND, blendAt, chroma, display, mixLab, ringColour, ringRamp, toOklab, type Lab } from '../../src/scripts/hero/section4/blend.ts';
 import { CLOUD, cellGrid, coverScale, landedFill } from '../../src/scripts/hero/section4/cloud.ts';
@@ -274,7 +278,7 @@ test('the garden from garden.json: rendered from the glide\'s end, each card on 
   assert.match(src, /const SUN = new Vector3\(\.\.\.\(L\?\.sun \?\? SUN_BEHIND\)\)/);
   assert.doesNotMatch(src, /0\.28017|0\.57358|0\.76975/, 'no sun hard-coded from garden.json');
   // the rings are lit by it: the shards' shader takes uSun for the diffuse and for the highlight's half vector
-  assert.match(src, /uSun: \{ value: SUN \}/); assert.match(src, /normalize\(uSun \+ v\)/); assert.match(src, /max\(dot\(n, uSun\), 0\.0\)/);
+  assert.match(src, /uSun: \{ value: SUN \}/); assert.match(src, /normalize\(uSun \+ v\)/); assert.match(src, /max\(dot\(n, uSun\) \+ 0\.25, 0\.0\)/);
 });
 
 test('garden.json\'s format (check item 3): the one garden.py writes is read as it stands; a file without its numbers fails the load instead of placing at NaN', () => {
@@ -321,8 +325,9 @@ test('GPU memory on a phone (spec 6, colour plus depth): under 48 MiB through th
   const target = W * H * (4 + 4);   // RGBA8 colour and a 24-bit depth buffer stored in 4 bytes
   const rows = bandRows(g, garden.plate.height).rows, plate = garden.plate.width * (rows[1] - rows[0]) * 4, plateWhole = garden.plate.width * garden.plate.height * 4;   // magnified only: no mips
   const cards = garden.cards.reduce((s, c) => s + (c.width * c.height * 4 * 4) / 3, 0);
-  const picture = (720 * 1280 * 4 * 4) / 3, depth = 180 * 320;
-  const entry = target + plate + cards + picture + depth, after = target + 3 * (picture + depth);
+  // each land's depth map is held with its prepared copy (depth.ts: RGBA8, the source's size), and the garden's light, two texels
+  const picture = (720 * 1280 * 4 * 4) / 3, depth = 180 * 320 + 180 * 320 * 4, hemi = 2 * 4;
+  const entry = target + plate + cards + picture + depth + hemi, after = target + 3 * (picture + depth) + hemi;
   t.diagnostic(`target ${(target / MiB).toFixed(2)} MiB (colour and depth); plate ${(plate / MiB).toFixed(2)} of ${(plateWhole / MiB).toFixed(2)}; cards ${(cards / MiB).toFixed(2)}; the entry ${(entry / MiB).toFixed(2)} MiB, after land 1 ${(after / MiB).toFixed(2)} MiB`);
   assert.ok(entry <= 48 * MiB && after <= 48 * MiB);
   assert.ok(plate <= plateWhole * 0.8, 'the band keeps four fifths of the plate or less');
@@ -425,7 +430,7 @@ test('colours (AC3): every scene colour is a key shade by id or a blend of two n
   // Pearl Whisper is the bubble's and the text's (transition.ts and the DOM); here only Urban Slate, behind a withdrawn garden
   for (const id of Object.values(SCENE_COLOURS).flat()) assert.ok(ids.includes(id) || id === 'urban-slate' || id === 'pearl-whisper', id);
   assert.deepEqual(SCENE_COLOURS.clear, ['urban-slate']);
-  for (const f of ['world', 'rings', 'cloud', 'stream', 'blend']) {
+  for (const f of ['world', 'rings', 'cloud', 'stream', 'blend', 'depth']) {
     const src = read(`src/scripts/hero/section4/${f}.ts`);
     assert.doesNotMatch(src, /#[0-9a-fA-F]{6}\b|0x[0-9a-fA-F]{6}\b/, `${f}.ts carries a raw hex colour`);
     for (const m of src.matchAll(/new Color\(([^()]*(?:\([^()]*\))?[^()]*)\)/g)) assert.match(m[1].trim(), /^(|\.\.\.display\(URBAN_SLATE\))$/, `${f}.ts: new Color(${m[1]})`);
@@ -434,12 +439,145 @@ test('colours (AC3): every scene colour is a key shade by id or a blend of two n
   }
   // the shades reach the shaders as one ramp made from ROOM_BAYS' hexes (blend.ts, display values: the target is read as
   // sRGB), read at an arc coordinate: the shards at theirs and one arc on for the lattice, the forcefields by their angle,
-  // the cloud by its longitude; no shader indexes a shade any more
+  // the cloud by the longitude of its front surface (the cloud's own test replays it); no shader indexes a shade any more
   const world = read('src/scripts/hero/section4/world.ts'), cloud = read('src/scripts/hero/section4/cloud.ts');
   assert.match(world, /new DataTexture\(ringRamp\(ROOM_BAYS\.map\(\(b\) => b\.hex\)\), 10 \* BLEND\.perArc, 1, RGBAFormat, UnsignedByteType\)/);
   assert.match(world, /ramp\.wrapS = RepeatWrapping; ramp\.minFilter = ramp\.magFilter = LinearFilter;/);
   assert.match(world, /mix\(ramp\(vTone\.x\), ramp\(vTone\.x \+ 1\.0\), /);
   assert.match(world, /texture\(tRamp, vec2\(\(deg \/ 36\.0 - vRing\) \* 0\.1, 0\.5\)\)/);
-  assert.match(cloud, /textureLod\(tRamp, vec2\(ph \/ 6\.2831853, 0\.5\), 0\.0\)/);
+  assert.match(cloud, /textureLod\(tRamp, vec2\(atan\(f\.z, f\.x\) \/ 6\.2831853, 0\.5\), 0\.0\)/);
   for (const src of [world, cloud]) assert.doesNotMatch(src, /uShades/);
+});
+
+// a land's grid as GRID_VERT draws it: corner (i, j) of a cols x rows grid (two texels a cell) at the depth map's
+// linearly filtered value there (edge texels repeated), on the capture camera's ray, seen through the land camera at
+// push; each cell's stretch along x and y against the capture pose (push 0), where every corner sits on its own uv
+function gridStretch(d: ArrayLike<number>, w: number, h: number, view: Pick<LandView, 'fov' | 'aspect' | 'near' | 'far'>, push: number) {
+  const lin = (u: number, v: number) => {
+    const fx = Math.min(w - 1, Math.max(0, u * w - 0.5)), fy = Math.min(h - 1, Math.max(0, v * h - 0.5)), x0 = Math.floor(fx), y0 = Math.floor(fy), x1 = Math.min(w - 1, x0 + 1), y1 = Math.min(h - 1, y0 + 1), tx = fx - x0, ty = fy - y0;
+    return (d[y0 * w + x0] * (1 - tx) + d[y0 * w + x1] * tx) * (1 - ty) + (d[y1 * w + x0] * (1 - tx) + d[y1 * w + x1] * tx) * ty;
+  };
+  const cols = w / 2, rows = h / 2, ty = Math.tan((view.fov * Math.PI) / 360), cam = landCamera(new PerspectiveCamera(), view, view.aspect, push);
+  const ndc = Array.from({ length: (cols + 1) * (rows + 1) }, (_, k) => {
+    const u = (k % (cols + 1)) / cols, v = Math.floor(k / (cols + 1)) / rows, z = 1 / (1 / view.far + (1 / view.near - 1 / view.far) * lin(u, v));
+    const q = new Vector3((u * 2 - 1) * ty * view.aspect * z, (v * 2 - 1) * ty * z, -z).project(cam);
+    return [q.x, q.y];
+  });
+  const at = (i: number, j: number) => ndc[j * (cols + 1) + i];
+  return { cols, rows, cell: (i: number, j: number) => [(at(i + 1, j)[0] - at(i, j)[0]) / (2 / cols), (at(i, j + 1)[1] - at(i, j)[1]) / (2 / rows)] as const };
+}
+
+test('the land grid\'s edges (wire-check item 3): a silhouette moves rigidly, an uncovering step spreads gently over what is behind, an occluding one stays sharp and is cut, a smooth surface is untouched', () => {
+  // a 160 x 100 depth map as the estimator makes them: far 0.05, a near disc (0.85) up and right of the centre whose
+  // edge is a soft six-texel ramp, and the ground rising gently along the bottom
+  const w = 160, h = 100, cx = 128, cy = 68, R = 14, NEAR = 0.85, FAR = 0.05;
+  const raw = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const r = Math.hypot(x + 0.5 - cx, y + 0.5 - cy), t = Math.min(1, Math.max(0, (R + 3 - r) / 6));
+    raw[y * w + x] = Math.max(y < 20 ? FAR + 0.004 * (20 - y) : FAR, FAR + (NEAR - FAR) * t);
+  }
+  const p = softenDepth(raw, w, h), q = 1 / 255;
+  assert.ok(REACH * LAND_DEPTH.slope >= 1 && FAN.includes(0), 'a full step falls away inside the slope pass, the line out from the centre among its lines');
+  // the push's end through the grid: a land's rest pose (0.15 of its near distance), room.ts's lands' capture
+  const view = { fov: 32, aspect: w / h, near: 1.6, far: 30 }, push = ENTRY.pushRest * view.near, zNear = 1 / (1 / view.far + (1 / view.near - 1 / view.far) * NEAR), mNear = zNear / (zNear - push);
+  const before = gridStretch(raw, w, h, view, push), after = gridStretch(p.front, w, h, view, push);
+  const toward = [w / 2 - cx, h / 2 - cy], tl = Math.hypot(toward[0], toward[1]);
+  let silBefore = [Infinity, -Infinity], silAfter = [Infinity, -Infinity], uncBefore = 0, uncAfter = 0, folds = 0;
+  for (let j = 0; j < after.rows; j++) for (let i = 0; i < after.cols; i++) {
+    const mx = 2 * i + 1 - cx, my = 2 * j + 1 - cy, r = Math.hypot(mx, my), a = after.cell(i, j), b = before.cell(i, j);
+    // the cells wholly on the ramp, where the picture's own edge lies: rigid with the disc, as its near side
+    if (r > R - 1.5 && r < R + 1.5) { silAfter = [Math.min(silAfter[0], ...a.map((s) => s / mNear)), Math.max(silAfter[1], ...a.map((s) => s / mNear))]; silBefore = [Math.min(silBefore[0], ...b.map((s) => s / mNear)), Math.max(silBefore[1], ...b.map((s) => s / mNear))]; }
+    // the cells ahead of the disc toward the picture's centre, where the push uncovers what is behind it
+    const along = (mx * toward[0] + my * toward[1]) / tl, across = Math.abs(mx * toward[1] - my * toward[0]) / tl;
+    if (along > R - 3 && across < R / 2) { uncAfter = Math.max(uncAfter, ...a); uncBefore = Math.max(uncBefore, ...b); }
+    // a cell the front pass folds lies where it is cut: among the texels its corners read, one carries a cut
+    if (Math.min(...a) < 0) {
+      folds++;
+      let cut = 0; for (let y = 2 * j - 1; y <= 2 * j + 2; y++) for (let x = 2 * i - 1; x <= 2 * i + 2; x++) cut = Math.max(cut, p.cut[Math.min(h - 1, Math.max(0, y)) * w + Math.min(w - 1, Math.max(0, x))]);
+      assert.ok(cut > 0, `cell ${i}, ${j} folds outside an occluding edge's cut`);
+    }
+  }
+  assert.ok(silAfter[0] > 0.99 && silAfter[1] < 1.01, `the silhouette's cells move as the near side: ${silAfter.map((s) => s.toFixed(3))} of its magnification`);
+  assert.ok(silBefore[0] < 0.5 && silBefore[1] > 1.3, `on the source depth they tore: ${silBefore.map((s) => s.toFixed(3))}`);
+  assert.ok(uncAfter < 1.35 && uncBefore > 1.6, `uncovered: stretched at most ${uncAfter.toFixed(3)} (the source depth ${uncBefore.toFixed(3)})`);
+  assert.ok(folds > 0, 'the occluding side does fold, so the cut is exercised');
+  // texel by texel along the line from the disc's centre away from the picture's centre (the occluding side): the near
+  // side carried over the ramp and the margin; past the ramp's foot the margin's sliver of what is behind is cut (the
+  // front pass drops it, raw below the cut, drawn above it) and the back pass takes it at its own depth; on the ramp's
+  // upper part the picture's edge is kept
+  let sliver = 0, kept = 0;
+  for (let s = 0; s <= R + 3 + LAND_DEPTH.margin; s++) {
+    const x = Math.round(cx - (toward[0] / tl) * s), y = Math.round(cy - (toward[1] / tl) * s), k = y * w + x;
+    if (raw[k] <= FAR + q && p.front[k] > FAR + LAND_DEPTH.edge) { sliver++; assert.ok(p.cut[k] > raw[k] && p.cut[k] < p.front[k], `texel ${s} out: cut ${p.cut[k]}`); near(p.back[k], FAR, q, `texel ${s} out: the back pass`); }
+    if (raw[k] >= FAR + LAND_DEPTH.cut * (NEAR - FAR) + 0.02) { kept++; assert.ok(raw[k] >= p.cut[k], `texel ${s} out, on the near side: kept`); near(p.front[k], NEAR, q, `texel ${s} out: rigid`); }
+  }
+  assert.ok(sliver >= LAND_DEPTH.margin - 3 && kept > R, `${sliver} sliver texels, ${kept} kept`);
+  // a smooth surface far from any edge (the ground, rising 0.004 a texel), and the far background: untouched
+  for (const [x, y] of [[20, 5], [40, 10], [70, 15], [20, 60], [60, 90]]) { const k = y * w + x; near(p.front[k], raw[k], 1e-6, `${x}, ${y}`); assert.equal(p.cut[k], 0); near(p.back[k], raw[k], 1e-6, `${x}, ${y} back`); }
+  // the grid draws the front pass, dropping above the cut, then the back pass where nothing as near was drawn
+  const src = read('src/scripts/hero/section4/world.ts');
+  assert.match(src, /if \(vD > cut && raw < cut\) discard;/);
+  assert.match(src, /gridU\.uBack\.value = 0; gridMat\.depthFunc = LessEqualDepth; renderer\.render\(landScene, landCam\);\n\s*if \(gridU\.uHasDepth\.value\) \{ gridU\.uBack\.value = 1; gridMat\.depthFunc = LessDepth;/);
+});
+
+test('the cloud (world check item 1): every point a patch of the frame shows carries nearly that patch\'s colour, at any turn and roll; coloured by its own longitude, each patch mixed every longitude facing its way', () => {
+  // the cloud's vertex shader (cloud.ts) replayed from its own hash: the ball 5 units ahead, turned and rolled, its points
+  // binned into 24 x 24 patches across it, each patch's spread of OKLab colour about its mean (the confetti a pixel can
+  // show), inside 0.8 of the radius (the limb turns through longitudes fastest)
+  const ramp = ringRamp(HEX), nr = 10 * BLEND.perArc, G = 24, D = 5, R = CLOUD.radius * S;
+  const rampAt = (a: number) => { const x = a * nr - 0.5, i0 = Math.floor(x), t = x - i0, c0 = ((i0 % nr) + nr) % nr, c1 = (c0 + 1) % nr; return [0, 1, 2].map((k) => (ramp[c0 * 4 + k] * (1 - t) + ramp[c1 * 4 + k] * t) / 255) as [number, number, number]; };
+  for (const [spin, roll] of [[0, 0], [1.24, 0], [0.7, 30], [2.9, -20]]) {
+    const cs = Math.cos(spin), ss = Math.sin(spin), cr = Math.cos((roll * Math.PI) / 180), sr = Math.sin((roll * Math.PI) / 180);
+    const turn = (x: number, y: number, z: number) => { const x1 = cs * x + ss * z, z1 = -ss * x + cs * z; return [cr * x1 - sr * y, sr * x1 + cr * y, z1]; };
+    const back = (x: number, y: number, z: number) => { const x1 = cr * x + sr * y, y1 = -sr * x + cr * y; return [cs * x1 - ss * z, y1, ss * x1 + cs * z]; };
+    const spread: Record<string, number> = {};
+    for (const mode of ['front', 'own']) {
+      const bins = Array.from({ length: G * G }, () => [0, 0, 0, 0, 0]);
+      for (let i = 0; i < CLOUD.touchCount; i++) {
+        const u = rnd(i, 0), cz = rnd(i, 1) * 2 - 1, ph = rnd(i, 2) * 2 * Math.PI, sz = Math.sqrt(1 - cz * cz), r = R * u ** 0.45;
+        const [x, y, z0] = turn(sz * Math.cos(ph) * r, cz * r, sz * Math.sin(ph) * r), z = z0 - D, ox = (x * (-D / z)) / R, oy = (y * (-D / z)) / R;
+        const f = back(ox, oy, Math.sqrt(Math.max(0, 1 - ox * ox - oy * oy))), lab = toOklab(rampAt(mode === 'front' ? Math.atan2(f[2], f[0]) / (2 * Math.PI) : ph / (2 * Math.PI)));
+        const bx = Math.floor(((ox + 1) / 2) * G), by = Math.floor(((oy + 1) / 2) * G);
+        if (bx < 0 || by < 0 || bx >= G || by >= G || Math.hypot((bx + 0.5) / G * 2 - 1, (by + 0.5) / G * 2 - 1) > 0.8) continue;
+        const b = bins[by * G + bx]; b[0] += lab[0]; b[1] += lab[1]; b[2] += lab[2]; b[3] += lab[0] ** 2 + lab[1] ** 2 + lab[2] ** 2; b[4]++;
+      }
+      let sum = 0, n = 0;
+      for (const b of bins) if (b[4] >= 10) { sum += Math.sqrt(Math.max(0, b[3] / b[4] - (b[0] ** 2 + b[1] ** 2 + b[2] ** 2) / b[4] ** 2)); n++; }
+      spread[mode] = sum / n;
+    }
+    assert.ok(spread.front <= 0.04, `turn ${spin}, roll ${roll}: a patch spreads ${spread.front.toFixed(3)}`);
+    assert.ok(spread.own >= 0.1, `turn ${spin}, roll ${roll}: by each point's own longitude ${spread.own.toFixed(3)}`);
+  }
+  assert.match(read('src/scripts/hero/section4/cloud.ts'), /vec2 o = \(pos\.xy \* \(mid\.z \/ pos\.z\) - mid\.xy\) \/ uR;\n\s*vec3 f = transpose\(mat3\(modelViewMatrix\)\) \* vec3\(o, sqrt\(max\(0\.0, 1\.0 - dot\(o, o\)\)\)\);/);
+});
+
+test('the rings\' shade (world check item 2): a face turned from the sun keeps its shade\'s colour, darker, never grey, where the old ambient and white sheen greyed it', () => {
+  // RING_FRAG's light replayed for the underside of a shard seen at a grazing 10 degrees under garden.json's sun, with a
+  // stand-in garden as harsh as any (the Lawn key shade below, Sky above): its colour in OKLab against the shade's own
+  const lin = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4), enc = (c: number) => (c <= 0.0031308 ? c * 12.92 : 1.055 * c ** (1 / 2.4) - 0.055);
+  type V = [number, number, number];
+  const add = (a: V, b: V): V => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], mul = (a: V, b: V): V => [a[0] * b[0], a[1] * b[1], a[2] * b[2]], sc = (a: V, k: number): V => [a[0] * k, a[1] * k, a[2] * k];
+  const dot = (a: V, b: V) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2], unit = (a: V): V => sc(a, 1 / Math.hypot(...a)), lum = (c: V) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  const tint = (c: V, k: number): V => c.map((x) => 1 + (x / Math.max(lum(c), 1e-3) - 1) * k) as V, toLin = (c: V): V => c.map(lin) as V, out = (c: V): V => c.map((x) => enc(Math.min(1, Math.max(0, x)))) as V;
+  const sky = display(ROOM_BAYS[1].hex) as V, ground = display(ROOM_BAYS[8].hex) as V, hemi = (y: number): V => toLin(add(sc(ground, 0.5 - 0.5 * y), sc(sky, 0.5 + 0.5 * y)));
+  const sun = unit(garden.sun.direction as V), n: V = [0, -1, 0], v = unit([0, -Math.sin(Math.PI / 18), Math.cos(Math.PI / 18)]), r = add(sc(v, -1), sc(n, 2 * dot(n, v)));
+  const nh = Math.max(dot(n, unit(add(sun, v))), 0), fr = 0.04 + 0.96 * (1 - Math.max(dot(n, v), 0)) ** 5, spec = 0.7 * nh ** 220 + 0.035 * nh ** 16;
+  const ratio = (c: Lab) => chroma(c) / c[0], hueOff = (c: Lab, s: Lab) => Math.abs(((hueOf(c) - hueOf(s) + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
+  let oldGrey = 0;
+  for (const b of ROOM_BAYS) {
+    const shade = toOklab(display(b.hex)), alb = toLin(display(b.hex) as V);
+    if (chroma(shade) < BLEND.neutral) continue;   // Snow and Silver have no colour to keep
+    const now = toOklab(out(add(mul(alb, sc(tint(hemi(n[1]), 0.25), 0.42)), add(sc(alb, (0.62 * Math.max(dot(n, sun) + 0.25, 0)) / 1.25), add([spec, spec, spec], mul(sc(hemi(r[1]), 0.15 * fr), tint(alb, 0.6)))))));
+    const old = toOklab(out(add(sc(alb, 0.28 + 0.12 * n[1] + 0.66 * Math.max(dot(n, sun), 0)), sc([1, 1, 1], spec + 0.15 * fr * (0.6 + 0.4 * r[1])))));
+    assert.ok(ratio(now) >= 0.6 * ratio(shade), `${b.name}: chroma for its lightness ${ratio(now).toFixed(3)} against the shade's ${ratio(shade).toFixed(3)}`);
+    assert.ok(hueOff(now, shade) < (30 * Math.PI) / 180, `${b.name}: hue off by ${((hueOff(now, shade) * 180) / Math.PI).toFixed(0)} degrees`);
+    assert.ok(now[0] < shade[0] && now[0] > 0.5 * shade[0], `${b.name}: darker (${now[0].toFixed(2)} against ${shade[0].toFixed(2)}), not black`);
+    if (ratio(old) < 0.6 * ratio(shade)) oldGrey++;
+  }
+  assert.ok(oldGrey >= 3, `the old light greyed ${oldGrey} shades`);
+  // the replay is RING_FRAG's: the fill, the wrapped sun and the tinted sheen, as written there
+  const src = read('src/scripts/hero/section4/world.ts');
+  assert.match(src, /vec3 c = alb \* \(0\.42 \* tint\(h, 0\.25\) \+ 0\.62 \* max\(dot\(n, uSun\) \+ 0\.25, 0\.0\) \/ 1\.25\) \* ao;/);
+  assert.match(src, /c \+= ao \* \(0\.7 \* pow\(nh, 220\.0\) \+ 0\.035 \* pow\(nh, 16\.0\) \+ 0\.15 \* fr \* hemi\(reflect\(-v, n\)\.y\) \* tint\(alb, 0\.6\)\);/);
+  assert.match(src, /vec3 tint\(vec3 c, float k\) \{ return mix\(vec3\(1\.0\), c \/ max\(0\.2126 \* c\.r \+ 0\.7152 \* c\.g \+ 0\.0722 \* c\.b, 1e-3\), k\); \}/);
 });
