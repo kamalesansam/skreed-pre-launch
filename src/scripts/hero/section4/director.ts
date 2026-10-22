@@ -35,7 +35,7 @@ import { createScrollFollower } from '../scroll/scrollMap.ts';
 import { clamp01, easeInOutCubic, lerpFPS } from '../util/math.ts';
 import { createHall, type HallScene } from './hall.ts';
 import { BUBBLE, bubbleAt, createTransition, type TransitionPass } from './transition.ts';
-import { createCarousel, type Carousel, type CarouselTune, type SceneDef } from './carousel.ts';
+import { createCarousel, type Carousel, type CarouselTune, type LightSetting, type SceneDef } from './carousel.ts';
 import { STEP, cloudCover, frameSource } from './carousel-math.ts';
 import { allowed, create as createPool, type VideoPool } from './video.ts';
 import { fetchProductsBin } from './products-bin.ts';
@@ -113,6 +113,10 @@ export interface RoomHooks {
   seek(sec: number): void;
   /** scene i at rest with the page at its position (entering at once if need be); true once its still or loop is resident */
   scene(i: number): boolean;
+  /** the carousel's lights set live (the product check, AC2); the values in force */
+  lights(o: Partial<LightSetting>): LightSetting;
+  /** the bottom shade set live (AC12's tuning): how dark at the bottom edge and its height as a share of the frame */
+  shade(dark: number, height?: number): void;
 }
 
 /** the exit seam and the reverse seam (the wrap), by phase (section-4-flux.md 4, the motion table) */
@@ -669,6 +673,8 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       setScene(i, true); snap(sceneQ(i)); sayScene(i);
       return resident(i);
     },
+    lights: (o: Partial<LightSetting>) => carousel.lights(o),
+    shade: (dark: number, height?: number) => carousel.shade(dark, height),
   } satisfies RoomHooks);
   return api;
 }
