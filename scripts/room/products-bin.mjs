@@ -41,7 +41,7 @@ export const BIN_PATH = 'src/assets/room/flux/products.bin', MANIFEST_PATH = 'sr
 export const LINE_KB = 160;   // the brief's stored line, KB = 1024 B
 const MAGIC = 0x31504853;     // 'SHP1' read as bytes S, H, P, 1
 const pad4 = (n) => (n + 3) & ~3;
-const mm = (v) => Math.round(v * 1e5) / 100;   // metres to millimetres, two decimals
+const mm = (v) => Math.round(v * 1e5) / 100 || 0;   // metres to millimetres, two decimals (a -0 would differ from the JSON's 0)
 
 /** an attribute's raw stored values (meshopt's padded attributes arrive interleaved) and its typed array */
 function rawOf(a) {
