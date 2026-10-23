@@ -1,0 +1,40 @@
+[
+  {
+    "created_at": "2026-10-22T10:34:08.466212Z",
+    "display_name": "Nano Banana 2.1",
+    "id": "bd12724b-6f41-472c-9242-ca1ab296670a",
+    "job_type": "nano_banana_2_1",
+    "min_result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/hf_20261022_103408_bd12724b-6f41-472c-9242-ca1ab296670a_min.webp",
+    "params": {
+      "aspect_ratio": "auto",
+      "batch_size": 1,
+      "height": 2752,
+      "is_inpaint": true,
+      "medias": [
+        {
+          "data": {
+            "id": "bc009cbe-7433-4db8-bfcb-e2816f111275",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/bc009cbe-7433-4db8-bfcb-e2816f111275.png"
+          },
+          "role": "image"
+        },
+        {
+          "data": {
+            "id": "b314d41e-5a20-4dab-b993-da61bbc727ea",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/b314d41e-5a20-4dab-b993-da61bbc727ea.png"
+          },
+          "role": "mask"
+        }
+      ],
+      "prompt": "Extend this scene into a tall portrait frame. At the top, continue the wooden slatted ceiling and the glowing ring light naturally; at the bottom, continue the dense rainforest undergrowth of ferns, moss and broad leaves. Same materials, same soft green light and mist, same colours, seamless, photoreal 3D render look. No new objects, no people, no text.",
+      "reference_elements": [],
+      "resolution": "2k",
+      "thinking_level": "medium",
+      "width": 1536
+    },
+    "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/hf_20261022_103408_bd12724b-6f41-472c-9242-ca1ab296670a.png",
+    "status": "completed"
+  }
+]

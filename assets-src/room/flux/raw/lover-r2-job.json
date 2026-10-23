@@ -1,0 +1,41 @@
+[
+  {
+    "created_at": "2026-10-22T10:37:42.418549Z",
+    "display_name": "Kling O3 (Frames)",
+    "id": "228de375-0a4e-4af2-9976-39da5fd37443",
+    "job_type": "kling_o3_flf",
+    "min_result_url": null,
+    "params": {
+      "aspect_ratio": "16:9",
+      "duration": 5,
+      "height": 720,
+      "medias": [
+        {
+          "data": {
+            "id": "94e77a11-d1f5-42be-a08c-fd5f9d88bead",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/94e77a11-d1f5-42be-a08c-fd5f9d88bead.png"
+          },
+          "role": "start_image"
+        },
+        {
+          "data": {
+            "id": "94e77a11-d1f5-42be-a08c-fd5f9d88bead",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/94e77a11-d1f5-42be-a08c-fd5f9d88bead.png"
+          },
+          "role": "end_image"
+        }
+      ],
+      "mode": "std",
+      "multi_prompt": [],
+      "multi_shots": false,
+      "prompt": "A seamless ambient loop of this exact scene: soft waves roll slowly on the distant sea, the pink sunset glows, the plants' leaves barely stir, soft light reflections glide across the polished marble floor. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+      "sound": "off",
+      "width": 1280
+    },
+    "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/hf_20261022_103742_228de375-0a4e-4af2-9976-39da5fd37443.mp4",
+    "status": "completed",
+    "thumbnail_url": "https://cdn.higgsfield.ai/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/hf_20261022_103742_228de375-0a4e-4af2-9976-39da5fd37443_thumbnail.webp"
+  }
+]

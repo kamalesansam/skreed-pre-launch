@@ -1,0 +1,282 @@
+{
+ "q0-curator": {
+  "width": 1400,
+  "height": 754,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q0-dreamer": {
+  "width": 1400,
+  "height": 934,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q0-main": {
+  "width": 1400,
+  "height": 733,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q0-optimist": {
+  "width": 1400,
+  "height": 934,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q0-rebel": {
+  "width": 1400,
+  "height": 934,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q0-spark": {
+  "width": 1400,
+  "height": 933,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q0-strategist": {
+  "width": 1400,
+  "height": 934,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q2-curator": {
+  "width": 1400,
+  "height": 933,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q2-dreamer": {
+  "width": 1400,
+  "height": 933,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q2-main": {
+  "width": 1400,
+  "height": 1055,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q2-optimist": {
+  "width": 933,
+  "height": 1400,
+  "widths": [
+   640,
+   933
+  ]
+ },
+ "q2-rebel": {
+  "width": 933,
+  "height": 1400,
+  "widths": [
+   640,
+   933
+  ]
+ },
+ "q2-spark": {
+  "width": 1400,
+  "height": 933,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q2-strategist": {
+  "width": 933,
+  "height": 1400,
+  "widths": [
+   640,
+   933
+  ]
+ },
+ "q4-curator": {
+  "width": 1400,
+  "height": 1050,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q4-dreamer": {
+  "width": 1400,
+  "height": 933,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q4-main": {
+  "width": 934,
+  "height": 1400,
+  "widths": [
+   640,
+   934
+  ]
+ },
+ "q4-optimist": {
+  "width": 1400,
+  "height": 933,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q4-rebel": {
+  "width": 1400,
+  "height": 934,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q4-spark": {
+  "width": 1400,
+  "height": 933,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q4-strategist": {
+  "width": 1400,
+  "height": 933,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q7-curator": {
+  "width": 935,
+  "height": 1400,
+  "widths": [
+   640,
+   935
+  ]
+ },
+ "q7-dreamer": {
+  "width": 1400,
+  "height": 933,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q7-main": {
+  "width": 1400,
+  "height": 1090,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q7-optimist": {
+  "width": 1400,
+  "height": 931,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q7-rebel": {
+  "width": 1050,
+  "height": 1400,
+  "widths": [
+   640,
+   1050
+  ]
+ },
+ "q7-spark": {
+  "width": 1400,
+  "height": 934,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q7-strategist": {
+  "width": 1400,
+  "height": 933,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q8-curator": {
+  "width": 1400,
+  "height": 934,
+  "widths": [
+   640,
+   1100
+  ]
+ },
+ "q8-dreamer": {
+  "width": 934,
+  "height": 1400,
+  "widths": [
+   640,
+   934
+  ]
+ },
+ "q8-main": {
+  "width": 933,
+  "height": 1400,
+  "widths": [
+   640,
+   933
+  ]
+ },
+ "q8-optimist": {
+  "width": 933,
+  "height": 1400,
+  "widths": [
+   640,
+   933
+  ]
+ },
+ "q8-rebel": {
+  "width": 933,
+  "height": 1400,
+  "widths": [
+   640,
+   933
+  ]
+ },
+ "q8-spark": {
+  "width": 818,
+  "height": 1400,
+  "widths": [
+   640,
+   818
+  ]
+ },
+ "q8-strategist": {
+  "width": 1400,
+  "height": 933,
+  "widths": [
+   640,
+   1100
+  ]
+ }
+}

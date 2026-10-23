@@ -1,0 +1,41 @@
+[
+  {
+    "created_at": "2026-10-22T10:43:58.602687Z",
+    "display_name": "Kling O3 (Frames)",
+    "id": "b99020ae-cf85-4e17-ad1e-c3ba31223443",
+    "job_type": "kling_o3_flf",
+    "min_result_url": null,
+    "params": {
+      "aspect_ratio": "9:16",
+      "duration": 5,
+      "height": 1280,
+      "medias": [
+        {
+          "data": {
+            "id": "77d3d437-8b6e-4b84-8ae8-002948e8af63",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/77d3d437-8b6e-4b84-8ae8-002948e8af63.png"
+          },
+          "role": "start_image"
+        },
+        {
+          "data": {
+            "id": "77d3d437-8b6e-4b84-8ae8-002948e8af63",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/77d3d437-8b6e-4b84-8ae8-002948e8af63.png"
+          },
+          "role": "end_image"
+        }
+      ],
+      "mode": "std",
+      "multi_prompt": [],
+      "multi_shots": false,
+      "prompt": "A seamless ambient loop of this exact scene: thin mist drifts slowly over the far lake and hills, the ferns and broad leaves sway very gently in a light breeze, the tree's leaves barely stir, the green ring light glows steadily. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+      "sound": "off",
+      "width": 720
+    },
+    "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/hf_20261022_104358_b99020ae-cf85-4e17-ad1e-c3ba31223443.mp4",
+    "status": "completed",
+    "thumbnail_url": "https://cdn.higgsfield.ai/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/hf_20261022_104358_b99020ae-cf85-4e17-ad1e-c3ba31223443_thumbnail.webp"
+  }
+]
