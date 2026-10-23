@@ -229,3 +229,41 @@ Flagged to Sam, not the shade's to fix: the prompt over the hall's lit grey door
 A step turns a region two to four times in a second (the lights down then up over its second half, and the saturated red of ember's sky in and out), within the six AC5 allows. Not run: five steps back to back at Tune's shortest stepMs, the two seams, the way back and the wrap (the capture driver takes a from-to list; the seams and the wrap need a driver of their own).
 
 **Open after these fixes.** The e2e suite (not run here; the 390 flow gained the layout and prompt assertions); section 6's frame cost (the probe); section 12's documents; the prompt's contrast over the hall (part one); AC5 over the seams, the way back and the wrap; the mid-step frames remain mostly black (the "For Sam" note above stands).
+
+**The frames.** `scripts/room/render-stills.mjs` ran as written (no shim) against the served hooks build in the installed Chrome on the Metal GPU, 1 minute 44 seconds for both setups, 24 frames each, the exit landing at scroll 0 and the hall at both viewports. The contact sheets of the fixed build are `docs/specs/screenshots/section-4-flux-fixes-390.jpg` and `section-4-flux-fixes-1280.jpg` (the frames in the stills script's order: the hall's start and station, the bubble at 25, 50 and 90 percent, the five scenes at rest, the mid-step frame, the hold, the exit's cover-in and the frame after the jump, the wrap's cover and its landing, the way back at its half and the hall after it, then the poster tier's hall and five scenes); the sheets of section 4 above stay as the record of the defects.
+
+**Tests, type check and the production build, after the fixes (in the worktree).**
+
+| Command | Result |
+|---|---|
+| `npm run test:unit` | exit 0; 186 tests, 186 pass, 0 fail (177 before; the layout, the prompt, the placement and the tone tests are new) |
+| `npx tsc --noEmit -p tsconfig.json` | exit 0 |
+| `npm run build` | exit 0; csp.mjs: 12 pages, media-src 'self'; budget: "every enforced line of section-4-flux.md 6 holds (49 enforced) and AC8's formats check"; guard: "the ten loops and nothing else, media-src 'self'" |
+
+**The budget (the production build after the fixes).** Scripts at gzip, everything else as stored, KB = 1024 B, as budget.mjs prints them; the section's script grew from 27.9 to 29.4 KB with the layout cache, the placement maths, the light and shade hooks and the shade's band, still under Sam's 30 KB line.
+
+| Line | Measured | Line in section 6 |
+|---|---|---|
+| Section 4's script (director, carousel, video, assets, walk, lazy) | 29.4 KB | 30 KB pending Sam, 38 KB hard |
+| scroll.ts (its own chunk, marker skreed:scroll) | 2.8 KB | 4 KB |
+| Total JS with section 4 and scroll.ts | 228.1 KB | 250 KB |
+| Section 4 on the poster tier: its script | 8.0 KB | 8.5 KB |
+| Loop cove, wide / portrait | 1,119.1 / 1,116.1 KB | 1,200 KB each |
+| Loop grove, wide / portrait | 1,131.7 / 1,111.6 KB | 1,200 KB each |
+| Loop ember, wide / portrait | 931.4 / 924.2 KB | 1,200 KB each |
+| Loop palace, wide / portrait | 1,096.5 / 1,054.5 KB | 1,200 KB each |
+| Loop dawn, wide / portrait | 618.2 / 651.5 KB | 1,200 KB each |
+| Stills, wide AVIF (largest, grove) | 43.2 KB | 110 KB |
+| Stills, wide WebP (largest, grove) | 49.2 KB | 176 KB |
+| Stills, portrait AVIF (largest, grove) | 49.9 KB | 80 KB |
+| Stills, portrait WebP (largest, grove) | 61.0 KB | 128 KB |
+| products.bin | 263.6 KB | 270 KB |
+| To the press, wide / portrait, AVIF | 1,444.7 / 1,459.2 KB | 1,700 KB |
+| To the press, wide / portrait, WebP-only browsers | 1,486.6 / 1,506.2 KB | 1,700 KB |
+| The whole section in dist (10 loops, 20 stills) | 10,899.8 KB | 15,000 KB |
+| One visit, wide / portrait, AVIF | 5,349.5 / 5,334.7 KB | 7,300 KB |
+| One visit, wide / portrait, WebP | 5,411.3 / 5,400.6 KB | 7,300 KB |
+| Poster tier pictures, AVIF wide / portrait | 174.1 / 196.8 KB | 570 / 420 KB |
+| Poster tier pictures, WebP wide / portrait | 197.7 / 223.9 KB | 900 / 660 KB |
+| First view: section 4's markup and room.css | 3.9 KB | 4 KB |
+| Formats | 13 pictures AVIF with a WebP twin; 10 scene `<img>` with width and height | AC8 |
