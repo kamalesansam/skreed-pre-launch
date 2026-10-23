@@ -180,3 +180,52 @@ Before the fix (the spec's numbers, the white key): 12.93, 13.06, 13.27, 3.73 an
 | 5 dawn | 12.49 / 1.26 | 10.46 / 1.05 | 5.02 / 1.98 | 9.25 / 1.07 | Pearl Whisper |
 
 The script exits 1 when `ROOM_SCENES` disagrees with its picks; `tests/unit/room.test.ts` holds the five values and the director's use of them.
+
+**D6, closed.** The scene hint is a row of scene 1's text grid on both classes, above the count (a row under the count shares the previous and next words' row at 390, where the hint reaches 223 px from the gutter and the words start at 141 px), and `walk.ts` hides it on any arrival at another scene, as a step already did. On the served build it reads at (16, 778) above the count at 390 x 844 and at (45, 688) at 1280 x 800, and no other scene shows it.
+
+**The 2.2.2 control.** `.rm-pause` sits bottom right one row above the previous and next words (44 px plus --s2), as the spec's sections 3 and 5 place it, a plain button whose text swaps between pause and play, hidden until the director sets data-pause (E-S4-loops is pending, so it never showed in these runs) and never in the hall; the unit test holds the stylesheet, the markup and walk.ts to that.
+
+**AC12, the contrast (`scripts/room/contrast.mjs`, `docs/specs/evidence/section-4-flux-contrast.md`).** The script drives the new hooks (`__s4.scene(i)`, `__s4.seek`, `__s4.shade`) and AC12's method: every text box of each scene at rest (the four lines, the hint on scene 1, the previous and next words; the loading line and the 2.2.2 control where they show), the prompt at the station and Skip over the bubble at 25, 50 and 90 percent with scene 1's loop playing, over 10 frames 0.5 s apart at both viewports, the median over the frames of each frame's median ratio and the lowest of each frame's lightest-5-percent ratio. With the reference's shade (85 percent of black at the bottom edge, clear by 0.24 of the height) the four lines' block, which reaches 0.30 of the height at 390 and 0.45 at 1280, stood above the shade: dawn's name read 2.22:1 at 1280 and 2.79 at 390, its shade line 2.29 and the catalog line 3.76 at 1280, palace's name 3.40 and shade line 2.74 at 390. The shade gained a solid band (`SHADE.solid`, the darkening held from the bottom edge up to that share of the height, then clearing linearly by `SHADE.height`) and the lightest setting at which every scene box's median reads 4.5:1 or better is 45 percent of black, solid to 0.45 of the height, clear by 0.72 (at 60 percent the medians ran 9 to 17). The readings with the build's own shade (the lowest median and the lowest worst across each frame's boxes; the whole table per box is in the contrast document):
+
+| Frame | 390 x 844: median | worst | 1280 x 800: median | worst |
+|---|---|---|---|---|
+| the prompt at the station | **2.36** | **1.91** | **2.85** | **2.71** |
+| Skip, the bubble at 25 percent | 17.10 | 17.10 | 11.91 | 11.75 |
+| Skip, the bubble at 50 percent | 14.42 | 14.25 | 11.91 | 11.75 |
+| Skip, the bubble at 90 percent | 14.42 | 14.25 | 7.28 | 6.25 |
+| scene 1 cove (Phone case) at rest | 9.23 | 6.84 | 10.77 | 7.07 |
+| scene 2 grove (AirPods case) at rest | 13.60 | 6.47 | 15.60 | 7.20 |
+| scene 3 ember (MagSafe wallet) at rest | 16.22 | 13.18 | 13.75 | 4.70 |
+| scene 4 palace (Lenskin) at rest | 6.11 | 5.19 | 7.00 | 5.49 |
+| scene 5 dawn (Phone case) at rest | 6.56 | 5.70 | 6.02 | 4.79 |
+
+Flagged to Sam, not the shade's to fix: the prompt over the hall's lit grey door reads 2.36 / 1.91 at 390 and 2.85 / 2.71 at 1280 (part one's E-S4-contrast reading, as built). Not shown in these frames: the loading line (every loop was in before its scene was measured) and the 2.2.2 control (hidden while E-S4-loops is pending). The GPU estimate at scene 1 at 390 x 844: 56 geometries, 55 textures, 42 programs, the carousel's own count 21,817,122 B (20.8 MiB).
+
+**AC5, the flash check (`scripts/room/loop-flash.py`, `scripts/room/step-frames.mjs`).** The lands' clip-flash.py method on the ten loops as drawn at rest (decoded by ffmpeg at 24 frames a second, cover-fitted to the viewport of their class at the planes' 1.01 overscan, the bottom shade in the frame, the first second appended after the last frame so the loop's wrap is checked) and on the five steps (the four forward steps and the step back from scene 5) captured from the hooks build one 1/24 s tick at a time (`window.__skreedTick` while the clock is frozen; the loop elements play on at the wall clock, so a frame's video content is whatever the loops show then), 36 frames each at both viewports. AC5's rule as the spec quotes it: no 341 x 256 CSS px region has more than 25 percent of its area flash more than three times in any one second (more than six turns), a flash being a pair of opposing changes of at least 10 percent of the maximum relative luminance where the darker state is below 0.80, the same for saturated red. Every sequence passes; the verdicts are in `src/data/room-flux.json` (`flash` per loop, `flashSteps`):
+
+| Sequence | Viewport | Frames | Most transitions of one pixel in 1 s | Largest share of a region turning together | Most turns of a region in 1 s | Red: largest share | Red: most turns | Verdict |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| cove-portrait.mp4 | 390 x 844 | 144 | 3 | 0.1 percent | 0 | 0.2 percent | 0 | pass |
+| cove-wide.mp4 | 1280 x 800 | 144 | 7 | 1.4 percent | 0 | 0.0 percent | 0 | pass |
+| dawn-portrait.mp4 | 390 x 844 | 144 | 0 | 0.0 percent | 0 | 0.0 percent | 0 | pass |
+| dawn-wide.mp4 | 1280 x 800 | 144 | 2 | 0.0 percent | 0 | 0.0 percent | 0 | pass |
+| ember-portrait.mp4 | 390 x 844 | 144 | 0 | 0.0 percent | 0 | 2.7 percent | 0 | pass |
+| ember-wide.mp4 | 1280 x 800 | 144 | 0 | 0.0 percent | 0 | 5.8 percent | 0 | pass |
+| grove-portrait.mp4 | 390 x 844 | 144 | 0 | 0.0 percent | 0 | 0.0 percent | 0 | pass |
+| grove-wide.mp4 | 1280 x 800 | 144 | 1 | 0.0 percent | 0 | 0.0 percent | 0 | pass |
+| palace-portrait.mp4 | 390 x 844 | 144 | 11 | 5.2 percent | 0 | 0.0 percent | 0 | pass |
+| palace-wide.mp4 | 1280 x 800 | 144 | 0 | 0.0 percent | 0 | 0.4 percent | 0 | pass |
+| step 1 to 2 | 1280 x 800 | 36 | 7 | 100.0 percent | 2 | 0.0 percent | 0 | pass |
+| step 2 to 3 | 1280 x 800 | 36 | 6 | 100.0 percent | 3 | 53.7 percent | 2 | pass |
+| step 3 to 4 | 1280 x 800 | 36 | 8 | 100.0 percent | 2 | 35.8 percent | 4 | pass |
+| step 4 to 5 | 1280 x 800 | 36 | 7 | 100.0 percent | 4 | 0.6 percent | 0 | pass |
+| step 5 to 4 | 1280 x 800 | 36 | 10 | 100.0 percent | 3 | 31.6 percent | 2 | pass |
+| step 1 to 2 | 390 x 844 | 36 | 8 | 66.9 percent | 2 | 0.0 percent | 0 | pass |
+| step 2 to 3 | 390 x 844 | 36 | 7 | 72.2 percent | 2 | 38.6 percent | 2 | pass |
+| step 3 to 4 | 390 x 844 | 36 | 12 | 87.9 percent | 2 | 9.8 percent | 0 | pass |
+| step 4 to 5 | 390 x 844 | 36 | 8 | 92.7 percent | 2 | 0.0 percent | 0 | pass |
+| step 5 to 4 | 390 x 844 | 36 | 10 | 87.5 percent | 2 | 0.2 percent | 0 | pass |
+
+A step turns a region two to four times in a second (the lights down then up over its second half, and the saturated red of ember's sky in and out), within the six AC5 allows. Not run: five steps back to back at Tune's shortest stepMs, the two seams, the way back and the wrap (the capture driver takes a from-to list; the seams and the wrap need a driver of their own).
+
+**Open after these fixes.** The e2e suite (not run here; the 390 flow gained the layout and prompt assertions); section 6's frame cost (the probe); section 12's documents; the prompt's contrast over the hall (part one); AC5 over the seams, the way back and the wrap; the mid-step frames remain mostly black (the "For Sam" note above stands).

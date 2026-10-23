@@ -45,7 +45,10 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
     window.__heroStarted = true;
     const now = performance.now(), raw = clock.getDelta();                        // F2
     const frozen = (import.meta.env.PUBLIC_HERO_HOOKS === '1' && !!window.__skreedFreeze) || intro.paused;   // freeze: test hook for pixel-diff measurements; a seek pins the clocks
-    const dt = frozen ? 0 : Math.min(raw, 1 / 12);
+    // a tick while frozen (hooks builds): one frame's worth of clock, handed in by the flash check's step capture, consumed here
+    let tick = 0;
+    if (import.meta.env.PUBLIC_HERO_HOOKS === '1' && frozen && window.__skreedTick) { tick = Math.min(window.__skreedTick, 1 / 12); window.__skreedTick = 0; }
+    const dt = frozen ? tick : Math.min(raw, 1 / 12);
     st.t += dt; st.ratio = Math.min(5, dt / (1 / 60));
     const t = st.t, ratio = st.ratio;
     const iv = intro.frame({ t, dt, raw, frozen, now, texOk: tex.ok }, ctx);      // the intro's clock, timeline, fences and readiness

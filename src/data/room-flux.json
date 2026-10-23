@@ -1,5 +1,5 @@
 {
- "//": "Section 4's five scene loops (docs/specs/section-4-flux.md; the evidence and the ledger in docs/specs/evidence/section-4-flux-loops.md). Per loop: the masked inpaint that made its clean still and the kling_o3_flf call that animated it, with job ids, credits and prompts; the raw file by its sum and bytes (assets-src/room/flux/raw, gitignored; the sums committed in SHA256SUMS, where the generator's file names are); the encode scripts/room/encode-flux.mjs wrote, its matrix choice with both differences, the probe's checks and the poster stills. flash stays 'pending' until AC5's check runs on the loops; approval is Sam's for all ten.",
+ "//": "Section 4's five scene loops (docs/specs/section-4-flux.md; the evidence and the ledger in docs/specs/evidence/section-4-flux-loops.md). Per loop: the masked inpaint that made its clean still and the kling_o3_flf call that animated it, with job ids, credits and prompts; the raw file by its sum and bytes (assets-src/room/flux/raw, gitignored; the sums committed in SHA256SUMS, where the generator's file names are); the encode scripts/room/encode-flux.mjs wrote, its matrix choice with both differences, the probe's checks and the poster stills. flash carries AC5's verdict per loop (scripts/room/loop-flash.py, the loop as drawn at rest at the viewport of its class, its first second appended for the wrap) and flashSteps the five steps' verdicts; approval is Sam's for all ten.",
  "model": "kling_o3_flf",
  "params": {
   "duration": 5,
@@ -253,7 +253,23 @@
      "height": 666
     }
    },
-   "flash": "pending",
+   "flash": {
+    "verdict": "pass",
+    "viewport": "1280x800",
+    "checked": "2026-10-23",
+    "by": "scripts/room/loop-flash.py",
+    "frames": 144,
+    "pixelMost": 7,
+    "regionShare": 0.0143,
+    "regionTurns": 0,
+    "redShare": 0.0002,
+    "redTurns": 0,
+    "shade": [
+     0.45,
+     0.45,
+     0.72
+    ]
+   },
    "approval": {
     "date": "2026-10-22",
     "words": "All ten backgrounds are approved."
@@ -434,7 +450,23 @@
      "height": 1280
     }
    },
-   "flash": "pending",
+   "flash": {
+    "verdict": "pass",
+    "viewport": "390x844",
+    "checked": "2026-10-23",
+    "by": "scripts/room/loop-flash.py",
+    "frames": 144,
+    "pixelMost": 3,
+    "regionShare": 0.001,
+    "regionTurns": 0,
+    "redShare": 0.0016,
+    "redTurns": 0,
+    "shade": [
+     0.45,
+     0.45,
+     0.72
+    ]
+   },
    "approval": {
     "date": "2026-10-22",
     "words": "All ten backgrounds are approved."
@@ -601,7 +633,23 @@
      "height": 666
     }
    },
-   "flash": "pending",
+   "flash": {
+    "verdict": "pass",
+    "viewport": "1280x800",
+    "checked": "2026-10-23",
+    "by": "scripts/room/loop-flash.py",
+    "frames": 144,
+    "pixelMost": 1,
+    "regionShare": 0.0,
+    "regionTurns": 0,
+    "redShare": 0.0,
+    "redTurns": 0,
+    "shade": [
+     0.45,
+     0.45,
+     0.72
+    ]
+   },
    "approval": {
     "date": "2026-10-22",
     "words": "All ten backgrounds are approved."
@@ -766,7 +814,23 @@
      "height": 1280
     }
    },
-   "flash": "pending",
+   "flash": {
+    "verdict": "pass",
+    "viewport": "390x844",
+    "checked": "2026-10-23",
+    "by": "scripts/room/loop-flash.py",
+    "frames": 144,
+    "pixelMost": 0,
+    "regionShare": 0.0,
+    "regionTurns": 0,
+    "redShare": 0.0,
+    "redTurns": 0,
+    "shade": [
+     0.45,
+     0.45,
+     0.72
+    ]
+   },
    "approval": {
     "date": "2026-10-22",
     "words": "All ten backgrounds are approved."
@@ -927,7 +991,23 @@
      "height": 666
     }
    },
-   "flash": "pending",
+   "flash": {
+    "verdict": "pass",
+    "viewport": "1280x800",
+    "checked": "2026-10-23",
+    "by": "scripts/room/loop-flash.py",
+    "frames": 144,
+    "pixelMost": 0,
+    "regionShare": 0.0,
+    "regionTurns": 0,
+    "redShare": 0.0579,
+    "redTurns": 0,
+    "shade": [
+     0.45,
+     0.45,
+     0.72
+    ]
+   },
    "approval": {
     "date": "2026-10-22",
     "words": "All ten backgrounds are approved."
@@ -1088,7 +1168,23 @@
      "height": 1280
     }
    },
-   "flash": "pending",
+   "flash": {
+    "verdict": "pass",
+    "viewport": "390x844",
+    "checked": "2026-10-23",
+    "by": "scripts/room/loop-flash.py",
+    "frames": 144,
+    "pixelMost": 0,
+    "regionShare": 0.0,
+    "regionTurns": 0,
+    "redShare": 0.0272,
+    "redTurns": 0,
+    "shade": [
+     0.45,
+     0.45,
+     0.72
+    ]
+   },
    "approval": {
     "date": "2026-10-22",
     "words": "All ten backgrounds are approved."
@@ -1249,7 +1345,23 @@
      "height": 666
     }
    },
-   "flash": "pending",
+   "flash": {
+    "verdict": "pass",
+    "viewport": "1280x800",
+    "checked": "2026-10-23",
+    "by": "scripts/room/loop-flash.py",
+    "frames": 144,
+    "pixelMost": 0,
+    "regionShare": 0.0,
+    "regionTurns": 0,
+    "redShare": 0.0042,
+    "redTurns": 0,
+    "shade": [
+     0.45,
+     0.45,
+     0.72
+    ]
+   },
    "approval": {
     "date": "2026-10-22",
     "words": "All ten backgrounds are approved."
@@ -1418,7 +1530,23 @@
      "height": 1280
     }
    },
-   "flash": "pending",
+   "flash": {
+    "verdict": "pass",
+    "viewport": "390x844",
+    "checked": "2026-10-23",
+    "by": "scripts/room/loop-flash.py",
+    "frames": 144,
+    "pixelMost": 11,
+    "regionShare": 0.0518,
+    "regionTurns": 0,
+    "redShare": 0.0,
+    "redTurns": 0,
+    "shade": [
+     0.45,
+     0.45,
+     0.72
+    ]
+   },
    "approval": {
     "date": "2026-10-22",
     "words": "All ten backgrounds are approved."
@@ -1579,7 +1707,23 @@
      "height": 666
     }
    },
-   "flash": "pending",
+   "flash": {
+    "verdict": "pass",
+    "viewport": "1280x800",
+    "checked": "2026-10-23",
+    "by": "scripts/room/loop-flash.py",
+    "frames": 144,
+    "pixelMost": 2,
+    "regionShare": 0.0,
+    "regionTurns": 0,
+    "redShare": 0.0,
+    "redTurns": 0,
+    "shade": [
+     0.45,
+     0.45,
+     0.72
+    ]
+   },
    "approval": {
     "date": "2026-10-22",
     "words": "All ten backgrounds are approved."
@@ -1740,11 +1884,153 @@
      "height": 1280
     }
    },
-   "flash": "pending",
+   "flash": {
+    "verdict": "pass",
+    "viewport": "390x844",
+    "checked": "2026-10-23",
+    "by": "scripts/room/loop-flash.py",
+    "frames": 144,
+    "pixelMost": 0,
+    "regionShare": 0.0,
+    "regionTurns": 0,
+    "redShare": 0.0,
+    "redTurns": 0,
+    "shade": [
+     0.45,
+     0.45,
+     0.72
+    ]
+   },
    "approval": {
     "date": "2026-10-22",
     "words": "All ten backgrounds are approved."
    }
   }
- ]
+ ],
+ "flashSteps": {
+  "//": "AC5 over the steps: the four forward steps and the step back from scene 5, each 36 frames at 1/24 s captured by scripts/room/step-frames.mjs from the hooks build (the clock ticked one frame at a time, the loops playing at the wall clock) at both viewports, checked by scripts/room/loop-flash.py on 2026-10-23; a region fails with more than 6 turns in a second",
+  "checked": "2026-10-23",
+  "steps": [
+   {
+    "from": 1,
+    "to": 2,
+    "viewport": "1280x800",
+    "frames": 36,
+    "pixelMost": 7,
+    "regionShare": 1.0,
+    "regionTurns": 2,
+    "redShare": 0.0,
+    "redTurns": 0,
+    "verdict": "pass"
+   },
+   {
+    "from": 2,
+    "to": 3,
+    "viewport": "1280x800",
+    "frames": 36,
+    "pixelMost": 6,
+    "regionShare": 1.0,
+    "regionTurns": 3,
+    "redShare": 0.5372,
+    "redTurns": 2,
+    "verdict": "pass"
+   },
+   {
+    "from": 3,
+    "to": 4,
+    "viewport": "1280x800",
+    "frames": 36,
+    "pixelMost": 8,
+    "regionShare": 1.0,
+    "regionTurns": 2,
+    "redShare": 0.3583,
+    "redTurns": 4,
+    "verdict": "pass"
+   },
+   {
+    "from": 4,
+    "to": 5,
+    "viewport": "1280x800",
+    "frames": 36,
+    "pixelMost": 7,
+    "regionShare": 1.0,
+    "regionTurns": 4,
+    "redShare": 0.0056,
+    "redTurns": 0,
+    "verdict": "pass"
+   },
+   {
+    "from": 5,
+    "to": 4,
+    "viewport": "1280x800",
+    "frames": 36,
+    "pixelMost": 10,
+    "regionShare": 1.0,
+    "regionTurns": 3,
+    "redShare": 0.3158,
+    "redTurns": 2,
+    "verdict": "pass"
+   },
+   {
+    "from": 1,
+    "to": 2,
+    "viewport": "390x844",
+    "frames": 36,
+    "pixelMost": 8,
+    "regionShare": 0.6686,
+    "regionTurns": 2,
+    "redShare": 0.0002,
+    "redTurns": 0,
+    "verdict": "pass"
+   },
+   {
+    "from": 2,
+    "to": 3,
+    "viewport": "390x844",
+    "frames": 36,
+    "pixelMost": 7,
+    "regionShare": 0.7218,
+    "regionTurns": 2,
+    "redShare": 0.3865,
+    "redTurns": 2,
+    "verdict": "pass"
+   },
+   {
+    "from": 3,
+    "to": 4,
+    "viewport": "390x844",
+    "frames": 36,
+    "pixelMost": 12,
+    "regionShare": 0.879,
+    "regionTurns": 2,
+    "redShare": 0.0978,
+    "redTurns": 0,
+    "verdict": "pass"
+   },
+   {
+    "from": 4,
+    "to": 5,
+    "viewport": "390x844",
+    "frames": 36,
+    "pixelMost": 8,
+    "regionShare": 0.9271,
+    "regionTurns": 2,
+    "redShare": 0.0,
+    "redTurns": 0,
+    "verdict": "pass"
+   },
+   {
+    "from": 5,
+    "to": 4,
+    "viewport": "390x844",
+    "frames": 36,
+    "pixelMost": 10,
+    "regionShare": 0.8746,
+    "regionTurns": 2,
+    "redShare": 0.0019,
+    "redTurns": 0,
+    "verdict": "pass"
+   }
+  ]
+ }
 }
