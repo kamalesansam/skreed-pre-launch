@@ -56,9 +56,22 @@ test('the five scenes (section-4-flux.md 3): the rooms in order, the products, t
     assert.doesNotMatch(s.alt, /\b(case|wallet|lenskin|airpods|phone)\b/i, `${s.id}: no product in the still`);
     assert.doesNotMatch(s.alt, /bath|shower|tub|shampoo/i, `${s.id}: nothing of a bathroom`);
     assert.ok(Number.isFinite(s.baseYaw));
+    assert.equal(typeof s.toneDark, 'boolean', `${s.id}: the logotype's tone over the scene`);
     assert.ok(productById(s.product));
     for (const cls of ['wide', 'portrait'] as const) for (const k of ['loop', 'avif', 'webp'] as const) assert.equal(typeof s.files[cls][k], 'string', `${s.id} ${cls} ${k}: a URL string (empty under Node, the build's glob fills it)`);
   }
+  // the logotype's tone over each scene (D5): scripts/room/scene-tone.mjs on 2026-10-23 measured Pearl Whisper at 5.0 to 18.6:1
+  // and Urban Slate at 1.05 to 1.98:1 under the logotype's and the control's boxes at both viewports, so every scene keeps Pearl
+  assert.deepEqual(ROOM_SCENES.map((s) => s.toneDark), [false, false, false, false, false]);
+  const director = read('src/scripts/hero/section4/director.ts');
+  assert.match(director, /const sceneTone = \(\) => ROOM_SCENES\[carousel\.front\(\)\]\?\.toneDark \?\? false;/, 'the director takes the front scene\'s tone');
+  assert.match(director, /tex = carousel\.out; toneDark = sceneTone\(\);/, 'over the scenes');
+  assert.match(director, /toneDark = b\.done && sceneTone\(\);/, 'once the bubble is done');
+  assert.doesNotMatch(director, /toneDark = true;/, 'never Urban Slate by state alone');
+  // under a seam's cloud (Pearl Whisper where it is thickest) the logotype and the control turn Urban Slate from half cover,
+  // and the frame applies the plan's tone under any cover, after the exit's jump too (the checker's finding on D5's first fix)
+  assert.match(director, /toneDark \|\|= cover >= 0\.5;/, 'Urban Slate from half cover');
+  assert.match(read('src/scripts/hero/loop.ts'), /if \(plan && \(cover > 0 \|\| \(roomOn && plan\.wipeIn >= 0\.5\)\)\) window\.__skreedLogo\?\.setTone\(plan\.toneDark\);/, "the plan's tone applied under any cover");
   assert.deepEqual(SCENE_SIZE, { wide: { width: 1280, height: 666 }, portrait: { width: 720, height: 1280 } });
   assert.equal(shadeLine(ROOM_SCENES[0]), 'Lilac, vivid violet');
   assert.equal(fill(ROOM_COPY.count, { n: 2, N: 5 }), '2 / 5');
@@ -148,9 +161,18 @@ test("E-S4-font: section 2's label type, IBM Plex Mono Medium in capitals, at th
   assert.match(css, /\.room \.rm-link \{[^}]*min-height: 44px; min-width: 44px;[^}]*text-decoration-line: underline; text-decoration-thickness: 1px; text-underline-offset: 0\.4em;/);
   assert.match(css, /\.room \.rm-nav \{ position: absolute; right: var\(--inset\); bottom: var\(--rm-bottom\);/);
   assert.match(css, /\.room:not\(\[data-state="world"\]\) \.rm-nav \{ display: none; \}/);
-  assert.match(css, /@media \(orientation: portrait\) \{ \.room \.rm-scene-hint \{ bottom: calc\(var\(--rm-bottom\) \+ 44px \+ var\(--s2\)\); \} \}/, 'the hint one row above the words on a portrait stage');
-  assert.match(css, /\.room \.rm-pause \{ left: var\(--inset\);/, 'the pause control top left');
-  assert.match(css, /\.room:not\(\[data-pause="1"\]\) \.rm-pause/, 'the pause control hidden unless the director shows it');
+  // the scene hint is a row of scene 1's text grid under the count (D6), on both classes: no position of its own, no portrait rule
+  assert.doesNotMatch(css, /rm-scene-hint \{ bottom/, 'the hint has no bottom of its own');
+  assert.doesNotMatch(css, /orientation: portrait\) \{ \.room \.rm-scene-hint/, 'no portrait rule for the hint');
+  assert.match(css, /\.rm-scene :is\(\.rm-scene-hint, \.rm-scene-more\)\[hidden\] \{ display: none; \}/);
+  // the 2.2.2 control (spec 3 and 5): bottom right one row above the previous and next words, its text swapping between pause and play, no aria-pressed, hidden until data-pause is set, never in the hall
+  assert.match(css, /\.room \.rm-pause \{ right: var\(--inset\); bottom: calc\(var\(--rm-bottom\) \+ 44px \+ var\(--s2\)\); \}/, 'the pause control bottom right, one row above the words');
+  assert.doesNotMatch(css, /\.rm-pause \{ left:/, 'no longer top left');
+  assert.match(css, /\.room:not\(\[data-pause="1"\]\) \.rm-pause, \.room:is\(\[data-state="hall"\]\) \.rm-pause \{ display: none; \}/, 'the pause control hidden unless the director shows it, and never in the hall');
+  const walkSrc = read('src/scripts/room/walk.ts');
+  assert.match(walkSrc, /dec\.set\(pause, motionOn \? R\.pause : R\.play\)/, 'the text swaps between pause and play');
+  for (const src of [astro, walkSrc, css]) assert.doesNotMatch(src, /aria-pressed/, 'no aria-pressed');
+  assert.match(walkSrc, /root\.dataset\.pause === '1' && f\.state !== 'hall'/, 'shown only once data-pause is set, never in the hall');
   for (const id of ['rmEnter', 'rmSkip', 'rmPrev', 'rmNext', 'rmPause']) assert.match(astro, new RegExp(`class="rm-[a-z]+ rm-link" id="${id}"`));
 });
 
@@ -158,7 +180,9 @@ test('the DOM (section-4-flux.md 5): the prompt, the pad, Skip, the lines, the s
   assert.match(astro, /<button type="button" class="rm-enter rm-link" id="rmEnter" aria-keyshortcuts="E"><span class="rm-key" aria-hidden="true">\{R\.key\}<\/span><span class="rm-enter-text">\{R\.enter\}<\/span><\/button>/, 'the prompt is never hidden: there are always five scenes');
   assert.match(astro, /<div class="rm-pad" id="rmPad" tabindex="0" role="group" aria-label=\{R\.stageAria\}><\/div>/);
   assert.match(astro, /<p class="rm-line rm-loading" id="rmLoading" role="status" hidden>/);
-  assert.match(astro, /<p class="rm-line rm-scene-hint" id="rmSceneHint" hidden>\{R\.sceneHintTouch\}<\/p>/);
+  assert.match(astro, /<p class="rm-scene-line">\{s\.line\}<\/p>\s*\{\/\*[^*]*\*\/\}\s*\{s\.i === 0 && <p class="rm-scene-hint" id="rmSceneHint" hidden>\{R\.sceneHintTouch\}<\/p>\}\s*<p class="rm-scene-count">\{s\.count\}<\/p>\s*<p class="rm-scene-more" aria-hidden="true" hidden><\/p>/, 'the scene hint a row of scene 1\'s lines above the count (the words share the count\'s row at 390), the loading line under it');
+  assert.doesNotMatch(astro, /rm-line rm-scene-hint/, 'the hint is no bottom-centre line');
+  assert.match(read('src/scripts/room/walk.ts'), /if \(sceneHint && !sceneHint\.hidden && i !== 0\) setLine\(sceneHint, ''\);/, 'the hint goes when the scene changes without a step');
   assert.match(astro, /<h2 class="sr-only">\{R\.scenesTitle\}<\/h2>/);
   assert.match(astro, /<ol class="rm-scenes" id="rmScenes" aria-label=\{R\.scenesAria\}>/);
   assert.match(astro, /<li class="rm-scene" data-id=\{s\.id\} data-i=\{s\.i\}>/);

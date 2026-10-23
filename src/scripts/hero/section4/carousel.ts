@@ -11,13 +11,17 @@
 // plane swings out on the arc of the stage's shape (80 degrees wide, 22 portrait, X-1), the incoming swings in from the
 // other side, the field of view pinches from 45 to fovStep and back by fovReturnAt, the front index switches at eased
 // 0.75, the lights follow proximity and its direction, the loops play and reset by it (at most two at once, their two
-// textures resident), and the product in front (z minus 4.4, life size times its exhibit factor times the class scale:
-// the case at most 0.55 of the view's height and 0.62 of its width) turns half a turn and is swapped edge-on at the
-// half with its scale easing over 0.35 to 0.65. The product is a MeshPhysicalMaterial per finish (render-products.py's
+// textures resident), and the product in front (z minus 4.4, life size times its exhibit factor times the class scale,
+// placed by carousel-math.ts productPlacement: on the wide class the case at most 0.55 of the view's height and 0.62
+// of its width, the centre kept and the holder moved right only as far as the lines' column needs; on the portrait
+// class at most 0.50 of the height, its centre raised to 0.60 of the view's height, so the four lines' block stays
+// clear of it) turns half a turn and is swapped edge-on at the half with its scale easing over 0.35 to 0.65. The product is a MeshPhysicalMaterial per finish (render-products.py's
 // numbers, the family page's calibration) in the scene's catalog shade, the trim dark and the logo a share of the
-// shade as the old universe drew them, under a PMREM of three's RoomEnvironment at 0.575, one DirectionalLight (the
-// key, from above and in front at 1.6, white mixed 60 percent toward the scene's tint, cross-faded over keyLightMs from
-// the front switch) and the cool fill at 0.2; the output colour-space chunk is replaced by an sRGB encode so it writes
+// shade as the old universe drew them, under a PMREM of three's RoomEnvironment (each material's own envMap, at
+// LIGHTS.env on the matte and gloss finishes and LIGHTS.metalEnv on the metallic), one DirectionalLight (the key, from
+// above and in front at LIGHTS.key, white mixed 60 percent toward the scene's tint, cross-faded over keyLightMs from
+// the front switch) and the cool fill at LIGHTS.fill, the three set by the product check (AC2); the output colour-space
+// chunk is replaced by an sRGB encode so it writes
 // display values into the same 8-bit target the planes do (X-9), cleared to black under NoToneMapping set and restored
 // around the draw, no tone curve (hero-architecture.md "Render targets and colour spaces"). The seams' cloud (X-3) is
 // the reference's fbm drawn into its own target at min(DPR, 1.5) (halved on degrade), premultiplied, only while a seam
@@ -30,7 +34,7 @@ import { BufferGeometry, Camera, Color, DirectionalLight, DoubleSide, Float32Buf
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import type { Product } from './products-bin.ts';
 import type { VideoPool } from './video.ts';
-import { LIGHT, LOOP_ASPECT, STEP, anglesAt, cloudCover, coverFit, easeStep, fovAt, keyLight, lightUp, loopShouldPlay, loopShouldReset, productFit, productScale, productYaw, proximity, ringPlace, type LightConfig, type LoopClass, type ProductFill } from './carousel-math.ts';
+import { LIGHT, LOOP_ASPECT, PLACE, STEP, anglesAt, cloudCover, coverFit, easeStep, fovAt, keyLight, lightUp, loopShouldPlay, loopShouldReset, productPlacement, productScale, productScreenBox, productYaw, proximity, ringPlace, type Box, type LightConfig, type LoopClass, type Placement } from './carousel-math.ts';
 
 export type Finish = 'matte' | 'gloss' | 'metallic';
 
@@ -76,6 +80,8 @@ export interface CarouselOptions {
 }
 
 export type SeamPhase = 'in' | 'out' | null;
+/** the lights as set (spec 3 "Materials and lights"; LIGHTS holds the defaults): the environment's intensity on the matte and gloss finishes (env) and on the metallic one, which reflects it rather than gathering it, on the wide class (metalEnv) and on the portrait class (metalEnvPortrait) */
+export interface LightSetting { key: number; env: number; metalEnv: number; metalEnvPortrait: number; fill: number; tint: boolean; bodyOnly: boolean }
 
 export interface Carousel {
   /** the carousel's frame: its 8-bit target, display values, cleared to black */
@@ -108,8 +114,16 @@ export interface Carousel {
   degrade(cloudHalf: boolean): void;
   /** the director's scissor while the bubble is small (the bubble's bounding box in device pixels), or null */
   scissor(r: { x: number; y: number; w: number; h: number } | null): void;
-  /** the bottom shade, for AC12's tuning: how dark at the bottom edge (0 to 1) and its height as a share of the frame */
-  shade(dark: number, height?: number): void;
+  /** the bottom shade, for AC12's tuning: how dark at the bottom edge (0 to 1), where it clears (a share of the frame's height) and up to where it stays solid */
+  shade(dark: number, height?: number, solid?: number): void;
+  /** the product's placement at the stage's CSS size, and the shown product's box on the stage (shares, x from the left, y from the top), or null with no product */
+  place(): Placement & { box: Box | null };
+  /**
+   * The lights set live (the review's product check, AC2; hooks builds call it): the key's, the environment's and the
+   * fill's intensity, the key's tint on or off (off: a white key), and bodyOnly, which hides the planes, the logo and
+   * the trim so the body alone is drawn on black. Returns the values in force.
+   */
+  lights(o: Partial<LightSetting>): LightSetting;
   /** products.bin arrived (or changed): the slots rebuilt in each scene's shade, the class scale from the case; their programs compiled one a frame if the rest has warmed */
   setProducts(products: readonly Product[]): void;
   /** the cloud's pass and target, one compile with the target bound (spec 5, "Loading", phase 0: readied at idle, before any seam); warm() starts with it */
@@ -125,24 +139,45 @@ export interface Carousel {
 
 /** each product's exhibit factor over life size (section-4.md's, spec 3 "Size and pose") */
 export const EXHIBIT: Readonly<Record<string, number>> = Object.freeze({ case: 1, wallet: 1.55, airpods: 1.75, lenskin: 2.2 });
-/** the class scale's rule (spec 3): the life-size case at most this share of the view's height and of its width at its distance, fov 45, whichever bites first */
-export const CLASS_FILL: Readonly<ProductFill> = Object.freeze({ height: 0.55, width: 0.62 });
+/** the class scale's rule on the wide class (spec 3; carousel-math.ts PLACE carries both classes): the life-size case at most this share of the view's height and of its width at its distance, fov 45, whichever bites first */
+export const CLASS_FILL = PLACE.wide;
 /** the finishes, MeshPhysicalMaterial each (render-products.py's numbers, the family page's calibration; spec 3 "Materials and lights") */
 export const FINISH = Object.freeze({
   matte: { roughness: 0.62, metalness: 0, specularIntensity: 0.2 },
   gloss: { roughness: 0.62, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.03, specularIntensity: 0.2 },
   metallic: { roughness: 0.38, metalness: 1 },
 });
-/** the lights (spec 3): the key's intensity, where it shines from (toward the product) and how far white mixes toward the scene's tint; the fill's tint, place and intensity; the environment's intensity and blur */
-export const LIGHTS = Object.freeze({ key: 1.6, keyMix: 0.6, keyFrom: [0.1, 0.8, 0.6] as const, fill: 0.2, fillTint: '#dfe6ea', fillFrom: [-0.6, 0.2, 0.8] as const, env: 0.575, blur: 0.04 });
+/**
+ * The lights (spec 3): the key's intensity, where it shines from (toward the product) and how far white mixes toward
+ * the scene's tint; the fill's tint, place and intensity; the environment's intensity on the matte and gloss finishes
+ * and on the metallic one, and its blur. The intensities are the spec's 1.6, 0.575 and 0.2 scaled by 0.83, set by
+ * scripts/room/product-check.mjs (AC2) on 2026-10-23 so that under a white key the matte lit face lands on its
+ * catalog hex (the environment gives 1.5 times the albedo per unit, the key 0.19, the fill 0.2; the spec's numbers
+ * sum to 1.21 and the lit faces clipped, the build record's D4); the metallic finish reflects the environment rather
+ * than gathering it and takes it per class: 1.0 on the wide class (the Lenskin within dE00 4 with 4 percent of its face
+ * at 255 at 1280 x 800; at 0.8 it reads dE00 8.06) and 0.6 on the portrait class, where the raised placement shows the
+ * face from lower down and it mirrors the environment's bright ceiling (at 1.0 the face clipped, 96 percent at 255 at
+ * 390 x 844; at 0.6 dE00 4.44 with 2.2 percent).
+ */
+export const LIGHTS = Object.freeze({ key: 1.33, keyMix: 0.6, keyFrom: [0.1, 0.8, 0.6] as const, fill: 0.17, fillTint: '#dfe6ea', fillFrom: [-0.6, 0.2, 0.8] as const, env: 0.48, metalEnv: 1.0, metalEnvPortrait: 0.6, blur: 0.04 });
 /** the trim's fixed dark (linear) and its roughness, and the logo's share of the shade (render-products.py, the old universe) */
 export const PARTS = Object.freeze({ trim: [0.073, 0.077, 0.077] as const, trimRoughness: 0.55, logoTint: 0.8468 });
-/** the bottom shade: 24 vh of the frame, clear to 85 percent black (the reference's caption gradient, spec 3 "Legibility") */
-export const SHADE = Object.freeze({ dark: 0.85, height: 0.24 });
+/**
+ * The bottom shade in the frame (the reference's caption gradient, spec 3 "Legibility"; AC12): dark at the bottom edge
+ * (the share of black), solid up to `solid` of the frame's height, then clearing linearly by `height`. The reference's
+ * is 24 vh, clear to 85 percent black (dark 0.85, solid 0, height 0.24); the four lines' block reaches 0.30 of the
+ * height at 390 x 844 and 0.45 at 1280 x 800 (the name at 40 px, the catalog line wrapping in 520 px), so a ramp that
+ * clears by 0.24 left dawn's name at 2.2:1 and palace's at 3.4. Set by scripts/room/contrast.mjs (--shade,
+ * --shade-solid, --shade-height, live) on 2026-10-23 to the lightest shade at which every text box's median reads
+ * 4.5:1 or better over 10 frames of every loop at both viewports: 45 percent of black, solid to 0.45 of the height,
+ * clear by 0.72 (every scene box's median 6.0:1 or better, the worst 4.7). docs/specs/evidence/section-4-flux-contrast.md
+ * has the readings.
+ */
+export const SHADE = Object.freeze({ dark: 0.45, solid: 0.45, height: 0.72 });
 /** the cloud's target is capped at this DPR (reference 8.4); the cloud's two tones as display values: the reference's shadow and Pearl Whisper (E-S4-colour) */
 export const CLOUD = Object.freeze({ dpr: 1.5, shadow: [0.80, 0.84, 0.93] as const, light: [0xf7 / 255, 0xf6 / 255, 0xf3 / 255] as const });
-/** the case's width and height in metres where products.bin lacks it (src/data/room-products-bin.json) */
-const CASE_M = [0.1047, 0.19674] as const;
+/** the case's width, height and depth in metres where products.bin lacks it (src/data/room-products-bin.json) */
+const CASE_M = [0.1047, 0.19674, 0.02656] as const;
 /** a proximity change under this is neither rising nor falling (the reference's) */
 const PROX_EPS = 5e-4;
 
@@ -153,7 +188,7 @@ const PLANE_VERT = /* glsl */`
 // loop or a reduced step cross-fades; the reference's reveal from the light-up value and the pixel's luminance
 // (carousel-math.ts lightGain), the floor; re-encoded, then the bottom shade by the fragment's own place in the frame
 const PLANE_FRAG = /* glsl */`
-  uniform sampler2D tMap, tTo; uniform float uMix, uLight, uSoft, uBoost, uFloor, uShade, uShadeH; uniform vec2 uRes;
+  uniform sampler2D tMap, tTo; uniform float uMix, uLight, uSoft, uBoost, uFloor, uShade, uShadeH, uShadeSolid; uniform vec2 uRes;
   varying vec2 vUv;
   vec3 toLinear(vec3 c) { return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }
   vec3 toSrgb(vec3 c) { return mix(c * 12.92, 1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, c)); }
@@ -164,7 +199,7 @@ const PLANE_FRAG = /* glsl */`
     float reveal = smoothstep(edge, edge + uSoft, lum);
     float ambient = smoothstep(0.4, 1.0, uLight) * uLight;
     float g = max(max(reveal, ambient) * (1.0 + uBoost * reveal * (1.0 - uLight)), uFloor);
-    float sh = 1.0 - uShade * (1.0 - clamp(gl_FragCoord.y / (uRes.y * uShadeH), 0.0, 1.0));
+    float sh = 1.0 - uShade * (1.0 - clamp((gl_FragCoord.y / uRes.y - uShadeSolid) / max(uShadeH - uShadeSolid, 1e-3), 0.0, 1.0));
     gl_FragColor = vec4(toSrgb(clamp(c * g, 0.0, 1.0)) * sh, 1.0);
   }`;
 const CLOUD_VERT = /* glsl */`
@@ -214,7 +249,7 @@ interface Plane {
   still: Texture | null; stillJob: Promise<void> | null; settled: boolean;
   showing: 'none' | 'still' | 'loop'; mixT0: number;
 }
-interface Slot { group: Group; mats: MeshPhysicalMaterial[]; exhibit: number }
+interface Slot { group: Group; mats: MeshPhysicalMaterial[]; parts: { mesh: Mesh; body: boolean }[]; exhibit: number; /** the product's life size times its exhibit factor, metres */ size: readonly [number, number, number] }
 interface Tween { from: number; to: number; dir: 1 | -1; t0: number; ms: number }
 
 export function createCarousel(o: CarouselOptions): Carousel {
@@ -232,7 +267,7 @@ export function createCarousel(o: CarouselOptions): Carousel {
   let scissorRect: { x: number; y: number; w: number; h: number } | null = null;
 
   // the planes, one a scene, sharing the light-up and shade uniforms
-  const shared: Record<'uSoft' | 'uBoost' | 'uFloor' | 'uShade' | 'uShadeH', { value: number }> & { uRes: { value: Vector2 } } = { uSoft: { value: LIGHT.soft }, uBoost: { value: LIGHT.boost }, uFloor: { value: LIGHT.floor }, uShade: { value: SHADE.dark }, uShadeH: { value: SHADE.height }, uRes: { value: new Vector2(8, 8) } };
+  const shared: Record<'uSoft' | 'uBoost' | 'uFloor' | 'uShade' | 'uShadeH' | 'uShadeSolid', { value: number }> & { uRes: { value: Vector2 } } = { uSoft: { value: LIGHT.soft }, uBoost: { value: LIGHT.boost }, uFloor: { value: LIGHT.floor }, uShade: { value: SHADE.dark }, uShadeH: { value: SHADE.height }, uShadeSolid: { value: SHADE.solid }, uRes: { value: new Vector2(8, 8) } };
   const planeGeo = new PlaneGeometry(1, 1);
   const planes: Plane[] = scenes.map(() => {
     const U: PlaneUniforms = { tMap: { value: null }, tTo: { value: null }, uMix: { value: 0 }, uLight: { value: 0 } };
@@ -247,6 +282,17 @@ export function createCarousel(o: CarouselOptions): Carousel {
   let products: readonly Product[] = o.products ?? [];
   let slots: (Slot | null)[] = scenes.map(() => null);
   let caseW: number = CASE_M[0], caseH: number = CASE_M[1], classScale = 1;
+  let placement: Placement = { cls: o.cls, scale: 1, x: 0, y: 0 };
+  const setting: LightSetting = { key: LIGHTS.key, env: LIGHTS.env, metalEnv: LIGHTS.metalEnv, metalEnvPortrait: LIGHTS.metalEnvPortrait, fill: LIGHTS.fill, tint: true, bodyOnly: false };
+  /** the environment's intensity on a material: the metallic finish's by the placement's class (the portrait placement shows the face from lower down) */
+  const envOf = (m: MeshPhysicalMaterial) => (m.metalness > 0.5 ? (placement.cls === 'portrait' ? setting.metalEnvPortrait : setting.metalEnv) : setting.env);
+  /**
+   * Each material carries the environment as its own envMap once the PMREM is in: with the scene's environment alone
+   * three (0.165, WebGLRenderer setProgram) sets the uniform from scene.environmentIntensity and ignores the material's
+   * envMapIntensity, so the environment stood at 1 whatever LIGHTS.env said (the build record's D4). The family page's
+   * stage.ts does the same for its gloss materials.
+   */
+  const applyEnv = (m: MeshPhysicalMaterial) => { if (envTarget) m.envMap = envTarget.texture; m.envMapIntensity = envOf(m); };
   const compiledPrograms = new Set<string>();
   function buildSlots() {
     for (const s of slots) if (s) { holder.remove(s.group); for (const m of s.mats) m.dispose(); }
@@ -256,20 +302,29 @@ export function createCarousel(o: CarouselOptions): Carousel {
       const p = byName.get(s.product);
       if (!p) return null;
       const shade = new Color(s.shade), group = new Group();
+      // the parts as render-products.py roles them: the trim in its fixed dark at roughness 0.55, the logo a share of the body's shade, everything else the body
       const body = partMaterial(shade, s.finish), logo = partMaterial(shade.clone().multiplyScalar(PARTS.logoTint), s.finish, -1), trim = partMaterial(new Color(...PARTS.trim), 'trim', 1);
+      for (const m of [body, logo, trim]) applyEnv(m);
+      const parts: Slot['parts'] = [];
       for (const part of p.parts) {
+        const isBody = part.name !== 'trim' && part.name !== 'logo';
         const mesh = new Mesh(part.geometry, part.name === 'trim' ? trim : part.name === 'logo' ? logo : body);
-        mesh.frustumCulled = false; group.add(mesh);
+        mesh.frustumCulled = false; mesh.visible = isBody || !setting.bodyOnly; group.add(mesh); parts.push({ mesh, body: isBody });
       }
       group.visible = false; holder.add(group);
-      return { group, mats: [body, logo, trim], exhibit: EXHIBIT[s.product] ?? 1 };
+      const e = EXHIBIT[s.product] ?? 1;
+      return { group, mats: [body, logo, trim], parts, exhibit: e, size: [p.size[0] * e, p.size[1] * e, p.size[2] * e] as const };
     });
     measure();
   }
-  /** the class scale from the stage's shape (spec 3, "Size and pose") */
+  /** the class scale and the holder's place from the stage's shape and size in CSS px (spec 3, "Size and pose"; carousel-math.ts productPlacement) */
   function measure() {
-    const d = Math.hypot(STEP.cam.x, STEP.cam.y, STEP.cam.z - STEP.productZ), viewH = 2 * Math.tan((STEP.fovBase * Math.PI) / 360) * d;
-    classScale = productFit(viewH, W / H, caseW, caseH, CLASS_FILL);
+    const sizes = slots.filter((s): s is Slot => !!s).map((s) => s.size);
+    const was = placement.cls;
+    placement = productPlacement(W / dpr, H / dpr, caseW, caseH, sizes.length ? sizes : [[caseW, caseH, CASE_M[2]]]);
+    classScale = placement.scale;
+    holder.position.set(placement.x, placement.y, STEP.productZ);
+    if (placement.cls !== was) for (const s of slots) if (s) for (const m of s.mats) applyEnv(m);   // the metallic finish's environment follows the class
   }
 
   // the lights: the key from above and in front, tinted per scene; the cool fill from the other side (spec 3)
@@ -469,8 +524,8 @@ export function createCarousel(o: CarouselOptions): Carousel {
           else if (motionOn && loopShouldPlay(prox, p.falling) && video.in(L) && !video.playing(L)) video.play(L);
         }
       });
-      // the visible planes' maps and fits
-      planes.forEach((p, j) => { if (p.group.visible) fit(p, chooseMap(p, j, t, !!(reduced && tw && j === tw.from))); });
+      // the visible planes' maps and fits (none drawn while the product check wants the body alone on black)
+      planes.forEach((p, j) => { if (p.group.visible) fit(p, chooseMap(p, j, t, !!(reduced && tw && j === tw.from))); if (setting.bodyOnly) p.mesh.visible = false; });
       // the product in front: the shown scene's, scaled across the step, turned with the step and the look
       const sh = slots[shownIdx];
       for (const s of slots) if (s) s.group.visible = s === sh;
@@ -482,8 +537,8 @@ export function createCarousel(o: CarouselOptions): Carousel {
         lookX += (lookTX - lookX) * k; lookY += (lookTY - lookY) * k;
         sh.group.rotation.set(lookY * STEP.lookRad, productYaw(curStep, shownIdx, scenes[shownIdx].baseYaw) + lookX * STEP.lookRad, 0);
       }
-      // the key light
-      const c = keyLight(t - keyT0, keyFrom, keyTo, T.keyLightMs); key.color.setRGB(c[0], c[1], c[2]);
+      // the key light (white while the product check has its tint off)
+      const c = keyLight(t - keyT0, keyFrom, keyTo, T.keyLightMs); if (setting.tint) key.color.setRGB(c[0], c[1], c[2]); else key.color.setRGB(1, 1, 1);
       // the cloud: its clock runs while motion does (held at 0 under reduced motion)
       if (motionOn && !reduced) cloudTime += Math.max(0, dt);
       if (seamPhase) { cloudU.uTime.value = cloudTime; cloudU.uProgress.value = cover; }
@@ -499,7 +554,15 @@ export function createCarousel(o: CarouselOptions): Carousel {
     },
     degrade(half) { cloudHalf = half; if (cloudRt) allocCloud(); },
     scissor(r) { scissorRect = r; },
-    shade(dark, height = SHADE.height) { shared.uShade.value = clamp01(dark); shared.uShadeH.value = Math.max(1e-3, height); },
+    shade(dark, height = SHADE.height, solid = SHADE.solid) { shared.uShade.value = clamp01(dark); shared.uShadeH.value = Math.max(1e-3, height); shared.uShadeSolid.value = Math.min(clamp01(solid), shared.uShadeH.value); },
+    place() { const sh = slots[shownIdx]; return { ...placement, box: sh ? productScreenBox(placement, sh.size, W / dpr, H / dpr) : null }; },
+    lights(o) {
+      Object.assign(setting, o);
+      key.intensity = setting.key; fill.intensity = setting.fill;
+      stage.environmentIntensity = setting.env;
+      for (const s of slots) if (s) { for (const m of s.mats) applyEnv(m); for (const p of s.parts) p.mesh.visible = p.body || !setting.bodyOnly; }
+      return { ...setting };
+    },
     setProducts(list) {
       if (disposed) return;
       products = list; buildSlots();
@@ -522,7 +585,8 @@ export function createCarousel(o: CarouselOptions): Carousel {
           if (disposed) { env.dispose(); return; }
           const pm = new PMREMGenerator(renderer);
           envTarget = pm.fromScene(env, LIGHTS.blur); env.dispose(); pm.dispose();
-          stage.environment = envTarget.texture;
+          stage.environment = envTarget.texture; stage.environmentIntensity = setting.env;
+          for (const s of slots) if (s) for (const m of s.mats) applyEnv(m);
           await frame();
           if (disposed) return;
           if (planes[0]) { await compile(planes[0].mesh, cam, stage, rt); await frame(); }

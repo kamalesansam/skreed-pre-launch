@@ -139,3 +139,214 @@ Three of five reach 255 in a channel. AC2 (within dE00 8 under a white key) was 
 - **Section 12's documents:** none changed on this branch (`git diff 06c2339 HEAD` over docs/, DESIGN.md and CLAUDE.md lists nothing but this record and the sheets, once committed).
 - **Range requests:** local wrangler answers 200 with the whole loop; Workers Static Assets in production unverified.
 - **The builder's open items stand:** the "Pause motion" control's place and aria-pressed contradict between sections 3, 5 and 10 (minor 9; the control is hidden while E-S4-loops is pending); the design choices listed in the builder's report (an entry abandoned off screen resets with no event, one extra carousel frame after a scrollbar reset, the hall's reveal skipped under the scenes, the wrap's one-shot unlock spent on a late touchend).
+
+## 8. The fixes on s4/flux-fixes (2026-10-23)
+
+Branch `s4/flux-fixes` on the default branch's c17d76a, in its own worktree, the hooks build served by wrangler on 127.0.0.1:8791 and driven through `__s4` in the installed Chrome 155 (channel chrome) on the Metal GPU (Apple M3 Pro) unless a line says SwiftShader. Each defect below names its commit's content; the numbers are the runs' own.
+
+**D1, closed.** `src/scripts/hero/section4/layout.ts` holds the section's cached layout and re-reads it when html's class changes (a MutationObserver), when the document, the quiz or the section changes size (a ResizeObserver on documentElement, #find and #room), on resize, and by `get()` once a reading taken under html.intro is stale; the hooks report it (`__s4.state().layout`), the page scroll re-evaluates its capture set on every reading (the glue spans were already measured fresh at every decision). Checked in a natural visit (the intro skipped, native scrolls): at 390 x 844 the director is made during the intro with the section at 1,577 px (the quiz at 733 px, inside the viewport) and reads 15,361 px once the intro ends; at 1280 x 800, 1,442 px during the intro and 14,560 after; at scroll 2,000, 6,000, 12,000 px and at the section's q 2 and 9.5, `qRaw` equals the page's own q at both viewports, and `__skreedRoom.snap(9.5)` lands at 9.5. `render-stills.mjs` launches the installed Chrome when present and waits for a reading taken after the intro before its first snap. Tests: `tests/unit/room-layout.test.ts` (a reading under html.intro replaced three ways), the e2e 390 flow checks the cached top against the live rect (not run here).
+
+**D2, closed.** The entry wiped the prompt through the decode's hide of the button itself, which split its whole text afresh and detached the two spans. `walk.ts` wipes the prompt by its two spans (`wipePrompt`). After the way back the prompt reads "[E]" and "Enter Skreed universe" in its two spans, decoded in by 1.5 s, focused, 189 x 44 px at (185, 358) at 390 and 312 x 44 at (761, 309) at 1280, the same boxes as on the first lap. Tests: `tests/unit/room-prompt.test.ts` (the mechanism and the fix under a fake document), the e2e way back checks the spans, the accessible name and the box.
+
+**D3, closed.** `carousel-math.ts productPlacement`: on the portrait class the case is capped at 0.50 of the view's height (0.62 of the width kept) and its centre raised to 0.60 of the view's height from the bottom (not 0.58: the near face projects 3 percent larger than the centre's depth and would cross the block's top by 0.017 of the height); on the wide class the 0.55 cap and the vertical centre are kept and the holder moves right only as far as the widest product's near face needs to clear the lines' column (the gutter plus 520 px, 565 px at 1280: the centred case overlapped it by 42 px and the Lenskin by 87), 0.314 world units, 89 px, at 1280 x 800, nothing at 1920 wide. The unit test projects every scene's product box and holds its overlap with the lines' box (the column at the gutter, the bottom 34 percent) at zero at both viewports:
+
+| Viewport | The lines' box | Case (scenes 1 and 5) | AirPods case | Wallet | Lenskin |
+|---|---|---|---|---|---|
+| 390 x 844 | x 16 to 374, y 557 to 844 | x 79 to 311, y 117 to 552 (51.6 percent tall) | x 94 to 296, y 227 to 441 | x 76 to 314, y 179 to 494 | x 39 to 351, y 245 to 430 |
+| 1280 x 800 | x 45 to 565, y 528 to 800 | x 611 to 854, y 198 to 651 (56.7 percent tall) | x 631 to 843, y 317 to 541 | x 606 to 855, y 260 to 588 | x 567 to 893, y 328 to 521 |
+
+On the served build the lines' glyph boxes (the name, the shade, the catalog line, the count) meet no product box on any scene at either viewport (the hooks' `product.box` against each line's `.dc` rect).
+
+**D4, closed: the AC2 check.** `scripts/room/product-check.mjs` renders each scene at 1280 x 800 (DPR 1) through the hooks under a white key (`__s4.lights({ tint: false, bodyOnly: true })`: the fill and the environment on, the planes, the logo and the trim hidden so the body alone is drawn on black), reads the median of each channel inside the central half of the product's box, and prints dE00 (CIEDE2000) against the catalog hex. The cause: with the scene's environment alone three 0.165 sets the shader's `envMapIntensity` from `scene.environmentIntensity` (1) and ignores the material's, so the environment stood at 1 whatever `LIGHTS.env` said; the environment gives 1.5 times the albedo per unit, the key 0.19 and the fill 0.2, so the spec's 1.6, 0.575 and 0.2 summed to 1.84 of the albedo as drawn before the fix (1.21 as the spec intended, with the environment at 0.575) and the lit faces clipped. Each product material now carries the environment as its own `envMap` (as the family page's gloss materials do), the three intensities are the spec's scaled by 0.83 (key 1.33, environment 0.48, fill 0.17: the intended 1.21 times 0.83 gives 1.0), and the metallic finish, which reflects the environment rather than gathering it, takes it at 1.0 on the wide class (`LIGHTS.metalEnv`; at 1.1 the Lenskin read dE00 2.7 with 30 percent of its face at 255, at 0.9 dE00 5.7 with 1 percent) and, since the checker's finding (section 9), at 0.6 on the portrait class (`LIGHTS.metalEnvPortrait`). The parts were already roled as render-products.py roles them (the trim in its fixed dark at roughness 0.55, the logo at 0.8468 of the body). The readings with the build's own lights:
+
+| Scene | Product, shade, finish | Catalog | Drawn (median of the lit face) | dE00 | Pixels at 255 |
+|---|---|---|---|---|---|
+| 1 cove | Phone case, Lilac, matte | #c988c8 | #c989c9 | 0.29 | 0.0 percent |
+| 2 grove | AirPods case, Sage, gloss | #96a880 | #95a680 | 0.77 | 0.0 percent |
+| 3 ember | MagSafe wallet, Desert, matte | #c6a884 | #c6a885 | 0.33 | 0.0 percent |
+| 4 palace | Lenskin, Ballerina, metallic | #efa3af | #ea93a0 | 3.97 | 4.1 percent |
+| 5 dawn | Phone case, Pastel, matte | #d7b9ed | #d7baee | 0.32 | 0.1 percent |
+
+Before the fix (the spec's numbers, the white key): 12.93, 13.06, 13.27, 3.73 and 17.35, three faces wholly at 255. The check re-runs with `node scripts/room/product-check.mjs <base>` against a served hooks build; `--try` runs other intensities in one session. These readings are the laptop's; section 9 has both viewports.
+
+**D5, closed.** `ROOM_SCENES` carries `toneDark` per scene and the director's plan takes the front scene's (the front switches at eased 0.75 of a step, where the lights change over; the bubble's end and the still3d dissolve's half take scene 1's). `scripts/room/scene-tone.mjs` measures each scene's still as drawn at rest (cover-fitted at the 1.01 overscan, the bottom shade in the frame) under the logotype's box (the gutter, 96 x 23.2 px at 390, 136 x 32.9 at 1280) and the control's (its 44 px row top right) at both viewports: the median luminance, and Pearl Whisper's and Urban Slate's contrast against it. Every scene's top is dark, so all five keep Pearl (Urban Slate measured 1.05 to 1.98:1, which is D5's reading):
+
+| Scene | 390 logotype: Pearl / Slate | 390 control | 1280 logotype | 1280 control | The pick |
+|---|---|---|---|---|---|
+| 1 cove | 9.05 / 1.09 | 17.66 / 1.78 | 14.39 / 1.45 | 11.19 / 1.13 | Pearl Whisper |
+| 2 grove | 12.19 / 1.23 | 12.48 / 1.26 | 17.57 / 1.77 | 16.26 / 1.64 | Pearl Whisper |
+| 3 ember | 18.36 / 1.85 | 18.6 / 1.88 | 16.85 / 1.7 | 16.77 / 1.69 | Pearl Whisper |
+| 4 palace | 5.76 / 1.72 | 6.6 / 1.5 | 13.15 / 1.33 | 11.69 / 1.18 | Pearl Whisper |
+| 5 dawn | 12.49 / 1.26 | 10.46 / 1.05 | 5.02 / 1.98 | 9.25 / 1.07 | Pearl Whisper |
+
+The script exits 1 when `ROOM_SCENES` disagrees with its picks; `tests/unit/room.test.ts` holds the five values and the director's use of them.
+
+**D6, closed.** The scene hint is a row of scene 1's text grid on both classes, above the count (a row under the count shares the previous and next words' row at 390, where the hint reaches 223 px from the gutter and the words start at 141 px), and `walk.ts` hides it on any arrival at another scene, as a step already did. On the served build it reads at (16, 778) above the count at 390 x 844 and at (45, 688) at 1280 x 800, and no other scene shows it.
+
+**The 2.2.2 control.** `.rm-pause` sits bottom right one row above the previous and next words (44 px plus --s2), as the spec's sections 3 and 5 place it, a plain button whose text swaps between pause and play, hidden until the director sets data-pause (E-S4-loops is pending, so it never showed in these runs) and never in the hall; the unit test holds the stylesheet, the markup and walk.ts to that.
+
+**AC12, the contrast (`scripts/room/contrast.mjs`, `docs/specs/evidence/section-4-flux-contrast.md`).** The script drives the new hooks (`__s4.scene(i)`, `__s4.seek`, `__s4.shade`) and AC12's method: every text box of each scene at rest (the four lines, the hint on scene 1, the previous and next words; the loading line and the 2.2.2 control where they show), the prompt at the station and Skip over the bubble at 25, 50 and 90 percent with scene 1's loop playing, over 10 frames 0.5 s apart at both viewports, the median over the frames of each frame's median ratio and the lowest of each frame's lightest-5-percent ratio. With the reference's shade (85 percent of black at the bottom edge, clear by 0.24 of the height) the four lines' block, which reaches 0.30 of the height at 390 and 0.45 at 1280, stood above the shade: dawn's name read 2.22:1 at 1280 and 2.79 at 390, its shade line 2.29 and the catalog line 3.76 at 1280, palace's name 3.40 and shade line 2.74 at 390. The shade gained a solid band (`SHADE.solid`, the darkening held from the bottom edge up to that share of the height, then clearing linearly by `SHADE.height`) and the lightest setting at which every scene box's median reads 4.5:1 or better is 45 percent of black, solid to 0.45 of the height, clear by 0.72 (at 60 percent the medians ran 9 to 17). The readings with the build's own shade (the lowest median and the lowest worst across each frame's boxes; the whole table per box is in the contrast document):
+
+| Frame | 390 x 844: median | worst | 1280 x 800: median | worst |
+|---|---|---|---|---|
+| the prompt at the station | **2.36** | **1.91** | **2.85** | **2.71** |
+| Skip, the bubble at 25 percent | 17.10 | 17.10 | 11.91 | 11.75 |
+| Skip, the bubble at 50 percent | 14.42 | 14.25 | 11.91 | 11.75 |
+| Skip, the bubble at 90 percent | 14.42 | 14.25 | 7.28 | 6.25 |
+| scene 1 cove (Phone case) at rest | 9.23 | 6.84 | 10.77 | 7.07 |
+| scene 2 grove (AirPods case) at rest | 13.60 | 6.47 | 15.60 | 7.20 |
+| scene 3 ember (MagSafe wallet) at rest | 16.22 | 13.18 | 13.75 | 4.70 |
+| scene 4 palace (Lenskin) at rest | 6.11 | 5.19 | 7.00 | 5.49 |
+| scene 5 dawn (Phone case) at rest | 6.56 | 5.70 | 6.02 | 4.79 |
+
+Flagged to Sam, not the shade's to fix: the prompt over the hall's lit grey door reads 2.36 / 1.91 at 390 and 2.85 / 2.71 at 1280 (part one's E-S4-contrast reading, as built). Not shown in these frames: the loading line (every loop was in before its scene was measured) and the 2.2.2 control (hidden while E-S4-loops is pending). The GPU estimate at scene 1 at 390 x 844: 56 geometries, 55 textures, 42 programs, the carousel's own count 21,817,122 B (20.8 MiB).
+
+**AC5, the flash check (`scripts/room/loop-flash.py`, `scripts/room/step-frames.mjs`).** The lands' clip-flash.py method on the ten loops as drawn at rest (decoded by ffmpeg at 24 frames a second, cover-fitted to the viewport of their class at the planes' 1.01 overscan, the bottom shade in the frame, the first second appended after the last frame so the loop's wrap is checked) and on the five steps (the four forward steps and the step back from scene 5) captured from the hooks build one 1/24 s tick at a time (`window.__skreedTick` while the clock is frozen; the loop elements play on at the wall clock, so a frame's video content is whatever the loops show then), 36 frames each at both viewports. AC5's rule as the spec quotes it: no 341 x 256 CSS px region has more than 25 percent of its area flash more than three times in any one second (more than six turns), a flash being a pair of opposing changes of at least 10 percent of the maximum relative luminance where the darker state is below 0.80, the same for saturated red. Every sequence passes; the verdicts are in `src/data/room-flux.json` (`flash` per loop, `flashSteps`):
+
+| Sequence | Viewport | Frames | Most transitions of one pixel in 1 s | Largest share of a region turning together | Most turns of a region in 1 s | Red: largest share | Red: most turns | Verdict |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| cove-portrait.mp4 | 390 x 844 | 144 | 3 | 0.1 percent | 0 | 0.2 percent | 0 | pass |
+| cove-wide.mp4 | 1280 x 800 | 144 | 7 | 1.4 percent | 0 | 0.0 percent | 0 | pass |
+| dawn-portrait.mp4 | 390 x 844 | 144 | 0 | 0.0 percent | 0 | 0.0 percent | 0 | pass |
+| dawn-wide.mp4 | 1280 x 800 | 144 | 2 | 0.0 percent | 0 | 0.0 percent | 0 | pass |
+| ember-portrait.mp4 | 390 x 844 | 144 | 0 | 0.0 percent | 0 | 2.7 percent | 0 | pass |
+| ember-wide.mp4 | 1280 x 800 | 144 | 0 | 0.0 percent | 0 | 5.8 percent | 0 | pass |
+| grove-portrait.mp4 | 390 x 844 | 144 | 0 | 0.0 percent | 0 | 0.0 percent | 0 | pass |
+| grove-wide.mp4 | 1280 x 800 | 144 | 1 | 0.0 percent | 0 | 0.0 percent | 0 | pass |
+| palace-portrait.mp4 | 390 x 844 | 144 | 11 | 5.2 percent | 0 | 0.0 percent | 0 | pass |
+| palace-wide.mp4 | 1280 x 800 | 144 | 0 | 0.0 percent | 0 | 0.4 percent | 0 | pass |
+| step 1 to 2 | 1280 x 800 | 36 | 7 | 100.0 percent | 2 | 0.0 percent | 0 | pass |
+| step 2 to 3 | 1280 x 800 | 36 | 6 | 100.0 percent | 3 | 53.7 percent | 2 | pass |
+| step 3 to 4 | 1280 x 800 | 36 | 8 | 100.0 percent | 2 | 35.8 percent | 4 | pass |
+| step 4 to 5 | 1280 x 800 | 36 | 7 | 100.0 percent | 4 | 0.6 percent | 0 | pass |
+| step 5 to 4 | 1280 x 800 | 36 | 10 | 100.0 percent | 3 | 31.6 percent | 2 | pass |
+| step 1 to 2 | 390 x 844 | 36 | 8 | 66.9 percent | 2 | 0.0 percent | 0 | pass |
+| step 2 to 3 | 390 x 844 | 36 | 7 | 72.2 percent | 2 | 38.6 percent | 2 | pass |
+| step 3 to 4 | 390 x 844 | 36 | 12 | 87.9 percent | 2 | 9.8 percent | 0 | pass |
+| step 4 to 5 | 390 x 844 | 36 | 8 | 92.7 percent | 2 | 0.0 percent | 0 | pass |
+| step 5 to 4 | 390 x 844 | 36 | 10 | 87.5 percent | 2 | 0.2 percent | 0 | pass |
+
+A step turns a region two to four times in a second (the lights down then up over its second half, and the saturated red of ember's sky in and out), within the six AC5 allows. Not run: five steps back to back at Tune's shortest stepMs, the two seams, the way back and the wrap (the capture driver takes a from-to list; the seams and the wrap need a driver of their own).
+
+**Open after these fixes.** The e2e suite (not run here; the 390 flow gained the layout and prompt assertions); section 6's frame cost (the probe); section 12's documents; the prompt's contrast over the hall (part one); AC5 over the seams, the way back and the wrap; the mid-step frames remain mostly black (the "For Sam" note above stands). Section 9 closes the e2e and AC5's remaining sequences.
+
+**The frames.** `scripts/room/render-stills.mjs` ran as written (no shim) against the served hooks build in the installed Chrome on the Metal GPU, 1 minute 44 seconds for both setups, 24 frames each, the exit landing at scroll 0 and the hall at both viewports. The contact sheets of the fixed build are `docs/specs/screenshots/section-4-flux-fixes-390.jpg` and `section-4-flux-fixes-1280.jpg` (the frames in the stills script's order: the hall's start and station, the bubble at 25, 50 and 90 percent, the five scenes at rest, the mid-step frame, the hold, the exit's cover-in and the frame after the jump, the wrap's cover and its landing, the way back at its half and the hall after it, then the poster tier's hall and five scenes); the sheets of section 4 above stay as the record of the defects.
+
+**Tests, type check and the production build, after the fixes (in the worktree).**
+
+| Command | Result |
+|---|---|
+| `npm run test:unit` | exit 0; 186 tests, 186 pass, 0 fail (177 before; the layout, the prompt, the placement and the tone tests are new) |
+| `npx tsc --noEmit -p tsconfig.json` | exit 0 |
+| `npm run build` | exit 0; csp.mjs: 12 pages, media-src 'self'; budget: "every enforced line of section-4-flux.md 6 holds (49 enforced) and AC8's formats check"; guard: "the ten loops and nothing else, media-src 'self'" |
+
+**The budget (the production build after the fixes).** Scripts at gzip, everything else as stored, KB = 1024 B, as budget.mjs prints them; the section's script grew from 27.9 to 29.4 KB with the layout cache, the placement maths, the light and shade hooks and the shade's band, still under Sam's 30 KB line.
+
+| Line | Measured | Line in section 6 |
+|---|---|---|
+| Section 4's script (director, carousel, video, assets, walk, lazy) | 29.4 KB | 30 KB pending Sam, 38 KB hard |
+| scroll.ts (its own chunk, marker skreed:scroll) | 2.8 KB | 4 KB |
+| Total JS with section 4 and scroll.ts | 228.1 KB | 250 KB |
+| Section 4 on the poster tier: its script | 8.0 KB | 8.5 KB |
+| Loop cove, wide / portrait | 1,119.1 / 1,116.1 KB | 1,200 KB each |
+| Loop grove, wide / portrait | 1,131.7 / 1,111.6 KB | 1,200 KB each |
+| Loop ember, wide / portrait | 931.4 / 924.2 KB | 1,200 KB each |
+| Loop palace, wide / portrait | 1,096.5 / 1,054.5 KB | 1,200 KB each |
+| Loop dawn, wide / portrait | 618.2 / 651.5 KB | 1,200 KB each |
+| Stills, wide AVIF (largest, grove) | 43.2 KB | 110 KB |
+| Stills, wide WebP (largest, grove) | 49.2 KB | 176 KB |
+| Stills, portrait AVIF (largest, grove) | 49.9 KB | 80 KB |
+| Stills, portrait WebP (largest, grove) | 61.0 KB | 128 KB |
+| products.bin | 263.6 KB | 270 KB |
+| To the press, wide / portrait, AVIF | 1,444.7 / 1,459.2 KB | 1,700 KB |
+| To the press, wide / portrait, WebP-only browsers | 1,486.6 / 1,506.2 KB | 1,700 KB |
+| The whole section in dist (10 loops, 20 stills) | 10,899.8 KB | 15,000 KB |
+| One visit, wide / portrait, AVIF | 5,349.5 / 5,334.7 KB | 7,300 KB |
+| One visit, wide / portrait, WebP | 5,411.3 / 5,400.6 KB | 7,300 KB |
+| Poster tier pictures, AVIF wide / portrait | 174.1 / 196.8 KB | 570 / 420 KB |
+| Poster tier pictures, WebP wide / portrait | 197.7 / 223.9 KB | 900 / 660 KB |
+| First view: section 4's markup and room.css | 3.9 KB | 4 KB |
+| Formats | 13 pictures AVIF with a WebP twin; 10 scene `<img>` with width and height | AC8 |
+
+## 9. The checker's findings on s4/flux-fixes, fixed (2026-10-23)
+
+The same worktree and branch, the hooks build served by wrangler on 127.0.0.1:8791 and driven through `__s4` in the installed Chrome 155 (channel chrome) on the Metal GPU (Apple M3 Pro); the e2e suite in the harness's own Chromium on SwiftShader. The checker's one major finding and five of its minors are closed below; the sixth, the spec's figures, is listed for the lead.
+
+**The tone over the cloud (major), closed.** D5's first fix took the plan's tone from the front scene alone, so under a seam's cloud (Pearl Whisper where it is thickest) the logotype and the Back to top control stayed Pearl and vanished at full cover: the checker read data-tone dark, colour rgb(247, 246, 243), on the wrap at both viewports. The exit's full cover had the same fault since c17d76a, where the frame applied the plan's tone only while the section was on, and after the exit's jump it is off. Now the director sets the plan's toneDark while a seam's cover is 0.5 or more (`toneDark ||= cover >= 0.5`, whatever is under the cloud: the hall, the scenes, or the hero after the jump), and the frame applies the plan's tone whenever the cover is above 0 as well as over the section past the third wipe (loop.ts, after the ride's own write, so it stands). Read at full cover on the fixed build through the checker's driver, the exit once its jump has run (phase out, the page at 0) and the wrap once it has landed (hold), at 390 x 844 and at 1280 x 800: the logotype and the Back to top control data-tone light, colour rgb(56, 63, 67), Urban Slate. The 390 e2e flow now holds the clock at both seams' full cover (`holdAtCover`: a frame watcher freezes the loop's clock on the first frame after the exit's jump and on the wrap's landing) and asserts the tone there, and dawn's own Pearl at rest before the exit and after the wrap; `tests/unit/room.test.ts` holds the director's line and the frame's. The AC5 captures below show it (the exit at frame 10 at 390: the cloud whole, the logotype in Urban Slate on it).
+
+**D4 at the phone (minor), closed.** `scripts/room/product-check.mjs` runs at 1280 x 800 and at 390 x 844 (`--views`). At 390 the Lenskin clipped under the one metallic environment of 1.0: dE00 4.67 with 96.0 percent of its face at 255, the face reading about (255, 181, 196), because the raised portrait placement shows the face from lower down and the metallic finish mirrors the environment's bright ceiling. The sweep, with the key 1.33, the environment 0.48 and the fill 0.17 (the metallic environment on the class in force):
+
+| Metallic environment | 1280 x 800: dE00 | At 255 | 390 x 844: dE00 | At 255 |
+|---|---|---|---|---|
+| 1.0 | 3.97 | 4.1 percent | 4.67 | 96.0 percent |
+| 0.9 | 5.71 | 1.3 percent | 3.21 | 80.9 percent |
+| 0.8 | 8.06 | 0.9 percent | 2.64 | 48.3 percent |
+| 0.7 | 10.63 | 0.8 percent | 1.86 | 12.2 percent |
+| 0.6 | 13.76 | 0.6 percent | 4.44 | 2.2 percent |
+| 0.5 | 17.41 | 0.5 percent | 7.87 | 1.2 percent |
+
+No one value serves both (the wide class needs 0.9 or more to stay under dE00 8, the phone 0.6 or less for a small share at 255), so the metallic finish takes the environment per placement class: `LIGHTS.metalEnv` 1.0 on the wide class and `LIGHTS.metalEnvPortrait` 0.6 on the portrait class (`envOf` by the placement's class, applied again when a resize changes the class; the hooks' `lights()` sets either). The readings with the build's own lights, under the white key:
+
+| Scene | Product, shade, finish | Catalog | 1280 x 800: drawn | dE00 | At 255 | 390 x 844: drawn | dE00 | At 255 |
+|---|---|---|---|---|---|---|---|---|
+| 1 cove | Phone case, Lilac, matte | #c988c8 | #c989c9 | 0.29 | 0.0 percent | #ca89c9 | 0.30 | 0.0 percent |
+| 2 grove | AirPods case, Sage, gloss | #96a880 | #95a680 | 0.77 | 0.0 percent | #94a67f | 0.64 | 0.0 percent |
+| 3 ember | MagSafe wallet, Desert, matte | #c6a884 | #c6a885 | 0.33 | 0.0 percent | #c6a885 | 0.33 | 0.0 percent |
+| 4 palace | Lenskin, Ballerina, metallic | #efa3af | #ea93a0 | 3.97 | 4.1 percent | #e2929e | 4.44 | 2.2 percent |
+| 5 dawn | Phone case, Pastel, matte | #d7b9ed | #d7baee | 0.32 | 0.1 percent | #d8baee | 0.25 | 0.0 percent |
+
+**The e2e 390 flow's focus (minor), closed.** At the step the checker named (room.spec.ts, the focus on the prompt off-station) the prompt still held the focus it took as it decoded in at the station, so `page.focus` fired no event and walk.ts never snapped. The spec now blurs the active element, waits for the prompt's is-near class to leave (walk.ts snaps only while the prompt is not near, and the frame clears that state once the page is off-station), then focuses it. The suite (`npm run test:e2e`, the harness's own Chromium 141 on SwiftShader, BASE_URL at the served hooks build) ran in 19.4 minutes: 115 passed, 19 failed. Seventeen of the failures are the quiz's picture specs (quiz.spec.ts 1115 and 2169 to 2732): the 35 quiz photographs live only in the main checkout's src/assets/quiz/pics, never in the repository, so this worktree's build has none; the base c17d76a built the same way fails them the same way. The other two were room specs, and both are closed below. After the two fixes the 390 flow (41 s, with the new tone assertions at both seams' full cover), the cold first-visit wrap (22 s) and the rest of the suite stand as before; the one room spec still failing is AC14, at its line 325, for the lead:
+
+- **The cold first-visit wrap (room.spec.ts 356), a regression of this branch, closed.** The wrap landed with scene 5's `is-on` class and lost it 240 ms later, still under the cover-out. Against the base the spec passes. The cause is a race this branch's timing exposed: the walk chunk mounts only when the section comes within a screen, which on a cold wrap is the landing itself, so the `wrap` line reached the walk before its first frame, and that first frame read the walk's initial state (`hall`) against the frame's `seam` as a hall-to-seam transition, which wipes the shown scene's lines and, after the wipe, its `is-on`. walk.ts now starts from the section's own `data-state` at mount, so a chunk mounted mid-seam sees no false transition.
+- **AC14 (room.spec.ts 290) at its line 322, closed.** The hook's entry arrives twice at scene 1 (finishEnter's arrival, then the hook's own), the first with Skip focused (focus goes to the name), the second with the name already focused, which the walk did not count as focus that moves, so it announced the line as well: the name focused and the live region speaking both, which the spec forbids. A scene name already focused now counts as focus that moves to the new name. The same code stands at c17d76a, where the spec fails earlier, at the scene hint (D6).
+- **AC14 at its line 325, open.** With every play() rejecting (the spec's stub), scene 1's loop reads `in` but never `refused`: in the installed Chrome as in Chromium, over 12 s at rest, no play() is attempted (`playing` false, `refused` false, no refusal warning), while the pool marks a refusal only on a frame after a play() it made has rejected. The carousel's gate for that play (motion on, the plane's proximity above the play threshold, the loop in and not playing) holds it back on that fixture; which term, and whether the spec's expectation or the gate is wrong, is the lead's to settle. video.ts and the gate are unchanged since c17d76a, where the spec never reached this line.
+
+**scene-tone.mjs (minor), closed.** Its shade term is the plane shader's: 1 minus dark times (1 minus clamp((y / H minus solid) / (height minus solid), 0, 1)), y the pixel's centre from the bottom, so a box inside the solid band would read as drawn. Re-run: every reading under the logotype's and the control's boxes is the same as the table in section 8 (the boxes sit above the band), and ROOM_SCENES matches the picks.
+
+**The record's D4 sentence (minor), closed.** Section 8 now says it in one place: 1.84 of the albedo as drawn before the fix, 1.21 as the spec intended, times 0.83 gives 1.0.
+
+**AC5's remaining sequences (minor), closed.** `scripts/room/step-frames.mjs` captures, one 1/24 s tick at a time as it captured the steps, the exit seam (the raw scroll across q 12.8: the cover in, the jump to scroll 0, the cover out over the hero and the lock), the wrap from scroll 0 (the cover in over the hero, the landing on scene 5, the cover out, the lock), the way back from scene 1, and five steps back to back at Tune's shortest stepMs, 400 (1 to 5 and back to 4, each requested on the first frame the previous one allows: frames 0, 14, 28, 42 and 56 at both viewports; Tune's live copy of the parameters set through `window.__skreedTune.room.params`, which every build reads), 36 frames each and 78 for the burst (`--seq`); `scripts/room/loop-flash.py` reads the new folders (`seam-<W>-exit`, `seam-<W>-wrap`, `seam-<W>-back`, `burst-<W>-<ms>`). The verdicts are in `src/data/room-flux.json` (`flashSteps` re-run on the fixed build, `flashSeams` new). Every sequence passes; the burst at 1280 x 800 reaches six turns of a region on saturated red in a second (ember's sky in and out at the short step), the most the rule allows, so a shorter step than Tune's range offers would fail it:
+
+| Sequence | Viewport | Frames | Most transitions of one pixel in 1 s | Largest share of a region turning together | Most turns of a region in 1 s | Red: largest share | Red: most turns | Verdict |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| the exit seam | 1280 x 800 | 36 | 6 | 100.0 percent | 2 | 0.3 percent | 0 | pass |
+| the wrap | 1280 x 800 | 36 | 4 | 100.0 percent | 2 | 0.0 percent | 0 | pass |
+| the way back | 1280 x 800 | 36 | 5 | 51.6 percent | 1 | 0.0 percent | 0 | pass |
+| five steps at stepMs 400 | 1280 x 800 | 78 | 10 | 100.0 percent | 5 | 65.8 percent | 6 | pass |
+| the exit seam | 390 x 844 | 36 | 6 | 100.0 percent | 2 | 0.1 percent | 0 | pass |
+| the wrap | 390 x 844 | 36 | 6 | 100.0 percent | 2 | 0.0 percent | 0 | pass |
+| the way back | 390 x 844 | 36 | 6 | 36.4 percent | 1 | 0.1 percent | 0 | pass |
+| five steps at stepMs 400 | 390 x 844 | 78 | 10 | 84.6 percent | 5 | 45.0 percent | 2 | pass |
+| step 1 to 2 (re-run) | 1280 x 800 | 36 | 7 | 100.0 percent | 2 | 0.0 percent | 0 | pass |
+| step 2 to 3 (re-run) | 1280 x 800 | 36 | 6 | 100.0 percent | 3 | 66.0 percent | 2 | pass |
+| step 3 to 4 (re-run) | 1280 x 800 | 36 | 8 | 98.6 percent | 2 | 33.6 percent | 4 | pass |
+| step 4 to 5 (re-run) | 1280 x 800 | 36 | 7 | 100.0 percent | 4 | 0.6 percent | 0 | pass |
+| step 5 to 4 (re-run) | 1280 x 800 | 36 | 10 | 100.0 percent | 3 | 31.6 percent | 2 | pass |
+| step 1 to 2 (re-run) | 390 x 844 | 36 | 8 | 69.6 percent | 2 | 0.0 percent | 0 | pass |
+| step 2 to 3 (re-run) | 390 x 844 | 36 | 7 | 54.0 percent | 2 | 42.2 percent | 2 | pass |
+| step 3 to 4 (re-run) | 390 x 844 | 36 | 11 | 72.1 percent | 4 | 9.1 percent | 0 | pass |
+| step 4 to 5 (re-run) | 390 x 844 | 36 | 8 | 51.3 percent | 2 | 0.0 percent | 0 | pass |
+| step 5 to 4 (re-run) | 390 x 844 | 36 | 10 | 73.9 percent | 2 | 0.2 percent | 0 | pass |
+
+**The spec's figures (minor), for the lead.** The build differs from figures the spec (revision 3, the source of truth) states, each reasoned in section 8 but ruled on by nobody; the spec is unchanged on this branch. With the merge the lead either amends it (revision 4) or lists each as pending Sam (F2 for the lights, the size and the shade):
+
+- Lights: the key 1.33, the environment 0.48 and the fill 0.17 with the metallic environment 1.0 on the wide class and 0.6 on the portrait class, where section 3 says 1.6, 0.575 and 0.2.
+- Product size and place: the portrait cap 0.50 of the view's height with the centre at 0.60, and the wide holder moved 89 px right at 1280 x 800, where section 3 says 0.55 / 0.62 centred.
+- The bottom shade: 45 percent of black, solid to 0.45 of the height and clear by 0.72, where section 3 says the reference's 24 vh shade, darkened; the lower half of every scene is darker than the reference's, and Sam has not seen it.
+- The scene hint: in the left column above the count, where the copy table says bottom centre and section 2 says one row above the words.
+- The pause control: bottom right with no aria-pressed, where section 10 says top left with aria-pressed; its place goes to whichever section the lead rules.
+
+**The frames.** `scripts/room/render-stills.mjs` ran as written against the served hooks build in the installed Chrome on the Metal GPU, 1 minute 45 seconds for both setups, 24 frames each; the contact sheets `docs/specs/screenshots/section-4-flux-fixes-390.jpg` and `section-4-flux-fixes-1280.jpg` are replaced with them (the same order as section 8's: the hall's start and station, the bubble at 25, 50 and 90 percent, the five scenes at rest, the mid-step frame, the hold, the exit's cover-in and the frame after the jump, the wrap's cover and its landing, the way back at its half and the hall after it, then the poster tier's hall and five scenes). Frame 15, the wrap at full cover, now shows the logotype and the Back to top control in Urban Slate on the cloud at both widths (section 8's sheets showed the blank frame); frame 9, palace, has the Lenskin at the per-class environment.
+
+**Tests, type check and the production build, after these fixes (in the worktree).**
+
+| Command | Result |
+|---|---|
+| `npm run test:unit` | exit 0; 186 tests, 186 pass, 0 fail (the tone assertions on the director and the frame, the per-class metallic environment) |
+| `npx tsc --noEmit -p tsconfig.json` | exit 0 |
+| `npm run test:e2e` (the served hooks build, Chromium on SwiftShader) | 115 passed, 19 failed in 19.4 minutes: 17 quiz picture specs (no photographs in this worktree), the cold wrap and AC14, the first two since fixed and re-run green, AC14 open at its line 325 (above) |
+| `npm run build` | exit 0; csp.mjs: 12 pages, media-src 'self'; budget: "every enforced line of section-4-flux.md 6 holds (49 enforced) and AC8's formats check"; guard: "the ten loops and nothing else, media-src 'self'" |
+
+**The budget (the production build after these fixes).** As budget.mjs prints it (scripts at gzip, everything else as stored, KB = 1024 B); the section's script grew from 29.4 to 29.5 KB with the cover's tone, the per-class environment and the walk's two lines, still under Sam's 30 KB line. Every other line is section 8's: scroll.ts 2.8 of 4; total JS with section 4 and scroll.ts 228.2 of 250; the poster tier's script 8.0 of 8.5; the ten loops 618.2 to 1,131.7 of 1,200 each; the largest stills grove wide AVIF 43.2 of 110 and WebP 49.2 of 176, portrait AVIF 49.9 of 80 and WebP 61.0 of 128; products.bin 263.6 of 270; to the press wide / portrait AVIF 1,444.7 / 1,459.2 and WebP-only 1,486.6 / 1,506.2 of 1,700; the whole section 10,899.8 of 15,000; one visit wide / portrait AVIF 5,349.5 / 5,334.7 and WebP 5,411.3 / 5,400.6 of 7,300; the poster tier's pictures AVIF 174.1 / 196.8 of 570 / 420 and WebP 197.7 / 223.9 of 900 / 660; the first view's markup and room.css 3.9 of 4; 13 pictures AVIF with a WebP twin, 10 scene img with width and height.
+
+**Open after section 9.** AC14 at its line 325 (above); section 6's frame cost (the probe); section 12's documents; the prompt's contrast over the hall (part one); the loading line and the 2.2.2 control never on screen for AC12 (E-S4-loops pending); the mid-step frames mostly black (the "For Sam" note in section 6 stands); the burst at 1280 x 800 at AC5's limit on red (six turns) at Tune's shortest step; the spec's figures above, pending the lead; the section's script at 29.5 KB of Sam's 30 KB line (pending him).

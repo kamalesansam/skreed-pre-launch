@@ -211,6 +211,8 @@ export async function startHero(o: StartOptions): Promise<void> {
       renderer, avif: data.avif, reduced, touch, dpr, snapHero: (y) => loop.snap(innerHeight > 0 ? y / innerHeight : 0),
       // a state change with no scroll event (a press at the station, a seam's end): the page scroll re-evaluates its capture set now
       onState: () => pageScroll?.notify(),
+      // the section's layout read again (the intro ending, the document growing, a resize): its range moved, so the capture set is re-evaluated too; the glue spans below are measured fresh at every decision
+      onLayout: () => pageScroll?.notify(),
     });
     ctx.room = room; life.onKill(() => room.dispose());
     room.resize(renderer.domElement.width, renderer.domElement.height);
@@ -256,6 +258,8 @@ export async function startHero(o: StartOptions): Promise<void> {
       back: () => ctx.room?.back() ?? false,
       wrap: () => { void loadDirector().then((r) => r?.wrap()); },
       glue: (on) => pageScroll?.glue(on),
+      lights: (o) => extra()?.lights(o) ?? null,
+      shade: (dark, height, solid) => extra()?.shade(dark, height, solid),
       skip: () => window.__skreedRoom?.skip(),
       get ready() { return !!ctx.room?.hall.ready; },
     };

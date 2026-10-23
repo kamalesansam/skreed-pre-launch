@@ -132,6 +132,90 @@ export function productFit(viewH: number, viewportAspect: number, caseW: number,
   return Math.min((fill.height * viewH) / caseH, (fill.width * viewH * viewportAspect) / caseW);
 }
 
+// ---- the product against the lines (spec 3 "Size and pose"; the build record's D3)
+
+/**
+ * The lines' column as room.css and tokens.css lay it out: the gutter --inset is clamp(16px, 3.5vw, 56px), the four
+ * lines' block sits at the gutter, 100 percent minus two gutters wide and at most 520 px, bottom left; the block the
+ * four lines, the hint and the loading line may fill is the bottom 34 percent of the stage. gap: the clearance the
+ * product keeps from the column's edge, CSS px. tests/unit/room-carousel.test.ts holds the stylesheets to these.
+ */
+export const LINES = Object.freeze({ insetMin: 16, insetVw: 0.035, insetMax: 56, column: 520, block: 0.34, gap: 2 });
+/** the gutter at a stage width, CSS px */
+export const insetPx = (cssW: number): number => Math.min(LINES.insetMax, Math.max(LINES.insetMin, cssW * LINES.insetVw));
+/** a box in shares of the stage, x from the left edge and y from the top */
+export interface Box { x0: number; y0: number; x1: number; y1: number }
+/** the lines' box at a stage size: the column's width at the gutter, the bottom block */
+export function linesBox(cssW: number, cssH: number): Box {
+  const inset = insetPx(cssW), w = Math.min(LINES.column, Math.max(0, cssW - 2 * inset));
+  return { x0: inset / cssW, x1: (inset + w) / cssW, y0: 1 - LINES.block, y1: 1 };
+}
+/**
+ * The product's place per class. The wide class: the case at most 0.55 of the view's height and 0.62 of its width,
+ * the centre kept (the ring's own, world y 0), the holder moved right only as far as the widest product's near face
+ * needs to clear the lines' column (at 1280 x 800 the column's edge at 565 px would run under a centred case by 42 px
+ * and under the Lenskin by 87). The portrait class: the case at most 0.50 of the view's height and 0.62 of its width,
+ * its centre raised to 0.60 of the view's height from the bottom, so the case's near face clears the lines' block (at
+ * 0.58 the near face, which projects 3 percent larger than the centre's depth, would still cross the block's top by
+ * 0.017 of the height). The class is the stage's shape, as the arc is (X-1).
+ */
+export const PLACE = Object.freeze({
+  wide: Object.freeze({ height: 0.55, width: 0.62, centre: null as number | null }),
+  portrait: Object.freeze({ height: 0.50, width: 0.62, centre: 0.60 as number | null }),
+});
+export interface Placement { cls: LoopClass; scale: number; /** the holder's world x and y at productZ */ x: number; y: number }
+/** the fixed camera's basis (three's lookAt): forward, right and up, unit vectors */
+export function cameraBasis(): { f: [number, number, number]; r: [number, number, number]; u: [number, number, number] } {
+  const P = STEP.cam, T = STEP.target;
+  let fx = T.x - P.x, fy = T.y - P.y, fz = T.z - P.z;
+  const fl = Math.hypot(fx, fy, fz); fx /= fl; fy /= fl; fz /= fl;
+  let rx = -fz, rz = fx;
+  const rl = Math.hypot(rx, rz); rx /= rl; rz /= rl;
+  return { f: [fx, fy, fz], r: [rx, 0, rz], u: [-rz * fy, rz * fx - rx * fz, rx * fy] };
+}
+/** a world point in the fixed camera's view: its right, up and depth coordinates */
+export function toView(x: number, y: number, z: number): { vx: number; vy: number; depth: number } {
+  const { f, r, u } = cameraBasis(), P = STEP.cam, dx = x - P.x, dy = y - P.y, dz = z - P.z;
+  return { vx: dx * r[0] + dy * r[1] + dz * r[2], vy: dx * u[0] + dy * u[1] + dz * u[2], depth: dx * f[0] + dy * f[1] + dz * f[2] };
+}
+/** the product's placement at a stage size (CSS px), from the case's life size and every product's life size times its exhibit factor */
+export function productPlacement(cssW: number, cssH: number, caseW: number, caseH: number, sizes: readonly (readonly [number, number, number])[]): Placement {
+  const cls: LoopClass = cssH > cssW ? 'portrait' : 'wide', P = PLACE[cls], aspect = cssW / Math.max(1, cssH), tanH = Math.tan((STEP.fovBase * Math.PI) / 360);
+  const { f, u } = cameraBasis(), C = STEP.cam, dz = STEP.productZ - C.z;
+  // the holder's y: world 0 (the ring's centre) or the y whose projection sits at centre of the view's height from the bottom
+  let y = 0;
+  if (P.centre !== null) {
+    const n = 2 * P.centre - 1;   // vy = n x tanH x depth, both linear in y
+    y = (n * tanH * (f[1] * -C.y + f[2] * dz) - (u[1] * -C.y + u[2] * dz)) / (u[1] - n * tanH * f[1]);
+  }
+  const d0 = toView(0, y, STEP.productZ).depth, viewH = 2 * tanH * d0, viewW = viewH * aspect;
+  const scale = productFit(viewH, aspect, caseW, caseH, P);
+  let x = 0;
+  if (cls === 'wide') {
+    const col = linesBox(cssW, cssH), edge = (col.x1 - 0.5 + LINES.gap / cssW) * viewW;   // the column's right edge plus the gap, world units at the centre's depth
+    let need = 0;
+    for (const s of sizes) { const hw = (s[0] * scale) / 2, dn = Math.max(1e-3, d0 - (s[2] * scale) / 2); need = Math.max(need, (hw * d0) / dn); }   // the near face's half width as seen at the centre's depth
+    x = Math.max(0, edge + need);
+  }
+  return { cls, scale, x, y };
+}
+/** the product's box on the stage at rest (face out, no look): its life-size box times its exhibit factor at the placement, every corner projected */
+export function productScreenBox(p: Placement, size: readonly [number, number, number], cssW: number, cssH: number): Box {
+  const aspect = cssW / Math.max(1, cssH), tanH = Math.tan((STEP.fovBase * Math.PI) / 360);
+  const box: Box = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) {
+    const v = toView(p.x + (sx * size[0] * p.scale) / 2, p.y + (sy * size[1] * p.scale) / 2, STEP.productZ + (sz * size[2] * p.scale) / 2);
+    const nx = v.vx / (v.depth * tanH * aspect), ny = v.vy / (v.depth * tanH), x = (nx + 1) / 2, yy = (1 - ny) / 2;
+    box.x0 = Math.min(box.x0, x); box.x1 = Math.max(box.x1, x); box.y0 = Math.min(box.y0, yy); box.y1 = Math.max(box.y1, yy);
+  }
+  return box;
+}
+/** the two boxes' overlap in CSS px squared (0 where they only touch or stand apart) */
+export function boxOverlap(a: Box, b: Box, cssW: number, cssH: number): number {
+  const w = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0), h = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
+  return w > 0 && h > 0 ? w * cssW * h * cssH : 0;
+}
+
 /** a loop plays while its proximity is above 0.3, or while it is falling (the room leaving keeps moving until it is reset) */
 export const loopShouldPlay = (prox: number, falling: boolean): boolean => prox > STEP.playAbove || (falling && prox > STEP.resetAt);
 /** a loop is paused and sought to 0 once its proximity is 0.02 or less (the end of the step it leaves) */

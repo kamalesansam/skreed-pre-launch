@@ -49,9 +49,11 @@ interface Window {
   /** section 4: the island's side of the bridge, installed with the section's director */
   __skreedRoom?: import('./config/room.ts').RoomIsland;
   /** hooks builds: section 4's state, entering without the walk, the entry by its clock (seconds), a scene at rest, one step, the way back, the wrap, the glue on or off (section-4-flux.md 5, "Build modes") */
-  __s4?: { state(): unknown; enter(): boolean; seek(sec: number): void; scene(i: number): boolean; step(dir: 1 | -1): boolean; back(): boolean; wrap(): void; glue(on: boolean): void; skip(): void; readonly ready: boolean };
+  __s4?: { state(): unknown; enter(): boolean; seek(sec: number): void; scene(i: number): boolean; step(dir: 1 | -1): boolean; back(): boolean; wrap(): void; glue(on: boolean): void; lights(o: Partial<import('./scripts/hero/section4/carousel.ts').LightSetting>): import('./scripts/hero/section4/carousel.ts').LightSetting | null; shade(dark: number, height?: number, solid?: number): void; skip(): void; readonly ready: boolean };
   // test hooks (test and staging builds only; hero-architecture.md 10)
   __skreedFreeze?: boolean;
+  /** hooks builds: while frozen, the next frame advances the clock by this many seconds once, then clears it (the flash check's step capture, one frame at a time) */
+  __skreedTick?: number;
   __skreedFrame?: number;
   __skreedMilestoneTimes?: Record<string, number>;
   __skreedIntroDoneCalls?: number;

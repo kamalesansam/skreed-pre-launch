@@ -5,7 +5,8 @@
 // the prompt at the door's handle, placed by a transform from its cached size, decoded in from 2.8 m out (in the Tab
 // order throughout; a keyboard focus on it while it is clipped snaps to the station); Skip from the press to scene 1
 // (an activation within 350 ms of its showing is dropped); each scene's four lines on arrival, one after another, wiped
-// at a step's start; the scene hint on scene 1's first visit (touch, wheel or keys by the device and the last key); the
+// at a step's start; the scene hint above scene 1's count on its first visit (touch, wheel or keys by the device and the
+// last key), gone at the first step and whenever the scene changes without one; the
 // loading line under the lines while a loop is expected; the previous and next words bottom right, wired to the
 // island's step and the way back; the "Pause motion" control where E-S4-loops is declined; the live region (one
 // announcement per arrival, only when focus does not move; the wrap's own line); and the keys while the pad or a control
@@ -61,7 +62,9 @@ export function mountRoom(root: HTMLElement): void {
 
   let viewed = false, walked = false, arrived = false, near = false, nearShown = false, startX: number | null = null, lastQ = 0, lastQRaw = 0, lastFrameAt = 0, topReached = false;
   let loadingSince = -1, busySince = -1, viaKeys = false, opacity = 1, skipAt = 0, shownScene = -1, hinted = false, stepped = false, moreText = '', moreSince = -1;
-  let promptW = 0, promptH = 0, inset = 16, busyText = '', lastState: RoomState = 'hall', navShown = false, motionOn = true;
+  // the state the section is in when this chunk mounts (a cold wrap lands before the chunk is in, so the first frame
+  // would read as a false hall-to-seam transition and wipe the landed scene's lines and its is-on)
+  let promptW = 0, promptH = 0, inset = 16, busyText = '', lastState: RoomState = (root.dataset.state as RoomState | undefined) ?? 'hall', navShown = false, motionOn = true;
   /** set around the script's own focus calls, so the focus listeners do not take them for the visitor's */
   let selfFocus = false;
   const focusQuietly = (el: HTMLElement | null | undefined) => { if (!el) return; selfFocus = true; try { el.focus({ preventScroll: true }); } finally { selfFocus = false; } };
@@ -80,6 +83,18 @@ export function mountRoom(root: HTMLElement): void {
     void dec.hide(el).then(() => { if (el.inert) el.hidden = true; });
   }
   function showControl(el: HTMLElement) { el.hidden = false; el.inert = false; void dec.show(el); }
+  /**
+   * The prompt's wipe at the entry: its focus goes first (to `to`, or the pad for a keyboard user), then it is inert and
+   * its two spans wipe out, then it is hidden. Never the button itself through the decode: the button is no prepared
+   * line, so a hide of it would split its whole text afresh (the two spans' copies run together, "[E][E]Enter...")
+   * and detach the spans the way back restores (the build record's D2).
+   */
+  function wipePrompt(to?: HTMLElement | null) {
+    if (enter.hidden) return;
+    if (enter.contains(document.activeElement)) { if (to) focusQuietly(to); else letGo(document.activeElement); }
+    enter.inert = true;
+    void Promise.all([dec.hide(keyEl), dec.hide(enterText)]).then(() => { if (enter.inert) enter.hidden = true; });
+  }
   /**
    * The prompt back in the hall (the way back, the reset from the scrollbar, an entry abandoned off screen, the new lap):
    * in the Tab order again and clipped until the station frame decodes it in, its busy text gone, the scenes inert again.
@@ -219,6 +234,8 @@ export function mountRoom(root: HTMLElement): void {
   function arrive(i: number, wrapped = false) {
     const sc = scenes[i], s = ROOM_SCENES[i];
     if (!sc || !s) return;
+    // the scene changed without a step (the hooks, the scrollbar's re-sync, the wrap): the hint goes, as a step takes it
+    if (sceneHint && !sceneHint.hidden && i !== 0) setLine(sceneHint, '');
     for (const o of scenes) if (o !== sc) o.li.classList.remove('is-on');
     shownScene = i;
     sc.li.classList.add('is-on');
@@ -227,7 +244,9 @@ export function mountRoom(root: HTMLElement): void {
     track('room_scene', { id: s.id, i });
     pad.setAttribute('aria-label', R.worldAria);
     // focus: a keyboard user's on the pad, Skip or a word goes to the scene's name, which speaks for itself; else one polite announcement
-    const a = document.activeElement, moving = a === pad || a === skip || a === prevB || a === nextB || (!!a && root.contains(a) && keyboarding());
+    // (focus already on a scene's name moves to the new one too: the hook's entry arrives twice at scene 1, Skip first and
+    // then the name, and a name must never be focused and its line announced both)
+    const a = document.activeElement, moving = a === pad || a === skip || a === prevB || a === nextB || (a instanceof HTMLElement && a.classList.contains('rm-scene-name')) || (!!a && root.contains(a) && keyboarding());
     const said = fill(wrapped ? R.wrapLive : R.sceneLive, { n: i + 1, N, name: productById(s.product).name, shade: shadeLine(s) });
     if (moving) focusQuietly(sc.name); else live.textContent = said;
     if (!skip.hidden) wipeControl(skip, sc.name);
@@ -279,7 +298,7 @@ export function mountRoom(root: HTMLElement): void {
       const hadFocus = root.contains(document.activeElement) || viaKeys;
       near = false;
       skipAt = performance.now(); showControl(skip);
-      wipeControl(enter, hadFocus ? skip : null);
+      wipePrompt(hadFocus ? skip : null);
       if (hadFocus) focusQuietly(skip);
       void dec.hide(hint).then(() => { hint.hidden = true; });
       if (list) list.inert = false;
