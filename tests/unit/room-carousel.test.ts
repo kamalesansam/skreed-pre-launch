@@ -367,7 +367,7 @@ test("carousel.ts's constants: the exhibit factors, the class scale's lines, the
   assert.deepEqual(LIGHTS, { key: 1.33, keyMix: 0.6, keyFrom: [0.1, 0.8, 0.6], fill: 0.17, fillTint: '#dfe6ea', fillFrom: [-0.6, 0.2, 0.8], env: 0.48, metalEnv: 1.0, blur: 0.04 });
   for (const k of ['key', 'env', 'fill'] as const) near(LIGHTS[k] / { key: 1.6, env: 0.575, fill: 0.2 }[k], 0.83, 0.03, `${k}: the spec's balance kept (within 0.03 of 0.83)`);
   assert.deepEqual(PARTS, { trim: [0.073, 0.077, 0.077], trimRoughness: 0.55, logoTint: 0.8468 });
-  assert.deepEqual(SHADE, { dark: 0.85, height: 0.24 });
+  assert.deepEqual(SHADE, { dark: 0.45, solid: 0.45, height: 0.72 }, 'the bottom shade as the contrast check set it (AC12, 2026-10-23)');
   assert.deepEqual(CLOUD.shadow, [0.80, 0.84, 0.93]);
   CLOUD.light.forEach((v, k) => near(v, [0xf7, 0xf6, 0xf3][k] / 255), 'Pearl Whisper');
   assert.equal(CLOUD.dpr, 1.5);

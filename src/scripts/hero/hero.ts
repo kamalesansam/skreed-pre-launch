@@ -259,7 +259,7 @@ export async function startHero(o: StartOptions): Promise<void> {
       wrap: () => { void loadDirector().then((r) => r?.wrap()); },
       glue: (on) => pageScroll?.glue(on),
       lights: (o) => extra()?.lights(o) ?? null,
-      shade: (dark, height) => extra()?.shade(dark, height),
+      shade: (dark, height, solid) => extra()?.shade(dark, height, solid),
       skip: () => window.__skreedRoom?.skip(),
       get ready() { return !!ctx.room?.hall.ready; },
     };

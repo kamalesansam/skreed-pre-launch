@@ -115,8 +115,8 @@ export interface RoomHooks {
   scene(i: number): boolean;
   /** the carousel's lights set live (the product check, AC2); the values in force */
   lights(o: Partial<LightSetting>): LightSetting;
-  /** the bottom shade set live (AC12's tuning): how dark at the bottom edge and its height as a share of the frame */
-  shade(dark: number, height?: number): void;
+  /** the bottom shade set live (AC12's tuning): how dark at the bottom edge, where it clears and up to where it stays solid, shares of the frame's height */
+  shade(dark: number, height?: number, solid?: number): void;
 }
 
 /** the exit seam and the reverse seam (the wrap), by phase (section-4-flux.md 4, the motion table) */
@@ -676,7 +676,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       return resident(i);
     },
     lights: (o: Partial<LightSetting>) => carousel.lights(o),
-    shade: (dark: number, height?: number) => carousel.shade(dark, height),
+    shade: (dark: number, height?: number, solid?: number) => carousel.shade(dark, height, solid),
   } satisfies RoomHooks);
   return api;
 }

@@ -114,8 +114,8 @@ export interface Carousel {
   degrade(cloudHalf: boolean): void;
   /** the director's scissor while the bubble is small (the bubble's bounding box in device pixels), or null */
   scissor(r: { x: number; y: number; w: number; h: number } | null): void;
-  /** the bottom shade, for AC12's tuning: how dark at the bottom edge (0 to 1) and its height as a share of the frame */
-  shade(dark: number, height?: number): void;
+  /** the bottom shade, for AC12's tuning: how dark at the bottom edge (0 to 1), where it clears (a share of the frame's height) and up to where it stays solid */
+  shade(dark: number, height?: number, solid?: number): void;
   /** the product's placement at the stage's CSS size, and the shown product's box on the stage (shares, x from the left, y from the top), or null with no product */
   place(): Placement & { box: Box | null };
   /**
@@ -159,8 +159,18 @@ export const FINISH = Object.freeze({
 export const LIGHTS = Object.freeze({ key: 1.33, keyMix: 0.6, keyFrom: [0.1, 0.8, 0.6] as const, fill: 0.17, fillTint: '#dfe6ea', fillFrom: [-0.6, 0.2, 0.8] as const, env: 0.48, metalEnv: 1.0, blur: 0.04 });
 /** the trim's fixed dark (linear) and its roughness, and the logo's share of the shade (render-products.py, the old universe) */
 export const PARTS = Object.freeze({ trim: [0.073, 0.077, 0.077] as const, trimRoughness: 0.55, logoTint: 0.8468 });
-/** the bottom shade: 24 vh of the frame, clear to 85 percent black (the reference's caption gradient, spec 3 "Legibility") */
-export const SHADE = Object.freeze({ dark: 0.85, height: 0.24 });
+/**
+ * The bottom shade in the frame (the reference's caption gradient, spec 3 "Legibility"; AC12): dark at the bottom edge
+ * (the share of black), solid up to `solid` of the frame's height, then clearing linearly by `height`. The reference's
+ * is 24 vh, clear to 85 percent black (dark 0.85, solid 0, height 0.24); the four lines' block reaches 0.30 of the
+ * height at 390 x 844 and 0.45 at 1280 x 800 (the name at 40 px, the catalog line wrapping in 520 px), so a ramp that
+ * clears by 0.24 left dawn's name at 2.2:1 and palace's at 3.4. Set by scripts/room/contrast.mjs (--shade,
+ * --shade-solid, --shade-height, live) on 2026-10-23 to the lightest shade at which every text box's median reads
+ * 4.5:1 or better over 10 frames of every loop at both viewports: 45 percent of black, solid to 0.45 of the height,
+ * clear by 0.72 (every scene box's median 6.0:1 or better, the worst 4.7). docs/specs/evidence/section-4-flux-contrast.md
+ * has the readings.
+ */
+export const SHADE = Object.freeze({ dark: 0.45, solid: 0.45, height: 0.72 });
 /** the cloud's target is capped at this DPR (reference 8.4); the cloud's two tones as display values: the reference's shadow and Pearl Whisper (E-S4-colour) */
 export const CLOUD = Object.freeze({ dpr: 1.5, shadow: [0.80, 0.84, 0.93] as const, light: [0xf7 / 255, 0xf6 / 255, 0xf3 / 255] as const });
 /** the case's width, height and depth in metres where products.bin lacks it (src/data/room-products-bin.json) */
@@ -175,7 +185,7 @@ const PLANE_VERT = /* glsl */`
 // loop or a reduced step cross-fades; the reference's reveal from the light-up value and the pixel's luminance
 // (carousel-math.ts lightGain), the floor; re-encoded, then the bottom shade by the fragment's own place in the frame
 const PLANE_FRAG = /* glsl */`
-  uniform sampler2D tMap, tTo; uniform float uMix, uLight, uSoft, uBoost, uFloor, uShade, uShadeH; uniform vec2 uRes;
+  uniform sampler2D tMap, tTo; uniform float uMix, uLight, uSoft, uBoost, uFloor, uShade, uShadeH, uShadeSolid; uniform vec2 uRes;
   varying vec2 vUv;
   vec3 toLinear(vec3 c) { return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }
   vec3 toSrgb(vec3 c) { return mix(c * 12.92, 1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, c)); }
@@ -186,7 +196,7 @@ const PLANE_FRAG = /* glsl */`
     float reveal = smoothstep(edge, edge + uSoft, lum);
     float ambient = smoothstep(0.4, 1.0, uLight) * uLight;
     float g = max(max(reveal, ambient) * (1.0 + uBoost * reveal * (1.0 - uLight)), uFloor);
-    float sh = 1.0 - uShade * (1.0 - clamp(gl_FragCoord.y / (uRes.y * uShadeH), 0.0, 1.0));
+    float sh = 1.0 - uShade * (1.0 - clamp((gl_FragCoord.y / uRes.y - uShadeSolid) / max(uShadeH - uShadeSolid, 1e-3), 0.0, 1.0));
     gl_FragColor = vec4(toSrgb(clamp(c * g, 0.0, 1.0)) * sh, 1.0);
   }`;
 const CLOUD_VERT = /* glsl */`
@@ -254,7 +264,7 @@ export function createCarousel(o: CarouselOptions): Carousel {
   let scissorRect: { x: number; y: number; w: number; h: number } | null = null;
 
   // the planes, one a scene, sharing the light-up and shade uniforms
-  const shared: Record<'uSoft' | 'uBoost' | 'uFloor' | 'uShade' | 'uShadeH', { value: number }> & { uRes: { value: Vector2 } } = { uSoft: { value: LIGHT.soft }, uBoost: { value: LIGHT.boost }, uFloor: { value: LIGHT.floor }, uShade: { value: SHADE.dark }, uShadeH: { value: SHADE.height }, uRes: { value: new Vector2(8, 8) } };
+  const shared: Record<'uSoft' | 'uBoost' | 'uFloor' | 'uShade' | 'uShadeH' | 'uShadeSolid', { value: number }> & { uRes: { value: Vector2 } } = { uSoft: { value: LIGHT.soft }, uBoost: { value: LIGHT.boost }, uFloor: { value: LIGHT.floor }, uShade: { value: SHADE.dark }, uShadeH: { value: SHADE.height }, uShadeSolid: { value: SHADE.solid }, uRes: { value: new Vector2(8, 8) } };
   const planeGeo = new PlaneGeometry(1, 1);
   const planes: Plane[] = scenes.map(() => {
     const U: PlaneUniforms = { tMap: { value: null }, tTo: { value: null }, uMix: { value: 0 }, uLight: { value: 0 } };
@@ -538,7 +548,7 @@ export function createCarousel(o: CarouselOptions): Carousel {
     },
     degrade(half) { cloudHalf = half; if (cloudRt) allocCloud(); },
     scissor(r) { scissorRect = r; },
-    shade(dark, height = SHADE.height) { shared.uShade.value = clamp01(dark); shared.uShadeH.value = Math.max(1e-3, height); },
+    shade(dark, height = SHADE.height, solid = SHADE.solid) { shared.uShade.value = clamp01(dark); shared.uShadeH.value = Math.max(1e-3, height); shared.uShadeSolid.value = Math.min(clamp01(solid), shared.uShadeH.value); },
     place() { const sh = slots[shownIdx]; return { ...placement, box: sh ? productScreenBox(placement, sh.size, W / dpr, H / dpr) : null }; },
     lights(o) {
       Object.assign(setting, o);
