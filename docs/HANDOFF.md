@@ -35,7 +35,7 @@ Deploy: `npm run build:staging && npx wrangler deploy --env staging` (the Worker
 
 ## 4. What is not in git and must be copied by hand
 
-All of it gitignored on purpose (the repo is public). From Sam's Mac (`/Users/apple/skreed-pre-launch`):
+Since 2026-10-23 the first two folders below are tracked after all, on Sam's word ("push this also into github, i'll delete them later, we haven't deployed the site yet anyway"), so a fresh clone has them; their `TRACKED.md` notes say so, and `tests/unit/quiz-pictures.test.ts` stands down while the note exists. Take them out of git again before the site goes live (and rewrite history if the licence requires it). The rest stays out of git. From Sam's Mac (`/Users/apple/skreed-pre-launch`):
 
 - `src/assets/quiz/pics/` (12 MB): the 35 licensed Envato photographs the quiz shows. Never commit them. Without them `npm run build` still passes but the quiz pictures are missing and the 17 quiz picture tests fail.
 - `assets-src/room/flux/raw/` (28 MB): the ten approved Kling loops, their stills, job records and the three generation scripts; `assets-src/room/flux/SHA256SUMS` (committed) verifies them. The encoded loops the site ships are committed under `src/assets/room/flux/`, so the site builds without the raw folder; the raw files are needed only to re-encode or to continue the pipeline.
