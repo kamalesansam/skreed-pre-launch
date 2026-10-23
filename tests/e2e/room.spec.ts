@@ -15,7 +15,8 @@
 // Ctrl+wheel in range and a one-finger pan at visualViewport.scale 2 that never step, and the still3d path under reduced
 // motion. The 3D path runs on SwiftShader here (?tier=hero3d), so the island specs drive the section by its hooks (__s4,
 // __skreedRoom) at device pixel ratio 1, skip the intro and turn the glue off (?glue=0: every q is set by scrollTo)
-// except the glue's own case. Not run in this change (no wrangler here): kept coherent with the hooks.
+// except the glue's own case. Run on 2026-10-23 against the hooks build served by wrangler (the build record's section 9:
+// the 390 flow and the cold wrap pass; AC14 is open at its refusal line).
 import { test, expect, type Page } from '@playwright/test';
 
 type Ev = { name: string; props: Record<string, string | number> };
@@ -43,6 +44,30 @@ const pageQ = (page: Page) => page.evaluate(() => { const room = document.getEle
 const noHScroll = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
 /** a decoded line's text (the decode's visually hidden copy) */
 const said = (page: Page, sel: string) => page.locator(`${sel} .sr-only`).first().textContent({ timeout: 2_000 }).catch(() => '');
+/**
+ * A seam held at full cover: a frame watcher installed first, then the seam started (the exit by the raw scroll across
+ * LOOP_START, the wrap by its hook), and the frame clock frozen (__skreedFreeze, hooks builds: the loop's dt goes to 0, so
+ * the seam holds where it is while frames still draw) on the first frame at which the exit has made its jump (its phase
+ * out, the page at 0 under the cloud) or the wrap has landed (hold or out). The state then, or null after 30 s; release()
+ * lets the clock run again.
+ */
+function holdAtCover(page: Page, kind: 'exit' | 'wrap'): Promise<S4 | null> {
+  return page.evaluate(({ k, q }) => new Promise<unknown>((res) => {
+    const t0 = performance.now();
+    const tick = () => {
+      const s = window.__s4!.state() as { seam: { kind: string; phase: string } | null };
+      const full = !!s.seam && s.seam.kind === k && (k === 'exit' ? s.seam.phase === 'out' : s.seam.phase === 'hold' || s.seam.phase === 'out');
+      if (full) { window.__skreedFreeze = true; res(s); return; }
+      if (performance.now() - t0 > 30_000) { res(null); return; }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    if (k === 'exit') { const room = document.getElementById('room')!, top = room.getBoundingClientRect().top + scrollY; scrollTo({ top: top + q * innerHeight, behavior: 'instant' }); }
+    else window.__s4!.wrap();
+  }), { k: kind, q: LOOP_START + 0.1 }) as Promise<S4 | null>;
+}
+const release = (page: Page) => page.evaluate(() => { window.__skreedFreeze = false; });
+const URBAN_SLATE_CSS = 'rgb(56, 63, 67)';
 
 test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scenes by five steps, the hold, the exit seam, the wrap and the way back', async ({ browser, baseURL }) => {
   test.setTimeout(1_500_000);
@@ -89,6 +114,10 @@ test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scene
   await goQ(page, 4);
   const order = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>('#room button, #room [tabindex]')].filter((el) => el.tabIndex >= 0 && !el.hidden && !el.closest('[inert]')).map((el) => el.id || el.className));
   expect(order[0]).toBe('rmEnter');
+  // the prompt still holds the focus it took as it decoded in at the station, so a focus on it would fire no event: let it
+  // go, and let the frame clear the near state (walk.ts snaps only while the prompt is not near), then focus it
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  await expect(page.locator('#rmEnter')).not.toHaveClass(/is-near/, { timeout: 10_000 });
   await page.focus('#rmEnter');
   await expect.poll(async () => (await s4(page)).q, { timeout: 20_000 }).toBeGreaterThan(9);
   await expect(page.locator('#rmEnter')).toHaveClass(/is-near/, { timeout: 20_000 });
@@ -189,7 +218,16 @@ test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scene
   await expect.poll(async () => (await s4(page)).scene, { timeout: 10_000 }).toBe(4);
   await goQ(page, 12.5); await page.waitForTimeout(400);
   expect((await s4(page)).state).toBe('world');
-  await page.evaluate((q) => { const room = document.getElementById('room')!, top = room.getBoundingClientRect().top + scrollY; scrollTo({ top: top + q * innerHeight, behavior: 'instant' }); }, LOOP_START + 0.1);
+  await expect(page.locator('.site-logo')).toHaveAttribute('data-tone', 'dark');   // dawn's own tone at rest (D5's measured pick: Pearl Whisper)
+  // the seam held at full cover, the clock frozen on the first frame after the jump: the logotype and the Back to top
+  // control read Urban Slate over the Pearl Whisper cloud (the regression the checker found in D5's first fix), the page at 0
+  const exitCover = await holdAtCover(page, 'exit');
+  expect(exitCover?.seam).toEqual({ kind: 'exit', phase: 'out' });
+  expect(await page.evaluate(() => scrollY)).toBeLessThan(2);
+  await expect(page.locator('.site-logo')).toHaveAttribute('data-tone', 'light');
+  await expect(page.locator('.site-logo')).toHaveCSS('color', URBAN_SLATE_CSS);
+  await expect(page.locator('#toTop')).toHaveAttribute('data-tone', 'light');
+  await release(page);
   await page.waitForFunction(() => scrollY < 2, null, { timeout: 120_000, polling: 250 });
   await expect.poll(() => page.evaluate(() => window.__skreedState!().sb), { timeout: 20_000 }).toBeLessThan(0.01);
   expect(await events(page)).toContain('room_loop');
@@ -201,13 +239,19 @@ test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scene
 
   // the wrap from the top: the reverse seam onto scene 5 with the followers snapped (the state seam until its lock ends,
   // the carousel drawn under the cloud from the landing), room_wrap and the wrap's own line, the prompt out of the Tab order
-  await page.evaluate(() => window.__s4!.wrap());
+  const wrapCover = await holdAtCover(page, 'wrap');
+  expect(wrapCover?.seam?.kind).toBe('wrap');
+  // held at full cover over the landing: Urban Slate again, over the cloud that covers scene 5
+  await expect(page.locator('.site-logo')).toHaveAttribute('data-tone', 'light');
+  await expect(page.locator('.site-logo')).toHaveCSS('color', URBAN_SLATE_CSS);
   await expect.poll(async () => (await s4(page)).under, { timeout: 30_000 }).toBe('world');
   expect((await s4(page)).state).toBe('seam');
   expect((await s4(page)).draws).toBe('scenes');
   expect((await s4(page)).lock).toBe(true);
+  await release(page);
   await expect.poll(async () => (await s4(page)).state, { timeout: 30_000 }).toBe('world');
   expect((await s4(page)).scene).toBe(N - 1);
+  await expect(page.locator('.site-logo')).toHaveAttribute('data-tone', 'dark', { timeout: 10_000 });   // dawn's own tone again once the cloud has gone
   expect(await page.evaluate(() => { const e = document.getElementById('rmEnter')!; return e.hidden && e.inert; })).toBe(true);
   await expect.poll(() => pageQ(page), { timeout: 10_000 }).toBeCloseTo(12, 1);
   await expect.poll(() => page.evaluate(() => Math.abs(window.__skreedState!().sb - scrollY / innerHeight)), { timeout: 20_000 }).toBeLessThan(0.05);

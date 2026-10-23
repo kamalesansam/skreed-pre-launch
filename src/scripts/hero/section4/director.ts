@@ -58,7 +58,7 @@ export interface RoomPlan {
   /** a seam's cloud cover, 0 to 1: above 0 the composite blends cloud (premultiplied) over its result */
   cover: number;
   cloud: Texture | null;
-  /** the logotype and the Back to top control over the section: Pearl in the hall; over the scenes the front scene's own tone (ROOM_SCENES toneDark, measured on the stills) */
+  /** the logotype and the Back to top control over the section: Pearl in the hall; over the scenes the front scene's own tone (ROOM_SCENES toneDark, measured on the stills); Urban Slate while a seam's cloud covers half the frame or more, whatever is under it */
   toneDark: boolean;
 }
 
@@ -563,6 +563,9 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       // a seam over the hall's frame, or over the hero after the exit's jump: the carousel steps for the cloud alone
       if (state === 'seam' && drawHall) { carousel.look(0, 0, false); carousel.scissor(null); carousel.update(f.t, f.dt, curW, curH); }
       if (HOOKS && seam && seam.phase === 'in') seamDraws.add(source);
+      // a seam's cloud at half cover or more (Pearl Whisper where it is thickest): Urban Slate over it, whatever is under it,
+      // the hall, the scenes, or the hero after the exit's jump (the frame applies the plan's tone under any cover, loop.ts)
+      toneDark ||= cover >= 0.5;
       lastRaw = qRaw;
 
       // the hand-off from the fog (Tune: handoff): 0 the composite's ice-shard cut, 1 a cut at half the screen, 2 a fade

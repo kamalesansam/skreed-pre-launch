@@ -68,6 +68,10 @@ test('the five scenes (section-4-flux.md 3): the rooms in order, the products, t
   assert.match(director, /tex = carousel\.out; toneDark = sceneTone\(\);/, 'over the scenes');
   assert.match(director, /toneDark = b\.done && sceneTone\(\);/, 'once the bubble is done');
   assert.doesNotMatch(director, /toneDark = true;/, 'never Urban Slate by state alone');
+  // under a seam's cloud (Pearl Whisper where it is thickest) the logotype and the control turn Urban Slate from half cover,
+  // and the frame applies the plan's tone under any cover, after the exit's jump too (the checker's finding on D5's first fix)
+  assert.match(director, /toneDark \|\|= cover >= 0\.5;/, 'Urban Slate from half cover');
+  assert.match(read('src/scripts/hero/loop.ts'), /if \(plan && \(cover > 0 \|\| \(roomOn && plan\.wipeIn >= 0\.5\)\)\) window\.__skreedLogo\?\.setTone\(plan\.toneDark\);/, "the plan's tone applied under any cover");
   assert.deepEqual(SCENE_SIZE, { wide: { width: 1280, height: 666 }, portrait: { width: 720, height: 1280 } });
   assert.equal(shadeLine(ROOM_SCENES[0]), 'Lilac, vivid violet');
   assert.equal(fill(ROOM_COPY.count, { n: 2, N: 5 }), '2 / 5');

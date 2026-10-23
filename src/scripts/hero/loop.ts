@@ -119,7 +119,10 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
       intro.afterRender(now, ctx, tex.ok);                                       // F15
     }
     rideCopy(els, tp, innerWidth / innerHeight, !!S2 && S2.ready);               // F16
-    if (roomOn && plan!.wipeIn >= 0.5) window.__skreedLogo?.setTone(plan!.toneDark);   // the logotype over the section: Pearl on the hall, Urban Slate over the scenes
+    // the logotype over the section (after the ride's own write, so this one stands): Pearl on the hall, the front scene's
+    // tone over the scenes, Urban Slate under a seam's cloud, after the exit's jump too, when the section is off and the
+    // cloud thins over the hero at rest
+    if (plan && (cover > 0 || (roomOn && plan.wipeIn >= 0.5))) window.__skreedLogo?.setTone(plan.toneDark);
   }
   function frame() {
     raf = requestAnimationFrame(frame);                                          // F1: the request first, so one bad frame can never stop the loop
