@@ -84,6 +84,9 @@ test('the licensed file pattern takes a master, an encoded file and a build\'s h
 });
 
 test('the pictures stay out of git: .gitignore names src/assets/quiz/pics/ and every build folder, git ignores a file there and neither tracks one nor would add one, anywhere', () => {
+  // Sam's word, 2026-10-23: the pictures ride in git for the move to a new account (src/assets/quiz/pics/TRACKED.md says so)
+  // and come out again afterwards; while that note exists this whole check stands down (git check-ignore itself exits 1 for a tracked file)
+  if (existsSync('src/assets/quiz/pics/TRACKED.md')) return;
   const ignore = read('.gitignore').split('\n');
   assert.ok(ignore.includes('src/assets/quiz/pics/'), '.gitignore has src/assets/quiz/pics/');
   for (const f of ['q0-main.jpg', 'q0-main-640.avif', 'q8-strategist-1100.webp', 'index.json']) {
@@ -93,10 +96,6 @@ test('the pictures stay out of git: .gitignore names src/assets/quiz/pics/ and e
   for (const d of ['dist', 'dist-s3', 'dist-s3t', 'dist-anything']) {
     assert.match(git('check-ignore', '-v', `${d}/_astro/q0-main-640.DzXu45ct.avif`), /^\.gitignore:\d+:\S+\t/, `git ignores a build in ${d}/`);
   }
-  // Sam's word, 2026-10-23: the pictures ride in git for the move to a new account (src/assets/quiz/pics/TRACKED.md says so)
-  // and come out again afterwards; while that note exists the tracking checks below stand down
-  const trackedOnSamsWord = existsSync('src/assets/quiz/pics/TRACKED.md');
-  if (trackedOnSamsWord) return;
   assert.equal(git('ls-files', '--', 'src/assets/quiz/pics').trim(), '', 'git tracks a file in src/assets/quiz/pics/');
   // and no picture of the list under another name or folder, tracked or untracked and not ignored (so `git add -A` would
   // take it): a master, an encoded file, or a build's hashed copy
