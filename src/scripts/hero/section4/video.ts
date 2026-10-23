@@ -1,6 +1,6 @@
 // Section 4 part three's loop elements (docs/specs/section-4-flux.md 4 "A loop the browser paused", 5 "Video policy" and
-// "Loading", AC7, E-S4-video), salvaged from part two's travel-video.ts and travel.ts: at most five <video> elements,
-// made once and kept across laps, muted and inline, unlocked (play then pause) inside the press task and again after a
+// "Loading", AC7, E-S4-video; the elements, the unlock and the fetch carried over from part two's loop player, which
+// left the repository with part three): at most five <video> elements, made once and kept across laps, muted and inline, unlocked (play then pause) inside the press task and again after a
 // wrap so a browser that wants a gesture before a video may play (iOS in Low Power Mode) has had it on these elements.
 // A loop streams from its hashed URL into its element (never a blob: the CSP's media-src 'self') and is in once the
 // element has buffered the whole file within half a frame (the 1/48 s slack), not in after 20 s or an error; a browser
@@ -10,10 +10,14 @@
 // (spec 5, "Loading"). Play, pause and reset come from the carousel's proximity rule (carousel-math.ts loopShouldPlay,
 // loopShouldReset). The resume rule: a loop the carousel asked to play is played again on a pause the carousel did not
 // cause, on visibilitychange to visible, on pageshow and by a 2 s watchdog. A rejected play(), or 1.5 s of visible time
-// since the latest play() with no new frame, marks the element refused and the carousel keeps the scene's still; the
-// next pointerup, touchend or keydown retries it, and the next unlock (a gesture) clears the refusals too. The loop
-// URLs come from the caller (the wiring's config): this module names no asset of its own, and it is the one section 4
-// module that may spell out the loops' format, .mp4 (tests/unit/room-video.test.ts).
+// since the latest play() with no new frame, marks the element refused (texture(), the plane's per-frame call, reads
+// it) and the carousel keeps the scene's still; the next pointerup, touchend or keydown retries it, and the next unlock
+// (a gesture) clears the refusals too. One play() at a time: play(i) is a no-op while the element plays (play() sets
+// paused false at once, so a pending play() reads as playing) and over a rejection texture() has not read yet, so the
+// carousel's gate may call it every frame without stacking play() calls or restarting the refusal clock (the build
+// record's section 10: the per-frame call erased each rejection before the pool read it, and AC7's retry on the next
+// input could never come). The loop URLs come from the caller (the wiring's config): this module names no asset of its
+// own, and it is the one section 4 module that may spell out the loops' format, .mp4 (tests/unit/room-carousel.test.ts).
 import { NoColorSpace, VideoTexture } from 'three';
 
 /** the policy's numbers (spec 5) */
@@ -80,8 +84,10 @@ interface Slot {
   refused: boolean;
   /** the carousel asked for this loop to play and has not reset or paused it since: the resume rule applies */
   wanted: boolean;
-  /** host.now() of the latest play() (-1 none, -2 rejected), the currentTime it started from, whether a frame came since */
+  /** host.now() of the latest play() (-1 none, -2 rejected and not yet read by texture()), the currentTime it started from, whether a frame came since */
   playAt: number; playFrom: number; seen: boolean;
+  /** the latest play()'s number: the settling of an older one (a pause or reset came between) is stale and changes nothing */
+  gen: number;
   /** the currentTime last marked for upload */
   shownT: number;
   onPause: () => void;
@@ -100,14 +106,14 @@ export interface VideoPool {
   aspect(i: number): number;
   /** the frame's size in pixels, [0, 0] before the metadata (the carousel's memory count) */
   size(i: number): readonly [number, number];
-  /** the element's texture, made when first asked (that frame's upload); call it once a frame while the plane draws it: a new currentTime is marked for upload and the refusal clock runs */
+  /** the element's texture, made when first asked (that frame's upload); call it once a frame while the plane draws it: a new currentTime is marked for upload and the refusal clock is read (a rejected play(), or 1.5 s of visible time since it with no new frame, marks the element refused here) */
   texture(i: number): VideoTexture;
   /** the texture freed (the plane parked); the element stays as it is */
   release(i: number): void;
   /** whether element i has a texture on the GPU */
   resident(i: number): boolean;
   playing(i: number): boolean;
-  /** play, and keep playing (the resume rule) until reset or pause; only when in and not refused */
+  /** play, and keep playing (the resume rule) until reset or pause; only when in and not refused; a no-op while the element plays, or over a rejection texture() has not read yet (the carousel calls it once a frame) */
   play(i: number): void;
   /** pause where it is and stop wanting it (the "Pause motion" control, E-S4-loops); a later play resumes it */
   pause(i: number): void;
@@ -142,7 +148,7 @@ export function pageHost(): VideoHost {
 /** n elements at most (VIDEO.max), the same ones on every call; the host is the page unless the test gives one */
 export function create(n: number, host: VideoHost = pageHost()): VideoPool {
   const count = Math.max(0, Math.min(VIDEO.max, Math.floor(n)));
-  const slots: Slot[] = Array.from({ length: count }, (_, k) => ({ v: host.element(k), state: 'idle', url: '', job: null, stop: null, tex: null, refused: false, wanted: false, playAt: -1, playFrom: 0, seen: false, shownT: -1, onPause: () => {} }));
+  const slots: Slot[] = Array.from({ length: count }, (_, k) => ({ v: host.element(k), state: 'idle', url: '', job: null, stop: null, tex: null, refused: false, wanted: false, playAt: -1, playFrom: 0, seen: false, gen: 0, shownT: -1, onPause: () => {} }));
   const at = (i: number): Slot | undefined => slots[i];
   const visible = (): boolean => host.doc?.visibilityState !== 'hidden';
   let hiddenAt = -1, disposed = false;
@@ -188,25 +194,31 @@ export function create(n: number, host: VideoHost = pageHost()): VideoPool {
   }
 
   function refuse(s: Slot) {
-    s.refused = true; s.playAt = -1;
+    s.refused = true; s.playAt = -1; s.seen = false; s.gen++;   // the refused play()'s settling, if it is still to come, is stale
     if (!s.v.paused) s.v.pause();
     console.warn('section 4: a loop was refused; its still stays');
   }
-  /** play() on a wanted element, the refusal clock restarted from now */
+  /**
+   * play() on a wanted element and the refusal clock started from now; nothing while the element plays (a pending play()
+   * reads as playing) or over a rejection texture() has not read yet, so the carousel's call every frame neither stacks
+   * play() calls nor restarts the clock. A rejection marks the clock -2 for texture(), unless a pause, a reset or a
+   * refusal came between (the play()'s number has moved on).
+   */
   function start(s: Slot) {
-    if (!s.v.paused) return;
+    if (!s.v.paused || s.playAt === -2) return;
+    const g = ++s.gen;
     s.playAt = host.now(); s.playFrom = s.v.currentTime; s.seen = false;
-    s.v.play().catch(() => { if (s.playAt >= 0) s.playAt = -2; });
+    s.v.play().catch(() => { if (g === s.gen && s.playAt >= 0) s.playAt = -2; });
   }
   /** the resume rule: every wanted, in, unrefused element that is paused is played again */
   function resume() {
     if (disposed) return;
     for (const s of slots) if (s.wanted && s.state === 'in' && !s.refused && s.v.paused) start(s);
   }
-  /** a refused loop tried again on the visitor's next input */
+  /** a refused loop (or one whose rejection texture() has not read yet) tried again on the visitor's next input */
   function retry() {
     if (disposed) return;
-    for (const s of slots) if (s.refused) { s.refused = false; if (s.wanted) start(s); }
+    for (const s of slots) if (s.refused || s.playAt === -2) { s.refused = false; s.playAt = -1; if (s.wanted) start(s); }
   }
   function onVisibility() {
     if (disposed) return;
@@ -225,7 +237,7 @@ export function create(n: number, host: VideoHost = pageHost()): VideoPool {
     n: count,
     unlock() {
       for (const s of slots) {
-        s.refused = false;
+        s.refused = false; if (s.playAt === -2) s.playAt = -1;   // a rejection not yet read goes with the refusals
         if (s.wanted && !s.v.paused) continue;   // already playing: it has had its gesture
         s.v.play().catch(() => {}); s.v.pause();
       }
@@ -259,13 +271,13 @@ export function create(n: number, host: VideoHost = pageHost()): VideoPool {
     pause(i) {
       const s = at(i);
       if (!s) return;
-      s.wanted = false; s.playAt = -1; s.seen = false;
+      s.wanted = false; s.playAt = -1; s.seen = false; s.gen++;   // a pending play() the pause aborts is stale, no refusal
       if (!s.v.paused) s.v.pause();
     },
     reset(i) {
       const s = at(i);
       if (!s) return;
-      s.wanted = false; s.playAt = -1; s.seen = false;
+      s.wanted = false; s.playAt = -1; s.seen = false; s.gen++;
       if (!s.v.paused) s.v.pause();
       if (s.v.currentTime > 0 && !s.v.seeking) s.v.currentTime = 0;
     },

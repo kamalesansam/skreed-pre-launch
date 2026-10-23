@@ -16,7 +16,9 @@
 // motion. The 3D path runs on SwiftShader here (?tier=hero3d), so the island specs drive the section by its hooks (__s4,
 // __skreedRoom) at device pixel ratio 1, skip the intro and turn the glue off (?glue=0: every q is set by scrollTo)
 // except the glue's own case. Run on 2026-10-23 against the hooks build served by wrangler (the build record's section 9:
-// the 390 flow and the cold wrap pass; AC14 is open at its refusal line).
+// the 390 flow and the cold wrap pass; section 10: 133 of 134, AC14 failing at its refusal line). Since then AC14's
+// refusal line reads the pool's refusal where the loops decode and the failed state where they do not (video.ts holds a
+// rejected play() until the pool reads it); the suite has not been re-run on that change.
 import { test, expect, type Page } from '@playwright/test';
 
 type Ev = { name: string; props: Record<string, string | number> };
@@ -322,10 +324,16 @@ test('section 4 at 390 x 844, AC14: a blocked loop, a rejected play(), products.
   expect(voices.filter((v) => v !== 'rmLive')).toEqual([]);
   expect(voices.includes('rmLive')).toBe(!named);
   if (!named) await expect(page.locator('#rmLive')).toHaveText(/^1 of 5\. /);
-  // the refused play(): scene 1's loop is in but refused, its still stays, no video plays; on a Tune build the line says so
-  await expect.poll(async () => (await s4(page)).loops[0]?.refused, { timeout: 30_000 }).toBe(true);
+  // the refused play() (spec 5 "Video policy", AC14; the build record's section 10): where the browser decodes the loops
+  // (the installed Chrome) scene 1's loop is in and the pool reads its rejected play() as a refusal on the next frame
+  // (video.ts: the carousel's per-frame play() no longer erases it), so the hooks read refused and in false, the still
+  // stays, no video plays, and on a Tune build the line says so; where the browser has no H.264 (the harness's Chromium)
+  // the loop never gets in and reads failed, AC14's state for a loop that failed: the still stays the same way, no line
+  await expect.poll(async () => { const l = (await s4(page)).loops[0]; return !!l && (l.refused || l.state === 'failed'); }, { timeout: 30_000 }).toBe(true);
+  const loop0 = (await s4(page)).loops[0];
+  if (loop0.state !== 'failed') { expect(loop0.state).toBe('in'); expect(loop0.refused).toBe(true); expect(loop0.in).toBe(false); expect(loop0.playing).toBe(false); }
   expect(await page.evaluate(() => [...document.querySelectorAll('video')].filter((v) => !v.paused).length)).toBe(0);
-  if (tune) await expect.poll(() => said(page, '.rm-scene[data-i="0"] .rm-scene-more'), { timeout: 10_000 }).toBe('Clip blocked');
+  if (tune && loop0.refused) await expect.poll(() => said(page, '.rm-scene[data-i="0"] .rm-scene-more'), { timeout: 10_000 }).toBe('Clip blocked');
   else await expect(page.locator('.rm-scene[data-i="0"] .rm-scene-more')).toBeHidden();
   // scene 2 held back: the step goes ahead on its still (the loop is optional), the loading line under its lines, Still loading at 8 s
   await expect.poll(() => page.evaluate(() => window.__s4!.step(1)), { timeout: 30_000 }).toBe(true);

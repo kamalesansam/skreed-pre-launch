@@ -357,6 +357,47 @@ test('the resume rule (spec 4, AC7): a loop the carousel wants plays again on a 
   assert.equal(v.src, '', 'the element is unloaded');
 }));
 
+test("the refusal under the carousel's per-frame play() (AC7; the build record's section 10): a play() that always rejects marks the element refused within 1.6 s of visible time with play() and texture() called every frame, one play() an attempt; the keydown retry plays it again, once; a play() that resolves with no frame is refused at 1.5 s the same way, and a frame that comes clears the clock", async () => quiet(async () => {
+  const page = fakePage(1), v = page.els[0];
+  const pool = createPool(1, page.host);
+  assert.equal(await pool.fetch(0, 'loop-0'), true);
+  // the carousel's gate (carousel.ts update: in and not playing, then play) and the plane's map (texture while in), once a frame at 60 Hz
+  const frame = () => { if (pool.in(0) && !pool.playing(0)) pool.play(0); if (pool.in(0)) pool.texture(0); page.advance(1000 / 60); };
+  const frames = async (n: number) => { for (let k = 0; k < n; k++) { frame(); await tick(); } };
+  // every play() rejects (the e2e's stub, iOS in Low Power Mode): the rejection survives the next frame's play() and is read by texture()
+  v.reject = true;
+  const t0 = page.host.now();
+  let refusedAt = -1;
+  for (let k = 0; k < 120 && refusedAt < 0; k++) { frame(); await tick(); if (pool.refused(0)) refusedAt = page.host.now() - t0; }
+  assert.ok(refusedAt >= 0 && refusedAt <= 1600, `refused after ${refusedAt} ms of visible time`);
+  assert.equal(v.plays, 1, 'one play() for the attempt, not one a frame');
+  assert.equal(pool.in(0), false); assert.equal(pool.playing(0), false);
+  await frames(60);
+  assert.equal(v.plays, 1, 'the frames do not play a refused loop'); assert.equal(pool.refused(0), true);
+  // the next input retries it, once (its rejection lands before the next frame, as in the browser: the input is its own task); rejected again, it is refused again by the frames that follow
+  page.win.dispatchEvent(new Event('keydown'));
+  assert.equal(v.plays, 2, 'the retry plays it again'); assert.equal(pool.refused(0), false); assert.equal(pool.in(0), true);
+  await tick();
+  await frames(10);
+  assert.equal(pool.refused(0), true, 'refused again once the rejection is read'); assert.equal(v.plays, 2, 'one play() for the retry');
+  // a play() that resolves but brings no frame: refused at 1.5 s of visible time, the per-frame call restarting nothing
+  v.reject = false;
+  page.win.dispatchEvent(new Event('pointerup'));
+  assert.equal(v.plays, 3); assert.equal(pool.playing(0), true);
+  const t1 = page.host.now();
+  await frames(60);
+  assert.equal(pool.refused(0), false, 'a second of visible time with no frame is not a refusal');
+  await frames(40);
+  assert.equal(pool.refused(0), true, `refused by ${(page.host.now() - t1).toFixed(0)} ms`); assert.equal(v.plays, 3, 'no play() restarted the clock');
+  assert.equal(pool.playing(0), false, 'paused where it was');
+  // a frame that comes clears the clock: the loop plays on and is never refused
+  page.win.dispatchEvent(new Event('keydown'));
+  assert.equal(v.plays, 4); assert.equal(pool.playing(0), true);
+  v.currentTime = 0.1; await frames(120);
+  assert.equal(pool.refused(0), false); assert.equal(v.plays, 4); assert.equal(pool.playing(0), true);
+  pool.dispose();
+}));
+
 test("carousel.ts's constants: the exhibit factors, the class scale's lines, the physical finishes, the lights, the parts, the shade, the cloud's tones", () => {
   assert.deepEqual(EXHIBIT, { case: 1, wallet: 1.55, airpods: 1.75, lenskin: 2.2 });
   assert.deepEqual(CLASS_FILL, { height: 0.55, width: 0.62, centre: null });
