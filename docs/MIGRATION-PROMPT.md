@@ -1,6 +1,6 @@
 # The prompt for a new account
 
-Paste the block below as the first message of a fresh Claude Code session on the new account, in an empty folder. Before pasting: copy `src/assets/quiz/pics/` and `assets-src/room/flux/raw/` from the old Mac to somewhere the new machine can reach (both are gitignored on purpose; `docs/HANDOFF.md` section 4 says why), sign the new machine in to GitHub (`gh auth login`), Cloudflare (`npx wrangler login`) and the Higgsfield CLI if the pipeline will be used, and install node 24.
+Paste the block below as the first message of a fresh Claude Code session on the new account, in an empty folder. Before pasting: sign the new machine in to GitHub (`gh auth login`), Cloudflare (`npx wrangler login`) and the Higgsfield CLI if the pipeline will be used, and install node 24.
 
 ```text
 You are taking over the Skreed pre-launch site (skreed.in's teaser, Astro 7 on Cloudflare Workers) from a previous account. I am Sam, the owner and sole reviewer. Everything is on GitHub; nothing of the site lives only on the old machine.
@@ -12,7 +12,7 @@ You are taking over the Skreed pre-launch site (skreed.in's teaser, Astro 7 on C
 
 2. Read, in this order, before touching anything: docs/HANDOFF.md (the state of everything as of 2026-10-23 and my standing rules), CLAUDE.md, DESIGN.md, docs/CHECKLIST.md, then docs/specs/section-4-flux.md (the latest work, revision 4) and the other specs it points to. Treat the specs as the source of truth and the hand-off's section 7 as the open list.
 
-3. Restore the two folders that are not in git: put my copy of the 35 quiz photographs at src/assets/quiz/pics/ and the ten raw loops with their records at assets-src/room/flux/raw/ (verify them with sha256sum -c against assets-src/room/flux/SHA256SUMS). Never commit either; the repo is public.
+3. The 35 quiz photographs (src/assets/quiz/pics/) and the ten raw loops with their records (assets-src/room/flux/raw/) are tracked in git for this move only; verify the loops with sha256sum -c against assets-src/room/flux/SHA256SUMS. Before the site goes live they come out of git again (see docs/HANDOFF.md section 4).
 
 4. Prove the checkout: npm ci, then npm run test:unit (expect 187 passing), npm run test:family, npm run build (every budget line must hold; the section 4 script is 29.5 KB against my 30 KB line). Then npm run build:staging and serve dist with npx wrangler dev --ip 127.0.0.1 --port 8790, and tell me the URL. Do not review the site through npm run dev; dev mode loads too slowly and drops to the flat poster tier. Astro allows one dev server per project.
 
