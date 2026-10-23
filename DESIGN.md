@@ -179,18 +179,19 @@ html { font-synthesis: none; -webkit-text-size-adjust: 100%; }
 }
 ```
 
-### Section 3 type (the quiz; exception E-S3-font in `docs/specs/hero.md` section 10)
+### Section 3 type (the quiz, and section 4; exceptions E-S3-font in `docs/specs/hero.md` section 10 and E-S4-font in `docs/specs/section-4-world.md` section 10)
 
-The quiz is set in section 2's label type, not in the three faces above (Sam, 2026-10-19: "keep the same font color and typography as well"). It is an exception to rule 4, rule 19, type-system principle 9 and the monospace ban above, for the quiz and section 2's gem labels (E-S2-font) only.
+The quiz is set in section 2's label type, not in the three faces above (Sam, 2026-10-19: "keep the same font color and typography as well"), and so is every line of section 4, plain text on the scene with section 2's decode (Sam, 2026-10-20: "Yes, all of it"). It is an exception to rule 4, rule 19, type-system principle 9 and the monospace ban above, for the quiz, section 4 (E-S4-font) and section 2's gem labels (E-S2-font) only.
 
 | Family | Job | Weights | Files (served at `/fonts/`) | Bytes |
 |---|---|---|---|---|
-| IBM Plex Mono | section 3, the quiz, every line; section 2's gem labels | 500 only | `ibm-plex-mono-500-caps.woff2` (U+0020, the digits, A to Z; section 2's file) and `ibm-plex-mono-500-rest.woff2` (the rest of Basic Latin, U+00A0, U+2018 to U+201E less U+201B, U+2026) | 2,184 and 3,176 |
+| IBM Plex Mono | section 3, the quiz, every line; section 4, every line; section 2's gem labels | 500 only | `ibm-plex-mono-500-caps.woff2` (U+0020, the digits, A to Z; section 2's file) and `ibm-plex-mono-500-rest.woff2` (the rest of Basic Latin, U+00A0, U+2018 to U+201E less U+201B, U+2026) | 2,184 and 3,176 |
 
 - **Files.** One family in two `@font-face` rules split by unicode-range (`src/styles/fonts.css`), both cut from IBMPlexMono-Medium.ttf at google/fonts@9710da1 with the same metrics (units per em 1000, ascent 1025, descent -275, every advance 600), so the two share one line box. Section 2's labels need only the capitals file; the quiz's text adds the second. The recipe and the checksums are in `scripts/fonts/manifest.txt` (SECTION 3). Outside the 120 KB cap of the three brand faces.
 - **Setting** (`.quiz`). `font: 500 var(--qz-fs) / 1.45 "IBM Plex Mono", ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0; font-synthesis: none; color: var(--pearl-whisper)`, as section 2's `.s2lab`.
 - **Sizes.** Since 2026-10-20 they scale with the screen (Sam: "the text is soo small, look at the screen size and look at how much area the text is covering, it doesnt make any sense"): `--qz-fs` `clamp(15px, min(0.6rem + 0.95vw, 2.6vh), 22px)`, `--qz-fs-q` `clamp(24px, min(1rem + 2.3vw, 5vh), 52px)` and `--qz-fs-big` `clamp(36px, min(1rem + 4.6vw, 10vh), 88px)`; the width term grows them, the height term holds them down on a short screen. Measured: the answers 15 px and the questions 24.97 px at 390 x 844, 20.8 and 40 px at 1280 x 800, 17.08 and 32.85 px at 1366 x 657 (every size in `docs/specs/quiz.md` section 2). Line heights 1.45, 1.25 and 1.1. Nothing under 15 px. The portrait step of section 2's labels (13 to 12 px) no longer applies to the quiz, and its old sizes (13, 22 and 36 px; 12, 18 and 28 px in portrait) are gone.
 - **Capitals.** The quiz's headline and questions are drawn in capitals, which rule 4's sentence case forbids for a headline; that is part of E-S3-font. Sam's sentence case stays in the DOM, in the decode's visually hidden copy, which sets `text-transform: none` (`.quiz .sr-only`) so that assistive technology reads it as written: Chrome names an element from its rendered text, and a copy left in the section's capitals is named "BACK" (Quiz decode, under Component Stylings). The intro's heading, sub-line and Begin, and the no-JS line, are split at build into the same pair (a sentence-case `span.sr-only` beside an `aria-hidden` span drawn in capitals), the no-JS link is named "ten families" by its `aria-label`, though Chrome still lists its drawn capitals as the link's text, and the loader writes "Loading..." the same way, so before the chunk has mounted and without JavaScript the accessibility tree carries Sam's case too, that link's text aside (`docs/specs/quiz.md` section 2).
+- **Section 4** (`.room`, `src/styles/room.css`). The same setting on the section's root: `font: 500 var(--rm-fs) / 1.45 "IBM Plex Mono", ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0; font-synthesis: none; color: var(--pearl-whisper)`. Its two sizes are the quiz's own, `--rm-fs` equal to `--qz-fs` (15 to 22 px) and `--rm-fs-q` to `--qz-fs-q` (24 to 52 px), which `tests/unit/room.test.ts` holds equal: a scene's name (`h3.rm-scene-name`) at `--rm-fs-q` / 1.25, balanced, and every other line, the prompt, Skip, the hints, the loading lines and the words at `--rm-fs` / 1.45; the count with tabular numerals. Nothing under 15 px. Sentence case stays in the DOM, in the decode's visually hidden copy (`.room .sr-only { text-transform: none }`), as in the quiz.
 
 ### Element rules (from type-system.md)
 
@@ -387,73 +388,107 @@ Sam, 2026-10-19: "add a back to top button throughout the site which navigates b
 - **Type.** Open Sans 600 at `--fs-button` / `--lh-solid`, the panel's text colour, no fill, no border.
 - **Size.** A hit area of at least 44 x 44 px (Tap targets, section 8; CHECKLIST B2): minimum height 44 px, padding `var(--s2) 0`.
 - **States.** An underline at a 3 px offset, transparent at rest and coloured in on hover and on `:focus-visible` only at once (no transition: nothing but transform and opacity animates, CHECKLIST C3). No transform.
-- **Uses.** In section 4, "Skip" on its own panel with padding `var(--s2) var(--s4)` (Skip, below). The quiz no longer uses it (2026-10-19): its controls are quiz links (Quiz link, above).
+- **Uses.** None. The quiz stopped using it on 2026-10-19 (its controls are quiz links, above) and section 4 on 2026-10-20 (Skip is a section 4 link, below); no element of the site carries `.txtbtn`. The pattern stays here for a later section that needs it.
 - **Focus.** The two-tone ring (Focus ring, above).
 
-### Section 4 stage (`section#room`; `src/styles/room.css`, `src/components/room/Room.astro`)
+### Section 4 stage (`section#room`; `src/styles/room.css`, `src/components/room/Room.astro`, `src/scripts/room/walk.ts`)
 
-- **Ground.** On the 3D path the section has no background of its own: a track of 1300svh (1500svh once the universe is entered) holds a sticky 100svh stage (`.rm-stage`, `overflow: clip`) over the hero's canvas, which draws the hall, the transition and the universe (docs/specs/section-4.md). The DOM over it is the controls below and nothing else. On the poster tier (`html:not(.hero3d)`, `html.poster`, or the section's own `data-tier="poster"` after a failed asset) and without JavaScript the track collapses and the stage is a grid on `--night` holding the two stills, each on a `--skeleton` box of its own aspect ratio (9:16, 16:10 in landscape) until it decodes.
-- **Text and panels.** Open Sans at `--fs-label` / `--lh-ui` in Urban Slate, only ever on a Pearl Whisper panel (9.9:1, whatever the canvas shows), square (`--radius-none`), no border, no shadow, no blur. `box-sizing: border-box` on everything in the section.
-- **Stacking.** The panels and the products at `z-index: 2`, the prompt at 3, Skip at 4, the poster tier's loop fade at 5.
-- **Focus.** `.room :focus-visible` is the Ember Luxe outline at 2 px with a 2 px offset; on the prompt, Skip and the product buttons a `::before` at `inset: -2px` with a 2 px Urban Slate border is the inner ring (the two-tone ring above). The pad's ring is drawn inside it (Pad, below).
-- **Positions.** No style attributes (the CSP has no `style-src-attr`): `src/scripts/room/walk.ts` sets `left` and `top` through the CSSOM, and the stage's opacity while the loop screen fades the section out.
+- **No boxes.** Sam, 2026-10-19, of the quiz: "just plain text on the fog backround with the same animation, no boxes or anything", and of section 4 on 2026-10-20: "Yes, all of it". Every element of the section is plain text on the scene: no panel, no fill, no border but the focus ring's, no shadow, no blur and no Ember Luxe button, on any tier. The controls are words, underlined as the quiz's links are. `box-sizing: border-box` on everything in it. `tests/unit/room.test.ts` fails on any background but `none`, `--night` or `--skeleton`, any border outside the focus ring, any `box-shadow`, `backdrop-filter` or `filter`, any gradient, a radius other than 0, a style attribute, and the classes `rm-pill`, `btn` and `txtbtn` (`docs/specs/section-4-flux.md` AC10).
+- **Ground.** On the 3D path the section has no background of its own. A track of 1580svh in every state (`.room .rm-track`, `ROOM_HEIGHT` 15.8 screens in `src/config/room.ts`) holds a sticky 100svh stage (`.rm-stage`, `overflow: clip`) over the hero's canvas, which draws the hall, the bubble and the five scenes (`docs/specs/section-4-flux.md`). The scenes' bottom shade, which keeps their lines legible, is drawn into the video frame by the carousel's shader (45 percent of black, solid to 0.45 of the height, clear by 0.72), never in the DOM. On the poster tier (`html:not(.hero3d)`, `html.poster`, or the section's own `data-tier="poster"` after a failed asset) and without JavaScript the track collapses and the stage is a grid on `--night`: the hall's still, then the scenes' column (Scenes, below), each picture on a `--skeleton` box of its aspect ratio until it decodes.
+- **Type.** Section 4's type (Section 3 type, under Typography Rules): IBM Plex Mono Medium in capitals, Pearl Whisper, at the quiz's sizes, set once on `.room`. The text stands straight on the scene, never boxed to pass: every line of the scenes measures 6.0:1 or better at the median over the ten loops at 390 x 844 and 1280 x 800; the prompt over the hall's lit door 2.36:1 at 390 x 844 and 2.85:1 at 1280 x 800 (E-S4-contrast, pending Sam; `docs/specs/evidence/section-4-flux-contrast.md`).
+- **Stacking.** The section at `z-index: 2` in the page. Inside the stage: the scene on screen at 2, the words that are controls and the lines at 3, and the poster tier's loop fade at 5 (fixed).
+- **Focus.** `.room :focus-visible` is the Ember Luxe outline at 2 px with a 2 px offset, and on the words that are controls a `::before` at `inset: -2px` with a 2 px Urban Slate border is the inner ring (the two-tone ring above). The pad's ring is drawn inside the stage (Pad, below). A scene's name takes focus from script only and draws no ring.
+- **Positions.** No style attributes (the CSP has no `style-src-attr`). `walk.ts` places the prompt by a `transform` through the CSSOM, and sets the stage's opacity while a seam's cloud covers the section.
+- **Decode.** Every line decodes in and wipes out by section 3's decode (Section 4 decode, below), and every control whose wipe ends takes `hidden`, its focus moved first and then `inert`. The scenes' lines are clipped instead, so all five scenes stay in the accessibility tree.
+- **The logotype over it.** Pearl Whisper over the hall and over every scene (`ROOM_SCENES` `toneDark`, measured on each scene's still under the logotype's box by `scripts/room/scene-tone.mjs`: every scene's top is dark); Urban Slate while a seam's cloud covers half the frame or more, whatever is under it, the hero after the exit's jump included. Back to top follows it.
 
-### Section 4 panel (`.rm-pill`: the hint, the loading line, the universe's hint)
+### Section 4 link (`.rm-link`: the prompt, Skip, the previous and next words, "Pause motion")
 
-- **Box.** Bottom centre: `left: 50%`, `bottom: calc(var(--inset) + env(safe-area-inset-bottom, 0px))`, `transform: translateX(-50%)`; `width: max-content` up to `calc(100% - 2 * var(--inset))`; minimum height 44 px, padding `var(--s2) var(--s3)`, the line centred (`display: flex; align-items: center; text-align: center`).
-- **Fill and type.** Pearl Whisper, Urban Slate, Open Sans 600 (`--w-ui-strong`) at `--fs-label` / `--lh-ui`, square. Every string comes from `src/config/room.ts` `ROOM_COPY`.
+- **Element.** A `<button type="button">` drawn as words, the quiz's link pattern (`.qz-link`): no fill, no border, square, the section's type and colour, `white-space: nowrap`, `display: inline-flex` with `gap: 0.6em`, `position: absolute`, `z-index: 3`. The user agent's fill, border, radius and appearance are taken off.
+- **Size.** Minimum height and minimum width 44 px, no padding, so each is 44 px tall and as wide as its words.
+- **States.** Underlined, 1 px at a 0.4 em offset, written as the longhands. On hover (`hover: hover` only) the line thickens to 2 px at once, with no transition and no transform. `aria-disabled="true"` drops the underline and the pointer (the prompt keeps its underline and shows `cursor: progress` while busy). Never the `disabled` attribute, so focus stays on it.
+- **Focus.** The two-tone ring (Section 4 stage, above).
 
-### Hint (`p.rm-pill.rm-hint`)
+### Section 4 line (`p.rm-line`: the hint, the loading line)
+
+- **Place.** Bottom centre: `left: 50%`, `bottom: calc(var(--inset) + env(safe-area-inset-bottom, 0px))`, `transform: translateX(-50%)`; `width: max-content` up to `calc(100% - 2 * var(--inset))`; minimum height 44 px, the line centred.
+- **Text.** Plain words in the section's type. Every string comes from `src/config/room.ts` `ROOM_COPY`.
+
+### Hint (`p.rm-line.rm-hint`)
 
 - **Text.** "Scroll or use the arrow keys to walk to the door." on a device that can hover, "Scroll to walk to the door." on `hover: none` (read once when the walk script mounts).
-- **Shown** once the hall's first frame is drawn and the section is in view: state-driven, at full opacity the moment it shows.
-- **Leaving.** After the visitor has walked 1 m it takes `.is-gone` (opacity 0 over `--dur-out` on `--ease-standard`, `pointer-events: none`, `aria-hidden="true"`) and `hidden` 220 ms later; once per page view (E-S4-motion). Reduced motion: no transition, a cut.
+- **Shown** once the hall's first frame is drawn and the section is in view: it decodes in.
+- **Leaving.** After the visitor has walked 1 m, or at the press, it wipes out and takes `hidden`; once per lap.
 
-### Loading line (`p.rm-pill.rm-loading`, `role="status"`)
+### Loading line (`p.rm-line.rm-loading`, `role="status"`)
 
-- **Text.** "Loading the entrance..." while the section is in view and the hall has not drawn its first frame, and also while the section's own chunk is on its way (its top has reached the viewport's top and no frame has come for 500 ms); "Still loading..." from 8 s. It goes with the first frame, and on the poster tier.
-- **Place.** The panel above, local to the section (CHECKLIST H1). Never a spinner (rule 41). The universe's wait shows on the prompt instead (Prompt, below).
+- **Text.** "Loading the entrance..." while the section is in view and the hall has not drawn its first frame. It also shows while the section's own chunk is on its way: its top has reached the viewport's top and no frame has come for 500 ms. "Still loading..." from 8 s. It decodes in, and wipes out with the first frame and on the poster tier.
+- **Place.** The line above, local to the section (CHECKLIST H1). Never a spinner (rule 41). The scenes' wait after a press shows on the prompt instead (Prompt, below), and a scene's wait for its loop under the scene's lines (Scenes, below).
 
-### Prompt (`button.btn.rm-enter`)
+### Prompt (`button.rm-enter.rm-link`, `#rmEnter`)
 
-- **Button.** The primary button: Ember Luxe fill, Urban Slate text by its literal hex (`#383F43`), Open Sans 600 at `--fs-button` / `--lh-solid`, minimum height 48 px, square, `white-space: nowrap`, `display: inline-flex` with `gap: var(--s2)`. Padding `0 var(--s4) 0 var(--s2)` with the key chip, `0 var(--s4)` without it. The text is "Enter Skreed universe" (`.rm-enter-text`).
-- **Key chip** (`span.rm-key`, `aria-hidden`). "E" in a 28 x 28 px square: Pearl Whisper fill, a 1 px Urban Slate border, Urban Slate text at `--fs-label`, `line-height: 1`, centred. `display: none` on `hover: none`, and with Tune's `promptChip` at 0 (`.room.rm-nochip`).
-- **Anchored to the door.** `position: absolute`, centred on its point by `translate(-50%, -50%)`. Every frame the walk script places it at the door's handle as the island projects it (through the camera without the pointer's sway, so it does not chase the pointer), moved right by half its own width so its left edge sits at the handle, and clamped inside the `--inset` gutters and 44 px clear of the bottom gutter.
-- **Hidden until near, never `hidden`.** In the hall it is always in the Tab order, the section's first tabbable element. Until the visitor is within 2.8 m of the door (`HALL.promptFrom`; the door station is 2.0 m) it is visually hidden by the clip pattern, `opacity: 0; clip-path: inset(50%)`; `.is-near` fades it in over 200 ms on `--ease-standard` with the clip lifted at once, and on leaving it fades out first and clips 200 ms later (E-S4-motion). It takes focus as it appears, unless a text field has it. A visitor's own focus on it while it is clipped (a Tab from the quiz) snaps the page to the door station, so it shows with its ring. When it clips away holding focus, a keyboard user's focus goes to the pad and anyone else's is dropped.
-- **States.** Hover (`hover: hover`, near, not busy) `translate(-50%, calc(-50% - 1px))`; press `scale(0.98)`; both `--dur-press` on `--ease-standard`. While the universe is still loading a press makes it busy: `aria-disabled="true"` and `aria-busy="true"` (never the `disabled` attribute, so focus stays on it), "Loading..." and "Still loading..." from 8 s, `cursor: progress`, no hover lift and no press scale; it enters by itself once the universe is in, and gives up if the visitor walks away.
-- **Input.** A click or a tap, Enter or Space on it, and E while the pad or a control of the section has focus.
-- **Reduced motion.** No transition (it cuts in and out) and no hover lift.
-- **Poster tier.** Shown at once over the hall's still (`top: 50svh`, centred); a press cross-fades to the universe's still over 300 ms (a cut under reduced motion) and shows the products list; gone once entered.
+- **Text.** `[E]` (`span.rm-key`) then "Enter Skreed universe" (`span.rm-enter-text`), drawn as `[E] ENTER SKREED UNIVERSE`, `aria-keyshortcuts="E"`. `[E]` is `display: none` on `hover: none` and with Tune's `promptChip` at 0 (`.room.rm-nochip`), so a phone reads `ENTER SKREED UNIVERSE`.
+- **Anchored to the door.** Every frame the walk script places it at the door's handle as the island projects it, through the camera without the pointer's sway, so it does not chase the pointer. It is moved by a `transform` from its size, cached when it comes on and again after a resize, so no frame reads layout (CHECKLIST C3). Its left edge sits at the handle; it is clamped inside the `--inset` gutters and 44 px clear of the bottom gutter.
+- **Hidden until near, never `hidden` in the hall.** It is always in the Tab order there, the section's first tabbable element. Until the visitor is within 2.8 m of the door (`HALL.promptFrom`; the door station is 2.0 m) it is visually hidden by `clip-path: inset(50%)`. `.is-near` lifts the clip, and `[E]` and the words decode in. On leaving they wipe out first, and it is clipped once the wipe ends.
+- **Focus.** It takes focus as it appears, unless a text field has it. A visitor's own focus on it while it is clipped (a Tab from the quiz) snaps the page to the door station, so it shows with its ring. When it clips away holding focus, a keyboard user's focus goes to the pad and anyone else's is dropped.
+- **Busy.** A press before products.bin and scene 1's loop are in (or have failed) makes it busy: `aria-disabled="true"` and `aria-busy="true"`. It reads "Loading..." and "Still loading..." from 8 s, and "Loading..." is announced through `#rmLive`. It enters by itself once they are in, and gives up if the visitor walks away.
+- **Input.** A click or a tap, Enter or Space on it, and a single, non-repeating E while the pad or a control of the section has focus.
+- **At the entry** its two spans wipe out (never the button whole, so the spans survive for the way back) and it takes `hidden`. After the way back it is in the Tab order again, decodes in at the station, and a keyboard user's focus returns to it. After the wrap it stays hidden while the scenes stand.
+- **Poster tier.** Shown at once over the hall's still (`top: 50svh`, centred, no clip). A press cross-fades the still to scene 1's over 300 ms (a cut under reduced motion), shows the scenes' column and moves focus to scene 1's name. It is gone once entered.
 
 ### Pad (`div.rm-pad`, `#rmPad`)
 
-- **Element.** The stage's focusable surface: `tabindex="0"`, `aria-label` "The entrance. Use the arrow keys to walk to the door.", `position: absolute; inset: 0`, after the prompt in the DOM so it comes second in the Tab order; no outline at rest, `-webkit-tap-highlight-color: transparent`.
-- **Keys.** It takes focus on a pointerdown. While it or another control of the section has focus, Up or W and Down or S walk (the page scrolls at Tune's `keySpeed`, 0.5 m per second), Left and Right turn the head 25 degrees for as long as they are held, and Escape blurs it (no trap) or, during the transition, skips. Without that focus the keys do what they always do (WCAG 2.1.4). The browser's own shortcuts pass through.
-- **Pointer.** A tap (under 8 px and 300 ms) picks the pedestal under it in the universe, and skips during the transition; on laptops hovering a pedestal sets `.is-over` (`cursor: pointer`).
-- **Focus, inset two-tone ring.** The stage clips, so the ring is drawn inside the pad: `outline: 2px solid var(--ember-luxe); outline-offset: -4px` over `box-shadow: inset 0 0 0 6px var(--urban-slate)`, which reads from the stage's edge inward as 2 px Urban Slate, 2 px Ember Luxe and 2 px Urban Slate, so the ring holds on the dark hall and on the white of the transition. The inset `box-shadow` is a hard ring with no blur and no offset, not a drop shadow, but it is the one `box-shadow` on the site against "No `box-shadow` anywhere" (section 6): flagged, to be recorded as a departure or redrawn with a `::before`.
+- **Element.** The stage's focusable surface: `tabindex="0"`, `role="group"`, `position: absolute; inset: 0`, after the prompt in the DOM so it comes second in the Tab order; no outline at rest, `-webkit-tap-highlight-color: transparent`. Its `aria-label` is "The entrance. Use the arrow keys to walk to the door." in the hall and "The five scenes. Use Down and Up to move between them." in the scenes.
+- **Keys.** They act only while the pad or a control of the section has focus; without it the keys do what they always do (WCAG 2.1.4), and the browser's own shortcuts pass through.
+  - **In the hall.** Up or W and Down or S walk (the page scrolls at Tune's `keySpeed`, 0.5 m per second, and stops at the door station: the pad never carries the page into the scenes), Left and Right turn the head 25 degrees for as long as they are held, E enters, and Escape blurs it (no trap).
+  - **Entering.** Escape, or Enter or Space on the pad, skips.
+  - **In the scenes** the keys belong to the page scroll (`src/scripts/hero/section4/scroll.ts`), whatever has focus but a button or a typing control: ArrowDown, PageDown and Space step forward, ArrowUp, PageUp and Shift+Space back, one step per keydown, a held key never repeating (E-S4-scroll).
+- **Pointer.** It takes focus on a pointerdown. A tap never skips. With Tune's `mouseLook` a mouse drag turns the head in the hall. In the scenes a pressed pointer or a finger turns the product (plus or minus 0.3 rad), never a hover.
+- **Focus, inset two-tone ring.** The stage clips, so the ring is drawn inside the pad: a `::before` at `inset: 0` with a 2 px Urban Slate border and a 2 px Ember Luxe outline at `outline-offset: -4px`, and an `::after` at `inset: 4px` with a 2 px Urban Slate border. From the stage's edge inward it reads 2 px Urban Slate, 2 px Ember Luxe and 2 px Urban Slate, so it holds on the hall and on every scene. No `box-shadow`.
 
-### Skip (`div.rm-skipwrap` > `button.txtbtn.rm-skip`)
+### Skip (`button.rm-skip.rm-link`, `#rmSkip`)
 
-- **Panel.** Its own square Pearl Whisper panel, bottom centre at `--inset` above the safe area (`translateX(-50%)`), minimum height 44 px, `z-index: 4`, so it reads at 9.9:1 over the hall, the white and the bands alike.
-- **Button.** The text button (Text button, above): Open Sans 600 at `--fs-button` / `--lh-solid`, Urban Slate, no fill, padding `var(--s2) var(--s4)`, minimum height 44 px; the underline at a 3 px offset coloured in on hover and on `:focus-visible`.
-- **When.** `hidden` except through the transition, from its first frame to its last. It takes focus at the press when the focus was in the section or the press came from the keyboard. Skip, Escape (or Enter or Space on the pad) and a tap on the stage end the transition at once.
+- **Place.** Bottom centre, as the lines are (Section 4 line, above).
+- **When.** `hidden` except from the press to scene 1's arrival: it decodes in at the press and wipes out when scene 1 arrives, its focus going to the scene's name first, never to `body`. It takes focus at the press when focus was in the section or the press came from the keyboard.
+- **What it does.** Skip, Escape, or Enter or Space on the pad end the bubble at once: scene 1 at rest with its lines, the page at its position.
+- **Guards.** An activation within 350 ms of Skip appearing is dropped, and a held key activates it once. A tap on the stage does not skip.
 
-### Product label (`li.rm-item` > `button.rm-product`)
+### Scenes (`ol.rm-scenes`, `#rmScenes`)
 
-- **Panel.** A real button: Pearl Whisper fill, Urban Slate text, square, no border, `display: grid; gap: var(--s1)`, padding `var(--s3)`, minimum height 44 px, `width: 100%` up to 480 px, the text left aligned, `cursor: default`. Its accessible name is the product's name (`aria-labelledby`) and the line its description (`aria-describedby`).
-- **Type.** The name (`.rm-name`) in Poppins 700 at `--fs-clause` / `--lh-h2`; the line (`.rm-line`) in Open Sans 400 at `--fs-legal` / `--lh-ui`, the catalog's sentence with rule 17's words dropped (Tune's `catalogWords` shows the catalog's own).
-- **Phones: the bottom panel.** `position: absolute` across the gutters (`left` and `right` at `--inset`), its bottom at `--inset` above the safe area, centred; so the focus ring sits on a visible element 44 px tall or more.
-- **Laptops: floating** (`(min-width: 900px) and (hover: hover)`, Tune's `labelFloat` at 1). `.is-float`: `width: max-content` up to `min(320px, calc(100vw - 2 * var(--inset)))`, `transform: translate(-50%, -100%)`, so its bottom centre sits on the product's anchor (0.3 m above the product, projected without the pointer's sway), re-placed every frame and clamped inside the gutters. It shows the hovered product while no product has focus.
-- **Shown and hidden.** Only the active product's item is shown (`.is-shown`); the others are visually hidden by the clip pattern (1 px, `clip-path: inset(50%)`) and stay in the accessibility tree. The item takes no pointer events, its button does. No motion: the label appears in place and its text changes.
-- **The universe's hint** (`p.rm-pill.rm-label`, the panel above): "Scroll to look around. Hover a pedestal, or use the arrow keys, to read about it." on a device that can hover, "Scroll to look around. Tap a pedestal to read about it." on touch; from the universe's first frame until the first pan, tap or key, then hidden while a product's label shows.
+- **Element.** `h2.sr-only` "The five scenes", then the list, `aria-label` "Our products, in five rooms": one `li.rm-scene[data-id][data-i]` per scene of `ROOM_SCENES`, in the carousel's order (cove, grove, ember, palace, dawn). Each holds:
+  - the still, `picture.rm-scene-pic`: the portrait AVIF and WebP under `(orientation: portrait)`, then the wide AVIF and WebP, and an `<img>` with its `alt` (one sentence describing the room, no product), `width` and `height`, lazy. Its sources stay in `data-srcset` and `data-src` until the poster tier asks for them, so the 3D path, where the carousel draws the same stills, never fetches them;
+  - the lines, `div.rm-scene-text`, a grid with `gap: var(--s1)`: `h3.rm-scene-name` (`tabindex="-1"`), `p.rm-scene-shade`, `p.rm-scene-line`, on scene 1 `p.rm-scene-hint` (`hidden`), `p.rm-scene-count`, then `p.rm-scene-more` (`aria-hidden`, `hidden`);
+  - `p.sr-only.rm-scene-alt`, the name's `aria-describedby` on the 3D path.
+- **The lines** (section-4-flux.md 3). The product's catalog name ("Phone case"); its shade and family, "Lilac, vivid violet"; the product's catalog line with rule 17's words dropped; the count, "1 / 5", with tabular numerals. The name at `--rm-fs-q` / 1.25, balanced; the rest at `--rm-fs` / 1.45.
+- **Shown.** Only the scene on screen (`.is-on`): its lines bottom left, `left: var(--inset)`, their bottom at `--inset` above the safe area, `width: calc(100% - 2 * var(--inset))` up to 520 px, Pearl Whisper straight on the scene, over the bottom shade the carousel draws. The product is placed clear of them: on a phone it sits higher (its centre at 0.60 of the view's height), on a laptop it moves right by what the 520 px column needs (89 px at 1280 x 800), and a unit test holds every product's box to zero overlap with the lines' (the column, the bottom 34 percent). The other scenes are clipped by the clip pattern (1 px, `clip-path: inset(50%)`), never `hidden`, so all five stay in the accessibility tree. On the 3D path the list is `inert` in the hall until the entry or the wrap; never inert on the poster tier or without JavaScript.
+- **Arrival.** The four lines decode in, one after another, 0.12 s apart. A keyboard user's focus (on the pad, Skip, a word or a scene's name, or anywhere in the section after a key) moves to the scene's name, which speaks with its room's description. Otherwise `#rmLive` announces "1 of 5. Phone case. Lilac, vivid violet." once, never twice; after the wrap, "Round to the five scenes. 5 of 5. ...".
+- **A step.** At its start the lines wipe out in 0.2 s and are clipped again; the next scene's lines decode in at its end.
+- **The hint.** On scene 1, as a row of its lines above the count (a row under the count would share the previous and next words' row at 390), once its lines have settled and only on its first visit: "Swipe to the next scene" on `hover: none`, "Scroll to the next scene" with a pointer, "Scroll or press Down to the next scene" when a key was used in the last 15 s. It wipes out on the first step and on any arrival at another scene.
+- **Loading.** While the scene's loop is expected and not in, "Loading..." under the count in `p.rm-scene-more`, "Still loading..." at 8 s; the scene shows its still meanwhile. Never on the still paths (reduced motion, Save-Data, 2g, `deviceMemory` 2 or less) nor after a refusal. On a Tune build a refused loop shows "Clip blocked" there.
+- **Poster tier and no JavaScript.** The scenes stand one per screen in a column on `--night` (`min-height: 100svh`), each its still over its lines: the still full width, `aspect-ratio: 9 / 16` (1280 / 666 in landscape) up to 76svh, `object-fit: cover`, on a `--skeleton` box until it decodes; the lines under it, padded `--inset`, within 520 px. No video, no carousel, no glue. Without JavaScript the noscript line reads "The entrance needs JavaScript. The scenes are below." over the column.
 
-### Products list (`ol.rm-products`)
+### Previous and next words (`div.rm-nav` > `button.rm-prev.rm-link`, `button.rm-next.rm-link`)
 
-- **Element.** `aria-label` "Products in the universe"; one `li.rm-item` per product (`data-id`), Sam's four in the catalog's order (the phone case, the MagSafe wallet, the Lenskin, the AirPods case), each holding its label's button. Real DOM, so the keyboard and screen readers reach every product without the scene.
-- **Roving tabindex.** Only the active product's button has `tabindex="0"` (the first on entering), the rest `-1`. ArrowLeft and ArrowRight move it and its focus and scroll the page to that pedestal (smooth, instant under reduced motion); a focus or a click on a button centres its pedestal; a focused button follows the pan, so the ring stays on the label that shows. A visitor who entered by keyboard gets the first product's focus at the end of the transition.
-- **Inert.** `inert` on the 3D path until the universe is entered (and `visibility: hidden` until the walk script has run); never inert on the poster tier or without JavaScript.
-- **Announced.** `p.sr-only#rmLive` (`aria-live="polite"`) reads "Name. Line" once the scroll has settled (400 ms) after a change the pan made; never for a focused button, which speaks for itself.
-- **Poster tier and no JavaScript.** A list under the still: `display: grid; gap: var(--s2)`, padding `var(--s3) var(--inset) var(--s5)`, every product its own panel, static (no clip, no transform); after the press on the poster tier, at once without JavaScript.
+- **Text.** "Previous scene" and "Next scene", two underlined words (Section 4 link, above).
+- **Place.** Bottom right: `right: var(--inset)`, their bottom at `--inset` above the safe area, `gap: var(--s3)`. Shown in the scenes only (`data-state="world"`), decoded in with the first arrival; hidden in every other state.
+- **What they do.** One whole step each, the same as a swipe or a key. "Previous scene" at scene 1 is the way back into the hall; "Next scene" at scene 5 is `aria-disabled`. They give a tap, a screen reader and a keyboard a single-pointer way to step (WCAG 2.5.1).
+
+### Pause motion (`button.rm-pause.rm-link`, `#rmPause`; WCAG 2.2.2, the default of E-S4-loops if Sam declines it)
+
+- **Text.** "Pause motion", swapping to "Play motion" once the loops are paused: a plain button whose text swaps, no `aria-pressed`.
+- **Place.** Bottom right, one row above the previous and next words (`bottom: calc(var(--inset) + env(safe-area-inset-bottom, 0px) + 44px + var(--s2))`).
+- **When.** Only while the director sets `data-pause="1"`, which it does only once Sam declines E-S4-loops; while it is pending the control is never shown. Then: while entering, in the scenes, on the way back and under a seam, never in the hall, absent on the poster tier.
+- **What it does.** Every loop pauses and the cloud's time holds, while steps, seams and the glue still work. Remembered for the visit only (a variable, nothing stored).
+
+### Live region (`p.sr-only#rmLive`, `aria-live="polite"`)
+
+- One announcement per arrival, only when focus does not move to the scene's name; the wrap's own line after the wrap; and the prompt's "Loading..." while the scenes load.
+
+### Section 4 decode (`src/scripts/quiz/decode.ts` from `walk.ts`; E-S4-font, and E-S4-motion pending)
+
+- **What it is.** Section 3's decode on section 4's text, with the same markup (a visually hidden sentence-case copy beside an `aria-hidden` row of glyphs) and the same timings (Motion, section 10). Every line of the prompt, Skip, the hint, the loading line, the words and each scene's four lines and hint is split once when the walk script mounts, and hidden until its part decodes in.
+- **Never a transform on the text.** Each glyph's opacity, and its character while it rolls. The prompt alone moves, placed by a transform at the door's handle.
+- **Reduced motion.** A 0.2 s fade, no roll. The decode reads the setting live.
 
 ### Skeleton (later sections)
 
@@ -525,6 +560,7 @@ One idea per screen. No feature grids, no bento, no three-up cards, no badge abo
   | cue | 2 |
   | Tune, dev only | 3 |
   | section 3, the quiz (`section#find`, in flow after the track) | 3, after the riders in DOM order, so it paints over section 2's labels |
+  | section 4 (`section#room`, in flow after the quiz; its own layers inside, Section 4 stage) | 2 |
   | logotype | 4 |
   | loader | 6 |
 
@@ -551,7 +587,7 @@ One idea per screen. No feature grids, no bento, no three-up cards, no badge abo
 - Design every state: empty, loading (skeleton), error, offline, slow network, no results, permission denied, validation, success.
 - Build and screenshot at 390 px before 1280 px.
 - Honour reduced motion everywhere.
-- Give anything that moves on its own for more than 5 s a way to stop, or keep it under 5 s (WCAG 2.2.2). The hero's scene and countdown are pending Sam's exception E-2.2.2.
+- Give anything that moves on its own for more than 5 s a way to stop, or keep it under 5 s (WCAG 2.2.2). The hero's scene and countdown are pending Sam's exception E-2.2.2, and section 4's loops E-S4-loops (its default is the "Pause motion" control).
 - Use the two-tone focus ring wherever the background can be light.
 - Write short, specific sentences in the first person.
 
@@ -613,6 +649,26 @@ Sam, 2026-10-19. The full wording is in `docs/specs/hero.md` section 10 and `doc
 - E-S3-contrast: Pearl Whisper text straight on the fog, below AA;
 - E-S3-motion: the decode on every change of screen, outside rule 12's motion list; no transform on the text (each glyph's opacity, and its character while it rolls). Sam's approval covers the text's decode only. The answer pictures of the visual questions decode in the same way, strip by strip (each strip's slice swapped as a `background-position`, as a glyph's character is), and settle in scale from 1.03 to 1, built on 2026-10-20 at his request ("have some sort of animation when the text is appearing dont just straight up blankly slap the image on the screen on hover") and not yet confirmed as part of the exception (`docs/specs/quiz.md` section 10, item 17).
 
+### Approved section 4 exceptions
+
+Sam's own words cover these, so they are recorded as approved with them. The full wording, with each default if withdrawn, is `docs/specs/section-4-flux.md` section 10 (`docs/specs/section-4-world.md` section 10 for E-S4-portal and E-S4-font), and they are in `CLAUDE.md` ("Section 4 (Sam, 2026-10-19 and 2026-10-22)"). For section 4 (`section#room`) only:
+- E-S4-scroll: inside the carousel's range in the scenes (q 10 to 12) the wheel, one finger and the keys of a step are captured for whole steps, and at scroll 0 after the intro a touch or a wheel burst runs the wrap; never Ctrl+wheel, more than one finger, a zoomed viewport or a typing control. Against section-4.md D13 ("The section does not hold the scroll"), section-4-world.md's "Never a hold" and the references' fixed decision against wheel hijacking on phones. "sure", to a wrapped virtual scroll replacing native scroll, and the brief's "each section has an elastic sticky glue" (2026-10-22).
+- E-S4-snap: the glue over the page's three seams, on touch too, instant under reduced motion. Against section-2.md's auto-settle ("never on touch or under reduced motion") and the references' "no snap on the hero". "page sections only, same on touch" (2026-10-22).
+- E-S4-video, amended: `media-src 'self'` in production for the ten scene loops, muted with no audio track, `playsinline`; never under reduced motion, Save-Data, 2g or slow-2g, or at `deviceMemory` 2 or less, where the stills stand in; every loop passes the flash rule (AC5). The backgrounds are videos, "phones as well" (2026-10-22).
+- E-S4-colour, amended: the five scenes keep their own palettes with their gradients, glows and fog (rules 1, 21, 24 and 42; A2), the cloud's shadow tone (0.80, 0.84, 0.93) and the carousel's black clear colour; the products wear catalog shades by id, and the cloud's light and the text are Pearl Whisper. "use the same colors what they use for all 5 scenes" and "the fog, the water, the gradient, everything" (2026-10-22).
+- E-S4-38, amended: the hall shows no product, and the bubble's inside is scene 1 with its product (rule 38). "instead of the shampoo product... we will have our 3d model" (2026-10-22).
+- E-S4-portal and E-S4-font stand as section-4-world.md has them: the wavy circle that opens over the hall (rules 12, 21 and 42), "have a wavy circle zooming from centre to the end of the screen" (2026-10-19); section 2's label type for every line of the section (rules 4 and 19, type-system.md, CHECKLIST A3), "Yes, all of it" (2026-10-20).
+
+### Pending section 4 exceptions
+
+Not approved yet; the build ships each as the spec says and flags it, and `docs/specs/section-4-flux.md` section 10 gives each one's default if Sam declines:
+- E-S4-loops (WCAG 2.2.2): the five loops run while a scene is front, with no way to stop them. Default: the "Pause motion" control (Pause motion, under Component Stylings).
+- E-S4-webgl, amended: the island draws the hall, the door, the bubble, and the carousel's planes, products and cloud, against "No WebGL from section 3 on" and CHECKLIST C3. Default: the poster column for everyone.
+- E-S4-motion, amended: every motion of section 4 in section 10 below, the decodes and the loops included (rule 12's reserved-motion list, C3's transform-and-opacity rule for the decode's character swap); rule 12's three sentences stand as the world spec had them: nothing fades in on scroll, nothing moves that the visitor did not start except what this list names, and every named motion has its cut under reduced motion. Default: cuts with the 300 ms cross-fade for every one, and the decode as a 0.2 s fade.
+- E-S4-contrast, amended: Pearl Whisper text straight on the hall, the bubble and the five loops (`docs/specs/evidence/section-4-flux-contrast.md`: every scene line 6.0:1 or better at the median; the prompt over the hall's lit door 2.36:1 at 390 x 844 and 2.85:1 at 1280 x 800). Default: the bottom shade darkened until every median reads 4.5:1, and the step's text hidden until the lights are up.
+- E-S4-glow, amended: the hall's seam glow, fixture halos and laptop bloom, and the gloss and metallic products' highlights under the key light (rules 13 and 42). Default: matte for every product, the hall as built.
+- E-S4-grain (the hall only) and E-S4-light (the hall's Urban Slate clear colour from the press, the bubble's Pearl Whisper outline) stand pending as section-4-world.md section 10 has them.
+
 ## 8. Responsive Behavior
 
 - **Phone first.** It must look as strong on a phone as on a laptop. Most visitors arrive from Instagram's in-app browser on mid-range Android over 4G.
@@ -621,6 +677,7 @@ Sam, 2026-10-19. The full wording is in `docs/specs/hero.md` section 10 and `doc
   - 1100 px: the countdown lift is removed;
   - aspect 0.9: portrait framing in the hero (camera zoom `min(1, aspect * 1.25)`, sky crop class, poster class, section 2 swatch columns 24 to 12). In CSS, wide is `(min-aspect-ratio: 9/10)` and portrait is its complement, which matches the scene's `aspect < 0.9` exactly.
 - **The quiz (section 3).** Phone first: the stage is `min-height: 100svh` with its text bottom-aligned on phones and centred on laptops (900 px wide and 600 px tall or more, the family pages' breakpoint), where the stage pads 64 px more at the top, the intro widens from 560 px to `min(78vw, 1040px)`, the questions to `min(90vw, 1240px)` with the picture frame beside the words, the results and the gift's column to `min(84vw, 1120px)`, and the result takes two columns. The type scales with the viewport's width and is held down by its height (15 to 22 px, 24 to 52 px, 36 to 88 px); there is no portrait step since 2026-10-20. On a phone a visual question's picture stands above it, in the space under the logotype's band, and is left out where under 96 px are free. The deck holds the tallest question's height from the first question to the last (at 1366 x 657 a visual question's frame adds 5.4 px, an open defect); on a landscape phone the deck is taller than the screen, and at 1024 x 768 and 1366 x 657 the stage is, with the laptop's 64 px of extra top padding (797 px of 768; 666.4 px of 657, 671.8 px on a visual question), so the page scrolls through it there.
+- **Section 4.** Phone first, on the quiz's type scale. The hall's hint, its loading line and Skip sit bottom centre inside the gutters above the safe area, a scene's lines bottom left within 520 px, the previous and next words bottom right. The loops come in two sets, portrait (720 x 1280) where the stage is taller than wide and wide (1328 x 692) elsewhere, chosen once a visit when the first loop starts to load and cover-fitted every frame after; the arc of a step is 22 degrees on a portrait stage and 80 on a wide one. The product sits higher on a phone and to the right on a laptop, clear of the lines.
 - **Viewport units.** `svh` for layout heights. Nothing is animated in `dvh`. Safe areas use `env(safe-area-inset-*)`.
 - **Tap targets.** At least 44 px. Inputs are 16 px so iOS never zooms.
 - **Canvas pixel ratio.** Capped at 1.25 on touch and 1.5 elsewhere.
@@ -664,7 +721,7 @@ Ease:            --ease-standard cubic-bezier(0.2, 0, 0, 1), 150 ms for press, 4
 
 ## 10. Motion
 
-Motion is reserved for the hero canvas, the Wall, the tilt card and the manifesto, each choreographed once, plus section 3's decode (E-S3-motion) and its answer pictures' reveal (built at Sam's request on 2026-10-20, pending his confirmation under E-S3-motion). Everything honours `prefers-reduced-motion`. Sections are visible at rest. Nothing moves on its own for more than 5 s without a way to stop it, except what E-2.2.2 lists while it is pending and the fog under section 3 (E-S3-bg, approved 2026-10-19).
+Motion is reserved for the hero canvas, the Wall, the tilt card and the manifesto, each choreographed once, plus section 3's decode (E-S3-motion) and its answer pictures' reveal (built at Sam's request on 2026-10-20, pending his confirmation under E-S3-motion), and section 4's (below: the bubble approved as E-S4-portal, the rest pending as E-S4-motion). Everything honours `prefers-reduced-motion`. Sections are visible at rest. Nothing moves on its own for more than 5 s without a way to stop it, except what E-2.2.2 lists while it is pending, the fog under section 3 (E-S3-bg, approved 2026-10-19), and section 4's loops while E-S4-loops is pending. Every other motion of section 4 is under 5 s and started by the visitor: the step 0.77 s, the bubble 2.35 s from the press with Skip, the seams 640 ms plus the 400 ms lock, the way back 1 s, the glue 0.5 s.
 
 ### UI tokens
 
@@ -680,7 +737,7 @@ Motion is reserved for the hero canvas, the Wall, the tilt card and the manifest
   --dur-lift: 600ms;                              /* loader lift */
   --dur-cue: 1.5s;                                /* one cue cycle */
   --cue-cycles: 2.44;                             /* three bounces, ending on a landing (3.66 s) */
-  --dur-out: 200ms;                               /* section 4's hint fading out; the quiz no longer uses it (2026-10-19) */
+  --dur-out: 200ms;                               /* unused since the quiz (2026-10-19) and section 4 (2026-10-20) became plain text: their text decodes */
   --dur-card: 300ms;                              /* unused since the quiz became plain text (2026-10-19): no card moves */
 }
 ```
@@ -753,6 +810,36 @@ Section 2's label animation on the quiz's text (`src/scripts/hero/section2/label
 | Result swatches | opacity 0 to 1, 400 ms | linear |
 | "Not quite? Try again" | the page scrolls back to the section's top | the browser's smooth scroll |
 
+### Section 4, the entrance and the five scenes (`src/scripts/hero/section4/`, `src/scripts/room/walk.ts`; E-S4-portal approved, E-S4-motion and E-S4-loops pending)
+
+No library. The island's own loop drives the camera, the shaders and the carousel: one clock from the press for the door and the bubble (`director.ts`), one tween per step and one cloud per seam (`carousel.ts`); `scroll.ts` settles the glue; section 3's decode moves the text; the Web Animations API runs the poster tier's fades. Everything in the DOM changes by opacity only, the decode swapping characters as E-S3-motion does; the prompt alone is placed by a transform. The constants live in `config/room.ts` (`PRESS`, `ROOM_PARAMS`, and Tune's `ROOM_RANGES`), `transition.ts` (`BUBBLE`), `carousel-math.ts` (`STEP`, `LIGHT`), `scroll-math.ts` (`GLUE`, `BURST`, `TOUCH`) and `video.ts` (`VIDEO`). Times are seconds after the press at the defaults.
+
+| Moment | Duration or rate | Curve |
+|---|---|---|
+| The hall's hint | decodes in on the hall's first frame; wipes out after 1 m walked, or at the press | the decode |
+| The walk | the scroll, clamped at 1.0 m per second except across a snap; the keys at 0.5 m per second, stopping at the door station; Left and Right turn the head 25 degrees while held | linear; the turn eased at 6 per second |
+| The prompt | decodes in at 2.8 m from the door; wipes out on leaving | the decode |
+| The leaves | 0 to 0.9 s | cubic out |
+| The dolly into the doorway | 1.6 m, from 0.3 s over 0.9 s; the hall then freezes at 1.2 s and its last frame is the bubble's outside | cubic in-out |
+| Skip | decodes in at the press; wipes out when scene 1 arrives | the decode |
+| The bubble (E-S4-portal) | from 0.35 s for `bubbleMs` (2000 ms; Tune 1200 to 3200), over scene 1 at rest with cove's loop playing. The radius rises to 8 percent of the short side over the first 12 percent of the time, then grows at a constant zoom rate until the edge is 4 device px past the farthest corner; it only ever grows, so every pixel crosses once (WCAG 2.3.1). The wobble: five modes of 2, 3, 5, 8 and 13 lobes at 1.3 to 6.8 rad per second, its amplitude easing from 0.12 to 0.025 of the radius. The lens pull at the edge, 6 device px over 24, fades out over the last tenth | eased, then a constant zoom |
+| Arrival at scene 1 | 2.35 s; the page set to q 10 by one instant `scrollTo` | |
+| A scene's lines | decode in on arrival, one after another, 0.12 s apart; wipe out in 0.2 s at a step's start | the decode |
+| Scene 1's hint | decodes in once the lines have settled, on the first visit; wipes out at the first step | the decode |
+| A scene at rest | its loop plays (5 s, looping, while E-S4-loops is pending); the product still, unless a pressed pointer or a finger turns it, up to 0.3 rad, back to rest on release; no idle sway and nothing on hover | the look smoothed by `1 - 0.9^(60 dt)` |
+| A step (a wheel tick, a swipe of 12 px, a key, or a word) | `stepMs` 770 ms (Tune 400 to 1200): the leaving room swings out and the arriving one in on an arc of 80 degrees on laptops (`sweepDeg`, Tune 40 to 120) and 22 when the stage is taller than wide (`sweepDegPortrait`, Tune 12 to 80); the view pinches from 45 to 42 degrees by eased 0.65 and relaxes by the end; the front scene switches at eased 0.75 (285 ms); the product turns half a turn and is swapped edge-on at eased 0.5, its scale easing over 0.35 to 0.65; every gesture swallowed until 150 ms after; the page snapped to the scene's q at the end | power2.out, `1 - (1 - t)^3`; the pinch a cubic smoothstep |
+| The lights over a step | each room's light-up follows its proximity: the leaving room stays lit until the step's half, then both change over its second half, the arriving room coming up from its brightest areas (threshold 0.5, softness 0.64, boost 0.17, floor 0.01; Tune `lightStart`, `lightSoft`, `lightBoost`), moving at 1 over 0.68 s a second, dt capped at 0.1 s. Mid-step most of the frame is dark (For Sam, item 13) | linear toward a smoothstep target |
+| The key light | its tint cross-fades to the arriving scene's over `keyLightMs` 1100 ms from the front switch | cubic smoothstep |
+| The loops over a step | a loop plays while its proximity is above 0.3 or falling, and is paused and reset to its first frame at 0.02 or less; at most two play | |
+| A late loop | its still holds the plane, then cross-fades to the loop when it arrives | 300 ms, linear |
+| The exit seam (the raw scroll crossing q 12.8 downward, over scene 5 or the hall) | the cloud covers the frame in 280 ms with the scroll held; under full cover the page jumps to scroll 0 and the section resets; the cloud thins over the hero's rest pose in 360 ms; every gesture swallowed for 400 ms more | in `1 - (1 - e)^2`; out linear to 0.78 over the first 120 ms, then a smoothstep |
+| The wrap (with the intro over, a touch from scroll 0 moving 16 px down, or a wheel burst at scroll 0 after 200 ms of silence) | the cloud covers the hero in 280 ms (after a wait of at most 1.5 s if its pass is not compiled); under full cover the page is set to scene 5, held until dawn's still is in (at most 1.5 s); the cloud thins over dawn in 360 ms; the 400 ms lock | as the exit |
+| The way back (a backward gesture, or "Previous scene", at scene 1) | the bubble in reverse over half of `bubbleMs` (1 s) while the hall renders live: the dolly back, the leaves shut, the outside's grey and dark fading with the circle; then the hall at the station | the bubble's own curve, run down |
+| The glue (a scroll the visitor started stopping inside one of the page's three seam spans) | after 150 ms still with no finger or button down, the page settles to the nearer end of the span over 0.5 s (`snapMs`, Tune 200 to 900), once per run, cancelled by any input | `--ease-standard` |
+| The scrollbar | in the scenes' range the scene follows the page's position at once, with no tween; below it, the hall at once | |
+| Poster tier: the press | the hall's still fades out over scene 1's | 300 ms, linear |
+| Poster tier: the loop | a `--night` veil in, the jump to the top, the veil out | 300 ms each, linear |
+
 ### Reduced motion
 
 - **Hero.** It renders the poster: no loader, no canvas. The scene, when Sam picks the `still3d` option, reads the setting once at start.
@@ -762,4 +849,5 @@ Section 2's label animation on the quiz's text (`src/scripts/hero/section2/label
 - **Smooth scroll** becomes instant.
 - **Option.** Sam may choose the prototype's still-3D variant instead (`REDUCED_MOTION_TIER`).
 - **Quiz.** The decode is a 0.2 s fade with no roll; an answer picture fades in or out over 0.2 s with no roll and no scale; the answer taken does not hold, a finger's answer on a visual question included; the guard on a new question is 150 ms; the swatches fade in over 200 ms; "Not quite? Try again" scrolls back at once.
+- **Section 4.** Reduced motion sends the visitor to the poster tier by default (`REDUCED_MOTION_TIER` `poster`): the hall's still, the press a cut to scene 1's still and the column of the five scenes, no video, no carousel, no glue; the loop the 300 ms fade through `--night`. Under `still3d` (a test and Tune tier) the island reads the setting once at boot: the walk in four cuts, no door swing and no dolly, the bubble a 600 ms dissolve from the hall to scene 1 at rest, no video (each plane its still), a step a cut with a 300 ms cross-fade between the two stills (the field of view and the lights untouched, the product swapped and the key light set at once), no look; the seams, the way back, the wrap and the glue instant, the cloud's time held at 0. The text fades over 0.2 s with no roll; the decode reads the setting live.
 - **Later sections** wrap all GSAP in `gsap.matchMedia()`, and `src/scripts/motion.ts` stays the one source of the flag.

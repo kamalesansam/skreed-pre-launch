@@ -64,6 +64,8 @@ From a photo: a single large target that says "Pick a photo", which opens the na
 
 ## Section 4. Reserve your shade
 
+Superseded on 2026-10-16, revised on 2026-10-22: section 4 is now the entrance and the five scenes. The visitor walks a grey concrete hall to a door by scrolling; the press opens it and a wavy bubble opens onto five dreamlike looping rooms (cove, grove, ember, palace, dawn), one of Sam's products turning in front of each in a catalog shade, the next room swinging in on an arc with each swipe, scroll tick or key, every line plain text on the scene. Past the fifth room a cloud carries the page back to the hero, and the hero scrolled up lands on the fifth room, so the page loops both ways (`docs/specs/section-4.md`, `docs/specs/section-4-world.md` section 2 and `docs/specs/section-4-flux.md`). Reserving moves to a later section. The text below is kept for the record until that section is written up.
+
 Headline: "Reserve Sunset." The shade name in the headline is live; it follows whatever the visitor last chose anywhere on the page. If they chose nothing, it reads "Reserve your shade" and the first field is the shade.
 
 The form is four fields and one box, in this order. Phone number, with "+91" fixed in the field and ten digits expected, validated when the visitor leaves the field, never on each keystroke. Device, a picker of the 21 devices we have renders for, pre-filled from the browser's guess. Finish, Matte or Gloss, two large chips. Email, optional, labelled "Email, optional, for a receipt". Then one unticked box in Open Sans: "Skreed can message me on WhatsApp about this reservation and the November 1 launch. Withdraw any time by replying STOP." Under the box, a one-line link: "What we do with your number".
@@ -167,6 +169,8 @@ The result card opens full width with the render on the left tilting under the c
 From a photo: the drop target is large and accepts a dragged file as well as a click. The five extracted circles appear in a row with the five matched tiles under them, and hovering a circle draws a thin line to its tile.
 
 ### Section 4 on a laptop
+
+Superseded with section 4 above: on a laptop the scenes swing on the reference's wider 80 degree arc, a wheel tick or ArrowDown is one step, and the product sits right of the lines (`docs/specs/section-4-flux.md` section 2, "1280 x 800"). The text below is kept for the record.
 
 Two columns again. Left: the render in the chosen shade, large, with the finish toggle under it. Right: the form, 420 px wide, the same five fields, the same unticked box, the same button. The live count sits above the form in tabular figures and counts up by one, visibly, when the visitor's own reservation lands.
 
