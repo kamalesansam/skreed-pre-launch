@@ -80,8 +80,8 @@ export interface CarouselOptions {
 }
 
 export type SeamPhase = 'in' | 'out' | null;
-/** the lights as set (spec 3 "Materials and lights"; LIGHTS holds the defaults): the environment's intensity on the matte and gloss finishes (env) and on the metallic one (metalEnv), which reflects it rather than gathering it */
-export interface LightSetting { key: number; env: number; metalEnv: number; fill: number; tint: boolean; bodyOnly: boolean }
+/** the lights as set (spec 3 "Materials and lights"; LIGHTS holds the defaults): the environment's intensity on the matte and gloss finishes (env) and on the metallic one, which reflects it rather than gathering it, on the wide class (metalEnv) and on the portrait class (metalEnvPortrait) */
+export interface LightSetting { key: number; env: number; metalEnv: number; metalEnvPortrait: number; fill: number; tint: boolean; bodyOnly: boolean }
 
 export interface Carousel {
   /** the carousel's frame: its 8-bit target, display values, cleared to black */
@@ -154,9 +154,12 @@ export const FINISH = Object.freeze({
  * scripts/room/product-check.mjs (AC2) on 2026-10-23 so that under a white key the matte lit face lands on its
  * catalog hex (the environment gives 1.5 times the albedo per unit, the key 0.19, the fill 0.2; the spec's numbers
  * sum to 1.21 and the lit faces clipped, the build record's D4); the metallic finish reflects the environment rather
- * than gathering it and takes it at 1.0 (the Lenskin within dE00 4 with 4 percent of its face at 255).
+ * than gathering it and takes it per class: 1.0 on the wide class (the Lenskin within dE00 4 with 4 percent of its face
+ * at 255 at 1280 x 800; at 0.8 it reads dE00 8.06) and 0.6 on the portrait class, where the raised placement shows the
+ * face from lower down and it mirrors the environment's bright ceiling (at 1.0 the face clipped, 96 percent at 255 at
+ * 390 x 844; at 0.6 dE00 4.44 with 2.2 percent).
  */
-export const LIGHTS = Object.freeze({ key: 1.33, keyMix: 0.6, keyFrom: [0.1, 0.8, 0.6] as const, fill: 0.17, fillTint: '#dfe6ea', fillFrom: [-0.6, 0.2, 0.8] as const, env: 0.48, metalEnv: 1.0, blur: 0.04 });
+export const LIGHTS = Object.freeze({ key: 1.33, keyMix: 0.6, keyFrom: [0.1, 0.8, 0.6] as const, fill: 0.17, fillTint: '#dfe6ea', fillFrom: [-0.6, 0.2, 0.8] as const, env: 0.48, metalEnv: 1.0, metalEnvPortrait: 0.6, blur: 0.04 });
 /** the trim's fixed dark (linear) and its roughness, and the logo's share of the shade (render-products.py, the old universe) */
 export const PARTS = Object.freeze({ trim: [0.073, 0.077, 0.077] as const, trimRoughness: 0.55, logoTint: 0.8468 });
 /**
@@ -280,8 +283,9 @@ export function createCarousel(o: CarouselOptions): Carousel {
   let slots: (Slot | null)[] = scenes.map(() => null);
   let caseW: number = CASE_M[0], caseH: number = CASE_M[1], classScale = 1;
   let placement: Placement = { cls: o.cls, scale: 1, x: 0, y: 0 };
-  const setting: LightSetting = { key: LIGHTS.key, env: LIGHTS.env, metalEnv: LIGHTS.metalEnv, fill: LIGHTS.fill, tint: true, bodyOnly: false };
-  const envOf = (m: MeshPhysicalMaterial) => (m.metalness > 0.5 ? setting.metalEnv : setting.env);
+  const setting: LightSetting = { key: LIGHTS.key, env: LIGHTS.env, metalEnv: LIGHTS.metalEnv, metalEnvPortrait: LIGHTS.metalEnvPortrait, fill: LIGHTS.fill, tint: true, bodyOnly: false };
+  /** the environment's intensity on a material: the metallic finish's by the placement's class (the portrait placement shows the face from lower down) */
+  const envOf = (m: MeshPhysicalMaterial) => (m.metalness > 0.5 ? (placement.cls === 'portrait' ? setting.metalEnvPortrait : setting.metalEnv) : setting.env);
   /**
    * Each material carries the environment as its own envMap once the PMREM is in: with the scene's environment alone
    * three (0.165, WebGLRenderer setProgram) sets the uniform from scene.environmentIntensity and ignores the material's
@@ -316,9 +320,11 @@ export function createCarousel(o: CarouselOptions): Carousel {
   /** the class scale and the holder's place from the stage's shape and size in CSS px (spec 3, "Size and pose"; carousel-math.ts productPlacement) */
   function measure() {
     const sizes = slots.filter((s): s is Slot => !!s).map((s) => s.size);
+    const was = placement.cls;
     placement = productPlacement(W / dpr, H / dpr, caseW, caseH, sizes.length ? sizes : [[caseW, caseH, CASE_M[2]]]);
     classScale = placement.scale;
     holder.position.set(placement.x, placement.y, STEP.productZ);
+    if (placement.cls !== was) for (const s of slots) if (s) for (const m of s.mats) applyEnv(m);   // the metallic finish's environment follows the class
   }
 
   // the lights: the key from above and in front, tinted per scene; the cool fill from the other side (spec 3)

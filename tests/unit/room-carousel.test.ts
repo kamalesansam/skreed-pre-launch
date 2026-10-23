@@ -363,8 +363,10 @@ test("carousel.ts's constants: the exhibit factors, the class scale's lines, the
   assert.deepEqual(PLACE, { wide: { height: 0.55, width: 0.62, centre: null }, portrait: { height: 0.50, width: 0.62, centre: 0.60 } });
   assert.deepEqual(LINES, { insetMin: 16, insetVw: 0.035, insetMax: 56, column: 520, block: 0.34, gap: 2 });
   assert.deepEqual(FINISH, { matte: { roughness: 0.62, metalness: 0, specularIntensity: 0.2 }, gloss: { roughness: 0.62, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.03, specularIntensity: 0.2 }, metallic: { roughness: 0.38, metalness: 1 } });
-  // the intensities as the product check set them (AC2, 2026-10-23): the spec's 1.6, 0.575 and 0.2 scaled by 0.83, the metallic finish's environment at 1.0
-  assert.deepEqual(LIGHTS, { key: 1.33, keyMix: 0.6, keyFrom: [0.1, 0.8, 0.6], fill: 0.17, fillTint: '#dfe6ea', fillFrom: [-0.6, 0.2, 0.8], env: 0.48, metalEnv: 1.0, blur: 0.04 });
+  // the intensities as the product check set them (AC2, 2026-10-23): the spec's 1.6, 0.575 and 0.2 scaled by 0.83, the metallic finish's environment at 1.0 on the wide class and 0.6 on the portrait class
+  assert.deepEqual(LIGHTS, { key: 1.33, keyMix: 0.6, keyFrom: [0.1, 0.8, 0.6], fill: 0.17, fillTint: '#dfe6ea', fillFrom: [-0.6, 0.2, 0.8], env: 0.48, metalEnv: 1.0, metalEnvPortrait: 0.6, blur: 0.04 });
+  // the metallic finish mirrors the environment's bright ceiling from the raised portrait placement, so its environment is lower there (product-check.mjs at 390 x 844: 96 percent of the Lenskin's face at 255 at 1.0, 2.2 percent at 0.6)
+  assert.ok(LIGHTS.metalEnvPortrait < LIGHTS.metalEnv);
   for (const k of ['key', 'env', 'fill'] as const) near(LIGHTS[k] / { key: 1.6, env: 0.575, fill: 0.2 }[k], 0.83, 0.03, `${k}: the spec's balance kept (within 0.03 of 0.83)`);
   assert.deepEqual(PARTS, { trim: [0.073, 0.077, 0.077], trimRoughness: 0.55, logoTint: 0.8468 });
   assert.deepEqual(SHADE, { dark: 0.45, solid: 0.45, height: 0.72 }, 'the bottom shade as the contrast check set it (AC12, 2026-10-23)');
