@@ -62,7 +62,9 @@ export function mountRoom(root: HTMLElement): void {
 
   let viewed = false, walked = false, arrived = false, near = false, nearShown = false, startX: number | null = null, lastQ = 0, lastQRaw = 0, lastFrameAt = 0, topReached = false;
   let loadingSince = -1, busySince = -1, viaKeys = false, opacity = 1, skipAt = 0, shownScene = -1, hinted = false, stepped = false, moreText = '', moreSince = -1;
-  let promptW = 0, promptH = 0, inset = 16, busyText = '', lastState: RoomState = 'hall', navShown = false, motionOn = true;
+  // the state the section is in when this chunk mounts (a cold wrap lands before the chunk is in, so the first frame
+  // would read as a false hall-to-seam transition and wipe the landed scene's lines and its is-on)
+  let promptW = 0, promptH = 0, inset = 16, busyText = '', lastState: RoomState = (root.dataset.state as RoomState | undefined) ?? 'hall', navShown = false, motionOn = true;
   /** set around the script's own focus calls, so the focus listeners do not take them for the visitor's */
   let selfFocus = false;
   const focusQuietly = (el: HTMLElement | null | undefined) => { if (!el) return; selfFocus = true; try { el.focus({ preventScroll: true }); } finally { selfFocus = false; } };
@@ -242,7 +244,9 @@ export function mountRoom(root: HTMLElement): void {
     track('room_scene', { id: s.id, i });
     pad.setAttribute('aria-label', R.worldAria);
     // focus: a keyboard user's on the pad, Skip or a word goes to the scene's name, which speaks for itself; else one polite announcement
-    const a = document.activeElement, moving = a === pad || a === skip || a === prevB || a === nextB || (!!a && root.contains(a) && keyboarding());
+    // (focus already on a scene's name moves to the new one too: the hook's entry arrives twice at scene 1, Skip first and
+    // then the name, and a name must never be focused and its line announced both)
+    const a = document.activeElement, moving = a === pad || a === skip || a === prevB || a === nextB || (a instanceof HTMLElement && a.classList.contains('rm-scene-name')) || (!!a && root.contains(a) && keyboarding());
     const said = fill(wrapped ? R.wrapLive : R.sceneLive, { n: i + 1, N, name: productById(s.product).name, shade: shadeLine(s) });
     if (moving) focusQuietly(sc.name); else live.textContent = said;
     if (!skip.hidden) wipeControl(skip, sc.name);
