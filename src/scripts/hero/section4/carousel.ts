@@ -25,7 +25,8 @@
 // display values into the same 8-bit target the planes do (X-9), cleared to black under NoToneMapping set and restored
 // around the draw, no tone curve (hero-architecture.md "Render targets and colour spaces"). The seams' cloud (X-3) is
 // the reference's fbm drawn into its own target at min(DPR, 1.5) (halved on degrade), premultiplied, only while a seam
-// runs; its pass and target are readied at idle by warmCloud() before any seam (spec 5, "Loading", phase 0). The
+// runs, and while its cover is whole the stage is not drawn (its target keeps the last frame; nothing under the cloud
+// shows); its pass and target are readied at idle by warmCloud() before any seam (spec 5, "Loading", phase 0). The
 // reduced path: stills on every plane, a step is a cut with a 300 ms cross-fade, the fov and the lights untouched, the
 // product swapped and the key light set at once, no look, the cloud's time held at 0. Nothing here captures a gesture,
 // reads the scroll or touches the DOM: the director and scroll.ts call requestStep, setScene, seam, look and motion,
@@ -425,12 +426,21 @@ export function createCarousel(o: CarouselOptions): Carousel {
     cloudRt?.dispose(); cloudRt = new WebGLRenderTarget(w, h, { depthBuffer: false }); CW = w; CH = h; cloudU.uRes.value.set(w, h);
   }
 
+  /**
+   * The frame's draws: the stage into its target, then the cloud into its own while a seam runs. Under a seam's full
+   * cover the stage is not drawn and its target keeps the last frame: the cloud is opaque there, so nothing under it
+   * shows, and a seam over the hall or over the hero after the exit's jump steps the carousel for the cloud alone (the
+   * build record's section 10, the cost reading of the seams over the hero). The wrap's hold and the frames at either
+   * end of a cover-in and a cover-out are the frames at cover 1.
+   */
   function draw() {
     const pc = renderer.getClearColor(_cc), pa = renderer.getClearAlpha(), tm = renderer.toneMapping, ac = renderer.autoClear;
     renderer.toneMapping = NoToneMapping; renderer.autoClear = false;
-    if (scissorRect) { rt.scissor.set(scissorRect.x, scissorRect.y, scissorRect.w, scissorRect.h); rt.scissorTest = true; } else rt.scissorTest = false;
-    renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 1); renderer.clear(true, true, false);
-    renderer.render(stage, cam);
+    if (!(seamPhase && cover >= 1)) {
+      if (scissorRect) { rt.scissor.set(scissorRect.x, scissorRect.y, scissorRect.w, scissorRect.h); rt.scissorTest = true; } else rt.scissorTest = false;
+      renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 1); renderer.clear(true, true, false);
+      renderer.render(stage, cam);
+    }
     if (seamPhase && cloudRt) {
       renderer.setRenderTarget(cloudRt); renderer.setClearColor(0x000000, 0); renderer.clear(true, false, false);
       renderer.render(cloudScene, cloudCam);

@@ -420,9 +420,10 @@ test("carousel.ts's constants: the exhibit factors, the class scale's lines, the
 /** a renderer that draws nothing and keeps the stage it was asked to draw, so the test can read the product in front */
 function stubRenderer() {
   let stage: Scene | null = null;
-  const renderer = { toneMapping: 1, autoClear: true, getClearColor: (c: Color) => c.set(0), getClearAlpha: () => 1, setRenderTarget() {}, setClearColor() {}, clear() {}, render(s: Scene) { if (s.children.length > 3) stage = s; }, compileAsync: () => Promise.reject(new Error('no GL under node')) } as unknown as WebGLRenderer;
+  const draws = { stage: 0, cloud: 0 };   // the stage holds the planes, the holder and the lights; the cloud's scene its one triangle
+  const renderer = { toneMapping: 1, autoClear: true, getClearColor: (c: Color) => c.set(0), getClearAlpha: () => 1, setRenderTarget() {}, setClearColor() {}, clear() {}, render(s: Scene) { if (s.children.length > 3) { stage = s; draws.stage++; } else draws.cloud++; }, compileAsync: () => Promise.reject(new Error('no GL under node')) } as unknown as WebGLRenderer;
   const holder = () => (stage as Scene | null)?.children.find((o: Object3D) => o instanceof Group && Math.abs(o.position.z - STEP.productZ) < 1e-9) as Group | undefined;
-  return { renderer, shown: () => holder()?.children.find((g) => g.visible) ?? null };
+  return { renderer, shown: () => holder()?.children.find((g) => g.visible) ?? null, draws };
 }
 const geometry = () => { const g = new BufferGeometry(); g.setAttribute('position', new BufferAttribute(new Float32Array(9), 3)); g.setAttribute('normal', new BufferAttribute(new Float32Array(9), 3)); g.setIndex(new BufferAttribute(new Uint16Array([0, 1, 2]), 1)); return g; };
 const products = () => (['wallet', 'airpods', 'lenskin', 'case'] as const).map((name) => ({ name, size: name === 'case' ? [0.1047, 0.19674, 0.02656] as [number, number, number] : [0.07, 0.09, 0.005] as [number, number, number], parts: [{ name: 'shell', geometry: geometry() }, { name: 'trim', geometry: geometry() }, { name: 'logo', geometry: geometry() }] }));
@@ -433,8 +434,8 @@ function fakePool(n: number) {
 }
 const sceneDefs = (still: (i: number) => Promise<Texture | null>, baseYaw = 0): SceneDef[] => (['cove', 'grove', 'ember', 'palace', 'dawn'] as const).map((id, i) => ({ id, keyLight: ['#ffa6c8', '#a8ffe0', '#ffa171', '#ffc9a3', '#cbb0ff'][i], baseYaw, product: ['case', 'airpods', 'wallet', 'lenskin', 'case'][i], shade: ['#c988c8', '#96a880', '#c6a884', '#efa3af', '#d7b9ed'][i], finish: (['matte', 'gloss', 'matte', 'metallic', 'matte'] as const)[i], still: () => still(i), loop: i }));
 
-test('the step through the carousel: one gesture one whole step, the front switch at 285 ms, the swap at the half, the cooldown, at most two loops playing; over a lap at most two loop textures resident and one at rest', async () => quiet(async () => {
-  const { pool, st, resident } = fakePool(5), { renderer } = stubRenderer();
+test('the step through the carousel: one gesture one whole step, the front switch at 285 ms, the swap at the half, the cooldown, at most two loops playing; over a lap at most two loop textures resident and one at rest; the cloud only during a seam, and the stage not drawn under full cover', async () => quiet(async () => {
+  const { pool, st, resident } = fakePool(5), { renderer, draws } = stubRenderer();
   const c = createCarousel({ renderer, scenes: sceneDefs(async () => new Texture()), products: products(), video: pool, cls: 'wide', reduced: false, tune: () => TUNE, dpr: 1 });
   c.setScene(0, true); await tick();
   const dt = 1 / 60; let t = 0;
@@ -479,7 +480,17 @@ test('the step through the carousel: one gesture one whole step, the front switc
   assert.equal(st[1].made, 1, 'a texture is made once per visit of its plane');
   assert.ok(c.memory() > 0);
   assert.equal(c.cloud, null);
-  c.seam('in', 0.5); frame(); assert.ok(c.cloud !== null, 'the cloud only during a seam'); c.seam(null, 0); frame(); assert.equal(c.cloud, null);
+  // the seams: the cloud drawn only while one runs; under full cover (the wrap's hold, the ends of a cover-in and a cover-out) the stage is not drawn and its target keeps the last frame
+  const before = { ...draws };
+  c.seam('in', 0.5); frame(); assert.ok(c.cloud !== null, 'the cloud only during a seam');
+  assert.deepEqual({ stage: draws.stage - before.stage, cloud: draws.cloud - before.cloud }, { stage: 1, cloud: 1 }, 'half cover: the stage and the cloud');
+  c.seam('in', 1); frame(); frame(); c.seam('out', 0); frame();
+  assert.deepEqual({ stage: draws.stage - before.stage, cloud: draws.cloud - before.cloud }, { stage: 1, cloud: 4 }, 'full cover: the cloud alone');
+  assert.ok(c.cloud !== null);
+  c.seam('out', 0.5); frame();
+  assert.deepEqual({ stage: draws.stage - before.stage, cloud: draws.cloud - before.cloud }, { stage: 2, cloud: 5 }, 'the cover thinning: the stage again');
+  c.seam(null, 0); frame(); assert.equal(c.cloud, null);
+  assert.deepEqual({ stage: draws.stage - before.stage, cloud: draws.cloud - before.cloud }, { stage: 3, cloud: 5 }, 'no seam: the stage alone');
   c.dispose();
   assert.equal(resident(), 0, 'dispose releases every loop texture');
 }));
