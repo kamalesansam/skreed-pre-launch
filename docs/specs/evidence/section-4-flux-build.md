@@ -350,3 +350,116 @@ No one value serves both (the wide class needs 0.9 or more to stay under dE00 8,
 **The budget (the production build after these fixes).** As budget.mjs prints it (scripts at gzip, everything else as stored, KB = 1024 B); the section's script grew from 29.4 to 29.5 KB with the cover's tone, the per-class environment and the walk's two lines, still under Sam's 30 KB line. Every other line is section 8's: scroll.ts 2.8 of 4; total JS with section 4 and scroll.ts 228.2 of 250; the poster tier's script 8.0 of 8.5; the ten loops 618.2 to 1,131.7 of 1,200 each; the largest stills grove wide AVIF 43.2 of 110 and WebP 49.2 of 176, portrait AVIF 49.9 of 80 and WebP 61.0 of 128; products.bin 263.6 of 270; to the press wide / portrait AVIF 1,444.7 / 1,459.2 and WebP-only 1,486.6 / 1,506.2 of 1,700; the whole section 10,899.8 of 15,000; one visit wide / portrait AVIF 5,349.5 / 5,334.7 and WebP 5,411.3 / 5,400.6 of 7,300; the poster tier's pictures AVIF 174.1 / 196.8 of 570 / 420 and WebP 197.7 / 223.9 of 900 / 660; the first view's markup and room.css 3.9 of 4; 13 pictures AVIF with a WebP twin, 10 scene img with width and height.
 
 **Open after section 9.** AC14 at its line 325 (above); section 6's frame cost (the probe); section 12's documents; the prompt's contrast over the hall (part one); the loading line and the 2.2.2 control never on screen for AC12 (E-S4-loops pending); the mid-step frames mostly black (the "For Sam" note in section 6 stands); the burst at 1280 x 800 at AC5's limit on red (six turns) at Tune's shortest step; the spec's figures above, pending the lead; the section's script at 29.5 KB of Sam's 30 KB line (pending him).
+
+## 10. The frame cost probe, the e2e suite and the GPU resident set on the merged build (2026-10-23)
+
+Branch `s4/flux-probe` at 3276400 (the merge of `s4/flux-fixes`), in its own worktree, nothing in the code changed. `npm run build:test` (exit 0) was served by `npx wrangler dev --port 8787 --ip 127.0.0.1` from the worktree, the harness's port; the probe and the suite used that one server, one after the other, and it was stopped at the end. Before the build the quiz's photographs were copied from the main checkout's `src/assets/quiz/pics/` into the worktree's own ignored folder, so this build carries them as the main checkout's does (section 9's worktree had none); they are not staged. Apple M3 Pro; Google Chrome 155.0.8059.85 (channel chrome, headless) for the probe; Playwright's Chromium 141 for the suite, as the harness sets it. Other sessions shared the machine (load average 4 to 10 over the runs), so a single reading moves between runs; every probe case ran twice.
+
+**In one paragraph.** On the Metal GPU every case passes with room: the heaviest frame, the wrap's cloud over the hero's composite at 1280 x 800, reads 0.62 P, and a step 0.23 P at most. Under Chrome's 4x CPU throttle with SwiftShader every case fails, the hero at rest on its own included (4.75 P at 390 x 844, 18.93 P at 1280 x 800), so that stand-in cannot settle section 6's check, and no A15-class iPhone or Redmi-class Android was at hand: the frame cost stays open. The section's resident set at scene 1 at 390 x 844 reads 22.92 MiB by its own count, about 36.6 MiB with the hall's estimate, and about 43.7 MiB at the heaviest moment of a step: under the 48 MiB line. The e2e suite, with the quiz's photographs in the build: 133 of 134 pass. The one failure is AC14 at its line 326, which cannot pass in the harness's Chromium (no loop is ever in there) and, in a Chrome that decodes the loops, fails on the code: the carousel calls play() every frame and each call erases the previous rejection before the pool reads it.
+
+**The probe's method.** The family page's probe (`docs/specs/family-page.md` 2.5, and section 18 item 7 as built): the display period P from 10 animation frames with nothing drawn (a blank page in the same browser context, at the same throttle), then 20 renders of the frame under test, each timed from the start of the page's loop frame (`loop.ts` step(): the hero where it shows, section 4's targets, the cloud, the composite) to the end of a one-pixel `readPixels` of the canvas, which returns only once the GPU process has finished the frame. The reading is the median of the 20; pass at 1.25 P or less. Two more readings were kept: the interval between the loop's animation frames, and the GPU time from `EXT_disjoint_timer_query_webgl2`, which Chrome 155 exposes on both back ends here. The timer is not used for the verdict: on Metal its median read more than the median wall time of the same frames in 7 of the 30 cases (all of them frames with the hero's composite, five at 1280 x 800 and two at 390 x 844), which a GPU time spent inside those frames cannot do.
+
+A frame is held while it is drawn 22 times (the first 2 discarded) the way `scripts/room/step-frames.mjs` holds one: the loop's clock frozen (`__skreedFreeze`), advanced one 1/24 s tick at a time (`__skreedTick`) to the chosen point, then probed with the clock held. The frames still draw in full, and the loops play on at the wall clock, so their textures upload as they would. Setups: 390 x 844 with touch at device scale 3, which the hero's touch cap draws at DPR 1.25 (canvas 487 x 1055); 1280 x 800 at device scale 2, which the fine-pointer cap draws at 1.5 (canvas 1920 x 1200). Both on `/?tier=hero3d&glue=0`, the intro skipped, the hall walked to the station through the section's snap. The driver is a scratchpad script, not in the repo. The cases:
+
+- scene 1 at rest, the baseline;
+- a step, scene 2 to 3 (grove to ember: both loops playing, the wallet swapping in), held at 3, 5 and 10 ticks of the 0.77 s step (0.125, 0.208 and 0.417 s; the hooks' step 1.41, 1.61 and 1.90, the front switched at the last);
+- the exit seam from scene 5: its cover-in over the scenes at tick 3 (cover 0.51), and its cover-out over the hero after the jump to scroll 0 at tick 11 (cover 0.78);
+- the hero at rest at scroll 0 with no seam, for comparison (not a case of the spec; second runs only);
+- the wrap from scroll 0: its cover-in over the hero at tick 3 (cover 0.69).
+
+**The frame cost on the Metal GPU (Chrome 155, no throttle).** P 16.6 ms in every context (60 Hz). The median of 20, run 1 / run 2, as a share of P, and the slowest single frame of both runs:
+
+| Case | 390 x 844, DPR 1.25 | 1280 x 800, DPR 1.5 | Verdict |
+|---|---|---|---|
+| scene 1 at rest | 2.45 / 4.40 ms (0.15 / 0.27 P), slowest 5.5 | 2.80 / 3.50 ms (0.17 / 0.21 P), slowest 8.5 | pass |
+| step 2 to 3 at 0.125 s | 2.20 / 3.50 ms (0.13 / 0.21 P), slowest 5.0 | 2.50 / 3.60 ms (0.15 / 0.22 P), slowest 6.2 | pass |
+| step 2 to 3 at 0.208 s | 1.90 / 2.75 ms (0.11 / 0.17 P), slowest 7.3 | 2.60 / 3.60 ms (0.16 / 0.22 P), slowest 10.4 | pass |
+| step 2 to 3 at 0.417 s | 1.80 / 2.50 ms (0.11 / 0.15 P), slowest 6.2 | 2.90 / 3.80 ms (0.17 / 0.23 P), slowest 5.4 | pass |
+| exit seam, cover-in over scene 5 | 3.70 / 2.35 ms (0.22 / 0.14 P), slowest 5.3 | 5.95 / 4.50 ms (0.36 / 0.27 P), slowest 8.4 | pass |
+| exit seam, cover-out over the hero | 5.05 / 6.00 ms (0.30 / 0.36 P), slowest 12.6 | 7.60 / 8.70 ms (0.46 / 0.52 P), slowest 10.1 | pass |
+| the hero at rest, no seam (run 2) | 4.30 ms (0.26 P), slowest 6.6 | 9.25 ms (0.56 P), slowest 12.5 | pass |
+| wrap, cover-in over the hero | 6.20 / 5.85 ms (0.37 / 0.35 P), slowest 14.0 | 10.25 / 8.90 ms (0.62 / 0.54 P), slowest 12.4 | pass |
+
+The page's own JavaScript took 0.4 to 1.2 ms of each frame, and the interval between frames was 16.7 ms (1.0 P) in every case, so no frame was dropped. An M3 Pro is neither of the spec's phones; these readings show the frames are light on a laptop GPU and no more.
+
+**The frame cost under Chrome's 4x CPU throttle with SwiftShader.** The installed Chrome with the e2e's flags (`--use-angle=swiftshader --enable-unsafe-swiftshader --ignore-gpu-blocklist`; the renderer reads "SwiftShader Device (LLVM 10.0.0)"), so the loops still decode (Playwright's Chromium has no H.264), and `Emulation.setCPUThrottlingRate` 4 on the page while each case is probed (the positioning ran unthrottled). P 16.5 to 16.6 ms. The median of 20, run 1 / run 2:
+
+| Case | 390 x 844, DPR 1.25 | 1280 x 800, DPR 1.5 | Verdict |
+|---|---|---|---|
+| scene 1 at rest | 28.20 / 24.55 ms (1.71 / 1.48 P) | 55.55 / 50.50 ms (3.35 / 3.04 P) | fail |
+| step 2 to 3 at 0.125 s | 41.20 / 38.65 ms (2.50 / 2.33 P) | 56.95 / 54.90 ms (3.43 / 3.31 P) | fail |
+| step 2 to 3 at 0.208 s | 39.70 / 36.05 ms (2.41 / 2.17 P) | 59.95 / 63.15 ms (3.61 / 3.80 P) | fail |
+| step 2 to 3 at 0.417 s | 43.00 / 39.70 ms (2.61 / 2.39 P) | 69.65 / 69.45 ms (4.20 / 4.18 P) | fail |
+| exit seam, cover-in over scene 5 | 31.05 / 29.30 ms (1.88 / 1.77 P) | 76.15 / 81.25 ms (4.59 / 4.89 P) | fail |
+| exit seam, cover-out over the hero | 98.65 / 94.20 ms (5.98 / 5.67 P) | 378.25 / 358.45 ms (22.79 / 21.59 P) | fail |
+| the hero at rest, no seam (run 2) | 78.90 ms (4.75 P) | 314.30 ms (18.93 P) | fail |
+| wrap, cover-in over the hero | 98.95 / 105.10 ms (6.00 / 6.33 P) | 373.85 / 360.20 ms (22.52 / 21.70 P) | fail |
+
+Two controls, each run once:
+
+- **The throttle off** (the same SwiftShader setup at rate 1), in the table's order: at 390 x 844, 22.65, 36.15, 38.00, 37.00, 26.75, 85.50, 72.55 and 85.30 ms (1.36 to 5.15 P); at 1280 x 800, 49.20, 51.00, 54.10, 64.00, 68.25, 325.25, 284.70 and 322.75 ms (2.96 to 19.59 P). The throttle takes the page's own JavaScript from 0.35 to 0.7 ms a frame to 1.2 to 3.7 ms; the rest of each frame is SwiftShader drawing in the GPU process, which the throttle does not slow.
+- **The degrade path's first step, DPR 1** (390 x 844 at device scale 1, canvas 390 x 844, the 4x throttle): scene 1 22.35 ms (1.35 P); the step 30.40, 31.90 and 39.55 ms (1.84, 1.93 and 2.40 P); the cover-in 24.55 ms (1.49 P); the cover-out over the hero 68.25 ms (4.14 P); the hero alone 58.40 ms (3.54 P); the wrap 67.75 ms (4.11 P). Every case still fails. The second step, the cloud at half resolution, has no hook (`carousel.degrade` is not on `__s4`), so it was not measured.
+
+What these say. On SwiftShader the hero at rest by itself costs 4.4 to 4.75 P at 390 x 844 and 17 to 19 P at 1280 x 800, so no frame that shows the hero can pass on this stand-in whatever section 4 does; the section's own frames (scene 1, the step, the cover-in over the scenes) cost 1.4 to 2.6 P at 390, less than the hero alone. A seam over the hero costs the hero plus 13 to 26 ms at 390 and 38 to 46 ms at 1280 on SwiftShader, and at most 2 ms on Metal. That extra is the cloud's pass and, with it, the carousel's whole stage: during a seam over the hall's frame `director.ts` steps the carousel for its cloud, and `carousel.ts` draw() renders the stage (the plane and the product) into its target before the cloud, though only the cloud is shown there. It is the one cost in these frames the section could shed; recorded as a reading, not changed here.
+
+**Section 6's frame cost stays open.** Its pass is on an A15-class iPhone and a Redmi-class Android, and neither was at hand. On the M3 Pro every case passes, the heaviest frame at 0.62 P; under the world spec's stand-in (4x throttle, SwiftShader) every case fails, the hero alone included, so the stand-in cannot settle it either way.
+
+**The GPU resident set at scene 1 at 390 x 844.** At scene 1 at rest, its loop playing, scenes 1 and 2's stills in (both Metal runs and every SwiftShader run read the same bytes; the texture count differs by one between the two back ends):
+
+| Reading | DPR 1.25, the touch cap (canvas 487 x 1055) | DPR 1 (canvas 390 x 844) |
+|---|---|---|
+| `__skreedGpu()` (the one renderer: the hero, the hall and the section) | 56 geometries, 55 textures (54 on SwiftShader), 42 programs | 56 geometries, 54 textures, 42 programs (SwiftShader) |
+| `__s4.state().memory` at scene 1 at rest | 24,032,622 B (22.92 MiB) | 21,817,122 B (20.81 MiB) |
+| `__s4.state().memory` mid-step, 2 to 3 held | 31,405,422 B (29.95 MiB) | 29,189,922 B (27.84 MiB) |
+
+The count at scene 1 at DPR 1.25, term by term (the terms of `carousel.ts` memory(), recomputed from the canvas and the files' pixel sizes; they sum to the reading exactly):
+
+- the carousel's target, RGBA8 and depth, 487 x 1055 x 8: 4,110,280 B (3.92 MiB);
+- the cloud's target at min(DPR, 1.5), 487 x 1055 x 4: 2,055,140 B (1.96 MiB);
+- the products' environment, a PMREM of 768 x 1024 at half float: 6,291,456 B (6.00 MiB);
+- the products' geometry (positions x 24 and indices x 2): 516,546 B (0.49 MiB);
+- two stills, scenes 1 and 2, 720 x 1280 x 4: 7,372,800 B (7.03 MiB);
+- one loop's texture, scene 1's, 720 x 1280 x 4: 3,686,400 B (3.52 MiB).
+
+Mid-step adds scene 3's still and its loop's texture, 3,686,400 B each: two loops and three stills, as section 5 allows. Neither hook counts the hall, which stays resident under the scenes for the way back. The world's memory record (`docs/specs/evidence/section-4-world-memory.md`) estimates it from its sizes at about 13.7 MiB at DPR 1.25 (the 1024 x 1024 lightmap with mips 5.33, the hall's target 3.92, its output pass 1.96, the floor's cube 0.5, the bubble's pass 1.96); the lightmap in this build is still 1024 x 1024. With it the section holds about 36.6 MiB at scene 1 at rest and about 43.7 MiB at the heaviest moment of a step: **under the 48 MiB line, by 11.4 and 4.3 MiB.** Section 6's estimate (two VideoTextures, three stills, the products, the cloud's target) leaves out the products' environment map, 6.00 MiB, the largest single term, and the carousel's own target. At 1280 x 800 (DPR 1.5, not under the phone line): 44,951,746 B (42.87 MiB) at rest and 52,037,570 B (49.63 MiB) mid-step.
+
+**The e2e suite.** `npx playwright test --project e2e` in the worktree, BASE_URL and SKREED_PORT unset, so the harness's port 8787, where the served build was already up and the config reused it; the build identity check read the same `index.html` at the start and at the end (sha256 6d18d4a8dc749320). Playwright's Chromium 141 on SwiftShader with the harness's flags, two workers: **133 passed, 1 failed, 134 tests, in 11.0 minutes.**
+
+| Spec file | Tests | Passed | Failed |
+|---|---:|---:|---:|
+| a11y-breakpoints.spec.ts | 14 | 14 | 0 |
+| countdown.spec.ts | 12 | 12 | 0 |
+| csp.spec.ts | 7 | 7 | 0 |
+| cue-logotype.spec.ts | 9 | 9 | 0 |
+| hover.spec.ts | 4 | 4 | 0 |
+| island.spec.ts | 2 | 2 | 0 |
+| loader.spec.ts | 6 | 6 | 0 |
+| locked-values.spec.ts | 1 | 1 | 0 |
+| quiz.spec.ts | 53 | 53 | 0 |
+| room.spec.ts | 7 | 6 | 1 |
+| tiers.spec.ts | 14 | 14 | 0 |
+| to-top.spec.ts | 5 | 5 | 0 |
+
+Section 4's specs, one by one:
+
+- room.spec.ts 72, the 390 x 844 flow (the track, the keyboard, the entry, five steps, the hold, the exit seam with the tone at full cover, the wrap, the way back): pass, 40.0 s.
+- room.spec.ts 291, AC14: **fail** at its line 326 (section 9's line 325, one line further down since), after 48.8 s: `loops[0].refused` stayed false over the poll's 30 s.
+- room.spec.ts 357, the cold first-visit wrap: pass, 16.9 s.
+- room.spec.ts 391, the glue at section 4's seam and Shift+Tab into the quiz (AC4): pass, 21.9 s.
+- room.spec.ts 429, Ctrl+wheel in range and the one-finger pan at scale 2 (AC3): pass, 21.0 s.
+- room.spec.ts 462, still3d (AC11): pass, 10.9 s.
+- room.spec.ts 502, the poster tier: pass, 0.9 s.
+
+The 17 quiz picture specs that failed in section 9 (quiz.spec.ts 1115 and 2169 to 2732) pass here with the photographs in the build, which bears out section 9's reading of them. Every other test passed; the full list is the run's log in the session scratchpad.
+
+**AC14's refused play() (room.spec.ts 291, line 326).** The line is `expect.poll(... loops[0]?.refused ...).toBe(true)`. Reproduced outside the suite with the test's own stub (every play() rejects with NotAllowedError) and routes (products.bin and ember's loop aborted), every play() call counted with its caller by a scratchpad driver, then 12 s at scene 1 after `__s4.scene(0)`:
+
+- **In the harness's Chromium 141, the suite's browser:** no loop is ever in. Chromium has no H.264 decoder, so every loop errors and the pool marks it failed ("the loop ... did not load; its still stays", all five); `loops[0]` reads state failed, in false, refused false. The only play() calls are the pool's read-ahead nudge from its suspend handler (4 in all). A refused play() needs a loop that is in, so in this browser line 326 cannot pass whatever the code does; what the browser does show, the still kept and no video playing, is AC14's state for a loop that failed.
+- **In the installed Chrome 155, which decodes the loops:** scene 1's loop is in, and play() is called once a frame, 699 calls in 12 s (704 frames), every one from the carousel's gate (`carousel.ts` update(): `motionOn && loopShouldPlay(...) && video.in(L) && !video.playing(L)`, then `video.play(L)`) through `video.ts` start(). Each is rejected, and `refused` stays false. The order inside a frame is why: the rejection lands as a microtask after the frame and sets `playAt` to -2; on the next frame the gate runs first and calls play() again, and start() sets `playAt` to the current time, overwriting the -2 before texture() (called after the gate, for the plane's map) reads it; the same call restarts the 1.5 s no-frame clock, so that never runs out either. Section 9 read this as no play() attempted; the call count says otherwise.
+
+What the assertion needs:
+
+1. A browser that decodes the loops for this spec: the installed Chrome (channel chrome, or CHROME_PATH pointed at it), since in the harness's Chromium the case it tests cannot arise. If the suite stays on Chromium, the line needs a branch on `loops[0].state === 'failed'` that asserts the still and no playing video instead of the refusal.
+2. With the loops decoded, the assertion as written is what section 5 and AC14 ask (a rejected play() marks the element refused, and a refused loop is retried on the next input), and the code fails it. For it to pass, a rejected play() has to survive until texture() reads it: for example start() leaving `playAt` at -2 once a play() has been rejected, or the gate not calling play() again while one is pending or refused. Until then the page retries play() at the frame rate rather than on the next input, and by the code the plane draws the paused element's frame (the loop counts as in) rather than the scene's still. Nothing was changed here; the fix is the builder's, and which form it takes is the lead's to rule.
+
+**Open after section 10.** Section 6's frame cost on an A15-class iPhone and a Redmi-class Android; AC14 at its line 326 (the harness's browser for it, and video.ts's refusal under the per-frame retry); the seams over the hero drawing the carousel's whole stage for the cloud alone (a cost reading); the cloud at half resolution, the degrade path's second step, with no hook to measure it. The rest of section 9's open list stands.
