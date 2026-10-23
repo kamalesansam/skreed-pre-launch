@@ -13,6 +13,8 @@
 .fl a:active .fl-sw { transform: scale(0.98); }
 @media (min-width: 900px) { .fl ol { grid-template-columns: repeat(10, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { .fl a .fl-sw { transition: none; } }
+html.hero3d .fl:not([data-placed]) { background: none; pointer-events: none; }   /* the 3D path never shows the swatch grid: see-through until the island places the boxes (Sam, 2026-10-23: the panel flashed over the loading animation); the links stay in the tab order, the poster path keeps the grid */
+html.hero3d .fl:not([data-placed]) :is(.fl-sw, .fl-cap) { opacity: 0; }
 html.hero3d .fl[data-placed] { position: fixed; inset: 0; padding: 0; background: none; pointer-events: none; }
 html.hero3d .fl[data-placed] ol { display: block; }
 html.hero3d .fl[data-placed] a { position: absolute; left: 0; top: 0; width: var(--hit, 44px); height: var(--hit, 44px); padding: 0; pointer-events: none; color: transparent; }   /* transparent, never hidden: always in the tab order */
