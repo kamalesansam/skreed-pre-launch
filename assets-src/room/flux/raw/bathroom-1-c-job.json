@@ -1,0 +1,40 @@
+[
+  {
+    "created_at": "2026-10-22T10:15:28.309169Z",
+    "display_name": "Nano Banana 2.1",
+    "id": "85afba8b-cf2b-422f-b1cb-85b5c6ac40b4",
+    "job_type": "nano_banana_2_1",
+    "min_result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/hf_20261022_101528_85afba8b-cf2b-422f-b1cb-85b5c6ac40b4_min.webp",
+    "params": {
+      "aspect_ratio": "auto",
+      "batch_size": 1,
+      "height": 1472,
+      "is_inpaint": true,
+      "medias": [
+        {
+          "data": {
+            "id": "e131052e-d7fe-4552-9011-f7a2cc66ae7d",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/e131052e-d7fe-4552-9011-f7a2cc66ae7d.png"
+          },
+          "role": "image"
+        },
+        {
+          "data": {
+            "id": "8e11c7a1-103f-4a08-bb89-47426a1b3bee",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/8e11c7a1-103f-4a08-bb89-47426a1b3bee.png"
+          },
+          "role": "mask"
+        }
+      ],
+      "prompt": "Remove the bottles, jars and the incense tray from the tops of the two round stone pedestals, leaving the pedestal tops bare and smooth. Keep the pink sunset light, the rock walls, the gold columns, the plant and the rippling water exactly as they are. Photoreal 3D render look matching the scene.",
+      "reference_elements": [],
+      "resolution": "2k",
+      "thinking_level": "medium",
+      "width": 2830
+    },
+    "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/hf_20261022_101528_85afba8b-cf2b-422f-b1cb-85b5c6ac40b4.png",
+    "status": "completed"
+  }
+]

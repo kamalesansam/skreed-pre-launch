@@ -1,0 +1,40 @@
+[
+  {
+    "created_at": "2026-10-22T10:30:10.268027Z",
+    "display_name": "Nano Banana 2.1",
+    "id": "abee60bc-8bce-4276-a554-af51270cc970",
+    "job_type": "nano_banana_2_1",
+    "min_result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/hf_20261022_103010_abee60bc-8bce-4276-a554-af51270cc970_min.webp",
+    "params": {
+      "aspect_ratio": "auto",
+      "batch_size": 1,
+      "height": 2752,
+      "is_inpaint": true,
+      "medias": [
+        {
+          "data": {
+            "id": "71b882ea-9662-4bd9-bf6a-67544bcaa4a2",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/71b882ea-9662-4bd9-bf6a-67544bcaa4a2.png"
+          },
+          "role": "image"
+        },
+        {
+          "data": {
+            "id": "062d747b-884b-41a8-9b9d-d4a8e0672f1d",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/062d747b-884b-41a8-9b9d-d4a8e0672f1d.png"
+          },
+          "role": "mask"
+        }
+      ],
+      "prompt": "Extend this scene into a tall portrait frame. At the top, continue the dark concrete roof slab naturally; at the bottom, continue the wet dark stone floor with its flat slabs and sunset reflections. Same materials, same red sunset lighting, same colours, seamless, photoreal 3D render look. No new objects, no people, no text.",
+      "reference_elements": [],
+      "resolution": "2k",
+      "thinking_level": "medium",
+      "width": 1536
+    },
+    "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/hf_20261022_103010_abee60bc-8bce-4276-a554-af51270cc970.png",
+    "status": "completed"
+  }
+]

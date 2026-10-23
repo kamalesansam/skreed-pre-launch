@@ -1,0 +1,1 @@
+These 35 licensed photographs are tracked in git only for the move to a new account (Sam, 2026-10-23: "push this also into github, i will delete them later, we have not deployed the site yet anyway"). They come out again afterwards, and git history will still hold them until it is rewritten.

@@ -1,0 +1,40 @@
+[
+  {
+    "created_at": "2026-10-22T10:23:43.718713Z",
+    "display_name": "Nano Banana 2.1",
+    "id": "2b636f06-6a1f-49be-9bae-7d0e29830af6",
+    "job_type": "nano_banana_2_1",
+    "min_result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/hf_20261022_102343_2b636f06-6a1f-49be-9bae-7d0e29830af6_min.webp",
+    "params": {
+      "aspect_ratio": "auto",
+      "batch_size": 1,
+      "height": 1472,
+      "is_inpaint": true,
+      "medias": [
+        {
+          "data": {
+            "id": "80c1381f-dca0-4a7d-b82d-01c1b0fe0603",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/80c1381f-dca0-4a7d-b82d-01c1b0fe0603.png"
+          },
+          "role": "image"
+        },
+        {
+          "data": {
+            "id": "0bd3f84d-d687-4c9b-bb65-2feb55d6dca2",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/0bd3f84d-d687-4c9b-bb65-2feb55d6dca2.png"
+          },
+          "role": "mask"
+        }
+      ],
+      "prompt": "Remove the bottles and jars from the round ledge on the right and the small cup and little side table on the left completely, leaving bare smooth surfaces and bare floor. Keep the sunset, the sea, the leaning stone slab, the wet dark stone floor with its flat slabs, the glass walls and everything else exactly as they are. Photoreal 3D render look matching the scene.",
+      "reference_elements": [],
+      "resolution": "2k",
+      "thinking_level": "medium",
+      "width": 2830
+    },
+    "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/hf_20261022_102343_2b636f06-6a1f-49be-9bae-7d0e29830af6.png",
+    "status": "completed"
+  }
+]

@@ -1,0 +1,41 @@
+[
+  {
+    "created_at": "2026-10-22T10:39:03.675478Z",
+    "display_name": "Kling O3 (Frames)",
+    "id": "7325b64e-faf2-47fa-9f93-c5604d090c70",
+    "job_type": "kling_o3_flf",
+    "min_result_url": null,
+    "params": {
+      "aspect_ratio": "16:9",
+      "duration": 5,
+      "height": 720,
+      "medias": [
+        {
+          "data": {
+            "id": "8c0267a2-e772-4ece-bc3c-3076c0305d24",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/8c0267a2-e772-4ece-bc3c-3076c0305d24.png"
+          },
+          "role": "start_image"
+        },
+        {
+          "data": {
+            "id": "8c0267a2-e772-4ece-bc3c-3076c0305d24",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/8c0267a2-e772-4ece-bc3c-3076c0305d24.png"
+          },
+          "role": "end_image"
+        }
+      ],
+      "mode": "std",
+      "multi_prompt": [],
+      "multi_shots": false,
+      "prompt": "A seamless ambient loop of this exact scene: the sheer white curtains sway very gently, purple fog drifts slowly along the floor, the birds glide slowly, the stars twinkle faintly, the soft dawn glow breathes. The camera is completely locked. No new objects, no people, no text. The last frame matches the first frame exactly.",
+      "sound": "off",
+      "width": 1280
+    },
+    "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/hf_20261022_103903_7325b64e-faf2-47fa-9f93-c5604d090c70.mp4",
+    "status": "completed",
+    "thumbnail_url": "https://cdn.higgsfield.ai/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/hf_20261022_103903_7325b64e-faf2-47fa-9f93-c5604d090c70_thumbnail.webp"
+  }
+]

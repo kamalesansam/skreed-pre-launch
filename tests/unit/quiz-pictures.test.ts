@@ -6,7 +6,7 @@
 // The type scale Sam asked for the same day ("the text is soo small") is three clamp() tokens in quiz.css.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { QUIZ_PICTURES } from '../../src/config/quiz-pictures.ts';
@@ -93,6 +93,10 @@ test('the pictures stay out of git: .gitignore names src/assets/quiz/pics/ and e
   for (const d of ['dist', 'dist-s3', 'dist-s3t', 'dist-anything']) {
     assert.match(git('check-ignore', '-v', `${d}/_astro/q0-main-640.DzXu45ct.avif`), /^\.gitignore:\d+:\S+\t/, `git ignores a build in ${d}/`);
   }
+  // Sam's word, 2026-10-23: the pictures ride in git for the move to a new account (src/assets/quiz/pics/TRACKED.md says so)
+  // and come out again afterwards; while that note exists the tracking checks below stand down
+  const trackedOnSamsWord = existsSync('src/assets/quiz/pics/TRACKED.md');
+  if (trackedOnSamsWord) return;
   assert.equal(git('ls-files', '--', 'src/assets/quiz/pics').trim(), '', 'git tracks a file in src/assets/quiz/pics/');
   // and no picture of the list under another name or folder, tracked or untracked and not ignored (so `git add -A` would
   // take it): a master, an encoded file, or a build's hashed copy

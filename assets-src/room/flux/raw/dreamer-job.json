@@ -1,0 +1,40 @@
+[
+  {
+    "created_at": "2026-10-22T10:22:12.258551Z",
+    "display_name": "Nano Banana 2.1",
+    "id": "ac67de4f-fe5f-4ab5-8a39-8b729e08c07a",
+    "job_type": "nano_banana_2_1",
+    "min_result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/hf_20261022_102212_ac67de4f-fe5f-4ab5-8a39-8b729e08c07a_min.webp",
+    "params": {
+      "aspect_ratio": "auto",
+      "batch_size": 1,
+      "height": 1472,
+      "is_inpaint": true,
+      "medias": [
+        {
+          "data": {
+            "id": "28fdf90c-2c39-4bf7-8be2-4c189cd529c8",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/28fdf90c-2c39-4bf7-8be2-4c189cd529c8.png"
+          },
+          "role": "image"
+        },
+        {
+          "data": {
+            "id": "3db62711-7a2f-4a25-9b2d-30523df24a70",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/3db62711-7a2f-4a25-9b2d-30523df24a70.png"
+          },
+          "role": "mask"
+        }
+      ],
+      "prompt": "Remove the wall-mounted vanity cabinet, the basin, the tap, the oval mirror, the bottles, the towels and the small plant completely, leaving nothing in their place. Continue the sheer white vertical curtain wall and the soft lilac and peach light behind it seamlessly across the area. Keep everything else exactly as it is. Photoreal 3D render look matching the scene.",
+      "reference_elements": [],
+      "resolution": "2k",
+      "thinking_level": "medium",
+      "width": 2830
+    },
+    "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3HBPKb2JTuwd41KartyYO3Lx1Ia/hf_20261022_102212_ac67de4f-fe5f-4ab5-8a39-8b729e08c07a.png",
+    "status": "completed"
+  }
+]
