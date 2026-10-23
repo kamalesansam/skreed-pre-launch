@@ -12,8 +12,9 @@ Two kinds of input:
   carousel draws it at rest (cover-fitted to the viewport of its class at the planes' 1.01 overscan, the light-up whole,
   the bottom shade in the frame: --shade dark,solid,height as carousel.ts SHADE has them), its first second appended
   after its last frame so the wrap of the loop is checked too;
-- a step: a folder of PNG frames captured by scripts/room/step-frames.mjs (the hooks build drawn one 1/24 s tick at a
-  time, so the sequence is the step at 24 frames a second whatever the capture's own pace), read as they are.
+- a step, a burst of steps, a seam, the way back or the wrap: a folder of PNG frames captured by scripts/room/step-frames.mjs
+  (the hooks build drawn one 1/24 s tick at a time, so the sequence runs at 24 frames a second whatever the capture's own
+  pace), read as they are.
 On each sequence:
 - a pixel makes a transition where its relative luminance has moved at least 0.1 from its running extreme and the
   darker of the two is below 0.80 (a flash is a pair of opposing transitions); the saturated red test is the same on
@@ -27,7 +28,8 @@ water gives many), the largest share of a region turning the same way at once, t
 second, the same two for red, and the verdict; --json writes the rows with their verdicts for src/data/room-flux.json.
 
 usage: python3 -I scripts/room/loop-flash.py [--loops <dir>] [--steps <dir>] [--shade 0.85,0,0.24] [--json <file>] [W x H ...]
-  the loops are <id>-<wide|portrait>.mp4; the steps are folders named step-<W>-<from>-<to> of frame-NNN.png
+  the loops are <id>-<wide|portrait>.mp4; the steps are folders of frame-NNN.png named step-<W>-<from>-<to>, burst-<W>-<ms>,
+  seam-<W>-exit, seam-<W>-wrap or seam-<W>-back
 """
 import io, json, re, subprocess, sys
 from pathlib import Path
@@ -174,13 +176,18 @@ def main():
                 print(row(clip.name, vw, vh, a), flush=True); good &= a['verdict'] == 'pass'
                 results.append({'kind': 'loop', 'id': sid, 'class': cls, 'viewport': f'{vw}x{vh}', **a})
     if steps:
-        for folder in sorted(Path(steps).glob('step-*')):
-            m = re.match(r'step-(\d+)-(\d+)-(\d+)$', folder.name)
+        for folder in sorted(Path(steps).glob('*-*')):
+            m = re.match(r'(step|burst|seam)-(\d+)-(.+)$', folder.name)
             if not m or not folder.is_dir(): continue
+            kind, _, name = m.groups()
             a, w, h = check_step(folder)
             if a is None: continue
             print(row(folder.name, w, h, a), flush=True); good &= a['verdict'] == 'pass'
-            results.append({'kind': 'step', 'from': int(m.group(2)), 'to': int(m.group(3)), 'viewport': f'{w}x{h}', **a})
+            r = {'kind': kind, 'viewport': f'{w}x{h}', **a}
+            if kind == 'step': fr, to = map(int, name.split('-')); r.update({'from': fr, 'to': to})
+            elif kind == 'burst': r['stepMs'] = int(name)
+            else: r['name'] = name
+            results.append(r)
     if out:
         Path(out).write_text(json.dumps({'shade': shade, 'results': results}, indent=1) + '\n')
     sys.exit(0 if good else 1)
