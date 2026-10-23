@@ -357,6 +357,47 @@ test('the resume rule (spec 4, AC7): a loop the carousel wants plays again on a 
   assert.equal(v.src, '', 'the element is unloaded');
 }));
 
+test("the refusal under the carousel's per-frame play() (AC7; the build record's section 10): a play() that always rejects marks the element refused within 1.6 s of visible time with play() and texture() called every frame, one play() an attempt; the keydown retry plays it again, once; a play() that resolves with no frame is refused at 1.5 s the same way, and a frame that comes clears the clock", async () => quiet(async () => {
+  const page = fakePage(1), v = page.els[0];
+  const pool = createPool(1, page.host);
+  assert.equal(await pool.fetch(0, 'loop-0'), true);
+  // the carousel's gate (carousel.ts update: in and not playing, then play) and the plane's map (texture while in), once a frame at 60 Hz
+  const frame = () => { if (pool.in(0) && !pool.playing(0)) pool.play(0); if (pool.in(0)) pool.texture(0); page.advance(1000 / 60); };
+  const frames = async (n: number) => { for (let k = 0; k < n; k++) { frame(); await tick(); } };
+  // every play() rejects (the e2e's stub, iOS in Low Power Mode): the rejection survives the next frame's play() and is read by texture()
+  v.reject = true;
+  const t0 = page.host.now();
+  let refusedAt = -1;
+  for (let k = 0; k < 120 && refusedAt < 0; k++) { frame(); await tick(); if (pool.refused(0)) refusedAt = page.host.now() - t0; }
+  assert.ok(refusedAt >= 0 && refusedAt <= 1600, `refused after ${refusedAt} ms of visible time`);
+  assert.equal(v.plays, 1, 'one play() for the attempt, not one a frame');
+  assert.equal(pool.in(0), false); assert.equal(pool.playing(0), false);
+  await frames(60);
+  assert.equal(v.plays, 1, 'the frames do not play a refused loop'); assert.equal(pool.refused(0), true);
+  // the next input retries it, once (its rejection lands before the next frame, as in the browser: the input is its own task); rejected again, it is refused again by the frames that follow
+  page.win.dispatchEvent(new Event('keydown'));
+  assert.equal(v.plays, 2, 'the retry plays it again'); assert.equal(pool.refused(0), false); assert.equal(pool.in(0), true);
+  await tick();
+  await frames(10);
+  assert.equal(pool.refused(0), true, 'refused again once the rejection is read'); assert.equal(v.plays, 2, 'one play() for the retry');
+  // a play() that resolves but brings no frame: refused at 1.5 s of visible time, the per-frame call restarting nothing
+  v.reject = false;
+  page.win.dispatchEvent(new Event('pointerup'));
+  assert.equal(v.plays, 3); assert.equal(pool.playing(0), true);
+  const t1 = page.host.now();
+  await frames(60);
+  assert.equal(pool.refused(0), false, 'a second of visible time with no frame is not a refusal');
+  await frames(40);
+  assert.equal(pool.refused(0), true, `refused by ${(page.host.now() - t1).toFixed(0)} ms`); assert.equal(v.plays, 3, 'no play() restarted the clock');
+  assert.equal(pool.playing(0), false, 'paused where it was');
+  // a frame that comes clears the clock: the loop plays on and is never refused
+  page.win.dispatchEvent(new Event('keydown'));
+  assert.equal(v.plays, 4); assert.equal(pool.playing(0), true);
+  v.currentTime = 0.1; await frames(120);
+  assert.equal(pool.refused(0), false); assert.equal(v.plays, 4); assert.equal(pool.playing(0), true);
+  pool.dispose();
+}));
+
 test("carousel.ts's constants: the exhibit factors, the class scale's lines, the physical finishes, the lights, the parts, the shade, the cloud's tones", () => {
   assert.deepEqual(EXHIBIT, { case: 1, wallet: 1.55, airpods: 1.75, lenskin: 2.2 });
   assert.deepEqual(CLASS_FILL, { height: 0.55, width: 0.62, centre: null });
@@ -379,9 +420,10 @@ test("carousel.ts's constants: the exhibit factors, the class scale's lines, the
 /** a renderer that draws nothing and keeps the stage it was asked to draw, so the test can read the product in front */
 function stubRenderer() {
   let stage: Scene | null = null;
-  const renderer = { toneMapping: 1, autoClear: true, getClearColor: (c: Color) => c.set(0), getClearAlpha: () => 1, setRenderTarget() {}, setClearColor() {}, clear() {}, render(s: Scene) { if (s.children.length > 3) stage = s; }, compileAsync: () => Promise.reject(new Error('no GL under node')) } as unknown as WebGLRenderer;
+  const draws = { stage: 0, cloud: 0 };   // the stage holds the planes, the holder and the lights; the cloud's scene its one triangle
+  const renderer = { toneMapping: 1, autoClear: true, getClearColor: (c: Color) => c.set(0), getClearAlpha: () => 1, setRenderTarget() {}, setClearColor() {}, clear() {}, render(s: Scene) { if (s.children.length > 3) { stage = s; draws.stage++; } else draws.cloud++; }, compileAsync: () => Promise.reject(new Error('no GL under node')) } as unknown as WebGLRenderer;
   const holder = () => (stage as Scene | null)?.children.find((o: Object3D) => o instanceof Group && Math.abs(o.position.z - STEP.productZ) < 1e-9) as Group | undefined;
-  return { renderer, shown: () => holder()?.children.find((g) => g.visible) ?? null };
+  return { renderer, shown: () => holder()?.children.find((g) => g.visible) ?? null, draws };
 }
 const geometry = () => { const g = new BufferGeometry(); g.setAttribute('position', new BufferAttribute(new Float32Array(9), 3)); g.setAttribute('normal', new BufferAttribute(new Float32Array(9), 3)); g.setIndex(new BufferAttribute(new Uint16Array([0, 1, 2]), 1)); return g; };
 const products = () => (['wallet', 'airpods', 'lenskin', 'case'] as const).map((name) => ({ name, size: name === 'case' ? [0.1047, 0.19674, 0.02656] as [number, number, number] : [0.07, 0.09, 0.005] as [number, number, number], parts: [{ name: 'shell', geometry: geometry() }, { name: 'trim', geometry: geometry() }, { name: 'logo', geometry: geometry() }] }));
@@ -392,8 +434,8 @@ function fakePool(n: number) {
 }
 const sceneDefs = (still: (i: number) => Promise<Texture | null>, baseYaw = 0): SceneDef[] => (['cove', 'grove', 'ember', 'palace', 'dawn'] as const).map((id, i) => ({ id, keyLight: ['#ffa6c8', '#a8ffe0', '#ffa171', '#ffc9a3', '#cbb0ff'][i], baseYaw, product: ['case', 'airpods', 'wallet', 'lenskin', 'case'][i], shade: ['#c988c8', '#96a880', '#c6a884', '#efa3af', '#d7b9ed'][i], finish: (['matte', 'gloss', 'matte', 'metallic', 'matte'] as const)[i], still: () => still(i), loop: i }));
 
-test('the step through the carousel: one gesture one whole step, the front switch at 285 ms, the swap at the half, the cooldown, at most two loops playing; over a lap at most two loop textures resident and one at rest', async () => quiet(async () => {
-  const { pool, st, resident } = fakePool(5), { renderer } = stubRenderer();
+test('the step through the carousel: one gesture one whole step, the front switch at 285 ms, the swap at the half, the cooldown, at most two loops playing; over a lap at most two loop textures resident and one at rest; the cloud only during a seam, and the stage not drawn under full cover', async () => quiet(async () => {
+  const { pool, st, resident } = fakePool(5), { renderer, draws } = stubRenderer();
   const c = createCarousel({ renderer, scenes: sceneDefs(async () => new Texture()), products: products(), video: pool, cls: 'wide', reduced: false, tune: () => TUNE, dpr: 1 });
   c.setScene(0, true); await tick();
   const dt = 1 / 60; let t = 0;
@@ -438,7 +480,17 @@ test('the step through the carousel: one gesture one whole step, the front switc
   assert.equal(st[1].made, 1, 'a texture is made once per visit of its plane');
   assert.ok(c.memory() > 0);
   assert.equal(c.cloud, null);
-  c.seam('in', 0.5); frame(); assert.ok(c.cloud !== null, 'the cloud only during a seam'); c.seam(null, 0); frame(); assert.equal(c.cloud, null);
+  // the seams: the cloud drawn only while one runs; under full cover (the wrap's hold, the ends of a cover-in and a cover-out) the stage is not drawn and its target keeps the last frame
+  const before = { ...draws };
+  c.seam('in', 0.5); frame(); assert.ok(c.cloud !== null, 'the cloud only during a seam');
+  assert.deepEqual({ stage: draws.stage - before.stage, cloud: draws.cloud - before.cloud }, { stage: 1, cloud: 1 }, 'half cover: the stage and the cloud');
+  c.seam('in', 1); frame(); frame(); c.seam('out', 0); frame();
+  assert.deepEqual({ stage: draws.stage - before.stage, cloud: draws.cloud - before.cloud }, { stage: 1, cloud: 4 }, 'full cover: the cloud alone');
+  assert.ok(c.cloud !== null);
+  c.seam('out', 0.5); frame();
+  assert.deepEqual({ stage: draws.stage - before.stage, cloud: draws.cloud - before.cloud }, { stage: 2, cloud: 5 }, 'the cover thinning: the stage again');
+  c.seam(null, 0); frame(); assert.equal(c.cloud, null);
+  assert.deepEqual({ stage: draws.stage - before.stage, cloud: draws.cloud - before.cloud }, { stage: 3, cloud: 5 }, 'no seam: the stage alone');
   c.dispose();
   assert.equal(resident(), 0, 'dispose releases every loop texture');
 }));

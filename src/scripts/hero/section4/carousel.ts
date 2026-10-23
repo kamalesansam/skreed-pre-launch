@@ -6,8 +6,9 @@
 // its loop's frames (video.ts) or its poster still: the bytes decoded to linear, scaled per pixel by the gain the
 // scene's light-up value and the pixel's luminance give (carousel-math.ts lightTarget, lightUp and lightGain, the
 // reference's intro-less path, X-4: the room leaving stays lit until the step's half, the room arriving comes up from
-// its brightest areas), re-encoded, with the reference's bottom shade in the frame (24 vh, clear to 85 percent black,
-// so the lines over it are never boxed, AC10 and AC12). A step is one tween on power2.out over stepMs: the outgoing
+// its brightest areas), re-encoded, with the bottom shade in the frame (SHADE: 45 percent of black, solid to 0.45 of
+// the height and clear by 0.72, set by the contrast check, not the reference's 24 vh at 85 percent, so the lines over
+// it read 4.5:1 or better and are never boxed, AC10 and AC12). A step is one tween on power2.out over stepMs: the outgoing
 // plane swings out on the arc of the stage's shape (80 degrees wide, 22 portrait, X-1), the incoming swings in from the
 // other side, the field of view pinches from 45 to fovStep and back by fovReturnAt, the front index switches at eased
 // 0.75, the lights follow proximity and its direction, the loops play and reset by it (at most two at once, their two
@@ -17,7 +18,7 @@
 // class at most 0.50 of the height, its centre raised to 0.60 of the view's height, so the four lines' block stays
 // clear of it) turns half a turn and is swapped edge-on at the half with its scale easing over 0.35 to 0.65. The product is a MeshPhysicalMaterial per finish (render-products.py's
 // numbers, the family page's calibration) in the scene's catalog shade, the trim dark and the logo a share of the
-// shade as the old universe drew them, under a PMREM of three's RoomEnvironment (each material's own envMap, at
+// shade as render-products.py roles them, under a PMREM of three's RoomEnvironment (each material's own envMap, at
 // LIGHTS.env on the matte and gloss finishes and LIGHTS.metalEnv on the metallic), one DirectionalLight (the key, from
 // above and in front at LIGHTS.key, white mixed 60 percent toward the scene's tint, cross-faded over keyLightMs from
 // the front switch) and the cool fill at LIGHTS.fill, the three set by the product check (AC2); the output colour-space
@@ -25,7 +26,8 @@
 // display values into the same 8-bit target the planes do (X-9), cleared to black under NoToneMapping set and restored
 // around the draw, no tone curve (hero-architecture.md "Render targets and colour spaces"). The seams' cloud (X-3) is
 // the reference's fbm drawn into its own target at min(DPR, 1.5) (halved on degrade), premultiplied, only while a seam
-// runs; its pass and target are readied at idle by warmCloud() before any seam (spec 5, "Loading", phase 0). The
+// runs, and while its cover is whole the stage is not drawn (its target keeps the last frame; nothing under the cloud
+// shows); its pass and target are readied at idle by warmCloud() before any seam (spec 5, "Loading", phase 0). The
 // reduced path: stills on every plane, a step is a cut with a 300 ms cross-fade, the fov and the lights untouched, the
 // product swapped and the key light set at once, no look, the cloud's time held at 0. Nothing here captures a gesture,
 // reads the scroll or touches the DOM: the director and scroll.ts call requestStep, setScene, seam, look and motion,
@@ -160,7 +162,7 @@ export const FINISH = Object.freeze({
  * 390 x 844; at 0.6 dE00 4.44 with 2.2 percent).
  */
 export const LIGHTS = Object.freeze({ key: 1.33, keyMix: 0.6, keyFrom: [0.1, 0.8, 0.6] as const, fill: 0.17, fillTint: '#dfe6ea', fillFrom: [-0.6, 0.2, 0.8] as const, env: 0.48, metalEnv: 1.0, metalEnvPortrait: 0.6, blur: 0.04 });
-/** the trim's fixed dark (linear) and its roughness, and the logo's share of the shade (render-products.py, the old universe) */
+/** the trim's fixed dark (linear) and its roughness, and the logo's share of the shade (render-products.py) */
 export const PARTS = Object.freeze({ trim: [0.073, 0.077, 0.077] as const, trimRoughness: 0.55, logoTint: 0.8468 });
 /**
  * The bottom shade in the frame (the reference's caption gradient, spec 3 "Legibility"; AC12): dark at the bottom edge
@@ -425,12 +427,21 @@ export function createCarousel(o: CarouselOptions): Carousel {
     cloudRt?.dispose(); cloudRt = new WebGLRenderTarget(w, h, { depthBuffer: false }); CW = w; CH = h; cloudU.uRes.value.set(w, h);
   }
 
+  /**
+   * The frame's draws: the stage into its target, then the cloud into its own while a seam runs. Under a seam's full
+   * cover the stage is not drawn and its target keeps the last frame: the cloud is opaque there, so nothing under it
+   * shows, and a seam over the hall or over the hero after the exit's jump steps the carousel for the cloud alone (the
+   * build record's section 10, the cost reading of the seams over the hero). The wrap's hold and the frames at either
+   * end of a cover-in and a cover-out are the frames at cover 1.
+   */
   function draw() {
     const pc = renderer.getClearColor(_cc), pa = renderer.getClearAlpha(), tm = renderer.toneMapping, ac = renderer.autoClear;
     renderer.toneMapping = NoToneMapping; renderer.autoClear = false;
-    if (scissorRect) { rt.scissor.set(scissorRect.x, scissorRect.y, scissorRect.w, scissorRect.h); rt.scissorTest = true; } else rt.scissorTest = false;
-    renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 1); renderer.clear(true, true, false);
-    renderer.render(stage, cam);
+    if (!(seamPhase && cover >= 1)) {
+      if (scissorRect) { rt.scissor.set(scissorRect.x, scissorRect.y, scissorRect.w, scissorRect.h); rt.scissorTest = true; } else rt.scissorTest = false;
+      renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 1); renderer.clear(true, true, false);
+      renderer.render(stage, cam);
+    }
     if (seamPhase && cloudRt) {
       renderer.setRenderTarget(cloudRt); renderer.setClearColor(0x000000, 0); renderer.clear(true, false, false);
       renderer.render(cloudScene, cloudCam);

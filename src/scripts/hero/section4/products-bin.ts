@@ -38,7 +38,7 @@ export function parseProductsBin(buf: ArrayBuffer): Product[] {
   });
 }
 
-/** products.bin fetched with the site's 20 s timeout (travel-park.ts's fetchBuffer, model-fetch.ts's pattern), stopped by signal, and parsed */
+/** products.bin fetched with the site's 20 s timeout (model-fetch.ts's pattern), stopped by signal, and parsed */
 export async function fetchProductsBin(url: string, signal?: AbortSignal): Promise<Product[]> {
   const ac = new AbortController(), t = setTimeout(() => ac.abort(), 20_000), stop = () => ac.abort();
   if (signal?.aborted) ac.abort();

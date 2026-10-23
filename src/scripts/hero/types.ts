@@ -45,7 +45,7 @@ export interface HeroContext {
   groundMesh: Mesh<never, MeshBasicMaterial> | Mesh; stonesMesh: Mesh;
   sky: SkyState;
   composerA: HeroComposer; fogGround: GroundScene; section2: Section2Scene | null; composite: Composite; mask: LogoMask; scrollTex: Texture;
-  /** section 4 (section4/director.ts: the hall, the bubble, the world and its lands, the loop), created by its lazy chunk once the quiz is in view; null before that and on a failed import */
+  /** section 4 (section4/director.ts: the hall, the bubble, the five scenes on the carousel, the seams), created by its lazy chunk once the quiz is in view; null before that and on a failed import */
   room: RoomDirector | null;
   intro: IntroDirector;
   params: HeroParams; reduced: boolean; touch: boolean; ghost: boolean;

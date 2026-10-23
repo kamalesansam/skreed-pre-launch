@@ -1,5 +1,6 @@
-// Section 4's output pass (docs/specs/section-4.md 2 "The look on screen"; the evidence file section 4), shared by the
-// hall and the universe: the vignette multiplies first so the centre clips to white in the 8-bit target, the colour
+// Section 4's output pass (docs/specs/section-4.md 2 "The look on screen"; the evidence file section 4), the hall's
+// alone since part three (the carousel writes display values into its own target and takes no pass): the vignette
+// multiplies first so the centre clips to white in the 8-bit target, the colour
 // split pulls red in and blue out by the square of the radius, the bleach-bypass overlays the pixel with its own luma,
 // the grain a hash of the pixel, static (E-S4-grain; the frame number stays 0), and on laptops a screened bloom. Normalised by the longer side so a portrait phone keeps the laptop's corners.
 import { ShaderMaterial, Vector2, WebGLRenderTarget, type Texture, type WebGLRenderer } from 'three';
@@ -21,7 +22,7 @@ const POST_FRAG = /* glsl */`
     float rc = length(0.5 * uRes / max(uRes.x, uRes.y));
     vec2 off = d * r * uSplit / (rc * rc * uRes);
     vec3 c = vec3(texture2D(tSrc, vUv - off).r, texture2D(tSrc, vUv).g, texture2D(tSrc, vUv + off).b);
-    if (uEncode > 0.5) c = toSrgb(clamp(c, 0.0, 1.0));       // a linear source (the universe's half-float target) to display values first
+    if (uEncode > 0.5) c = toSrgb(clamp(c, 0.0, 1.0));       // a linear source (encode set; none since part three, the hall's target holds display values) to display values first
     if (uBloom > 0.0) {
       // laptops: a blurred copy screened over the frame, no threshold, radius 0.8 percent of the frame (spec 2; 12 taps on two rings)
       vec2 px = 0.008 * max(uRes.x, uRes.y) / uRes; vec3 b = vec3(0.0);

@@ -19,7 +19,7 @@ import { FS_UV_VERT } from './post.ts';
 import { PEARL_WHISPER, URBAN_SLATE } from '../../../config/tokens.ts';
 import { clamp01, smoothstep } from '../util/math.ts';
 
-/** The bubble's numbers (spec 2 "The bubble"). Tune's range for bubbleMs is world.ts's WORLD_RANGES (what the first ring pass allows), inside msRange. */
+/** The bubble's numbers (spec 2 "The bubble"). Tune's range for bubbleMs is msRange, its own (ROOM_RANGES carries it; room-bubble.test.ts proves the growth across it). */
 export interface BubbleConstants {
   /** seconds after the press the bubble starts */
   readonly start: number;
