@@ -2,7 +2,7 @@
 // hero's own rule, hero.md AC: the logotype and the Back to top control turn Urban Slate where the frame under them
 // is light, at 3:1 or better; the build record's D5). Each scene's still as the carousel draws it at rest (the loop's
 // first frame, cover-fitted to the view at the planes' 1.01 overscan, the light-up whole, the bottom shade in the
-// frame) at 390 x 844 (the portrait still) and 1280 x 800 (the wide still), measured under the logotype's box and the
+// frame as the plane shader draws it, solid to SHADE.solid of the height and clear by SHADE.height) at 390 x 844 (the portrait still) and 1280 x 800 (the wide still), measured under the logotype's box and the
 // control's box (read off the served page: the logotype at the gutter, 96 x 23.2 px, 136 x 32.9 from 1024 px wide;
 // the control's 44 px row top right): the median luminance under each box, and Pearl Whisper's and Urban Slate's
 // contrast against it. The pick per scene is the colour that measures 3:1 or better under every box at both
@@ -41,7 +41,8 @@ function medianLum({ data, info }, b) {
   const ls = [];
   const x0 = Math.max(0, Math.floor(b.x)), y0 = Math.max(0, Math.floor(b.y)), x1 = Math.min(info.width, Math.ceil(b.x + b.w)), y1 = Math.min(info.height, Math.ceil(b.y + b.h));
   for (let y = y0; y < y1; y++) {
-    const fromBottom = info.height - y, sh = 1 - SHADE.dark * (1 - Math.min(1, fromBottom / (info.height * SHADE.height)));
+    // the plane shader's shade at this row (carousel.ts PLANE_FRAG: solid up to SHADE.solid of the height, clear by SHADE.height; gl_FragCoord.y is the pixel's centre from the bottom)
+    const yb = (info.height - y - 0.5) / info.height, sh = 1 - SHADE.dark * (1 - Math.min(1, Math.max(0, (yb - SHADE.solid) / Math.max(SHADE.height - SHADE.solid, 1e-3))));
     for (let x = x0; x < x1; x++) { const k = (y * info.width + x) * 3; ls.push(lum(data[k] * sh, data[k + 1] * sh, data[k + 2] * sh)); }
   }
   ls.sort((a, c) => a - c);
