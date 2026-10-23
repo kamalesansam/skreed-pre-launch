@@ -12,7 +12,7 @@
     "dev": "PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=1 PUBLIC_STAGING=0 PUBLIC_FAMILY_3D=on astro dev",
     "build": "PUBLIC_HERO_HOOKS=0 PUBLIC_TUNE=0 PUBLIC_STAGING=0 astro build && node scripts/csp.mjs && node scripts/hero/budget.mjs dist --mode build && node scripts/room/guards.mjs --post-build --mode build",
     "build:test": "PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=0 PUBLIC_STAGING=0 astro build && node scripts/csp.mjs",
-    "build:staging": "PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=1 PUBLIC_STAGING=1 astro build && node scripts/csp.mjs && node scripts/hero/budget.mjs dist --mode staging && node scripts/room/guards.mjs --post-build --mode staging",
+    "build:staging": "PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=1 PUBLIC_STAGING=1 PUBLIC_FAMILY_3D=on astro build && node scripts/csp.mjs && node scripts/hero/budget.mjs dist --mode staging && node scripts/room/guards.mjs --post-build --mode staging",
     "preview": "wrangler dev --port 8787",
     "check": "astro check",
     "gen:shades": "node scripts/hero/gen-shades.mjs",
