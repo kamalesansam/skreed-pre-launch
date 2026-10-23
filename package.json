@@ -10,7 +10,7 @@
   "//build-modes": "Section 4 ships one build in every mode (docs/specs/section-4-flux.md 5, Build modes): the five scene loops and their stills, with media-src 'self' written by csp.mjs for build, build:test and build:staging alike (E-S4-video as amended). build:test adds the hooks (__s4), build:staging the hooks and Tune. build and build:staging then run budget.mjs (section 6's lines and AC8's formats) and the post-build guard (exactly the ten loops, no land, park or garden asset, media-src 'self'). This note sits outside scripts so that npm run cannot run it.",
   "scripts": {
     "dev": "PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=1 PUBLIC_STAGING=0 PUBLIC_FAMILY_3D=on astro dev",
-    "build": "PUBLIC_HERO_HOOKS=0 PUBLIC_TUNE=0 PUBLIC_STAGING=0 astro build && node scripts/csp.mjs && node scripts/hero/budget.mjs dist --mode build && node scripts/room/guards.mjs --post-build --mode build",
+    "build": "PUBLIC_HERO_HOOKS=0 PUBLIC_TUNE=0 PUBLIC_STAGING=0 PUBLIC_FAMILY_3D=on astro build && node scripts/csp.mjs && node scripts/hero/budget.mjs dist --mode build && node scripts/room/guards.mjs --post-build --mode build",
     "build:test": "PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=0 PUBLIC_STAGING=0 astro build && node scripts/csp.mjs",
     "build:staging": "PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=1 PUBLIC_STAGING=1 PUBLIC_FAMILY_3D=on astro build && node scripts/csp.mjs && node scripts/hero/budget.mjs dist --mode staging && node scripts/room/guards.mjs --post-build --mode staging",
     "preview": "wrangler dev --port 8787",

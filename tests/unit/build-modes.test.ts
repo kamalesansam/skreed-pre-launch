@@ -60,7 +60,7 @@ test("csp.mjs: media-src 'self' in every mode, with no flag and whatever the env
 
 test('package.json: one build, no pick; build and build:staging run the budget and the guard, every mode gets media-src self', () => {
   for (const name of ['build', 'build:test', 'build:staging']) assert.doesNotMatch(pkg.scripts[name], /PUBLIC_PARK_TRAVEL|--media/, name);
-  assert.match(pkg.scripts.build, /^PUBLIC_HERO_HOOKS=0 PUBLIC_TUNE=0 PUBLIC_STAGING=0 astro build && node scripts\/csp\.mjs && node scripts\/hero\/budget\.mjs dist --mode build && node scripts\/room\/guards\.mjs --post-build --mode build$/);
+  assert.match(pkg.scripts.build, /^PUBLIC_HERO_HOOKS=0 PUBLIC_TUNE=0 PUBLIC_STAGING=0 PUBLIC_FAMILY_3D=on astro build && node scripts\/csp\.mjs && node scripts\/hero\/budget\.mjs dist --mode build && node scripts\/room\/guards\.mjs --post-build --mode build$/);
   assert.match(pkg.scripts['build:test'], /^PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=0 PUBLIC_STAGING=0 astro build && node scripts\/csp\.mjs$/);
   assert.match(pkg.scripts['build:staging'], /^PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=1 PUBLIC_STAGING=1 PUBLIC_FAMILY_3D=on astro build && node scripts\/csp\.mjs && node scripts\/hero\/budget\.mjs dist --mode staging && node scripts\/room\/guards\.mjs --post-build --mode staging$/);
   // the note sits beside the scripts, not among them, so npm run cannot run it
