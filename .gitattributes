@@ -1,0 +1,19 @@
+# Every text file but one is LF in the working tree on every machine (since 2026-10-23). Git for Windows sets
+# core.autocrlf on, which checked a fresh clone out CRLF and broke sha256sum -c and eight test files; this file
+# settles it without a setting on the machine.
+* text=auto eol=lf
+
+# The one exception: this file was committed CRLF and nothing reads it, so it stays as it is rather than rewritten.
+docs/data/shades.csv -text
+
+# The binaries, named so that no heuristic ever treats one as text.
+*.png binary
+*.jpg binary
+*.webp binary
+*.avif binary
+*.mp4 binary
+*.bin binary
+*.glb binary
+*.woff2 binary
+*.pdf binary
+*.ico binary
