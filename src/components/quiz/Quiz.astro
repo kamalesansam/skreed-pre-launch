@@ -43,6 +43,8 @@ const shade = (id: string) => {
       <h2 class="qz-h" data-dc><span class="sr-only">{Q.h}</span><span aria-hidden="true">{Q.h}</span></h2>
       <p class="qz-sub" data-dc><span class="sr-only">{Q.sub}</span><span aria-hidden="true">{Q.sub}</span></p>
       <button type="button" class="qz-link qz-begin" id="qzBegin" data-label={Q.begin} data-loading={Q.loading} data-dc><span class="sr-only">{Q.begin}</span><span aria-hidden="true">{Q.begin}</span></button>
+      {/* the way past the quiz (quiz-gate.md D3): section 4 is locked behind the quiz until the result or this press; split at build as Begin is, and hidden without JavaScript, where nothing is locked */}
+      <button type="button" class="qz-link qz-skip" id="qzSkip" data-label={Q.skip} data-loading={Q.loading} data-dc><span class="sr-only">{Q.skip}</span><span aria-hidden="true">{Q.skip}</span></button>
       <noscript><p class="qz-noscript"><span class="sr-only">{Q.noscriptLead}</span><span aria-hidden="true">{Q.noscriptLead}</span><a href="/#families" aria-label={Q.noscriptLink}>{Q.noscriptLink}</a><span class="sr-only">{Q.noscriptTail}</span><span aria-hidden="true">{Q.noscriptTail}</span></p></noscript>
     </div>
     <div class="qz-deck" id="qzDeck" hidden>
@@ -58,6 +60,7 @@ const shade = (id: string) => {
             </div>
             <div class="qz-foot">
               {i > 0 && <button type="button" class="qz-link qz-back" data-dc>{Q.back}</button>}
+              <button type="button" class="qz-link qz-skip" data-dc>{Q.skip}</button>
             </div>
             {c.visual && c.answers.some((a) => picture(`q${i}-${a.persona}`)) && (
               <div class="qz-pics" aria-hidden="true">
@@ -132,20 +135,22 @@ const shade = (id: string) => {
   </div>}
 </section>
 <script>
-  // the loader: the chunk comes once the section is within a screen, or at once when "Swipe to begin" is pressed first.
-  // Any press before the chunk has mounted (whether or not the import is already in flight) shows "Loading..." and is
-  // replayed by mountQuiz through data-pending; once mounted, deck.ts owns the button.
+  // the loader: the chunk comes once the section is within a screen, or at once when "Swipe to begin" or "Skip quiz" is
+  // pressed first. Any press on either before the chunk has mounted (whether or not the import is already in flight)
+  // shows "Loading..." on that button and is replayed by mountQuiz through data-pending; a press on the other button
+  // while one is pending does nothing; once mounted, deck.ts owns both.
   const root = document.getElementById('find');
-  const begin = document.getElementById('qzBegin') as HTMLButtonElement | null;
-  if (root && begin) {
+  const begin = document.getElementById('qzBegin') as HTMLButtonElement | null, skip = document.getElementById('qzSkip') as HTMLButtonElement | null;
+  if (root && begin && skip) {
+    const buttons = [begin, skip];
     let p: Promise<unknown> | null = null, mounted = false, retry = '';
-    const label = begin.dataset.label ?? '';
-    // the label in two copies, as the server drew it: sentence case for assistive technology, capitals on screen
-    const say = (t: string) => { const a = document.createElement('span'), b = document.createElement('span'); a.className = 'sr-only'; a.textContent = t; b.setAttribute('aria-hidden', 'true'); b.textContent = t; begin.replaceChildren(a, b); };
-    // a rejected import (a chunk gone after a redeploy, a dropped connection) gives the button back, so the next press
-    // tries again; it also retries by itself when the connection returns. The browser's module map remembers a failed
-    // fetch, so the retry goes through a fresh URL (the one the error names, with a query), where the browser gives one.
-    const reset = (err: unknown) => { const m = /(https?:\/\/[^\s'"()]+\.js)/.exec(String((err as Error)?.message ?? err)); if (m) retry = m[1]; p = null; begin.removeAttribute('aria-disabled'); begin.removeAttribute('aria-busy'); delete begin.dataset.pending; say(label); };
+    // a label in two copies, as the server drew it: sentence case for assistive technology, capitals on screen
+    const say = (b: HTMLButtonElement, t: string) => { const a = document.createElement('span'), c = document.createElement('span'); a.className = 'sr-only'; a.textContent = t; c.setAttribute('aria-hidden', 'true'); c.textContent = t; b.replaceChildren(a, c); };
+    const pending = () => buttons.some((b) => b.dataset.pending);
+    // a rejected import (a chunk gone after a redeploy, a dropped connection) gives the pending button its label back, so
+    // the next press tries again; it also retries by itself when the connection returns. The browser's module map
+    // remembers a failed fetch, so the retry goes through a fresh URL (the one the error names, with a query), where the browser gives one.
+    const reset = (err: unknown) => { const m = /(https?:\/\/[^\s'"()]+\.js)/.exec(String((err as Error)?.message ?? err)); if (m) retry = m[1]; p = null; for (const b of buttons) { if (!b.dataset.pending) continue; b.removeAttribute('aria-disabled'); b.removeAttribute('aria-busy'); delete b.dataset.pending; say(b, b.dataset.label ?? ''); } };
     const load = (): Promise<typeof import('../../scripts/quiz/deck.ts')> => (retry ? import(/* @vite-ignore */ `${retry}?r=${Date.now()}`) : import('../../scripts/quiz/deck.ts'));
     const start = () => (p ??= load().then((m) => { m.mountQuiz(root); mounted = true; }).catch(reset));
     addEventListener('online', () => { if (!mounted && !p) void start(); });
@@ -153,9 +158,9 @@ const shade = (id: string) => {
       const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); void start(); } }, { rootMargin: '100% 0px' });
       io.observe(root);
     } else void start();
-    begin.addEventListener('click', () => {
-      if (mounted || begin.dataset.pending) return;
-      begin.setAttribute('aria-disabled', 'true'); begin.setAttribute('aria-busy', 'true'); say(begin.dataset.loading ?? ''); begin.dataset.pending = '1';
+    for (const b of buttons) b.addEventListener('click', () => {
+      if (mounted || pending()) return;
+      b.setAttribute('aria-disabled', 'true'); b.setAttribute('aria-busy', 'true'); say(b, b.dataset.loading ?? ''); b.dataset.pending = '1';
       void start();
     });
   }

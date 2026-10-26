@@ -219,13 +219,28 @@ export async function startHero(o: StartOptions): Promise<void> {
     return room;
   }).catch((e: unknown) => { console.warn('section 4: the section chunk did not load; the stills stand in', e); document.getElementById('room')?.setAttribute('data-tier', 'poster'); return null; }));
   const loadHall = () => loadDirector().then((room) => room?.load().then(() => { if (room.hall.failed) document.getElementById('room')?.setAttribute('data-tier', 'poster'); }));
+  // the quiz gate (docs/specs/quiz-gate.md D1, D2, D5): section#room is hidden and data-locked until the quiz's result or
+  // Skip quiz opens it (scripts/quiz/gate.ts). While locked there is no wrap from the top (canWrap, below) and no glue
+  // span at its seam (docTop reads NaN for an element with no box, below); the hall and the director chunk still load as
+  // they always did (the stage observer and afterIntro), so the hall is ready for a press on Skip quiz. The unlock's
+  // event re-evaluates the page scroll and loads the hall if nothing has; __skreedHall tells the quiz's ride whether the
+  // hall is in, and lets it wait for it (at most 1.5 s).
+  const roomEl = document.getElementById('room');
+  const roomLocked = () => !!roomEl?.hasAttribute('data-locked');
+  const onUnlock = () => { pageScroll?.notify(); void loadHall(); };
+  addEventListener('skreed:quiz-unlock', onUnlock);
+  life.onKill(() => removeEventListener('skreed:quiz-unlock', onUnlock));
+  window.__skreedHall = { get ready() { return !!ctx.room?.hall.ready; }, load: () => loadHall() };
+  life.onKill(() => { window.__skreedHall = undefined; });
   // the page scroll (section4/scroll.ts, its own chunk, marker skreed:scroll): the glue over the three seams, the wrap from
   // the top and the carousel's gestures, from the intro's end; the director is its adapter's other side. One viewport for
   // the spans is a probe's 100svh (the track is in svh, the hero's map in innerHeights)
   const probe = document.createElement('div');
   probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:100svh;visibility:hidden;pointer-events:none';
   document.body.append(probe); life.onKill(() => probe.remove());
-  const docTop = (id: string) => { const el = document.getElementById(id); return el ? el.getBoundingClientRect().top + scrollY : NaN; };
+  // an element with no box (section#room hidden behind the quiz gate) reads NaN, and its span is dropped below: a display:
+  // none element's rect is all zeros and would read as the current scroll position, a span the glue would settle into
+  const docTop = (id: string) => { const el = document.getElementById(id); return el && el.getClientRects().length ? el.getBoundingClientRect().top + scrollY : NaN; };
   const svh = () => probe.offsetHeight || innerHeight;
   let pageScroll: PageScroll | null = null, scrollImport: Promise<void> | null = null;
   const startScroll = () => (scrollImport ??= import('./section4/scroll.ts').then((m) => {
@@ -239,7 +254,7 @@ export async function startHero(o: StartOptions): Promise<void> {
       room: {
         inRange: () => !!ctx.room?.inRange(), edge: (d) => ctx.room?.edge(d) ?? null, step: (d) => !!ctx.room?.stepScene(d),
         back: () => { ctx.room?.back(); }, wrap: () => { void loadDirector().then((r) => r?.wrap()); },
-        canWrap: () => loop.state.introDone && !ctx.room?.lock(), lock: () => !!ctx.room?.lock(), busy: () => !!ctx.room?.busy(),
+        canWrap: () => loop.state.introDone && !ctx.room?.lock() && !roomLocked(), lock: () => !!ctx.room?.lock(), busy: () => !!ctx.room?.busy(),
       },
     });
     life.onKill(() => pageScroll?.dispose());
