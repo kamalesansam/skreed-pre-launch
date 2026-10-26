@@ -70,13 +70,15 @@ test('item 1: a skipped cross-document view transition is never a hero failure: 
 test('iterations 3 and 4: a return visit that stalls lands on the families, and only the visitor moves the poster page: the soft poster centres nav#families and measures its scroll rule from there; toPoster centres only when the loader was not already on its soft poster; the recovery on frame2 puts section 2 in place', () => {
   const boot = read('src/scripts/boot.ts');
   const soft = boot.slice(boot.indexOf('function onSoftPoster('), boot.indexOf('async function boot('));
-  assert.match(soft, /resetRiders\(els\);\n(?:\s*\/\/[^\n]*\n)*\s+const ret = !!document\.getElementById\('intro'\)\?\.classList\.contains\('ret'\);\n\s+if \(ret\) \$\('families'\)\?\.scrollIntoView\(\{ block: 'center', behavior: 'instant' \}\);\n\s+const base = ret \? scrollY : 0;\n\s+const onScroll = \(\) => \{ if \(Math\.abs\(scrollY - base\) > 8\) toPoster\('soft-then-scrolled'\); \};/,
-    'on a return visit the families are centred first, then the scroll rule is measured from that position (from the top it is scrollY > 8 as before), so neither the collapse nor the centring counts');
+  assert.match(soft, /resetRiders\(els\);\n(?:\s*\/\/[^\n]*\n)*\s+const ret = !!document\.getElementById\('intro'\)\?\.classList\.contains\('ret'\);\n\s+if \(ret\) \{ \$\('families'\)\?\.scrollIntoView\(\{ block: 'center', behavior: 'instant' \}\); softCentred = true; \}\n\s+const base = ret \? scrollY : 0;\n\s+const onScroll = \(\) => \{ if \(Math\.abs\(scrollY - base\) > 8\) toPoster\('soft-then-scrolled'\); \};/,
+    'on a return visit the families are centred first and the flag set beside the centring (iteration 5), then the scroll rule is measured from that position (from the top it is scrollY > 8 as before), so neither the collapse nor the centring counts');
   assert.match(soft, /addEventListener\('scroll', onScroll, \{ passive: true \}\);\n\s+const off = \(\) => removeEventListener\('scroll', onScroll\);\n\s+life\.onRecover\(off\); life\.onKill\(off\);/, 'the rule is installed on every soft poster and lifted by a recovery');
   assert.match(soft, /if \(kind === 'fail'\) \{ if \(!life\.dead\) toPoster\('module-load-error'\); return; \}/, 'a real failure still ends it');
   const hard = boot.slice(boot.indexOf('function toPoster('), boot.indexOf('function onSoftPoster('));
-  assert.match(hard, /let fresh = true;[^\n]*\n\s+if \(L\) \{\n\s+const s = L\.state\(\);\n\s+fresh = s\.mode !== 'poster';\n/, 'whether the loader was already on its soft poster is read before the abort');
-  assert.match(hard, /const fam = fresh && location\.hash === '#families' \? \$\('families'\) : null;/, 'from a soft poster the visitor\'s place is kept; a fresh fall on a return visit centres the families');
+  assert.match(boot, /^let softCentred = false;$/m, 'one module-level flag (iteration 5)');
+  assert.match(hard, /const fam = !softCentred && location\.hash === '#families' \? \$\('families'\) : null;/, 'toPoster reads the flag: a soft poster that centred keeps the visitor\'s place on a hard turn; a fall that never passed there (the Gate\'s fail, a lost context, a failed fetch) centres the families');
+  assert.doesNotMatch(hard, /fresh|s\.mode !== 'poster';/, 'nothing reads the loader\'s mode for the centring: the fail kind sets mode poster without any centring');
+  assert.equal(boot.split('softCentred').length - 1, 3, 'declared, set beside the centring, read in toPoster');
   const loader = read('src/inline/loader.inline.js');
   assert.match(loader, /if\(mode==='poster'\)\{if\(ready\)\{ph='enter';HT\.classList\.replace\('poster','hero3d'\);lift\(\)\}return\}/, 'the loader\'s recovery branch lifts on frame2, then __introDone runs life.recover(), which runs the hero\'s snap hook');
   assert.match(loader, /intro\.classList\.add\('po'\)/, 'poster() keeps #intro, so its ret class is still there to read');
@@ -85,7 +87,7 @@ test('iterations 3 and 4: a return visit that stalls lands on the families, and 
 
 test('item 3: a return visit that falls to the poster centres nav#families instead of keeping the 3D scroll offset', () => {
   const boot = read('src/scripts/boot.ts');
-  assert.match(boot, /const fam = fresh && location\.hash === '#families' \? \$\('families'\) : null;/, 'only a fresh fall centres (iteration 4: from a soft poster the place is kept)');
+  assert.match(boot, /const fam = !softCentred && location\.hash === '#families' \? \$\('families'\) : null;/, 'a fall centres unless a soft poster already did (iterations 4 and 5)');
   assert.match(boot, /if \(fam\) fam\.scrollIntoView\(\{ block: 'center', behavior: 'instant' \}\);\n\s+else if \(y < before - innerHeight\) scrollTo\(\{ top: 0, behavior: 'instant' \}\);\n\s+else scrollTo\(\{ top: y - \(before - after\), behavior: 'instant' \}\);/, 'the centring takes the place of the offset keep, after the track has collapsed to one screen');
   assert.ok(boot.indexOf("H.classList.replace('hero3d', 'poster')") < boot.indexOf('fam.scrollIntoView'), 'the page is the poster page before the nav is centred, so the nav is in flow after one screen');
 });
