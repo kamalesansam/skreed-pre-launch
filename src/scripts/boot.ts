@@ -30,8 +30,10 @@ function toPoster(reason: string, err?: unknown): void {
   if (life.dead) return;
   life.kill(reason);                                            // 1. loop, observer, listeners, renderer and its context
   const L = window.__skreedLoader;                              // 2. the loader, in any phase
+  let fresh = true;   // the loader was not on its soft poster: a return visit's families are centred below (6); from a soft poster the visitor's place is kept
   if (L) {
     const s = L.state();
+    fresh = s.mode !== 'poster';
     if (!navigator.onLine && s.phase === 'load' && s.mode !== 'poster') L.fail(COPY_LD.offline);
     else if (!(s.mode === 'poster' && s.note)) L.abort();
   }
@@ -41,7 +43,7 @@ function toPoster(reason: string, err?: unknown): void {
   resetRiders(els);                                             // 4. ride styles, tone, labels (section 2 and the intro reset in their disposers)
   for (const e of document.querySelectorAll('[inert]')) e.removeAttribute('inert');   // 5.
   const after = track ? track.offsetHeight : 0;                 // 6. keep what the visitor was reading in place
-  const fam = location.hash === '#families' ? $('families') : null;   // a return visit that fell to the poster (family-page.md 2.2): the families centred, as links.ts does off the 3D path
+  const fam = fresh && location.hash === '#families' ? $('families') : null;   // a return visit that fell to the poster (family-page.md 2.2): the families centred, as links.ts does off the 3D path; from a soft poster onSoftPoster centred them already and the visitor may have moved since
   if (fam) fam.scrollIntoView({ block: 'center', behavior: 'instant' });
   else if (y < before - innerHeight) scrollTo({ top: 0, behavior: 'instant' });
   else scrollTo({ top: y - (before - after), behavior: 'instant' });
@@ -54,11 +56,15 @@ function onSoftPoster(kind: 'stall' | 'offline' | 'fail'): void {
   if (kind === 'fail') { if (!life.dead) toPoster('module-load-error'); return; }
   if (life.dead) return;
   resetRiders(els);
-  // a return visit (family-page.md 13 step 3; the loader's decision, #intro.ret) sits deep in the page by design, at the
-  // fragment's scroll or at section 2's rest, so a scroll there is no sign the visitor gave up on the 3D: its soft poster
-  // recovers on frame2 as a top-of-page stall does, and the hero's own snap and lift carry on; a real failure still ends it
-  if (document.getElementById('intro')?.classList.contains('ret')) return;
-  const onScroll = () => { if (scrollY > 8) toPoster('soft-then-scrolled'); };
+  // a return visit (family-page.md 13 step 3; the loader's decision, #intro.ret) sat deep in the page by design, at the
+  // fragment's scroll or at section 2's rest, and the track has just collapsed to one screen under it: the poster page is
+  // centred on the families, as toPoster does, and the scroll rule is measured from there, so neither the collapse nor the
+  // centring counts as the visitor's scroll. The island keeps loading; on frame2 the recovery lifts and hero.ts's
+  // life.onRecover hook puts section 2 in place. Only the visitor moves the poster page, and a real failure still ends it
+  const ret = !!document.getElementById('intro')?.classList.contains('ret');
+  if (ret) $('families')?.scrollIntoView({ block: 'center', behavior: 'instant' });
+  const base = ret ? scrollY : 0;
+  const onScroll = () => { if (Math.abs(scrollY - base) > 8) toPoster('soft-then-scrolled'); };
   addEventListener('scroll', onScroll, { passive: true });
   const off = () => removeEventListener('scroll', onScroll);
   life.onRecover(off); life.onKill(off);

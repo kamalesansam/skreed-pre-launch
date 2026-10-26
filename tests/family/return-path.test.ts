@@ -43,8 +43,8 @@ test('the hero: the intro skipped, the page and both followers snapped to S2T.LA
   assert.doesNotMatch(hero, /import \{ isReturnVisit \}|= isReturnVisit\(\)/, 'never a second reading of the conditions');
   assert.match(hero, /createIglooIntro\(\{ [^}]*skip: ret[^}]*\}\)/, 'the shot is skipped on a return visit, as for a hash');
   assert.match(read('src/scripts/hero/intro/igloo.ts'), /const SKIP = reduce \|\| !!o\.skip \|\|/);
-  assert.match(hero, /section2\.snapTo = \(screens\) => \{ scrollTo\(\{ top: Math\.round\(screens \* innerHeight\), behavior: 'instant' \}\); loop\.snap\(screens\); \};/, 'snapTo scrolls the page and sets both followers');
-  assert.match(hero, /if \(ret\) \{\n\s+const snapTo = section2\.snapTo;\n\s+snapTo\(S2T\.LAND\);/, 'section 2 at rest at once, under the veil: the fragment\'s scroll to nav#families is undone');
+  assert.match(hero, /section2\.snapTo = \(screens\) => \{ if \(!document\.documentElement\.classList\.contains\('poster'\)\) scrollTo\(\{ top: Math\.round\(screens \* innerHeight\), behavior: 'instant' \}\); loop\.snap\(screens\); \};/, 'snapTo scrolls the page, never the poster page (iteration 4), and sets both followers');
+  assert.match(hero, /if \(ret\) \{\n\s+const snapTo = section2\.snapTo;\n\s+snapTo\(S2T\.LAND\);\n\s+life\.onRecover\(\(\) => snapTo\(S2T\.LAND\)\);/, 'section 2 at rest at once under the veil (the fragment\'s scroll to nav#families undone), and again as a soft poster recovers (iteration 4)');
   assert.match(hero, /if \(!L\.state\(\)\.ready \|\| !\(section2\.ready \|\| section2\.failed \|\| !loop\.running\)\) \{ requestAnimationFrame\(settle\); return; \}/, 'frame2 still gates the lift (the readiness model), and the gems are built first');
   assert.match(hero, /snapTo\(S2T\.LAND\); L\.skip\(\);/, 'snapped again, then the loader\'s skip path');
   assert.match(hero, /if \(e\.persisted && renderer\.getContext\(\)\.isContextLost\(\)\) o\.onHardFail\('webglcontextlost after restore'\)/, 'a back-forward cache restore with a lost context goes the way every lost context goes (boot.ts: the poster page)');
@@ -67,19 +67,25 @@ test('item 1: a skipped cross-document view transition is never a hero failure: 
   assert.ok(gate.indexOf("addEventListener('pagereveal'") < gate.indexOf("addEventListener('error'"), 'before the module error guard');
 });
 
-test('iteration 3: a return visit\'s soft poster (a stall under the veil) never turns hard on a scroll, since the visit sits deep in the page by design; it recovers on frame2', () => {
+test('iterations 3 and 4: a return visit that stalls lands on the families, and only the visitor moves the poster page: the soft poster centres nav#families and measures its scroll rule from there; toPoster centres only when the loader was not already on its soft poster; the recovery on frame2 puts section 2 in place', () => {
   const boot = read('src/scripts/boot.ts');
   const soft = boot.slice(boot.indexOf('function onSoftPoster('), boot.indexOf('async function boot('));
-  assert.match(soft, /resetRiders\(els\);\n(?:\s*\/\/[^\n]*\n)*\s+if \(document\.getElementById\('intro'\)\?\.classList\.contains\('ret'\)\) return;\n\s+const onScroll = \(\) => \{ if \(scrollY > 8\) toPoster\('soft-then-scrolled'\); \};/, 'the return is read before the scroll rule is installed, after the riders are reset');
+  assert.match(soft, /resetRiders\(els\);\n(?:\s*\/\/[^\n]*\n)*\s+const ret = !!document\.getElementById\('intro'\)\?\.classList\.contains\('ret'\);\n\s+if \(ret\) \$\('families'\)\?\.scrollIntoView\(\{ block: 'center', behavior: 'instant' \}\);\n\s+const base = ret \? scrollY : 0;\n\s+const onScroll = \(\) => \{ if \(Math\.abs\(scrollY - base\) > 8\) toPoster\('soft-then-scrolled'\); \};/,
+    'on a return visit the families are centred first, then the scroll rule is measured from that position (from the top it is scrollY > 8 as before), so neither the collapse nor the centring counts');
+  assert.match(soft, /addEventListener\('scroll', onScroll, \{ passive: true \}\);\n\s+const off = \(\) => removeEventListener\('scroll', onScroll\);\n\s+life\.onRecover\(off\); life\.onKill\(off\);/, 'the rule is installed on every soft poster and lifted by a recovery');
   assert.match(soft, /if \(kind === 'fail'\) \{ if \(!life\.dead\) toPoster\('module-load-error'\); return; \}/, 'a real failure still ends it');
+  const hard = boot.slice(boot.indexOf('function toPoster('), boot.indexOf('function onSoftPoster('));
+  assert.match(hard, /let fresh = true;[^\n]*\n\s+if \(L\) \{\n\s+const s = L\.state\(\);\n\s+fresh = s\.mode !== 'poster';\n/, 'whether the loader was already on its soft poster is read before the abort');
+  assert.match(hard, /const fam = fresh && location\.hash === '#families' \? \$\('families'\) : null;/, 'from a soft poster the visitor\'s place is kept; a fresh fall on a return visit centres the families');
   const loader = read('src/inline/loader.inline.js');
-  assert.match(loader, /if\(mode==='poster'\)\{if\(ready\)\{ph='enter';HT\.classList\.replace\('poster','hero3d'\);lift\(\)\}return\}/, 'the loader\'s recovery branch lifts on frame2');
+  assert.match(loader, /if\(mode==='poster'\)\{if\(ready\)\{ph='enter';HT\.classList\.replace\('poster','hero3d'\);lift\(\)\}return\}/, 'the loader\'s recovery branch lifts on frame2, then __introDone runs life.recover(), which runs the hero\'s snap hook');
   assert.match(loader, /intro\.classList\.add\('po'\)/, 'poster() keeps #intro, so its ret class is still there to read');
+  assert.match(read('src/scripts/hero/bridge/loader.ts'), /life\.recover\(\);\n\s+cb\(\);/, 'the recovery hooks run before the hero\'s own intro-done work');
 });
 
 test('item 3: a return visit that falls to the poster centres nav#families instead of keeping the 3D scroll offset', () => {
   const boot = read('src/scripts/boot.ts');
-  assert.match(boot, /const fam = location\.hash === '#families' \? \$\('families'\) : null;/);
+  assert.match(boot, /const fam = fresh && location\.hash === '#families' \? \$\('families'\) : null;/, 'only a fresh fall centres (iteration 4: from a soft poster the place is kept)');
   assert.match(boot, /if \(fam\) fam\.scrollIntoView\(\{ block: 'center', behavior: 'instant' \}\);\n\s+else if \(y < before - innerHeight\) scrollTo\(\{ top: 0, behavior: 'instant' \}\);\n\s+else scrollTo\(\{ top: y - \(before - after\), behavior: 'instant' \}\);/, 'the centring takes the place of the offset keep, after the track has collapsed to one screen');
   assert.ok(boot.indexOf("H.classList.replace('hero3d', 'poster')") < boot.indexOf('fam.scrollIntoView'), 'the page is the poster page before the nav is centred, so the nav is in flow after one screen');
 });

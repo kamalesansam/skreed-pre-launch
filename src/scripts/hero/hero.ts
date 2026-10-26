@@ -199,7 +199,8 @@ export async function startHero(o: StartOptions): Promise<void> {
   // 18. hooks, the loader's cut, the stage observer
   const loop = createLoop(ctx, pointer, labels, initiallyIntroDone, tex);
   life.onKill(() => { loop.stop(); labels.clear(); labels.dispose(); });
-  section2.snapTo = (screens) => { scrollTo({ top: Math.round(screens * innerHeight), behavior: 'instant' }); loop.snap(screens); };
+  // never a scroll of the poster page (a soft poster's one-screen track, boot.ts onSoftPoster): only the visitor moves that; the followers are set all the same, for the recovery
+  section2.snapTo = (screens) => { if (!document.documentElement.classList.contains('poster')) scrollTo({ top: Math.round(screens * innerHeight), behavior: 'instant' }); loop.snap(screens); };
   // section 1 in place (the back-to-top control, scripts/shell/to-top.ts): the loop's own jump, without the fourth wipe
   window.__skreedTop = () => { scrollTo({ top: 0, behavior: 'instant' }); loop.snap(0); ctx.room?.reset(); };
   life.onKill(() => { window.__skreedTop = undefined; });
@@ -212,6 +213,7 @@ export async function startHero(o: StartOptions): Promise<void> {
   if (ret) {
     const snapTo = section2.snapTo;
     snapTo(S2T.LAND);
+    life.onRecover(() => snapTo(S2T.LAND));   // a soft poster's recovery on frame2 (the loader's recovery branch, then __introDone): section 2 in place as the lift starts
     const settle = () => {
       if (life.dead) return;
       const L = window.__skreedLoader;
