@@ -1,8 +1,9 @@
 // The family page module (docs/specs/family-page.md 2.3 to 2.7, 4, 5, 20, 21): one selection store and everything that
 // follows it (the bar's swatch and name, the scrubber, the swatch grid, the finish, the URL, the live region, events),
 // the switcher's focus handling, swatch grid mode, the seven-screen scroll map (the HUD's exit, the tint, the beats'
-// text and nav, the argument screen with its letters and smoke), the skeleton at runtime, the loader's lift (the
-// wordmark's glitch, E-F4). No GSAP: DOM moves are CSS transitions and the Web Animations API (decision 10). The
+// text and nav, the argument screen with its letters and smoke, and its way out, "Back to main page", section 22), the
+// skeleton at runtime, the loader's lift (the wordmark's glitch, E-F4). No GSAP: DOM moves are CSS transitions and the
+// Web Animations API (decision 10). The
 // selected markers are drawn by CSS from html[data-shade], so this module only moves the attribute and writes text.
 import { reducedMQ } from '../motion.ts';
 import { FAM_COPY, splitLine, type CopyShade } from './copy.ts';
@@ -12,6 +13,7 @@ import { SWAP_MS, SHADE_MS, URL_DEBOUNCE_MS, SETTLE_MS, DRAG_HUD_MS, LIVE_MS } f
 import { tintOf } from './tint.ts';
 import { createSmoke } from './smoke.ts';
 import { createArgument } from './argument.ts';
+import { backFade, backTimer } from './back.ts';
 import { WIDE_MQ, activeBeat, scrollClasses, skeletonPolys, solve, type Dims } from './three/pose.ts';
 
 interface PageData { slug: string; name: string; first: number; key: number; has3d: boolean; size3d: string | null; names: string[]; dims: Dims }
@@ -249,6 +251,56 @@ const argSvg = $('arg-svg') as unknown as SVGSVGElement | null, argClip = docume
 const argument = argSvg && argClip && argBlur && smoke ? createArgument(argSvg, argClip, argBlur, smoke, reduced, (e, p) => track(e as 'argument_shown', p)) : null;
 const beatEls = document.querySelectorAll<HTMLElement>('.beat'), navBtns = document.querySelectorAll<HTMLButtonElement>('.beatnav button');
 let sv = 0;
+
+// ---- the argument screen's way out (section 22, exception E-F5): "Back to main page", a link to /#families, hidden
+// until the argument screen has been on for 2.5 s, then faded in by opacity over 400 ms; faded out over 200 ms and hidden
+// again when the screen goes off. back.ts holds the rules (the scroll and the clock); this is the element, one timer and
+// the Web Animations API, since [hidden] is display: none, which no CSS transition can start from. 3D mode only ----
+const backEl = $<HTMLAnchorElement>('famBack');
+let backSince: number | null = null, backShown = false, backT = 0, backAnim: Animation | null = null;
+/** hidden at once, timer dropped: the argument came back during the exit, or the page went to swatch grid mode */
+function backReset(): void {
+  clearTimeout(backT); backT = 0;
+  backAnim?.cancel(); backAnim = null;
+  backShown = false; backSince = null;
+  if (backEl) backEl.hidden = true;
+}
+function backShow(): void {
+  backAnim?.cancel(); backAnim = null;
+  backShown = true;
+  backEl!.hidden = false;   // dropped and animated in the same task: no frame shows it at full opacity first
+  const o = backFade('in', reduced());
+  if (!o || typeof backEl!.animate !== 'function') return;
+  const a = backEl!.animate([{ opacity: 0 }, { opacity: 1 }], o);
+  backAnim = a;
+  a.onfinish = () => { if (backAnim === a) backAnim = null; };
+}
+function backHide(): void {
+  backAnim?.cancel(); backAnim = null;
+  backShown = false;
+  const o = backFade('out', reduced());
+  if (!o || typeof backEl!.animate !== 'function') { backEl!.hidden = true; return; }
+  const a = backEl!.animate([{ opacity: 1 }, { opacity: 0 }], { ...o, fill: 'forwards' });
+  backAnim = a;
+  a.onfinish = () => { if (backAnim !== a) return; backEl!.hidden = true; a.cancel(); backAnim = null; };   // as to-top.ts lifts its veil
+}
+/** on every scroll and when the timer fires: the rules of back.ts against the clock */
+function backCheck(): void {
+  if (!backEl) return;
+  clearTimeout(backT); backT = 0;
+  const r = backTimer(H.classList.contains('m3d') ? sv : 0, performance.now(), backSince);
+  if (r.since === null) {   // the argument is off: the timer is dropped; a shown control leaves
+    backSince = null;
+    if (backShown) backHide();
+    return;
+  }
+  if (backSince === null && backAnim) backReset();   // back on during the exit: hidden at once, then a new 2.5 s
+  backSince = r.since;
+  if (r.show) { if (!backShown) backShow(); }
+  else backT = window.setTimeout(backCheck, r.dueMs);
+}
+backEl?.addEventListener('click', () => track('family_back', { from: 'argument' }));   // the browser follows the link (D4)
+
 function onScroll(): void {
   sv = innerHeight > 0 ? scrollY / innerHeight : 0;
   if (scrollY > 8) H.setAttribute('data-scrolled', ''); else H.removeAttribute('data-scrolled');
@@ -258,6 +310,7 @@ function onScroll(): void {
   H.classList.toggle('tint-on', c.tintOn);
   H.classList.toggle('arg-on', c.argOn);
   argument?.show(c.argOn);
+  backCheck();
   const active = activeBeat(sv);
   beatEls.forEach((b) => b.classList.toggle('on', b.dataset.beat === active));
   navBtns.forEach((b) => b.setAttribute('aria-current', b.dataset.beat === active ? 'true' : 'false'));
@@ -306,6 +359,7 @@ function toGrid(reason: string): void {
 const LINES = { failed: FAM_COPY.modelFailed, failedTwice: FAM_COPY.modelFailedTwice, offline: FAM_COPY.offline, saveData: FAM_COPY.saveData, slowConnection: FAM_COPY.slowConnection };
 on('fam:grid', ({ reason, message, retry }) => {
   toGrid(reason);
+  backReset();
   track('stage_mode', { mode: 'grid', reason });
   if (!message) { stateEl.replaceChildren(); return; }
   const [lead, rest] = splitLine(LINES[message]);
@@ -328,4 +382,4 @@ stateEl.querySelectorAll<HTMLButtonElement>('[data-line] button').forEach((b) =>
 if (H.classList.contains('grid')) track('stage_mode', { mode: 'grid', reason: H.dataset.why ?? '' });
 
 // test and staging builds read the store through this hook; production never defines it
-if (import.meta.env.PUBLIC_HERO_HOOKS === '1') w.__fam = { get: () => ({ sel, finish, shade: nnn(sel), sv }), select: (i: number) => select(i, 'key'), smoke: () => smoke?.stats(), argument: () => ({ shown: argument?.shown(), laid: argument?.laid() }) };
+if (import.meta.env.PUBLIC_HERO_HOOKS === '1') w.__fam = { get: () => ({ sel, finish, shade: nnn(sel), sv }), select: (i: number) => select(i, 'key'), smoke: () => smoke?.stats(), argument: () => ({ shown: argument?.shown(), laid: argument?.laid() }), back: () => ({ since: backSince, shown: backShown }) };

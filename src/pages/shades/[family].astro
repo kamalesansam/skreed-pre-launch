@@ -2,7 +2,8 @@
 // /shades/<family>/: one static page per colour family (docs/specs/family-page.md). The ten paths come from
 // docs/data/shades-240.json; data.ts fails the build on anything but 10 families of 24. FAMILY_3D (mode.ts) decides
 // whether the 3D island is built at all; the default build is swatch grid mode. In 3D builds the shell's loader covers
-// the page from first paint with the family milestones (section 20).
+// the page from first paint with the family milestones (section 20), and the argument screen's way out, "Back to main
+// page" (section 22), is the body's last control: after Back to top, so it is the last tabbable element once shown.
 import Base from '../../layouts/Base.astro';
 import '../../styles/family.css';
 import FamilyHeadFirst from '../../components/family/FamilyHeadFirst.astro';
@@ -77,4 +78,5 @@ const Loader = ON3D ? (await import('../../components/shell/Loader.astro')).defa
   <FamilyPage fam={fam} has3d={has3d} supplier={mode === 'on'} />
   {Island && <Island mode={mode === 'on' ? 'on' : 'dev'} />}
   <BackToTop page="family" />
+  {has3d && <a class="fam-back ring2 press" id="famBack" href="/#families" hidden>{FAM_COPY.backHome}</a>}
 </Base>

@@ -91,7 +91,7 @@ G17. Cookie notice: only required if non-essential cookies load; with PostHog in
 G18. Analytics installed and verified: PostHog events firing (signup_submitted, signup_success, ig_follow_click, shade_selected, share) and Cloudflare Web Analytics on.
 G19. Real contact details in the footer: collab@skreed.in, Hyderabad, Telangana (from the catalog), plus the Instagram handle.
 G20. Nov 15 cutover rehearsed (the launch moved from Nov 1, Sam 2026-10-20): the Cloudflare redirect rule tested with 302 on a staging hostname.
-G21. Internal links: every section links to at least one other (Wall → Reserve, Quiz → Wall, Thanks → Share, footer → privacy/terms); no dead ends.
+G21. Internal links: every section links to at least one other (Wall → Reserve, Quiz → Wall, Thanks → Share, footer → privacy/terms); no dead ends. The family pages' argument screen, their last screen, links back to the landing's section 2 ("Back to main page", `/#families`; `docs/specs/family-page.md` 22).
 G22. Breadcrumbs: not on a one-page teaser; the sticky section index (01–08) does the same job. Noted as n/a with reason.
 G23. Five FAQs in the footer as native `<details>`: when it launches, what reserving means, is it a payment, which phones, how to withdraw consent. Marked up with FAQPage JSON-LD.
 G24. Response-time promise next to the contact line: "We reply on WhatsApp within one working day."
