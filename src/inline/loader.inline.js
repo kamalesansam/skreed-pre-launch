@@ -8,6 +8,8 @@ if(!HT.classList.contains('loading'))return;
 var reduce=matchMedia('(prefers-reduced-motion:reduce)').matches,OFF=COPY.offline;
 var intro=$('intro'),M=$('ldM'),GL=$('ldG'),FL=$('ldFill'),SG=$('ldS'),BD=$('ldBand'),LN=$('ldLine'),PN=$('ldN'),PC=$('ldPct'),ST=$('ldSt'),i;
 if('scrollRestoration'in history)history.scrollRestoration='manual';if(!location.hash)scrollTo(0,0);
+/* the return path (family-page.md 2.2 and 13 step 3; built with round 4, section 22): back from a family page, or /#families, on the landing's 3D path. A night veil (no wordmark, no percent) that the island lifts through skip() once frame2 is in and section 2 is at rest; never the fill's wait and the exit */
+var RET=HT.classList.contains('hero3d')&&(location.hash==='#families'||((performance.getEntriesByType?performance.getEntriesByType('navigation'):[])[0]||{}).type==='back_forward');if(RET)intro.classList.add('ret');
 /* mask: the page's one wordmark */
 var ps=$('skreed-wordmark').children,sv='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1209.46 292.9">';
 for(i=0;i<ps.length;i++)sv+='<path d="'+ps[i].getAttribute('d')+'"/>';
@@ -62,7 +64,7 @@ function tick(now){raf=requestAnimationFrame(tick);
     if(!manual&&!ready&&now-lastP>(got.scene?12e3:2e4)){poster('','stall');return}
     if(tl>=1.64+(FULL-1.64)*Math.min(1,p)-.001){if(fA.playState==='running')fA.pause()}
     else{var sp=reduce||swA&&swA.currentTime/1e3-tl>.15?2:1;if(fA.playbackRate!==sp)fA.updatePlaybackRate(sp);if(fA.playState==='paused')fA.play()}
-    if(ready&&tl>=FULL-.001)sched(now)}
+    if(ready&&!RET&&tl>=FULL-.001)sched(now)}
   else if(ph==='exit'){tl=Math.max(FULL,Math.min(END,FULL+(now-E)/1e3));if(tl>=END)enter()}
   if(ph==='load'||ph==='exit')show(tl/END*99)}
 window.__skreedLoaderReport=function(m){if(manual||!WT[m]||got[m])return;got[m]=1;lastP=performance.now();

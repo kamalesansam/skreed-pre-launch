@@ -599,6 +599,6 @@ One column of three five-dot chevrons at the bottom centre, its bottom edge on `
 
 ### 12.7 Not done in round 3, and why
 - Section 2 on the poster tier (a still of the ten gems with the ten links) and the reduced-motion tier's gems: not built; the poster tier shows the v9.10 poster and the links are the family links' own layout below the fold. Pending the section 2 follow-ups (task 62).
-- The loader's return-visit skip (`isReturnVisit`): the plan's skip path contradicts the readiness model (frame2 gates the lift, and the poster must never show the loader); left for a decision.
+- The loader's return-visit skip (`isReturnVisit`): the plan's skip path contradicts the readiness model (frame2 gates the lift, and the poster must never show the loader); left for a decision. Built on 2026-10-26 with the family pages' round 4 (`family-page.md` 22, "Built"): the loader keeps its frame2 gate and shows no wordmark on a return visit (a night veil, `hero-architecture.md` 4.3 item 8), and the island lifts it with section 2 at rest; the poster path never sees it.
 - Stage 2 encodes per device class (12.6).
 - Lighthouse: one run only, mobile preset, production build under wrangler dev, poster tier (headless Chromium routes itself to the poster on its software GL), on a loaded 4-core machine with the test suites running: performance 69, accessibility 100, best practices 100, SEO 100; FCP 1.1 s, LCP 2.2 s, CLS 0, TBT 2,230 ms. The TBT is not trustworthy under that load and was not re-measured (out of budget); C4 stays open.
