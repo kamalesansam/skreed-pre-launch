@@ -180,9 +180,11 @@ Each is PASS or FAIL with evidence. The frames are written by `scripts/quiz/fram
 
 ## 11. For Sam
 
+Sam, 2026-10-26, on the merged build with the frames of the review in hand: "Both ship as built. I will answer the spec questions as they stand." Nothing changes for it; items 1 to 5 stay open for his answers.
+
 1. The copy: "Skip quiz", your words in sentence case, drawn in the quiz's capitals like every line of it; no ruling needed unless you want other words.
 2. The place (pending Sam's word in the frames): a fourth row under "Swipe to begin" on the intro, and on every question at the right of the footer opposite Back (alone on question 1), never on the result; frames `intro` and `card2-foot`.
-3. The ride (pending Sam's word in the frames): 1.2 s from the press to the hall fully in, through the third wipe, stopped by any scroll, touch or key; the hall loads while you read the quiz and the ride waits for it up to 1.5 s (the word reads "Loading..." meanwhile), so the wipe is usually drawn; where it is not in by then, the fog holds a moment and the wipe plays when it is in; frames `ride-mid` and `arrival` (not yet taken: no browser on the build machine).
+3. The ride (pending Sam's word in the frames): 1.2 s from the press to the hall fully in, through the third wipe, stopped by any scroll, touch or key; the hall loads while you read the quiz and the ride waits for it up to 1.5 s (the word reads "Loading..." meanwhile), so the wipe is usually drawn; where it is not in by then, the fog holds a moment and the wipe plays when it is in; frames `ride-mid` and `arrival` (the owner's JPEGs of iteration 2 on the 3D path at both sizes, `quiz-gate-390-3d-ride-mid.jpg`, `quiz-gate-390-3d-arrival-wipe.jpg`, `quiz-gate-1280-3d-ride-mid.jpg` and `quiz-gate-1280-3d-arrival.jpg`, described in section 7 under "Frames taken"; the frames script's PNGs are still to come, since no Playwright browser is on the build machine).
 4. Remembered for the visit (pending Sam's word in the frames): once open, section 4 stays open in that tab, a reload included, until the tab is closed; a new visit starts locked.
 5. A quiz finished on an earlier visit does not unlock section 4 today, since nothing is kept across visits (CHECKLIST B3); should it? It would need `localStorage`, which the site never relies on. Default: no.
 
