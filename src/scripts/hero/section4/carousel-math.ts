@@ -228,6 +228,13 @@ export const loopShouldReset = (prox: number): boolean => prox <= STEP.resetAt;
  */
 export const productYaw = (step: number, i: number, baseYaw: number): number => baseYaw + Math.PI * (i - step);
 
+/**
+ * How much of the authored rest pose (the scene's baseYaw and basePitch) the product carries at the fractional step
+ * while it stands for scene i: all of it at rest, none by the half step, so the edge-on swap stays edge-on whatever the
+ * pose; a cubic smoothstep between (Sam's references of 2026-10-26: the AirPods case seen from above, the Lenskin turned).
+ */
+export const poseWeight = (step: number, i: number): number => smoothstep(0.5, 1, 1 - Math.abs(step - i));
+
 /** the product's scale across a step: from the outgoing's to the incoming's over eased t 0.35 to 0.65, around the swap at 0.5 */
 export const productScale = (t: number, from: number, to: number): number => from + (to - from) * smoothstep(STEP.scaleFrom, STEP.scaleTo, t);
 

@@ -55,7 +55,7 @@ test('the five scenes (section-4-flux.md 3): the rooms in order, the products, t
     assert.match(s.alt, /^[A-Z][^.]+\.$/, `${s.id}: one sentence`);
     assert.doesNotMatch(s.alt, /\b(case|wallet|lenskin|airpods|phone)\b/i, `${s.id}: no product in the still`);
     assert.doesNotMatch(s.alt, /bath|shower|tub|shampoo/i, `${s.id}: nothing of a bathroom`);
-    assert.ok(Number.isFinite(s.baseYaw));
+    assert.ok(Number.isFinite(s.baseYaw)); assert.ok(Number.isFinite(s.basePitch));
     assert.equal(typeof s.toneDark, 'boolean', `${s.id}: the logotype's tone over the scene`);
     assert.ok(productById(s.product));
     for (const cls of ['wide', 'portrait'] as const) for (const k of ['loop', 'avif', 'webp'] as const) assert.equal(typeof s.files[cls][k], 'string', `${s.id} ${cls} ${k}: a URL string (empty under Node, the build's glob fills it)`);

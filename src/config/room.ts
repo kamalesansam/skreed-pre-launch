@@ -118,8 +118,15 @@ export interface RoomScene {
   readonly keyLight: string;
   /** one sentence describing the room (no product in the still), the poster column's alt */
   readonly alt: string;
-  /** the product's authored presentation yaw at rest, radians (face out) */
+  /** the product's authored presentation yaw at rest, radians (0 is face out) */
   readonly baseYaw: number;
+  /**
+   * The product's authored presentation pitch at rest, radians (positive tips the top toward the camera). The rest pose
+   * (this and baseYaw) is Sam's references of 2026-10-26: the AirPods case as his Blender view, from a little above so
+   * the open lid and the shell's mouth show; the Lenskin as his renders, turned so its thickness and the holes' walls
+   * show. All of the pose at rest, none at the edge-on swap (carousel-math.ts poseWeight).
+   */
+  readonly basePitch: number;
   /**
    * The logotype and the Back to top control turn Urban Slate over this scene (true) or stay Pearl Whisper (false): the
    * frame under their boxes measured on the scene's stills by scripts/room/scene-tone.mjs (the hero's 3:1 rule), the
@@ -143,15 +150,15 @@ const files = (id: string): Readonly<Record<SceneClass, SceneFiles>> => {
 /** products.bin's URL (the four meshes, section-4-flux.md 9 X-7) */
 export const PRODUCTS_BIN_URL = fluxUrl('products.bin');
 
-type SceneRow = Omit<RoomScene, 'i' | 'files'>;
+type SceneRow = Omit<RoomScene, 'i' | 'files' | 'basePitch'> & { basePitch?: number };
 const SCENE_ROWS: readonly SceneRow[] = [
   { id: 'cove', order: 1, product: 'case', shade: 'vivid-violet-05', shadeName: 'Lilac', family: 'vivid violet', hex: '#c988c8', finish: 'matte', keyLight: '#ffa6c8', baseYaw: 0, toneDark: false,
     alt: 'A pink rock cove with gold columns under a sunset sky, water rippling across the floor.' },
-  { id: 'grove', order: 2, product: 'airpods', shade: 'go-green-09', shadeName: 'Sage', family: 'go green', hex: '#96a880', finish: 'gloss', keyLight: '#a8ffe0', baseYaw: 0, toneDark: false,
+  { id: 'grove', order: 2, product: 'airpods', shade: 'go-green-09', shadeName: 'Sage', family: 'go green', hex: '#96a880', finish: 'gloss', keyLight: '#a8ffe0', baseYaw: 0, basePitch: 0.42, toneDark: false,
     alt: 'A green forest with a dense rainforest floor, a misty lake and a ring of light.' },
   { id: 'ember', order: 3, product: 'wallet', shade: 'basic-brown-04', shadeName: 'Desert', family: 'basic brown', hex: '#c6a884', finish: 'matte', keyLight: '#ffa171', baseYaw: 0, toneDark: false,
     alt: 'A red sunset over the sea, a leaning slab and a wet stone floor of flat slabs.' },
-  { id: 'palace', order: 4, product: 'lenskin', shade: 'playful-pink-06', shadeName: 'Ballerina', family: 'playful pink', hex: '#efa3af', finish: 'metallic', keyLight: '#ffc9a3', baseYaw: 0, toneDark: false,
+  { id: 'palace', order: 4, product: 'lenskin', shade: 'playful-pink-06', shadeName: 'Ballerina', family: 'playful pink', hex: '#efa3af', finish: 'metallic', keyLight: '#ffc9a3', baseYaw: 0.55, basePitch: 0.12, toneDark: false,
     alt: 'A pink palace with a royal marble floor, statues and lattice screens open to the sea.' },
   { id: 'dawn', order: 5, product: 'case', shade: 'vivid-violet-04', shadeName: 'Pastel', family: 'vivid violet', hex: '#d7b9ed', finish: 'matte', keyLight: '#cbb0ff', baseYaw: 0, toneDark: false,
     alt: 'A lilac dawn through sheer curtains, a starry disc and fog across the floor.' },
@@ -161,7 +168,7 @@ const SCENE_ROWS: readonly SceneRow[] = [
  * its catalog shade and finish, the key light's tint, the still's alt and the files of both classes. The ids are ours
  * (X-12); the reference's names never reach src/ (scripts/room/guards.mjs).
  */
-export const ROOM_SCENES: readonly RoomScene[] = Object.freeze(SCENE_ROWS.map((r, i) => Object.freeze({ ...r, i, files: files(r.id) })));
+export const ROOM_SCENES: readonly RoomScene[] = Object.freeze(SCENE_ROWS.map((r, i) => Object.freeze({ ...r, basePitch: r.basePitch ?? 0, i, files: files(r.id) })));
 export const SCENE_COUNT = ROOM_SCENES.length;
 /** a scene's shade line, "Lilac, vivid violet" (spec 3, "Each scene's four lines") */
 export const shadeLine = (s: RoomScene): string => `${s.shadeName}, ${s.family}`;

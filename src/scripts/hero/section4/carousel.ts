@@ -36,7 +36,7 @@ import { BufferGeometry, Camera, Color, DirectionalLight, DoubleSide, Float32Buf
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import type { Product } from './products-bin.ts';
 import type { VideoPool } from './video.ts';
-import { LIGHT, LOOP_ASPECT, PLACE, STEP, anglesAt, cloudCover, coverFit, easeStep, fovAt, keyLight, lightUp, loopShouldPlay, loopShouldReset, productPlacement, productScale, productScreenBox, productYaw, proximity, ringPlace, type Box, type LightConfig, type LoopClass, type Placement } from './carousel-math.ts';
+import { LIGHT, LOOP_ASPECT, PLACE, STEP, anglesAt, cloudCover, coverFit, easeStep, fovAt, keyLight, lightUp, loopShouldPlay, loopShouldReset, poseWeight, productPlacement, productScale, productScreenBox, productYaw, proximity, ringPlace, type Box, type LightConfig, type LoopClass, type Placement } from './carousel-math.ts';
 
 export type Finish = 'matte' | 'gloss' | 'metallic';
 
@@ -45,8 +45,10 @@ export interface SceneDef {
   readonly id: string;
   /** the key light's tint over this scene, a hex string (the reference's per-scene tints) */
   readonly keyLight: string;
-  /** the product's authored presentation yaw at rest, radians (face out) */
+  /** the product's authored presentation yaw at rest, radians (0 is face out) */
   readonly baseYaw: number;
+  /** the product's authored presentation pitch at rest, radians (positive tips the top toward the camera; 0 where absent) */
+  readonly basePitch?: number;
   /** the product's name in products.bin: case, wallet, airpods or lenskin */
   readonly product: string;
   /** the product's catalog shade, a hex string */
@@ -104,8 +106,12 @@ export interface Carousel {
   setScene(i: number, instant?: boolean): void;
   /** the seam's cloud: the phase and its 0 to 1; null ends it */
   seam(phase: SeamPhase, e: number): void;
-  /** the product's look from a pressed pointer or a finger, x and y in minus 1 to 1; released, it returns to rest (never on hover, X-14) */
-  look(x: number, y: number, pressed: boolean): void;
+  /**
+   * The product's look, the reference's cursor tilt (X-14 as amended, E-S4-hover): x and y in minus 1 to 1 (x right, y
+   * down, the pointer's place in the viewport), each adding 0.3 rad to the yaw and the pitch, eased by 1 minus 0.9 to the
+   * power of 60 dt a frame; a mouse by hovering, a finger while it presses; active false returns it to rest.
+   */
+  look(x: number, y: number, active: boolean): void;
   /** the loops and the cloud's time run (true) or hold (false): the "Pause motion" control, E-S4-loops; steps, seams and the glue still work */
   motion(on: boolean): void;
   /** one frame: t and dt in seconds, w and h the stage in device pixels; one draw into out (and the cloud's while a seam runs) */
@@ -164,6 +170,8 @@ export const FINISH = Object.freeze({
 export const LIGHTS = Object.freeze({ key: 1.33, keyMix: 0.6, keyFrom: [0.1, 0.8, 0.6] as const, fill: 0.17, fillTint: '#dfe6ea', fillFrom: [-0.6, 0.2, 0.8] as const, env: 0.48, metalEnv: 1.0, metalEnvPortrait: 0.6, blur: 0.04 });
 /** the trim's fixed dark (linear) and its roughness, and the logo's share of the shade (render-products.py) */
 export const PARTS = Object.freeze({ trim: [0.073, 0.077, 0.077] as const, trimRoughness: 0.55, logoTint: 0.8468 });
+/** the frame target's multisample count (WebGL2 MSAA), for the products' edges */
+export const MSAA = 4;
 /**
  * The bottom shade in the frame (the reference's caption gradient, spec 3 "Legibility"; AC12): dark at the bottom edge
  * (the share of black), solid up to `solid` of the frame's height, then clearing linearly by `height`. The reference's
@@ -233,10 +241,16 @@ type Rgb = [number, number, number];
 const keyTint = (hex: string): Rgb => { const c = new Color(hex); return [1 + (c.r - 1) * LIGHTS.keyMix, 1 + (c.g - 1) * LIGHTS.keyMix, 1 + (c.b - 1) * LIGHTS.keyMix]; };
 const texBytes = (t: Texture | null): number => { const i = t?.image as { width?: number; height?: number; videoWidth?: number; videoHeight?: number } | undefined; const w = i?.videoWidth ?? i?.width ?? 0, h = i?.videoHeight ?? i?.height ?? 0; return w * h * 4; };
 
-/** a product part's material in a colour and finish, writing display values: the output colour-space chunk replaced by an sRGB encode, no tone curve (X-9); offset pulls the logo forward and the trim back where they share a surface */
+/**
+ * A product part's material in a colour and finish, writing display values: the output colour-space chunk replaced by
+ * an sRGB encode, no tone curve (X-9); offset pulls the logo forward and the trim back where they share a surface. Both
+ * sides are drawn: Sam's AirPods case is one open sheet for its shell and for its lid (products.py keeps the FBX's
+ * surfaces), and the open lid shows the camera its inside, the sheet's back face, which a front-side material culled
+ * (the lid vanished from the front, 2026-10-26); three flips the normal on a back face, so the inside lights as a surface.
+ */
 function partMaterial(color: Color, finish: Finish | 'trim', offset = 0): MeshPhysicalMaterial {
   const look = finish === 'trim' ? { roughness: PARTS.trimRoughness, metalness: 0 } : FINISH[finish];
-  const m = new MeshPhysicalMaterial({ color, envMapIntensity: LIGHTS.env, toneMapped: false, ...look, polygonOffset: offset !== 0, polygonOffsetFactor: offset, polygonOffsetUnits: offset });
+  const m = new MeshPhysicalMaterial({ color, envMapIntensity: LIGHTS.env, toneMapped: false, side: DoubleSide, ...look, polygonOffset: offset !== 0, polygonOffsetFactor: offset, polygonOffsetUnits: offset });
   m.onBeforeCompile = (s) => { s.fragmentShader = s.fragmentShader.replace('#include <colorspace_fragment>', 'gl_FragColor = sRGBTransferOETF( gl_FragColor );'); };
   m.customProgramCacheKey = () => 'display';
   return m;
@@ -265,7 +279,10 @@ export function createCarousel(o: CarouselOptions): Carousel {
   const stage = new Scene();
   const cam = new PerspectiveCamera(STEP.fovBase, 1, 0.1, 1000);
   cam.position.set(STEP.cam.x, STEP.cam.y, STEP.cam.z); cam.lookAt(STEP.target.x, STEP.target.y, STEP.target.z); cam.updateMatrixWorld();
-  let rt = new WebGLRenderTarget(8, 8, { depthBuffer: true }), W = 8, H = 8;
+  // the frame target, multisampled: without MSAA every product silhouette and hole rim came out stair-stepped against
+  // the loops (seen 2026-10-26 against Sam's Cycles renders); the planes and the cloud are full-screen quads, so the
+  // samples cost edges alone, and three resolves the samples when the texture is read (the hero's composite)
+  let rt = new WebGLRenderTarget(8, 8, { depthBuffer: true, samples: MSAA }), W = 8, H = 8;
   let scissorRect: { x: number; y: number; w: number; h: number } | null = null;
 
   // the planes, one a scene, sharing the light-up and shade uniforms
@@ -491,7 +508,7 @@ export function createCarousel(o: CarouselOptions): Carousel {
       if (video) scenes.forEach((s, j) => { if (s.loop !== null && j !== k) video.reset(s.loop); });
     },
     seam(phase, e) { seamPhase = phase; cover = cloudCover(phase, e); if (phase) allocCloud(); },
-    look(x, y, pressed) { if (reduced) return; lookTX = pressed ? x : 0; lookTY = pressed ? y : 0; },
+    look(x, y, active) { if (reduced) return; lookTX = active ? x : 0; lookTY = active ? y : 0; },
     motion(on) {
       motionOn = on;
       if (!on && video) for (const s of scenes) if (s.loop !== null) video.pause(s.loop);
@@ -546,7 +563,9 @@ export function createCarousel(o: CarouselOptions): Carousel {
         sh.group.scale.setScalar(scale);
         const k = 1 - Math.pow(0.9, 60 * dt);
         lookX += (lookTX - lookX) * k; lookY += (lookTY - lookY) * k;
-        sh.group.rotation.set(lookY * STEP.lookRad, productYaw(curStep, shownIdx, scenes[shownIdx].baseYaw) + lookX * STEP.lookRad, 0);
+        // the authored rest pose, all of it at rest and none at the edge-on half step (poseWeight), under the look
+        const pw = reduced ? 1 : poseWeight(curStep, shownIdx), sc = scenes[shownIdx];
+        sh.group.rotation.set((sc.basePitch ?? 0) * pw + lookY * STEP.lookRad, productYaw(curStep, shownIdx, sc.baseYaw * pw) + lookX * STEP.lookRad, 0);
       }
       // the key light (white while the product check has its tint off)
       const c = keyLight(t - keyT0, keyFrom, keyTo, T.keyLightMs); if (setting.tint) key.color.setRGB(c[0], c[1], c[2]); else key.color.setRGB(1, 1, 1);
@@ -558,7 +577,7 @@ export function createCarousel(o: CarouselOptions): Carousel {
     resize(w, h, ratio) {
       W = Math.max(1, Math.round(w)); H = Math.max(1, Math.round(h));
       if (ratio && ratio > 0) dpr = ratio;
-      rt.dispose(); rt = new WebGLRenderTarget(W, H, { depthBuffer: true });
+      rt.dispose(); rt = new WebGLRenderTarget(W, H, { depthBuffer: true, samples: MSAA });
       cam.aspect = W / H; cam.updateProjectionMatrix(); shared.uRes.value.set(W, H);
       if (cloudRt) allocCloud();
       measure();
@@ -607,7 +626,8 @@ export function createCarousel(o: CarouselOptions): Carousel {
     },
     prepare(i) { for (const j of [i, i + 1, i - 1]) if (j >= 0 && j < N) ensureStill(j); },
     memory() {
-      let b = W * H * 8 + (cloudRt ? CW * CH * 4 : 0) + (envTarget ? envTarget.width * envTarget.height * 8 : 0);
+      // the frame target: its colour and depth renderbuffers at MSAA samples, and the texture the samples resolve into
+      let b = W * H * (8 * MSAA + 4) + (cloudRt ? CW * CH * 4 : 0) + (envTarget ? envTarget.width * envTarget.height * 8 : 0);
       for (const p of products) for (const part of p.parts) b += part.geometry.attributes.position.count * 24 + (part.geometry.index?.count ?? 0) * 2;
       for (const p of planes) b += texBytes(p.still);
       if (video) for (const s of scenes) if (s.loop !== null && video.resident(s.loop)) { const [w, h] = video.size(s.loop); b += w * h * 4; }
