@@ -695,7 +695,7 @@ Sam, 2026-10-26, verbatim (the first part of his message, on the quiz and sectio
 
 **Exception E-F5** (Sam, 2026-10-26, the quote above). On the family pages' argument screen, "Back to main page" is not visible for the first 2.5 s after the screen comes on, then fades in over 400 ms, and fades out over 200 ms when the visitor scrolls back up: against CHECKLIST D1 (visible at rest) and rule 12's visible-at-rest clause, its fade and exit being motion outside rule 12's reserved list. It waits on a timer started by the argument screen, never on an observer, and the screen it belongs to is the 3D path's alone. Default if withdrawn: the control is shown at once when the argument comes on, at full opacity, with no fade, and hidden at once when it goes off. No CSS line needs a mark, since nothing in it falls under the guards of `data.test.ts` line 198; `back.test.ts` holds the 2.5 s instead.
 
-**For Sam.**
+**For Sam.** Sam, 2026-10-26, on the merged build with the frames of the review in hand: "Both ship as built. I will answer the spec questions as they stand." Nothing changes for it; the five questions stand as written.
 1. The words: "Back to main page" (yours), or "Back to the families", which names where it lands?
 2. The wait: 2.5 s, inside your "2 -3 seconds"; 2 or 3 is one constant.
 3. The place: centred under the letters at the bottom of the screen, and on phones one row above Back to top, which already sits at the bottom right. Right there?
