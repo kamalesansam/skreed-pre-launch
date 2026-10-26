@@ -133,4 +133,68 @@ for (const s of SETUPS) {
   console.log(s.name, 'done', await page.evaluate(() => ({ persona: document.querySelector('.qz-result:not([hidden])')?.dataset.persona, shade: document.querySelector('.qz-result:not([hidden]) .qz-big')?.dataset.shade, scrollW: document.scrollingElement.scrollWidth })));
   await ctx.close();
 }
+
+// The quiz gate's frames (docs/specs/quiz-gate.md 7): on a page with no flag, section 4 locked, `intro` (17.2 screens,
+// the intro at rest with Skip quiz) and `card2-foot` (question 2 settled, Back and Skip quiz in its footer; no pictures
+// on that question, so no licensed photograph is in the frame); on ?room=open once the hall is resident (__s4.ready),
+// `ride-mid` (the ride at a raw q of about 0.5, the third wipe part way) and `arrival` (the hall fully in after a
+// keyboard press, the pad's ring); and at 390 x 844 on the poster tier `poster-arrival` (the hall's still with its
+// prompt). Written to docs/specs/screenshots/quiz-gate-<w>x<h>-<state>.png.
+const GATE_BASE = new URL(BASE);
+for (const s of SETUPS) {
+  const shotGate = (page, state) => page.screenshot({ path: `${OUT}/quiz-gate-${s.name}-${state}.png` });
+  const settledIn = (page) => page.waitForFunction(() => !document.getElementById('find').hasAttribute('data-decoding'), null, { timeout: 30_000 }).then(() => sleep(150));
+  const toQuiz = async (page) => { await page.evaluate(() => { const top = document.getElementById('find').getBoundingClientRect().top + scrollY; scrollTo({ top, behavior: 'instant' }); if (window.__skreedSnap) window.__skreedSnap(top / innerHeight); }); await sleep(900); };
+  // locked: the intro with Skip quiz, then question 2's footer
+  const ctx = await browser.newContext({ viewport: s.viewport, deviceScaleFactor: s.deviceScaleFactor });
+  const page = await ctx.newPage();
+  await page.goto(GATE_BASE.href, { waitUntil: 'load' });
+  await page.waitForFunction(() => window.__s2 && window.__s2() && window.__s2().ready, null, { timeout: 420_000 }).catch(() => console.warn(s.name, 'gate: section 2 did not report ready'));
+  await toQuiz(page);
+  await page.locator('#qzSkip > .dc').waitFor();
+  console.log(s.name, 'gate: locked', await page.evaluate(() => { const r = document.getElementById('room'); return { hidden: r.hidden, locked: r.hasAttribute('data-locked'), docEnd: document.documentElement.scrollHeight, quizFoot: Math.round(document.getElementById('find').getBoundingClientRect().bottom + scrollY) }; }));
+  await shotGate(page, 'intro');
+  await page.locator('#qzBegin').evaluate((b) => b.click());
+  await page.locator('.qz-card[data-i="0"].is-top').waitFor();
+  await settledIn(page);
+  await page.locator('.qz-card[data-i="0"] .qz-opt[data-persona="curator"]').evaluate((b) => b.click());
+  await page.locator('.qz-card[data-i="1"].is-top').waitFor();
+  await settledIn(page);
+  await shotGate(page, 'card2-foot');
+  await ctx.close();
+  // open, the hall resident: the ride through the third wipe from a keyboard press, and the arrival on the pad
+  const open = new URL(GATE_BASE); open.searchParams.set('room', 'open');
+  const ctx2 = await browser.newContext({ viewport: s.viewport, deviceScaleFactor: s.deviceScaleFactor });
+  const p2 = await ctx2.newPage();
+  await p2.goto(open.href, { waitUntil: 'load' });
+  await p2.waitForFunction(() => window.__s2 && window.__s2() && window.__s2().ready, null, { timeout: 420_000 }).catch(() => console.warn(s.name, 'gate: section 2 did not report ready'));
+  await toQuiz(p2);
+  await p2.locator('#qzSkip > .dc').waitFor();
+  await p2.waitForFunction(() => window.__s4 && window.__s4.ready, null, { timeout: 300_000 }).catch(() => console.warn(s.name, 'gate: the hall did not become ready'));
+  await p2.locator('#qzBegin').focus();
+  await p2.keyboard.press('Tab');
+  await p2.keyboard.press('Enter');
+  await p2.waitForFunction(() => { const st = window.__s4 && window.__s4.state(); return !!st && st.qRaw >= 0.5; }, null, { timeout: 10_000 }).catch(() => console.warn(s.name, 'gate: the ride did not reach q 0.5'));
+  await shotGate(p2, 'ride-mid');
+  await p2.waitForFunction(() => !document.getElementById('room').hasAttribute('data-ride'), null, { timeout: 10_000 }).catch(() => console.warn(s.name, 'gate: the ride did not end'));
+  await sleep(1200);
+  console.log(s.name, 'gate: arrival', await p2.evaluate(() => ({ focus: document.activeElement && document.activeElement.id, q: window.__s4 && window.__s4.state() && window.__s4.state().q, y: scrollY, roomTop: Math.round(document.getElementById('room').getBoundingClientRect().top + scrollY) })));
+  await shotGate(p2, 'arrival');
+  await ctx2.close();
+  // the poster tier at 390 x 844: the hall's still with its prompt after the ride
+  if (s.viewport.width < 900) {
+    const poster = new URL(GATE_BASE); poster.searchParams.set('tier', 'poster');
+    const ctx3 = await browser.newContext({ viewport: s.viewport, deviceScaleFactor: s.deviceScaleFactor });
+    const p3 = await ctx3.newPage();
+    await p3.goto(poster.href, { waitUntil: 'load' });
+    await toQuiz(p3);
+    await p3.locator('#qzSkip > .dc').waitFor();
+    await p3.locator('#qzSkip').evaluate((b) => b.click());
+    await p3.waitForFunction(() => document.getElementById('room').dataset.open === 'skip' && !document.getElementById('room').hasAttribute('data-ride'), null, { timeout: 10_000 }).catch(() => console.warn(s.name, 'gate: the poster ride did not end'));
+    await p3.waitForFunction(() => { const img = document.querySelector('#room .rm-still img'); return !!img && img.complete && img.naturalWidth > 0; }, null, { timeout: 30_000 }).catch(() => console.warn(s.name, 'gate: the hall still did not decode'));
+    await sleep(400);
+    await shotGate(p3, 'poster-arrival');
+    await ctx3.close();
+  }
+}
 await browser.close();
