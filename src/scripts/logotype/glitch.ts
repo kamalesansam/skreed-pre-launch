@@ -2,15 +2,35 @@
 // a burst breaks the wordmark into thin horizontal slabs shifted sideways by up to about 1.05% of its width, three slab
 // patterns per burst, opacity flicker 0.85 + 0.15 sin(30p + phase), then it snaps clean. Each burst splits the slabs in one
 // near-complementary pair of the hero's shades, drawn through var(--shade-<id>) (D30; exception E-24).
+// Since 2026-10-26 the same glitch runs on the countdown's dot numerals (E-CD-glitch): the target (the <use> href, its
+// viewBox, the kick amplitude and the slab grid) is an option, the wordmark the default.
 // No three.js import: it runs on every page and every tier (D25).
 import { GLITCH_PAIRS, GLITCH_LIGHT } from '../../config/shades.gen.ts';
 import { reducedMQ } from '../motion.ts';
 
+export interface GlitchTarget {
+  /** the symbol every slab draws */
+  href: string;
+  /** its viewBox */
+  w: number; h: number;
+  /** the slab kick, as a share of the width */
+  amp: number;
+  /** the slab grid: rows of slabs, segments a row */
+  rows: number; segs: number;
+  /** prefix of the clipPath ids (unique per instance on the page) */
+  prefix: string;
+}
+
 export interface GlitchOptions {
   /** share of slabs that get the colour split (HERO_PARAMS.logoSplit) */
   split: number;
-  /** the idle twitch every 8 to 16 s (HERO_PARAMS.logoIdle); 0 in production (D20) */
+  /** the idle twitch (HERO_PARAMS.logoIdle): 1 on, 0 off */
   idle: number;
+  /** the idle twitch's wait between bursts, seconds, drawn at random in this range (IDLE_EVERY; the prototype's 8 to 16) */
+  every?: readonly [number, number];
+  /** hover, tap and focus bursts (the logotype, a link); false for the countdown (not a control, rule 48) */
+  interactive?: boolean;
+  target?: Partial<GlitchTarget>;
 }
 
 export interface LogoGlitch {
@@ -22,18 +42,20 @@ export interface LogoGlitch {
 }
 
 const NS = 'http://www.w3.org/2000/svg';
-const LVW = 1209.46, LVH = 292.9, AMP = LVW * 0.0105, ROWS = 8, SEGS = 6;
+/** the wordmark, #skreed-wordmark: 1209.46 by 292.9, kicks of 1.05% of the width, 8 rows of 6 slabs */
+export const WORDMARK_TARGET: GlitchTarget = { href: '#skreed-wordmark', w: 1209.46, h: 292.9, amp: 0.0105, rows: 8, segs: 6, prefix: 'lg-c' };
 
-export function createLogoGlitch(link: HTMLAnchorElement, options: GlitchOptions): LogoGlitch {
+export function createLogoGlitch(host: Element, options: GlitchOptions): LogoGlitch {
   const cfg = { ...options };
-  const svg = link.querySelector('svg') as SVGSVGElement, defs = svg.querySelector('defs') as SVGDefsElement;
-  const base = svg.querySelector('.logo-base') as SVGUseElement, layer = svg.querySelector('.logo-tiles') as SVGGElement;
+  const T = { ...WORDMARK_TARGET, ...options.target }, LVW = T.w, LVH = T.h, AMP = LVW * T.amp, ROWS = T.rows, SEGS = T.segs;
+  const svg = (host instanceof SVGSVGElement ? host : host.querySelector('svg')) as SVGSVGElement, defs = svg.querySelector('defs') as SVGDefsElement;
+  const base = svg.querySelector('.logo-base,.gl-base') as SVGUseElement, layer = svg.querySelector('.logo-tiles,.gl-tiles') as SVGGElement;
   const tiles: { r: SVGRectElement; g: SVGGElement; u: SVGUseElement; ua: SVGUseElement; ub: SVGUseElement }[] = [];
   for (let i = 0; i < ROWS * SEGS; i++) {
-    const cp = document.createElementNS(NS, 'clipPath'); cp.id = 'lg-c' + i;
+    const cp = document.createElementNS(NS, 'clipPath'); cp.id = T.prefix + i;
     const r = document.createElementNS(NS, 'rect'); r.setAttribute('shape-rendering', 'crispEdges'); cp.append(r); defs.append(cp);
-    const g = document.createElementNS(NS, 'g'); g.setAttribute('clip-path', `url(#lg-c${i})`);
-    const mk = () => { const e = document.createElementNS(NS, 'use'); e.setAttribute('href', '#skreed-wordmark'); return e; };
+    const g = document.createElementNS(NS, 'g'); g.setAttribute('clip-path', `url(#${T.prefix}${i})`);
+    const mk = () => { const e = document.createElementNS(NS, 'use'); e.setAttribute('href', T.href); return e; };
     const ua = mk(), ub = mk(), u = mk(); g.append(ua, ub, u); layer.append(g);   // two coloured ghosts behind the Pearl Whisper copy
     tiles.push({ r, g, u, ua, ub });
   }
@@ -87,21 +109,24 @@ export function createLogoGlitch(link: HTMLAnchorElement, options: GlitchOptions
     pair = GLITCH_PAIRS[Math.floor(Math.random() * GLITCH_PAIRS.length)];
     cancelAnimationFrame(raf); startAt = performance.now() + delay * 1000; raf = requestAnimationFrame(tick);
   }
-  link.addEventListener('pointerenter', (e) => { if (e.pointerType !== 'touch') burst(0.25); });
-  link.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') burst(0.25); });
-  link.addEventListener('focus', () => { if (link.matches(':focus-visible')) burst(0.25); });
+  if (cfg.interactive !== false) {
+    host.addEventListener('pointerenter', (e) => { if ((e as PointerEvent).pointerType !== 'touch') burst(0.25); });
+    host.addEventListener('pointerdown', (e) => { if ((e as PointerEvent).pointerType === 'touch') burst(0.25); });
+    host.addEventListener('focus', () => { if (host.matches(':focus-visible')) burst(0.25); });
+  }
   // igloo's intro glitch, split in the pair the mark shows at rest (Sky and Crimson)
   const intro = (delay: number) => { burst(0.5, delay); pair = GLITCH_PAIRS[0]; };
   let idleTimer = 0;
   const scheduleIdle = () => {
     clearTimeout(idleTimer);
     if (!cfg.idle) return;
-    idleTimer = window.setTimeout(() => { if (cfg.idle) burst(0.25); scheduleIdle(); }, rand(8000, 16000));
+    const [lo, hi] = cfg.every ?? [8, 16];
+    idleTimer = window.setTimeout(() => { if (cfg.idle) burst(0.25); scheduleIdle(); }, rand(lo * 1000, hi * 1000));
   };
   scheduleIdle();
   return {
     burst, intro,
-    setTone: (light) => { link.dataset.tone = light ? 'light' : 'dark'; },
+    setTone: (light) => { (host as HTMLElement).dataset.tone = light ? 'light' : 'dark'; },
     configure: (o) => { Object.assign(cfg, o); scheduleIdle(); },
   };
 }

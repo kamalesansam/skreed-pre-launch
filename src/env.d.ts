@@ -31,6 +31,8 @@ interface Window {
   __introDone?: () => void;
   __heroStarted?: boolean;
   __skreedLogo?: import('./scripts/logotype/glitch.ts').LogoGlitch;
+  /** the countdown's glitch on / (E-CD-glitch): its four numeral pairs as one */
+  __skreedCount?: import('./scripts/logotype/glitch.ts').LogoGlitch;
   __skreedLogoQ?: [string, ...unknown[]][];
   __skreedCountV?: string[];
   __skreedTierOverride?: () => string;

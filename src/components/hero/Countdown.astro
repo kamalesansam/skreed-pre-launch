@@ -1,16 +1,25 @@
 ---
-// The countdown (DESIGN.md section 4): bottom left, Open Sans 600 tabular numerals, role timer. Its script is the last
+// The countdown (DESIGN.md section 4): bottom left, role timer. Each group's two numerals are one SVG of dot-matrix digits
+// (src/config/countdown-digits.ts, exception E-CD-font): the pair #cdg-<unit> holds two <use> of the digit paths #dg-0 to
+// #dg-9, which the plain countdown script builds and points at the live digits; the .gl-base use draws the pair and the
+// .gl-tiles layer is the glitch's (src/scripts/logotype/glitch.ts, the logotype's glitch shared, E-CD-glitch). The digits
+// as text stay in a visually hidden span per group (#cd-<unit>), so the timer reads as before; the intro's type-in
+// (src/scripts/hero/intro/igloo.ts) substitutes and wipes the pair's two <use> as it does the glyphs of a line. Its script is the last
 // element of body (ScrollCue.astro, part "script"). Without JavaScript only the noscript line shows (D27).
 import { COPY } from '../../config/copy.ts';
-const [days, hours, minutes, seconds] = COPY.cd.units;
+import { PAIR_W, PAIR_H, DIGIT_ADVANCE } from '../../config/countdown-digits.ts';
+const units = ['d', 'h', 'm', 's'] as const;
 ---
 <section class="copy" id="heroCopy">
   <p class="eyebrow" id="cdEyebrow">{COPY.cd.eyebrow}</p>
   <div class="count" id="count" role="timer" aria-label={COPY.cd.aria}>
-    <div><span class="n" id="cd-d">00</span><span class="l">{days}</span></div>
-    <div><span class="n" id="cd-h">00</span><span class="l">{hours}</span></div>
-    <div><span class="n" id="cd-m">00</span><span class="l">{minutes}</span></div>
-    <div class="sec"><span class="n" id="cd-s">00</span><span class="l">{seconds}</span></div>
+    {units.map((u, i) => (
+      <div class:list={[{ sec: u === 's' }]}>
+        <svg class="n" id={`cdn-${u}`} viewBox={`0 0 ${PAIR_W} ${PAIR_H}`} aria-hidden="true" focusable="false"><defs><g id={`cdg-${u}`}><use href="#dg-0"/><use href="#dg-0" x={DIGIT_ADVANCE}/></g></defs><use class="gl-base" href={`#cdg-${u}`}/><g class="gl-tiles" display="none"></g></svg>
+        <span class="sr-only" id={`cd-${u}`}>00</span>
+        <span class="l">{COPY.cd.units[i]}</span>
+      </div>
+    ))}
   </div>
   <noscript><p class="eyebrow">{COPY.cd.noscriptLead}<time datetime={COPY.cd.noscriptDatetime}>{COPY.cd.noscriptDate}</time></p></noscript>
 </section>
