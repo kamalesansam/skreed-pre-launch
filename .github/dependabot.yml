@@ -1,0 +1,14 @@
+# Weekly bumps for the npm pins and the actions' commit pins (docs/specs/hero-architecture.md 14; security checklist
+# row 18). package.json pins every dependency exactly (tests/unit/build-modes.test.ts), so each bump stays a pin.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

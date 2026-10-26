@@ -1,0 +1,147 @@
+# The teaser's gate and its deploys to Cloudflare Workers + Static Assets (docs/DEPLOY.md; the plan is
+# docs/specs/hero-architecture.md 14 and 15).
+#
+# Every push and every pull request runs "verify": the secret scan, the unit tests, the production build with its CSP,
+# budget and guards, a grep of the build for keys, and a wrangler dry run. A push to the repository's default branch then
+# deploys the staging Worker (skreed-teaser-staging on workers.dev, noindex, hooks and Tune on). Production
+# (skreed-teaser; skreed.in once the zone is on Cloudflare) deploys only from the "Run workflow" button with target
+# "production", behind the "production" environment, where Sam can require his own review first.
+#
+# Secrets (repository settings, Secrets and variables, Actions): CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
+# Every action is pinned to a commit; Dependabot (.github/dependabot.yml) proposes the bumps.
+name: deploy
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Where to deploy
+        type: choice
+        options: [staging, production]
+        default: staging
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  WRANGLER_SEND_METRICS: 'false'
+  ASTRO_TELEMETRY_DISABLED: '1'
+  NODE_VERSION: '24'
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    concurrency:
+      group: verify-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # the whole history, for the secret scan
+      - name: Secret scan of the history (security checklist row 4)
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Dependency audit (row 18; reported, not a gate, because the advisories sit in the build toolchain and nothing of it ships)
+        run: npm audit --omit=dev || true
+      - name: Unit tests
+        run: npm run test:unit
+      - name: Family page tests
+        run: npm run test:family
+      - name: Production build (astro, csp, budget, guards)
+        run: npm run build
+      - name: No key in the build (row 1)
+        run: |
+          if grep -rEl 'sk_live_|shpat_|service_role|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY' dist; then
+            echo '::error::the build carries something that looks like a key'; exit 1
+          fi
+      - name: Wrangler dry run
+        run: npm run deploy:dry
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist-production-${{ github.sha }}
+          path: dist
+          retention-days: 7
+
+  staging:
+    needs: verify
+    if: >-
+      (github.event_name == 'push' && github.ref_name == github.event.repository.default_branch)
+      || (github.event_name == 'workflow_dispatch' && inputs.target == 'staging')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
+    environment:
+      name: staging
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: The two secrets are set
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo '::error::CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID must both be repository secrets (docs/DEPLOY.md, step 3)'; exit 1
+          fi
+      - run: npm ci
+      - name: Staging build (hooks and Tune on, noindex)
+        run: npm run build:staging
+      - name: Deploy skreed-teaser-staging
+        id: deploy
+        run: |
+          npx wrangler deploy --env staging | tee deploy.log
+          echo "url=$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' deploy.log | head -1)" >> "$GITHUB_OUTPUT"
+
+  production:
+    needs: verify
+    if: github.event_name == 'workflow_dispatch' && inputs.target == 'production'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: The two secrets are set
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo '::error::CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID must both be repository secrets (docs/DEPLOY.md, step 3)'; exit 1
+          fi
+      - run: npm ci
+      - name: Production build (astro, csp, budget, guards)
+        run: npm run build
+      - name: Deploy skreed-teaser
+        id: deploy
+        run: |
+          npx wrangler deploy --env="" | tee deploy.log
+          echo "url=$(grep -oE 'https://[a-z0-9.-]+(\.workers\.dev|skreed\.in)' deploy.log | head -1)" >> "$GITHUB_OUTPUT"
