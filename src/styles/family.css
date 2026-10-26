@@ -71,10 +71,10 @@ ol { padding: 0; list-style: none; }
    centred under the letters at the bottom of the screen, level with the beat nav (z-index 4), under the corners and Back
    to top (6). Declared after .allfam so its position: fixed wins over .ring2's position: relative; centred by the margins,
    never a transform, since .press owns the transform. On the phone layout its row stands one --s1 above Back to top's row
-   (D1); the wide layout puts its bottom one --inset above the safe area. It transitions nothing, since [hidden] is
+   (D1; --to-top-bottom, to-top.css, is that row's offset); the wide layout puts its bottom one --inset above the safe area. It transitions nothing, since [hidden] is
    display: none, which no transition can start from; the fade in and out is a Web Animations API animation in page.ts
    (--dur-fade and --dur-out, tokens.css) */
-.fam-back { position: fixed; z-index: 4; left: 0; right: 0; width: max-content; margin-inline: auto; bottom: calc(14px + var(--hit) + var(--s1) + var(--sab));
+.fam-back { position: fixed; z-index: 4; left: 0; right: 0; width: max-content; margin-inline: auto; bottom: calc(var(--to-top-bottom) + var(--hit) + var(--s1) + var(--sab));
   min-height: var(--hit); padding: 0 var(--s2); display: inline-flex; align-items: center; font-size: var(--fs-label); font-weight: 600; line-height: 1; white-space: nowrap; color: var(--pearl-whisper); text-decoration: none; }
 
 /* the first screen: the family's name under the wordmark (D9), the stage behind, the HUD rows over it */

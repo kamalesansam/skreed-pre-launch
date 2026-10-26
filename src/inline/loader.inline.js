@@ -8,8 +8,10 @@ if(!HT.classList.contains('loading'))return;
 var reduce=matchMedia('(prefers-reduced-motion:reduce)').matches,OFF=COPY.offline;
 var intro=$('intro'),M=$('ldM'),GL=$('ldG'),FL=$('ldFill'),SG=$('ldS'),BD=$('ldBand'),LN=$('ldLine'),PN=$('ldN'),PC=$('ldPct'),ST=$('ldSt'),i;
 if('scrollRestoration'in history)history.scrollRestoration='manual';if(!location.hash)scrollTo(0,0);
-/* the return path (family-page.md 2.2 and 13 step 3; built with round 4, section 22): back from a family page, or /#families, on the landing's 3D path. A night veil (no wordmark, no percent) that the island lifts through skip() once frame2 is in and section 2 is at rest; never the fill's wait and the exit */
-var RET=HT.classList.contains('hero3d')&&(location.hash==='#families'||((performance.getEntriesByType?performance.getEntriesByType('navigation'):[])[0]||{}).type==='back_forward');if(RET)intro.classList.add('ret');
+/* the return path (family-page.md 2.2 and 13 step 3; built with round 4, section 22): back from a family page, or /#families, on the landing's 3D path. A night veil (no wordmark, no percent) that the island lifts through skip() once frame2 is in and section 2 is at rest; never the fill's wait and the exit. Not for Back to top's way home (to-top.ts sets skreed:to-top before it steps back): on a cache miss that load starts at the top, its hash dropped so the browser's own scroll to the fragment cannot undo it */
+var TT=false;try{TT=sessionStorage.getItem('skreed:to-top')==='1'}catch(e){}
+var RET=!TT&&HT.classList.contains('hero3d')&&(location.hash==='#families'||((performance.getEntriesByType?performance.getEntriesByType('navigation'):[])[0]||{}).type==='back_forward');if(RET)intro.classList.add('ret');
+if(TT){scrollTo(0,0);if(location.hash)history.replaceState(history.state,'',location.pathname+location.search)}
 /* mask: the page's one wordmark */
 var ps=$('skreed-wordmark').children,sv='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1209.46 292.9">';
 for(i=0;i<ps.length;i++)sv+='<path d="'+ps[i].getAttribute('d')+'"/>';

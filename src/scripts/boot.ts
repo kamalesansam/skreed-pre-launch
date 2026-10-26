@@ -6,7 +6,7 @@
 // No three.js import: the boot chunk stays small, and the island loads only on the 3D tier.
 import { PORTRAIT_ASPECT, SOFTWARE_GL, TEXTURE_PATH } from '../config/hero.ts';
 import { COPY_LD } from '../config/copy.ts';
-import { createLife, IslandDead } from './hero/bridge/life.ts';
+import { createLife, isAbortError, IslandDead } from './hero/bridge/life.ts';
 import { prefetchHeroData, dataPromises } from './hero/data/assets.ts';
 import { resetRiders, type RideEls } from './hero/scroll/reset.ts';
 
@@ -41,7 +41,9 @@ function toPoster(reason: string, err?: unknown): void {
   resetRiders(els);                                             // 4. ride styles, tone, labels (section 2 and the intro reset in their disposers)
   for (const e of document.querySelectorAll('[inert]')) e.removeAttribute('inert');   // 5.
   const after = track ? track.offsetHeight : 0;                 // 6. keep what the visitor was reading in place
-  if (y < before - innerHeight) scrollTo({ top: 0, behavior: 'instant' });
+  const fam = location.hash === '#families' ? $('families') : null;   // a return visit that fell to the poster (family-page.md 2.2): the families centred, as links.ts does off the 3D path
+  if (fam) fam.scrollIntoView({ block: 'center', behavior: 'instant' });
+  else if (y < before - innerHeight) scrollTo({ top: 0, behavior: 'instant' });
   else scrollTo({ top: y - (before - after), behavior: 'instant' });
   dispatchEvent(new Event('scroll'));                           // 7. the inline cue check recomputes the cue
   if (err === undefined) console.warn('[hero] ' + reason); else console.warn('[hero] ' + reason, err);   // 8.
@@ -72,7 +74,9 @@ async function boot(): Promise<void> {
   const onLost = () => toPoster('webglcontextlost');   // no restore attempt
   canvas?.addEventListener('webglcontextlost', onLost);
   const onError = (e: ErrorEvent) => { if (!window.__heroStarted) toPoster('error before start', e.error ?? e.message); };
-  const onRejection = (e: PromiseRejectionEvent) => { if (!window.__heroStarted && !(e.reason instanceof IslandDead)) toPoster('unhandled rejection before start', e.reason); };
+  // a skipped cross-document view transition into this page (a family page's "Back to main page" or wordmark, Back to top on a
+  // cache miss) rejects its promises with AbortError "Transition was skipped": the browser's own, never the island's failure
+  const onRejection = (e: PromiseRejectionEvent) => { if (isAbortError(e.reason)) return; if (!window.__heroStarted && !(e.reason instanceof IslandDead)) toPoster('unhandled rejection before start', e.reason); };
   addEventListener('error', onError); addEventListener('unhandledrejection', onRejection);
   life.onKill(() => { removeEventListener('error', onError); removeEventListener('unhandledrejection', onRejection); });
 

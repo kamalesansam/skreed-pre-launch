@@ -35,7 +35,7 @@ test('the stylesheet: .fam-back fixed at z-index 4 after .allfam, set as "All fa
   const rule = css.match(/^\.fam-back \{([^}]*)\}/m)?.[1] ?? '';
   assert.ok(rule, 'one .fam-back rule');
   assert.ok(css.indexOf('.allfam {') < css.indexOf('.fam-back {') && css.indexOf('.ring2 {') < css.indexOf('.fam-back {'), 'declared after .allfam and .ring2, so position: fixed wins');
-  for (const decl of ['position: fixed', 'z-index: 4', 'left: 0', 'right: 0', 'width: max-content', 'margin-inline: auto', 'bottom: calc(14px + var(--hit) + var(--s1) + var(--sab))',
+  for (const decl of ['position: fixed', 'z-index: 4', 'left: 0', 'right: 0', 'width: max-content', 'margin-inline: auto', 'bottom: calc(var(--to-top-bottom) + var(--hit) + var(--s1) + var(--sab))',
     'min-height: var(--hit)', 'padding: 0 var(--s2)', 'display: inline-flex', 'align-items: center', 'font-size: var(--fs-label)', 'font-weight: 600', 'line-height: 1', 'white-space: nowrap', 'color: var(--pearl-whisper)', 'text-decoration: none']) {
     assert.ok(rule.includes(decl), `.fam-back: ${decl}`);
   }
@@ -44,6 +44,11 @@ test('the stylesheet: .fam-back fixed at z-index 4 after .allfam, set as "All fa
   const wide = css.slice(css.indexOf('@media (min-width: 900px) and (min-height: 600px) {\n'));
   assert.ok(wide.slice(0, wide.indexOf('\n}')).includes('.fam-back { bottom: calc(var(--inset) + var(--sab)); }'), 'the wide layout: one --inset above the safe area');
   assert.match(css, /\[hidden\] \{ display: none !important; \}/, 'hidden is display: none, which no transition can start from');
+  // rule 15: Back to top's bottom offset is one token, used by its own row and by this control's (iteration 2, item 4)
+  const toTop = read('src/styles/to-top.css');
+  assert.match(toTop, /^:root \{ --to-top-bottom: 14px; \}/m, 'the token, defined where Back to top is styled (both pages load it)');
+  assert.match(toTop, /\.to-top\[data-page="family"\] \{[^}]*bottom: calc\(var\(--to-top-bottom\) \+ env\(safe-area-inset-bottom, 0px\)\);/, 'Back to top stands on it');
+  assert.equal(((toTop + css).match(/\b14px\b/g) ?? []).length, 1, 'the number is written once, as the token');
 });
 
 test('the page module: the controller after argument.show in onScroll, hidden at once on fam:grid, family_back on click with the link left to the browser, the hook', () => {
@@ -57,6 +62,8 @@ test('the page module: the controller after argument.show in onScroll, hidden at
   assert.match(click, /track\('family_back', \{ from: 'argument' \}\)/);
   assert.doesNotMatch(click, /preventDefault/, 'the browser follows the link (D4)');
   assert.match(page, /\{ \.\.\.o, fill: 'forwards' \}/, 'the exit holds its last frame until hidden');
+  assert.match(page, /const from = getComputedStyle\(backEl!\)\.opacity;[^\n]*\n\s+backAnim\?\.cancel\(\);/, 'the exit starts from the current opacity, read before the arrival is cancelled (iteration 2, item 5)');
+  assert.match(page, /animate\(\[\{ opacity: from \}, \{ opacity: 0 \}\]/);
   assert.match(page, /back: \(\) => \(\{ since: backSince, shown: backShown \}\)/, 'the test hook');
   assert.match(read('src/scripts/family/track.ts'), /\| 'family_back';/);
 });

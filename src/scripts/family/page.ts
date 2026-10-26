@@ -276,11 +276,12 @@ function backShow(): void {
   a.onfinish = () => { if (backAnim === a) backAnim = null; };
 }
 function backHide(): void {
+  const from = getComputedStyle(backEl!).opacity;   // read before the cancel: an interrupted arrival leaves from where it is, never a jump to full
   backAnim?.cancel(); backAnim = null;
   backShown = false;
   const o = backFade('out', reduced());
   if (!o || typeof backEl!.animate !== 'function') { backEl!.hidden = true; return; }
-  const a = backEl!.animate([{ opacity: 1 }, { opacity: 0 }], { ...o, fill: 'forwards' });
+  const a = backEl!.animate([{ opacity: from }, { opacity: 0 }], { ...o, fill: 'forwards' });
   backAnim = a;
   a.onfinish = () => { if (backAnim !== a) return; backEl!.hidden = true; a.cancel(); backAnim = null; };   // as to-top.ts lifts its veil
 }

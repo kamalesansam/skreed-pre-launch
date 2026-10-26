@@ -179,7 +179,8 @@ test.describe('22. where it sits (acceptance 3)', () => {
       await page.waitForTimeout(DELAY + IN_MS + 200);
       await expect(back(page)).toBeVisible();
       const b = await box(page, '#famBack');
-      expect(Math.abs(b.x + b.w / 2 - w / 2)).toBeLessThanOrEqual(1);
+      const centre = await page.evaluate(() => document.documentElement.clientWidth / 2);   // the layout viewport's centre: beside a classic scrollbar it is not the window's
+      expect(Math.abs(b.x + b.w / 2 - centre)).toBeLessThanOrEqual(1);
       expect(b.h).toBe(44);
       if (w === 1280 && h === 800) { expect(b.y).toBeCloseTo(711.2, 0); expect(b.b).toBeCloseTo(755.2, 0); }
       if (w === 390 && h === 844) { expect(b.y).toBe(734); expect(b.b).toBe(778); }

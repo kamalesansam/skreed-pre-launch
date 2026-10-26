@@ -37,7 +37,6 @@ import { createLabels } from './interaction/labels.ts';
 import { createLoop } from './loop.ts';
 import { warmUp } from './warmup.ts';
 import { createIglooIntro } from './intro/igloo.ts';
-import { isReturnVisit } from '../family/rock-links.ts';
 import type { RideEls } from './scroll/ride.ts';
 import type { RoomDirector } from './section4/director.ts';
 import type { PageScroll } from './section4/scroll.ts';
@@ -61,8 +60,10 @@ export async function startHero(o: StartOptions): Promise<void> {
   if (HOOKS) installStall();
   // the loader hands over at its cut: until then the hero holds the plotted pose exactly
   const initiallyIntroDone = !document.documentElement.classList.contains('loading');
-  // the return path (family-page.md 2.2 and 13, step 3): Back from a family page, or /#families; the loader is a veil and section 2 is the destination
-  const ret = isReturnVisit();
+  // the return path (family-page.md 2.2 and 13, step 3): Back from a family page, or /#families; the loader is a veil and section 2 is
+  // the destination. The loader decided (loader.inline.js RET: isReturnVisit()'s two conditions, and not Back to top's way home, whose
+  // sessionStorage flag to-top.ts has cleared by now), so its decision is read, never made again
+  const ret = !!document.getElementById('intro')?.classList.contains('ret');
 
   // 1. the hero chunk and pieces.json
   const pieces = await data.pieces; life.check();
