@@ -539,9 +539,10 @@ One scale, used through `gap` on flex and grid, not per-element margins (rule 15
 ### The family pages' layout (`/shades/<family>/`, `docs/specs/family-page.md` 2.3, 2.4, 2.8)
 
 - **Spacing steps added for the family pages** (defined in `src/styles/family.css`, used through `gap` and padding): `--s4: 24px` (title offset over the stage, the HUD band's top padding, the switcher's bottom padding), `--s5: 32px` (the swatch grid's height allowance in the stage), `--s6: 48px` (section padding: "The whole family.", the family navigation row, the footer).
-- **Component dimensions, not spacing:** the header (56 px phone, 72 px wide, `--fh`), the HUD band (224 px, `--band`, 3D mode), the tap minimum (44 px, `--hit`), the wide layout's grid circle (80 px, `--sw-wide`, spec 2.6) and grid column (112 px, `--cell-w`), its finish and Reserve column (190 px, `--side-w`), its HUD and scrubber column (at most 664 px, `--scrub-w`) and the shade name between Prev and Next (318 px, `--name-w`), the sticky bar (72 px plus the safe area), the scrubber marker (24 px), the switcher rows (56 px), the Prev and Next chevron (16 px in a 44 px box), the grid swatch's selected ring (2 px at a 3 px offset) and focus outline (6 px offset).
+- **Component dimensions, not spacing:** the header (56 px phone, 72 px wide, `--fh`), the HUD band (224 px, `--band`, 3D mode), the tap minimum (44 px, `--hit`), the wide layout's grid circle (80 px, `--sw-wide`, spec 2.6) and grid column (112 px, `--cell-w`), its finish and Reserve column (190 px, `--side-w`), its HUD and scrubber column (at most 664 px, `--scrub-w`) and the shade name between Prev and Next (318 px, `--name-w`), the sticky bar (72 px plus the safe area), the scrubber marker (24 px), the switcher rows (56 px), the Prev and Next chevron (16 px in a 44 px box), the grid swatch's selected ring (2 px at a 3 px offset) and focus outline (6 px offset), and Back to top's bottom offset on a family page (14 px, `--to-top-bottom` in `to-top.css`, which "Back to main page" stands one row above).
 - **One breakpoint:** the wide layout at 900 px wide and 600 px tall or more; everything else is the phone layout.
 - **Wide layout, swatch grid mode:** title, the 80 px grid and the controls stack in flow and the page scrolls, so a short laptop screen (1280 x 609, 1366 x 657, 1024 x 600, 900 x 600) never shrinks the circles or lays the grid over the controls. Only 3D mode pins the controls into the stage's bottom band.
+- **The argument screen's way out** (round 4, `family-page.md` 22, exception E-F5): "Back to main page", a fixed link set as "All families" is (Open Sans 600 at `--fs-label`, a 44 px hit row, no box), centred under the letters by its margins. On the phone layout its row stands one `--s1` above Back to top's row, so its bottom is 66 px plus the safe area above the bottom edge (hit row y 734 to 778 at 390 x 844); on the wide layout its bottom is one `--inset` above the safe area (y 711.2 to 755.2 at 1280 x 800). Its layer is `z-index: 4`, level with the beat nav and the HUD and under the corners, Back to top (6) and the loader (40); it exists in 3D mode only and is `hidden` until 2.5 s after the argument screen comes on.
 
 ### Whitespace
 
@@ -744,7 +745,7 @@ Motion is reserved for the hero canvas, the Wall, the tilt card and the manifest
   --dur-lift: 600ms;                              /* loader lift */
   --dur-cue: 1.5s;                                /* one cue cycle */
   --cue-cycles: 2.44;                             /* three bounces, ending on a landing (3.66 s) */
-  --dur-out: 200ms;                               /* unused since the quiz (2026-10-19) and section 4 (2026-10-20) became plain text: their text decodes */
+  --dur-out: 200ms;                               /* the family pages' "Back to main page" fading out (family-page.md 22); unused on the landing since the quiz (2026-10-19) and section 4 (2026-10-20) became plain text */
   --dur-card: 300ms;                              /* unused since the quiz became plain text (2026-10-19): no card moves */
 }
 ```
@@ -796,9 +797,11 @@ Tokens in `src/styles/family.css`; the script twins in `src/scripts/family/timin
 | Sticky bar swatch | cross-fade by opacity (the new shade under, a copy of the old one fading out on top), 600 ms; no colour is animated (C3) | linear |
 | Poster to canvas | opacity, 200 ms | linear |
 | Buttons and swatches | hover `translateY(-1px)`, press `scale(0.98)`, 150 ms | `--ease-standard` |
+| "Back to main page" arrives (round 4, family-page.md 22, E-F5) | 2.5 s after the argument screen comes on (one timer): `hidden` dropped, then opacity 0 to 1 over 400 ms (`--dur-fade`) by the Web Animations API; nothing moves | `--ease-standard` |
+| "Back to main page" leaves | the argument screen goes off after it showed: opacity 1 to 0 over 200 ms (`--dur-out`), then `hidden`; leaving before 2.5 s drops the timer and shows nothing | `--ease-in` |
 | Between family pages and back to `/` | the browser's cross-document view transition (root cross-fade) | browser default |
 
-Reduced motion: swatch grid mode by default (no island; `REDUCED_MOTION_TIER`), every DOM move instant, the view transition off; under `still3d` the lineup jumps, with no entrance, tilt or turn.
+Reduced motion: swatch grid mode by default (no island; `REDUCED_MOTION_TIER`), every DOM move instant, the view transition off; under `still3d` the lineup jumps, with no entrance, tilt or turn, and "Back to main page" is shown at full opacity at 2.5 s and hidden at once.
 
 ### Section 3, the quiz (`src/scripts/quiz/decode.ts` and `deck.ts`; E-S3-motion)
 

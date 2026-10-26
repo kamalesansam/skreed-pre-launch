@@ -315,3 +315,449 @@ Graded by the review skill (`.claude/skills/review/SKILL.md`) against `docs/CHEC
 - **Run 2, the 3D slow line.** At 375x667 the stage keeps its 320 px floor, so the scrubber moves from 528-572 to 559-603, under the bar at 594 (at rest only the finish row is under it). At 390x844 the HUD moves 29 px up when the line shows and back when it clears (builder note 6). Both belong to the 3D grading in run 2. A line that arrives after 8 s cannot be reserved at first paint, so run 2 should decide whether that line may move the HUD or should take space elsewhere.
 - **Rule 15, minor.** The new phone rule subtracts a raw `72px` for the bar height, the same value `scroll-padding-bottom` already uses. Registering it as a component dimension (for example `--bar-h`) would keep the two in step. The unit test covers gaps only.
 - **Spec edits by the builder.** Section 3 (state lines) and section 13 (step 1) were amended to match the code. Both are consistent with the iteration 2 fix list.
+
+## Round 4, iteration 1, 2026-10-26: FAIL
+
+Round 4 is "Back to main page" on the argument screen (`family-page.md` section 22: criteria 1 to 6, D1 to D7, E-F5 and the builder's Built, Checked and Not done), with section 13 step 3, the landing's return path, which this build carries. Branch `family/back-to-families`: three commits on 24564a3 (93772c6, 3163b36, 3bbcb7a), 23 files.
+
+### How it was checked
+
+- Frames read first, before any code: `screenshots/family-r4-390-arg-before.jpg` and `-after.jpg`, `family-r4-1280-arg-before.jpg` and `-after.jpg`, `family-r4-390-landing-after-press.jpg` and `family-r4-1280-landing-after-press.jpg`. They are the owner's, taken in a Chromium pane with a hardware GPU against the branch's staging build under `wrangler` on 127.0.0.1:8791. They are JPEG, not the PNG the spec names. The 390 frames are 488 x 1055 (scale 1.25) and the 1280 frames 800 x 500 (scale 0.625). The family is a blue one, by eye Blissful Blue.
+- The owner's live measurements in that pane are used as evidence, under the criteria they support: the control's box, type and colour at both sizes; `#toTop`, `#famBtn` and `#arg-box`; `scrollWidth`; the `back()` hook through arrival, exit and re-arrival; and the press at both sizes, with `html.className`, `__skreedDead`, the loader's state, the network and the console.
+- The diff (`git diff claude/youthful-planck-objwf5...HEAD`): `src/` and the tests read in full; the docs read where they make claims (CLAUDE.md, DESIGN.md, CHECKLIST.md G21, HANDOFF.md, hero-architecture.md 4.3, hero.md 12.7 and the spec).
+- The code around it, read: `src/scripts/boot.ts` (the rejection guard), `src/scripts/family/rock-links.ts` and `links.ts` (the transition scope and the poster path's return), `src/scripts/shell/to-top.ts` (Back to top's way home), `src/scripts/hero/section2/gems.ts` (the gems' `ready`) and `src/components/shell/Loader.astro` (what the veil hides).
+- Tests, run by the reviewer: `test:family` 58 of 58 pass; `test:unit` 187, with 186 passing and 1 skipped. The worktree was unchanged afterwards.
+- The builder's staging `dist/`, read only:
+  - one `a#famBack` in each of the ten family pages and none in `index.html`;
+  - it is the body's last element, after `a#toTop`;
+  - the page module is 16,866 B, 7,138 B gzip (level 9), as the hand-off says;
+  - the landing's `@view-transition` rules are inline in its `<head>`.
+- Contrast, the reviewer's estimate. Pearl Whisper against the pixels of the control's box in the four argument frames, decoded with `jpeg-js` from the repository's `node_modules`: the whole box at 2.3 s, and the bands above and below the glyphs at 3 s. Median background luminance 0.0000 to 0.0023, brightest pixel 0.0006 to 0.0052: 17.6:1 to 19.4:1. That is one family and one frame per size, from JPEGs.
+- Grep of every added line: no em or en dash, emoji, TODO, FIXME or lorem.
+- Not done: no Playwright browser exists here and none was installed, so `tests/family/specs/back.spec.ts` did not run. No Lighthouse. `/web-design-guidelines` and `visual-critique` are not installed.
+
+### Checklist
+
+| Item | Verdict | Evidence |
+|---|---|---|
+| A1 | FAIL | The diff against rules 1 to 50. One violation, rule 15: `.fam-back`'s `bottom: calc(14px + ...)` (family.css line 77) repeats Back to top's raw 14 px (to-top.css line 24), a value off the spacing scale now kept in two places. Rule 12's visible-at-rest clause: the 2.5 s wait and the fades are E-F5 (Sam, 2026-10-26), recorded in CLAUDE.md. Rule 7 for the light families is unmeasured (E3). Nothing else: no colour but Pearl Whisper (24, 49, 50); Open Sans 600 (4, 18, 19, 30); no shadow, border, fill, gradient, blur or radius (1, 2, 5, 6, 20, 21, 25, 28, 31, 39, 42, 43); no icon or arrow (10, 22, 44, 45); no opacity on hover (14); hover and press on the link only (48); copy with no dash, emoji or buzzword (3, 16, 17, 27, 29, 35); the case on screen (38). Site level, outside the diff: no terms or privacy page in `dist/` (46, 47) |
+| A2 | PASS | `--pearl-whisper` only; the veil is the loader's `--night` (E-A2) |
+| A3 | PASS | Measured: Open Sans 600, 14 px, no italic. `line-height: 1` is in the rule, not measured |
+| A4 | PASS | "Back to main page", Sam's words in sentence case; no dash, emoji or buzzword (the copy test). Pending his word in the frames (spec 12 item 6) |
+| A5 | PASS | The argument screen shows the case; the control adds no stand-in |
+| B1 | FAIL | Frames exist at both widths for the argument screen and the press, but they are the owner's JPEGs from a pane, not Playwright's PNGs. `family-r4-{390,1280}-landing-3d` cannot exist while the 3D landing falls to the poster (item 1) |
+| B2 | PASS | At 390 x 844: `scrollWidth` 390; the box at x 121.1 to 269.4, 121 px inside both edges; 148.3 x 44 px. Other sizes: criterion 3 |
+| B3 | PASS | A same-origin link (`/#families`); no storage in the diff |
+| B4 | PASS | Nothing in the diff uses or animates `svh` or `dvh`; the offsets are tokens and `env()`. See the iPhone note |
+| C1 | PASS | Page module 7,138 B gzip, measured in `dist/`. Before it was 6,719 B (the builder's figure), so +419 B of the 1,000 B allowed. Total JS on the page 168,972 B of 250,000 B |
+| C2 | n/a | No image |
+| C3 | PASS | The fade is opacity alone, by the Web Animations API; `.press` owns the transform; the C3 guard (`data.test.ts`) passes; the veil lifts by the loader's existing fade |
+| C4 | FAIL | Lighthouse was not run on either page this round. E-C4 is still pending for the hero |
+| D1 | PASS | The 2.5 s wait is E-F5. The landing's veil is the 3D path's loader (E-H1); its look is pending Sam (spec 12 item 10) |
+| D2 | PASS | By source and unit test: `backFade(dir, true)` is `null`; `reduced()` is read at each show and hide; the default reduced-motion tier is grid mode, where the control is `display: none`; the landing's `@view-transition` is `none` under reduced motion. Criterion 6's browser row did not run |
+| D3 | FAIL | The "Pressed" row of section 22's states table (the landing at section 2) fails on the 3D path, because a skipped cross-fade is handled as a hard failure (item 1). Back to top's way home now ends on section 2 when the back-forward cache misses (item 2) |
+| D4 | PASS | `.press` on the link only: `translateY(-1px)` on hover, `scale(0.98)` on press, no opacity |
+| E1 | BLOCKED | `/web-design-guidelines` is not installed here. Recorded as blocked, never PASS |
+| E2 | BLOCKED | `visual-critique` is not installed. The reviewer's critique of the 390 frame is in the notes |
+| E3 | FAIL | It is a real link named by its text, `hidden` (out of the tab order and the tree) until shown, with the two-tone ring from `.ring2`. Not proven: the contrast that criterion 6 asks for (Frosty White, Mellow Yellow and Blissful Blue, both sizes, median of 10 frames at 2.9 s, written in this log). The reviewer's estimate covers Blissful Blue only (17.6:1 to 19.4:1, single JPEG frames); the light families' smoke is the risk the spec names. The keyboard rows did not run |
+| E4 | PASS | Writes no data; `family_back` is a local `skreed:track` event |
+| E5 | n/a | No database |
+| G1, G3, G4, G6, G7, G8 | PASS | Not touched by this round. `dist/` has the branded 404, unique titles and descriptions, the icon set and manifest, `robots.txt` and `sitemap.xml` |
+| G2, G11 | n/a | E-G2 for the landing; the family pages have had no Reserve since round 3 (Sam, 2026-10-15) |
+| G5, G15, G16, G18, G19, G23, G24, G26 | FAIL | Not touched by this round and still missing in `dist/`: no `og:image`; no privacy or terms page; no PostHog or Web Analytics; no visible contact line or reply promise on either page (the email is only in the family pages' Organization JSON-LD); no FAQ; no LocalBusiness JSON-LD |
+| G9, G12 | PASS | This round adds no image and loads no data |
+| G10 | FAIL | The control was measured at 390 and 1280 only (criterion 3, item 4) |
+| G13, G14, G17, G20, G22, G25 | n/a | No form, thanks state, cookies, cutover or founders' note here; breadcrumbs n/a on the teaser (R9) |
+| G21 | FAIL | The link exists and goes to `/#families`. But the line this round added to G21 says it "links back to the landing's section 2", and on the 3D path, the only place the control exists, the press lands on the poster page instead (item 1). The poster page's family grid is not a dead end, but the gems, the quiz's fog and section 4 in 3D are gone for the rest of the visit |
+| G27 | PASS | Nothing fabricated |
+| H | FAIL | As D3: the "Pressed" row on the 3D path, and Back to top on a cache miss. H1: the landing's veil is the 3D path's loader under E-H1 |
+| F1 | FAIL | Criteria 3, 5 and 6 and section 13 step 3 below |
+| F2 | PASS | No TODO, placeholder, lorem or commented-out code in the added lines |
+
+### Acceptance criteria (round 4, section 22)
+
+| # | Verdict | Evidence |
+|---|---|---|
+| 1 | PASS | `back.test.ts` reads the route: one element with its classes, `href`, `hidden` and copy id, directly after `<BackToTop page="family" />`, the body's last, and only under `has3d` (`mode !== 'off'`). The copy test runs "Back to main page". In `dist/`: exactly one on each of the ten pages, after `a#toTop` and last in the body; none on `/`. Its name is its text (no `aria-label`). Shown, at both sizes, the owner measured: Open Sans 600 14 px, Pearl Whisper, no underline, transparent, no border, no shadow, 44 px tall. No off build was made here; the condition folds at build time |
+| 2 | PASS | `backTimer` by unit test: off at 5.6 screens and on above; `show` false at 2,499 ms and true at 2,500; the cancel; the re-arrival; `dueMs`. Seen live by the owner at 390 x 844 through the `back()` hook: `since` set on arrival; `shown` true after 2.5 s; `since` null and `hidden` on the way up to 5.5 screens; a new 2.5 s on the way back down; opacity 1 at 3 s. The frames agree at both sizes: no control at 2.3 s, the control at 3 s. The held-clock rows are by source only, because `back.spec.ts` did not run: opacity 1 by 2.9 s; the 1.0 s, 2.0 s and 4.5 s sequence; `hidden` 200 ms after the exit |
+| 3 | FAIL | Measured by the owner at two of the eight sizes. At 390 x 844: hit row y 734 to 778, centre x 195.2; clear of `#toTop` (y 786 to 830) and `#arg-box` (y 390.3 to 453.7); 121 px inside both edges; `scrollWidth` 390. At 1280 x 800: y 711.2 to 755.2, centre x 632.4 (see the notes); clear of `#famBtn`, `#toTop` and `#arg-box` (y 297.3 to 502.8). Unmeasured: 360 x 780, 375 x 667, 430 x 932, 768 x 1024, 844 x 390 and 900 x 600 (item 4) |
+| 4 | PASS | By source and unit test. Outside 3D mode `backTimer` gets 0 screens and never drops `hidden`. `html:not(.m3d) .fam-back` is `display: none`, and `[hidden]` is `display: none !important`, so the control is never focusable and never in the tree. Without JavaScript the `hidden` markup stays. `fam:grid` calls `backReset()`, which sets `hidden` at once. The grid rows of `back.spec.ts` did not run |
+| 5 | FAIL | A real click went to `http://127.0.0.1:8791/#families` at both sizes. By source and unit test: one `family_back {from: 'argument'}`, dispatched synchronously in the click listener; no `preventDefault`; no `family_open` (the switcher's listener matches `/shades/` only); a real link for the modified click; `.press` for hover and press. **The landing on the 3D path fails: it falls to the poster tier (item 1).** The poster path proper (the Gate's poster tier) was not tried. The fallen landing shows the families in view with no loader, but at 1280 the row lies under the wordmark and Back to top (item 5). The browser rows did not run |
+| 6 | FAIL | The contrast row is not met. It asks for medians for three families at both sizes, written in this log. There is only the reviewer's single-frame estimate for Blissful Blue (17.6:1 to 19.4:1), and nothing for Frosty White or Mellow Yellow (item 3). The rest holds by source and unit test: it is the body's last element after `a#toTop` (`dist/`); the `.ring2` ring; no script moves focus or writes `#live`; no Escape handler; the `arg` beat's heading comes earlier in the DOM; opacity only, by the Web Animations API; the C3 guard; `backFade(dir, true)` is `null` and `reduced()` is read live. The keyboard and reduced-motion rows did not run |
+| 13, step 3 | FAIL | Never ran in a browser: the landing falls to the poster before the hero chunk loads (item 1). Read from the files: the veil hides `.ld-w` (the whole wordmark, its fill, band and outline) and `#ldPct`; no exit is scheduled at `FULL`; the snap to `S2T.LAND` at step 18; the lift through `skip()` once frame2 and the gems are in. On a back-forward cache restore with a lost context it goes to the poster, not the rebuild that 13 asks for, because boot.ts handles every lost context that way (recorded in Built). Back to top regresses on a cache miss (item 2) |
+
+### Verdict: FAIL
+
+1. **Keep the landing on the 3D path when the cross-fade into it is skipped (criterion 5, G21, D3, H, F1; section 13 step 3).**
+   - **What happens.** The press follows the link, and the browser's root cross-fade into `/#families` is skipped. The inbound transition's `ready` promise rejects with `AbortError: Transition was skipped` and nothing handles it, so it reaches `src/scripts/boot.ts` line 75. That `onRejection` treats every unhandled rejection before the hero starts as fatal and calls `toPoster`, which is terminal for the visit.
+   - **What the owner saw.** At both sizes, twice in the console, and again on a plain navigation to `/#families` from another page of the same build: `html` "js poster", `__skreedDead` true, the hero chunk never fetched, and the loader done with `ready` false. So step 3 never runs (no veil, no snap, no lift). The visitor gets the poster page's family links, and the gems, the quiz's fog and section 4 in 3D are gone for the visit.
+   - **Where it fails.** Criterion 5's 3D row; G21's new sentence ("links back to the landing's section 2"); and D3 and H, because a skipped cross-fade, an ordinary browser outcome, is handled as a hard failure.
+   - **What skips it.** Nothing in the repository:
+     - the one `skipTransition()` (`rock-links.ts` line 183) runs in the landing's own `pageswap`, for links leaving it;
+     - both pages opt in from inline `<head>` rules;
+     - nothing starts a second transition.
+
+     So the skip is the browser's own. Chromium gives this same AbortError when, for example, the document is hidden during the reveal, so it can happen on any phone. The fix is to absorb it, in two lines:
+     - `src/scripts/boot.ts` line 75: return early from `onRejection` when `e.reason` is a `DOMException` named `AbortError`, so only the island's own failures send the 3D path to the poster.
+     - The landing's Gate (`src/inline/gate.inline.js`, inline in its head): a `pagereveal` listener that, when the event has a `viewTransition`, attaches `.catch(() => {})` to its `ready` and `finished`. A skipped cross-fade then never becomes an unhandled rejection.
+   - **Then.** Press the control again at 390 x 844 and 1280 x 800 on the staging build. Record the veil, the snap to 14.5 screens and `nav#families[data-placed]`, and take `family-r4-{390,1280}-landing-3d`.
+   - **Also covered.** The same guard sits under the family page's wordmark link to `/` and under Back to top when the cache misses; this change covers them too.
+2. **Do not send Back to top's way home to section 2 (D3, H; section 13 step 3; read from the files, not run).**
+   - **The cause.** `RET` (`loader.inline.js` line 12) and `ret` (`hero.ts` line 65) are true for every `back_forward` entry. On a family page, Back to top traverses back to `/`. When the back-forward cache misses, it relies on "a fresh load starts at the top anyway (loader.inline.js)" (`to-top.ts` lines 90 to 92).
+   - **The result.** With this build that fresh load is the night veil lifting onto section 2. Take a visitor who goes from the quiz's "See it on the case" to a family page and presses Back to top: before this round the landing came up at section 1, and now it comes up at the gems.
+   - **Change.**
+     - In `loader.inline.js`, set `RET` false and scroll to 0 when sessionStorage's `skreed:to-top` is `'1'` (read inside a try, as `to-top.ts` does).
+     - In `hero.ts`, take the loader's decision (`#intro.ret`) instead of calling `isReturnVisit()` again after `to-top.ts` has cleared the flag.
+     - Assert both in `return-path.test.ts`.
+3. **Measure the words' contrast for the three families criterion 6 names (E3, criterion 6, A1 rule 7).** Frosty White (Snow), Mellow Yellow (Sunbeam) and Blissful Blue (Sky), at 390 x 844 and 1280 x 800, at 2.9 s, the median of 10 frames each. Write the six figures in this log. `back.spec.ts` already has the row. A median under 4.5:1 keeps E3 failing.
+4. **Run `back.spec.ts` on a machine with Playwright's Chromium and attach its frames (criterion 3, B1, G10).** Use the `PUBLIC_FAMILY_3D=on npm run build:test` build. It should cover:
+   - the boxes at criterion 3's eight sizes (844 x 390 is the one where the letters' box and the control share the least height);
+   - the held-clock rows of criteria 2 and 6 and the grid rows of criterion 4;
+   - the four frames as PNG, with `-landing-3d` once item 1 is in.
+5. **Centre the families on a return visit that falls to the poster (criterion 5's poster row, D3).**
+   - **What the frame shows.** In the 1280 landing frame, Frosty White's circle sits on the wordmark and Roaring Red's under Back to top, with the quiz's intro below.
+   - **The cause.** `links.ts` line 12 skips its centring while `html.hero3d` is set. `toPoster`'s scroll keep (`boot.ts` lines 43 to 45) then leaves `nav#families` at the top edge, under the fixed corners.
+   - **Change.** In `toPoster`, when `location.hash === '#families'`, scroll `nav#families` to the centre (`scrollIntoView({ block: 'center', behavior: 'instant' })`, as `links.ts` does) instead of keeping the offset.
+   - **After item 1,** this is only the late-failure case: a lost context, or a failed import or data fetch.
+6. **Run Lighthouse mobile (C4)** on a family page of the 3D build and on `/#families`, and paste the numbers here.
+7. **Rule 15 (A1).** Register Back to top's 14 px bottom offset as one token, used by `to-top.css` line 24 and by `.fam-back` (family.css line 77), and list it among DESIGN.md's component dimensions.
+8. **E1 and E2 stay BLOCKED.** Install `/web-design-guidelines` and `visual-critique` where the loop runs, or have Sam accept the hand-applied pass.
+9. **Site essentials, carried and not this round's (A1 rules 46 and 47; G5, G15, G16, G18, G19, G23, G24, G26).** Still missing in `dist/`:
+   - `og:image`;
+   - the privacy and terms pages;
+   - analytics;
+   - a visible contact line with the reply promise;
+   - the FAQ;
+   - LocalBusiness JSON-LD.
+
+   They belong to the site-essentials pass.
+
+### Notes (not graded as FAIL)
+
+- **Visual critique at 390 (folded in for E2).**
+  - **Before.** The round 3 argument screen as built: the letters partly under the case, then a dark band of about 280 px down to Back to top.
+  - **After.** "Back to main page" sits low in that band, centred, with Back to top 8 px under it at the right. It reads as calm chrome, the size and weight of "All families", and is clearly legible on this family.
+  - **Two weaknesses.**
+    - The two bottom controls do not line up. One is centred and one is right-aligned with its icon, 8 px apart, so they read as a crowded pair rather than a deliberate ending. The new one also sits far nearer Back to top than the letters it follows.
+    - Both say "Back to" and both lead to the landing (on a family page, Back to top steps back to the landing's top). A visitor sees two ways back with different words and no difference they can guess.
+
+    Both belong to D1, which is pending Sam's word on the words and the place.
+  - **At 1280,** the control stands alone at the bottom centre, Back to top sits at the top right, and nothing competes.
+- **An interrupted arrival flashes.** If the visitor scrolls up during the 400 ms fade in, `backHide()` cancels it and starts the exit from opacity 1 (`page.ts` lines 278 to 284), so the words jump to full before fading. Starting the exit from the current computed opacity fixes it. No checklist line fails on it.
+- **Spec 13 step 3's condition.** `isReturnVisit()` is true for every `back_forward` entry. So a Back from any page on a cache miss (a future privacy or terms page, or Instagram) also comes up at section 2 under the veil, with the igloo shot skipped. That is the spec's own test, and the spec owner may want `#families` alone, which the gems' click already leaves behind (`followRock`). Item 2 covers Back to top only.
+- **iPhone.**
+  - `onScroll` divides by `innerHeight` while the screens are `100svh` (section 22, "Not checked"). With Safari's toolbar collapsed, the last scroll position may stay under 5.6 screens, so the argument screen and this control would never come on there, and G21 on iPhones depends on it.
+  - This is older than this round. A check in Safari settles it.
+- **Criterion 3 at 1280.** The centre was measured at x 632.4: the centre of the 1265 px layout viewport beside the pane's 15 px classic scrollbar, where the letters' box (80% of the same width) is centred too. The criterion's "x 640" holds only with overlay scrollbars, as in Playwright. This is graded as meeting the intent; the criterion should say "the layout viewport's centre".
+- **Step 3 is still untested in a browser.** Once item 1 is in, step 3 runs for the first time. Two things are still read from the files only: the race between frame2 and the gems' build (`hero.ts` lines 211 to 222), and Chrome's fragment anchor after `scrollTo`.
+- **Whether the fall predates this round is unknown.**
+  - The owner's baseline on the default build (8790) was a fresh `/#families` arrival, which has no transition.
+  - A transition into the landing on the default build (the family page's wordmark link to `/`) was not tried.
+  - So it is not known whether the guard already dropped those visits to the poster before this round. Item 1 covers both cases.
+- **The frames.** The "before" frames are at about 2.3 s, not the 2.4 s the spec names. The 1280 frames are 800 x 500, which supports layout checks but not pixel checks.
+- **Stale comment.** `src/styles/tokens.css` keeps the stale `--dur-out` comment that DESIGN.md now corrects.
+- **Pending Sam.** Spec 12 items 6 to 10 (the words, the wait, the place, Armor, and the veil with no count). Graded as built until he answers.
+
+## Round 4, iteration 3, 2026-10-26: FAIL
+
+Round 4's iterations 2 and 3 graded together against the iteration 1 verdict above (`family-page.md` section 22, criteria 1 to 6, and section 13 step 3). Branch `family/back-to-families`: c3583e2 (iteration 2) and 123ee42 (iteration 3) on 3bbcb7a, then beefc96 (the owner's frames). `git diff 3bbcb7a...HEAD`: 21 files, 102 lines in and 27 out.
+
+### How it was checked
+
+- **Verdicts.** PASS, FAIL, BLOCKED and n/a as before, plus UNPROVEN: a row that needs a browser run this machine cannot make. UNPROVEN is not PASS.
+- **Frames.** The owner's JPEGs, read again by eye: `family-r4-390-arg-before.jpg` and `-after.jpg`, `family-r4-1280-arg-after.jpg` and both `-landing-after-press.jpg`. They show iteration 1's build. The control has not moved since, and the landing frames show the poster fall that iteration 2 fixed. The 390 landing frame is 780 x 1688 (scale 2); the argument frames are 488 x 1055.
+- **The owner's browser evidence since iteration 1.** A Chromium pane with a hardware GPU, the branch's staging build on 127.0.0.1:8793, on a heavily loaded machine (60 s hero loads):
+  - On iteration 2's build, a press at 390 x 844 reached `/#families` and the landing stayed on the 3D path: `html` "js hero3d loading", `#intro` "intro ret", `__skreedDead` false, the loader at phase load. One "Uncaught (in promise) AbortError: Transition was skipped" was still in the console, no longer a hero failure.
+  - About 60 s later, with no progress, the loader went to its soft poster. The page sat at 17.2 screens (the fragment's scroll), so `boot.ts`'s soft-then-scrolled rule made it the hard poster, centred on `nav#families` (sv 0.67). Iteration 3 changes that path.
+  - On iteration 3's build the pane showed no 3D page at all (the family page stopped at 82 percent, as the default build's did in the same pane), so nothing of iteration 3 was seen in a browser.
+- **The diff, read in full:** `boot.ts`, `life.ts`, `hero.ts`, `gate.inline.js`, `loader.inline.js`, `page.ts`, `family.css`, `to-top.css`, the tests, DESIGN.md, `hero-architecture.md` 4.3 and 7.3, and the spec's section 22.
+- **The code around it, read:**
+  - the loader's `poster()`, its recovery branch (`loader.inline.js` line 64) and its stall and gap rules (lines 66 and 60);
+  - `shell.css` lines 81 and 90 (the poster layout, and the soft poster's transparent loader);
+  - `hero.ts` step 18 (lines 202 to 222);
+  - `links.ts`, `to-top.ts`, and `bridge/loader.ts` (`__introDone` runs `life.recover()`).
+- **Tests, run by the reviewer:** `test:family` 61 of 61 pass; `test:unit` 187, with 186 passing and 1 skipped. Nothing in the worktree changed except this log.
+- **The builder's `dist/`,** iteration 3's staging build (13:49, hooks on), read only:
+  - one `a#famBack` on each of the ten family pages, the body's last element, and none on `/`;
+  - the Gate's `pagereveal` listener with all three catches, the loader's `TT` and `RET`, and the boot chunk's early return on `#intro.ret`;
+  - every inline script on `/` (3) and on `/shades/blissful-blue/` (2) has its sha256 in `_headers`;
+  - `node scripts/case-model/budget.mjs dist blissful-blue`: the page module 7,161 B gzip, total JS on the page 168,995 B. `node scripts/hero/budget.mjs dist --mode staging`: every line holds (48 enforced).
+- **Grep** of the 118 added lines: no em or en dash, emoji, TODO, FIXME or lorem.
+- **Not done.** No Playwright browser exists here and none was installed, so `back.spec.ts` did not run. No Lighthouse. `/web-design-guidelines` and `visual-critique` are not installed. The reviewer pressed nothing in a browser.
+- **Iteration 1's nine items:**
+  - fixed: 1 (seen live), 2 (by source and unit test) and 7;
+  - 5: fixed for the hard poster (seen live), but iteration 3 bypasses it when a return visit stalls (item 1 below);
+  - the fade note and criterion 3's wording: fixed;
+  - 3, 4 and 6: open; 8: blocked; 9: carried.
+
+### Checklist
+
+| Item | Verdict | Evidence |
+|---|---|---|
+| A1 | FAIL | The iteration 2 and 3 diff against rules 1 to 50: no violation. Rule 15 is fixed: Back to top's 14 px is one token, `--to-top-bottom` (to-top.css line 12), used by `.to-top[data-page="family"]` (line 25) and `.fam-back` (family.css line 77), and listed in DESIGN.md's component dimensions; `back.test.ts` finds the number written once. The exit now fades from the current opacity: opacity only, under E-F5 (12, 14). The new comments and spec lines carry no dash, emoji or buzzword (3, 16, 17, 29). Still failing, outside the diff: rules 46 and 47, with no terms or privacy page in `dist/` (item 7). Rule 7 for the light families is unmeasured (item 4) |
+| A2 | PASS | Pearl Whisper only; the veil and the soft poster are the loader's `--night` (E-A2) |
+| A3 | PASS | Unchanged since iteration 1's measurement: Open Sans 600, 14 px, no italic |
+| A4 | PASS | "Back to main page", unchanged; pending Sam's word (spec 12 item 6) |
+| A5 | PASS | Unchanged |
+| B1 | UNPROVEN | The frames are the owner's JPEGs of iteration 1's build, and the spec now says so (section 22, acceptance criteria). The Playwright PNGs, and `-landing-3d` and `-landing-poster` of the landing as built now, need the browser run (item 3) |
+| B2 | PASS | At 390 x 844 as measured in iteration 1: `scrollWidth` 390, 121 px inside both edges, 44 px tall. The token keeps the computed 14 px, so the box has not moved |
+| B3 | PASS | A same-origin link. The loader's new sessionStorage read is inside a try; without storage, Back to top's way home on a cache miss is taken for a return visit, nothing worse. No localStorage |
+| B4 | PASS | Nothing in the diff uses or animates `svh` or `dvh` |
+| C1 | PASS | Measured on iteration 3's `dist/`: the page module 7,161 B gzip, +442 B of the 1,000 B allowed (6,719 B before). Total JS on the family page 168,995 B of 250,000 B. The landing's budget holds every line |
+| C2 | n/a | No image |
+| C3 | PASS | The exit is opacity alone, from its current value, by the Web Animations API (`page.ts` lines 278 to 284); the C3 guard passes |
+| C4 | UNPROVEN | Lighthouse not run (item 5) |
+| D1 | PASS | E-F5 for the wait and the fades. The return veil comes under E-H1 and is pending Sam (spec 12 item 10), whose question understates the wait (item 2) |
+| D2 | PASS | Unchanged: `backFade(dir, true)` is `null` and `reduced()` is read live; the landing's `@view-transition` is `none` under reduced motion |
+| D3 | FAIL | Iteration 1's two failures are fixed. A skipped cross-fade no longer ends the 3D path: seen live on iteration 2's build (`hero3d loading`, `#intro.ret`, `__skreedDead` false). Back to top's way home is not a return visit, by source and unit test. New with iteration 3: a return visit that stalls lands on the soft poster with nothing centred, and the island then scrolls it (item 1) |
+| D4 | PASS | Unchanged: `.press` on the link only |
+| E1 | BLOCKED | `/web-design-guidelines` is not installed (item 6) |
+| E2 | BLOCKED | `visual-critique` is not installed (item 6). The reviewer's critique by eye is in the notes |
+| E3 | UNPROVEN | A real link named by its text, `hidden` until shown, with the `.ring2` ring. The contrast criterion 6 asks for (three families, both sizes, median of 10 frames at 2.9 s) and the keyboard rows need the browser (items 3 and 4). The reviewer's estimate covers Blissful Blue only (17.6:1 to 19.4:1, iteration 1) |
+| E4 | PASS | Writes no data; `family_back` is a local `skreed:track` event |
+| E5 | n/a | No database |
+| G1, G3, G4, G6, G7, G8 | PASS | Not touched. `dist/` has the branded 404, unique titles and descriptions, the icon set and manifest, `robots.txt` and `sitemap.xml` |
+| G2, G11 | n/a | E-G2 for the landing; no Reserve on the family pages since round 3 |
+| G5, G15, G16, G18, G19, G23, G24, G26 | FAIL | Carried, not this round's. Missing in `dist/`: an `og:image`, the privacy and terms pages, analytics, a visible contact line with the reply promise, the FAQ, and LocalBusiness JSON-LD (item 7) |
+| G9, G12 | PASS | No image added; no data loaded |
+| G10 | UNPROVEN | The control was measured at 390 and 1280 only (item 3) |
+| G13, G14, G17, G20, G22, G25 | n/a | No form, thanks state, cookies, cutover or founders' note here; breadcrumbs n/a on the teaser |
+| G21 | UNPROVEN | The link goes to `/#families`, and since iteration 2 the landing stays on the 3D path (seen live). That it ends at section 2 with the gems live (the snap to 14.5 screens and the lift) is shown by source tests and the built files only; the owner's pane could show no 3D page on iteration 3's build (item 3). On every path the landing carries the families' links, so it is never a dead end |
+| G27 | PASS | Nothing fabricated |
+| H | FAIL | As D3: a return visit's loading and slow-network rows (item 1). H1: the veil is E-H1 |
+| F1 | FAIL | Criterion 5 and step 3 fail on item 1, and section 22 understates the wait to Sam (item 2). Criteria 3 and 6 are unproven |
+| F2 | PASS | No TODO, placeholder, lorem or commented-out code in the 118 added lines |
+
+### Acceptance criteria (round 4, section 22)
+
+| # | Verdict | Evidence |
+|---|---|---|
+| 1 | PASS | Unchanged since iteration 1. In iteration 3's `dist/`: exactly one `a#famBack.fam-back.ring2.press` on each of the ten pages, with `href="/#families"`, `hidden` and "Back to main page", the body's last element after `a#toTop`; none on `/`. The owner's computed styles from iteration 1 stand: iterations 2 and 3 change only how the bottom offset is written |
+| 2 | PASS | `backTimer` by unit test, and the owner's live run through the `back()` hook on iteration 1's build. Iteration 2 changed only where the exit starts: the computed opacity, read before the cancel (`back.test.ts`). For a control that is fully shown that is 1, as before. The held-clock rows are by source, since `back.spec.ts` did not run |
+| 3 | UNPROVEN | The wording now reads the layout viewport's centre, so the owner's 1280 measurement (x 632.4 beside a 15 px classic scrollbar) meets it, and `back.spec.ts` measures against `clientWidth / 2`. Measured at two of the eight sizes (iteration 1). 360 x 780, 375 x 667, 430 x 932, 768 x 1024, 844 x 390 and 900 x 600 need the browser run (item 3) |
+| 4 | PASS | By source and unit test, unchanged: `html:not(.m3d) .fam-back` and `[hidden]` are `display: none`, and `fam:grid` calls `backReset()`. The grid rows of `back.spec.ts` did not run |
+| 5 | FAIL | **The press:** a real click reached `/#families` (live, iterations 1 and 2). One `family_back`, no `preventDefault`, no `family_open`: by source and unit test. **The landing:** on the 3D path it now stays 3D (live, iteration 2); section 2 at rest with the gems live is unproven (item 3). A return that falls to the hard poster centres `nav#families` (live, iteration 2, sv 0.67). **Where it fails:** a return visit that stalls lands on the soft poster with nothing centred, and the island then scrolls it (item 1). The poster tier proper (`links.ts`) was not tried |
+| 6 | UNPROVEN | The contrast row needs medians for Frosty White, Mellow Yellow and Blissful Blue at both sizes (item 4); the keyboard and reduced-motion rows need the browser (item 3). By source, as in iteration 1: last in the body, the `.ring2` ring, focus never moved, no Escape handler, `#live` untouched, opacity only |
+| 13, step 3 | FAIL | The arrival is fixed: the landing stays on the 3D path under the veil (live, iteration 2). The snap to 14.5 screens and the lift onto the gems are shown by source tests and the built files only. A stall under the veil fails, by source (item 1). Back to top's way home is not a return visit, by source and unit test |
+
+### Verdict: FAIL
+
+Items 1 and 2 are code and document changes that can be made on this machine. Items 3 to 7 are open records: each needs a browser, a tool or an input this machine does not have.
+
+1. **A return visit that stalls must land on the families, and only the visitor may move it (D3, H, criterion 5, section 13 step 3, F1; read from the files, not run).**
+   - **What happens now.** This is the case the owner hit on iteration 2's build. With iteration 3:
+     - **The poster page shows.** The loader's `poster('', 'stall')` swaps `hero3d` for `poster`, so the track collapses to one screen (`shell.css` line 81) under a page that sat at 17.2 screens, or at 14.5. The soft poster's loader is transparent (line 90), so the visitor sees the poster page.
+     - **Nothing centres the families.** `onSoftPoster` returns at `boot.ts` line 60. `links.ts` centres `nav#families` only at load, off the 3D path, and `toPoster`'s centring (line 44, iteration 2) is no longer reached. So the browser decides where the families end up. With scroll anchoring they stay at the top edge, under the wordmark and Back to top, as in iteration 1's landing frames; without it, the shorter page clamps somewhere else.
+     - **The island scrolls the poster page.** The island keeps loading. `hero.ts` step 18 (lines 212 to 214) calls `snapTo(S2T.LAND)` with no check for the poster. In the owner's case, a stall before any progress, that scrolls the poster page to 14.5 screens (or its end): away from the families, under a visitor who may be reading.
+     - **The recovery does not wait for the gems.** On frame2 the loader's recovery branch (`loader.inline.js` line 64) swaps back to `hero3d` and lifts at once. So the 3D page can show at the poster page's scroll before `settle` snaps it to section 2. `hero-architecture.md` 7.3 step 3 still says the recovery happens "while `scrollY` is at most 8, so nothing jumps", which no longer holds here.
+     - **What it replaced.** On iteration 2's build the same stall ended on the hard poster with the families centred, the fallback the owner saw work. Iteration 3 replaces it with a recovery that moves the page twice.
+   - **Change.**
+     - `boot.ts` `onSoftPoster`, on a return visit: do not return with no rule.
+       - Centre `nav#families` as `toPoster` does (`scrollIntoView({ block: 'center', behavior: 'instant' })`), then read `scrollY`.
+       - Keep the scroll rule, measured from that position: a scroll of more than 8 px from it calls `toPoster('soft-then-scrolled')`.
+       - Then neither the collapse nor the centring is taken for the visitor's own scroll.
+     - `boot.ts` `toPoster`: centre the families only when the loader was not already on its soft poster (`s.mode !== 'poster'`, read before the abort). From a soft poster, keep the visitor's place, as every soft poster does.
+     - `hero.ts`:
+       - `snapTo` does not scroll while `html.poster` is set (step 18 and `settle`);
+       - on a return visit, register `life.onRecover(() => snapTo(S2T.LAND))`, so a recovery puts section 2 in place as the lift starts.
+     - Amend `hero-architecture.md` 4.3 item 8 and 7.3 (steps 2 and 3) and the spec's Iteration 3 paragraph to match. Assert the three changes by source in `return-path.test.ts`.
+2. **Tell Sam how long the plain screen can last (F1; spec 12 item 10, which D1 grades as built until he answers).**
+   - **What the spec says.** For Sam item 5 (`family-page.md` line 703) says the way back shows a plain night screen for "about 2 to 6 s".
+   - **What the code does.** The loader's stall rule (`loader.inline.js` line 66) holds that screen for up to 20 s with no progress, or 12 s once the scene is in.
+     - On a slow device it can hold longer: a gap of more than 500 ms between frames is not counted (line 60), and the owner's stall came after about 60 s.
+     - From 4 s without progress it shows "Still loading" or "Slow connection" (line 65).
+     - After item 1, a stall then shows the poster page centred on the families, and the gems once the 3D arrives, unless the visitor has scrolled.
+   - **Change.** Add these points to item 5, so his answer covers the slow case as well as the usual one.
+3. **Run the browser rows on a machine with Playwright's Chromium (B1, G10, G21, criteria 3, 5 and 6, section 13 step 3; open record).** Use the `PUBLIC_FAMILY_3D=on npm run build:test` build. It should cover:
+   - `back.spec.ts` in full: the eight sizes of criterion 3, the held-clock rows of criteria 2 and 6, the grid rows of criterion 4, and the press on both landing paths;
+   - the landing after the press at 390 x 844 and 1280 x 800: the veil, the snap to 14.5 screens, `nav#families[data-placed]` and no loader. Take `family-r4-{390,1280}-landing-3d.png` and `-landing-poster.png`;
+   - the console at the press, to record whether the "Transition was skipped" line is gone (see the notes);
+   - once item 1 is in, a stall under the veil, with the island held at a milestone (`__skreedStall`) or its data held back by route.
+4. **Measure the words' contrast for the three families (E3, criterion 6, A1 rule 7; open record).**
+   - Measure Frosty White (Snow), Mellow Yellow (Sunbeam) and Blissful Blue (Sky) at 390 x 844 and 1280 x 800, at 2.9 s, taking the median of 10 frames for each.
+   - Write the six figures in this log. A median under 4.5:1 keeps E3 failing.
+5. **Run Lighthouse mobile (C4; open record)** on a family page of the 3D build and on `/#families`, and paste the numbers here.
+6. **E1 and E2 stay BLOCKED (open record).** Install `/web-design-guidelines` and `visual-critique` where the loop runs, or have Sam accept the hand-applied pass.
+7. **The site essentials, carried and not this round's (A1 rules 46 and 47; G5, G15, G16, G18, G19, G23, G24, G26; open record).** Still missing in `dist/`:
+   - the `og:image`;
+   - the privacy and terms pages;
+   - analytics;
+   - a visible contact line with the reply promise;
+   - the FAQ;
+   - LocalBusiness JSON-LD.
+
+   They belong to the site-essentials pass.
+
+### Notes (not graded as FAIL)
+
+- **The console line on arrival.**
+  - **What is handled.** A `ViewTransition` has three promises: `ready`, `finished` and `updateCallbackDone`. The Gate now catches all three on the landing's inbound transition, in the head, before the first render (`gate.inline.js` line 15). So, by source, any rejection from that object is handled.
+  - **What is not proven.** That the line the owner saw on iteration 2's build came from that object. The pane's console may keep the family page's lines across the navigation, and the landing cannot reach the family page's outgoing transition.
+  - **Either way,** the line cannot reach the hero again, because `boot.ts` lets every `AbortError` pass, and no checklist line asks for a clean console. The next press records it (item 3).
+- **`isAbortError` is broad.** Every `AbortError` passes the guard, not only a skipped transition. Before the hero's first frame (`__heroStarted`, `loop.ts` line 45) the island has no abort of its own that could go unhandled: its data promises are caught in `boot.ts`, and section 4 loads after the first frame. So nothing is lost today.
+- **Back to top on the poster tier.**
+  - `links.ts` (since 2026-10-09) centres the families on any `back_forward` entry. On the poster tier the loader returns before its `TT` rule (no `html.loading`).
+  - So on that tier, Back to top's way home on a cache miss comes up at the families, not at section 1.
+  - This is older than this round, and not graded.
+- **Back to top's dropped hash.** Iteration 2 drops the fragment with `replaceState` during the load. Whether Chrome's fragment scroll then stays at the top is read from the files, not seen.
+- **Visual critique by eye (folded in for E2).** The frames have not changed, so iteration 1's critique holds:
+  - at 390 the two bottom controls are out of line, one centred and one right-aligned, 8 px apart;
+  - both read "Back to", and both lead to the landing.
+
+  Both points are pending Sam under D1. Two new readings:
+  - At 1280 the cases cover most of GO BEYOND BASIC in the after frame. That is round 3's argument screen, not this control.
+  - The landing frames, iteration 1's poster fall, show what a stalled return can show again under item 1:
+    - at 1280, Frosty White's circle on the wordmark and Roaring Red's under Back to top;
+    - at 390, the first row tight under the wordmark, with the rest of the screen empty night.
+- **Unchanged from iteration 1:**
+  - spec 13 step 3's condition: any `back_forward` entry is a return visit;
+  - the iPhone question: `innerHeight` against `100svh`;
+  - the race between frame2 and the gems, read from the files only;
+  - the stale `--dur-out` comment in `tokens.css`;
+  - spec 12 items 6 to 10, pending Sam, graded as built until he answers.
+
+## Round 4, iteration 4, 2026-10-26: FAIL
+
+Iteration 4 (8437569, five files, 34 lines in and 18 out) answers items 1 and 2 of the iteration 3 verdict above. This entry grades those two items again, then restates the open records and the items pending Sam. Every other row stands as graded in iteration 3.
+
+### How it was checked
+
+- **The commit, read in full:**
+  - `boot.ts`: `toPoster`'s `fresh` flag (lines 33, 36 and 46), and `onSoftPoster`'s centring and base (lines 65 and 66);
+  - `hero.ts`: the `snapTo` guard (line 203) and the `life.onRecover` hook (line 216);
+  - `return-path.test.ts`;
+  - `hero-architecture.md` 4.3 item 8 and 7.3 steps 2, 3 and 6;
+  - `family-page.md` For Sam item 5 (line 703) and the Iteration 4 paragraph.
+- **The paths through it, read in the files:**
+  - the loader's `poster()`, `fail()` and `state()`, and its recovery branch (`loader.inline.js` line 64);
+  - the Gate's module load-error catch (`gate.inline.js` line 17);
+  - `bridge/loader.ts`, whose `__introDone` runs `life.recover()` before the hero's own work;
+  - `scrollMap.ts`: the followers' `snap` sets two numbers and writes no style.
+- **Tests, run by the reviewer:** `test:family` 61 of 61 pass; `test:unit` 187, with 186 passing and 1 skipped.
+- **The builder's `dist/`** (rebuilt at 14:15, staging, hooks on), read only:
+  - the boot chunk carries the centring, the base and `fresh`, and the hero chunk carries the `snapTo` guard;
+  - every inline script on `/` (3) and on `/shades/blissful-blue/` (2) still has its sha256 in `_headers`.
+- **Grep of the 40 added lines:** no em or en dash, emoji, TODO, FIXME or lorem.
+- **Not done:** no browser here, as before. Nothing in this entry was seen running.
+
+### Items re-graded
+
+| Iteration 3 item | Verdict | Evidence |
+|---|---|---|
+| 1. A return visit that stalls lands on the families, and only the visitor moves it | FAIL | **Done as asked, by source.** A stall or offline soft poster on a return visit centres `nav#families`, reads `scrollY` after it, and turns hard only on a scroll of more than 8 px from there; from the top the rule is `scrollY > 8` as before. `snapTo` never scrolls while `html.poster` is set, at step 18 and in `settle` alike. A recovery runs `life.onRecover(() => snapTo(S2T.LAND))` as the lift starts; `__introDone` runs `life.recover()`, which also removes the scroll listener in the same task as the snap, so the snap's scroll event finds no listener. A hard turn from that soft poster keeps the visitor's place. **New gap, from the reviewer's own wording in iteration 3.** `fresh = s.mode !== 'poster'` takes every loader poster for a soft poster that `onSoftPoster` has centred, but the `fail` kind never reaches that centring. On a return visit, a module script that fails to load before the hero's first frame trips the Gate's catch (`gate.inline.js` line 17). Its `fail('')` makes the loader's `poster(..., 'fail')` set its mode to `poster` and collapse the track. Then `onSoftPoster('fail')` (`boot.ts` line 56) calls `toPoster('module-load-error')`, where `fresh` is false: `nav#families` is not centred, and the page stays wherever the collapse left it. With scroll anchoring that is the top edge, under the wordmark and Back to top, as in iteration 1's landing frames (iteration 1's item 5). Iterations 2 and 3 centred this case; iteration 4 does not. `hero-architecture.md` 7.3 step 6 says "from a soft poster `onSoftPoster` centred the families already", which is not true for `fail` |
+| 2. Tell Sam how long the plain screen can last | PASS | For Sam item 5 (line 703) now gives: about 2 to 6 s on a warm cache; the stall rule's 20 s with no progress, or 12 s once the scene is in; gaps of more than 500 ms between frames, which are not counted; "Still loading" or "Slow connection" from 4 s without progress; and what a stall shows, the poster page centred on the families, then the gems once the 3D arrives unless the visitor has scrolled. Each point matches `loader.inline.js` lines 60, 65 and 66 and `boot.ts` as built |
+
+### Rows these items touch
+
+| Row | Verdict | Evidence |
+|---|---|---|
+| D3, H | FAIL | The stalled return now holds by source. A module load failure on a return visit is not centred (item 1) |
+| Criterion 5 | FAIL | The poster row on that same path (item 1). The 3D row is still unproven (item 2) |
+| 13, step 3 | UNPROVEN | By source, the arrival, the stall, the recovery and Back to top's way home now hold; none of them has been seen in a browser (item 2) |
+| F1 | FAIL | Criterion 5 (item 1). Criteria 3 and 6 are unproven (items 2 and 3). The spec's account of what ships is now accurate for the wait (item 2 of iteration 3) |
+
+### Verdict: FAIL
+
+Item 1 is a code and document change that can be made on this machine. Items 2 to 6 are open records.
+
+1. **Centre the families on a return visit that falls through the module load-error catch (D3, H, criterion 5, F1; read from the files, not run).**
+   - **Change in `boot.ts`.** Replace `fresh` with a flag that records what happened: whether `onSoftPoster` centred the families.
+     - Declare `let softCentred = false;` at module level.
+     - Set it to true where `onSoftPoster` centres (line 65, on a return visit).
+     - In `toPoster`, write `const fam = !softCentred && location.hash === '#families' ? $('families') : null;`.
+     - Drop lines 33 and 36.
+   - **The result.** A stall or offline soft poster still keeps the visitor's place on a hard turn, and a `fail` on a return visit is centred again, as in iterations 2 and 3.
+   - **Documents and tests.** Amend `hero-architecture.md` 7.3 step 6 and 4.3 item 8, and the spec's Iteration 4 paragraph, to say this. Assert it by source in `return-path.test.ts`:
+     - the flag is set beside the centring;
+     - `toPoster` reads it, and nothing reads `s.mode` for the centring.
+2. **The browser rows (B1, G10, G21, criteria 3, 5 and 6, section 13 step 3; open record).** Run on a machine with Playwright's Chromium and the `PUBLIC_FAMILY_3D=on npm run build:test` build:
+   - `back.spec.ts` in full: criterion 3's eight sizes, the held-clock rows of criteria 2 and 6, the grid rows of criterion 4, and the press on both landing paths;
+   - the landing after the press at 390 x 844 and 1280 x 800: the veil, the snap to 14.5 screens, `nav#families[data-placed]` and no loader, with `family-r4-{390,1280}-landing-3d.png` and `-landing-poster.png`;
+   - the console at the press, to see whether the "Transition was skipped" line is gone;
+   - a stall under the veil, with the island held at a milestone (`__skreedStall`) or its data held back by route: the families centred on the poster page, then section 2 on recovery;
+   - after item 1, a module script refused by route on `/#families`: the families centred.
+3. **The words' contrast for the three families (E3, criterion 6, A1 rule 7; open record).**
+   - Measure Frosty White (Snow), Mellow Yellow (Sunbeam) and Blissful Blue (Sky) at 390 x 844 and 1280 x 800, at 2.9 s, taking the median of 10 frames for each.
+   - Write the six figures in this log; a median under 4.5:1 keeps E3 failing.
+4. **Lighthouse mobile (C4; open record)** on a family page of the 3D build and on `/#families`, with the numbers pasted here.
+5. **E1 and E2, BLOCKED (open record).** `/web-design-guidelines` and `visual-critique` are not installed where the loop runs. Install them there, or have Sam accept the hand-applied pass.
+6. **The site essentials, carried and not this round's (A1 rules 46 and 47; G5, G15, G16, G18, G19, G23, G24, G26; open record).** Still missing in `dist/`:
+   - the `og:image`;
+   - the privacy and terms pages;
+   - analytics;
+   - a visible contact line with the reply promise;
+   - the FAQ;
+   - LocalBusiness JSON-LD.
+
+### Pending Sam (graded as built until he answers)
+
+Spec 12 items 6 to 10, that is the spec's "For Sam" 1 to 5:
+
+- the words, "Back to main page" or "Back to the families";
+- the wait, 2.5 s;
+- the place: centred under the letters, one row above Back to top on phones;
+- whether the control also comes on the fourth case type (Armor);
+- the way back's plain night screen with no count, now with its slow case stated.
+
+The two weaknesses of the critique by eye (the bottom controls out of line, and both reading "Back to") belong to his answer on the place and the words.
+
+**Runnable on this machine:** item 1 only (two lines of `boot.ts`, the two document paragraphs and the test). Everything else needs a browser, a tool or an input this machine does not have.
+
+### Notes (not graded as FAIL)
+
+- **A recovery does not wait for the gems.** On a soft poster's recovery the loader lifts on frame2 alone, and the snap puts section 2 in place as the lift starts. Unlike a return visit with no stall, nothing waits for `section2.ready`, so the 600 ms fade can open on gems still being built. The reviewer asked for this in iteration 3, and frame2 still gates the lift (hero.md 12.7).
+- **A scroll the visitor did not make.** On the centred poster page, a later layout shift above `nav#families` that scroll anchoring corrects by more than 8 px would count as the visitor's scroll. The result is the hard poster, keeping the place, with the families still in view. Nothing above the families is known to change height there.
+- **Followers.** `snapTo` still sets the scroll followers on the poster page. `scrollMap.ts` shows they are two numbers with no style written, so nothing on the poster page moves.
+
+## Round 4, iteration 5, 2026-10-26: FAIL
+
+Iteration 5 (0941e13; 4 files, 16 lines in and 11 out) answers item 1 of the iteration 4 verdict above. It is the loop's last iteration. Item 1 now passes. The round still fails, but only on open records: rows that need a browser (UNPROVEN), tools that are not installed (BLOCKED) and carried site essentials (FAIL). No code or document change is outstanding.
+
+### How it was checked
+
+- **The commit, read in full:**
+  - `boot.ts`: `softCentred` declared at line 19, read in `toPoster` at line 47, and set beside the return-visit centring in `onSoftPoster` at line 66;
+  - `return-path.test.ts`;
+  - `hero-architecture.md` 4.3 item 8 and 7.3 step 6;
+  - the spec's Iteration 5 paragraph in section 22.
+- **Tests, run by the reviewer:** `test:family` 61 of 61 pass; `test:unit` 187, with 186 passing and 1 skipped.
+- **The builder's `dist/`,** rebuilt at 14:22, read only:
+  - the boot chunk declares the flag false, sets it beside the centring and reads it in `toPoster`;
+  - every inline script on `/` (3) and on `/shades/blissful-blue/` (2) still has its sha256 in `_headers`.
+- **Grep of the 21 added lines:** no em or en dash, emoji, TODO, FIXME or lorem.
+- **Not done:** no browser here. Nothing in this entry was seen running.
+
+### Item re-graded
+
+| Iteration 4 item | Verdict | Evidence |
+|---|---|---|
+| 1. Centre the families on a return visit that falls through the module load-error catch | PASS | By source and by the built files. `softCentred` is set only where `onSoftPoster` centres, on a stall or offline soft poster on a return visit; `toPoster` centres when `!softCentred && location.hash === '#families'`; the `fresh` and `s.mode` lines are gone. A `fail` returns at `boot.ts` line 57 before that branch, so the Gate's module load-error fall now centres the families again, as do a lost context and a failed fetch. A hard turn after a centred soft poster keeps the visitor's place. `return-path.test.ts` asserts the flag beside the centring, `toPoster` reading it, no `fresh` or `s.mode` read for the centring, and three occurrences of the flag. `hero-architecture.md` 4.3 item 8 and 7.3 step 6 now say the same |
+
+With item 1 in, D3, H, criterion 5 and section 13 step 3 hold by source. They move from FAIL to UNPROVEN until the browser run, and F1 is UNPROVEN with them.
+
+### Open records
+
+- The browser run (B1, G10, G21, D3, H, criteria 3, 5 and 6, step 3), needing Playwright's Chromium on the `build:test` build. It should cover:
+  - `back.spec.ts` in full;
+  - the landing after the press at both sizes, with the `-landing-3d` and `-landing-poster` PNGs;
+  - the console at the press;
+  - a stall under the veil;
+  - a module script refused on `/#families`.
+- The words' contrast for Frosty White, Mellow Yellow and Blissful Blue at both sizes, as the median of 10 frames (E3, criterion 6, A1 rule 7).
+- Lighthouse mobile on a family page and on `/#families` (C4).
+- E1 and E2: BLOCKED, since `/web-design-guidelines` and `visual-critique` are not installed.
+- The carried site essentials: the `og:image`, privacy and terms, analytics, the contact line with the reply promise, the FAQ, and LocalBusiness JSON-LD (A1 rules 46 and 47; G5, G15, G16, G18, G19, G23, G24, G26).
+
+### Pending Sam (graded as built until he answers; spec 12 items 6 to 10)
+
+- The words: "Back to main page" or "Back to the families".
+- The wait: 2.5 s.
+- The place, centred under the letters and one row above Back to top on phones. The critique's two points go with this item and the words: the bottom controls are out of line, and both read "Back to".
+- Armor: whether the fourth case type gets the control too.
+- The way back's plain night screen with no count, its slow case now stated.
+
+**Runnable on this machine:** nothing is outstanding. Every remaining item needs a browser, a tool or an input this machine does not have.
+
+### Notes (not graded as FAIL)
+
+- **The flag outlives a recovery.** After a centred soft poster recovers on frame2, `softCentred` stays true. A later hard failure in the 3D page then keeps the visitor's place, as on any visit, instead of centring the families again. That suits a visitor who has been reading.

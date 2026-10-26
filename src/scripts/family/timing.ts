@@ -11,3 +11,8 @@ export const LINEUP_RATE = 10.94;                            // per second: 50% 
 export const TURN_MS = 600;                                  // the front case's turn
 export const TURN_EASE = [0.45, 0, 0.55, 1] as const;        // --ease-turn
 export const CANVAS_FADE_MS = 200;                           // poster to canvas
+// the argument screen's "Back to main page" (section 22, exception E-F5): the wait, then the fade in and out, whose CSS
+// twins are --dur-fade and --dur-out in src/styles/tokens.css (the timing test keeps them equal)
+export const BACK_DELAY_MS = 2500;                           // the argument screen on, then the control
+export const BACK_IN_MS = 400;                               // its fade in (--dur-fade)
+export const BACK_OUT_MS = 200;                              // its fade out (--dur-out)

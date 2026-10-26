@@ -1,7 +1,8 @@
 // Every string on the family pages (docs/specs/family-page.md section 3, 20 and 21). Pure functions of the data, shared
 // by the Astro components (build) and the page module (runtime), so the HTML and the live updates can never disagree.
 // No em dashes, no emojis, sentence case (CLAUDE.md rules 3, 16, 29). Round 3 (Sam, 2026-10-15): no eyebrow, no index
-// line, no family line in the HUD, no Reserve, no "Show swatches"; "All families" opens the switcher.
+// line, no family line in the HUD, no Reserve, no "Show swatches"; "All families" opens the switcher. Round 4 (Sam,
+// 2026-10-26, section 22): "Back to main page" on the argument screen.
 
 export interface CopyShade { readonly name: string; readonly index: number; readonly n: number; readonly nnn: string }
 
@@ -11,6 +12,7 @@ export const FAM_COPY = {
   home: 'Skreed home',
   families: 'Families',
   allFamilies: 'All families',
+  backHome: 'Back to main page',   // the argument screen's way out (round 4, section 22, Sam's words in sentence case)
   stage: (family: string, shade: string) => `24 ${family} cases in a row. ${shade} is in front.`,
   prev: 'Previous shade',
   next: 'Next shade',

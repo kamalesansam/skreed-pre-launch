@@ -9,6 +9,7 @@
    the logotype, above the riders and the sections (z-index 4, the logotype's layer). A family page: in the bar's free
    right end on phones; on the wide layout (the family page's own query) under "All families", clear of the Matte and
    Gloss switch at the bottom right. The veil is the --night layer the jump happens under (z-index 5, under the loader). */
+:root { --to-top-bottom: 14px; }   /* Back to top's bottom offset on a family page (DESIGN.md component dimensions); "Back to main page" stands one row above it on that offset (family.css .fam-back) */
 .to-top { position: fixed; z-index: 4; display: inline-flex; align-items: center; gap: var(--s1); min-height: 44px; padding: 0 var(--s2); font-family: var(--font-ui); font-size: var(--fs-label); font-weight: 600; line-height: 1; white-space: nowrap; text-decoration: none; color: var(--pearl-whisper); -webkit-tap-highlight-color: transparent; transition: transform var(--dur-press) var(--ease-standard); }
 .to-top[data-tone="light"] { color: var(--urban-slate); }
 .to-top[hidden] { display: none; }
@@ -21,7 +22,7 @@
 .to-top[data-page="home"] { top: calc(var(--inset) + env(safe-area-inset-top, 0px) + 11.625px - 22px); right: calc(var(--inset) + env(safe-area-inset-right, 0px) - var(--s2)); }
 @media (min-width: 1024px) { .to-top[data-page="home"] { top: calc(var(--inset) + env(safe-area-inset-top, 0px) + 16.47px - 22px); } }
 /* a family page: the bar's right end on phones (the bar is 72 px plus the safe area, its name on the left), above the bar */
-.to-top[data-page="family"] { z-index: 6; right: calc(var(--inset) + env(safe-area-inset-right, 0px) - var(--s2)); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+.to-top[data-page="family"] { z-index: 6; right: calc(var(--inset) + env(safe-area-inset-right, 0px) - var(--s2)); bottom: calc(var(--to-top-bottom) + env(safe-area-inset-bottom, 0px)); }
 @media (min-width: 900px) and (min-height: 600px) {
   .to-top[data-page="family"] { bottom: auto; top: calc(var(--inset) + env(safe-area-inset-top, 0px) + var(--mark-h) / 2 - 22px + 44px + var(--s1)); }
 }

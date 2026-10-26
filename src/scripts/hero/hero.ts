@@ -60,6 +60,10 @@ export async function startHero(o: StartOptions): Promise<void> {
   if (HOOKS) installStall();
   // the loader hands over at its cut: until then the hero holds the plotted pose exactly
   const initiallyIntroDone = !document.documentElement.classList.contains('loading');
+  // the return path (family-page.md 2.2 and 13, step 3): Back from a family page, or /#families; the loader is a veil and section 2 is
+  // the destination. The loader decided (loader.inline.js RET: isReturnVisit()'s two conditions, and not Back to top's way home, whose
+  // sessionStorage flag to-top.ts has cleared by now), so its decision is read, never made again
+  const ret = !!document.getElementById('intro')?.classList.contains('ret');
 
   // 1. the hero chunk and pieces.json
   const pieces = await data.pieces; life.check();
@@ -70,7 +74,7 @@ export async function startHero(o: StartOptions): Promise<void> {
   const tune = import.meta.env.PUBLIC_TUNE === '1' ? window.__skreedTune : undefined;
   const P: HeroParams = tune ? tune.params : heroParams(reduced);
   const dpr = Math.min(devicePixelRatio, touch ? DPR_CAP.touch : DPR_CAP.fine);
-  const intro = createIglooIntro({ reduced, touch, dpr, mist: P.mist, bloom: P.bloom, hooks: HOOKS });
+  const intro = createIglooIntro({ reduced, touch, dpr, mist: P.mist, bloom: P.bloom, hooks: HOOKS, skip: ret });
 
   // 3. renderer
   const canvas = document.getElementById('stage') as HTMLCanvasElement;
@@ -195,10 +199,35 @@ export async function startHero(o: StartOptions): Promise<void> {
   // 18. hooks, the loader's cut, the stage observer
   const loop = createLoop(ctx, pointer, labels, initiallyIntroDone, tex);
   life.onKill(() => { loop.stop(); labels.clear(); labels.dispose(); });
-  section2.snapTo = (screens) => { scrollTo({ top: Math.round(screens * innerHeight), behavior: 'instant' }); loop.snap(screens); };
+  // never a scroll of the poster page (a soft poster's one-screen track, boot.ts onSoftPoster): only the visitor moves that; the followers are set all the same, for the recovery
+  section2.snapTo = (screens) => { if (!document.documentElement.classList.contains('poster')) scrollTo({ top: Math.round(screens * innerHeight), behavior: 'instant' }); loop.snap(screens); };
   // section 1 in place (the back-to-top control, scripts/shell/to-top.ts): the loop's own jump, without the fourth wipe
   window.__skreedTop = () => { scrollTo({ top: 0, behavior: 'instant' }); loop.snap(0); ctx.room?.reset(); };
   life.onKill(() => { window.__skreedTop = undefined; });
+  // the return path (family-page.md 2.2 and 13, step 3; built with round 4, section 22): Back from a family page, or
+  // /#families, the landing is section 2 at rest with the gems live, never the quiz the fragment's own scroll aimed at
+  // (nav#families stands in flow after the track). The page and both followers snap to S2T.LAND now, under the loader's
+  // veil (loader.inline.js: a return visit shows no wordmark and schedules no exit), and once the loader has its frame2
+  // and the gems are built (or have failed, or the loop is not running to build them) the veil lifts onto them through
+  // the loader's skip path. frame2 still gates the lift, so the readiness model holds (hero.md 12.7)
+  if (ret) {
+    const snapTo = section2.snapTo;
+    snapTo(S2T.LAND);
+    life.onRecover(() => snapTo(S2T.LAND));   // a soft poster's recovery on frame2 (the loader's recovery branch, then __introDone): section 2 in place as the lift starts
+    const settle = () => {
+      if (life.dead) return;
+      const L = window.__skreedLoader;
+      if (!L) return;
+      if (!L.state().ready || !(section2.ready || section2.failed || !loop.running)) { requestAnimationFrame(settle); return; }
+      snapTo(S2T.LAND); L.skip();
+    };
+    requestAnimationFrame(settle);
+  }
+  // restored from the back-forward cache with its context gone (iOS can return a cached page that way): the hero's one
+  // answer to a lost context is the poster page (boot.ts, no restore attempt), reached through onHardFail
+  const onShow = (e: PageTransitionEvent) => { if (e.persisted && renderer.getContext().isContextLost()) o.onHardFail('webglcontextlost after restore'); };
+  addEventListener('pageshow', onShow);
+  life.onKill(() => removeEventListener('pageshow', onShow));
   if (HOOKS) installHooks(ctx, loop, { skyClass: () => ctx.sky.cls });
   // section 4 (docs/specs/section-4.md 5; section-4-flux.md 5, "Loading"): its director chunk comes at idle once the intro
   // ends (phase 0: the cloud's pass readied, so a wrap from the top has its cover), or when the quiz or the section itself

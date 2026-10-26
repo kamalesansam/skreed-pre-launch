@@ -6,7 +6,7 @@
 // No three.js import: the boot chunk stays small, and the island loads only on the 3D tier.
 import { PORTRAIT_ASPECT, SOFTWARE_GL, TEXTURE_PATH } from '../config/hero.ts';
 import { COPY_LD } from '../config/copy.ts';
-import { createLife, IslandDead } from './hero/bridge/life.ts';
+import { createLife, isAbortError, IslandDead } from './hero/bridge/life.ts';
 import { prefetchHeroData, dataPromises } from './hero/data/assets.ts';
 import { resetRiders, type RideEls } from './hero/scroll/reset.ts';
 
@@ -14,6 +14,9 @@ const H = document.documentElement;
 const life = createLife();
 const $ = (id: string) => document.getElementById(id);
 const els: RideEls = { heroCopy: $('heroCopy'), cue: $('cue'), labels: $('labels'), siteLogo: $('siteLogo') };
+// a return visit's soft poster (stall, offline) has centred nav#families (onSoftPoster): a hard turn after it keeps the visitor's
+// place; a hard fall that never passed there (the Gate's module load-error fail, a lost context, a failed fetch) centres them itself
+let softCentred = false;
 
 /** A hardware WebGL2 context (architecture 8): SwiftShader passes failIfMajorPerformanceCaveat, so the renderer string decides. */
 function hardwareGL(): boolean {
@@ -41,7 +44,9 @@ function toPoster(reason: string, err?: unknown): void {
   resetRiders(els);                                             // 4. ride styles, tone, labels (section 2 and the intro reset in their disposers)
   for (const e of document.querySelectorAll('[inert]')) e.removeAttribute('inert');   // 5.
   const after = track ? track.offsetHeight : 0;                 // 6. keep what the visitor was reading in place
-  if (y < before - innerHeight) scrollTo({ top: 0, behavior: 'instant' });
+  const fam = !softCentred && location.hash === '#families' ? $('families') : null;   // a return visit that fell to the poster (family-page.md 2.2): the families centred, as links.ts does off the 3D path, unless a soft poster centred them already and the visitor may have moved since
+  if (fam) fam.scrollIntoView({ block: 'center', behavior: 'instant' });
+  else if (y < before - innerHeight) scrollTo({ top: 0, behavior: 'instant' });
   else scrollTo({ top: y - (before - after), behavior: 'instant' });
   dispatchEvent(new Event('scroll'));                           // 7. the inline cue check recomputes the cue
   if (err === undefined) console.warn('[hero] ' + reason); else console.warn('[hero] ' + reason, err);   // 8.
@@ -52,7 +57,15 @@ function onSoftPoster(kind: 'stall' | 'offline' | 'fail'): void {
   if (kind === 'fail') { if (!life.dead) toPoster('module-load-error'); return; }
   if (life.dead) return;
   resetRiders(els);
-  const onScroll = () => { if (scrollY > 8) toPoster('soft-then-scrolled'); };
+  // a return visit (family-page.md 13 step 3; the loader's decision, #intro.ret) sat deep in the page by design, at the
+  // fragment's scroll or at section 2's rest, and the track has just collapsed to one screen under it: the poster page is
+  // centred on the families, as toPoster does, and the scroll rule is measured from there, so neither the collapse nor the
+  // centring counts as the visitor's scroll. The island keeps loading; on frame2 the recovery lifts and hero.ts's
+  // life.onRecover hook puts section 2 in place. Only the visitor moves the poster page, and a real failure still ends it
+  const ret = !!document.getElementById('intro')?.classList.contains('ret');
+  if (ret) { $('families')?.scrollIntoView({ block: 'center', behavior: 'instant' }); softCentred = true; }
+  const base = ret ? scrollY : 0;
+  const onScroll = () => { if (Math.abs(scrollY - base) > 8) toPoster('soft-then-scrolled'); };
   addEventListener('scroll', onScroll, { passive: true });
   const off = () => removeEventListener('scroll', onScroll);
   life.onRecover(off); life.onKill(off);
@@ -72,7 +85,9 @@ async function boot(): Promise<void> {
   const onLost = () => toPoster('webglcontextlost');   // no restore attempt
   canvas?.addEventListener('webglcontextlost', onLost);
   const onError = (e: ErrorEvent) => { if (!window.__heroStarted) toPoster('error before start', e.error ?? e.message); };
-  const onRejection = (e: PromiseRejectionEvent) => { if (!window.__heroStarted && !(e.reason instanceof IslandDead)) toPoster('unhandled rejection before start', e.reason); };
+  // a skipped cross-document view transition into this page (a family page's "Back to main page" or wordmark, Back to top on a
+  // cache miss) rejects its promises with AbortError "Transition was skipped": the browser's own, never the island's failure
+  const onRejection = (e: PromiseRejectionEvent) => { if (isAbortError(e.reason)) return; if (!window.__heroStarted && !(e.reason instanceof IslandDead)) toPoster('unhandled rejection before start', e.reason); };
   addEventListener('error', onError); addEventListener('unhandledrejection', onRejection);
   life.onKill(() => { removeEventListener('error', onError); removeEventListener('unhandledrejection', onRejection); });
 

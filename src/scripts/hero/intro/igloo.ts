@@ -39,13 +39,15 @@ const BLOOMF = [1, 0.8, 0.6, 0.4, 0.2], BLOOMT = [1, 0.45, 0.15, 0.04, 0];   // 
 const SUBS = ['0123456789', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'];
 const glyphSub = (ch: string, k: number) => { for (const s of SUBS) { const i = s.indexOf(ch); if (i >= 0) return s[(i + 3 * k + 1) % s.length]; } return ch; };
 
-export interface IglooOptions { reduced: boolean; touch: boolean; dpr: number; mist: number; bloom: number; hooks: boolean }
+export interface IglooOptions { reduced: boolean; touch: boolean; dpr: number; mist: number; bloom: number; hooks: boolean;
+  /** a return visit (family-page.md 13 step 3: Back from a family page, or /#families): the shot is skipped, as for a hash */
+  skip?: boolean }
 
 export function createIglooIntro(o: IglooOptions): IntroDirector {
   const { reduced: reduce, dpr: DPR } = o;
   const HT = document.documentElement, LD = () => window.__skreedLoader, posterNow = () => !!(LD() && LD()!.state().mode === 'poster');
-  // the intro is skipped (end state at once) for reduced motion, ?intro=0 and deep links, as igloo skips it for a project link
-  const SKIP = reduce || new URLSearchParams(location.search).get('intro') === '0' || !!location.hash;
+  // the intro is skipped (end state at once) for reduced motion, a return visit, ?intro=0 and deep links, as igloo skips it for a project link
+  const SKIP = reduce || !!o.skip || new URLSearchParams(location.search).get('intro') === '0' || !!location.hash;
   const fontsP = Promise.race([document.fonts.load('400 24px "Open Sans"'), new Promise((r) => setTimeout(r, 3000))]).catch(() => 0);   // the number atlas
   const PEARL = new Color(PEARL_WHISPER);
   const FLATC = new Color().setRGB(0.007455, 0.007454, 0.008448);   // linear; ACES + sRGB output it as the loader's night (5,5,6)
