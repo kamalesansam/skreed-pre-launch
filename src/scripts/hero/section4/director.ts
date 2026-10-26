@@ -195,7 +195,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   const seamDraws = new Set<string>();
   const look = { yaw: 0, pitch: 0 };
   // the product's look from a pressed pointer or a finger (never on hover, X-14)
-  let pressed = false, lookX = 0, lookY = 0;
+  let pressed = false, aimed = false, lookX = 0, lookY = 0;
 
   // ---- the loop class, the loop elements, the stills and the carousel
   let cls: SceneClass = 'wide', clsFixed = false;
@@ -216,7 +216,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   }
   const tuneObj: CarouselTune = { stepMs: STEP.ms, sweepDeg: STEP.sweepDeg, sweepDegPortrait: STEP.sweepDegPortrait, fovStep: STEP.fovStep, fovReturnAt: STEP.fovReturnAt, lightStart: 0.5, lightSoft: 0.64, lightBoost: 0.17, keyLightMs: STEP.keyLightMs };
   const refreshTune = (P: RoomParams) => { tuneObj.stepMs = P.stepMs; tuneObj.sweepDeg = P.sweepDeg; tuneObj.sweepDegPortrait = P.sweepDegPortrait; tuneObj.fovStep = P.fovStep; tuneObj.fovReturnAt = P.fovReturnAt; tuneObj.lightStart = P.lightStart; tuneObj.lightSoft = P.lightSoft; tuneObj.lightBoost = P.lightBoost; tuneObj.keyLightMs = P.keyLightMs; };
-  const scenes: SceneDef[] = ROOM_SCENES.map((s, i) => ({ id: s.id, keyLight: s.keyLight, baseYaw: s.baseYaw, product: s.product, shade: s.hex, finish: s.finish, still: () => loadStill(i), loop: video ? i : null }));
+  const scenes: SceneDef[] = ROOM_SCENES.map((s, i) => ({ id: s.id, keyLight: s.keyLight, baseYaw: s.baseYaw, basePitch: s.basePitch, product: s.product, shade: s.hex, finish: s.finish, still: () => loadStill(i), loop: video ? i : null }));
   const carousel: Carousel = createCarousel({ renderer, scenes, video, cls, reduced, tune: () => tuneObj, dpr: o.dpr });
   /** the carousel's loops and cloud clock run only while the scenes are drawn (never under the hall's frames) and the control allows */
   const syncMotion = () => carousel.motion(motionOn && state !== 'hall' && !(state === 'seam' && under === 'hall'));
@@ -399,9 +399,13 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
     }
   }
 
-  // ---- the product's look: a pressed pointer or a finger on the stage (section-4-flux.md 4; X-14)
-  const onDown = (e: PointerEvent) => { if (state !== 'world' || !inRoom) return; pressed = true; lookX = (e.clientX / innerWidth) * 2 - 1; lookY = 1 - (e.clientY / innerHeight) * 2; };
-  const onMove = (e: PointerEvent) => { if (!pressed) return; lookX = (e.clientX / innerWidth) * 2 - 1; lookY = 1 - (e.clientY / innerHeight) * 2; };
+  // ---- the product's look, the reference's cursor tilt (section-4-flux.md 4; X-14 as amended, E-S4-hover): a mouse or
+  // a pen by hovering anywhere in the viewport, a finger while it presses the stage; the pointer's place in minus 1 to 1,
+  // x right and y down as the reference reads it (clientX / innerWidth x 2 minus 1, clientY / innerHeight x 2 minus 1),
+  // and the last place holds when the pointer leaves or lifts, as the reference's does; the carousel eases toward it
+  const aim = (e: PointerEvent) => { aimed = true; lookX = (e.clientX / innerWidth) * 2 - 1; lookY = (e.clientY / innerHeight) * 2 - 1; };
+  const onDown = (e: PointerEvent) => { if (state !== 'world' || !inRoom) return; pressed = true; aim(e); };
+  const onMove = (e: PointerEvent) => { if (e.pointerType === 'touch' ? pressed : state === 'world' && inRoom) aim(e); };
   const onUp = () => { pressed = false; };
   addEventListener('pointerdown', onDown, { passive: true }); addEventListener('pointermove', onMove, { passive: true });
   addEventListener('pointerup', onUp, { passive: true }); addEventListener('pointercancel', onUp, { passive: true }); addEventListener('blur', onUp);
@@ -560,7 +564,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
           sayScene(to);
         }
         const live = state === 'world';
-        carousel.look(live ? lookX : 0, live ? lookY : 0, live && pressed);
+        carousel.look(live ? lookX : 0, live ? lookY : 0, live && aimed);
         carousel.scissor(null); carousel.update(f.t, f.dt, curW, curH); tex = carousel.out; toneDark = sceneTone();
         on = inRoom && qRaw > 0;   // not the hall's q: a wrap may land before the hall is in
       }

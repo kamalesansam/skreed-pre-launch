@@ -14,8 +14,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { BufferAttribute, BufferGeometry, Color, Group, Scene, Texture, type Object3D, type WebGLRenderer } from 'three';
-import { LIGHT, LINES, LOOP_ASPECT, PLACE, STEP, anglesAt, boxOverlap, cloudCover, coverFit, easeStep, fovAt, frameSource, insetPx, keyLight, lightGain, lightTarget, lightUp, linesBox, loopShouldPlay, loopShouldReset, planeCoverage, productFit, productPlacement, productScale, productScreenBox, productYaw, proximity, ringPlace, smoothstep, toView, type LoopClass } from '../../src/scripts/hero/section4/carousel-math.ts';
+import { BufferAttribute, BufferGeometry, Color, DoubleSide, Group, Mesh, MeshPhysicalMaterial, Scene, Texture, type Object3D, type WebGLRenderer } from 'three';
+import { LIGHT, LINES, LOOP_ASPECT, PLACE, STEP, anglesAt, boxOverlap, cloudCover, coverFit, easeStep, fovAt, frameSource, insetPx, keyLight, lightGain, lightTarget, lightUp, linesBox, loopShouldPlay, loopShouldReset, planeCoverage, poseWeight, productFit, productPlacement, productScale, productScreenBox, productYaw, proximity, ringPlace, smoothstep, toView, type LoopClass } from '../../src/scripts/hero/section4/carousel-math.ts';
 import { VIDEO, allowed, create as createPool, wholeBuffered, type VideoElement, type VideoHost, type VideoPool } from '../../src/scripts/hero/section4/video.ts';
 import { CLASS_FILL, CLOUD, EXHIBIT, FINISH, LIGHTS, PARTS, SHADE, createCarousel, type CarouselTune, type SceneDef } from '../../src/scripts/hero/section4/carousel.ts';
 
@@ -185,6 +185,12 @@ test('productYaw: face out at every rest, edge-on at every half step; the scale 
     near(Math.cos(productYaw(i + 0.5, i, 0)), 0, 1e-12, `edge-on after ${i}`);
     near(Math.cos(productYaw(i + 0.5, i + 1, 0)), 0, 1e-12, `edge-on before ${i + 1}`);
     near(productYaw(i + 1, i, base) - productYaw(i, i, base), -Math.PI, 1e-12, 'minus pi a step');
+    // the authored rest pose: all of it at rest, none at either half step (the edge-on swap), between in between
+    assert.equal(poseWeight(i, i), 1, `the whole pose at rest on ${i}`);
+    assert.equal(poseWeight(i + 0.5, i), 0, `no pose at the swap after ${i}`); assert.equal(poseWeight(i - 0.5, i), 0, `no pose at the swap before ${i}`);
+    assert.equal(poseWeight(i + 0.7, i), 0, 'none past the half either');
+    const w = poseWeight(i + 0.25, i); assert.ok(w > 0 && w < 1, `part of the pose a quarter step out (${w})`); near(w, 0.5, 1e-12, 'the cubic smoothstep\'s half at the quarter');
+    assert.ok(poseWeight(i + 0.1, i) > poseWeight(i + 0.2, i), 'falling away from rest');
   }
   assert.equal(productScale(0, 1, 2), 1); assert.equal(productScale(0.35, 1, 2), 1); assert.equal(productScale(0.5, 1, 2), 1.5);
   assert.equal(productScale(0.65, 1, 2), 2); assert.equal(productScale(1, 1, 2), 2);
@@ -432,7 +438,33 @@ function fakePool(n: number) {
   const pool: VideoPool = { n, unlock() {}, fetch: async () => true, in: () => true, refused: () => false, aspect: () => LOOP_ASPECT.wide, size: () => [1328, 692], texture(i) { if (!st[i].tex) { st[i].tex = new Texture(); st[i].made++; } return st[i].tex as never; }, release(i) { st[i].tex = null; }, resident: (i) => st[i].tex !== null, playing: (i) => st[i].playing, play(i) { st[i].playing = true; st[i].plays++; }, pause(i) { if (st[i].playing) st[i].pauses++; st[i].playing = false; }, reset(i) { if (st[i].playing) st[i].resets++; st[i].playing = false; }, dispose() {} };
   return { pool, st, resident: () => st.filter((s) => s.tex !== null).length };
 }
-const sceneDefs = (still: (i: number) => Promise<Texture | null>, baseYaw = 0): SceneDef[] => (['cove', 'grove', 'ember', 'palace', 'dawn'] as const).map((id, i) => ({ id, keyLight: ['#ffa6c8', '#a8ffe0', '#ffa171', '#ffc9a3', '#cbb0ff'][i], baseYaw, product: ['case', 'airpods', 'wallet', 'lenskin', 'case'][i], shade: ['#c988c8', '#96a880', '#c6a884', '#efa3af', '#d7b9ed'][i], finish: (['matte', 'gloss', 'matte', 'metallic', 'matte'] as const)[i], still: () => still(i), loop: i }));
+const sceneDefs = (still: (i: number) => Promise<Texture | null>, baseYaw = 0, basePitch = 0): SceneDef[] => (['cove', 'grove', 'ember', 'palace', 'dawn'] as const).map((id, i) => ({ id, keyLight: ['#ffa6c8', '#a8ffe0', '#ffa171', '#ffc9a3', '#cbb0ff'][i], baseYaw, basePitch, product: ['case', 'airpods', 'wallet', 'lenskin', 'case'][i], shade: ['#c988c8', '#96a880', '#c6a884', '#efa3af', '#d7b9ed'][i], finish: (['matte', 'gloss', 'matte', 'metallic', 'matte'] as const)[i], still: () => still(i), loop: i }));
+
+test('the look (X-14 as amended, E-S4-hover) and the rest pose: at rest the authored yaw and pitch; the look adds 0.3 rad of each, eased by a tenth a frame at 60 Hz (1 minus 0.9 to the power of 60 dt), and returns the same way once inactive; across a step the pose is gone at the edge-on swap; every part is drawn on both sides (the AirPods lid)', async () => quiet(async () => {
+  const rig = stubRenderer();
+  const c = createCarousel({ renderer: rig.renderer, scenes: sceneDefs(async () => new Texture(), 0.3, 0.2), products: products(), video: fakePool(5).pool, cls: 'wide', reduced: false, tune: () => TUNE, dpr: 1 });
+  c.setScene(1, true); await tick();
+  let t = 0; const dt = 1 / 60; const frame = () => { t += dt; c.update(t, dt, 1280, 800); };
+  frame();
+  const g = rig.shown()!;
+  near(g.rotation.x, 0.2, 1e-9, 'at rest: the pitch'); near(g.rotation.y, 0.3, 1e-9, 'at rest: the yaw');
+  for (const m of g.children) assert.equal(((m as Mesh).material as MeshPhysicalMaterial).side, DoubleSide, `${m.name || 'part'} drawn on both sides`);
+  c.look(1, 1, true); frame();
+  near(g.rotation.y, 0.3 + 0.3 * 0.1, 1e-9, 'a tenth of the way after one frame (w = 1 - 0.9)'); near(g.rotation.x, 0.2 + 0.3 * 0.1, 1e-9, 'the pitch too, y down adds pitch');
+  for (let k = 0; k < 200; k++) frame();
+  near(g.rotation.y, 0.6, 1e-4, 'settled at the yaw plus 0.3 rad'); near(g.rotation.x, 0.5, 1e-4, 'settled at the pitch plus 0.3 rad');
+  c.look(-1, 0, true); for (let k = 0; k < 200; k++) frame();
+  near(g.rotation.y, 0.0, 1e-4, 'the other way'); near(g.rotation.x, 0.2, 1e-4, 'the pitch back at rest');
+  c.look(0, 0, false); for (let k = 0; k < 200; k++) frame();
+  near(g.rotation.y, 0.3, 1e-4, 'inactive: back to rest');
+  // a step: the pose fades out by the swap (poseWeight) and comes back by the end
+  assert.equal(c.requestStep(1), true);
+  let minPitch = 1, before = rig.shown();
+  while (c.busy()) { frame(); const s = rig.shown()!; if (s === before) minPitch = Math.min(minPitch, Math.abs(s.rotation.x)); }
+  assert.ok(minPitch < 5e-3, `the outgoing product's pitch is gone by the swap, within the last frame before it (min ${minPitch.toFixed(4)} rad)`);
+  near(rig.shown()!.rotation.x, 0.2, 1e-9, 'the incoming product at rest carries the whole pose'); near(rig.shown()!.rotation.y, 0.3, 1e-9, 'and the yaw');
+  c.dispose();
+}));
 
 test('the step through the carousel: one gesture one whole step, the front switch at 285 ms, the swap at the half, the cooldown, at most two loops playing; over a lap at most two loop textures resident and one at rest; the cloud only during a seam, and the stage not drawn under full cover', async () => quiet(async () => {
   const { pool, st, resident } = fakePool(5), { renderer, draws } = stubRenderer();
