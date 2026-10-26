@@ -59,7 +59,7 @@ for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
   const ctx = await browser.newContext({ viewport: vp, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.warn(`[${W}] page error:`, e.message));
-  await page.goto(new URL('/?tier=hero3d&glue=0', base).href, { waitUntil: 'load' });
+  await page.goto(new URL('/?tier=hero3d&glue=0&room=open', base).href, { waitUntil: 'load' });
   await page.waitForFunction(() => window.__heroStarted && !document.documentElement.classList.contains('loading'), null, { timeout: 240_000 });
   await page.evaluate(() => window.__skreedIntro?.skip?.());
   await page.waitForFunction(() => !document.documentElement.classList.contains('intro'), null, { timeout: 30_000 }).catch(() => {});

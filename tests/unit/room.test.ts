@@ -177,6 +177,8 @@ test("E-S4-font: section 2's label type, IBM Plex Mono Medium in capitals, at th
 });
 
 test('the DOM (section-4-flux.md 5): the prompt, the pad, Skip, the lines, the scenes list, the words, the pause control, the live region, noscript', () => {
+  // rendered hidden and data-locked behind the quiz until the result or Skip quiz (quiz-gate.md D1; tests/unit/quiz-gate.test.ts has the gate)
+  assert.match(astro, /<section class="room" id="room" aria-label=\{R\.aria\} data-state="hall" hidden data-locked>/);
   assert.match(astro, /<button type="button" class="rm-enter rm-link" id="rmEnter" aria-keyshortcuts="E"><span class="rm-key" aria-hidden="true">\{R\.key\}<\/span><span class="rm-enter-text">\{R\.enter\}<\/span><\/button>/, 'the prompt is never hidden: there are always five scenes');
   assert.match(astro, /<div class="rm-pad" id="rmPad" tabindex="0" role="group" aria-label=\{R\.stageAria\}><\/div>/);
   assert.match(astro, /<p class="rm-line rm-loading" id="rmLoading" role="status" hidden>/);

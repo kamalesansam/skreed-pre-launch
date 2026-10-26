@@ -104,6 +104,9 @@ test('copy: sentence case headings, no em or en dash, no emoji, no banned words,
     assert.equal(h[0], h[0].toUpperCase(), h);
   }
   for (const q of QUIZ_QUESTIONS) assert.doesNotMatch(q.q, /\d/, `a digit in a question: ${q.q}`);
+  // the gate's control (quiz-gate.md 3): Sam's "rskip quiz" in sentence case, read into the rules above with the rest of QUIZ_COPY
+  assert.equal(QUIZ_COPY.skip, 'Skip quiz');
+  assert.ok(allStrings().includes(QUIZ_COPY.skip));
   // no invented counts on the result (Sam, 2026-10-16: the confidence and rarity figures stay out)
   for (const p of QUIZ_PERSONAS) assert.doesNotMatch(`${p.profile} ${p.palette}`, /%|Top \d/, p.id);
 });

@@ -108,6 +108,10 @@
 :is(html:not(.hero3d), html.poster) .rm-scene-text, .room[data-tier="poster"] .rm-scene-text, .rm-scenes-static .rm-scene-text { padding: 0 var(--inset); max-width: calc(520px + 2 * var(--inset)); }
 :is(html:not(.hero3d), html.poster) .rm-scene-alt, .room[data-tier="poster"] .rm-scene-alt { display: none; }
 :is(html:not(.hero3d), html.poster) .rm-loopend, .room[data-tier="poster"] .rm-loopend { display: block; height: 100svh; }
+/* the quiz gate (docs/specs/quiz-gate.md D1): with JavaScript the section is rendered hidden and data-locked until the
+   quiz's result or Skip quiz opens it; without JavaScript nothing is locked, since the quiz cannot run there, so the
+   section shows (an author rule outranks the browser's own [hidden] rule) */
+html:not(.js) .room[data-locked] { display: block; }
 html:not(.js) .room .rm-track { height: auto; }
 html:not(.js) .rm-stage { position: relative; height: auto; overflow: visible; display: grid; grid-template-columns: minmax(0, 1fr); background: var(--night); }
 html:not(.js) .rm-still { display: block; grid-area: auto; }

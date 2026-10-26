@@ -28,7 +28,7 @@ const s4 = (page: Page): Promise<S4> => page.evaluate(() => window.__s4!.state()
 const N = 5, LOOP_START = 12.8;
 
 async function open3d(page: Page, baseURL: string | undefined): Promise<void> {
-  await page.goto(new URL('/?tier=hero3d&glue=0', baseURL).href);
+  await page.goto(new URL('/?tier=hero3d&glue=0&room=open', baseURL).href);
   await page.waitForFunction(() => window.__heroStarted && !!window.__skreedIntro, null, { timeout: 540_000, polling: 500 });
   await page.evaluate(() => (window.__skreedIntro as unknown as { skip(): void }).skip());
   await page.waitForFunction(() => !document.documentElement.classList.contains('loading'), null, { timeout: 300_000, polling: 500 });
@@ -402,7 +402,7 @@ test('section 4 at 390 x 844: the glue at section 4\'s seam settles a visitor\'s
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   // the glue on: no ?glue=0 here
-  await page.goto(new URL('/?tier=hero3d', baseURL).href);
+  await page.goto(new URL('/?tier=hero3d&room=open', baseURL).href);
   await page.waitForFunction(() => window.__heroStarted && !!window.__skreedIntro, null, { timeout: 540_000, polling: 500 });
   await page.evaluate(() => (window.__skreedIntro as unknown as { skip(): void }).skip());
   await page.waitForFunction(() => !document.documentElement.classList.contains('loading'), null, { timeout: 300_000, polling: 500 });
@@ -510,7 +510,7 @@ test('section 4 at 390 x 844 under reduced motion (still3d): no loop elements, t
 
 test('section 4 on the poster tier: the still, the prompt at once, the five scenes in a column after the press, no tall track', async ({ page, baseURL }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(new URL('/?tier=poster', baseURL).href);
+  await page.goto(new URL('/?tier=poster&room=open', baseURL).href);
   await expect(page.locator('html')).toHaveClass('js poster');
   const room = page.locator('#room');
   await room.scrollIntoViewIfNeeded();
