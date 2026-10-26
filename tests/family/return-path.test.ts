@@ -63,8 +63,18 @@ test('item 1: a skipped cross-document view transition is never a hero failure: 
   assert.match(boot, /import \{ createLife, isAbortError, IslandDead \} from '\.\/hero\/bridge\/life\.ts';/);
   assert.match(boot, /const onRejection = \(e: PromiseRejectionEvent\) => \{ if \(isAbortError\(e\.reason\)\) return; if \(!window\.__heroStarted && !\(e\.reason instanceof IslandDead\)\) toPoster\('unhandled rejection before start', e\.reason\); \};/, 'the early return comes first');
   const gate = read('src/inline/gate.inline.js');
-  assert.match(gate, /addEventListener\('pagereveal', function \(e\) \{ var v = e\.viewTransition; if \(v\) \{ v\.ready\.catch\(function \(\) \{\}\); v\.finished\.catch\(function \(\) \{\}\); \} \}\);/, 'the Gate, in the head before the first render, handles both promises');
+  assert.match(gate, /addEventListener\('pagereveal', function \(e\) \{ var v = e\.viewTransition; if \(v\) \{ v\.ready\.catch\(function \(\) \{\}\); v\.finished\.catch\(function \(\) \{\}\); v\.updateCallbackDone\.catch\(function \(\) \{\}\); \} \}\);/, 'the Gate, in the head before the first render, handles all three promises (iteration 3: updateCallbackDone rejected too)');
   assert.ok(gate.indexOf("addEventListener('pagereveal'") < gate.indexOf("addEventListener('error'"), 'before the module error guard');
+});
+
+test('iteration 3: a return visit\'s soft poster (a stall under the veil) never turns hard on a scroll, since the visit sits deep in the page by design; it recovers on frame2', () => {
+  const boot = read('src/scripts/boot.ts');
+  const soft = boot.slice(boot.indexOf('function onSoftPoster('), boot.indexOf('async function boot('));
+  assert.match(soft, /resetRiders\(els\);\n(?:\s*\/\/[^\n]*\n)*\s+if \(document\.getElementById\('intro'\)\?\.classList\.contains\('ret'\)\) return;\n\s+const onScroll = \(\) => \{ if \(scrollY > 8\) toPoster\('soft-then-scrolled'\); \};/, 'the return is read before the scroll rule is installed, after the riders are reset');
+  assert.match(soft, /if \(kind === 'fail'\) \{ if \(!life\.dead\) toPoster\('module-load-error'\); return; \}/, 'a real failure still ends it');
+  const loader = read('src/inline/loader.inline.js');
+  assert.match(loader, /if\(mode==='poster'\)\{if\(ready\)\{ph='enter';HT\.classList\.replace\('poster','hero3d'\);lift\(\)\}return\}/, 'the loader\'s recovery branch lifts on frame2');
+  assert.match(loader, /intro\.classList\.add\('po'\)/, 'poster() keeps #intro, so its ret class is still there to read');
 });
 
 test('item 3: a return visit that falls to the poster centres nav#families instead of keeping the 3D scroll offset', () => {

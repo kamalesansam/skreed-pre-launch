@@ -10,8 +10,9 @@
   }
   if (t === 'poster') c.add('poster'); else { c.add('hero3d', 'loading'); if (t === 'still3d') c.add('still3d'); }
   /* a cross-document view transition into this page that the browser skips (the family pages' way back, family-page.md 22) rejects
-     its ready and finished promises with AbortError; handled here, so the rejection never reaches boot.ts's guard as unhandled */
-  addEventListener('pagereveal', function (e) { var v = e.viewTransition; if (v) { v.ready.catch(function () {}); v.finished.catch(function () {}); } });
+     its promises (ready, finished, and updateCallbackDone, seen in the console after the first two were handled) with AbortError;
+     handled here, so the rejection never reaches boot.ts's guard as unhandled */
+  addEventListener('pagereveal', function (e) { var v = e.viewTransition; if (v) { v.ready.catch(function () {}); v.finished.catch(function () {}); v.updateCallbackDone.catch(function () {}); } });
   addEventListener('error', function (e) {
     var s = e.target; if (s && s.tagName === 'SCRIPT' && s.type === 'module' && !window.__heroStarted && window.__skreedLoader) window.__skreedLoader.fail('');
   }, true);

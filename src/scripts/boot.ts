@@ -54,6 +54,10 @@ function onSoftPoster(kind: 'stall' | 'offline' | 'fail'): void {
   if (kind === 'fail') { if (!life.dead) toPoster('module-load-error'); return; }
   if (life.dead) return;
   resetRiders(els);
+  // a return visit (family-page.md 13 step 3; the loader's decision, #intro.ret) sits deep in the page by design, at the
+  // fragment's scroll or at section 2's rest, so a scroll there is no sign the visitor gave up on the 3D: its soft poster
+  // recovers on frame2 as a top-of-page stall does, and the hero's own snap and lift carry on; a real failure still ends it
+  if (document.getElementById('intro')?.classList.contains('ret')) return;
   const onScroll = () => { if (scrollY > 8) toPoster('soft-then-scrolled'); };
   addEventListener('scroll', onScroll, { passive: true });
   const off = () => removeEventListener('scroll', onScroll);
