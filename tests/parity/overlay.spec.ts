@@ -16,7 +16,9 @@ const NOW = new Date('2026-10-09T09:00:00+05:30');
 // hidden fixed layer with will-change, which changes how Chromium composites the logotype; it is not part of the overlay.
 // Round 3: the cue is ciao's side icon (hero.md 14), not the v9.10 ball, so it is hidden on both pages here and compared by
 // tests/parity/v11-cue.spec.ts against the v11.4 prototype; section 2's layers and the family links are the port's only.
-const HIDE = '#stage,.hero-poster,#intro,.tune,.labels,.fallback,#wallCopy,.cue,.scrollcue,#s2labels,#s2links,#families{display:none!important}';
+// 2026-10-26: the countdown's numerals are the port's dot digits (E-CD-font), not the prototype's Open Sans, so both pages
+// hide them and compare the eyebrow, the labels and the logotype; the idle twitch (E-CD-glitch) is switched off first.
+const HIDE = '#stage,.hero-poster,#intro,.tune,.labels,.fallback,#wallCopy,.cue,.scrollcue,#s2labels,#s2links,#families,#count .n{display:none!important}';
 const VIEWPORTS = [
   { name: '390', viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 },
   { name: '1280', viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1.5 },
@@ -24,6 +26,7 @@ const VIEWPORTS = [
 
 async function settle(page: Page) {
   await page.addStyleTag({ content: HIDE });
+  await page.evaluate(() => window.__skreedLogo?.configure({ idle: 0 }));
   await sameBackground(page);
   await fontsReady(page);
   await page.waitForTimeout(1600);   // past the port's poster-tier intro burst (0.75 s + 0.5 s)

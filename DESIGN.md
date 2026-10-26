@@ -266,12 +266,13 @@ Sam, 2026-10-19: "add a back to top button throughout the site which navigates b
 
 - **Placement.** Bottom left at `--inset`. Below 1100 px it would reach the middle, so it sits 84 px higher and the cue sits under it. On the poster path it sits in the first screen and scrolls away with it.
 - **Eyebrow.** "Launch in", Open Sans 600 at 14 px.
-- **Groups.** Four columns (days, hours, minutes, seconds) with gap `clamp(var(--s3), 4vw, 44px)`. Each holds a numeral at `--fs-hero-countdown`, 600, tabular, always two digits, `min-width: 2ch`, with a unit label 600 at 14 px under it, `gap: var(--s1)`. All Pearl Whisper.
+- **Groups.** Four columns (days, hours, minutes, seconds) with gap `clamp(var(--s3), 4vw, 44px)`. Each holds a pair of dot-matrix numerals (hero spec E-CD-font, 2026-10-26): one SVG, 17.5 by 13 dots, `clamp(2.5rem, 10.5vw, 4rem)` tall, always two digits so nothing jumps, the digits our own beaded dot bitmaps from `src/config/countdown-digits.ts` (8 by 13 dots a digit, strokes two dots thick, corners rounded by a dot, every dot a circle that touches its neighbours), drawn by the countdown script and never a font file; the digits as text in a visually hidden span. A unit label 600 at 14 px under it, `gap: var(--s1)`. All Pearl Whisper.
+- **Glitch.** The countdown carries the logotype's glitch (E-CD-glitch): slabs kicked sideways with shade-pair ghosts, 0.25 s a burst, all four pairs at once. Both the logotype and the countdown twitch on their own every 3 to 7 s (Sam, 2026-10-26); the countdown has no hover or press burst, since it is not a control.
 - **Semantics.** `role="timer"`, `aria-label="Time until launch"`.
 - **First tick.** The numerals stay hidden until the first tick, which runs in the same task.
 - **At zero.** The eyebrow reads "Skreed is live. skreed.com", with "skreed.com" a real link: Pearl Whisper, underlined, `pointer-events: auto`, a hit box at least 44 px tall, the two-tone focus ring. The numerals are not displayed (`.count[hidden]{display:none}`).
 - **No JavaScript.** One line, "Launching 15 November 2026", with the date in a `<time>`; the eyebrow and the numerals are not displayed.
-- **Reduced motion.** The seconds group is hidden.
+- **Reduced motion.** The seconds group is hidden and the glitch never runs.
 
 ### Scroll cue (hero)
 

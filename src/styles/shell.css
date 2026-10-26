@@ -16,10 +16,10 @@ body{color:var(--pearl-whisper);font-family:var(--font-ui);margin:0;font-synthes
 .count{display:flex;gap:clamp(var(--s3),4vw,44px);font-family:var(--font-ui);font-variant-numeric:tabular-nums;color:var(--pearl-whisper)}
 .count[hidden]{display:none}   /* at zero the numerals go (D26) */
 .count>div{display:flex;flex-direction:column;gap:var(--s1)}
-.count .n{font-weight:600;font-size:clamp(2.3rem,7vw,4.8rem);line-height:1;min-width:2ch}   /* two digits always, so nothing jumps when a value drops below 10 */
+.count .n{display:block;height:clamp(2.5rem,10.5vw,4rem);width:auto;overflow:visible;color:var(--pearl-whisper)}   /* the dot digits (E-CD-font): two always, 17.5 by 13 dots a pair, so nothing jumps when a value drops below 10; overflow for the glitch's kicks */
 .count .l{font-weight:600;font-size:.875rem;color:var(--pearl-whisper)}
 .count:not([data-ready]) .n{visibility:hidden}   /* no false value before the first tick */
-@media (prefers-reduced-motion:reduce){.count .sec{display:none}}   /* a digit changing every second is motion too */
+@media (prefers-reduced-motion:reduce){.count .sec{display:none}.count .gl-tiles{display:none!important}.count .n{opacity:1!important}}   /* a digit changing every second is motion too; no glitch */
 @media (max-width:1100px){.copy{padding-bottom:calc(var(--inset) + 84px + env(safe-area-inset-bottom,0px))}}   /* below 1100 px the countdown reaches the middle, so it lifts by the cue's height plus 11 px and the cue sits under it */
 /* the scroll cue, ciao's side icon re-created (measured, docs/specs/hero.md 12.3): three chevrons of five dots drawn top down, held, wiped top down, 2.5 s a cycle;
    17.5 x 73 px. One, at the bottom centre on --inset (Sam, 2026-10-20: "put only one in the middle", the two side ones clashed with the countdown): from

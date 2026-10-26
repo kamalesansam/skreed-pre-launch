@@ -148,7 +148,7 @@ test('AC5.4 a click on the logotype scrolls to the top: smooth, or instant under
 // windows are exact instead of sampled from headless frames (measured here: frame gaps up to 600 ms under load).
 const tilesShown = (page: Page) => page.evaluate(() => !document.querySelector('.site-logo .logo-tiles')!.hasAttribute('display'));
 
-test('AC5.7 and AC5.5 glitch: intro 0.5 s burst 0.75 s after install on the poster tier, hover and focus bursts of 0.25 s, no idle twitch', async ({ browser, baseURL }) => {
+test('AC5.7 and AC5.5 glitch: intro 0.5 s burst 0.75 s after install on the poster tier, the idle twitch every 3 to 7 s on the logotype and the countdown, hover and focus bursts of 0.25 s', async ({ browser, baseURL }) => {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   const page = await ctx.newPage();
   await page.clock.install();
@@ -163,16 +163,28 @@ test('AC5.7 and AC5.5 glitch: intro 0.5 s burst 0.75 s after install on the post
   expect(await tilesShown(page), 'at 1.225 s').toBe(true);
   await page.clock.runFor(60);
   expect(await tilesShown(page), 'at 1.285 s').toBe(false);
-  // no idle twitch: nothing for 20 s without input (logoIdle 0)
-  await recordBursts(page);
-  await page.evaluate(() => { (window as unknown as { __bursts: unknown[] }).__bursts = []; });
+  // the idle twitch (E-CD-glitch, logoIdle 1, IDLE_EVERY 3 to 7 s): a 0.25 s burst every 3 to 7 s without input, on the
+  // logotype and, as one, on the countdown's four pairs, each on its own timer
   await page.evaluate(() => {
-    const w = window as unknown as { __bursts: number[] };
+    const w = window as unknown as { __bursts: number[]; __cbursts: number[][] };
+    w.__bursts = []; w.__cbursts = [[], [], [], []];
     const g = document.querySelector('.site-logo .logo-tiles')!;
     new MutationObserver(() => { if (!g.hasAttribute('display')) w.__bursts.push(performance.now()); }).observe(g, { attributes: true, attributeFilter: ['display'] });
+    document.querySelectorAll('#count .gl-tiles').forEach((c, i) => new MutationObserver(() => { if (!c.hasAttribute('display')) w.__cbursts[i].push(performance.now()); }).observe(c, { attributes: true, attributeFilter: ['display'] }));
   });
   await page.clock.runFor(20_000);
-  expect(await page.evaluate(() => (window as unknown as { __bursts: number[] }).__bursts.length), 'bursts in 20 s idle').toBe(0);
+  const idle = await page.evaluate(() => { const w = window as unknown as { __bursts: number[]; __cbursts: number[][] }; return { logo: w.__bursts, count: w.__cbursts }; });
+  const gaps = (t: number[]) => t.slice(1).map((v, i) => v - t[i]);
+  for (const [name, t] of [['logo', idle.logo] as const, ...idle.count.map((t, i) => [`count ${i}`, t] as const)]) {
+    expect(t.length, `${name}: bursts in 20 s idle`).toBeGreaterThanOrEqual(2);
+    expect(t.length, `${name}: bursts in 20 s idle`).toBeLessThanOrEqual(7);
+    for (const g of gaps(t)) { expect(g, `${name}: gap ${g}`).toBeGreaterThanOrEqual(3000 - 20); expect(g, `${name}: gap ${g}`).toBeLessThanOrEqual(7000 + 300); }
+  }
+  for (let i = 1; i < 4; i++) expect(idle.count[i], 'the four pairs burst as one').toEqual(idle.count[0]);
+  // the idle twitch off (Tune's switch), so the input bursts below start from rest
+  await page.evaluate(() => window.__skreedLogo!.configure({ idle: 0 }));
+  await page.clock.runFor(400);
+  expect(await tilesShown(page), 'at rest').toBe(false);
   // pointer enter (mouse): 0.25 s
   await page.locator('#siteLogo').hover();
   await page.clock.runFor(40);
@@ -197,6 +209,7 @@ test('AC5.5 glitch on touch: a tap bursts', async ({ browser, baseURL }) => {
   const page = await ctx.newPage();
   await page.goto(new URL('/?tier=poster', baseURL).href);
   await page.waitForTimeout(1600);
+  await page.evaluate(() => window.__skreedLogo!.configure({ idle: 0 }));   // no idle burst in the window
   const n = (await bursts(page)).length;
   await page.locator('#siteLogo').tap();
   await page.waitForTimeout(600);
@@ -227,6 +240,43 @@ test('AC5.6 glitch slabs: 48, one pair per burst, ghosts filled by var(--shade-<
     expect(GLITCH_PAIRS.some((p) => [...ids].every((id) => p.includes(id))), [...ids].join(',')).toBe(true);
     await page.waitForTimeout(2000);
   }
+});
+
+test('AC5.8 the countdown glitch (E-CD-glitch): four pairs of 15 slabs, one burst breaks all four, ghosts filled by var(--shade-<id>), none under reduced motion', async ({ page, browser, baseURL }) => {
+  await page.goto('/?tier=poster');
+  await page.waitForTimeout(1500);
+  expect(await page.locator('#count .gl-tiles > g').count()).toBe(60);
+  expect(await page.locator('#count defs clipPath').count()).toBe(60);
+  expect(await page.locator('#count .gl-tiles > g use').evaluateAll((us) => [...new Set(us.map((u) => u.getAttribute('href')))].sort())).toEqual(['#cdg-d', '#cdg-h', '#cdg-m', '#cdg-s']);
+  await page.evaluate(() => window.__skreedLogo!.configure({ idle: 0 }));
+  await page.waitForTimeout(400);
+  const shown = () => page.locator('#count .gl-tiles').evaluateAll((gs) => gs.map((g) => !g.hasAttribute('display')));
+  expect(await shown()).toEqual([false, false, false, false]);
+  await page.evaluate(() => window.__skreedCount!.burst(2));
+  await page.waitForTimeout(150);
+  expect(await shown()).toEqual([true, true, true, true]);
+  const hex = Object.fromEntries(SHADES.map((s) => [s.id, s.hex]));
+  const toRgb = (h: string) => `rgb(${parseInt(h.slice(1, 3), 16)}, ${parseInt(h.slice(3, 5), 16)}, ${parseInt(h.slice(5, 7), 16)})`;
+  const ghosts = await page.evaluate(() => [...document.querySelectorAll<SVGUseElement>('#count .gl-tiles use')]
+    .filter((u) => u.style.color && !u.hasAttribute('display') && !u.parentElement!.hasAttribute('display'))
+    .map((u) => ({ style: u.style.color, computed: getComputedStyle(u).color })));
+  expect(ghosts.length).toBeGreaterThan(0);
+  for (const g of ghosts) {
+    const m = /^var\(--shade-([a-z-]+-\d\d)\)$/.exec(g.style);
+    expect(m, g.style).not.toBeNull();
+    expect(GLITCH_PAIRS.some((p) => p.includes(m![1])), m![1]).toBe(true);
+    expect(g.computed).toBe(toRgb(hex[m![1]]));
+  }
+  await page.waitForTimeout(2200);
+  expect(await shown()).toEqual([false, false, false, false]);
+  // reduced motion: the tiles never show
+  const rm = await browser.newPage({ baseURL, reducedMotion: 'reduce' });
+  await rm.goto('/?tier=poster');
+  await rm.waitForTimeout(1600);
+  await rm.evaluate(() => window.__skreedCount!.burst(2));
+  await rm.waitForTimeout(150);
+  expect(await rm.locator('#count .gl-tiles').evaluateAll((gs) => gs.map((g) => getComputedStyle(g).display))).toEqual(['none', 'none', 'none', 'none']);
+  await rm.close();
 });
 
 test('AC5.7 reduced motion: no burst at all, and turning it on after load stops new bursts', async ({ browser, baseURL }) => {
