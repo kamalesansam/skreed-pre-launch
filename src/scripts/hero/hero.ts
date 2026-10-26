@@ -230,7 +230,12 @@ export async function startHero(o: StartOptions): Promise<void> {
   const onUnlock = () => { pageScroll?.notify(); void loadHall(); };
   addEventListener('skreed:quiz-unlock', onUnlock);
   life.onKill(() => removeEventListener('skreed:quiz-unlock', onUnlock));
-  window.__skreedHall = { get ready() { return !!ctx.room?.hall.ready; }, load: () => loadHall() };
+  // the hall's own load() returns at once when its load has started (hall.ts), and it always has by the time the quiz's
+  // ride asks (the stage observer, then the unlock's listener), so the hook waits a frame at a time until the hall is in
+  // or has failed, or the director is gone; the ride races this against its 1.5 s (quiz-gate.md, amendment 2)
+  const hallSettled = () => { const h = ctx.room?.hall; return life.dead || !h || h.ready || h.failed; };
+  const untilHall = () => new Promise<void>((res) => { const tick = () => { if (hallSettled()) res(); else requestAnimationFrame(tick); }; tick(); });
+  window.__skreedHall = { get ready() { return !!ctx.room?.hall.ready; }, load: () => loadHall().then(untilHall) };
   life.onKill(() => { window.__skreedHall = undefined; });
   // the page scroll (section4/scroll.ts, its own chunk, marker skreed:scroll): the glue over the three seams, the wrap from
   // the top and the carousel's gestures, from the intro's end; the director is its adapter's other side. One viewport for

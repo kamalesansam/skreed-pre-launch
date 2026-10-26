@@ -3281,34 +3281,47 @@ for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
   });
 }
 
-test('QG AC4 on ?tier=hero3d at 390 x 844 with a cold hall (no flag): the press unlocks, the ride waits for the hall at most 1.5 s ("Loading..." meanwhile) and lands at q 1 within 1 px; once the hall is in the wipe has played (q 1)', async ({ browser, baseURL }) => {
+test('QG AC4 on ?tier=hero3d at 390 x 844 with a cold hall (hall.bin held back by route): the press unlocks and the ride waits, "Loading..." with aria-busy on the control and no scroll, until the 1.5 s cap, then rides over the fog and lands at q 1 within 1 px with the label back; released, the hall arrives and the wipe plays to q 1', async ({ browser, baseURL }) => {
   test.setTimeout(900_000);
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
+  // the hall's model held on the network until released: the hall cannot become ready, however fast the machine
+  let release = (): void => undefined; const held = new Promise<void>((r) => { release = r; });
+  await page.route(/\/_astro\/hall\.[^/?]*\.bin(\?|$)/, async (route) => { await held; await route.continue(); });
   await open3dQuiz(page, baseURL, '&glue=0');
   expect(await roomState(page)).toEqual(LOCKED);
   await atQuiz3d(page);
-  const ready = await page.evaluate(() => !!window.__s4?.ready);
-  const t0 = Date.now();
+  expect(await page.evaluate(() => !!window.__s4?.ready), 'the hall is cold').toBe(false);
+  const yStart = await scrollAt(page);
   await sampleRide(page);
   await pressSkip(page);
-  await expect(page.locator('#room')).toHaveAttribute('data-open', 'skip');
-  if (!ready) {
-    // the hall was still loading: the control reads "Loading..." while the ride waits, at most HALL_WAIT_MS
-    const busy = await page.locator('#qzSkip').getAttribute('aria-busy');
-    expect(busy === 'true' || Date.now() - t0 > HALL_WAIT_MS, 'aria-busy while waiting, unless the wait is over').toBe(true);
-  }
-  await rideOver(page);
-  expect(Date.now() - t0, 'the ride began within the wait plus its own length').toBeLessThan(HALL_WAIT_MS + RIDE_MS + 2_500);
-  const e = await ends(page), one = await page.evaluate(() => document.getElementById('rmStage')!.offsetHeight);
-  expect(Math.abs(e.y - Math.round(e.room + one)), 'landed at q 1').toBeLessThanOrEqual(1);
+  // the wait: unlocked at once, the ride marked, the control busy and reading "Loading...", the page where it was
+  await expect(page.locator('#qzSkip')).toHaveAttribute('aria-busy', 'true', { timeout: 300 });
+  await expect(page.locator('#qzSkip')).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.locator('#qzSkip')).toHaveAccessibleName(Q.loading);
+  expect(await roomState(page)).toEqual({ ...opened('skip'), ride: true });
+  await page.waitForTimeout(1_000);
+  expect(await scrollAt(page), 'no scroll a second into the wait').toBe(yStart);
+  await expect(page.locator('#qzSkip')).toHaveAttribute('aria-busy', 'true');
+  // the cap: the wait ends at HALL_WAIT_MS, the label comes back and the ride runs over the fog
+  await expect(page.locator('#qzSkip')).not.toHaveAttribute('aria-busy', 'true', { timeout: HALL_WAIT_MS });
   await expect(page.locator('#qzSkip')).toHaveAccessibleName(Q.skip);
-  await expect(page.locator('#qzSkip')).not.toHaveAttribute('aria-busy', 'true');
+  const s = await rideOver(page);
+  const from = s.samples[0].y, pressIdx = s.samples.findIndex((x) => x.t >= s.pressAt), moveIdx = s.samples.findIndex((x, k) => k > pressIdx && Math.abs(x.y - from) > 0.5);
+  expect(moveIdx, 'the page moved').toBeGreaterThan(pressIdx);
+  expect(s.samples[moveIdx].t - s.pressAt, 'and not before the cap, less a frame').toBeGreaterThanOrEqual(HALL_WAIT_MS - 2 * FRAME);
+  expect(s.samples[moveIdx].t - s.pressAt, 'nor long after it').toBeLessThan(HALL_WAIT_MS + 400);
+  const e = await ends(page), one = await page.evaluate(() => document.getElementById('rmStage')!.offsetHeight);
+  expect(Math.abs(e.y - Math.round(e.room + one)), 'landed at q 1, over the fog').toBeLessThanOrEqual(1);
+  expect(await page.evaluate(() => !!window.__s4?.ready), 'the hall still out at the landing').toBe(false);
   expect(await gateEvents(page)).toEqual([['quiz_skip', { q: 0 }], ['room_unlock', { by: 'skip' }]]);
+  // released: the hall arrives and the third wipe plays on its clock to q 1
+  release();
   await page.waitForFunction(() => window.__s4?.ready, null, { timeout: 300_000, polling: 500 });
   await expect.poll(async () => (await s4q(page))!.q, { timeout: 5_000 }).toBeGreaterThan(0.98);
+  expect(Math.abs(await scrollAt(page) - Math.round(e.room + one)), 'the page did not move for the hall').toBeLessThanOrEqual(1);
   expect(errors).toEqual([]);
   await ctx.close();
 });
