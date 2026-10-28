@@ -72,7 +72,6 @@ html.uh1 .site-logo,html.uh2 #heroCopy .eyebrow,html.uh2 #count{opacity:0}
 #ldSt:empty{display:none}
 .po .ld-p{bottom:auto;top:calc(50% + 12svh)}
 /*LOADER-CSS-END*/
-.intro.ret .ld-w,.intro.ret #ldPct{display:none}   /* a return visit (family-page.md 13 step 3): the loader is a night veil, lifted by the island once the gems are at rest; only the status line can show */
 
 /* the wordmark sprite: defined once, drawn by <use> (a class, not a style attribute, for the CSP) */
 .sprite{position:absolute}

@@ -3,8 +3,9 @@
 // with FAMILY_PAGES on (test and staging builds, or PUBLIC_FAMILY_PAGES=on).
 //   Poster path: needs only the mount. The ten links are section 2's visible fallback grid.
 //   3D path (?tier=hero3d, test builds): also needs the section 2 island to call installRockNav, placeLinkBoxes from
-//   the frame that places the gem labels, and isReturnVisit in the loader's skip path. Until it does, these rows fail
-//   at the first check with "the section 2 island does not place the link boxes".
+//   the frame that places the gem labels, and the return path of spec 13 step 3 (built: the loader runs in full on a
+//   return visit and the island snaps the page to S2T.LAND and lifts onto the gems; family-page.md 23). Until it does,
+//   these rows fail at the first check with "the section 2 island does not place the link boxes".
 import { test, expect, type BrowserContext, type Page } from '@playwright/test';
 import { FAMILIES, NAMES, PHONE, WIDE } from './util.ts';
 
