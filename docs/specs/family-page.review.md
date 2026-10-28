@@ -761,3 +761,1045 @@ With item 1 in, D3, H, criterion 5 and section 13 step 3 hold by source. They mo
 ### Notes (not graded as FAIL)
 
 - **The flag outlives a recovery.** After a centred soft poster recovers on frame2, `softCentred` stays true. A later hard failure in the 3D page then keeps the visitor's place, as on any visit, instead of centring the families again. That suits a visitor who has been reading.
+
+## Round 5, iteration 1, 2026-10-26: FAIL
+
+Round 5 is the landing's 0 to 100 wordmark loader on the way back and "Back to main page" on Back to top's row on phones (`family-page.md` section 23: criteria 1 to 8, D1 to D9, and the builder's Built, Checked and Not done), with Armor unchanged (Sam: "no"). Branch `family/round-5-return-loader`, cut from 7241c50; the build is uncommitted: 17 files, 684 lines in and 115 out (`git diff`), and nine untracked PNGs under `screenshots/`.
+
+The product does what Sam asked. Every failure below is in the evidence: one browser row asserts a bound the loader never promised, four round 4 rows fail on the harness, two ways in and the poster path's centring have no run, and three document points are left.
+
+### How it was checked
+
+- **Verdicts.** PASS, FAIL, BLOCKED, UNPROVEN and n/a as in round 4. UNPROVEN means a row that needs a browser run nobody has made; it is not PASS.
+- **Frames, read first, before any code.** All are PNGs written by `back.spec.ts` in the installed Chrome under the harness's SwiftShader flags.
+  - The argument screen 3.0 s after it came on: `family-r5-390-arg-after.png` (780 x 1688), `-360-` (720 x 1560), `-844-` (1688 x 780) and `-1280-` (1280 x 800).
+  - The landing about 2.5 s after the arrival: `family-r5-{390,1280}-return-loader.png`.
+  - The landing 1 s after the loader has gone: `family-r5-{390,1280}-return-gems.png`.
+  - The poster path: `family-r5-390-landing-poster.png`.
+  - Round 4's `family-r4-390-arg-after.jpg`, `-1280-arg-after.jpg` and `-390-landing-after-press.jpg` for comparison. The family is Blissful Blue.
+- **The diff, read in full:**
+  - `loader.inline.js` (all 88 lines, not only the changed one), `hero.ts`, `family.css`, `shell.css`, `to-top.css` and `rock-links.ts`;
+  - the four test files and `entry.spec.ts`;
+  - CLAUDE.md, DESIGN.md, HANDOFF.md, hero.md, hero-architecture.md, and the spec's 2.2, 7, 12, 13, 22 and 23.
+- **The code around it, read:**
+  - `page.ts`: the control's controller and `onScroll`, a plain scroll listener with no throttle of its own;
+  - `back.ts`, `links.ts` and `section2/gems.ts`, whose `build()` always ends in `ready` or `failed`;
+  - `warmup.ts`, the c1 to c9 milestones;
+  - `loader-weights.json`;
+  - Playwright's clock (`node_modules/playwright-core/lib/generated/clockSource.js`): `pauseAt`, and the faked `requestAnimationFrame` and `performance`.
+- **Tests, run by the reviewer:**
+  - `test:family`: 62 of 62 pass;
+  - `test:unit`: 192, with 191 passing and 1 skipped (ffprobe);
+  - both run with `--script-shell` set to Git's bash.
+- **The browser run.** The reviewer read the owner's logs and started no browser and no server.
+  - `back.spec.ts` against `PUBLIC_FAMILY_3D=on npm run build:test` on 127.0.0.1:8793: 40 rows, 33 passed and 7 failed in 12.2 minutes (`scratchpad/r5-back-spec.log`).
+  - Rows 1, 2, 3, 6 and 7 again with a 300 s timeout (`r5-back-rerun.log`): mellow-yellow passed at both sizes, and the other four failed again (the reduced-motion row, the second time, in `hold()`).
+  - So 34 of the 40 rows pass. The six that fail are criterion 2's two landing rows and four rows from round 4.
+- **The owner's sampler.** Two runs of rows 4 and 5's assertions outside the suite, with the same init scripts in the same Chrome (`tasks/b4wefnh1m.output`, `tasks/b9bey7zui.output`). Read in full, with the samples around each jump.
+- **The worktree's `dist/`** (the `build:test` build of 16:33), read only:
+  - the landing's loader carries `g&&l.classList.add(\`ret\`)` and the exit line `R&&(!g||z)&&W>=E-.001&&ue(e)`;
+  - no `!RET&&` form and no `.intro.ret` rule are left;
+  - the hero chunk has one `.ready()` call and no `.cut()`. Its two `.skip()` calls are the hooks' (the room's and the intro hook's), not the loader's;
+  - each family page has one `#famBack` and three `.fam-back` rules: the phone base with the new `left` and `bottom`, the grid mode's `display: none`, and the wide block's centring;
+  - `node scripts/case-model/budget.mjs dist blissful-blue` on this test build: page module 7,161 B gzip and total JS 168,937 B, both PASS.
+- **The builder's production budget logs** (`scratchpad/build-before.log` and `build-after.log`):
+  - "inline scripts (4)" 4.7 to 4.8 KB gzip, 9.7 KB raw both;
+  - "inline styles (1)" 39.4 to 39.3 KB raw;
+  - the hero chunk 54.5 KB gzip and 151.8 KB raw both;
+  - "every enforced line of section-4-flux.md 6 holds (49 enforced)", and the section 4 build guard passes.
+  - The family page's after-run is the builder's figure; no after-log was kept.
+- **Grep of the 684 added lines and of every changed file:** no em or en dash and no emoji. The only AI product name is the file name `CLAUDE.md`. No TODO, FIXME or lorem. Every changed file is LF.
+- **Not available here:** `/web-design-guidelines` and `visual-critique` are not installed, so the reviewer's own critique of the 390 frame stands in for E2 (Notes). No Lighthouse run. No real phone.
+
+### Checklist
+
+| Item | Verdict | Evidence |
+|---|---|---|
+| A1 | FAIL | The diff against rules 1 to 50: no violation. Rule 15: the phone rule's offsets are tokens and Back to top's own expressions (`--inset`, `--s2`, `--to-top-bottom`, `--sab`), with no raw number (`back.test.ts`). The control's place changes with no motion, icon or colour: rules 10, 12 (with E-F5), 14, 22, 24, 45 and 48 hold. No dash, emoji or buzzword in any comment or document line (3, 16, 17, 27, 29). The loader shown on a return visit is E-H1's (rule 38 and the loader's motion, as on a first visit). Still failing, outside the diff and carried: rules 46 and 47, with no privacy or terms page in `dist/` |
+| A2 | PASS | Pearl Whisper only; the loader's `--night` and its light are E-A2 |
+| A3 | PASS | Computed in the browser at 390 and 1280: Open Sans 600, 14 px, line height 14 px (rows "shown at", both pass). The loader's type is E-A3's |
+| A4 | PASS | No copy changed. "Back to main page" stays pending Sam (spec 12 item 6) |
+| A5 | PASS | The argument screen shows the case. The loader screen is the hero's own, under E-H1 |
+| B1 | PASS | Playwright PNGs at 390 and 1280 of the argument screen, the return loader and the gems. The poster frame was caught mid cross-fade (item 3) |
+| B2 | PASS | No horizontal scroll at 360 x 780, 375 x 667, 390 x 844, 430 x 932, 768 x 1024, 780 x 360 and 844 x 390, nor at the four wide sizes. The words start at `--inset` (16 px at 390); both controls are 44 px tall (criterion 5's rows, all pass) |
+| B3 | PASS | A same-origin link; no storage added |
+| B4 | PASS | Nothing in the diff uses or animates `svh` or `dvh` |
+| C1 | PASS | Production: critical JS 15.3 KB, unchanged. The landing's inline scripts grow 1 B gzip (4,861 to 4,862 B, the builder's exact figure; 4.7 to 4.8 KB at the log's precision), inside the plan's 20 B gzip and 50 B raw. The hero chunk changes 1 B raw. The family page module is unchanged at 7,070 B gzip, the same chunk |
+| C2 | n/a | No image |
+| C3 | PASS | No animation added. The control's fade is opacity alone by the Web Animations API, unchanged, and the C3 guard (`data.test.ts`) passes in `test:family`. The loader's animations are the prototype's, byte for byte (`inline-loader.test.ts`) |
+| C4 | UNPROVEN | Lighthouse not run (open record) |
+| D1 | PASS | The loader on the way back is E-H1's; the control's wait is E-F5's |
+| D2 | UNPROVEN | By source, `backFade(dir, true)` is `null` and `reduced()` is read live, and the landing's reduced-motion tier is the poster. In the browser, the first half of the reduced-motion row passed in the first run: at 2.5 s, not hidden, opacity 1, no animation. Its "gone at once" half failed on the harness (item 2) |
+| D3 | UNPROVEN | The way back's Loading state was seen: the wordmark, the count and its exit. The stall, offline, error and gems-failed rows of section 23's states table are by source only (open record) |
+| D4 | PASS | `.press` on the link only, unchanged since round 4. The browser's hover row failed before its first hover, on the harness (item 2) |
+| E1 | BLOCKED | `/web-design-guidelines` is not installed |
+| E2 | BLOCKED | `visual-critique` is not installed. The reviewer's critique by eye is in the notes |
+| E3 | PASS | A real link named by its text; Tab order and the `.ring2` ring pass in the browser (the keyboard row). Contrast where the words now stand, median of 10 frames at 2.9 s. At 390: Frosty White 19.43:1, Blissful Blue 19.43:1, Mellow Yellow 19.43:1 (rerun). At 1280: Frosty White 15.46:1, Mellow Yellow 15.29:1 (15.33:1 rerun), Blissful Blue 15.73:1. Lowest single frame 12.5:1. This closes round 4's open contrast record |
+| E4 | PASS | Writes no data |
+| E5 | n/a | No database |
+| G1, G3, G4, G6, G7, G8 | PASS | Not touched; present in `dist/` |
+| G2, G11 | n/a | E-G2; no Reserve on the family pages since round 3 |
+| G5, G15, G16, G18, G19, G23, G24, G26 | FAIL | Carried, not this round's. Missing in `dist/`: an `og:image` (0 on `/` and on the family page), the privacy and terms pages, analytics, a visible contact line with the reply promise, the FAQ and LocalBusiness JSON-LD |
+| G9, G12 | PASS | No image added; no data loaded |
+| G10 | PASS | The control was measured in the browser at 360, 375, 390, 430, 768, 900, 1024, 1280 and 1366 px wide, and in landscape at 780 x 360 and 844 x 390 (criteria 5 and 6) |
+| G13, G14, G17, G20, G22, G25 | n/a | No form, thanks state, cookies, cutover or founders' note here; breadcrumbs n/a on the teaser |
+| G21 | PASS | Seen for the first time in the browser on the 3D path, by the owner's sampler at both sizes and by the frames. The press lands at 14.5 screens (12,238 px at 844 tall; 11,600 px at 800 tall), with section 2 ready, `nav#families[data-placed]` and ten links, and the gems in `-return-gems` |
+| G27 | PASS | Nothing fabricated |
+| H | UNPROVEN | As D3. H1: the loader on the way back is E-H1's |
+| F1 | FAIL | Criteria 2 and 7 fail and criteria 1 and 4 are unproven (below); the spec's "Not done" no longer matches what was run (item 4) |
+| F2 | PASS | No TODO, placeholder, lorem or commented-out code in the added lines |
+
+### Acceptance criteria (round 5, section 23)
+
+| # | Verdict | Evidence |
+|---|---|---|
+| 1 | UNPROVEN | **Source.** `shell.css` has no `.intro.ret` rule (`return-path.test.ts`, and the built stylesheet). Line 69 reads `if(ready&&(!RET||manual)&&tl>=FULL-.001)sched(now)`; line 13's `RET` is round 4's. **The press, both sizes.** In the spec, the assertions before line 417 passed: `#intro.ret`, `.ld-w` and `#ldPct` not `display: none` from the first sample to the lift, and the count past 30. The sampler agrees: zero frames with either hidden, and 30 passed at 3.2 to 3.8 s. The `-return-loader` frames show the wordmark filling ("sk" lit) and the count at 44 on the night. **Not run:** a direct load of `/#families`, and the browser's Back from a family page with the back-forward cache missed (item 3). The second is the one way in that exercises `RET`'s `back_forward` condition |
+| 2 | FAIL | **The prototype's rules hold.** `inline-loader.test.ts` passes: undoing the deviations gives the prototype byte for byte. On the way back, `html.loading` is removed at 12.5 s (390) and 16.9 to 18.0 s (1280) after the time origin. `n` never falls. The phases run load, exit, enter, lift, and the lift sample reads `n` 100. The family page keeps `cut()`; `RET` needs `html.hero3d`. **The row fails** at `S[k].n - S[k-1].n <= 5`: 9 (390) and 8 (1280) in the spec, 17 to 23 in the sampler. **The test is at fault, not the product.** At 390 the samples read `tl` 2.306 at 3,365 ms, then nothing for 1,218 ms; `tl` read 2.312 and 2.319 for two more samples, then 3.528 at 4,586 ms. At 1280: 2.875 at 4,099 ms, then 4.437 at 5,663 ms. In both, `next` read c3 before the jump and c4 after it, and `p` rose by c3's 0.13. The long task is the hero's own warm-up compile, milestone c3 (`warmup.ts` line 32: `compileAsync` and a render of the scene), which runs under the loader on every visit, the first included. While the main thread is blocked, the fill keeps running on the compositor; when it resumes, `fA.currentTime` catches up in one frame. The catch-up equals the block at playback rate 1 (1.222 s of fill over 1.221 s; 1.562 s over 1.564 s), so the fill never ran faster than the prototype allows (rate 2 at most), and nothing cut it. **Also:** the row's `done` check (lines 421 and 422) asserts nothing. The sampler stops once `#intro` is gone, and `done()` sets `ph='done'` and removes `#intro` in the same task, so no sample is ever `done` (the sampler's own `"done": null`). Fix: item 1 |
+| 3 | PASS | **Source** (`return-path.test.ts`): the settle condition, then `snapTo(S2T.LAND); L.ready();`; no `L.skip()` or `L.cut()`; the `life.onRecover` hook; `__introDone` runs `life.recover()` first; `lift()` calls `__introDone`. **Browser** (the owner's sampler, the same init scripts and Chrome as the spec): `scrollY` is 14.5 times `innerHeight` at the lift and 1 s after (12,238 at 844; 11,600 at 800), and 0 px off over every sample after the lift; section 2's hook reports `ready` with all ten gems at L 1 and their labels placed before the lift; `nav#families` has `data-placed` and ten links; `html` stays `hero3d`. **Frames:** `-return-gems` shows the ten gems at rest with their labels at both sizes. **The fragment scroll,** which section 23 left as "Not checked": the first samples read 14,517 (390) and 13,760 (1280), the browser's own jump to `#families`. The island's snap then read 12,238 and 11,600 under the loader, and nothing moved the page again. The spec's own row stopped at item 1's line before these assertions, so it must reach them after item 1 |
+| 4 | UNPROVEN | **The poster path's row passes "in view, no loader"** (`html.poster`, `#intro` hidden). **Criterion 4 says "the families centred".** The row does not assert it, and its frame contradicts it at the moment it was taken. `family-r5-390-landing-poster.png` was captured during the root cross-fade: the family page's case, its letters and both bottom controls show through. The ten swatches sit at the top edge (about y 48 to 235 of 844), under the wordmark and Back to top, with the quiz's heading cut by the bottom edge (item 3). **The stall, the refused module, the lost context, the failed fetch and Back to top's way home on a cache miss** are round 4's code, untouched, by source and `return-path.test.ts` only; no browser row (open record) |
+| 5 | PASS | All seven phone rows pass in the browser: the same top and bottom as `#toTop` within 0.5 px; both 44 px; 14 px above the bottom; the words at `--inset` within 1 px; the chevron at the width less `--inset`; one baseline within 0.5 px; 48 px or more apart; clear of `#toTop`, `#famBtn` and `#arg-box`; no horizontal scroll. At 390 x 844 the row is y 786 to 830, with the boxes at the planned x within 2 px. `back.test.ts`: the phone rule's `bottom` is Back to top's family expression with `var(--sab)`, its `left` the mirror of Back to top's `right`, and `margin-inline: auto` appears once, in the wide block. The frames at 360, 390 and 844 show the row by eye: the words at x 16.5 (390, css px), Back to top's chevron ending near x 374, one line near y 808 |
+| 6 | PASS | All four wide rows pass in the browser at 900 x 600, 1024 x 768, 1280 x 800 and 1366 x 768. The control is centred within 1 px with its bottom one `--inset` above the edge (711.2 to 755.2 at 1280 x 800), and Back to top sits at 91.3 to 135.3 under "All families". The 1280 frame puts the control where round 4's did |
+| 7 | FAIL | **These hold:** the DOM and Tab order are section 22's (the keyboard row passes); `backTimer` is off at 5.6 screens and below (`back.test.ts`); the 2.5 s, 400 ms and 200 ms and the words are unchanged (unit tests); Armor is untouched. **Not met:** "Section 22's criteria 1, 2, 4, 5 and 6 still pass". Four of their browser rows are red on the harness (item 2); see the next table. Criterion 6's contrast is now measured where the words stand and passes (E3) |
+| 8 | PASS | Production build: every enforced line holds (49), and both post-build guards pass. The inline scripts grow 1 B gzip and the hero chunk 1 B raw; the page module is unchanged and its inline stylesheet goes 9,332 to 9,324 B gzip (the builder's run). `test:family` (the C3 guard among them) passes. No em or en dash in any changed file |
+
+### Section 22's criteria under round 5
+
+| # | Verdict | Evidence |
+|---|---|---|
+| 1 | PASS | In the browser: the built HTML row (one control on each of three families, after `#toTop`, named by its text), and the computed style rows at 390 and 1280 |
+| 2 | FAIL | Its two frame rows pass at both sizes (no control at 2.4 s; the control in at 3.0 s), and `backTimer`'s unit tests pass. Its two held-clock rows are red on the harness (item 2), so the cancel, the re-arrival at 4.5 s and the 200 ms exit have never passed in a browser |
+| 3 | PASS | Replaced on the phone layout by round 5's criterion 5, and held on the wide layout by criterion 6 |
+| 4 | PASS | All seven grid rows (data saver, 2G, `deviceMemory` 2, reduced motion, no WebGL2, `?mode=grid`, JavaScript off) and the `fam:grid` row pass |
+| 5 | FAIL | **These pass:** the plain click row (one `family_back {from: 'argument'}`, no `family_open`, `defaultPrevented` false, the modified click opens a new tab and leaves the page) and the poster row ("in view, no loader"). **Red:** the hover row, on the harness (item 2). The 3D landing row is round 5's criteria 1 to 3 |
+| 6 | FAIL | **These pass:** the keyboard row, the six contrast medians (E3) and zero CSP violations. **Red:** the reduced-motion row, on the harness (item 2) |
+
+### Verdict: FAIL
+
+Items 1 to 4 can all be done on this machine: test code and document lines, no product code. The owner's rerun of `back.spec.ts` then grades them.
+
+1. **Criterion 2's landing row asserts a bound the loader never promised; fix the row and the criterion's wording, not the loader (criterion 2; section 22 criterion 5's 3D half; F1).**
+   - **The product is not at fault.** The jumps are the prototype loader's catch-up after a long main-thread task, the hero's c3 warm-up compile, which a first visit runs under the same loader. `inline-loader.test.ts` proves the loader is byte-identical apart from the recorded deviations, so the loader must not change.
+   - **In `tests/family/specs/back.spec.ts` lines 417 to 422:**
+     - keep "`n` never falls";
+     - replace the per-frame `<= 5` with a rate bound against every earlier loading sample, not only the previous one: for every k and every j before it, `tl[k] - tl[j] <= 2 * (t[k] - t[j]) / 1000 + 0.02`, which is a running minimum of `tl - 2t/1000`. The fill never runs faster than twice real time. The bound must look further back than one frame, because `currentTime` read the pre-block value for two more samples after the 1,218 ms gap at 390 before it caught up, so a window of "the frame right after a gap" misses it. The two catch-ups measured (1.222 s of fill over 1.221 s, and 1.562 s over 1.564 s) pass it; a `cut()` from a fill under 4.96 s fails it;
+     - prove "no cut" directly. The init script wraps `__skreedLoader`'s `cut` and `skip` when the loader defines the object, and the row asserts that neither is called on the landing and that `ready` is called exactly once;
+     - read `__skreedLoader.state()` once after `#intro` is gone, and assert phase `done`, `n` 100 and `tl` 7.05. The current `if (done.length)` can never be true.
+   - **In section 23, criterion 2's second bullet:** say the same: never falling; never faster than twice real time measured from any earlier frame, so a long task's catch-up is allowed and a cut is not; no `cut()` or `skip()` call on the landing.
+   - **Then** the row reaches its remaining assertions for criteria 1 and 3 (section 2 ready before the lift, 14.5 screens at the lift and after), which the sampler already shows passing.
+2. **Fix the four round 4 rows that fail on the harness (criterion 7; section 22 criteria 2, 5 and 6; D2).** Each failed again on the rerun (the reduced-motion row the second time in `hold()`), so each is a deterministic fault of the test in this environment, not of the product.
+   - **`hold()` (lines 47 to 50).**
+     - **Cause.** `page.clock.pauseAt(now + 1)` races Playwright's fake clock, which runs in real time until `pauseAt` stops it. Under load the round trip from the `Date.now()` read to `pauseAt` takes more than 1 ms, so the target is already past: "Cannot fast-forward to the past". This failed the 1280 "when it shows" row on both runs and the reduced-motion row on the rerun.
+     - **Fix.** Pause with a margin longer than any round trip, for instance `now + 500`. Every timer the rows measure starts at the next `toEnd()`, after the pause, so the margin moves nothing.
+   - **"When it shows" (line 133, and the waits at lines 149 and 156).**
+     - **Cause.** The fade is a Web Animations API animation on the document timeline, which the fake clock does not drive. `runFor(2499)` fires the island's held animation frames back to back, about 150 of them, each a SwiftShader draw. 500 ms after `animate()`, the computed opacity still read "0", the animation's first keyframe, while its timing object was right.
+     - **Fix.** Keep the timing-object assertion, then await the fade's own end (`Promise.all(el.getAnimations().map((a) => a.finished))`) before reading opacity "1" and no animation left. Do the same before the exit check, and await the exit's `finished` before asserting `hidden`.
+   - **"Hover lifts it 1 px" (lines 328 to 330).**
+     - **Cause.** The arrival started late under slow frames: opacity 0.970735 at 3,100 ms after the argument came on.
+     - **Fix.** Wait for the arrival's `finished`, or poll the opacity to "1", before the first read. This row is about hover and press, not timing.
+   - **"Reduced motion turned on after the page went 3D" (lines 478 to 480) and `toScreen()` (lines 41 to 44).**
+     - **Cause.** `page.ts` listens to `scroll` directly, but the browser dispatches the event in its next rendering step. Frames here are 142 to 251 ms apart at the 90th percentile, so the 80 ms wait is too short.
+     - **Fix in `toScreen()`.** Await the page's own `scroll` event: a one-shot listener added before the `scrollTo`, which runs after `page.ts`'s earlier listener. Return at once when the position does not change.
+     - **Fix in the row.** Assert `hidden` with an auto-retrying `toHaveAttribute('hidden', '')`, and assert "no animation" by a count of `animate()` calls on `#famBack`, kept by an init script, that stays 0.
+3. **Run the ways in that criterion 1 names, and make the poster row prove the centring (criteria 1 and 4, B1).**
+   - **Criterion 1's other two ways in.** Add to the landing row:
+     - a direct `page.goto('/#families')`, with the tier pin;
+     - the browser's Back from a family page with the back-forward cache missed. For instance, serve the landing with `Cache-Control: no-store` through `page.route`, assert the navigation entry's type is `back_forward`, and confirm `pageshow` was not `persisted`.
+     - Each asserts `#intro.ret`, the wordmark and the count shown, and the lift at 14.5 screens. The Back is the only run that exercises `RET`'s `back_forward` condition.
+   - **The poster row (lines 343 to 356).**
+     - Wait for the cross-fade to end, for instance until no `::view-transition` animation is left on `document.documentElement`.
+     - Then assert that `nav#families`'s centre is within a few px of the layout viewport's centre, or at the page end's clamp. Retake `family-r5-390-landing-poster.png`.
+     - If the families are still at the top edge once the cross-fade is over, the browser's fragment scroll is winning over `links.ts` line 12. That is a product fault of the poster path (older than this round, but in this round's criterion 4), to fix in `links.ts`.
+4. **Documents (F1; section 23's documents list).**
+   - **`src/scripts/family/links.ts` line 11** still says "isReturnVisit in the loader's skip path"; the list missed it. Reword it as `rock-links.ts` line 32 now reads: on the 3D path the loader runs in full and lifts onto section 2.
+   - **The four narrow sizes' gaps.** Section 23's phone-row table ("Apart (boxes)") and criterion 5 read 77.8, 92.8, 107.8 and 147.8 px. The edges give 77.7, 92.7, 107.7 and 147.7, which `back.test.ts` and DESIGN.md use. Make the spec agree.
+   - **Section 23's "Not done"** says no browser ran and no frame was taken. Record the owner's run: the two logs, 34 of 40 rows passing, the six failures and their causes as graded here, the sampler's figures and the frames' names. Then the spec's account matches what was verified.
+
+### Open records
+
+These are not FAIL in the builder's hands. Each needs a machine, a tool or an input the loop does not have.
+
+- **The rerun of `back.spec.ts`** after items 1 to 3, on the owner's machine (Chrome with `CHROME_PATH`, the `build:test` build on 8793).
+- **The way back's failure paths in a browser** (criterion 4; D3, H):
+  - a stall under the loader, the island held at a milestone by `__skreedStall` or by route;
+  - a module script refused on `/#families`;
+  - a lost context and a failed fetch;
+  - Back to top's way home on a cache miss.
+- **A real phone:**
+  - the loader's count catch-up on a real GPU (on SwiftShader the c3 block was 1.2 to 1.6 s and the count jumped 17 to 23);
+  - the row's safe areas (the home indicator and the landscape side insets);
+  - round 4's `innerHeight` against `100svh` question on iPhone.
+- **Lighthouse mobile (C4),** on a family page of the 3D build and on `/#families`.
+- **E1 and E2: BLOCKED.** `/web-design-guidelines` and `visual-critique` are not installed.
+- **The carried site essentials** (A1 rules 46 and 47; G5, G15, G16, G18, G19, G23, G24, G26).
+
+### Pending Sam (graded as built until he answers; spec 12 items 6, 7, 11 and 12)
+
+- **The words:** "Back to main page" or "Back to the families". On phones both bottom controls now read "Back to" on one line.
+- **The wait:** 2.5 s.
+- **The way back's length:** the landing's full loader, or the family pages' faster finish (`L.cut()` for `L.ready()`, one word).
+  - On a warm cache on a real device, the plan's arithmetic is 8.2 s to the gems.
+  - In this harness the lift came 12.5 to 18 s after the time origin, because SwiftShader's frames are slow. Judge it on a phone.
+- **The phone row:** one row as built, stacked at the right, or under the letters.
+
+### Notes (not graded as FAIL)
+
+- **Visual critique by eye of the 390 frame (in place of E2).**
+  - **What Sam asked for is there.** "Back to main page" now starts at x 16, where the wordmark starts. Back to top's chevron ends at x 374, where "All families" ends. The two controls share one baseline near y 808. So the bottom row mirrors the top row, and round 4's fault is gone: centred, 8 px above Back to top and overlapping its columns. The 360 frame keeps 102 px between the words, and the 844 x 390 frame keeps the row about 68 px under the letters' bottom. That reads as "follows and alligns".
+  - **What a designer would still send back.**
+    - Two "Back to" labels on one line read as near twins, and only one carries an icon. On a family page both go to the landing, since Back to top steps back to its top. This is the words question, pending Sam.
+    - The control now reads as page chrome rather than the next step after GO / BEYOND BASIC, with about 330 px of empty night between the letters (bottom near y 455) and the row. That is D4's reading (1) against reading (3), also Sam's to choose.
+  - **Older, not this round's.**
+    - The case covers "BEYOND" at 390.
+    - At 844 x 390 three cases stand over the letters, the left one over the G of GO, and the right case's top comes within a few px of "All families".
+    - The same build draws one case at 360, 390 and 1280, three at 844 x 390, and five in round 4's 1280 pane frame. So which lineup the argument screen shows is not settled by the frames. This is round 3's argument screen (section 21, E-F3), worth Sam's look.
+- **The return frames.** `-return-loader` at both sizes shows the first visit's loader: the wordmark half filled, the count reading 44 with its 1.1 em spacing (E-A3), no status line. `-return-gems` shows the ten gems at rest with their labels and Back to top top right, as the landing's section 2 is built.
+- **Why the gems are ready before the lift.** `gems.ts` `build()` always ends in `ready` or `failed` (try and catch around `compileAsync`), so the loader can never be held at 69 by a build that neither ends nor fails. A gem build that is merely slow holds the count at 69 with the passes running and no status line, as the states table says.
+- **The unit test's arithmetic.** `back.test.ts`'s new test recomputes the plan's table from the stylesheets' constants and the plan's word widths. That checks the plan's arithmetic, not the page; the browser rows of criterion 5 measure the page, and they pass.
+- **The builder's budget figures** for the family page after the change come from the builder's run; only the before-log was kept. On this machine's test build the page module is 7,161 B gzip, as in round 4's staging build.
+
+## Round 5, iteration 2, 2026-10-28: FAIL
+
+Iteration 2 answers the four items of the iteration 1 verdict above. It is test code in `back.spec.ts`, section 23's wording, and one product fix in `src/scripts/family/links.ts`: on the poster path the families are now centred again at the load event. The whole round is still uncommitted on `family/round-5-return-loader`: 19 files, 1,060 lines in and 144 out (`git diff`, iterations 1 and 2 together, this log included), and the nine PNGs.
+
+Items 1, 2 and 4 are closed. Item 3's runs are done: all 42 browser rows pass, the three ways in run the full loader at both sizes, and the poster row now proves the centring. The round fails on the `links.ts` fix itself. Its new centring at the load event runs whatever happened before it:
+- it undoes a scroll the visitor made while the load was still running;
+- on Back to top's way home it centres the families after a fall to the poster, where `toPoster` had kept the top.
+
+The reviewer reproduced both against the 8793 server. On a held load the families also still sit at the top edge until the load event, and then jump.
+
+### How it was checked
+
+- **Verdicts.** PASS, FAIL, BLOCKED, UNPROVEN and n/a as in round 4. CLOSED for an iteration 1 item now met.
+- **Frames first, before any code.** The nine PNGs the last full run rewrote (11:21 to 11:27 on 2026-10-28). They were compared with iteration 1's reads in the entry above and with round 4's `family-r4-{390,1280}-arg-after.jpg`.
+- **The diff, read in full where iteration 2 touched it:**
+  - `back.spec.ts`, all 679 lines, and `links.ts`;
+  - section 23's criteria 1, 2, 4 and 5, the phone-row table, "Checked", "Not done" and the "Iteration 2" paragraph.
+- **The code around it, read:**
+  - `loader.inline.js`, all 88 lines: the fill's clock, and what `cut()` and `skip()` do;
+  - `rock-links.ts` (`isReturnVisit`), `to-top.ts`, and `boot.ts` (`toPoster`, `onSoftPoster`);
+  - `gate.inline.js` line 11, and the module order in the built `dist/index.html`.
+- **The logs, read in full:**
+  - `test-results/r5-it2b-back-spec.log`: 42 of 42 in 13.5 min;
+  - `r5-it2b-back-spec-run1.log`: 41 of 42;
+  - `r5-it2b-landing.log`: 4 of 4;
+  - `r5-it2b-frames-poster.log`: 6 of 6;
+  - `r5-it2b-poster-1.log` and `r5-it2b-poster-trace.log`;
+  - the previous builder's `r5-it2-back-spec.log`: 40 of 42.
+- **The logs' line numbers.** The test locations in the logs (133, 659, 899, 914 and so on) are not this file's source lines: the file has 679 lines, and the poster row starts at line 399. The reviewer's own run printed the same numbers against the current file, and a failure's code frame prints the real source lines (`r5-it2-back-spec.log`, "380 |"). So the logs are of this file, and the numbers are the runner's.
+- **Tests, run by the reviewer:**
+  - `test:unit`: 192, with 191 passing and 1 skipped (ffprobe);
+  - `test:family`: 62 of 62;
+  - `npx tsc --noEmit`: clean.
+- **Rows run by the reviewer** against 8793, one worker, 300 s timeout: 3 of 3 in 1.9 min.
+  - The poster row: centre 421.8 of 844 at `scrollY` 564.
+  - "The landing at 390, 3D path, the other two ways in": lifts at 15.53 s and 18.55 s, the count's largest one-frame rise 25 and 24, the fill 0.000 s ahead of twice the frame clock, calls `{cut: 0, skip: 0, ready: 1}`.
+  - "Reduced motion turned on after the page went 3D".
+  - The poster row rewrote `family-r5-390-landing-poster.png` at 12:14. It is the same frame, the families centred; only the countdown changed.
+- **Diagnostics of the `links.ts` fix.** Two short scripts of the reviewer's, outside the repository, drove the installed Chrome with the harness's SwiftShader flags against 8793. Runs A to D are in "The `links.ts` fix" below.
+- **The worktree's `dist/`** (the `build:test` build of 10:44 on 2026-10-28), read only:
+  - the landing's `FamilyLinksNav` module carries the load-time centring (307 B raw);
+  - the modules load in this order: SiteLogo, FamilyLinksNav, BackToTop, Quiz, Room, HeroStage;
+  - `node scripts/hero/budget.mjs dist --mode test`: critical JS 15.6 KB, total JS 205.9 KB, and 238.7 of 250 KB with section 4 and `scroll.ts`. Every enforced line of section-4-flux.md 6 holds (49).
+- **Grep of the 1,060 added lines:** no em or en dash and no emoji. No TODO, FIXME or lorem, outside this log's own words. Every changed file is LF.
+- **Not available here:**
+  - `/web-design-guidelines` and `visual-critique` are not installed;
+  - no Lighthouse run and no real phone;
+  - no production build since iteration 2's `links.ts` change.
+
+### The frames
+
+- **The argument screen 3.0 s after it came on** (`-390-`, `-360-`, `-844-`).
+  - As iteration 1 read them. "Back to main page" starts at x 16.5, under the wordmark. Back to top's chevron ends near x 374, under "All families". The two share one line near y 808 at 390.
+  - The 360 frame keeps the same row. At 844 x 390 the row stands about 68 px under the letters.
+  - The frames are now taken at the page's own 3.0 s, once the fade has ended.
+- **`-1280-arg-after`.** The control is centred under the letters near y 733, with Back to top under "All families", where `family-r4-1280-arg-after.jpg` has them.
+- **`-390-return-loader` and `-1280-`.** The first visit's wordmark loader on the night: "skr" lit and "eed" filling with the count at 57 (390), and the wordmark under a light pass at 30 (1280).
+- **`-return-gems`.** The ten gems at rest with their labels at both sizes, and Back to top top right.
+- **`-390-landing-poster`.** Now taken after the cross-fade, with nothing of the family page showing through.
+  - The countdown is on the poster at the top. The ten swatches stand in two rows, centred: about y 325 to 515 of 844, centre 421.8 by the row's own log.
+  - Back to top is not shown, as built: the landing shows it past 0.9 of a screen, and the page stands at 564 px.
+  - Under the swatches is about 330 px of night before the quiz. That is the poster tier's track as built.
+
+### Iteration 1 items, re-graded
+
+| # | Verdict | Evidence |
+|---|---|---|
+| 1 | CLOSED | **The form.** The fill's own `currentTime` is read against the frame's `requestAnimationFrame` timestamp, in the same callback. The row keeps a running minimum of `fill - 2f` over every earlier loading frame, with 0.02 s of tolerance. Both values come from the same frame clock, so a catch-up after a long task (both jump together, at rate 1) passes, and so do a hold and the rate-2 catch-up. **A cut.** `cut()` is `fA.finish()` (loader line 77): the fill jumps to 4.96 s in one frame while the clock moves one frame, so the bound fails for any cut from a fill below 4.94 s less two frames. The init script turns `__skreedLoader` into an accessor, so it wraps `cut`, `skip` and `ready` on the object the loader assigns before any other script can read it; any cut or skip is counted, whatever the fill. `skip()` (line 78) also leaves no exit phase and `tl` short of 7.05, which the end-state read catches. So the row catches a cut two ways and a skip three. `fA` has `fill: 'forwards'`, so it stays `getAnimations()[0]` on `#ldFill` through the exit, and the samples read the right animation. **The reviewer's iteration 1 form was wrong.** `tl` against `performance.now()` mixes two clocks: it stood 1.05 to 2.08 s over its bound in all 19 landings that logged it (run 1, the landing-only run, the last full run and the reviewer's), against at most 0.000 s for the asserted form. The builder was right to log it and not assert it. **Results.** Every landing passes: in the last full run, the landing-only run and the reviewer's run, and the five of run 1 that passed. The count never falls; calls `{cut: 0, skip: 0, ready: 1}`; the end state is `done`, 100 and 7.05. The phases pass `exit` then `enter`. Run 1's 390 press row failed at the phases: a gap of more than 500 ms between frames hid `enter`. The sampler now also reads the phase at each change of the count, and `enter` is seen in 0 to 9 frames and at the count's 100 in every landing since. **The wording** of criterion 2's bullets matches the row, except the 20 ms (item 3) |
+| 2 | CLOSED | **`hold()`** pauses 2 s ahead. `pauseAt` fires each due timer at most once, and the control's timer starts at the next `toEnd()`, after the pause, so nothing measured moves. **"When it shows"** asserts the timing objects, then awaits `finished` before reading opacity and `hidden`. The exit is read inside the scroll event that starts it: 200 ms on `cubic-bezier(0.55, 0.085, 0.68, 0.53)`, fill forwards. **The hover row** waits for the arrival's end and polls the 150 ms transitions. **The reduced-motion row** awaits the page's own scroll event and checks `hidden` with a retrying assertion; its `Element.prototype.animate` spy counts 0 calls on `#famBack`. All four rows pass in both full runs, and the reduced-motion row in the reviewer's run. **The frames row** now reads the page's clock: `hidden` dropped 2,515 to 2,693 ms after the argument came on, over eight readings. That closes the previous builder's 1280 failure |
+| 3 | CLOSED, with a new fault | **Criterion 1's other two ways in** are a new row at each size, and both pass in all three logged runs and in the reviewer's 390 run. The Back is asserted as `back_forward`, with `pageshow` not persisted and no hash, so `RET` holds by the navigation type alone. **The poster row** waits for the load event and the end of the cross-fade, then asserts the nav's centre within 4 px of the layout viewport's. It passes five times in the builder's runs and once in the reviewer's, and the frame is retaken. **The cause the builder found is right.** The browser's fragment scroll ran after the module's centring: the trace has iteration 1 ending at 844 (centre 141.8), and as built at 564 (centre 421.8) to 1.5 s after the load event. **But the fix's load-time call is unconditional** (items 1 and 2 of the verdict) |
+| 4 | CLOSED | **The gaps.** The table and criterion 5 read 77.7, 92.7, 107.7 and 147.7 px, as `back.test.ts` does. The one 77.8 left is in "Checked", recording the correction. **"Not done"** records the owner's run: 34 of 40, the six failures and their causes, the sampler's figures and the frames. **`links.ts`'s comment** no longer names the loader's skip path |
+
+### The `links.ts` fix
+
+`centre()` scrolls `nav#families` to the middle when `isReturnVisit()` is true and `html.hero3d` is not set. Since iteration 2 it runs when the module runs and again at the load event, once. `isReturnVisit()` is true for the hash `#families` and for any `back_forward` load (`rock-links.ts` line 37).
+
+| Case | Result | Evidence |
+|---|---|---|
+| The 3D path | PASS: nothing while `html.hero3d` stands | The gate sets the class before any module runs (`gate.inline.js` line 11). The six landings hold 14.5 screens at the lift and after |
+| A plain first visit | PASS: nothing | Run D, the poster tier at `/`: `navigate`, no hash, `scrollY` 0 after the load event |
+| Back to top's way home, 3D path, cache missed | PASS without a fall; FAIL after a fall to the poster before the load event | Run C at 1280 x 800: the landing pinned to `hero3d` and served `no-store`, the hero chunk refused and the fonts held 6 s. `toPoster` ran at 401 ms and kept `scrollY` 0 (no hash, since the loader's `TT` dropped it). The load event came at 6,414 ms, still at 0. At 6,620 ms the page stood at 482, the nav's centre at 400.4 of 800: `links.ts`, by `back_forward`. The control, with no refusal and no hold, stayed at 0 with the loader up (`html.loading`), `back_forward`, not persisted. New in iteration 2: at module time the class was `hero3d`, so the old single call did nothing |
+| The visitor's scroll before the load event, poster path | FAIL | Run A at 390 x 844 on `/#families`, the images and fonts held 4 s. 600 ms after `DOMContentLoaded` (`interactive`), the page stood at 844 with the nav at the top edge (centre 141.8), because the browser's fragment scroll repeats until the load event. A 600 px wheel took the page to its end (1,128). At the load event it was pulled back to 564. The browser's own fragment scroll stops at the visitor's first scroll; `centre()` does not |
+| Back to top's way home, poster tier, cache missed | Older, not this round's | Run B: a click on Blissful Blue's swatch (history entry `/#families`), then Back to top. The landing loaded `back_forward`, not persisted, and stood at 564, the families centred. `links.ts` has centred on this load since round 4 (the same condition at module time), and the poster tier keeps the browser's own scroll restoration, because the loader that sets `manual` returns before line 10 there. So the press never reached the top on this tier; the load-time call now makes it certain. `to-top.ts` line 90's "a fresh load starts at the top anyway (loader.inline.js)" holds on the 3D path only. The landing's URL read without its hash after the routed reload |
+
+### Checklist
+
+| Item | Verdict | Evidence |
+|---|---|---|
+| A1 | FAIL | The diff against rules 1 to 50: no violation. Iteration 2 adds test code and one instant scroll in `links.ts`, with no motion, colour, type or copy. No dash, emoji or buzzword in any added line (rules 3, 16, 17, 27, 29). Still failing, outside the diff and carried: rules 46 and 47, with no privacy or terms page in `dist/` |
+| A2 | PASS | Pearl Whisper only; the loader's `--night` and light are E-A2 |
+| A3 | PASS | The rows "shown at" pass at 390 and 1280 in both full runs: Open Sans 600, 14 px, line height 14 px. The loader's type is E-A3's |
+| A4 | PASS | No copy changed |
+| A5 | PASS | The argument screen shows the case; the loader screen is the hero's own, under E-H1 |
+| B1 | PASS | Playwright PNGs at 390 and 1280 of the argument screen, the return loader and the gems. The poster frame is now taken after the cross-fade |
+| B2 | PASS | Criterion 5's seven rows and criterion 6's four pass in both full runs: no horizontal scroll, the words at `--inset`, both controls 44 px tall |
+| B3 | PASS | Same-origin links. The `sessionStorage` flag is Back to top's, unchanged |
+| B4 | PASS | Nothing uses or animates `svh` or `dvh` |
+| C1 | PASS | Test build: critical JS 15.6 KB (production 15.3 KB at iteration 1). `links.ts` adds about 90 B raw to a module of 0.2 KB gzip. Item 3 asks for the production run |
+| C2 | n/a | No image |
+| C3 | PASS | `links.ts` scrolls instantly and animates nothing. The C3 guard passes in `test:family` |
+| C4 | UNPROVEN | Lighthouse not run (open record) |
+| D1 | PASS | The loader on the way back is E-H1's; the control's wait is E-F5's |
+| D2 | PASS | The reduced-motion row passes in both full runs and the reviewer's: shown at 2.5 s with opacity 1 and no animation, hidden at once, `animate()` never called on the control. The landing's reduced-motion tier is the poster (criterion 4) |
+| D3 | FAIL | Items 1 and 2: Back to top's way home after a fall, and the slow network on the poster path's way back |
+| D4 | PASS | The hover row passes: the lift to `matrix(1, 0, 0, 1, 0, -1)`, the press to 0.98, opacity 1 throughout |
+| E1 | BLOCKED | `/web-design-guidelines` is not installed |
+| E2 | BLOCKED | `visual-critique` is not installed; the reviewer's critique by eye is in the notes |
+| E3 | PASS | The keyboard row passes. Contrast medians: 19.43:1 for the three families at 390; 15.50, 15.50 and 16.16:1 at 1280; the lowest single frame 12.6:1 in the last full run. Zero CSP violations. The new rows test nothing that E3 does not already cover |
+| E4 | PASS | Writes no data |
+| E5 | n/a | No database |
+| G1, G3, G4, G6, G7, G8 | PASS | Not touched; present in `dist/` |
+| G2, G11 | n/a | E-G2; no Reserve on the family pages |
+| G5, G15, G16, G18, G19, G23, G24, G26 | FAIL | Carried, not this round's: no `og:image` on `/`, no privacy or terms pages, no analytics, contact line, FAQ or LocalBusiness JSON-LD |
+| G9, G12 | PASS | No image added; no data loaded |
+| G10 | PASS | Criteria 5 and 6 at 360, 375, 390, 430, 768, 900, 1024, 1280 and 1366 px wide, and at 780 x 360 and 844 x 390 |
+| G13, G14, G17, G20, G22, G25 | n/a | No form, thanks state, cookies, cutover or founders' note here; breadcrumbs n/a on the teaser |
+| G21 | PASS | The press, the direct load and the Back each land at 14.5 screens with `nav#families[data-placed]` and ten links, in both full runs |
+| G27 | PASS | Nothing fabricated |
+| H | FAIL | As D3: the slow network and the error path of Back to top's way home |
+| F1 | FAIL | Criterion 4 (below) |
+| F2 | PASS | No TODO, placeholder, lorem or commented-out code in the added lines |
+
+### Acceptance criteria (round 5, section 23)
+
+| # | Verdict | Evidence |
+|---|---|---|
+| 1 | PASS | All three ways in, at both sizes: the press, a direct load of `/#families`, and the Back with the cache missed (`back_forward`, not persisted, no hash). They pass in run 1, the landing-only run, the last full run and the reviewer's 390 run. In every one: `#intro.ret`, the wordmark and the count not `display: none` from the first sample to the lift, and the count past 30. The frames show the wordmark filling and the count (57 at 390, 30 at 1280) |
+| 2 | PASS | **The parity test passes.** **In the browser,** over every logged landing: the lift came 11.2 to 18.55 s after the time origin, all past 7.5 s; the count never falls; the fill is at most 0.000 s ahead of twice the frame clock (the bound is 0.02 s); calls `{cut: 0, skip: 0, ready: 1}`; `exit` then `enter`; and once `#intro` is gone, `done`, 100 and 7.05. The count's largest one-frame rise was 31: the c3 catch-up allowed by the bullet. **The form** is judged in item 1 above. **The wording** lacks only the 20 ms (item 3) |
+| 3 | PASS | In all landings: `scrollY` is 14.5 times `innerHeight` within 2 px at the lift, on every sample after it and 1 s later; section 2 is ready on the last loading sample; ten placed links. The frames show the gems at rest |
+| 4 | FAIL | **The poster row** passes after the load event: centre 421.8 of 844, five builder runs and the reviewer's. **Items 1 and 2:** the load-time centring moves the families onto Back to top's way home after a fall (run C), and undoes the visitor's scroll on a held load (run A), where the families sat at the top edge until the load event. **Still with no browser row** (open record): the stall, the refused module on `/#families`, the lost context and the failed fetch |
+| 5 | PASS | All seven phone rows pass in both full runs (the row, the baseline, the gaps, the 390 x 844 figures within 2 px), and `back.test.ts` passes |
+| 6 | PASS | All four wide rows pass in both full runs: centred within 1 px, 711.2 to 755.2 at 1280 x 800, Back to top at 91.3 to 135.3 |
+| 7 | PASS | The DOM and Tab order (the keyboard row), `backTimer` off at 5.6 screens and below (`back.test.ts`), and the timings and words (unit tests). Section 22's criteria 1, 2, 4, 5 and 6 pass in the browser (next table), and criterion 6's contrast is measured where the words stand (E3) |
+| 8 | PASS | On the test build every enforced line holds (49), and the C3 guard passes. No em or en dash in any changed file. Iteration 1's production figures stand for the loader, the hero chunk and the stylesheets, which iteration 2 left alone; `links.ts` adds about 90 B raw. The production run after the next fix is item 3 |
+
+### Section 22's criteria under round 5
+
+| # | Verdict | Evidence |
+|---|---|---|
+| 1 | PASS | The built HTML row (one control on each of three families, after `#toTop`, named by its text) and the computed-style rows at 390 and 1280 |
+| 2 | PASS | **The held-clock rows** pass at both sizes in both full runs: hidden at 2,499 ms and shown at 2,500 ms; the 400 ms arrival on `cubic-bezier(0.2, 0, 0, 1)`, awaited to its end; up at 1.0 s and down at 2.0 s shows it at 4.5 s; up after it showed, the 200 ms exit on `--ease-in`, then hidden. **The frames rows** read the page's clock: every frame before 2.4 s hidden, and the first at or after 3.0 s shown |
+| 3 | PASS | Replaced on phones by round 5's criterion 5; held on the wide layout by criterion 6 |
+| 4 | PASS | The seven grid rows and the `fam:grid` row pass in both full runs |
+| 5 | PASS | The plain-click row; the hover row; the poster row, now with the centring; and the 3D landing rows (round 5's criteria 1 to 3) |
+| 6 | PASS | The keyboard row, the reduced-motion row, the six contrast medians and zero CSP violations |
+
+### Verdict: FAIL
+
+All three items can be done on this machine: one product file, its tests and the record. The owner's rerun of `back.spec.ts` then grades them.
+
+1. **`links.ts`: never centre on Back to top's way home (criterion 4; D3; H; section 23's states rows "Back to top's way home" and "Error").**
+   - **The fault, new in iteration 2.**
+     - `centre()` asks `isReturnVisit()`, which is true for any `back_forward` load. Back to top's way home on a cache miss is one, with the hash dropped by the loader's `TT`.
+     - On the 3D path, the call at module time does nothing (`hero3d`). A hard fall before the load event then replaces the class with `poster`, and `toPoster` keeps the top, since there is no hash. The load-time call then centres the families.
+     - Reproduced in run C: `scrollY` 0 from the fall at 401 ms to the load event at 6,414 ms, then 482, the nav's centre at 400.4 of 800.
+   - **Change.**
+     - Treat a load that carries Back to top's flag as no return, as the loader's `TT` does, at both calls.
+     - `FamilyLinksNav`'s module runs before `BackToTop`'s, which clears the flag (`to-top.ts` line 92; the module order in `dist/index.html`). So `links.ts` can read `sessionStorage['skreed:to-top']` when its module runs. Pin that order with a test, or carry the decision on the document from an inline script.
+   - **Prove it.**
+     - A browser row as run C: the landing pinned to `hero3d` and served `no-store`, Back to top pressed on a family page, the hero chunk refused and the fonts held so that the fall comes first. Assert `scrollY` 0 one second after the load event.
+     - A source test in `return-path.test.ts`.
+2. **`links.ts`: keep the families centred while the load runs, and never move the page after the visitor's own scroll (criterion 4; D3 and H, slow network).**
+   - **The fault.** Run A, the poster path at 390 x 844 on `/#families`, with the images and fonts held 4 s:
+     - 600 ms after `DOMContentLoaded` the nav sat at the top edge (`scrollY` 844, centre 141.8);
+     - a 600 px wheel took the page to its end (1,128);
+     - at the load event `centre()` pulled it back to 564.
+     - With no scroll of the visitor's, the families sit at the top edge for the whole held load, then jump 280 px under the finger.
+     - The poster tier is the slow tier (data saver, 2G, low memory), so a long load is its normal case. The same call also re-centres a soft poster that came before the load event after the visitor has moved it, which resets `onSoftPoster`'s 8 px measure.
+   - **Change.** Hold the families centred from the module's call to the load event, and stop at the visitor's first `wheel`, `touchstart`, `keydown` or `pointerdown`, as the browser's own fragment scroll does. For instance:
+     - re-centre on each `scroll` event until the load event or that first input, in place of the unconditional load-time call;
+     - or, off the 3D path, give `nav#families` an inline `scroll-margin-top` of half the layout viewport less half its height, so that the browser's own fragment scroll lands it centred.
+   - **Prove it.**
+     - The poster row again, with the images and fonts held 4 s: the nav's centre within 4 px of the layout viewport's at 1 s, at 3 s and 1 s after the load event.
+     - A variant with a 600 px wheel at 1 s whose `scrollY` still stands 1 s after the load event.
+3. **The record (F1; criterion 8).**
+   - **Section 23.** The poster-path line, the iteration paragraph and `links.ts`'s comment say what the fixed code does, and record runs A to D.
+   - **Criterion 2's second bullet.** Add the 20 ms the row allows ("never more than 20 ms ahead of twice the frame clock"). The row and the "Iteration 2" paragraph say 0.02 s; the criterion does not.
+   - **"Built".** Run a production `npm run build` after the change, and record the landing's critical JS and the links module's size. The last production figures are iteration 1's, from before `links.ts` changed. On the test build every line holds: 15.6 KB critical, 238.7 of 250 KB.
+
+### Open records
+
+These are not FAIL in the builder's hands. Each needs a machine, a tool or an input the loop does not have.
+
+- **The rerun of `back.spec.ts`** after items 1 to 3, on the owner's machine.
+- **The way back's failure paths as browser rows** (criterion 4; D3, H):
+  - a stall (`__skreedStall`);
+  - a module script refused on `/#families`;
+  - a lost context;
+  - a failed fetch.
+  - Run C exercised one refused chunk on Back to top's way home, not as a spec row.
+- **Back to top's way home on a cache miss, 3D path.** Seen once in the reviewer's control: `scrollY` 0, the loader up, `back_forward`, not persisted. Item 1's row can carry it.
+- **The poster tier's Back to top on a cache miss lands on the families** (run B, older than this round).
+  - Item 1 takes `links.ts` out of it. The browser's own scroll restoration would then still keep the visitor's old place, because the loader that sets `manual` does not run on that tier.
+  - This is for the owner, outside this round's criteria. `to-top.ts` line 90's "a fresh load starts at the top anyway (loader.inline.js)" is true on the 3D path only.
+- **A real phone:** the loader's count catch-up on a real GPU (the c3 block was 1.2 to 1.6 s on SwiftShader), the row's safe areas, and round 4's `innerHeight` against `100svh` question on iPhone.
+- **Lighthouse mobile (C4).**
+- **E1 and E2: BLOCKED.**
+- **The carried site essentials:** A1 rules 46 and 47; G5, G15, G16, G18, G19, G23, G24, G26.
+- **The Workers runtime's crash during a short run** is the hand-off's account. There is no log of it here, and neither full run met it.
+
+### Pending Sam (graded as built until he answers; spec 12 items 6, 7, 11 and 12)
+
+- **The words:** "Back to main page" or "Back to the families". On phones both bottom controls read "Back to" on one line.
+- **The wait:** 2.5 s.
+- **The way back's length:** the landing's full loader, or the family pages' faster finish. In this harness the lift came 11.2 to 18.6 s after the time origin, on SwiftShader; judge it on a phone.
+- **The phone row:** one row as built, stacked at the right, or under the letters.
+
+### Notes (not graded as FAIL)
+
+- **Visual critique by eye of the 390 frame (in place of E2).**
+  - **As iteration 1 read it.** The bottom row mirrors the top row. Two "Back to" labels sit on one line, only one with an icon (the words question). About 330 px of night lies between the letters and the row (D4's reading).
+  - **Older, not this round's.**
+    - The case covers "BEYOND" at 390.
+    - At 844 x 390 three cases stand over the letters, the left one over the G, and the right case's top comes within a few px of "All families".
+    - 1280 shows one case where round 4's frame showed five.
+  - **New this iteration.** The poster frame reads well: the countdown, then the families centred with their names. The night under the families is the poster tier's track, as built.
+- **The loader's frames** differ from iteration 1's only in the count at capture (57 and 30, against 44), since the capture is a wall-clock wait into a load of varying length.
+- **`r5-it2b-poster-trace.log`** and the reviewer's run A agree on the fast case: the browser's fragment scroll lands the nav at the top edge (844) on or just after the load event, and the load-time call wins by running after it. So the fix's end state is right whenever the visitor has not moved first.
+
+## Round 5, iteration 3, 2026-10-28: FAIL
+
+Iteration 3 answers the three items of the iteration 2 verdict above. It is one product file, `src/scripts/family/links.ts` (27 lines in, 9 out), its source test in `return-path.test.ts` (31 in, 3 out), three browser rows in `back.spec.ts` (139 in, 1 out) and section 23's record (10 lines in, 7 out). The whole round is still uncommitted on `family/round-5-return-loader`: 19 files, 1,468 lines in and 146 out before this entry, and the nine PNGs.
+
+All three iteration 2 items are closed. Back to top's way home now keeps the top after a fall, and the held load keeps the families centred to the load event and lets go at the visitor's first input. The reviewer's own runs confirm both, and listener hygiene holds on every path tried.
+
+The round still fails, on three things the reviewer found in this iteration:
+- **The poster tier's Back.** On the poster tier proper (reduced motion, so the loader never runs and the browser keeps its own scroll restoration), the browser's Back from a family page with the cache missed does not end centred. The browser restores the visitor's old place 3 to 19 ms after the load event, after `links.ts` has let go.
+- **The poster frame.** The poster row's frame was caught mid cross-fade again.
+- **The record.** It calls the harness's fall path "the poster tier", and section 23's budget paragraph no longer matches the build.
+
+### How it was checked
+
+- **Verdicts.** PASS, FAIL, BLOCKED, UNPROVEN, n/a and CLOSED, as in iteration 2.
+- **Frames first, before any code.** The nine PNGs the full run rewrote (12:44 to 12:51 on 2026-10-28), compared with iteration 2's reading above.
+- **Iteration 3's own change, isolated.**
+  - The reviewer's snapshot of the iteration 2 diff (taken at 12:12, before iteration 3) was applied to `HEAD` outside the repository and compared with the worktree. Only `links.ts`, `return-path.test.ts`, `back.spec.ts`, section 23 and this log changed since iteration 2.
+  - The other 15 changed files are byte for byte as iteration 2 left them.
+- **Read in full:**
+  - `links.ts`, and its built module in `dist/_astro/` (643 B);
+  - the new test and the three new rows;
+  - section 23's poster-path line, criterion 2's second bullet, criterion 4, the states table, the budget paragraph, "Checked", "Not done" and the "Iteration 3" paragraph;
+  - `to-top.ts` lines 60 to 100, `loader.inline.js` lines 1 to 20, and `rock-links.ts`'s `isReturnVisit` and `installViewTransitionScope`.
+- **The logs, read in full:** `test-results/r5-it3-back-spec.log` (45 of 45), `r5-it3-new-rows.log`, the four `r5-it3-diag-*.log`, `r5-it3-build-prod.log`, `r5-it3-family-budget-prod.log`, `r5-it3-unit.log` and `r5-it3-family.log`.
+- **Tests, run by the reviewer:**
+  - `npx tsc --noEmit`: clean;
+  - `test:family`: 63 of 63;
+  - `test:unit`: 192, with 191 passing and 1 skipped (ffprobe).
+- **The three new rows**, run by the reviewer against 8793 (one worker, 300 s timeout): 3 of 3 in 34.2 s.
+  - The held load: centred at 421.8 of 844 at 1 s, at 3 s and 1 s after the load event; `DOMContentLoaded` at 487 ms, the load at 4,347 ms, 694 frames.
+  - The wheel: 564 to 1,128 by 2,048 ms, and 1,128 1 s after the load event (4,210 ms).
+  - Back to top's way home: the fall at 391 ms, the load at 6,327 ms, 952 frames none off the top. The control at 0 with the loader up.
+  - These rows take no frames, so no repository file was rewritten.
+- **The server.** 8793 serves the 13:00 test build. Its landing's links module is `FamilyLinksNav...DHUWdoxD.js`, the same chunk as the production log's, and its module scripts come in the order SiteLogo, FamilyLinksNav, BackToTop, Quiz, Room, HeroStage.
+- **Diagnostics.** The reviewer's own scripts, outside the repository, drove the installed Chrome with the harness's SwiftShader flags against 8793:
+  - `diag-totop3d.cjs` and `diag-links.cjs` from iteration 2;
+  - four new ones: painted frames, listener hygiene, the poster row's wait, and the poster tier's Back.
+  - **Painted frames** were read from the browser's screencast, whose metadata gives each composited frame's scroll offset. That is a capture of what was painted, not a sample taken before layout.
+  - **Listeners** were read by wrapping `addEventListener` and `removeEventListener` on `window` in an init script and keeping the calls whose stack is the links module's.
+  - Results are in the tables below.
+- **Grep of every changed file and of the added lines:** no em or en dash, no emoji, no AI product name; every changed file is LF. No TODO, FIXME or lorem outside this log's own words.
+- **Not available here:**
+  - `/web-design-guidelines` and `visual-critique` are not installed;
+  - no Lighthouse run and no real phone;
+  - the headless harness hides scrollbars, so a scrollbar drag was not tried.
+
+### The frames
+
+- **The argument screen 3.0 s after it came on** (`-390-`, `-360-`, `-844-`, `-1280-`). As iteration 2 read them.
+  - At 390, "Back to main page" starts at x 16.5 and Back to top's chevron ends near x 374, on one line near y 808.
+  - At 360 the row is near y 744. At 844 x 390 it is about y 354, under the letters.
+  - At 1280 the control is centred under the letters near y 733, with Back to top under "All families".
+  - Only the case's pose differs from iteration 2's frames.
+- **`-390-return-loader` and `-1280-`.** The wordmark under a light pass on the night, the count at 30 (390) and 29 (1280). Iteration 2's frames read 57 and 30; the capture is a wall-clock wait into a load of varying length.
+- **`-return-gems`.** The ten gems at rest with their labels at both sizes, and Back to top top right. As before.
+- **`-390-landing-poster`: regressed.** It was caught mid cross-fade again, as in iteration 1. The family page shows through the landing:
+  - its case and GO / BEYOND BASIC across the swatches;
+  - "All families" top right;
+  - "Back to main page" and Back to top at the bottom.
+
+  The swatches themselves stand about y 328 to 515 of 844, centred, as the row's log says (421.8). Item 2 below.
+
+### Iteration 2 items, re-graded
+
+| # | Verdict | Evidence |
+|---|---|---|
+| 1 | CLOSED | **The code.** `links.ts` reads `sessionStorage['skreed:to-top']` inside a try before `isReturnVisit()` and does nothing when it is set; it never writes the flag. **The order** it relies on holds three ways: `index.astro` mounts `FamilyLinks` before `BackToTop`, the served landing's module scripts come in that order, and module scripts run in document order. `return-path.test.ts` pins the first two. **Run C again, without the spec:** the fall to the poster at 276 ms, the load at 6,090 ms, and `scrollY` 0 at every change and 1.5 s after (`back_forward`, not persisted, no hash). The control stood at 0 with the loader up. **The new row** passes in the full run and in the reviewer's (above). **Run B** (no pin; the harness's own fall, at 189 ms) now ends at 0 with the hash dropped, where iteration 2 read 564 |
+| 2 | CLOSED | **The hold.** The page is centred at the module, re-centred on each scroll before the load event, centred once more at the load event, and left alone from the visitor's first `wheel`, `touchstart`, `keydown` or `pointerdown`. **The rows** pass in the full run and the reviewer's. **On the poster tier proper, the reviewer's runs:** reduced motion, `html.poster` from the first class stamp, the browser's restoration left on `auto`: the fragment's scroll to 844 was re-centred 2 to 7 ms later, and the page stood at 564 through the held load and after it. **In painted frames** (the screencast, seven held loads, four on the harness's fall path and three on the poster tier proper): every frame stood at 0 (the blank page before the navigation, or the landing's top before the module ran) or at 564, never at 844. The two wheel runs moved only with the wheel and kept 1,128 through the load event. **A key** (End at 1280, held 3 s): the listeners went at 974 ms and the page kept 965 through the load event at 3,117 ms. The fault found under this iteration's code is a scroll after the load event, a different one (verdict item 1) |
+| 3 | CLOSED | **Section 23 carries the fixed code.** The poster-path line, criterion 4, two new states rows and the iteration 3 paragraph describe it, and `links.ts`'s comment says what the code does. **The 20 ms.** Criterion 2's second bullet now reads "never more than 20 ms ahead of twice the frame clock", as the row allows. **The production build** is recorded with its log: critical JS 15.5 KB, total JS 204.8 KB, 237.2 of 250 KB with section 4 and `scroll.ts`, the hero chunk `hero.CKiDk_2_.js` at 54.5 KB gzip (55,826 B), and the family page unchanged. The record's new faults are verdict item 3 |
+
+### `links.ts`, path by path
+
+| Case | Result | Evidence |
+|---|---|---|
+| The 3D path, `/#families` | PASS: nothing while `html.hero3d` stands | The landing pinned to `hero3d`: the six listeners were added at 165 ms and removed at the load event (172 ms) with no centring. The loader's snap took the page to 11,600, 14.5 times 800. The six landings of the full run held 14.5 screens at the lift and after |
+| A plain first visit | PASS: no centring, no listener | `navigate`, no hash. No listener of the links module's was added (only `installFamilyLinks`'s `pageswap`, round 4's), no scroll event, `scrollY` 0 |
+| Reduced motion, `/#families`, not held | PASS | Centred at 421.8 of 844 (564). The listeners were added at 146 ms and all removed at the load event (149 ms) |
+| The harness's "poster path" (the fall at about `DOMContentLoaded`), `/#families`, held 4 s | PASS | Rows and the reviewer's runs as in item 2 |
+| The poster tier proper, `/#families`, held 4 s, with and without a wheel | PASS | Item 2 |
+| Back to top's way home, 3D path, cache missed, a fall before the load event | PASS | Item 1 |
+| Back to top's way home, poster tier proper, cache missed | Older, not this round's (open record) | Reduced motion. The visitor left the landing at 513. The landing loaded `back_forward` with `#families` kept, and the browser restored 513 at 67 ms. `links.ts` did nothing (the flag), and the page stood at 513 after the load event (centre 472.8). Back to top does not reach the top on this tier; iteration 2 read 564, so the press missed the top there too |
+| **The browser's Back, poster tier proper, cache missed** | **FAIL** | **Four runs.** Reduced motion; the landing at `/`, the families brought into view, a click on Blissful Blue, the landing served `no-store`, then Back. Each was `back_forward`, not persisted, `#families` kept, `history.scrollRestoration` `auto`. **Left at the swatches (513), nothing held:** the browser restored 513 at 52 ms; `links.ts` had centred it (564) by `DOMContentLoaded` at 162 ms; the load event came at 163 ms; and at 166 ms the browser restored 513 again. It stood there 1.5 s later, the nav's centre at 472.8 of 844. **The same with the images and fonts held 3 s:** 564 from 126 ms through the load event at 3,085 ms, then 513 at 3,104 ms. **Left 300 px lower (813):** the same at 150 ms and 3,100 ms, ending at 813 with the nav's centre at 172.8. **The cause, confirmed.** With `history.scrollRestoration` set to `manual` at `DOMContentLoaded` by the reviewer's init script, the same two runs from 813 ended at 564, centre 421.8. **Older code.** The load-time centring of iteration 2, and round 4's module-time one, would lose to the same restoration. But the case is this round's criterion 4 ("reduced motion's default tier show[s] ... the families centred"), section 23's reduced-motion paragraph and its states row "Reduced motion, poster path". `links.ts`'s comment premise, "the landing keeps manual scroll restoration (the loader)", holds only where the loader runs: it returns at line 6 on the poster tier, before line 10 sets `manual` |
+| Listener hygiene | PASS | Six listeners: `scroll` and the four inputs passive, `load` plain. All six are removed by one `stop`, at the load event or the first input, in every run above, and never added on a first visit or once the document is complete. Nothing calls `preventDefault`, in the source and in the built module |
+
+### Checklist
+
+| Item | Verdict | Evidence |
+|---|---|---|
+| A1 | FAIL | The diff against rules 1 to 50: no violation. Iteration 3 adds one instant scroll held to the load event, with no motion, colour, type or copy (rules 12, 14 and 48 untouched). No dash, emoji or buzzword in any added line (rules 3, 16, 17, 27, 29). Still failing, outside the diff and carried: rules 46 and 47, with no privacy or terms page in `dist/` |
+| A2 | PASS | Pearl Whisper only; the loader's `--night` and light are E-A2 |
+| A3 | PASS | The "shown at" rows pass at 390 and 1280 in the full run |
+| A4 | PASS | No copy changed |
+| A5 | PASS | The argument screen shows the case; the loader screen is the hero's own, under E-H1 |
+| B1 | FAIL | Item 2: `family-r5-390-landing-poster.png` was taken mid cross-fade, with the family page showing through the landing. The other eight frames are as graded |
+| B2 | PASS | Criterion 5's seven rows and criterion 6's four pass in the full run |
+| B3 | PASS | Same-origin links; `links.ts` only reads the flag, inside a try |
+| B4 | PASS | Nothing uses or animates `svh` or `dvh` |
+| C1 | PASS | Production: critical JS 15.5 KB of the 60 KB line (15.3 KB at iteration 1); total JS 204.8 KB, 237.2 of 250 KB with section 4 and `scroll.ts`. The links module is 643 B raw and 387 B gzip, against about 204 B gzip at round 4 by the reviewer's esbuild check of the two sources. Section 23's own budget paragraph no longer matches: item 3 |
+| C2 | n/a | No image |
+| C3 | PASS | `links.ts` scrolls instantly and animates nothing; the C3 guard passes in `test:family` |
+| C4 | UNPROVEN | Lighthouse not run (open record) |
+| D1 | PASS | The loader on the way back is E-H1's; the control's wait is E-F5's |
+| D2 | PASS | The reduced-motion row passes; `links.ts`'s centring is instant |
+| D3 | FAIL | Item 1: the poster tier's Back with the cache missed ends at the restored place |
+| D4 | PASS | The hover row passes |
+| E1 | BLOCKED | `/web-design-guidelines` is not installed |
+| E2 | BLOCKED | `visual-critique` is not installed; the reviewer's critique by eye is in the notes |
+| E3 | PASS | The keyboard row passes; contrast medians 19.43:1 for the three families at 390 and 16.14, 15.46 and 15.99:1 at 1280, the lowest single frame 12.7:1; zero CSP violations |
+| E4 | PASS | Writes no data |
+| E5 | n/a | No database |
+| G1, G3, G4, G6, G7, G8 | PASS | Not touched; present in `dist/` |
+| G2, G11 | n/a | E-G2; no Reserve on the family pages |
+| G5, G15, G16, G18, G19, G23, G24, G26 | FAIL | Carried, not this round's: no `og:image` on `/`, no privacy or terms pages, no analytics, contact line, FAQ or LocalBusiness JSON-LD |
+| G9, G12 | PASS | No image added; no data loaded |
+| G10 | PASS | Criteria 5 and 6 at every listed size |
+| G13, G14, G17, G20, G22, G25 | n/a | No form, thanks state, cookies, cutover or founders' note here; breadcrumbs n/a on the teaser |
+| G21 | PASS | The press, the direct load and the Back land at 14.5 screens with ten placed links in the full run |
+| G27 | PASS | Nothing fabricated |
+| H | FAIL | As D3: the slow tier's Back with the cache missed |
+| F1 | FAIL | Criterion 4 (item 1) and the record (item 3) |
+| F2 | PASS | No TODO, placeholder, lorem or commented-out code in the added lines |
+
+### Acceptance criteria (round 5, section 23)
+
+| # | Verdict | Evidence |
+|---|---|---|
+| 1 | PASS | All three ways in at both sizes in the full run: `ret`, the wordmark and the count from the first sample to the lift, the count past 30. The frames show the wordmark and the count (30 and 29) |
+| 2 | PASS | The parity test passes. The six landings: the lift 9.75 to 19.83 s after the time origin; the count never falls and rose at most 28 in one frame; the fill at most 0.000 s ahead of twice the frame clock; calls `{cut: 0, skip: 0, ready: 1}`; `enter` in 1 to 8 frames and at the count's 100; `done`, 100 and 7.05 at the end. The wording now carries the 20 ms |
+| 3 | PASS | 14.5 screens within 2 px at the lift and after, section 2 ready first, ten placed links, in all six landings; the frames show the gems at rest |
+| 4 | FAIL | **Item 1:** reduced motion's default tier does not end centred after the browser's Back with the cache missed. **Item 2:** the poster row's frame contradicts the row's own caption, "once the cross-fade is over". **PASS within it:** the held load and the wheel on both the fall path and the poster tier proper; Back to top's way home after a fall. **Still with no browser row** (open record): the stall, the refused module on `/#families`, the lost context and the failed fetch |
+| 5 | PASS | All seven phone rows pass in the full run, and `back.test.ts` passes |
+| 6 | PASS | All four wide rows pass in the full run |
+| 7 | PASS | The keyboard row, `backTimer` off at 5.6 screens and below, the timings and words, and section 22's criteria below |
+| 8 | PASS | Production build, every enforced line holds (49) and both guards pass. The inline scripts row is as iteration 1 left it (4.8 KB). The hero chunk is iteration 1's. The family page module is unchanged (7,070 B gzip, `BInCOMKE`). The C3 guard passes, and no changed file carries an em or en dash. The budget paragraph above the criteria is item 3 |
+
+### Section 22's criteria under round 5
+
+| # | Verdict | Evidence |
+|---|---|---|
+| 1 | PASS | The built HTML row and the computed-style rows at 390 and 1280 |
+| 2 | PASS | The held-clock rows at both sizes; the frames rows dropped `hidden` at 2,520.5 ms (390) and 2,511.6 ms (1280) after the argument came on |
+| 3 | PASS | Replaced on phones by round 5's criterion 5; held on the wide layout by criterion 6 |
+| 4 | PASS | The seven grid rows and the `fam:grid` row |
+| 5 | PASS | The plain-click row, the hover row, the poster row's centring assertion and the 3D landing rows. The poster row's frame is B1 |
+| 6 | PASS | The keyboard row, the reduced-motion row, the six contrast medians and zero CSP violations |
+
+### Verdict: FAIL
+
+All three items can be done on this machine: one line of product code, test code, a frame and the record. The owner's rerun of `back.spec.ts` then grades them.
+
+1. **`links.ts`: keep the families centred after the load event on the poster tier's Back (criterion 4; section 23's reduced-motion paragraph and its states row "Reduced motion, poster path"; D3; H).**
+   - **The fault.** The poster tier proper, the reduced-motion default and by the same code Save-Data, 2g and low memory, keeps `history.scrollRestoration` on `auto`, because the loader returns before its line 10 there.
+     - The browser's Back from a family page with the landing's cache missed is a return visit. `links.ts` centres it and holds the centring to the load event.
+     - The browser then restores the visitor's old place 3 to 19 ms after the load event, once `links.ts` has let go.
+     - Left at the swatches: 513, centre 472.8 of 844. Left 300 px lower: 813, centre 172.8. Held 3 s or not.
+   - **Change.**
+     - When `links.ts` decides to centre (a return visit, no Back to top flag), set `history.scrollRestoration = 'manual'` before the load event, as the loader does on the 3D path. The reviewer's init script doing this at `DOMContentLoaded` brought both runs from 813 to 564, centre 421.8.
+     - Correct the comment's "the landing keeps manual scroll restoration (the loader)": the loader sets it only on the 3D path.
+     - Leave Back to top's way home on that tier as it is; it is an open record, outside this round.
+   - **Prove it.**
+     - A browser row under `reducedMotion: 'reduce'`, the poster tier from the start: assert `html.poster` at the first class stamp and `scrollRestoration` `auto` before the module.
+     - Visit `/`, bring the families into view, then 300 px lower. Open a family page by its link, serve the landing `no-store`, and go Back.
+     - Assert `back_forward`, not persisted, the nav's centre within 4 px of the layout viewport's 1 s after the load event, and no frame after the load event elsewhere. Run it with the images and fonts held 3 s and without.
+     - Extend `return-path.test.ts`'s iteration 3 test to the new line.
+2. **The poster row's frame: take it once the cross-fade has ended on screen (B1; criterion 4's frame; section 22's criterion 5).**
+   - **The fault.** The row waits until `readyState` is `complete` and no `::view-transition` animation is left, then takes the frame. In this harness that wait ends while the cross-fade is still painted, so the frame shows the family page through the landing.
+   - **The reviewer's evidence.**
+     - The row's own sequence, run four times: the wait ended 14 to 19 ms after the URL changed, at 696 to 798 ms on the page's clock. `document.activeViewTransition` was still set at that moment in all four.
+     - Every frame taken there showed the family page.
+     - A frame 0.5 s later was clean (the reviewer's `poster-frame-t300.png` in the scratchpad).
+     - The screencast of the press painted the cross-fade for a few hundred ms after the page's own transition had resolved `finished`.
+     - Iteration 2's frame was clean by timing.
+   - **Change.**
+     - Wait for the transition the landing's `pagereveal` reports to resolve `finished`, captured by an init script, and for `document.activeViewTransition` to be null. Then wait a fixed 1 s before the frame.
+     - Retake `family-r5-390-landing-poster.png`, and look at it before recording it.
+3. **The record (F1).**
+   - **Name the harness's "poster path".** The iteration 3 paragraph's runs, the held-load and wheel rows, and the "poster tier's Back" run all begin on `hero3d loading` and fall to the poster at about `DOMContentLoaded`.
+     - The builder's own logs show it: `r5-it3-diag-held.log`, "66ms class ... js hero3d loading" then "528ms ... js poster"; `r5-it3-diag-back.log`, 78 ms and 271 ms.
+     - So the loader had already set `scrollRestoration` to `manual`.
+     - "The browser's own restoration on this tier ... the restoration did not fight the hold" therefore describes a run in which there was no restoration.
+     - Say what was run, and record item 1's reduced-motion row as the poster tier proper.
+     - The poster row's name and comment ("the harness has no hardware WebGL2, so / is the poster page") should say the same.
+   - **Section 23's budget paragraph** still reads "At most 70 B gzip in all".
+     - The round now also grows the landing's links module, on the critical path, from about 204 B to 387 B gzip (643 B raw), for iterations 2 and 3. Critical JS went from 15.3 to 15.5 KB.
+     - Add the links module's line and its measured figure to the paragraph, and to criterion 8's bullets, so the stated budget matches the build. It is far under the project's 60 KB line.
+   - **The poster-path line and the "Slow network, poster path" row:** add item 1's change once made, since the hold alone does not cover a restoration after the load event.
+
+### Open records
+
+These are not FAIL in the builder's hands. Each needs a machine, a tool or an input the loop does not have, or is outside this round.
+
+- **The rerun of `back.spec.ts`** after items 1 to 3, on the owner's machine.
+- **The way back's failure paths as browser rows** (criterion 4; D3, H): a stall (`__skreedStall`), a module script refused on `/#families`, a lost context and a failed fetch.
+- **Back to top on the poster tier proper with the cache missed** does not reach the top.
+  - Reduced motion: it ends at the visitor's old place (513, `#families` kept), by the browser's restoration; iteration 2 read 564 by `links.ts`.
+  - `to-top.ts` line 90's "a fresh load starts at the top anyway (loader.inline.js)" is true where the loader runs only.
+  - For the owner, outside this round's criteria.
+- **The builder's "one reading, not a capture".**
+  - The reviewer's screencast saw no painted frame at the top edge in seven held loads (6 to 53 frames each).
+  - A screencast can drop a frame while it waits for its acknowledgement, so a single frame is not ruled out; a real phone is the check. The rows' samplers read before layout, as the builder says.
+  - Frames at 0 came first in every run, at least partly the blank page before the navigation. Whether the landing itself paints at its top before the module runs is not settled by this capture; round 4's module-time centring had the same timing.
+- **Scrolls without a wheel, touch, key or pointer during a held load are re-centred until the load event.** For example: the find bar opened from the browser's menu, or a screen reader moving focus. The criterion names only the four inputs. A scrollbar drag should send `pointerdown`, but the headless harness hides scrollbars, so it was not tried.
+- **A real phone:** the loader's count catch-up on a real GPU, the row's safe areas, and round 4's `innerHeight` against `100svh` question on iPhone.
+- **Lighthouse mobile (C4).**
+- **E1 and E2: BLOCKED.**
+- **The carried site essentials:** A1 rules 46 and 47; G5, G15, G16, G18, G19, G23, G24, G26.
+
+### Pending Sam (graded as built until he answers; spec 12 items 6, 7, 11 and 12)
+
+- **The words:** "Back to main page" or "Back to the families". On phones both bottom controls read "Back to" on one line.
+- **The wait:** 2.5 s.
+- **The way back's length:** the landing's full loader, or the family pages' faster finish. In this harness the lift came 9.75 to 19.83 s after the time origin, on SwiftShader; judge it on a phone.
+- **The phone row:** one row as built, stacked at the right, or under the letters.
+
+### Notes (not graded as FAIL)
+
+- **Visual critique by eye of the 390 frame (in place of E2).**
+  - **As iteration 2 read it.** The bottom row mirrors the top row. Two "Back to" labels sit on one line, only one with an icon (the words question). About 330 px of night lies between the letters and the row.
+  - **Older, not this round's:**
+    - the case covers "OND B" at 390;
+    - three cases stand over the letters at 844 x 390;
+    - 1280 shows one case where round 4's frame showed five.
+- **The poster frame as it should read.** The reviewer's clean frame, taken 0.5 s after the row's wait, shows the countdown on the poster at the top and the ten swatches in two rows centred, with night below.
+- **The harness's landing** chooses `hero3d` and falls to the poster at about `DOMContentLoaded` (the class stamps above), unless the poster tier is chosen up front, as it is under emulated reduced motion (seen here). Rows that need the poster tier proper must emulate such a condition.
+
+## Round 5, iteration 4, 2026-10-28: FAIL
+
+Iteration 4 answers the three items of the iteration 3 verdict above. It is:
+- one line of product code in `src/scripts/family/links.ts`, with its comment (10 lines in, 2 out);
+- one source test in `return-path.test.ts` (21 in, 1 out);
+- one browser row and the poster row's wait in `back.spec.ts` (86 in, 12 out);
+- section 23's record (12 lines in, 8 out).
+
+The whole round is still uncommitted on `family/round-5-return-loader`: 19 files, 1,799 lines in and 146 out before this entry, and the nine PNGs.
+
+All three iteration 3 items are closed. The poster tier's Back now ends centred, in the reviewer's own runs as well as the builder's row. The poster frame is clean, by eye and by its pixels.
+
+The round still fails:
+- **One record fault, found in this iteration (verdict item 1).** `history.scrollRestoration` belongs to the history entry. So the `manual` that `links.ts` sets on a return stays on the landing's entry for every later load of it. The record says the opposite for Back to top's way home ("it does not reach that load"). On an entry an earlier return has set, that way home now ends at the top, not at the old place. The product is right; the record is not.
+- **The open records,** as at round 4's last iteration: C4 not run, E1 and E2 blocked, the carried site essentials, and the checks that need a real phone.
+
+### How it was checked
+
+- **Verdicts.** PASS, FAIL, BLOCKED, UNPROVEN, n/a and CLOSED, as in iterations 2 and 3.
+- **Frames first, before any code.** The nine PNGs the full run rewrote (13:59 to 14:05 on 2026-10-28), against iteration 3's reading above. The poster frame was also read by its pixels.
+- **Iteration 4's own change, isolated.**
+  - The reviewer's snapshot of the iteration 3 diff (13:06, before the iteration 3 review) was applied to `HEAD` outside the repository and compared with the worktree.
+  - Only `links.ts`, `return-path.test.ts`, `back.spec.ts`, section 23 and this log changed since then. This log's change is the iteration 3 entry alone: 225 lines appended, nothing above it touched.
+  - The other 14 changed files are byte for byte as iteration 3 left them.
+- **Read in full:**
+  - `links.ts`, and its built module in `dist/_astro/` (`FamilyLinksNav...BSRgQS44.js`, 735 B raw and 411 B gzip at level 9, the production log's chunk);
+  - the new source test, the new row, the poster row's wait, the two renamed rows and their sampler;
+  - section 23's 12 changed lines, word by word against iteration 3's text, and the iteration 4 paragraph;
+  - `loader.inline.js` lines 1 to 14, `gate.inline.js` line 11, `rock-links.ts`'s `isReturnVisit` and `to-top.ts`'s `backHome`.
+- **The logs, read in full:**
+  - `test-results/r5-it4-back-spec.log` (46 of 46);
+  - `r5-it4-new-rows.log`, with the new row's first form failing on its exact href after 10.0 min;
+  - `r5-it4-poster-back.log`, `r5-it4-build-prod.log`, `r5-it4-family-budget-prod.log` and both `r5-it4-build-test-*.log`;
+  - `r5-it4-unit.log` and `r5-it4-family.log`.
+- **Tests, run by the reviewer:**
+  - `npx tsc --noEmit`: clean;
+  - `test:unit`: 192, with 191 passing and 1 skipped (ffprobe);
+  - `test:family`: 64 of 64, the iteration 4 test among them.
+- **Three rows, run by the reviewer** against 8793 (one worker, 300 s timeout): the poster tier row, the held-load row and the wheel row, 3 of 3 in 20.7 s.
+  - **The poster tier row.** Left at 864, with `auto` before the module and `manual` after. Both times the centre stood at 421.8 of 844 (`scrollY` 564), with no frame off centre:
+    - nothing held: `DOMContentLoaded` at 231 ms, the load at 232 ms, 145 frames after it;
+    - held 3 s: 147 ms and 3,100 ms, 145 frames after it.
+  - **The held load:** 421.8 at 1 s, at 3 s and 1 s after the load event (`DOMContentLoaded` at 547 ms, the load at 4,375 ms, 691 frames).
+  - **The wheel:** 564 to 1,128 by 2,040 ms, and 1,128 1 s after the load event.
+  - These rows take no frames. No repository file was rewritten; the poster frame still reads 14:03:05.
+- **The server.** 8793 serves the 14:11 test build (`dist/index.html` at 14:11:35).
+  - Its landing's links module is the production log's chunk.
+  - Its module scripts come in the order SiteLogo, FamilyLinksNav, BackToTop, Quiz, Room, HeroStage.
+- **Diagnostics.** The reviewer's own scripts, outside the repository, drove the installed Chrome with the harness's SwiftShader flags against 8793. Each spy was installed before any page script:
+  - **A setter spy** on `History.prototype.scrollRestoration`. It names each caller by its stack (the links module, another module, or the inline loader). It also stamps the entry's mode at init, at `DOMContentLoaded` and at the load event.
+  - **The links module's listener calls** on `window`, as in iteration 3.
+  - **Painted frames,** from the screencast's metadata, as in iteration 3.
+  - **The runs:**
+    - run B again;
+    - the first visits;
+    - the 3D path pinned;
+    - later loads of an entry the links module has set;
+    - the poster tier's other causes (Save-Data, 2g, 2 GB of memory).
+  - Results are in the tables below.
+- **Grep of every changed file and of the added lines:**
+  - no em or en dash, no emoji, and no AI product name outside a file name;
+  - every changed file is LF;
+  - no TODO, FIXME or lorem outside this log's own words.
+- **Not available here:**
+  - `/web-design-guidelines` and `visual-critique` are not installed;
+  - no Lighthouse run and no real phone;
+  - the headless harness hides scrollbars, so a scrollbar drag was not tried.
+
+### The frames
+
+- **The argument screen 3.0 s after it came on** (`-390-`, `-360-`, `-844-`, `-1280-`). As iteration 3 read them:
+  - at 390, "Back to main page" starts at x 16.5 and Back to top's chevron ends near x 374, on one line near y 808;
+  - at 360 the row is near y 744; at 844 x 390 it is about y 354, under the letters;
+  - at 1280 the control is centred under the letters near y 733, with Back to top under "All families";
+  - only the case's pose differs.
+- **`-390-return-loader` and `-1280-`.** The wordmark under a light pass on the night, the count at 32 (390) and 27 (1280). As before, the capture is a wall-clock wait into a load of varying length.
+- **`-return-gems`.** The ten gems at rest with their labels at both sizes, and Back to top top right. As before.
+- **`-390-landing-poster`: clean.** The countdown on the poster at the top, the ten swatches in two rows centred, and night below. Nothing of the family page shows: no case, no letters, no "All families" and neither bottom control.
+  - **By its pixels:** every sampled pixel of the bottom row's band (y 786 to 830) and of the night from y 550 to 785 reads 5 or 6 in each channel. That is the night itself.
+  - The swatch circles span y 328 to 473.5 and the last light label ends at y 514.5, so the nav is centred near y 421.
+
+### Iteration 3 items, re-graded
+
+| # | Verdict | Evidence |
+|---|---|---|
+| 1 | CLOSED | **The code.** `links.ts` sets `history.scrollRestoration = 'manual'` as the first line inside `if (!toTop && isReturnVisit())`. It is under `!html.hero3d`, before the first `centre()`, and nowhere else; the built module carries the same guarded assignment. The comment's premise is now right: the loader returns at line 7 without `loading`, before its line 10, and the gate adds `loading` on the `hero3d` tiers only. **Run B again,** in iteration 3's four forms: reduced motion, `/`, the families brought into view, Blissful Blue by its link, the landing `no-store`, then Back. All four were `back_forward`, not persisted, with `#families` kept. The mode was `auto` at init and set `manual` once, by the links module, at the module (68 to 137 ms). **Left at the swatches (513):** 564 and centre 421.8 of 844 1.5 s after the load event, nothing held and held 3 s; iteration 3 read 513 and 472.8. **Left 300 px lower (813):** 564 and 421.8 in both; iteration 3 read 813 and 172.8. No scroll after the load event moved the page. **The tier's other causes,** which the builder lists as not verified: under Save-Data, 2g and 2 GB of memory the first visit kept `auto`, so no loader ran. The Back from 813 ended at 564, centre 421.8, with `manual` set. **The row** passes in the full run and in the reviewer's. **The source test** pins the line, its guard and its place, the loader's order and the gate |
+| 2 | CLOSED | **The wait.** The row catches the transition at `pagereveal` and awaits its `finished`; the log reads "finished". It then waits for `readyState` `complete`, for `document.activeViewTransition` to be null and for 1 s more, and asserts it is still null before the frame. **The frame** is clean by eye and by its pixels (above). The centring assertion (421.8 of 844) passed in the full run |
+| 3 | CLOSED; a new fault in the same record is verdict item 1 | **The fall path named.** The iteration 3 paragraph's run A and its Back run now name the harness's fall path, with their class stamps (66 and 528 ms; 78 and 271 ms). They say the loader had already set manual restoration. A note keeps the earlier wording and points to iteration 4's row for the poster tier proper. The poster row's name and the held-load and wheel rows' names say the same. **The budget.** The paragraph and criterion 8 carry the links module: about 204 B gzip at round 4, 387 B and 643 B after iteration 3, and 411 B and 735 B after iteration 4. The budget's line reads 0.4 KB and 0.7 KB, and critical JS went from 15.3 to 15.5 KB. The reviewer's measure of the served module agrees (735 B, 411 B). **The changed lines.** The poster-path line, criterion 4's third bullet and both states rows carry item 1's change. **The rest of the record.** Section 23's plan "Checked", iteration 1's "Built", "Checked" and "Not done", and the iteration 2 and 3 paragraphs are unchanged but for the corrections above. They stay true as history. This log's history is whole |
+
+### `links.ts`, path by path
+
+| Case | Result | Evidence |
+|---|---|---|
+| The 3D path, `/#families` typed | PASS: the loader's setting only | `hero3d` pinned. The mode was set once, by the inline loader at 11 ms, and never by the links module. Its six listeners were added at 117 ms and removed at the load event (120 ms) with no centring. The page stood at 12,238, 14.5 times 844 |
+| The 3D path, Back with the cache missed | PASS | `back_forward`. The mode was already `manual` at init: the loader's, from the first visit, kept on the entry. The loader set it again at 4 ms, and the links module never did. The page stood at 12,238 |
+| A plain first visit, the poster tier proper | PASS: `auto` kept | Reduced motion, `/`: no setter call, `auto` at the end, `scrollY` 0, and only round 4's `pageswap` listener |
+| A plain first visit, the harness's default | PASS | The loader's `manual` at 12 ms, then the fall to the poster; nothing from the links module |
+| `/#families` typed, the poster tier proper | PASS | A return visit by its hash: `manual` set by the links module at 106 ms, centred at 421.8 of 844. The listeners were added at 110 ms and removed at the load event (116 ms) |
+| The browser's Back, the poster tier proper, cache missed | PASS | Item 1 |
+| The same under Save-Data, 2g and 2 GB of memory | PASS | Item 1 |
+| The harness's fall path, held 4 s, with and without a wheel | PASS | The rows, in the full run and the reviewer's |
+| Back to top's way home, 3D path, a fall before the load event | PASS | The row in the full run: the fall at 459 ms, the load at 6,209 ms, `scrollY` 0 through 946 frames. The control stood at 0 with the loader up |
+| **Later loads of an entry the links module has set** | **The product: PASS. The record: FAIL (item 1)** | **Set-up:** reduced motion and one return first (centred, `manual`), then four runs, each run twice. **A reload** of `/#families` (`reload`): `manual` at init, the first frames at the top, then centred at 421.8 by the module. **A second trip and Back:** `manual` at init, the first frames at the top instead of the old place, then centred at the module. **A second trip and Back to top's way home,** the landing `no-store`: `manual` at init. The links module does nothing (the flag), and the page ends at the top, 0, with `#families` kept. **The same way home on a fresh entry** (`auto`): it ends at the visitor's old place (813, centre 172.8), as iteration 3's open record reads |
+| Listener hygiene | PASS | Six listeners, as in iteration 3. They are added at the module on a return visit only, and all removed by one `stop` at the load event in every run above; none on a first visit. Nothing calls `preventDefault` |
+
+### Checklist
+
+| Item | Verdict | Evidence |
+|---|---|---|
+| A1 | FAIL | **The diff against rules 1 to 50:** no violation. Iteration 4 adds one assignment of the entry's scroll restoration, with no motion, colour, type or copy (rules 12, 14 and 48 untouched). No dash, emoji or buzzword in any added line (rules 3, 16, 17, 27, 29). **Still failing, outside the diff and carried:** rules 46 and 47, with no privacy or terms page in `dist/` |
+| A2 | PASS | Pearl Whisper only; the loader's `--night` and light are E-A2 |
+| A3 | PASS | The "shown at" rows pass at 390 and 1280 in the full run |
+| A4 | PASS | No copy changed |
+| A5 | PASS | The argument screen shows the case; the loader screen is the hero's own, under E-H1 |
+| B1 | PASS | The nine frames, 390 and 1280 among them, as graded above. The poster frame is clean |
+| B2 | PASS | Criterion 5's seven rows and criterion 6's four pass in the full run |
+| B3 | PASS | Same-origin links. `links.ts` reads the flag inside a try and sets only the entry's restoration mode; it writes no storage |
+| B4 | PASS | Nothing uses or animates `svh` or `dvh` |
+| C1 | PASS | **Production:** critical JS 15.5 KB of the 60 KB line; total JS 204.8 KB, and 237.2 of 250 KB with section 4 and `scroll.ts`. **The links module:** 735 B raw and 411 B gzip, as section 23's budget paragraph and criterion 8 now say |
+| C2 | n/a | No image |
+| C3 | PASS | `links.ts` scrolls instantly and animates nothing; the C3 guard passes in `test:family` |
+| C4 | UNPROVEN | Lighthouse not run (open record) |
+| D1 | PASS | The loader on the way back is E-H1's; the control's wait is E-F5's |
+| D2 | PASS | The poster tier row runs under reduced motion; `links.ts`'s centring is instant |
+| D3 | PASS | The poster tier's Back with the cache missed now ends centred (item 1). The failure paths still have no browser rows (open record) |
+| D4 | PASS | The hover row passes |
+| E1 | BLOCKED | `/web-design-guidelines` is not installed |
+| E2 | BLOCKED | `visual-critique` is not installed; the reviewer's critique by eye is in the notes |
+| E3 | PASS | The keyboard row passes. Contrast medians: 19.43:1 for the three families at 390, and 15.84, 15.46 and 15.33:1 at 1280; the lowest single frame 12.8:1. Zero CSP violations |
+| E4 | PASS | Writes no data |
+| E5 | n/a | No database |
+| G1, G3, G4, G6, G7, G8 | PASS | Not touched; present in `dist/` |
+| G2, G11 | n/a | E-G2; no Reserve on the family pages |
+| G5, G15, G16, G18, G19, G23, G24, G26 | FAIL | Carried, not this round's: no `og:image` on `/`, no privacy or terms pages, no analytics, contact line, FAQ or LocalBusiness JSON-LD |
+| G9, G12 | PASS | No image added; no data loaded |
+| G10 | PASS | Criteria 5 and 6 at every listed size |
+| G13, G14, G17, G20, G22, G25 | n/a | No form, thanks state, cookies, cutover or founders' note here; breadcrumbs n/a on the teaser |
+| G21 | PASS | The press, the direct load and the Back land at 14.5 screens with ten placed links in the full run |
+| G27 | PASS | Nothing fabricated |
+| H | PASS | As D3: the slow tier's Back now ends centred, on every cause of the poster tier the reviewer tried |
+| F1 | FAIL | Item 1: the record misstates what the manual mode does on later loads of the landing's entry |
+| F2 | PASS | No TODO, placeholder, lorem or commented-out code in the added lines |
+
+### Acceptance criteria (round 5, section 23)
+
+| # | Verdict | Evidence |
+|---|---|---|
+| 1 | PASS | All three ways in at both sizes in the full run: `ret`, and the wordmark and the count from the first sample to the lift, with the count past 30. The frames show the wordmark and the count (32 and 27) |
+| 2 | PASS | **The parity test** passes. **The six landings:** the lift 11.28 to 14.19 s after the time origin; the count never falls and rose at most 26 in one frame; the fill at most 0.000 s ahead of twice the frame clock; calls `{cut: 0, skip: 0, ready: 1}`; `enter` in 1 to 7 frames and at the count's 100 in every one |
+| 3 | PASS | 14.5 screens within 2 px at the lift and after, section 2 ready first, and ten placed links, in all six landings. The frames show the gems at rest |
+| 4 | PASS | **Closed:** the poster tier proper's Back under reduced motion, Save-Data, 2g and 2 GB of memory (item 1), and the poster row's frame (item 2). **Held from iteration 3:** the held load and the wheel on the fall path, and Back to top's way home after a fall. **Still without a browser row** (open records, as the criterion's own evidence line says): the stall, the refused module on `/#families`, the lost context and the failed fetch |
+| 5 | PASS | All seven phone rows pass in the full run, and `back.test.ts` passes |
+| 6 | PASS | All four wide rows pass in the full run |
+| 7 | PASS | The keyboard row, `backTimer` off at 5.6 screens and below, the timings and the words, and section 22's criteria below |
+| 8 | PASS | **The production build:** every enforced line holds (49) and both guards pass. **Unchanged since iteration 1:** the inline scripts row (4.8 KB gzip, 9.7 KB raw) and the hero chunk, byte for byte (`hero.CKiDk_2_.js`, 55,826 B gzip). **The links module** is as the paragraph says. **The family page module** is unchanged (7,070 B gzip, `BInCOMKE`). The C3 guard passes, and no changed file carries an em or en dash |
+
+### Section 22's criteria under round 5
+
+| # | Verdict | Evidence |
+|---|---|---|
+| 1 | PASS | The built HTML row and the computed-style rows at 390 and 1280 |
+| 2 | PASS | The held-clock rows at both sizes. The frames rows dropped `hidden` 2,504.1 ms (390) and 2,522.2 ms (1280) after the argument came on |
+| 3 | PASS | Replaced on phones by round 5's criterion 5, and held on the wide layout by criterion 6 |
+| 4 | PASS | The seven grid rows and the `fam:grid` row |
+| 5 | PASS | The plain-click row, the hover row, the poster row's centring and its clean frame, and the 3D landing rows |
+| 6 | PASS | The keyboard row, the reduced-motion row, the six contrast medians and zero CSP violations |
+
+### Verdict: FAIL
+
+The one item is the record. It needs no product change and no browser rerun. Running `test:family` after it is enough, since the source test reads `links.ts`'s comment.
+
+1. **The record: say that the manual mode stays on the landing's history entry (F1; section 23's poster-path line and the iteration 4 paragraph).**
+   - **The fault.** `history.scrollRestoration` is the history entry's, not the load's. Once `links.ts` sets `manual` on a return, the landing's entry keeps it for every later load of that entry. The record says otherwise in one place and is silent in the others:
+     - the iteration 4 paragraph's "Not verified" says Back to top's way home on the poster tier proper "ends at the visitor's old place by the browser's restoration", and that "item 1's assignment is inside the centring block, so it does not reach that load";
+     - `links.ts`'s comment ends "Never on a plain first visit, never on Back to top's way home, never on the 3D path". That is true of the assignment, not of its effect.
+   - **The reviewer's runs** (reduced motion, one return first, the landing `no-store`, each run twice):
+     - Back to top's way home on that entry ends at the top, `scrollY` 0, with `#families` kept and the mode `manual` at init. On a fresh entry it ends at the old place (813, centre 172.8).
+     - A later Back shows the top before the module, where the first Back paints the old place. Both end centred.
+     - A reload of `/#families` starts `manual` and is centred by the module.
+   - **Change.**
+     - Correct the "Not verified" sentence. The way home ends at the old place on an entry no return has set. On one a return has set, it ends at the top, with `#families` kept.
+     - Add one clause to the poster-path line under "After the press", and to `links.ts`'s comment: the setting is the landing entry's, so it holds for later loads of that entry (a reload, a later Back, Back to top's way home).
+     - The header of `return-path.test.ts` calls the iteration 3 and 4 tests "the last two tests"; they are the third and fourth of seven. Name them, or say where they are. Iteration 3's "the last test" was already wrong, and the reviewer missed it then.
+   - **No product change is asked.** Each outcome above is as good as before or better. On such an entry the way home now reaches the top, which is what Back to top is for.
+
+### Open records
+
+These are not FAIL in the builder's hands. Each needs a machine, a tool or an input the loop does not have, or is outside this round.
+
+- **The way back's failure paths as browser rows** (criterion 4; D3, H): a stall (`__skreedStall`), a module script refused on `/#families`, a lost context and a failed fetch.
+- **The poster tier proper's first Back paints the old place before the module runs.**
+  - The screencast shows 1 to 3 painted frames at the old place before the centre, a jump of 51 or 249 px: 513 for about 70 ms, 813 for about 90 ms, and one frame at 813 when held.
+  - A later Back to the same entry starts at the top instead.
+  - The spec centres "when its module runs", so this is as designed. How it reads on a phone is for a real phone.
+  - This settles iteration 3's question about frames before the module on this tier.
+- **Back to top on the poster tier proper with the cache missed** reaches the top only on an entry a return has set (item 1's runs). On a fresh entry it ends at the old place. `to-top.ts` line 90's "a fresh load starts at the top anyway (loader.inline.js)" is true only where the loader runs. For the owner, outside this round's criteria.
+- **Scrolls without a wheel, touch, key or pointer during a held load are re-centred until the load event.** For example: the find bar opened from the browser's menu, or a screen reader moving focus. A scrollbar drag was not tried.
+- **The builder's "one reading, not a capture"** for the fall path stands as iteration 3 read it.
+- **A real phone:** the loader's count on a real GPU, the row's safe areas, round 4's `innerHeight` against `100svh` question, and the first Back's frames above.
+- **Lighthouse mobile (C4).**
+- **E1 and E2: BLOCKED.**
+- **The carried site essentials:** A1 rules 46 and 47; G5, G15, G16, G18, G19, G23, G24, G26.
+
+### Pending Sam (graded as built until he answers; spec 12 items 6, 7, 11 and 12)
+
+- **The words:** "Back to main page" or "Back to the families". On phones both bottom controls read "Back to" on one line.
+- **The wait:** 2.5 s.
+- **The way back's length:** the landing's full loader, or the family pages' faster finish. In this run the lift came 11.28 to 14.19 s after the time origin, on SwiftShader; judge it on a phone.
+- **The phone row:** one row as built, stacked at the right, or under the letters.
+
+### Notes (not graded as FAIL)
+
+- **Visual critique by eye of the 390 frame (in place of E2).**
+  - **As iteration 3 read it.** The bottom row mirrors the top row. Two "Back to" labels sit on one line, only one with an icon (the words question). About 330 px of night lies between the letters and the row.
+  - **Older, not this round's:**
+    - the case covers "OND B" at 390;
+    - three cases stand over the letters at 844 x 390;
+    - 1280 shows one case where round 4's frame showed five.
+- **The poster frame** now reads as the reviewer's clean frame of iteration 3 did: the countdown on the poster, the ten swatches centred in two rows, night below.
+- **Line numbers in the runner's logs** do not match the source. The new row is "back.spec.ts:973" in a file of 891 lines, and iteration 3's log ran to 1,365 in 817. The rows are found by name.
+- **The scratch folder is shared.** The builder's scripts sit beside the reviewer's in the same scratch folder. The reviewer ran only its own.
+
+## Round 5, iteration 5, 2026-10-28: FAIL
+
+Iteration 5 answers the one item of the iteration 4 verdict above. It is the loop's last iteration. It is documents only:
+- section 23's record in `docs/specs/family-page.md` (4 lines in, 2 out): the poster-path line and the iteration 4 paragraph rewritten, and the iteration 5 paragraph added;
+- the comment in `src/scripts/family/links.ts` (3 lines in, 1 out);
+- the header of `tests/family/return-path.test.ts` (2 lines in, 1 out).
+
+Item 1 is closed. Every passage it named now says what the reviewer measured in iteration 4, and nothing else changed since iteration 4.
+
+The round still fails, but only on open records, as round 4's last iteration did:
+- C4 not run (UNPROVEN);
+- E1 and E2, with their tools not installed (BLOCKED);
+- the carried site essentials: A1 rules 46 and 47, and G5, G15, G16, G18, G19, G23, G24 and G26.
+
+No code or document change is outstanding in the builder's hands. The round was committed while this review ran (see the notes).
+
+### How it was checked
+
+- **Verdicts.** PASS, FAIL, BLOCKED, UNPROVEN, n/a and CLOSED, as in iterations 2 to 4.
+- **Frames first.** The nine PNGs are iteration 4's: written 13:59:13 to 14:05:12 on 2026-10-28 and not rewritten since. The 390 and 1280 argument frames and the poster frame were looked at again. They read as iteration 4 read them.
+- **Iteration 5's change, isolated.**
+  - The reviewer's snapshot of the whole diff at 14:14 was applied to 7241c50 outside the repository: all 19 files, no reject. The snapshot was taken after iteration 4's last build (14:11) and before the iteration 4 review.
+  - Against it, only section 23, `links.ts` and `return-path.test.ts` differ, and this log.
+  - This log's difference is the iteration 4 entry alone. It is byte for byte the reviewer's own draft of that entry, and nothing above it is touched.
+  - The other 15 changed files are byte for byte as iteration 4 left them, and the frames are not rewritten.
+  - The builder's two scripts for this iteration (`it5_edits.py` and `it5_append.py`, in the shared scratch folder) were read. Their four replacements and one append are exactly the diff.
+- **The product, unchanged.** The `links.ts` change is three comment lines in place of one. Both versions were minified by the project's own esbuild (0.28.2), as a proxy for the build. They give the same 764 B, byte for byte.
+  - So the served module (`FamilyLinksNav...BSRgQS44.js`, 735 B raw and 411 B gzip) and every iteration 4 figure stand.
+  - No build, no server change and no browser run were needed. 8793 still serves the 14:11 test build (200 on `/`).
+- **The passages, read word by word** against the iteration 4 text and against the reviewer's iteration 4 logs of the later loads (`rv4-later.log` and `rv4-later2.log`, each case run twice).
+- **Every other passage of section 23 on the way home and on the restoration** (lines 830, 852, 882 to 884, 942 to 944, and 1095 to 1099), read for any contradiction with the corrected fact.
+- **Tests, run by the reviewer:**
+  - `test:unit`: 192, with 191 passing and 1 skipped (the ffprobe probe);
+  - `test:family`: 64 of 64, with the iteration 3 and 4 source tests among them. The one that counts `scrollRestoration` in `links.ts` passes with the count at one.
+- **Grep of the three files and of the added lines:** ASCII only, LF, a final newline. No em or en dash, no emoji, no AI product or model name, no TODO, FIXME or lorem, no buzzword.
+- **Not available here:** `/web-design-guidelines` and `visual-critique` are not installed. There was no Lighthouse run and no real phone.
+
+### Iteration 4 item, re-graded
+
+| # | Verdict | Evidence |
+|---|---|---|
+| 1 | CLOSED | **What was asked:** correct the "Not verified" sentence; add the entry clause to the poster-path line and to the comment in `links.ts`; name the iteration 3 and 4 tests in the header of `return-path.test.ts`. All four are done, and each is true against the reviewer's runs (table below). **Those runs:** reduced motion, one return first (centred, `manual`). **A reload** of `/#families` (`reload`): `manual` at init, the first frame at 0, centred at 421.8 of 844 (`scrollY` 564) by the module. **A later Back** (`back_forward`): the same. **Back to top's way home on that entry:** `manual` at init, no setter call, `scrollY` 0, `#families` kept. **The same way home on a fresh entry:** `auto`, 813, centre 172.8. **The other passages:** no other passage of section 23 contradicts the fact. The states row for the way home (line 884) and criterion 4's second bullet (line 943) describe the loader's tiers and the fall; they say nothing of the poster tier proper, which the poster-path line and the "Not verified" sentence now carry (open record) |
+
+### The passages
+
+| Passage | Truth | Wording |
+|---|---|---|
+| The poster-path line under "After the press, the landing" (line 830) | TRUE. The setting is the entry's, so it holds for every later load of that entry. A reload and a later Back start at the top and are centred by the module. Back to top's way home ends at the top with `#families` kept. On an entry no return has set, it ends at the visitor's old place | PASS. One sentence after "(iteration 4).", in the record's voice. Its last clause is the poster tier proper's (note 2) |
+| Iteration 4's "Not verified" sentence (line 1097) | TRUE. It names the tier and the cache miss, and gives both outcomes and their cause. It keeps the old wording as history: the sentence said that load ends at the old place, and that the assignment does not reach it | PASS. "corrected in iteration 5, where this sentence said" would read more plainly as "before which this sentence said" (note 3) |
+| The comment in `links.ts` (lines 30 to 32) | TRUE. "Never set" is the assignment. The effect is the entry's and holds for a reload, a later Back and Back to top's way home, which then ends at the top with #families kept. The reload and the later Back are return visits, so the module sets the mode again; the effect is that they start at the top | PASS. The property's name is left out, so the source test's count stays at one. The new lines are at most 122 characters wide, within the comment's own widths (at most 124) |
+| The header of `return-path.test.ts` (lines 14 and 15) | TRUE. The file has seven tests. The third and fourth are named "iteration 3 (round 5): ..." and "iteration 4 (round 5): ...", as the header now says | PASS |
+| The iteration 5 paragraph (line 1099) | TRUE. It has three sentences. "No product code, browser row or frame changed" holds by the isolation above. The test counts match the reviewer's runs | PASS. "Four passages now say so" takes in the test header, which names the tests and says nothing of the entry (note 1) |
+
+### Checklist
+
+| Item | Verdict | Evidence |
+|---|---|---|
+| A1 | FAIL | **The diff against rules 1 to 50:** no violation. Iteration 5 changes record prose, a comment and a test header only, with no motion, colour, type or copy on the site. No dash, emoji or buzzword in any added line (rules 3, 16, 17, 27, 29). **Still failing, outside the diff and carried:** rules 46 and 47, with no privacy or terms page in `dist/` |
+| A2 | PASS | Carried from iteration 4: Pearl Whisper only; the loader's `--night` and light are E-A2 |
+| A3 | PASS | Carried: the "shown at" rows pass at 390 and 1280 in iteration 4's full run |
+| A4 | PASS | No copy changed |
+| A5 | PASS | Carried: the argument screen shows the case; the loader screen is the hero's own, under E-H1 |
+| B1 | PASS | The nine frames, 390 and 1280 among them, unchanged since iteration 4 and read again. The poster frame is clean |
+| B2 | PASS | Carried: criterion 5's seven rows and criterion 6's four pass in iteration 4's full run |
+| B3 | PASS | Carried: same-origin links; `links.ts` reads the flag inside a try, sets only the entry's restoration mode and writes no storage |
+| B4 | PASS | Nothing uses or animates `svh` or `dvh` |
+| C1 | PASS | Carried, since the module compiles identically. **Production:** critical JS 15.5 KB of the 60 KB line; total JS 204.8 KB, and 237.2 of 250 KB with section 4 and `scroll.ts`. **The links module:** 735 B raw and 411 B gzip |
+| C2 | n/a | No image |
+| C3 | PASS | Carried: `links.ts` scrolls instantly and animates nothing; the C3 guard passes in `test:family` |
+| C4 | UNPROVEN | Lighthouse not run (open record) |
+| D1 | PASS | Carried: the loader on the way back is E-H1's; the control's wait is E-F5's |
+| D2 | PASS | Carried: the poster tier row runs under reduced motion; `links.ts`'s centring is instant |
+| D3 | PASS | Carried: the poster tier's Back with the cache missed ends centred. The failure paths still have no browser rows (open record) |
+| D4 | PASS | Carried: the hover row passes |
+| E1 | BLOCKED | `/web-design-guidelines` is not installed |
+| E2 | BLOCKED | `visual-critique` is not installed; the reviewer's critique by eye is in iteration 4's notes, unchanged |
+| E3 | PASS | Carried: the keyboard row passes. Contrast medians 19.43:1 for the three families at 390, and 15.84, 15.46 and 15.33:1 at 1280; the lowest single frame 12.8:1. Zero CSP violations |
+| E4 | PASS | Writes no data |
+| E5 | n/a | No database |
+| G1, G3, G4, G6, G7, G8 | PASS | Not touched; present in `dist/` |
+| G2, G11 | n/a | E-G2; no Reserve on the family pages |
+| G5, G15, G16, G18, G19, G23, G24, G26 | FAIL | Carried, not this round's: no `og:image` on `/`, no privacy or terms pages, no analytics, contact line, FAQ or LocalBusiness JSON-LD |
+| G9, G12 | PASS | No image added; no data loaded |
+| G10 | PASS | Carried: criteria 5 and 6 at every listed size |
+| G13, G14, G17, G20, G22, G25 | n/a | No form, thanks state, cookies, cutover or founders' note here; breadcrumbs n/a on the teaser |
+| G21 | PASS | Carried: the press, the direct load and the Back land at 14.5 screens with ten placed links |
+| G27 | PASS | Nothing fabricated |
+| H | PASS | Carried, as D3 |
+| F1 | PASS | **Item 1 is closed.** Section 23 is now the round's whole history: the plan with its "Checked" and "Not checked"; then "Built", "Checked" and "Not done"; then iterations 2, 3, 4 and 5. Each later correction keeps the earlier wording and says where it was wrong. This log has iterations 1 to 5 once this entry is in, with nothing above this entry touched. Three wording notes below change no fact |
+| F2 | PASS | No TODO, placeholder, lorem or commented-out code in the added lines |
+
+### Acceptance criteria (round 5, section 23)
+
+Nothing of the product, the browser rows or the frames changed since iteration 4. Each criterion is carried from iteration 4's entry, as graded there.
+
+| # | Verdict | Evidence |
+|---|---|---|
+| 1 | PASS | Carried: all three ways in at both sizes; the wordmark and the count from the first sample to the lift, with the count past 30. The frames show the count at 32 (390) and 27 (1280) |
+| 2 | PASS | Carried: the parity test passes again in this run. In the six landings the lift came 11.28 to 14.19 s after the time origin. The count never fell and rose at most 26 in one frame. Calls were `{cut: 0, skip: 0, ready: 1}`, and `enter` came at the count's 100 in every landing |
+| 3 | PASS | Carried: 14.5 screens within 2 px at the lift and after, section 2 ready first, and ten placed links |
+| 4 | PASS | Carried: the poster tier proper's Back ends centred under reduced motion, Save-Data, 2g and 2 GB of memory, and the poster row's frame is clean. The held load, the wheel and Back to top's way home after a fall hold. Still without a browser row (open records): the stall, the refused module on `/#families`, the lost context and the failed fetch |
+| 5 | PASS | Carried: all seven phone rows pass in iteration 4's full run, and `back.test.ts` passes in this run |
+| 6 | PASS | Carried: all four wide rows pass in iteration 4's full run |
+| 7 | PASS | Carried: the keyboard row, `backTimer` off at 5.6 screens and below, the timings and the words, and section 22's criteria below |
+| 8 | PASS | Carried from iteration 4's production build. Every enforced line holds (49) and both guards pass. The inline scripts row (4.8 KB gzip) and the hero chunk (`hero.CKiDk_2_.js`, 55,826 B gzip) are iteration 1's. The links module compiles identically after iteration 5's comment (above). No changed file carries an em or en dash |
+
+### Round 4's criteria (section 22) under round 5
+
+| # | Verdict | Evidence |
+|---|---|---|
+| 1 | PASS | Carried: the built HTML row and the computed-style rows at 390 and 1280 |
+| 2 | PASS | Carried: the held-clock rows at both sizes; the frames rows dropped `hidden` 2,504.1 ms (390) and 2,522.2 ms (1280) after the argument came on |
+| 4 | PASS | Carried: the seven grid rows and the `fam:grid` row; `back.test.ts`'s `fam:grid` test passes again in this run |
+| 5 | PASS | Carried: the plain-click row, the hover row, the poster row's centring and its clean frame, and the 3D landing rows |
+| 6 | PASS | Carried: the keyboard row, the reduced-motion row, the six contrast medians and zero CSP violations |
+
+Criterion 3 is replaced on phones by round 5's criterion 5. It is held on the wide layout by criterion 6.
+
+### Verdict: FAIL
+
+The fail is on open records only. Iteration 4's one item is closed, and no code or document change is outstanding. This was the loop's fifth iteration, so the loop stops here, and the owner reports what remains. Each item below needs a tool, a run or an input the loop does not have.
+
+1. **E1 and E2 (BLOCKED).** Install `/web-design-guidelines` (vercel-labs/agent-skills) and `visual-critique` (the designer-skills marketplace). Run the first on the round's changed files, and the second on `family-r5-390-arg-after.png`. CLAUDE.md asks for the first, and the security checklist in `docs/research/08-prelaunch-security-checklist.md`, before any push to main. The round is now committed on its branch (notes). Unblocks E1 and E2.
+2. **C4 (UNPROVEN).** Run Lighthouse mobile on `/shades/blissful-blue/` and on `/#families` against a production build. E-C4, still pending Sam, grades it on the poster tier. Unblocks C4.
+3. **The carried site essentials (FAIL, not this round's).** These are the privacy and terms pages (rules 46 and 47; G15 and G16), the `og:image` on `/` (G5), analytics (G18), the contact line and its reply promise (G19 and G24), the five FAQs (G23), and the LocalBusiness JSON-LD (G26). Each is its own section, built through its own loop. Unblocks A1 and those eight G lines.
+
+### Open records
+
+These are not FAIL in the builder's hands. Each needs a machine, a tool or an input the loop does not have, or is outside this round.
+
+- **The way back's failure paths as browser rows** (criterion 4; D3, H): a stall (`__skreedStall`), a module script refused on `/#families`, a lost context and a failed fetch.
+- **The poster tier proper's first Back paints the old place before the module runs.**
+  - The screencast shows 1 to 3 painted frames at the old place, then the centre: a jump of 51 or 249 px.
+  - A later Back to the same entry starts at the top instead; the record now says so.
+  - The spec centres "when its module runs", so this is as designed. How it reads on a phone is for a real phone.
+- **Back to top on the poster tier proper with the cache missed.**
+  - It ends at the old place on a fresh entry, and at the top, with `#families` kept, on an entry a return has set. The poster-path line and the "Not verified" sentence now say so.
+  - `to-top.ts` line 90's "a fresh load starts at the top anyway (loader.inline.js)" is true only where the loader runs.
+  - The states row (line 884) and criterion 4's second bullet (line 943) describe the loader's tiers only.
+  - For the owner, outside this round's criteria.
+- **Scrolls without a wheel, touch, key or pointer during a held load are re-centred until the load event.** Examples are the find bar opened from the browser's menu, or a screen reader moving focus. A scrollbar drag was not tried.
+- **The builder's "one reading, not a capture"** for the fall path stands as iteration 3 read it.
+- **A real phone:** the loader's count on a real GPU, the row's safe areas, round 4's `innerHeight` against `100svh` question, and the first Back's frames above.
+- **Lighthouse mobile (C4).**
+- **E1 and E2: BLOCKED.**
+- **The carried site essentials:** A1 rules 46 and 47; G5, G15, G16, G18, G19, G23, G24 and G26.
+
+### Pending Sam (graded as built until he answers; spec 12 items 6, 7, 11 and 12)
+
+- **The words:** "Back to main page" or "Back to the families". On phones both bottom controls read "Back to" on one line.
+- **The wait:** 2.5 s.
+- **The way back's length:** the landing's full loader, or the family pages' faster finish. In iteration 4's run the lift came 11.28 to 14.19 s after the time origin on the software renderer; judge it on a phone.
+- **The phone row:** one row as built, stacked at the right, or under the letters.
+
+### For Sam
+
+- **What the round is.** On the way back from a family page to the landing, you now see the full 0 to 100 wordmark loader, as on a first visit. It lifts onto the ten gems at rest.
+- **The bottom row on phones.** "Back to main page" now sits on Back to top's row at the bottom left of the argument screen. On the wide layout it stays centred under the letters.
+- **The poster version.** On the version without 3D (reduced motion, Save-Data, slow networks and low-memory phones), coming back puts the ten swatches in the middle of the screen.
+- **What to look at.**
+  - `family-r5-390-arg-after.png`, and the 360, 844 and 1280 frames beside it, for where the two bottom controls sit;
+  - `family-r5-390-return-loader.png` and `-1280-return-loader.png` for the loader on the way back, caught mid-count;
+  - `family-r5-390-return-gems.png` and `-1280-return-gems.png` for where it lands;
+  - `family-r5-390-landing-poster.png` for the poster version.
+- **Your four answers:** the words, the 2.5 s wait, the length of the way back (judge it on your phone), and the row's place.
+
+### Notes (not graded as FAIL)
+
+- **The round was committed while this review ran.**
+  - The brief described it as uncommitted. At the start of this review `HEAD` was 7241c50, with 19 files changed and the nine PNGs untracked.
+  - At 14:36:40 on 2026-10-28 the branch gained e853f7f, under the repository's own identity. It holds 27 files, 1,165 lines in and 146 out: every changed file but this log, and the nine PNGs.
+  - Its message says "iterations 1 to 5", though this verdict had not yet returned. This log's round 5 entries, iterations 1 to 4 and this one, are left uncommitted.
+  - The three graded files in the commit are the files graded here (`git diff HEAD` shows this log alone). The branch has no upstream, so nothing is pushed.
+  - The reviewer ran no git command that writes. Whether this log joins the commit is the owner's call.
+- **Wording, changing no fact.**
+  1. The iteration 5 paragraph's "Four passages now say so" takes in the test header, which names the tests. Three passages say so, and the fourth names the tests.
+  2. The last clause of the poster-path line ("where on an entry no return has set it ends at the visitor's old place") is the poster tier proper's. On the loader's tiers, the fall path included, the way home ends at the top on any entry (line 884; iteration 4's Back to top row). The clause follows that tier's sentence and reads as its own. A reader of the bullet alone could apply it to the fall path.
+  3. "corrected in iteration 5, where this sentence said" can read as if iteration 5 were where the sentence said it.
+- **The frames,** by eye, as iteration 4's critique read them. The bottom row mirrors the top row. The case covers "OND B" at 390. The poster frame shows the countdown on the poster, the ten swatches centred in two rows, and night below.
+- **The scratch folder is shared.** The builder's iteration 5 scripts sit beside the reviewer's. The reviewer read them and ran only its own.
