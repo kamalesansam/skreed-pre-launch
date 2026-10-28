@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { HALL, LOOP_START, PRESS, RENDER_COLOURS, ROOM_COPY, ROOM_HEIGHT, ROOM_PARAMS, ROOM_PRODUCTS, ROOM_RANGES, ROOM_SCENES, ROOM_SCREENS, SCENE_COUNT, SCENE_SIZE, SCENES_END, STATION_Q, WORLD_START, fill, productById, sceneQ, shadeLine } from '../../src/config/room.ts';
+import { HALL, PRESS, RENDER_COLOURS, ROOM_COPY, ROOM_HEIGHT, ROOM_PARAMS, ROOM_PRODUCTS, ROOM_RANGES, ROOM_SCENES, ROOM_SCREENS, SCENE_COUNT, SCENE_SIZE, SCENES_END, STATION_Q, WIPE4_START, WORLD_START, fill, productById, sceneQ, shadeLine } from '../../src/config/room.ts';
 import { SHADES } from '../../src/config/shades.gen.ts';
 import { URBAN_SLATE } from '../../src/config/tokens.ts';
 import { BUBBLE } from '../../src/scripts/hero/section4/transition.ts';
@@ -22,20 +22,32 @@ const exists = (p: string) => existsSync(new URL(`../../${p}`, import.meta.url))
 const byId = new Map(SHADES.map((s) => [s.id, s]));
 const css = read('src/styles/room.css'), astro = read('src/components/room/Room.astro');
 
-test('the scroll map (section-4-flux.md 5): the scenes at a step of 0.5 from 10, the hold to 12.8, the loop screen and the tail, 15.8 screens in every state', () => {
-  assert.deepEqual({ ...ROOM_SCREENS }, { wipe: 1, walk: 8, station: 1, step: 0.5, hold: 0.8, loop: 1, tail: 1 });
+test('the scroll map (section-4-flux.md 5; section-5.md 5): the scenes at a step of 0.5 from 10, the hold to 12.8, the fourth wipe to 13.8, 14.8 screens in every state, the exit seam gone from the track', () => {
+  assert.deepEqual({ ...ROOM_SCREENS }, { wipe: 1, walk: 8, station: 1, step: 0.5, hold: 0.8, out: 1 });
   assert.equal(STATION_Q, 9.5);
   assert.equal(WORLD_START, 10);
   assert.equal(SCENE_COUNT, 5);
   assert.deepEqual(Array.from({ length: SCENE_COUNT }, (_, i) => sceneQ(i)), [10, 10.5, 11, 11.5, 12]);
   assert.equal(SCENES_END, 12);
-  assert.equal(LOOP_START, 12.8);
-  assert.equal(ROOM_HEIGHT, 15.8);
-  assert.ok(css.includes(`.room .rm-track { height: ${ROOM_HEIGHT * 100}svh; }`), 'room.css: the track at 1580svh');
-  assert.doesNotMatch(css, /data-lands|1300svh|1400svh|1600svh|1800svh|2000svh/, 'no per-N heights: the track is the same in every state');
-  // the stage is pinned through the loop screen and the tail: the seam's trigger and the jump's screen end inside the document
-  assert.ok(LOOP_START + ROOM_SCREENS.loop + ROOM_SCREENS.tail <= ROOM_HEIGHT - 1, 'the loop and the tail inside the pinned track');
-  assert.ok(SCENES_END + ROOM_SCREENS.hold === LOOP_START, 'the hold ends at the seam');
+  assert.equal(WIPE4_START, 12.8);
+  assert.equal(ROOM_HEIGHT, 14.8);
+  assert.ok(css.includes(`.room .rm-track { height: ${ROOM_HEIGHT * 100}svh; }`), 'room.css: the track at 1480svh');
+  assert.doesNotMatch(css, /data-lands|1300svh|1400svh|1580svh|1600svh|1800svh|2000svh/, 'no per-N heights: the track is the same in every state');
+  // the stage is pinned through the cut and unpins exactly as it ends (section-5.md 5): section 5 rises after it
+  assert.equal(WIPE4_START + ROOM_SCREENS.out, ROOM_HEIGHT - 1, 'the cut ends where the stage unpins');
+  assert.ok(SCENES_END + ROOM_SCREENS.hold === WIPE4_START, 'the hold ends at the cut');
+  // the exit seam runs from section 5's end now (section-5.md 2): no LOOP_START, no loop screen, no tail, no loop end in the DOM
+  assert.doesNotMatch(read('src/config/room.ts') + read('src/config/room-map.ts'), /LOOP_START|ROOM_SCREENS\.loop\b|ROOM_SCREENS\.tail\b/, 'LOOP_START, the loop screen and the tail are gone');
+  // the map on its own (config/room-map.ts), so the hero island's static read of the fourth wipe's span (hero.ts) carries no copy, scene or file
+  assert.match(read('src/scripts/hero/hero.ts'), /from '\.\.\/\.\.\/config\/room-map\.ts';/);
+  assert.doesNotMatch(read('src/scripts/hero/hero.ts'), /from '\.\.\/\.\.\/config\/room\.ts'/, 'hero.ts imports nothing from config/room.ts itself');
+  assert.doesNotMatch(read('src/config/room-map.ts'), /import /, 'room-map.ts imports nothing');
+  assert.doesNotMatch(css, /rm-loopend|rm-fade/, 'the loop end and the fade left room.css');
+  assert.doesNotMatch(astro, /rm-loopend|rm-fade/, 'and Room.astro');
+  const director = read('src/scripts/hero/section4/director.ts');
+  assert.match(director, /const crossed = Number\.isFinite\(exitY\) && Number\.isFinite\(prevY\) && prevY <= exitY \+ 1 && y > exitY \+ 1;/, 'the exit fires on the page scroll crossing section 5\'s exitY, never on arriving there (the wrap lands on it)');
+  assert.match(director, /const wipeOut = clamp01\(\(qAll - WIPE4_START\) \/ ROOM_SCREENS\.out\);/, 'the fourth wipe from WIPE4_START over one screen');
+  assert.match(director, /if \(o\.signupReady\(\) \|\| e >= SEAM\.holdS\)/, 'the wrap holds for the jars');
 });
 
 test('the five scenes (section-4-flux.md 3): the rooms in order, the products, the catalog shades by id, the finishes, the key lights, the alts, the files', () => {
@@ -71,6 +83,7 @@ test('the five scenes (section-4-flux.md 3): the rooms in order, the products, t
   // under a seam's cloud (Pearl Whisper where it is thickest) the logotype and the control turn Urban Slate from half cover,
   // and the frame applies the plan's tone under any cover, after the exit's jump too (the checker's finding on D5's first fix)
   assert.match(director, /toneDark \|\|= cover >= 0\.5;/, 'Urban Slate from half cover');
+  assert.match(director, /toneDark \|\|= wipeOut >= 0\.5;/, 'and from half the fourth wipe, over section 5\'s fog (section-5.md 4)');
   assert.match(read('src/scripts/hero/loop.ts'), /if \(plan && \(cover > 0 \|\| \(roomOn && plan\.wipeIn >= 0\.5\)\)\) window\.__skreedLogo\?\.setTone\(plan\.toneDark\);/, "the plan's tone applied under any cover");
   assert.deepEqual(SCENE_SIZE, { wide: { width: 1280, height: 666 }, portrait: { width: 720, height: 1280 } });
   assert.equal(shadeLine(ROOM_SCENES[0]), 'Lilac, vivid violet');

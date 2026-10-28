@@ -40,6 +40,8 @@ import { createIglooIntro } from './intro/igloo.ts';
 import type { RideEls } from './scroll/ride.ts';
 import type { RoomDirector } from './section4/director.ts';
 import type { PageScroll } from './section4/scroll.ts';
+import type { JarsScene } from './section5/jars.ts';
+import { ROOM_SCREENS, WIPE4_START } from '../../config/room-map.ts';
 import type { HeroContext, HeroUniforms, SkyState } from './types.ts';
 
 export interface StartOptions {
@@ -173,7 +175,7 @@ export async function startHero(o: StartOptions): Promise<void> {
     renderer, dpr, life, bridge, sceneA, camA, U, FOG, blocks, frame, pieces, logo, moon, rig,
     groundAt: ground.groundAt, stoneTopAt: stones.stoneTopAt, groundMesh: ground.mesh, stonesMesh: stones.mesh, sky: skyState,
     composerA, fogGround, section2, composite, mask, scrollTex: scrollTex.tex, intro, params: P, reduced, touch, ghost: touch && !reduced, els,
-    room: null,
+    room: null, signup: null,
   };
   // the intro's geometry, textures and wire layers (cage, outline, numbers: warm-up groups c5 to c7, before the labels' links)
   await intro.install(ctx); life.check();
@@ -242,12 +244,44 @@ export async function startHero(o: StartOptions): Promise<void> {
       onState: () => pageScroll?.notify(),
       // the section's layout read again (the intro ending, the document growing, a resize): its range moved, so the capture set is re-evaluated too; the glue spans below are measured fresh at every decision
       onLayout: () => pageScroll?.notify(),
+      // section 5 (section-5.md 5): the exit seam's trigger and the wrap's landing from its jar chunk, or from the DOM while the chunk is not in
+      exitY: () => { const v = ctx.signup ? ctx.signup.exitY() : NaN; return Number.isFinite(v) ? v : signupDom().exit; },
+      restY: () => { const v = ctx.signup ? ctx.signup.restY() : NaN; return Number.isFinite(v) ? v : signupDom().rest; },
+      signupReady: () => !signupEl || !ctx.signup || ctx.signup.ready || ctx.signup.failed,
     });
     ctx.room = room; life.onKill(() => room.dispose());
     room.resize(renderer.domElement.width, renderer.domElement.height);
     return room;
   }).catch((e: unknown) => { console.warn('section 4: the section chunk did not load; the stills stand in', e); document.getElementById('room')?.setAttribute('data-tier', 'poster'); return null; }));
   const loadHall = () => loadDirector().then((room) => room?.load().then(() => { if (room.hall.failed) document.getElementById('room')?.setAttribute('data-tier', 'poster'); }));
+  // section 5 (docs/specs/section-5.md 5, "Loading"): its jar chunk comes at idle once section 4's cloud has warmed, when
+  // the section is within two screens, or with a wrap; it draws the four jars over the fog and caches the section's
+  // layout. Until it is in (and for good if it fails: the section stands as text over the fog), the director reads the
+  // exit's trigger and the wrap's landing from the DOM, at most twice a second
+  const signupEl = document.getElementById('signup');
+  let signupImport: Promise<JarsScene | null> | null = null;
+  const loadSignup = () => (signupImport ??= (signupEl ? import('./section5/jars.ts').then((m) => {
+    if (life.dead) return null;
+    const jars = m.createJars({ renderer, root: signupEl, reduced, dpr, fog: () => fogGround.out, onLayout: () => pageScroll?.notify() });
+    ctx.signup = jars; life.onKill(() => jars.dispose());
+    jars.resize(renderer.domElement.width, renderer.domElement.height);
+    void jars.load();
+    return jars;
+  }).catch((e: unknown) => { console.warn('section 5: the jar chunk did not load; the section stands as text', e); signupEl.setAttribute('data-tier', 'poster'); return null; }) : Promise.resolve(null)));
+  let signupFb = { at: -1e9, exit: NaN, rest: NaN };
+  const signupDom = () => {
+    const now = performance.now();
+    if (now - signupFb.at < 500) return signupFb;
+    const b = signupEl?.querySelector('.su-body');
+    if (signupEl && b && signupEl.getClientRects().length) { const r = b.getBoundingClientRect(), s = signupEl.getBoundingClientRect(), exit = r.bottom + scrollY - innerHeight; signupFb = { at: now, exit, rest: Math.max(s.top + scrollY, exit) }; }
+    else signupFb = { at: now, exit: NaN, rest: NaN };
+    return signupFb;
+  };
+  if (signupEl && 'IntersectionObserver' in window) {
+    const near = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { near.disconnect(); void loadSignup(); } }, { rootMargin: '200% 0px' });
+    near.observe(signupEl);
+    life.onKill(() => near.disconnect());
+  }
   // the quiz gate (docs/specs/quiz-gate.md D1, D2, D5): section#room is hidden and data-locked until the quiz's result or
   // Skip quiz opens it (scripts/quiz/gate.ts). While locked there is no wrap from the top (canWrap, below) and no glue
   // span at its seam (docTop reads NaN for an element with no box, below); the hall and the director chunk still load as
@@ -281,13 +315,15 @@ export async function startHero(o: StartOptions): Promise<void> {
     if (life.dead) return;
     pageScroll = m.createPageScroll({
       reduced, hooks: HOOKS, svh, settleMs: () => tune?.room?.params.snapMs,
+      // the four spans (section-4-flux.md 5 "Glue spans"; section-5.md 2 "The elastic glue"): the first wipe, the quiz seam,
+      // section 4's seam, and the fourth wipe (the room's top plus 12.8 and 13.8 of its screens, which are the probe's 100svh)
       spans: () => {
         const vh = innerHeight, one = svh(), quiz = docTop('find'), top = docTop('room');
-        return [{ start: S2T.PULL * vh, end: S2T.W1END * vh }, { start: Math.min(S2T.W2 * vh, quiz - vh), end: quiz }, { start: top - one, end: top + one }].filter((x) => Number.isFinite(x.start) && Number.isFinite(x.end));
+        return [{ start: S2T.PULL * vh, end: S2T.W1END * vh }, { start: Math.min(S2T.W2 * vh, quiz - vh), end: quiz }, { start: top - one, end: top + one }, { start: top + WIPE4_START * one, end: top + (WIPE4_START + ROOM_SCREENS.out) * one }].filter((x) => Number.isFinite(x.start) && Number.isFinite(x.end));
       },
       room: {
         inRange: () => !!ctx.room?.inRange(), edge: (d) => ctx.room?.edge(d) ?? null, step: (d) => !!ctx.room?.stepScene(d),
-        back: () => { ctx.room?.back(); }, wrap: () => { void loadDirector().then((r) => r?.wrap()); },
+        back: () => { ctx.room?.back(); }, wrap: () => { void loadSignup(); void loadDirector().then((r) => r?.wrap()); },
         canWrap: () => loop.state.introDone && !ctx.room?.lock() && !roomLocked(), lock: () => !!ctx.room?.lock(), busy: () => !!ctx.room?.busy(),
       },
     });
@@ -295,7 +331,7 @@ export async function startHero(o: StartOptions): Promise<void> {
   }).catch((e: unknown) => { console.warn('section 4: the page scroll chunk did not load', e); }));
   const idle = (fn: () => void) => { if ('requestIdleCallback' in window) requestIdleCallback(fn, { timeout: 2000 }); else setTimeout(fn, 2000); };
   let introOver = false;
-  const afterIntro = () => { if (introOver) return; introOver = true; void startScroll(); idle(() => { if (!life.dead) void loadDirector().then((r) => r?.warmCloud()); }); };
+  const afterIntro = () => { if (introOver) return; introOver = true; void startScroll(); idle(() => { if (!life.dead) void loadDirector().then((r) => r?.warmCloud()).then(() => { if (!life.dead) void loadSignup(); }); }); };
   if (HOOKS) {
     const extra = () => ctx.room as unknown as import('./section4/director.ts').RoomHooks | null;
     window.__s4 = {
@@ -305,12 +341,21 @@ export async function startHero(o: StartOptions): Promise<void> {
       scene: (i) => extra()?.scene(i) ?? false,
       step: (dir) => ctx.room?.stepScene(dir) ?? false,
       back: () => ctx.room?.back() ?? false,
-      wrap: () => { void loadDirector().then((r) => r?.wrap()); },
+      wrap: () => { void loadSignup(); void loadDirector().then((r) => r?.wrap()); },
       glue: (on) => pageScroll?.glue(on),
       lights: (o) => extra()?.lights(o) ?? null,
       shade: (dark, height, solid) => extra()?.shade(dark, height, solid),
       skip: () => window.__skreedRoom?.skip(),
       get ready() { return !!ctx.room?.hall.ready; },
+    };
+    // section 5's hooks (section-5.md 5, "Build modes"): its state, a follow poured, the follows set, one jar's still, the chunk's load
+    window.__s5 = {
+      state: () => ctx.signup?.hooks() ?? null,
+      pour: (id) => ctx.signup?.pour(id),
+      follows: (ids) => ctx.signup?.follows(ids),
+      still: (id, level) => ctx.signup?.still(id, level) ?? Promise.resolve(null),
+      load: () => loadSignup().then(() => {}),
+      get ready() { return !!ctx.signup?.ready; },
     };
   }
   bridge.onIntroDone(() => { loop.introDone(); afterIntro(); });
@@ -330,12 +375,12 @@ export async function startHero(o: StartOptions): Promise<void> {
     addEventListener('skreed:tune-ghost', onGhost);
     life.onKill(() => removeEventListener('skreed:tune-ghost', onGhost));
   }
-  // The loop runs while the track or section 3 (section#find, the quiz over the fog ground, quiz.md 5) is in view; once
-  // both have left the viewport it stops and the canvas hides (architecture 7.5, amended for section 3). It restarts
-  // when either returns.
+  // The loop runs while the track, section 3 (section#find, the quiz over the fog ground, quiz.md 5), section 4 or section 5
+  // (section#signup, the jars over the same fog, section-5.md 5) is in view; once all have left the viewport it stops and
+  // the canvas hides (architecture 7.5, amended for sections 3 to 5). It restarts when any returns.
   let compiled = false, inView = true;
   const trackEl = document.getElementById('track');
-  const watched = [trackEl, document.getElementById('find'), document.getElementById('room')].filter((el): el is HTMLElement => !!el);
+  const watched = [trackEl, document.getElementById('find'), document.getElementById('room'), signupEl].filter((el): el is HTMLElement => !!el);
   if (watched.length && 'IntersectionObserver' in window) {
     const seen = new Map<Element, boolean>();
     const io = new IntersectionObserver((entries) => {

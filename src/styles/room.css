@@ -24,9 +24,9 @@
 /* the track: 15.8 screens in every state (the wipe, the walk, the station, the five scenes at half a screen each, the
    hold, the loop screen, the tail and the pinned screen after it); tests/unit/room.test.ts reads this against
    config/room.ts ROOM_HEIGHT */
-.room .rm-track { height: 1580svh; }
+.room .rm-track { height: 1480svh; }
 .rm-stage { position: sticky; top: 0; height: 100svh; overflow: clip; }
-.rm-loopend, .rm-still, .rm-scene-pic { display: none; }
+.rm-still, .rm-scene-pic { display: none; }
 
 /* the pad under the controls: focusable, takes the keys; the stage clips, so its two-tone ring is drawn inside it */
 .rm-pad { position: absolute; inset: 0; outline: none; -webkit-tap-highlight-color: transparent; }
@@ -85,8 +85,6 @@
 .room:not([data-pause="1"]) .rm-pause, .room:is([data-state="hall"]) .rm-pause { display: none; }
 
 /* the fade of the poster tier's loop (through --night to the first screen) */
-.rm-fade { position: fixed; inset: 0; z-index: 5; background: var(--night); pointer-events: none; }
-.rm-fade[hidden] { display: none; }
 
 /* the poster tier and no JavaScript: the track collapses to the still's one screen with the prompt over it at once; the
    press cross-fades the still to scene 1's picture (300 ms, walk.ts) and the scenes stand one per screen in a column,
@@ -107,7 +105,6 @@
 :is(html:not(.hero3d), html.poster) .rm-scene-pic img, .room[data-tier="poster"] .rm-scene-pic img, .rm-scenes-static .rm-scene-pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
 :is(html:not(.hero3d), html.poster) .rm-scene-text, .room[data-tier="poster"] .rm-scene-text, .rm-scenes-static .rm-scene-text { padding: 0 var(--inset); max-width: calc(520px + 2 * var(--inset)); }
 :is(html:not(.hero3d), html.poster) .rm-scene-alt, .room[data-tier="poster"] .rm-scene-alt { display: none; }
-:is(html:not(.hero3d), html.poster) .rm-loopend, .room[data-tier="poster"] .rm-loopend { display: block; height: 100svh; }
 /* the quiz gate (docs/specs/quiz-gate.md D1): with JavaScript the section is rendered hidden and data-locked until the
    quiz's result or Skip quiz opens it; without JavaScript nothing is locked, since the quiz cannot run there, so the
    section shows (an author rule outranks the browser's own [hidden] rule) */
@@ -116,6 +113,5 @@ html:not(.js) .room .rm-track { height: auto; }
 html:not(.js) .rm-stage { position: relative; height: auto; overflow: visible; display: grid; grid-template-columns: minmax(0, 1fr); background: var(--night); }
 html:not(.js) .rm-still { display: block; grid-area: auto; }
 html:not(.js) .rm-still[data-lazy] { display: none; }
-html:not(.js) .rm-loopend { display: none; }
 html:not(.js) .room :is(.rm-enter, .rm-pad, .rm-nav, .rm-pause), html:not(.js) .rm-scenes:not(.rm-scenes-static) { display: none; }
 html:not(.js) .room .rm-noscript { position: static; transform: none; margin: var(--s3) auto; }

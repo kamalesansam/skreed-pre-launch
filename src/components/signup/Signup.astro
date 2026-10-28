@@ -1,0 +1,107 @@
+---
+// Section 5, the sign-up (docs/specs/section-5.md 2, 3 and 5 "The DOM"), in the hero's after-track slot after section 4:
+// plain text on section 2's fog (E-S5-bg; Sam, 2026-10-26: "the same backround as section 2"), the headline, the
+// sub-line, the four jars (slots of air the island draws a jar into, each over its follow word and state line), the
+// email form (the quiz's gift form, rendered only with PUBLIC_LEADS on), the closing line and the jar model's credit,
+// then one empty screen for the exit seam's trigger. The markup is complete without JavaScript (the links work, the
+// no-JS line points at Instagram); scripts/signup/signup.ts, loaded once the section is within a screen, decodes the
+// text, counts the follows, drives the form and the poster tier's loop end. No style attributes (the CSP has no
+// style-src-attr). On the poster tier each slot shows a still of its jar from our own build (scripts/signup/render-stills.mjs).
+import { FOLLOW_COUNT, SIGNUP_COPY as C, SIGNUP_CREDIT, SIGNUP_JARS, followWord, jarLevel } from '../../config/signup.ts';
+import { beadColours } from '../../config/signup-colours.ts';
+import { QUIZ_GATE } from '../../config/quiz.ts';
+import gate from '../../inline/signup-gate.inline.js?raw';
+import { inlineScript } from '../shell/inlineScript.ts';
+import '../../styles/signup.css';
+// The quiz gate (docs/specs/quiz-gate.md D1, D2; section-5.md 12): the section is rendered hidden and data-locked with
+// section 4, which it follows in the page, so a locked page still ends at the quiz; its inline step right after the markup
+// opens it for a visit that has opened the room (the flag in sessionStorage, or the ?room=open override of hooks builds,
+// which the room's step has already written), and gate.ts's unlock opens it with the room. Without JavaScript nothing is
+// locked (signup.css). scripts/csp.mjs hashes the emitted step after the build.
+const gateCode = inlineScript('signup-gate.js', { KEY: QUIZ_GATE.key }, gate);
+
+// the form needs its Worker (quiz.md D7, the gift's rule): on in dev, test and staging builds, off in production until
+// PUBLIC_LEADS is set to on (folded at build time)
+const LEADS = import.meta.env.PUBLIC_LEADS === 'on' || (import.meta.env.PUBLIC_LEADS !== 'off'
+  && (import.meta.env.DEV || import.meta.env.PUBLIC_STAGING === '1' || import.meta.env.PUBLIC_HERO_HOOKS === '1'));
+// the poster tier's stills (absent files render no picture: a build without them shows the words alone)
+const files = import.meta.glob<string>('../../assets/signup/stills/*.{avif,webp}', { eager: true, query: '?url', import: 'default' });
+const still = (id: string) => {
+  const f = (k: string) => files[`../../assets/signup/stills/jar-${id}-${k}`];
+  const a2 = f('2x.avif'), a1 = f('1x.avif'), w2 = f('2x.webp'), w1 = f('1x.webp');
+  return a2 && a1 && w2 && w1 ? { avif: `${a1} 160w, ${a2} 320w`, webp: `${w1} 160w, ${w2} 320w`, src: w1 } : null;
+};
+// each slot carries its beads' hexes (the family's 24 catalog shades, joined at build), which the island's jar chunk reads
+const jars = SIGNUP_JARS.filter((j) => j.id === 'yours' || (j.url && j.worth > 0)).map((j) => ({ ...j, level: jarLevel(j), still: still(j.id), word: j.verb ? followWord(j) : C.yours, colours: beadColours(j.families).join(',') }));
+const instagram = SIGNUP_JARS.find((j) => j.id === 'instagram')?.url ?? '';
+---
+<section class="signup" id="signup" aria-label={C.aria} data-state="rest" data-follows={FOLLOW_COUNT} hidden data-locked>
+  <div class="su-body" id="suBody">
+    <h2 class="su-h" data-dc>{C.h}</h2>
+    <p class="su-sub" data-dc>{C.sub}</p>
+    <p class="su-jars-h" data-dc>{C.jars}</p>
+    <ol class="su-jars" id="suJars" aria-label={C.jarsAria}>
+      {jars.map((j) => (
+        <li class="su-jar" data-id={j.id} data-level={j.level.toFixed(3)}>
+          <div class="su-slot" data-slot={j.id} data-colours={j.colours}>
+            {j.still && (
+              <picture class="su-still" data-lazy>
+                <source data-srcset={j.still.avif} type="image/avif" sizes="(min-width: 720px) 184px, 45vw" />
+                <source data-srcset={j.still.webp} type="image/webp" sizes="(min-width: 720px) 184px, 45vw" />
+                <img data-src={j.still.src} alt={j.alt} width="160" height="200" loading="lazy" decoding="async" />
+              </picture>
+            )}
+          </div>
+          {j.verb
+            ? <a class="su-link su-follow" href={j.url} target="_blank" rel="noopener" data-id={j.id} aria-label={`${j.word}. ${C.newTab}.`} data-dc>{j.word}</a>
+            : <p class="su-word" data-dc>{j.word}</p>}
+          <p class="su-state" data-dc>{j.verb ? C.notYet : C.yoursEmpty}</p>
+        </li>
+      ))}
+    </ol>
+    <h3 class="su-got" data-dc>{C.got}</h3>
+    <p class="su-got-sub" data-dc>{C.gotSub}</p>
+    {LEADS && (
+      <form class="su-form" id="suForm" novalidate>
+        <div class="su-fields">
+          <label class="su-label" for="suEmail" data-dc>{C.email}</label>
+          <input class="su-input" id="suEmail" name="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" required aria-describedby="suErrEmail">
+          <p class="su-err" id="suErrEmail"></p>
+          <label class="su-check"><input type="checkbox" id="suConsent" name="consent" required aria-describedby="suErrConsent"><span class="su-tick" aria-hidden="true"></span><span data-dc>{C.consent}</span></label>
+          <p class="su-err" id="suErrConsent"></p>
+          <button type="submit" class="su-link" id="suSend" data-dc>{C.send}</button>
+          <p class="su-msg" id="suMsg" role="status"></p>
+          <p class="su-fine" data-dc>{C.fine}</p>
+        </div>
+        <div class="su-done" id="suDone" hidden>
+          <p class="su-done-text" tabindex="-1"></p>
+          <button type="button" class="su-link su-notyou">{C.notYou}</button>
+        </div>
+      </form>
+    )}
+    <p class="su-keep" data-dc>{C.keep}</p>
+    {/* the credit's words each decode on their own; the spaces and the punctuation between them are plain text, since the decode trims a line's ends */}
+    <p class="su-credit"><span data-dc>{C.creditLead}</span>{' '}<a href={SIGNUP_CREDIT.source} rel="noopener" data-dc>{SIGNUP_CREDIT.author}</a>{C.creditJoin}<a href={SIGNUP_CREDIT.licenceUrl} rel="noopener" data-dc>{SIGNUP_CREDIT.licence}</a>{C.creditEnd}</p>
+    <p class="sr-only" id="suLive" aria-live="polite"></p>
+    <noscript>
+      <p class="su-noscript">{C.noscriptLead}<a href={instagram} rel="noopener">{C.noscriptLink}</a>{C.noscriptEnd}</p>
+    </noscript>
+  </div>
+  <div class="su-loopend" id="suLoopEnd" aria-hidden="true"></div>
+  <div class="su-fade" id="suFade" aria-hidden="true" hidden></div>
+</section>
+<script is:inline set:html={gateCode}></script>
+<script>
+  // the section's script comes once the section is within a screen, or at once on a focus or a press inside it
+  const root = document.getElementById('signup');
+  if (root) {
+    let p: Promise<unknown> | null = null;
+    const start = () => (p ??= import('../../scripts/signup/signup.ts').then((m) => m.mountSignup(root)));
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); void start(); } }, { rootMargin: '100% 0px' });
+      io.observe(root);
+    } else void start();
+    root.addEventListener('focusin', () => { void start(); }, { once: true });
+    root.addEventListener('pointerdown', () => { void start(); }, { once: true });
+  }
+</script>

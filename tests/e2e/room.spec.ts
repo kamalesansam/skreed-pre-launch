@@ -1,11 +1,12 @@
 // Section 4 (docs/specs/section-4.md 7 for the hall; docs/specs/section-4-flux.md 7 for the scenes): AC1 the track's
-// 15.8 screens in every state and no horizontal scroll; AC13 the keyboard (the prompt is the section's first tabbable
+// 14.8 screens in every state (since section 5, 2026-10-26) and no horizontal scroll; AC13 the keyboard (the prompt is the section's first tabbable
 // element and a focus on it snaps to the station; E does nothing without focus and enters with it; Skip takes focus at the
 // press and hands it to scene 1's name; the scenes' names, lines and alts are all exposed; the pad's label follows the
 // state; the pad's walk ends at the station); AC3 one step a gesture through the hooks (the page snapped to the scene's q
 // when it ends, a step during a step swallowed, Next disabled at scene 5, a position change re-syncing the scene); AC6
-// the exit seam when the raw scroll crosses q 12.8 (the jump to scroll 0 with the hero's followers at 0, room_loop) and
-// the wrap from the top onto scene 5 (room_wrap, wrapLive); the way back at scene 1 into the hall (room_back, the prompt
+// the fourth wipe onto section 5 from q 12.8 and the exit seam when the raw scroll crosses section 5's exitY (the jump to
+// scroll 0 with the hero's followers at 0, room_loop; docs/specs/section-5.md 2) and the wrap from the top onto section
+// 5's rest with the scenes at scene 5 under it (room_wrap, section 5's own line); the way back at scene 1 into the hall (room_back, the prompt
 // focused); AC14's states (spec 5's table): a blocked loop route (the still stays, the loading line, Still loading at 8 s),
 // a rejected play() (the still stays, no line in production, clipBlocked on a Tune build), products.bin blocked (the
 // scenes without a product, the press never blocked after it), and __skreedLoseContext() in the scenes (the poster
@@ -22,10 +23,12 @@
 import { test, expect, type Page } from '@playwright/test';
 
 type Ev = { name: string; props: Record<string, string | number> };
-type S4 = { state: string; under: string; draws: string; seamDraws: string[]; scene: number; step: number; busy: boolean; lock: boolean; inRange: boolean; q: number; qRaw: number; arrive: number; worldReady: boolean; products: string; video: boolean; loops: { i: number; state: string; in: boolean; refused: boolean; playing: boolean }[]; seam: { kind: string; phase: string } | null; memory: number; layout: { top: number; height: number; intro: boolean } | null };
+type S4 = { state: string; under: string; draws: string; seamDraws: string[]; scene: number; step: number; busy: boolean; lock: boolean; inRange: boolean; q: number; qRaw: number; arrive: number; worldReady: boolean; products: string; video: boolean; loops: { i: number; state: string; in: boolean; refused: boolean; playing: boolean }[]; seam: { kind: string; phase: string } | null; memory: number; layout: { top: number; height: number; intro: boolean } | null; wipeOut: number; exitY: number; restY: number };
 const events = (page: Page): Promise<string[]> => page.evaluate(() => ((window as unknown as { __skreedEvents?: Ev[] }).__skreedEvents ?? []).map((e) => e.name));
 const s4 = (page: Page): Promise<S4> => page.evaluate(() => window.__s4!.state() as S4);
-const N = 5, LOOP_START = 12.8;
+const N = 5;
+/** section 5's rest, where the wrap lands (section-5.md 2), from the director's hooks */
+const restY = (page: Page) => page.evaluate(() => (window.__s4!.state() as { restY: number }).restY);
 
 async function open3d(page: Page, baseURL: string | undefined): Promise<void> {
   await page.goto(new URL('/?tier=hero3d&glue=0&room=open', baseURL).href);
@@ -54,7 +57,7 @@ const said = (page: Page, sel: string) => page.locator(`${sel} .sr-only`).first(
  * lets the clock run again.
  */
 function holdAtCover(page: Page, kind: 'exit' | 'wrap'): Promise<S4 | null> {
-  return page.evaluate(({ k, q }) => new Promise<unknown>((res) => {
+  return page.evaluate(({ k }) => new Promise<unknown>((res) => {
     const t0 = performance.now();
     const tick = () => {
       const s = window.__s4!.state() as { seam: { kind: string; phase: string } | null };
@@ -64,9 +67,10 @@ function holdAtCover(page: Page, kind: 'exit' | 'wrap'): Promise<S4 | null> {
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
-    if (k === 'exit') { const room = document.getElementById('room')!, top = room.getBoundingClientRect().top + scrollY; scrollTo({ top: top + q * innerHeight, behavior: 'instant' }); }
+    // the exit runs from section 5's end since 2026-10-26 (section-5.md 2): the raw scroll across its exitY
+    if (k === 'exit') { const y = (window.__s4!.state() as { exitY: number }).exitY; scrollTo({ top: y + 6, behavior: 'instant' }); }
     else window.__s4!.wrap();
-  }), { k: kind, q: LOOP_START + 0.1 }) as Promise<S4 | null>;
+  }), { k: kind }) as Promise<S4 | null>;
 }
 const release = (page: Page) => page.evaluate(() => { window.__skreedFreeze = false; });
 const URBAN_SLATE_CSS = 'rgb(56, 63, 67)';
@@ -85,9 +89,9 @@ test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scene
   await page.waitForTimeout(1500);
   expect(await events(page)).not.toContain('room_view');
 
-  // the hall loads one section ahead; the section is 15.8 screens in every state
+  // the hall loads one section ahead; the section is 14.8 screens in every state (section-5.md 5: the fourth wipe's screen and one pinned)
   await page.waitForFunction(() => window.__s4?.ready, null, { timeout: 300_000, polling: 500 });
-  expect(await page.evaluate(() => document.getElementById('room')!.offsetHeight)).toBeCloseTo(15.8 * H, -1);
+  expect(await page.evaluate(() => document.getElementById('room')!.offsetHeight)).toBeCloseTo(14.8 * H, -1);
   // the director's cached layout is a reading taken after the intro, at the section's real top (D1: a reading under
   // html.intro, with the hero's track collapsed, is replaced when the intro ends)
   await expect.poll(async () => (await s4(page)).layout?.intro, { timeout: 10_000 }).toBe(false);
@@ -139,7 +143,7 @@ test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scene
   await expect.poll(async () => (await s4(page)).state, { timeout: 20_000 }).toBe('entering');
   await expect(page.locator('#rmSkip')).toBeVisible();
   await expect(page.locator('#rmSkip')).toBeFocused();
-  expect(await page.evaluate(() => document.getElementById('room')!.offsetHeight)).toBeCloseTo(15.8 * H, -1);
+  expect(await page.evaluate(() => document.getElementById('room')!.offsetHeight)).toBeCloseTo(14.8 * H, -1);
   // a 5-screen scroll during the entry clock: no seam, and the clock's end puts the page at scene 1's position
   await page.mouse.wheel(0, 5 * H); await page.waitForTimeout(400);
   expect((await s4(page)).state).toBe('entering');
@@ -215,12 +219,27 @@ test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scene
   expect((await s4(page)).scene).toBe(3);
   await expect(page.locator('#rmName-' + (await page.locator('.rm-scene[data-i="3"]').getAttribute('data-id')))).toBeFocused({ timeout: 10_000 });
 
-  // the hold past scene 5, then the exit seam when the raw scroll crosses q 12.8: the jump to the top with the hero at rest, room_loop
+  // the hold past scene 5, then the fourth wipe onto section 5 (section-5.md 2): the cut from scene 5 over the room's q 12.8 to
+  // 13.8, the logotype Urban Slate from its half, and section 5 at rest over the fog with its four jars; the exit seam runs
+  // from section 5's end now, when the raw scroll crosses its exitY: the jump to the top with the hero at rest, room_loop
   await page.evaluate(() => window.__s4!.scene(4));
   await expect.poll(async () => (await s4(page)).scene, { timeout: 10_000 }).toBe(4);
   await goQ(page, 12.5); await page.waitForTimeout(400);
   expect((await s4(page)).state).toBe('world');
+  expect((await s4(page)).wipeOut).toBe(0);
   await expect(page.locator('.site-logo')).toHaveAttribute('data-tone', 'dark');   // dawn's own tone at rest (D5's measured pick: Pearl Whisper)
+  await goQ(page, 13.6); await page.waitForTimeout(1500);
+  expect((await s4(page)).wipeOut).toBeGreaterThan(0.6);
+  await expect(page.locator('.site-logo')).toHaveAttribute('data-tone', 'light', { timeout: 10_000 });
+  await page.evaluate(() => window.__s5?.load());
+  await page.waitForFunction(() => !!window.__s5?.ready || !!(window.__s5?.state() as { failed?: boolean } | null)?.failed, null, { timeout: 180_000, polling: 500 });
+  const rest0 = await restY(page);
+  expect(Number.isFinite(rest0)).toBe(true);
+  await page.evaluate((y) => { scrollTo({ top: y, behavior: 'instant' }); window.__skreedSnap?.(y / innerHeight); }, rest0);
+  await page.waitForTimeout(800);
+  expect(await noHScroll(page)).toBe(true);
+  await expect(page.locator('#signup .su-jar')).toHaveCount(4);
+  expect((await s4(page)).state).toBe('world');
   // the seam held at full cover, the clock frozen on the first frame after the jump: the logotype and the Back to top
   // control read Urban Slate over the Pearl Whisper cloud (the regression the checker found in D5's first fix), the page at 0
   const exitCover = await holdAtCover(page, 'exit');
@@ -253,14 +272,14 @@ test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scene
   await release(page);
   await expect.poll(async () => (await s4(page)).state, { timeout: 30_000 }).toBe('world');
   expect((await s4(page)).scene).toBe(N - 1);
-  await expect(page.locator('.site-logo')).toHaveAttribute('data-tone', 'dark', { timeout: 10_000 });   // dawn's own tone again once the cloud has gone
+  await expect(page.locator('.site-logo')).toHaveAttribute('data-tone', 'light', { timeout: 10_000 });   // section 5's fog under the logotype once the cloud has gone
   expect(await page.evaluate(() => { const e = document.getElementById('rmEnter')!; return e.hidden && e.inert; })).toBe(true);
-  await expect.poll(() => pageQ(page), { timeout: 10_000 }).toBeCloseTo(12, 1);
+  // the landing is section 5's rest (section-5.md 2): the body's end at the viewport's bottom, the scenes at scene 5 under it
+  await expect.poll(async () => Math.abs(await page.evaluate(() => scrollY) - await restY(page)), { timeout: 10_000 }).toBeLessThan(2);
   await expect.poll(() => page.evaluate(() => Math.abs(window.__skreedState!().sb - scrollY / innerHeight)), { timeout: 20_000 }).toBeLessThan(0.05);
   expect(await events(page)).toContain('room_wrap');
   await expect(page.locator('.rm-scene[data-i="4"]')).toHaveClass(/is-on/);
-  const named = await page.evaluate(() => !!document.activeElement?.classList.contains('rm-scene-name'));
-  if (!named) await expect(page.locator('#rmLive')).toHaveText(/^Round to the five scenes\. 5 of 5\. /);
+  await expect(page.locator('#suLive')).toHaveText('Round to the sign-up.');
 
   // back through the scenes to scene 1, then the way back: the hall at the station, room_back, the prompt focused for a keyboard user
   for (let to = N - 2; to >= 0; to--) {
@@ -382,7 +401,7 @@ test('section 4 at 390 x 844: a cold first-visit wrap from the top lands on scen
   await expect.poll(async () => (await s4(page)).state, { timeout: 60_000 }).toBe('world');
   expect((await s4(page)).scene).toBe(N - 1);
   await expect(page.locator('#room')).toHaveAttribute('data-scene', '4');
-  await expect.poll(() => pageQ(page), { timeout: 10_000 }).toBeCloseTo(12, 1);
+  await expect.poll(async () => Math.abs(await page.evaluate(() => scrollY) - await restY(page)), { timeout: 10_000 }).toBeLessThan(2);   // section 5's rest (section-5.md 2)
   await expect.poll(() => page.evaluate(() => Math.abs(window.__skreedState!().sb - scrollY / innerHeight)), { timeout: 20_000 }).toBeLessThan(0.05);
   expect(await events(page)).toContain('room_wrap');
   await expect(page.locator('.rm-scene[data-i="4"]')).toHaveClass(/is-on/);
@@ -494,15 +513,16 @@ test('section 4 at 390 x 844 under reduced motion (still3d): no loop elements, t
   // the exit seam is a cut: the jump to the top at once, then its 400 ms lock, then the hall
   await page.evaluate(() => window.__s4!.scene(4));
   await expect.poll(async () => (await s4(page)).scene, { timeout: 10_000 }).toBe(4);
-  await page.evaluate((q) => { const room = document.getElementById('room')!, top = room.getBoundingClientRect().top + scrollY; scrollTo({ top: top + q * innerHeight, behavior: 'instant' }); }, LOOP_START + 0.1);
+  // (from section 5's end, section-5.md 2: the raw scroll across its exitY)
+  await page.evaluate(() => { const y = (window.__s4!.state() as { exitY: number }).exitY; scrollTo({ top: y + 6, behavior: 'instant' }); });
   await page.waitForFunction(() => scrollY < 2, null, { timeout: 5_000, polling: 50 });
   expect(await events(page)).toContain('room_loop');
   await expect.poll(async () => (await s4(page)).state, { timeout: 5_000 }).toBe('hall');
-  // the wrap is a cut too: world at scene 5 once its lock ends
+  // the wrap is a cut too: world at scene 5 once its lock ends, the page at section 5's rest
   await page.evaluate(() => window.__s4!.wrap());
   await expect.poll(async () => (await s4(page)).state, { timeout: 5_000 }).toBe('world');
   expect((await s4(page)).scene).toBe(N - 1);
-  await expect.poll(() => pageQ(page), { timeout: 5_000 }).toBeCloseTo(12, 1);
+  await expect.poll(async () => Math.abs(await page.evaluate(() => scrollY) - await restY(page)), { timeout: 5_000 }).toBeLessThan(2);
   expect(await events(page)).toContain('room_wrap');
   expect(errors).toEqual([]);
   await ctx.close();

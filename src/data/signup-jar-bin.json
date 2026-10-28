@@ -1,0 +1,54 @@
+{
+ "bin": {
+  "path": "src/assets/signup/jar.bin",
+  "format": "SHP1",
+  "bytes": 17340,
+  "sha256": "a3225581d9d33ca130c08755e62c248d7496e5258313dff8ec68f9b70593c02e",
+  "products": [
+   "jar"
+  ],
+  "vertices": 1024,
+  "triangles": 1340,
+  "writtenBy": "scripts/signup/jar-bin.mjs"
+ },
+ "jar": {
+  "source": "https://sketchfab.com/3d-models/glass-jar-c1e74f99560549739bcb17df3103b66d",
+  "sha256": "a1705ec8dc35b8c1d976ac4f77fe7962acc556e2094a5eddc00cd70c4fce33ac",
+  "title": "Glass jar",
+  "author": "Pentristo",
+  "licence": "CC BY 4.0",
+  "licenceUrl": "http://creativecommons.org/licenses/by/4.0/",
+  "generator": "Sketchfab-13.79.0",
+  "parts": [
+   "jar"
+  ],
+  "vertices": 1024,
+  "triangles": 1340,
+  "bytes": 17256,
+  "heightM": 1,
+  "sizeMm": [
+   798.61,
+   1000,
+   798.61
+  ],
+  "boxMm": {
+   "min": [
+    -399.31,
+    -500,
+    -399.31
+   ],
+   "max": [
+    399.31,
+    500,
+    399.31
+   ]
+  },
+  "sourceHeight": 3.744136929512024,
+  "sourceCentre": [
+   0,
+   0.13747614622116078,
+   0.2100154161453247
+  ],
+  "gridStepMm": 0.0153
+ }
+}

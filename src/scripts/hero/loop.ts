@@ -90,16 +90,20 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
     // section 4 (docs/specs/section-4.md 5, section-4-flux.md 5, section4/director.ts): the hall, the bubble or the carousel
     // into their own targets, and the plan for the composite: the third wipe from the fog, the section's frame, a seam's cover
     const plan = room ? room.step({ t, dt, ratio, pointer, touch: ctx.touch, mouseRate: P.mouse, fog: fogGround.out }) : null;
-    const roomOn = !!plan && plan.on && !!plan.tex, cover = plan?.cover ?? 0;
+    const roomOn = !!plan && plan.on && !!plan.tex, cover = plan?.cover ?? 0, wipeOut = plan?.wipeOut ?? 0;
+    // section 5 (section-5.md 2, 4; E-S5-bg, section5/jars.ts): the jars over the fog in their own frame, drawn while the
+    // section is in view or it is the fourth wipe's far side; the fog ground renders first, as its floor
+    const S5 = ctx.signup, s5want = !!S5 && (wipeOut > 0 || S5.inView());
 
     // F14: hero, then section 2 (its own targets), then section 3's ground (the fog alone); the composite wipes hero to
     // section 2, then section 2 to the ground, which stays the whole frame under section 3 (quiz.md 5)
     if (!iv.hold) {
-      const s2on = !!S2 && S2.ready && tp > 0 && tp2 < 1, keep = s2on && tp2 <= 0 && S2!.logoLeft(), groundOn = (tp2 > 0 || (tp > 0 && !(S2 && S2.ready))) && !(roomOn && !plan!.groundNeeded);
+      const s2on = !!S2 && S2.ready && tp > 0 && tp2 < 1, keep = s2on && tp2 <= 0 && S2!.logoLeft(), groundOn = ((tp2 > 0 || (tp > 0 && !(S2 && S2.ready))) && !(roomOn && !plan!.groundNeeded)) || s5want;
       ctx.moon.visible = tp < 1;   // once the first wipe has covered the scene only the logo is seen: the ground and sky are skipped
       if (tp < 1 || keep) composerA.c.render(dt);
       if (s2on) S2!.render();
       if (groundOn) fogGround.render();
+      const p5 = S5 ? S5.step({ t, dt, wipe: wipeOut, cover }) : null, s5on = !!p5 && p5.on && !!p5.tex;
       if (keep && uMask) { const pc = renderer.getClearColor(_cc), pa = renderer.getClearAlpha(); renderer.setClearColor(0x000000, 1); uMask.value = 1;
         renderer.setRenderTarget(mask.rt); renderer.render(logo as unknown as Scene, camA); uMask.value = 0; renderer.setClearColor(pc, pa); }
       const groundTex = fogGround.out;
@@ -111,6 +115,11 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
         if (plan!.wipeIn < 1) { C.tA.value = groundTex; C.tB.value = rt; C.uProgress.value = plan!.wipeIn; C.uParA.value = 0; }
         else { C.tA.value = rt; C.tB.value = rt; C.uProgress.value = 0; }
       }
+      // the fourth wipe (section-5.md 2, E-S5-bg): section 4's frame (the scenes, or the hall) holds still under the cut as
+      // the hero does in the first wipe, and section 5's frame slides in (the fog alone until the jars are in); past the
+      // cut, and once the section has scrolled away, section 5's frame is the whole frame
+      if (roomOn && wipeOut > 0) { C.tA.value = plan!.tex; C.tB.value = s5on ? p5!.tex : groundTex; C.uProgress.value = wipeOut; C.uParA.value = 0; }
+      else if (s5on && !roomOn) { C.tA.value = p5!.tex; C.tB.value = p5!.tex; C.uProgress.value = 0; C.uParA.value = 0; }
       // a seam of section 4: its cloud over whatever the frame is (the section's frame, or the hero at rest after the jump)
       C.uCover.value = cover; C.tCloud.value = cover > 0 ? plan!.cloud : null;
       C.tH.value = composerA.c.readBuffer.texture; C.tM.value = mask.rt.texture; C.tS.value = s2on ? S2!.out : mask.black; C.uKeep.value = keep ? 1 : 0;

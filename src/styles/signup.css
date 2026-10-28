@@ -1,0 +1,92 @@
+/* Section 5, the sign-up (docs/specs/section-5.md 2 and 5). Plain text on section 2's fog, as the quiz and section 4
+   (E-S5-bg, E-S5-font pending): IBM Plex Mono Medium in capitals, Pearl Whisper, no letter-spacing, at the quiz's sizes;
+   no panels, no fills, no borders round anything but the email field's line, no shadows; the controls are words,
+   underlined as links are. The jars are drawn by the hero island where the slots are (the slots themselves are empty
+   boxes of air on the 3D path; the poster tier puts a still in each). scripts/signup/signup.ts decodes the text and
+   drives the states; without JavaScript the same text stands, still. Phone first: one column, the jars two by two, four
+   in a row from 720 px. */
+.signup {
+  --su-font: "IBM Plex Mono", ui-monospace, monospace;
+  /* the quiz's sizes, held equal by tests/unit/signup.test.ts: body 15 to 22 px, the headings 24 to 52 px */
+  --su-fs: clamp(15px, min(calc(0.6rem + 0.95vw), 2.6vh), 22px); --su-fs-q: clamp(24px, min(calc(1rem + 2.3vw), 5vh), 52px);
+  position: relative; z-index: 3; overflow-x: clip;   /* above the hero's riders, below the logotype at 4, as the quiz */
+  color: var(--pearl-whisper); font: 500 var(--su-fs) / 1.45 var(--su-font); text-transform: uppercase; letter-spacing: 0; font-synthesis: none;
+}
+.signup, .signup *, .signup *::before, .signup *::after { box-sizing: border-box; }
+.signup .dc { white-space: normal; }
+.signup .sr-only { text-transform: none; }   /* assistive technology gets Sam's sentence case (the decode's hidden copy) */
+:where(.signup) :where(p, h2, h3, ol) { margin: 0; }
+:where(.signup) :where(h2, h3) { font: inherit; }
+/* focus (DESIGN.md 4): the Ember Luxe outline with the Urban Slate ring inside it, on keyboard focus only */
+.signup :focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }
+.signup .su-link, .signup .su-check, .signup .su-done-text, .signup .su-credit a, .signup .su-noscript a { position: relative; }
+.signup :is(.su-link, .su-credit a, .su-noscript a):focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
+.signup .su-done-text:focus { outline: none; }   /* the done line takes focus from script alone (tabindex -1); it is no control */
+.signup .su-input:focus-visible { outline: none; border-bottom-width: 3px; }
+@supports not selector(:has(*)) {
+  .signup .su-check input:focus-visible + .su-tick { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }
+}
+@supports selector(:has(*)) {
+  .signup .su-check:has(input:focus-visible) { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }
+  .signup .su-check:has(input:focus-visible)::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
+}
+
+/* the body: one column, at most 720 px wide, from under the fixed logotype's band to the safe area */
+.su-body { position: relative; display: grid; gap: var(--s4); justify-items: start; width: 100%; max-width: calc(720px + 2 * var(--inset)); min-height: 100svh; margin: 0 auto; padding: calc(var(--inset) + 56px + env(safe-area-inset-top, 0px)) var(--inset) calc(var(--inset) + env(safe-area-inset-bottom, 0px)); }
+.su-h, .su-got { font-size: var(--su-fs-q); line-height: 1.25; text-wrap: balance; max-width: calc(26ch + 1px); }   /* + 1 px: the glyph spans' advances round up a little */
+.su-sub, .su-got-sub { max-width: calc(60ch + 1px); }
+.su-got { margin-top: var(--s3); }
+.su-keep { margin-top: var(--s3); }
+
+/* the jars: a two-by-two grid, four in a row from 720 px; each a slot of air (the island draws the jar where it is) over its words */
+.su-jars { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s4) var(--s3); width: 100%; }
+@media (min-width: 720px) { .su-jars { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.su-jar { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s1); justify-items: center; text-align: center; }   /* one column the cell wide: a word longer than the cell wraps inside it, and the slot never grows past the cell (the inner column was sized to the longest word) */
+.su-slot { position: relative; width: 100%; max-width: 184px; aspect-ratio: 4 / 5; }
+.su-still { display: none; }
+.su-word { min-height: 44px; display: inline-flex; align-items: center; }
+.su-state { font-variant-numeric: tabular-nums; }
+
+/* the controls are words (the quiz's link): underlined, at least 44 px each way to tap; hover thickens the line at once */
+.su-link { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; padding: 0; background: none; border: 0; border-radius: 0; color: inherit; font: inherit; text-transform: inherit; letter-spacing: inherit; text-align: inherit; text-decoration-line: underline; text-decoration-thickness: 1px; text-underline-offset: 0.4em; cursor: pointer; -webkit-tap-highlight-color: transparent; appearance: none; }   /* longhands: Safari before 26.2 drops a shorthand with a thickness in it */
+.su-link[aria-disabled="true"] { cursor: default; }
+@media (hover: hover) { .su-link:hover:not([aria-disabled="true"]) { text-decoration-thickness: 2px; } }
+.su-credit a, .su-noscript a { color: inherit; text-decoration-line: underline; text-decoration-thickness: 1px; text-underline-offset: 0.4em; -webkit-tap-highlight-color: transparent; }
+.su-credit a::after, .su-noscript a::after { content: ""; position: absolute; inset: -14px -8px; }   /* a 44 px hit box round each inline link */
+.signup .su-credit a .dc { white-space: nowrap; }   /* the licence name stays whole ("CC BY 4.0"): the decoder's row sets normal (line 16), so the rule is on the row */
+@media (hover: hover) { :is(.su-credit, .su-noscript) a:hover { text-decoration-thickness: 2px; } }
+
+/* the form (PUBLIC_LEADS on): the quiz's gift form, the same lines */
+.su-form, .su-fields, .su-done { display: grid; gap: var(--s2); justify-items: start; width: 100%; max-width: 560px; }
+.su-done-text { max-width: 100%; overflow-wrap: anywhere; }
+.su-fields[hidden], .su-done[hidden], .su-form[hidden] { display: none; }
+.su-input { width: 100%; min-height: 44px; padding: 0; border: 0; border-bottom: 1px solid var(--pearl-whisper); border-radius: 0; background: transparent; color: var(--pearl-whisper); font: inherit; font-size: 16px; text-transform: none; letter-spacing: 0; caret-color: var(--pearl-whisper); }   /* 16 px: iOS Safari zooms the page on focusing a smaller field */
+.su-input[aria-invalid="true"] { border-bottom-width: 2px; }
+.su-check { display: grid; grid-template-columns: auto 1fr; gap: var(--s2); align-items: center; min-height: 44px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.su-check input { position: absolute; width: 1px; height: 1px; margin: 0; opacity: 0; }
+.su-tick { white-space: pre; }
+.su-tick::before { content: "[ ]"; }
+.su-check input:checked + .su-tick::before { content: "[X]"; }
+.su-input:-webkit-autofill { -webkit-text-fill-color: var(--pearl-whisper); caret-color: var(--pearl-whisper); transition: background-color 0s 86400s, color 0s 86400s; }
+.su-input:autofill { -webkit-text-fill-color: var(--pearl-whisper); caret-color: var(--pearl-whisper); transition: background-color 0s 86400s, color 0s 86400s; }
+.su-err { min-height: 1.45em; }   /* one line always reserved under a field: a message never moves the controls below it */
+.su-msg { min-height: 1.45em; }
+
+/* under the body: one empty screen, the room for the exit seam's trigger (the 3D path) and the poster tier's loop end */
+.su-loopend { height: 100svh; }
+.su-fade { position: fixed; inset: 0; z-index: 5; background: var(--night); pointer-events: none; }
+.su-fade[hidden] { display: none; }
+
+/* the poster tier (no island: html without hero3d, html.poster, or the section fallen to it): the text on --night, the
+   jars as stills on a --skeleton box until they decode */
+:is(html:not(.hero3d), html.poster) .signup, .signup[data-tier="poster"] { background: var(--night); }
+:is(html:not(.hero3d), html.poster) .su-still, .signup[data-tier="poster"] .su-still { display: block; position: absolute; inset: 0; background: var(--skeleton); }
+:is(html:not(.hero3d), html.poster) .su-still img, .signup[data-tier="poster"] .su-still img { display: block; width: 100%; height: 100%; object-fit: contain; }
+
+/* without JavaScript: the text stands, the links work, the loop end and the fade are gone */
+html:not(.js) .su-loopend, html:not(.js) .su-fade { display: none; }
+
+/* the quiz gate (docs/specs/quiz-gate.md D1, D9): with JavaScript the section is rendered hidden and data-locked with
+   section 4 until the quiz's result or Skip quiz opens both (the inline step after the markup, gate.ts); without
+   JavaScript nothing is locked, as for the room */
+html:not(.js) .signup[data-locked] { display: block; }

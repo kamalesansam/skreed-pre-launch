@@ -563,7 +563,7 @@ test('AC5 and AC6: ten answers for The Quiet Curator with Math.random at 0.01 gi
   expect(await animateLog(page)).toEqual(['qz-big|opacity|400', ...r.others.map(() => 'qz-mini-sw|opacity|400')]);
   const form = page.locator('#qzForm');
   for (const [k, v] of [['shade', r.shade], ['family', 'frosty-white'], ['finish', 'matte'], ['persona', 'curator']]) await expect(form, k).toHaveAttribute(`data-${k}`, v);
-  expect(await events(page)).toEqual([['quiz_start', {}], ...answered(CURATOR), ['quiz_complete', { persona: 'curator', shade: 'frosty-white-10', others: r.others.join(',') }]]);
+  expect(await events(page)).toEqual([['quiz_start', {}], ...answered(CURATOR), ['room_unlock', { by: 'result' }], ['quiz_complete', { persona: 'curator', shade: 'frosty-white-10', others: r.others.join(',') }]]);
 });
 
 test('AC6 a tie: The Warm Optimist, The Romantic Rebel and The Dreamer three each, the Rebel picked last among them, give The Romantic Rebel; Math.random at 0.5 draws the group\'s fourth shade, Blush', async ({ page, baseURL }) => {
@@ -584,7 +584,7 @@ test('AC6 a tie: The Warm Optimist, The Romantic Rebel and The Dreamer three eac
   await expectResult(page, r);
   await expect(page.locator('#qzLive')).toHaveText(`${Q.eyebrow}: ${r.name}. ${r.p.name}.`);
   await expect(page.locator('.qz-result:not([hidden]) .qz-shade')).toBeFocused();
-  expect(await events(page)).toEqual([['quiz_start', {}], ...answered(TIE), ['quiz_complete', { persona: 'rebel', shade: r.shade, others: r.others.join(',') }]]);
+  expect(await events(page)).toEqual([['quiz_start', {}], ...answered(TIE), ['room_unlock', { by: 'result' }], ['quiz_complete', { persona: 'rebel', shade: r.shade, others: r.others.join(',') }]]);
 });
 
 test('AC5 Back: absent on card 1; after three answers it wipes card 4 out (an answer pressed meanwhile is not taken) and decodes card 3 back in, reading 03 / 10, the only card unhidden, no answer marked; answered again, the result follows the corrected answers', async ({ page, baseURL }) => {
@@ -626,7 +626,7 @@ test('AC5 Back: absent on card 1; after three answers it wipes card 4 out (an an
   await expect(page.locator('#find')).toHaveAttribute('data-state', 'result');
   const r = drawn(FIXED, 0.01);
   await expectResult(page, r);
-  expect(await events(page)).toEqual([['quiz_start', {}], ...answered(BEFORE), ['quiz_back', { q: 4 }], ...answered(FIXED, 2), ['quiz_complete', { persona: r.p.id, shade: r.shade, others: r.others.join(',') }]]);
+  expect(await events(page)).toEqual([['quiz_start', {}], ...answered(BEFORE), ['quiz_back', { q: 4 }], ...answered(FIXED, 2), ['room_unlock', { by: 'result' }], ['quiz_complete', { persona: r.p.id, shade: r.shade, others: r.others.join(',') }]]);
 });
 
 /** every click on the page from now on, caught before the deck's own listeners: when (the page's clock), its detail (2
@@ -932,7 +932,7 @@ test('AC5 "Not quite? Try again" wipes the result and the gift out, decodes card
   await page.evaluate(() => { Math.random = () => 0.5; });
   await answer(page, DREAMER);
   await expectResult(page, two);   // the first draw is back among the compatible shades and the second one hidden there
-  expect((await events(page)).filter(([n]) => n !== 'quiz_answer')).toEqual([['quiz_start', {}], ['quiz_complete', { persona: 'dreamer', shade: one.shade, others: one.others.join(',') }], ['quiz_retake', {}], ['quiz_complete', { persona: 'dreamer', shade: two.shade, others: two.others.join(',') }]]);
+  expect((await events(page)).filter(([n]) => n !== 'quiz_answer')).toEqual([['quiz_start', {}], ['room_unlock', { by: 'result' }], ['quiz_complete', { persona: 'dreamer', shade: one.shade, others: one.others.join(',') }], ['quiz_retake', {}], ['quiz_complete', { persona: 'dreamer', shade: two.shade, others: two.others.join(',') }]]);
 });
 
 /** a label the server split (or the loader's say()): each child as class|aria-hidden|text|text-transform */
@@ -1304,9 +1304,10 @@ test('AC7 the underlines are written as longhands and computed from them: every 
   await page.mouse.move(0, 0);
   expect(await lineOf('.qz-notyou'), 'Not you').toEqual(['underline 1px']);
   // every control of the section, hidden ones included: Begin, nine Backs, two links on each of the seven results, Send, Not
-  // you; at 1 px unless it still matches :hover (Chromium keeps :hover on Send, hidden under the pointer by the done state)
+  // you, and Skip quiz on the intro and on each of the ten questions (the quiz gate); at 1 px unless it still matches :hover
+  // (Chromium keeps :hover on Send, hidden under the pointer by the done state)
   const all = await page.locator('#find .qz-link').evaluateAll((els) => els.map((e) => { const cs = getComputedStyle(e); return { what: e.id || e.className, hover: e.matches(':hover'), line: `${cs.textDecorationLine} ${cs.textDecorationThickness}` }; }));
-  expect(all.length).toBe(1 + 9 + 7 * 2 + 1 + 1);
+  expect(all.length).toBe(1 + 9 + 7 * 2 + 1 + 1 + 11);
   expect(all.filter((l) => l.line !== (l.hover ? 'underline 2px' : 'underline 1px')), 'each underlined at 1 px, 2 under the pointer').toEqual([]);
   expect(all.filter((l) => !l.hover).length, 'at most one under the pointer').toBeGreaterThanOrEqual(all.length - 1);
 });
@@ -1414,7 +1415,7 @@ test('AC8 the gift form: blur with a value validates and an empty submit shows b
   const email = page.locator('#qzEmail'), consent = page.locator('#qzConsent'), send = page.locator('#qzSend'), done = page.locator('.qz-done-text'), errEmail = page.locator('#qzErrEmail');
   await expect(page.locator('#qzGift')).toBeVisible();
   await settled(page);
-  await expect(page.getByRole('textbox', { name: Q.email, exact: true })).toHaveId('qzEmail');
+  await expect(page.locator('#find').getByRole('textbox', { name: Q.email, exact: true })).toHaveId('qzEmail');
   await expect(send).toHaveAccessibleName(Q.send);
   // a value is validated on blur, never per keystroke, and a valid one clears the line again
   await email.fill('nope'); await expect(errEmail).toHaveText(''); await email.blur();

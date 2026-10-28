@@ -14,6 +14,7 @@ import type { CameraRig } from './camera/rig.ts';
 import type { Section2Scene } from './section2/types.ts';
 import type { GroundScene } from './section3/ground.ts';
 import type { RoomDirector } from './section4/director.ts';
+import type { JarsScene } from './section5/jars.ts';
 import type { IntroDirector } from './intro/types.ts';
 import type { RideEls } from './scroll/ride.ts';
 import type { SkyClass } from './data/urls.ts';
@@ -47,6 +48,8 @@ export interface HeroContext {
   composerA: HeroComposer; fogGround: GroundScene; section2: Section2Scene | null; composite: Composite; mask: LogoMask; scrollTex: Texture;
   /** section 4 (section4/director.ts: the hall, the bubble, the five scenes on the carousel, the seams), created by its lazy chunk once the quiz is in view; null before that and on a failed import */
   room: RoomDirector | null;
+  /** section 5 (section5/jars.ts: the four jars over the fog), created by its lazy chunk at idle after section 4's cloud or when the section nears; null before that and on a failed import */
+  signup: JarsScene | null;
   intro: IntroDirector;
   params: HeroParams; reduced: boolean; touch: boolean; ghost: boolean;
   els: RideEls;

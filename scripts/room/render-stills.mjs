@@ -26,7 +26,7 @@ const GL = process.env.SKREED_GL === 'swiftshader' ? ['--use-angle=swiftshader',
 const SETUPS = { phone: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }, laptop: { viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1.5 } };
 // the entry's beats at the defaults (config/room.ts ROOM_PARAMS, transition.ts BUBBLE): the bubble from 0.35 s for 2 s; the
 // step 770 ms; the scenes at q 10 to 12 at a step of 0.5, the hold to 12.8
-const BUBBLE_AT = 0.35, BUBBLE_S = 2.0, STEP_MS = 770, SCENES = 5, LOOP_START = 12.8;
+const BUBBLE_AT = 0.35, BUBBLE_S = 2.0, STEP_MS = 770, SCENES = 5, WIPE4_START = 12.8;   // the exit seam runs from section 5's end since 2026-10-26 (section-5.md); 12.8 is the fourth wipe's start now
 
 /** the installed Chrome when Playwright finds it, else its own Chromium */
 async function launch(args) {
@@ -103,7 +103,7 @@ if (framesDir) {
     // the hold past scene 5, then the exit seam: the cover a tenth of a second in, and the first frame after the jump
     await scene(page, SCENES - 1);
     await go(page, 12.5, 1200); await shot(page, f('hold'));
-    await page.evaluate((q) => { const room = document.getElementById('room'), top = room.getBoundingClientRect().top + scrollY; scrollTo({ top: top + q * innerHeight, behavior: 'instant' }); window.__skreedSnap?.((top + q * innerHeight) / innerHeight); }, LOOP_START + 0.05);
+    await page.evaluate((q) => { const room = document.getElementById('room'), top = room.getBoundingClientRect().top + scrollY; scrollTo({ top: top + q * innerHeight, behavior: 'instant' }); window.__skreedSnap?.((top + q * innerHeight) / innerHeight); }, WIPE4_START + 0.05);
     await page.waitForTimeout(100); await shot(page, f('exit-cover-in'));
     await page.waitForFunction(() => scrollY < 2, null, { timeout: 20_000, polling: 50 }).catch(() => console.warn('  no jump within 20 s'));
     await page.waitForTimeout(120); await shot(page, f('exit-after-jump'));

@@ -16,7 +16,8 @@
 // first and then going inert; the scenes' text is clipped instead, so all five stay in the accessibility tree, inert
 // until the entry or the wrap. On the poster tier, and when an asset fails, the hall's still stands with the prompt
 // over it, a press cross-fades it to scene 1's still and the scenes stand in a column (their stills lazy, within one
-// screen under Save-Data), and the loop is a fade through --night to the top. Every string comes from config/room.ts.
+// screen under Save-Data); the poster tier's loop end (a fade through --night to the top) is section 5's since
+// 2026-10-26 (scripts/signup/signup.ts). Every string comes from config/room.ts.
 import { HALL, ROOM_COPY as R, ROOM_SCENES, ROOM_SCREENS, SCENE_COUNT, STATION_Q, fill, liveRoomParams, productById, shadeLine, type RoomFrame, type RoomIsland, type RoomState } from '../../config/room.ts';
 import { hoverNoneMQ, reducedMQ } from '../motion.ts';
 import { createDecoder } from '../quiz/decode.ts';
@@ -39,7 +40,7 @@ export function mountRoom(root: HTMLElement): void {
   // asserted here and checked at once: the closures below keep the narrowed types
   const stage = $('rmStage')!, pad = $('rmPad')!, hint = $('rmHint')!, loading = $('rmLoading')!, enter = $<HTMLButtonElement>('rmEnter')!, skip = $<HTMLButtonElement>('rmSkip')!, live = $('rmLive')!;
   if (!stage || !pad || !hint || !loading || !enter || !skip || !live) return;
-  const list = $('rmScenes'), prevB = $<HTMLButtonElement>('rmPrev'), nextB = $<HTMLButtonElement>('rmNext'), sceneHint = $('rmSceneHint'), pause = $<HTMLButtonElement>('rmPause'), fade = $('rmFade'), loopEnd = $('rmLoopEnd');
+  const list = $('rmScenes'), prevB = $<HTMLButtonElement>('rmPrev'), nextB = $<HTMLButtonElement>('rmNext'), sceneHint = $('rmSceneHint'), pause = $<HTMLButtonElement>('rmPause');
   const enterText = enter.querySelector<HTMLElement>('.rm-enter-text')!, keyEl = enter.querySelector<HTMLElement>('.rm-key')!;
   const items = list ? [...list.querySelectorAll<HTMLLIElement>('li.rm-scene')] : [];
   const scenes = items.map((li) => ({
@@ -128,6 +129,9 @@ export function mountRoom(root: HTMLElement): void {
     if (f.state !== lastState) { stateChanged(lastState, f.state); lastState = f.state; }
     if (f.state === 'hall') hallFrame(f);
     else if (f.state === 'world') worldFrame(f);
+    // the fourth wipe (section-5.md 2): the scene's lines and the words wipe out as the cut onto section 5 begins, and
+    // decode back in when the scroll returns under it
+    if (f.state === 'world') outWipe(f.wipeOut > 0, f.scene);
     // the "Pause motion" control, where the director shows it (E-S4-loops declined): from the press, never in the hall
     if (pause) { const want = root.dataset.pause === '1' && f.state !== 'hall'; if (want === pause.hidden) { pause.hidden = !want; pause.inert = !want; if (want) void dec.show(pause); } }
     // a seam's cover: the section's own DOM goes under the cloud with it (its lines were wiped at the seam's start)
@@ -218,6 +222,19 @@ export function mountRoom(root: HTMLElement): void {
     for (const b of [prevB, nextB]) if (b) void dec.hide(b);
   }
 
+  /** the fourth wipe's start and its return: the shown scene's lines and the words wipe out, and come back once the cut has run back */
+  let outWiped = false;
+  function outWipe(on: boolean, i: number) {
+    if (on === outWiped) return;
+    outWiped = on;
+    const sc = scenes[i];
+    if (on) {
+      if (sceneHint && !sceneHint.hidden) setLine(sceneHint, '');
+      hideNav();
+      if (sc && shownScene === i) void dec.hideAll([...sc.lines, sc.more]);
+    } else if (sc && shownScene === i) { setNav(i); void dec.showAll(sc.lines, SCENE_STEP); }
+  }
+
   /** a step's start: the scene's lines wipe out (0.2 s) and are clipped again, the hint goes for good */
   function startStep(from: number, to: number) {
     const sc = scenes[from];
@@ -247,8 +264,11 @@ export function mountRoom(root: HTMLElement): void {
     // (focus already on a scene's name moves to the new one too: the hook's entry arrives twice at scene 1, Skip first and
     // then the name, and a name must never be focused and its line announced both)
     const a = document.activeElement, moving = a === pad || a === skip || a === prevB || a === nextB || (a instanceof HTMLElement && a.classList.contains('rm-scene-name')) || (!!a && root.contains(a) && keyboarding());
-    const said = fill(wrapped ? R.wrapLive : R.sceneLive, { n: i + 1, N, name: productById(s.product).name, shade: shadeLine(s) });
-    if (moving) focusQuietly(sc.name); else live.textContent = said;
+    // after the wrap the page stands on section 5, whose script announces the landing (section-5.md 2); the scenes wait under it
+    if (!wrapped) {
+      const said = fill(R.sceneLive, { n: i + 1, N, name: productById(s.product).name, shade: shadeLine(s) });
+      if (moving) focusQuietly(sc.name); else live.textContent = said;
+    }
     if (!skip.hidden) wipeControl(skip, sc.name);
     setNav(i);
     void dec.showAll(sc.lines, SCENE_STEP).then(() => {
@@ -312,8 +332,8 @@ export function mountRoom(root: HTMLElement): void {
       if (!skip.hidden) wipeControl(skip, null);
       if (keyboarding() || viaKeys) focusQuietly(enter);
     } else if (s === 'wrap') {
-      // the wrap landed on scene 5 under the cloud: the prompt goes (the new lap had put it back), the list leaves inert,
-      // the scene arrives with the wrap's own line
+      // the wrap landed on section 5 under the cloud with the scenes at scene 5 under it (section-5.md 2): the prompt goes
+      // (the new lap had put it back), the list leaves inert, scene 5 stands ready for the scroll back up through the cut
       track('room_wrap');
       hidePrompt();
       if (list) list.inert = false;
@@ -460,16 +480,7 @@ export function mountRoom(root: HTMLElement): void {
     }
     focusQuietly(scenes[0]?.name);
   }
-  if (loopEnd && fade && 'IntersectionObserver' in window) {
-    let fading = false;
-    new IntersectionObserver((es) => {
-      if (!isPoster() || fading || !es.some((x) => x.isIntersecting)) return;
-      fading = true; fade.hidden = false;
-      const a = fade.animate([{ opacity: 0 }, { opacity: 1 }], { duration: FADE_MS, fill: 'forwards' });
-      a.finished.then(() => { scrollTo({ top: 0, behavior: 'instant' }); track('room_loop'); return fade.animate([{ opacity: 1 }, { opacity: 0 }], { duration: FADE_MS, fill: 'forwards' }).finished; })
-        .catch(() => {}).finally(() => { fade.hidden = true; fading = false; });
-    }, { threshold: 0.95 }).observe(loopEnd);
-  }
+  // the poster tier's loop end (the fade through --night to the top) lives at section 5's end now (scripts/signup/signup.ts)
   // a hard fall to the poster path while the section is on screen keeps the visitor on the still, or on the column
   const mo = new MutationObserver(() => {
     if (!isPoster()) return;

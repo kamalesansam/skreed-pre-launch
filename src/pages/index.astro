@@ -1,6 +1,7 @@
 ---
-// / : the hero (docs/specs/hero.md) and section 3, the quiz (docs/specs/quiz.md), in the after-track slot; dev and
-// staging builds add the Tune panel.
+// / : the hero (docs/specs/hero.md), then in the after-track slot section 3, the quiz (docs/specs/quiz.md), section 4,
+// the entrance and the five scenes (docs/specs/section-4-flux.md), and section 5, the sign-up (docs/specs/section-5.md);
+// dev and staging builds add the Tune panel.
 import Base from '../layouts/Base.astro';
 import '../styles/shell.css';
 import Gate from '../components/shell/Gate.astro';
@@ -16,6 +17,7 @@ import Section2Layers from '../components/hero/Section2Layers.astro';
 import FamilyLinks from '../components/family/FamilyLinks.astro';
 import Quiz from '../components/quiz/Quiz.astro';
 import Room from '../components/room/Room.astro';
+import Signup from '../components/signup/Signup.astro';
 import BackToTop from '../components/shell/BackToTop.astro';
 import { COPY } from '../config/copy.ts';
 import { NIGHT } from '../config/tokens.ts';
@@ -38,6 +40,7 @@ const Tune = import.meta.env.PUBLIC_TUNE === '1' ? (await import('../components/
     <BackToTop slot="riders" page="home" />
     <Quiz slot="after-track" />
     <Room slot="after-track" />
+    <Signup slot="after-track" />
     {Tune && <Tune slot="dev" />}
     <ScrollCue slot="last" part="script" />
   </HeroStage>

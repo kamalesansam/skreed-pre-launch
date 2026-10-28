@@ -84,7 +84,11 @@ On a laptop the form sits to the right of the render and the confirmation animat
 
 The same confirmation is reachable at skreed.in/thanks with the reservation code, which is where the WhatsApp message and the optional email point.
 
-## Section 5. Tell someone
+## Section 5. The sign-up (decided 2026-10-26)
+
+After the fifth room the page cuts, the way it cut from the hero to the gems, onto the fog of section 2, and the sign-up rises over it as the quiz did: "You’ve made it this far." Four glass jars stand in a row (two by two on a phone), each a real jar drawn by the island where the page puts it: Facebook's a quarter full of Blissful Blue pellets, YouTube's a quarter of Roaring Red, Instagram's half of Playful Pink and Vivid Violet, and the visitor's own, empty. "Every follow fills the jar": a press on "Follow on Instagram" opens the page in a new tab and pours Instagram's colours into the visitor's jar; three follows fill it. Nothing on the site can check a follow and nothing pretends to. "Got your colours?", the email field, "Save my colours", and "Keep following to keep your colours." Past the end of the section the cloud carries the page back to the hero, and the hero scrolled up lands here. The percentages of Sam's picture are not on the page (the brand rule); "first dibs" stands in until he rules (`docs/specs/section-5.md` section 11). The sections below shift by one.
+
+## Section 6. Tell someone (was section 5)
 
 The share card is drawn on a canvas, 1080 by 1920, and shown at phone width. Pearl Whisper ground, the visitor's shade as a large circle swatch in the upper half with the phone render in it, "My Skreed shade is Sunset." in Poppins 700, "One of 240. Doors open Nov 1." in the serif, the SKRD mark and skreed.in in Open Sans at the bottom. The fonts are loaded through the FontFace API before the first draw, so the card never renders in a fallback face.
 
