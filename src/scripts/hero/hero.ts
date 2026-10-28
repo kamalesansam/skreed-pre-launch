@@ -60,9 +60,10 @@ export async function startHero(o: StartOptions): Promise<void> {
   if (HOOKS) installStall();
   // the loader hands over at its cut: until then the hero holds the plotted pose exactly
   const initiallyIntroDone = !document.documentElement.classList.contains('loading');
-  // the return path (family-page.md 2.2 and 13, step 3): Back from a family page, or /#families; the loader is a veil and section 2 is
-  // the destination. The loader decided (loader.inline.js RET: isReturnVisit()'s two conditions, and not Back to top's way home, whose
-  // sessionStorage flag to-top.ts has cleared by now), so its decision is read, never made again
+  // the return path (family-page.md 2.2 and 13, step 3; round 5, section 23): Back from a family page, or /#families; the loader runs in
+  // full, its exit held for this island's word, and section 2 is the destination. The loader decided (loader.inline.js RET:
+  // isReturnVisit()'s two conditions, and not Back to top's way home, whose sessionStorage flag to-top.ts has cleared by now), so its
+  // decision is read, never made again
   const ret = !!document.getElementById('intro')?.classList.contains('ret');
 
   // 1. the hero chunk and pieces.json
@@ -204,22 +205,26 @@ export async function startHero(o: StartOptions): Promise<void> {
   // section 1 in place (the back-to-top control, scripts/shell/to-top.ts): the loop's own jump, without the fourth wipe
   window.__skreedTop = () => { scrollTo({ top: 0, behavior: 'instant' }); loop.snap(0); ctx.room?.reset(); };
   life.onKill(() => { window.__skreedTop = undefined; });
-  // the return path (family-page.md 2.2 and 13, step 3; built with round 4, section 22): Back from a family page, or
-  // /#families, the landing is section 2 at rest with the gems live, never the quiz the fragment's own scroll aimed at
-  // (nav#families stands in flow after the track). The page and both followers snap to S2T.LAND now, under the loader's
-  // veil (loader.inline.js: a return visit shows no wordmark and schedules no exit), and once the loader has its frame2
-  // and the gems are built (or have failed, or the loop is not running to build them) the veil lifts onto them through
-  // the loader's skip path. frame2 still gates the lift, so the readiness model holds (hero.md 12.7)
+  // the return path (family-page.md 2.2 and 13, step 3; built with round 4, section 22; the loader in full since round 5,
+  // section 23): Back from a family page, or /#families, the landing is section 2 at rest with the gems live, never the
+  // quiz the fragment's own scroll aimed at (nav#families stands in flow after the track). The page and both followers
+  // snap to S2T.LAND now, under the loader (loader.inline.js: a return visit runs the first visit's loader, but schedules
+  // its exit only after ready() below), and once the loader has its frame2 and the gems are built (or have failed, or the
+  // loop is not running to build them) the island gives its word through the loader's own ready(): the exit runs at the
+  // next light pass and the lift opens on the gems. frame2 still gates the lift, so the readiness model holds (hero.md 12.7)
   if (ret) {
     const snapTo = section2.snapTo;
     snapTo(S2T.LAND);
-    life.onRecover(() => snapTo(S2T.LAND));   // a soft poster's recovery on frame2 (the loader's recovery branch, then __introDone): section 2 in place as the lift starts
+    // the third snap, at every lift (bridge/loader.ts: __introDone runs life.recover() first), the loader's own lift and a
+    // soft poster's recovery on frame2 alike: section 2 in place as the fade starts, whatever the browser's own scroll to
+    // the fragment did under the loader's 7.5 s
+    life.onRecover(() => snapTo(S2T.LAND));
     const settle = () => {
       if (life.dead) return;
       const L = window.__skreedLoader;
       if (!L) return;
       if (!L.state().ready || !(section2.ready || section2.failed || !loop.running)) { requestAnimationFrame(settle); return; }
-      snapTo(S2T.LAND); L.skip();
+      snapTo(S2T.LAND); L.ready();
     };
     requestAnimationFrame(settle);
   }
