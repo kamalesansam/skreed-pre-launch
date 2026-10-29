@@ -8,10 +8,11 @@
 import countdown from '../../inline/countdown.inline.js?raw';
 import { COPY } from '../../config/copy.ts';
 import { LAUNCH_ISO, LIVE_URL } from '../../config/site.ts';
+import { DIGITS, DOT_R } from '../../config/countdown-digits.ts';
 import { inlineScript } from '../shell/inlineScript.ts';
 interface Props { part: 'cue' | 'script' }
 const { part } = Astro.props;
-const code = inlineScript('countdown.js', { LAUNCH: Date.parse(LAUNCH_ISO), LIVE: { lead: COPY.cd.liveLead, link: COPY.cd.liveLink, href: LIVE_URL } }, countdown);
+const code = inlineScript('countdown.js', { LAUNCH: Date.parse(LAUNCH_ISO), LIVE: { lead: COPY.cd.liveLead, link: COPY.cd.liveLink, href: LIVE_URL }, DG: { rows: DIGITS, r: DOT_R } }, countdown);
 const svg = `<svg viewBox="0 0 35 146" width="100%" xmlns="http://www.w3.org/2000/svg">
     <g class="chev chev-top">
       <circle cx="2.4"  cy="2.4"  r="2.4" fill="currentColor" fill-opacity="0.3"/>

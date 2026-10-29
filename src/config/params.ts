@@ -1,7 +1,7 @@
 // The hero's 66 render parameters (hero-architecture.md 5.5), in the prototype's key order (template.html line 305).
 // Every value is the v9.10 prototype's, which already carries Sam's locked values of 2026-10-09 (hero.md section 0),
-// except logoIdle: 0 here, 1 in the prototype. The idle twitch is off in production for WCAG 2.2.2 (spec D20).
-// tests/unit/params.test.ts asserts the locked values, logoIdle and every other key against the prototype.
+// logoIdle included: 1, the idle twitch on, since 2026-10-26 (E-CD-glitch; it was 0 for WCAG 2.2.2, spec D20, and the
+// prototype's 8 to 16 s wait is now IDLE_EVERY's 3 to 7). tests/unit/params.test.ts asserts every key against the prototype.
 
 import { LOGO_IDLE, LOGO_SPLIT } from './glitch.ts';
 

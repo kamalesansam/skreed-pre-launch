@@ -58,7 +58,7 @@ $('tuneReset')?.addEventListener('click', () => {
   onParam('logoIdle');
   emit(null);
 });
-$('glitchNow')?.addEventListener('click', () => window.__skreedLogo?.burst(0.25));
+$('glitchNow')?.addEventListener('click', () => { window.__skreedLogo?.burst(0.25); window.__skreedCount?.burst(0.25); });
 $('glitchIdle')?.addEventListener('click', () => { params.logoIdle = params.logoIdle ? 0 : 1; press('glitchIdle', !!params.logoIdle, 'Idle twitch'); onParam('logoIdle'); emit('logoIdle'); });
 $('glitchSplit')?.addEventListener('click', () => { params.logoSplit = params.logoSplit > 0 ? 0 : HERO_PARAMS.logoSplit; press('glitchSplit', params.logoSplit > 0, 'Colour split'); onParam('logoSplit'); emit('logoSplit'); });
 $('ghost')?.addEventListener('click', (e) => {

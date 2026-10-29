@@ -267,7 +267,7 @@ B10 UI (igloo's webgl_show_ui_intro at 4.5 s and its uShow beats; DOM here, not 
   | 4.50 | event fires |
   | 5.25 | site logo shows via logoGlitch.intro, i.e. burst(0.5) with PAIRS[0] (igloo logo: 0.75 s delay, 0.5 s linear); settled 5.75 |
   | 5.53 | "Launch in": plate 5.53-5.93, text 5.53-6.28 (igloo message) |
-  | 5.63 | countdown row: plate 5.63-6.03, groups 5.63-6.38 (igloo on/off labels) |
+  | 5.63 | countdown row: plate 5.63-6.03, groups 5.63-6.38 (igloo on/off labels). Since 2026-10-26 the numerals are dot pairs (hero.md E-CD-font): each pair's two `<use>` are its glyphs, substituted by `href` (`#dg-<digit>`, the same 5, 4, 3, 2, 1 steps) and wiped by opacity, while `#count[data-hold]` keeps the plain script off them |
   | 5.63 | cue "Scroll": plate 5.63-6.00, text to 6.37; ball and line appear and start at 6.37 |
   | 6.80 | everything settled |
 

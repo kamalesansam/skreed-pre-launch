@@ -3,9 +3,9 @@
   "configurations": [
     {
       "name": "astro-dev",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--host", "127.0.0.1", "--port", "4321"],
-      "port": 4321
+      "runtimeExecutable": "C:/Program Files/Git/usr/bin/bash.exe",
+      "runtimeArgs": ["-lc", "PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=1 PUBLIC_STAGING=0 PUBLIC_FAMILY_3D=on exec npx astro dev --host 127.0.0.1 --port 4324"],
+      "port": 4324
     },
     {
       "name": "astro-dev-win",

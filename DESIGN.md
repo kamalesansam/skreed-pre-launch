@@ -266,12 +266,13 @@ Sam, 2026-10-19: "add a back to top button throughout the site which navigates b
 
 - **Placement.** Bottom left at `--inset`. Below 1100 px it would reach the middle, so it sits 84 px higher and the cue sits under it. On the poster path it sits in the first screen and scrolls away with it.
 - **Eyebrow.** "Launch in", Open Sans 600 at 14 px.
-- **Groups.** Four columns (days, hours, minutes, seconds) with gap `clamp(var(--s3), 4vw, 44px)`. Each holds a numeral at `--fs-hero-countdown`, 600, tabular, always two digits, `min-width: 2ch`, with a unit label 600 at 14 px under it, `gap: var(--s1)`. All Pearl Whisper.
+- **Groups.** Four columns (days, hours, minutes, seconds) with gap `clamp(var(--s3), 4vw, 44px)`. Each holds a pair of dot-matrix numerals (hero spec E-CD-font, 2026-10-26): one SVG, 17.5 by 13 dots, `clamp(2.5rem, 10.5vw, 4rem)` tall, always two digits so nothing jumps, the digits our own beaded dot bitmaps from `src/config/countdown-digits.ts` (8 by 13 dots a digit, strokes two dots thick, corners rounded by a dot, every dot a circle that touches its neighbours), drawn by the countdown script and never a font file; the digits as text in a visually hidden span. A unit label 600 at 14 px under it, `gap: var(--s1)`. All Pearl Whisper.
+- **Glitch.** The countdown carries the logotype's glitch (E-CD-glitch): slabs kicked sideways with shade-pair ghosts, 0.25 s a burst, all four pairs at once. Both the logotype and the countdown twitch on their own every 3 to 7 s (Sam, 2026-10-26); the countdown has no hover or press burst, since it is not a control.
 - **Semantics.** `role="timer"`, `aria-label="Time until launch"`.
 - **First tick.** The numerals stay hidden until the first tick, which runs in the same task.
 - **At zero.** The eyebrow reads "Skreed is live. skreed.com", with "skreed.com" a real link: Pearl Whisper, underlined, `pointer-events: auto`, a hit box at least 44 px tall, the two-tone focus ring. The numerals are not displayed (`.count[hidden]{display:none}`).
 - **No JavaScript.** One line, "Launching 15 November 2026", with the date in a `<time>`; the eyebrow and the numerals are not displayed.
-- **Reduced motion.** The seconds group is hidden.
+- **Reduced motion.** The seconds group is hidden and the glitch never runs.
 
 ### Scroll cue (hero)
 
@@ -295,6 +296,7 @@ Sam, 2026-10-19: "add a back to top button throughout the site which navigates b
 - **Poster state.** On a stall or offline the loader becomes a transparent overlay over the poster image, showing only the status line ("You are offline. The countdown still runs." when offline, nothing on a stall).
 - **Semantics.** `role="progressbar"` with `aria-valuenow`, removed in its poster state. Everything behind it is `inert` while it shows.
 - **Compositor only.** Everything moves by transform and opacity through Web Animations.
+- **A return visit.** Back from a family page, or `/#families`, on the 3D path shows the same loader with the same rules (`family-page.md` 23); its exit also waits for section 2's gems to be built and lifts onto them at 14.5 screens.
 
 ### Block labels (hero canvas overlay)
 
@@ -327,17 +329,18 @@ Sam, 2026-10-19: "add a back to top button throughout the site which navigates b
 - **Focus.** The two-tone ring on keyboard focus only (`:focus-visible`): the Ember Luxe outline at 2 px with a 2 px offset, and a 2 px Urban Slate ring drawn by `::before` at `inset: -2px` on the links and the answers (`.quiz :is(.qz-link, .qz-opt):focus-visible::before`). The question on screen, the shade's name and the done line take focus from script only (`tabindex="-1"`) and draw no outline and no ring (`.quiz :is(.qz-card, .qz-shade, .qz-done-text):focus { outline: none }`): they are no controls. The email field shows focus as its line at 3 px, with no outline box (2 px marks an error, so focus still shows on an invalid field). The consent row carries both rings round "[ ]" and its words (`.qz-check:has(input:focus-visible)`); where `:has()` is unsupported (`@supports not selector(:has(*))`) the Ember Luxe outline goes round "[ ]" alone (`input:focus-visible + .qz-tick`), since the box it stands for is unseen.
 - **Without JavaScript.** The intro reads as drawn, "Swipe to begin" is hidden (`html:not(.js)`), and the no-JS line links to `/#families`. Its lines, like the intro's, carry a sentence-case copy for assistive technology beside the drawn capitals, and the link is named "ten families" by its `aria-label`. Its link's hit box is an `::after` at `inset: -15px -8px` round the link, so it is at least 44 px tall (CHECKLIST B2) where the link sits on one line: 49.5 px at 360 x 780, 390 x 844 and 844 x 390, 52.5 px at 768 x 1024, 55.5 px at 1024 x 768, 57.5 px at 1280 x 800 and 53.5 px at 1366 x 657 (measured by hit testing with JavaScript off, 2026-10-20). At 430 x 932 the link wraps after "ten", and "families", on the second line, takes a tap only on its own 20 px line, under 44 px (an open defect, `docs/specs/quiz.md` AC4).
 
-### Quiz link (`.qz-link`: "Swipe to begin", Back, "See it on the case", "Not quite? Try again", "Send my gift", "Not you? Use another email.")
+### Quiz link (`.qz-link`: "Swipe to begin", "Skip quiz", Back, "See it on the case", "Not quite? Try again", "Send my gift", "Not you? Use another email.")
 
 - **Element.** A `<button>`, or an `<a>` for "See it on the case", drawn as words: no fill, no border, square, the section's type and colour, left aligned.
 - **Size.** `display: inline-flex`, minimum height and minimum width 44 px, no padding, so each is 44 px tall and as wide as its words, never under 44 px. Back, four letters of 0.6 em, takes the 44 x 44 px minimum wherever the body is under 18.3 px (every phone, 768 x 1024, 1366 x 657) and is as wide as its word above that (46.4 px at 1024 x 768, 49.9 px at 1280 x 800; measured 2026-10-20); the others are wider by their words.
 - **States.** Underlined as links are, 1 px at a 0.4 em offset, written as the longhands `text-decoration-line` and `text-decoration-thickness` (as every underline `quiz.css` sets is: Safari before 26.2 drops a `text-decoration` shorthand that carries a thickness, underline and all); on hover (`hover: hover` only) the line thickens to 2 px at once, with no transition (no transition anywhere in the quiz; CHECKLIST C3). While the chunk loads or the form sends the control is `aria-disabled` (never the `disabled` attribute) and reads "Loading...", "Sending..." or "Still trying...", and its line does not thicken.
-- **Uses.** "Swipe to begin" on the intro; Back in the footer of questions 2 to 10 (`.qz-foot`, a 44 px row); "See it on the case" (to the drawn shade on its family page, `/shades/<family>/?shade=<nnn>`) and "Not quite? Try again" side by side under the result (`.qz-actions`, wrapping, `gap: 0 var(--s4)`); "Send my gift" and "Not you? Use another email." in the gift.
+- **Uses.** "Swipe to begin" on the intro, and under it, since 2026-10-26, "Skip quiz" as the intro's fourth row (the quiz gate, `docs/specs/quiz-gate.md` D3: a press opens section 4 and rides the page to the hall; while the hall is awaited on the 3D path it reads "Loading..." with `aria-disabled`, as Begin does while its chunk loads); Back at the left of the footer of questions 2 to 10 and "Skip quiz" at the right of every question's footer, alone on question 1 (`.qz-foot`, a 44 px grid of two columns spread to the column's ends); "See it on the case" (to the drawn shade on its family page, `/shades/<family>/?shade=<nnn>`) and "Not quite? Try again" side by side under the result (`.qz-actions`, wrapping, `gap: 0 var(--s4)`); "Send my gift" and "Not you? Use another email." in the gift.
 - **Focus.** The two-tone ring (Quiz, above).
 
 ### Quiz question (`.qz-card`)
 
 - **One on screen.** Ten questions, one per `.qz-card` in `.qz-cards`, all in one grid cell (`display: grid` on the deck, `grid-area: 1 / 1` on every card), so the deck is as tall as its tallest question on every screen and nothing under it moves from one question to the next. A `hidden` card keeps its place in the cell (`.qz-card[hidden] { display: grid; visibility: hidden; }`). Only the question on screen shows (`.is-top`); every card keeps `tabindex="-1"`, and the one on screen is focused from script, with no ring, so it is announced and Down or Tab reaches its answers. The rest are `hidden` and `inert`, and no card is stacked behind it. A hidden card renders no picture frame, so at 1366 x 657, where a visual question's frame is taller than every question's words, the deck grows 5.4 px while a visual question is on screen (an open defect). Each card is `role="group"` named "Question n of 10".
+- **Footer** (`.qz-foot`). Since 2026-10-26 a grid of two `auto` columns spread to the column's ends (`justify-content: space-between`), 44 px tall: Back in the first column on questions 2 to 10, "Skip quiz" in the second (`grid-column: 2`, so it stays at the right on question 1, where the first column is empty), its last letter at the text column's right edge. Both decode in with the question, Skip quiz last, and wipe out with it (`docs/specs/quiz-gate.md` D3). Before the quiz gate the footer was a flex row holding Back alone.
 - **Rows.** A grid of four rows, `auto auto 1fr auto` (the count, the question, the seven answers, the footer), `gap: var(--s3)`, `align-content: start`, everything left aligned, `user-select: none`. On laptops every card has a second column for the picture frame, `clamp(260px, 30vw, 440px)` wide after a `clamp(32px, 4vw, 80px)` gap; the word-only questions keep it empty, so every question's words take the same width (716.8 px at 1280).
 - **Count** (`.qz-count`). "01 / 10" over the question (`QUIZ_COPY.count`), `aria-hidden` (the group's name says it in words). It replaces the ten-dot stepper, which is gone.
 - **Question** (`.qz-q`). At `--qz-fs-q` / 1.25, balanced. No digit in it.
@@ -538,9 +541,10 @@ One scale, used through `gap` on flex and grid, not per-element margins (rule 15
 ### The family pages' layout (`/shades/<family>/`, `docs/specs/family-page.md` 2.3, 2.4, 2.8)
 
 - **Spacing steps added for the family pages** (defined in `src/styles/family.css`, used through `gap` and padding): `--s4: 24px` (title offset over the stage, the HUD band's top padding, the switcher's bottom padding), `--s5: 32px` (the swatch grid's height allowance in the stage), `--s6: 48px` (section padding: "The whole family.", the family navigation row, the footer).
-- **Component dimensions, not spacing:** the header (56 px phone, 72 px wide, `--fh`), the HUD band (224 px, `--band`, 3D mode), the tap minimum (44 px, `--hit`), the wide layout's grid circle (80 px, `--sw-wide`, spec 2.6) and grid column (112 px, `--cell-w`), its finish and Reserve column (190 px, `--side-w`), its HUD and scrubber column (at most 664 px, `--scrub-w`) and the shade name between Prev and Next (318 px, `--name-w`), the sticky bar (72 px plus the safe area), the scrubber marker (24 px), the switcher rows (56 px), the Prev and Next chevron (16 px in a 44 px box), the grid swatch's selected ring (2 px at a 3 px offset) and focus outline (6 px offset).
+- **Component dimensions, not spacing:** the header (56 px phone, 72 px wide, `--fh`), the HUD band (224 px, `--band`, 3D mode), the tap minimum (44 px, `--hit`), the wide layout's grid circle (80 px, `--sw-wide`, spec 2.6) and grid column (112 px, `--cell-w`), its finish and Reserve column (190 px, `--side-w`), its HUD and scrubber column (at most 664 px, `--scrub-w`) and the shade name between Prev and Next (318 px, `--name-w`), the sticky bar (72 px plus the safe area), the scrubber marker (24 px), the switcher rows (56 px), the Prev and Next chevron (16 px in a 44 px box), the grid swatch's selected ring (2 px at a 3 px offset) and focus outline (6 px offset), and Back to top's bottom offset on a family page (14 px, `--to-top-bottom` in `to-top.css`, the row "Back to main page" shares on the phone layout).
 - **One breakpoint:** the wide layout at 900 px wide and 600 px tall or more; everything else is the phone layout.
 - **Wide layout, swatch grid mode:** title, the 80 px grid and the controls stack in flow and the page scrolls, so a short laptop screen (1280 x 609, 1366 x 657, 1024 x 600, 900 x 600) never shrinks the circles or lays the grid over the controls. Only 3D mode pins the controls into the stage's bottom band.
+- **The argument screen's way out** (round 4, `family-page.md` 22, exception E-F5; its place on phones, round 5, section 23): "Back to main page", a fixed link set as "All families" is (Open Sans 600 at `--fs-label`, a 44 px hit row, no box). On the phone layout it is on Back to top's row with Back to top's offsets (its bottom `--to-top-bottom` plus the safe area, its left `--inset` plus the side safe area less `--s2`), so its words start at `--inset` on the left as the wordmark does and Back to top keeps the right (hit row y 786 to 830 at 390 x 844, the boxes 107.7 px apart); on the wide layout it is centred under the letters by its margins, its bottom one `--inset` above the safe area (y 711.2 to 755.2 at 1280 x 800). Its layer is `z-index: 4`, level with the beat nav and the HUD and under the corners, Back to top (6) and the loader (40); it exists in 3D mode only and is `hidden` until 2.5 s after the argument screen comes on.
 
 ### Whitespace
 
@@ -659,6 +663,12 @@ Sam's own words cover these, so they are recorded as approved with them. The ful
 - E-S4-38, amended: the hall shows no product, and the bubble's inside is scene 1 with its product (rule 38). "instead of the shampoo product... we will have our 3d model" (2026-10-22).
 - E-S4-portal and E-S4-font stand as section-4-world.md has them: the wavy circle that opens over the hall (rules 12, 21 and 42), "have a wavy circle zooming from centre to the end of the screen" (2026-10-19); section 2's label type for every line of the section (rules 4 and 19, type-system.md, CHECKLIST A3), "Yes, all of it" (2026-10-20).
 
+### Approved quiz gate exceptions
+
+Sam's own words of 2026-10-26 cover these, so they are recorded as approved with them. The full wording, with each default if withdrawn, is `docs/specs/quiz-gate.md` section 10, and they are in `CLAUDE.md` ("Quiz gate (Sam, 2026-10-26)"). For section 4's lock behind the quiz and the ride from "Skip quiz" only:
+- E-QG-lock: `section#room` rendered `hidden` with `data-locked` until the quiz's result shows or Skip quiz is pressed, then open for the rest of the visit; while locked no wrap from the top and no glue span at its seam; never without JavaScript. Against rule 12's "Sections are visible at rest" for section 4, the loop both ways at the top, quiz.md's "the page goes on below the quiz in every phase" and CHECKLIST G21 (no dead end: the result's flow and Skip quiz lead on). "it shouldnt scroll past the quiz untill someone takes the quiz, section 4 should be locked".
+- E-QG-ride: one ride per press of Skip quiz, 1.2 s on `--ease-standard` to section 4's q 1 (its top on the poster tier) through the third wipe as built, after a wait for the hall of at most 1.5 s on the 3D path, by an instant `scrollTo` each frame with no CSS property animated (CHECKLIST C3, as E-S4-snap); ended by any wheel, touch or key from 350 ms after the press or by a scroll it did not write; instant under reduced motion. Against rule 12's reserved-motion list and `docs/references/README.md`'s line on a soft scroll takeover. "the moment they click on skip quiz, it should go to section 4 automatically, with the transition included".
+
 ### Pending section 4 exceptions
 
 Not approved yet; the build ships each as the spec says and flags it, and `docs/specs/section-4-flux.md` section 10 gives each one's default if Sam declines:
@@ -737,7 +747,7 @@ Motion is reserved for the hero canvas, the Wall, the tilt card and the manifest
   --dur-lift: 600ms;                              /* loader lift */
   --dur-cue: 1.5s;                                /* one cue cycle */
   --cue-cycles: 2.44;                             /* three bounces, ending on a landing (3.66 s) */
-  --dur-out: 200ms;                               /* unused since the quiz (2026-10-19) and section 4 (2026-10-20) became plain text: their text decodes */
+  --dur-out: 200ms;                               /* the family pages' "Back to main page" fading out (family-page.md 22); unused on the landing since the quiz (2026-10-19) and section 4 (2026-10-20) became plain text */
   --dur-card: 300ms;                              /* unused since the quiz became plain text (2026-10-19): no card moves */
 }
 ```
@@ -750,6 +760,7 @@ Motion is reserved for the hero canvas, the Wall, the tilt card and the manifest
 | Loader fill | from 1.64 s to 4.96 s at full progress; held at real progress; twice the pace to catch up | measured table |
 | Loader exit | dim 1.24 s, outline 0.24 s, percent fade 400 ms after 300 ms, lift 600 ms; 8.2 s first paint to hero on a fast load | `--ease-in` |
 | Loader slow text | after 4 s without progress | |
+| Loader on a return visit | as the first visit's; the exit also waits for the island's `ready()` once the gems are built; 8.2 s to the gems on a fast load | `--ease-in` |
 | Hero life ramp | 2 s after the lift | cubic out |
 | Bob | `sin(0.7t) * 0.07` units | sine |
 | Camera shake | 0.01 rad scale, sine noise | |
@@ -789,9 +800,11 @@ Tokens in `src/styles/family.css`; the script twins in `src/scripts/family/timin
 | Sticky bar swatch | cross-fade by opacity (the new shade under, a copy of the old one fading out on top), 600 ms; no colour is animated (C3) | linear |
 | Poster to canvas | opacity, 200 ms | linear |
 | Buttons and swatches | hover `translateY(-1px)`, press `scale(0.98)`, 150 ms | `--ease-standard` |
+| "Back to main page" arrives (round 4, family-page.md 22, E-F5) | 2.5 s after the argument screen comes on (one timer): `hidden` dropped, then opacity 0 to 1 over 400 ms (`--dur-fade`) by the Web Animations API; nothing moves | `--ease-standard` |
+| "Back to main page" leaves | the argument screen goes off after it showed: opacity 1 to 0 over 200 ms (`--dur-out`), then `hidden`; leaving before 2.5 s drops the timer and shows nothing | `--ease-in` |
 | Between family pages and back to `/` | the browser's cross-document view transition (root cross-fade) | browser default |
 
-Reduced motion: swatch grid mode by default (no island; `REDUCED_MOTION_TIER`), every DOM move instant, the view transition off; under `still3d` the lineup jumps, with no entrance, tilt or turn.
+Reduced motion: swatch grid mode by default (no island; `REDUCED_MOTION_TIER`), every DOM move instant, the view transition off; under `still3d` the lineup jumps, with no entrance, tilt or turn, and "Back to main page" is shown at full opacity at 2.5 s and hidden at once.
 
 ### Section 3, the quiz (`src/scripts/quiz/decode.ts` and `deck.ts`; E-S3-motion)
 
@@ -809,6 +822,7 @@ Section 2's label animation on the quiz's text (`src/scripts/hero/section2/label
 | An answer taken by a finger on a visual question | holds until its picture has settled, at most 0.9 s, then wipes out with it; no hold where the frame is not drawn (a phone with under 96 px above the question) or under reduced motion | |
 | Result swatches | opacity 0 to 1, 400 ms | linear |
 | "Not quite? Try again" | the page scrolls back to the section's top | the browser's smooth scroll |
+| "Skip quiz" (the quiz gate, E-QG-ride; `docs/specs/quiz-gate.md` 4) | section 4 opens in place (nothing moves), then one frame later the page rides from where it is to section 4's q 1, the hall fully in (its top on the poster tier), over 1.2 s, one instant `scrollTo` a frame, the target clamped to the page's range each frame; on the 3D path the ride first waits for the hall, at most 1.5 s, the words reading "Loading..." meanwhile; ended at once by any wheel, touch or key from 350 ms after the press, or by a scroll it did not write; at the landing focus moves to the hall's pad (the prompt on the poster tier) after a keyboard press, and the destination's name is announced once after a pointer press | `--ease-standard` |
 
 ### Section 4, the entrance and the five scenes (`src/scripts/hero/section4/`, `src/scripts/room/walk.ts`; E-S4-portal approved, E-S4-motion and E-S4-loops pending)
 
@@ -848,6 +862,6 @@ No library. The island's own loop drives the camera, the shaders and the carouse
 - **Glitch.** Off. It reads the setting live before every burst, so turning it on after load stops new bursts.
 - **Smooth scroll** becomes instant.
 - **Option.** Sam may choose the prototype's still-3D variant instead (`REDUCED_MOTION_TIER`).
-- **Quiz.** The decode is a 0.2 s fade with no roll; an answer picture fades in or out over 0.2 s with no roll and no scale; the answer taken does not hold, a finger's answer on a visual question included; the guard on a new question is 150 ms; the swatches fade in over 200 ms; "Not quite? Try again" scrolls back at once.
+- **Quiz.** The decode is a 0.2 s fade with no roll; an answer picture fades in or out over 0.2 s with no roll and no scale; the answer taken does not hold, a finger's answer on a visual question included; the guard on a new question is 150 ms; the swatches fade in over 200 ms; "Not quite? Try again" scrolls back at once; "Skip quiz" rides in one instant jump to its target a frame after the press (`docs/specs/quiz-gate.md` 4).
 - **Section 4.** Reduced motion sends the visitor to the poster tier by default (`REDUCED_MOTION_TIER` `poster`): the hall's still, the press a cut to scene 1's still and the column of the five scenes, no video, no carousel, no glue; the loop the 300 ms fade through `--night`. Under `still3d` (a test and Tune tier) the island reads the setting once at boot: the walk in four cuts, no door swing and no dolly, the bubble a 600 ms dissolve from the hall to scene 1 at rest, no video (each plane its still), a step a cut with a 300 ms cross-fade between the two stills (the field of view and the lights untouched, the product swapped and the key light set at once), no look; the seams, the way back, the wrap and the glue instant, the cloud's time held at 0. The text fades over 0.2 s with no roll; the decode reads the setting live.
 - **Later sections** wrap all GSAP in `gsap.matchMedia()`, and `src/scripts/motion.ts` stays the one source of the flag.

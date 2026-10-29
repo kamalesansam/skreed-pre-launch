@@ -166,7 +166,9 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   let top = 0, height = 1, measured = false;
   const lay = watchLayout({
     html: H,
-    read: () => { if (!root) return null; const r = root.getBoundingClientRect(); return { top: r.top + scrollY, height: r.height }; },
+    // null while the quiz gate holds the section hidden (quiz-gate.md D5): a hidden section's rect is all zeros and would
+    // read as { top: scrollY, height: 1 }, a section that is not there; the section's ResizeObserver reads it as it opens
+    read: () => { if (!root || root.hasAttribute('data-locked')) return null; const r = root.getBoundingClientRect(); return { top: r.top + scrollY, height: r.height }; },
     watch: [root, document.getElementById('find'), H],
     onMeasure: (l) => { top = l.top; height = l.height; measured = true; o.onLayout?.(); },
   });
@@ -433,6 +435,8 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
     begin(ratio) {
       if (!root) return;
       current();
+      // no reading yet (the section locked behind the quiz, quiz-gate.md D5): it is not on screen, and q stays 0
+      if (!measured) { inRoom = false; q = qAll = qRaw = prevRaw = 0; return; }
       const rTop = top - scrollY;
       inRoom = rTop < innerHeight && rTop + height > 0;
       qRaw = -rTop / screenPx();
@@ -628,7 +632,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
     },
     wrap() {
       if (state !== 'hall' && state !== 'world') return false;
-      if (seam || pendingEnter) return false;
+      if (seam || pendingEnter || root?.hasAttribute('data-locked')) return false;   // never over a section locked behind the quiz (quiz-gate.md D5)
       seamDraws.clear();
       void api.load(); void api.warmCloud();
       if (reduced) { landWrap(); seam = { kind: 'wrap', phase: 'lock', t0: lastT, holdY: 0 }; setState('seam'); say('seam'); say('wrap'); return true; }

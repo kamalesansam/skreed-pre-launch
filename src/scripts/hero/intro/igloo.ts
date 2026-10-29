@@ -24,8 +24,9 @@ interface IntroState {
   sync: WebGLSync | null; syncAt: number; rsz: boolean; iv: number[]; last: number; a0: number;
   w: number; touch: number; breath: number; v: Record<string, number>; ev: Record<string, 1>; lines: Line[] | null; lt: number | null;
 }
-interface Unit { s: HTMLSpanElement; ch: string; el: HTMLElement; i: number; x: number; g?: string; a?: string }
-interface Line { els: HTMLElement[]; start: number; count?: 1; units: Unit[] | null; orig?: string[] }
+/** a glyph of the type-in: a span of text, or (use) one <use> of the countdown's dot pair (E-CD-font) */
+interface Unit { s: HTMLSpanElement | SVGUseElement; ch: string; el: Element; i: number; x: number; g?: string; a?: string; use?: true }
+interface Line { els: Element[]; start: number; count?: 1; units: Unit[] | null; orig?: string[] }
 
 const bez = (x1: number, y1: number, x2: number, y2: number) => (x: number) => { if (x <= 0) return 0; if (x >= 1) return 1; let lo = 0, hi = 1, u = 0.5;
   for (let i = 0; i < 40; i++) { u = (lo + hi) / 2; if (3 * (1 - u) * (1 - u) * u * x1 + 3 * (1 - u) * u * u * x2 + u * u * u < x) lo = u; else hi = u; }
@@ -39,13 +40,15 @@ const BLOOMF = [1, 0.8, 0.6, 0.4, 0.2], BLOOMT = [1, 0.45, 0.15, 0.04, 0];   // 
 const SUBS = ['0123456789', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'];
 const glyphSub = (ch: string, k: number) => { for (const s of SUBS) { const i = s.indexOf(ch); if (i >= 0) return s[(i + 3 * k + 1) % s.length]; } return ch; };
 
-export interface IglooOptions { reduced: boolean; touch: boolean; dpr: number; mist: number; bloom: number; hooks: boolean }
+export interface IglooOptions { reduced: boolean; touch: boolean; dpr: number; mist: number; bloom: number; hooks: boolean;
+  /** a return visit (family-page.md 13 step 3: Back from a family page, or /#families): the shot is skipped, as for a hash */
+  skip?: boolean }
 
 export function createIglooIntro(o: IglooOptions): IntroDirector {
   const { reduced: reduce, dpr: DPR } = o;
   const HT = document.documentElement, LD = () => window.__skreedLoader, posterNow = () => !!(LD() && LD()!.state().mode === 'poster');
-  // the intro is skipped (end state at once) for reduced motion, ?intro=0 and deep links, as igloo skips it for a project link
-  const SKIP = reduce || new URLSearchParams(location.search).get('intro') === '0' || !!location.hash;
+  // the intro is skipped (end state at once) for reduced motion, a return visit, ?intro=0 and deep links, as igloo skips it for a project link
+  const SKIP = reduce || !!o.skip || new URLSearchParams(location.search).get('intro') === '0' || !!location.hash;
   const fontsP = Promise.race([document.fonts.load('400 24px "Open Sans"'), new Promise((r) => setTimeout(r, 3000))]).catch(() => 0);   // the number atlas
   const PEARL = new Color(PEARL_WHISPER);
   const FLATC = new Color().setRGB(0.007455, 0.007454, 0.008448);   // linear; ACES + sRGB output it as the loader's night (5,5,6)
@@ -181,7 +184,10 @@ export function createIglooIntro(o: IglooOptions): IntroDirector {
   let SKU: Record<string, { value: unknown }> | null = null;
   const UIQ = { eb: null as HTMLElement | null, cnt: null as HTMLElement | null };
   let lastW = 0, lastH = 0;
-  const cdIdx = (el: HTMLElement) => ['cd-d', 'cd-h', 'cd-m', 'cd-s'].indexOf(el.id), cdNow = (el: HTMLElement) => { const k = cdIdx(el), v = window.__skreedCountV; return k >= 0 && v ? v[k] : null; };
+  // the countdown's groups: the hidden text spans #cd-<unit> and the dot pairs #cdn-<unit> (E-CD-font) read the same value
+  const cdIdx = (el: Element) => { const k = ['cd-d', 'cd-h', 'cd-m', 'cd-s', 'cdn-d', 'cdn-h', 'cdn-m', 'cdn-s'].indexOf(el.id); return k < 0 ? -1 : k % 4; };
+  const cdNow = (el: Element) => { const k = cdIdx(el), v = window.__skreedCountV; return k >= 0 && v ? v[k] : null; };
+  const pairUses = (el: Element) => [...el.querySelectorAll<SVGUseElement>(':scope > defs > g > use')];
 
   function evalTL(t: number) {
     const ctx = X!, v = IN.v, end = IN.phase === 'done', on = !end && !SKIP, A = ctx.composerA, C = ctx.composite.C, FOG = ctx.FOG, P = ctx.params;
@@ -220,6 +226,11 @@ export function createIglooIntro(o: IglooOptions): IntroDirector {
     if (ln.units) return;
     const units: Unit[] = [], r = document.createRange(); ln.orig = ln.els.map((e) => e.textContent ?? '');
     ln.els.forEach((el, n) => {
+      if (el instanceof SVGSVGElement) {   // a dot pair: its two <use> are the glyphs, substituted by href and wiped by opacity
+        const real = cdNow(el) || '00';
+        pairUses(el).forEach((s, i) => { s.style.opacity = '0'; units.push({ s, ch: real[i], el, i, x: 0, use: true }); });
+        return;
+      }
       const txt = ln.orig![n], node = el.firstChild, w: number[] = [];
       if (node && node.nodeType === 3) for (let i = 0; i < txt.length; i++) { r.setStart(node, i); r.setEnd(node, i + 1); w.push(r.getBoundingClientRect().width); }
       el.textContent = '';
@@ -233,7 +244,10 @@ export function createIglooIntro(o: IglooOptions): IntroDirector {
   }
   function unsplitLine(ln: Line) {
     if (!ln.units) return;
-    ln.els.forEach((el, n) => { el.textContent = cdNow(el) || ln.orig![n]; });
+    ln.els.forEach((el, n) => {
+      if (el instanceof SVGSVGElement) { const real = cdNow(el) || '00'; pairUses(el).forEach((s, i) => { s.setAttribute('href', '#dg-' + real[i]); s.style.opacity = ''; }); }
+      else el.textContent = cdNow(el) || ln.orig![n];
+    });
     ln.units = null; if (ln.count && UIQ.cnt) delete UIQ.cnt.dataset.hold;
   }
   function drawLine(ln: Line, t: number) {
@@ -241,13 +255,13 @@ export function createIglooIntro(o: IglooOptions): IntroDirector {
     for (const u of ln.units!) {
       const k = Math.floor((1 - clamp01(2 * p2 - u.x)) * 5.753) % 8, real = (cdNow(u.el) || '')[u.i] || u.ch, g = k ? glyphSub(real, k) : real;
       const a = clamp01((1.1 * p1 - u.x) / 0.1).toFixed(3);
-      if (u.g !== g) u.s.textContent = u.g = g;
+      if (u.g !== g) { u.g = g; if (u.use) u.s.setAttribute('href', '#dg-' + g); else u.s.textContent = g; }
       if (u.a !== a) u.s.style.opacity = u.a = a;
     }
   }
   function uiEval(t: number, on: boolean) {
     HT.classList.toggle('uh1', on && t < 5.25); HT.classList.toggle('uh2', on && t < 4.5); HT.classList.toggle('uh3', on && t < 4.5); HT.classList.toggle('uh4', on && t < 6.37);
-    if (!IN.lines) IN.lines = [{ els: UIQ.eb ? [UIQ.eb] : [], start: 5.5, units: null }, { els: UIQ.cnt ? [...UIQ.cnt.querySelectorAll<HTMLElement>('.n,.l')] : [], start: 5.63, count: 1, units: null }];
+    if (!IN.lines) IN.lines = [{ els: UIQ.eb ? [UIQ.eb] : [], start: 5.5, units: null }, { els: UIQ.cnt ? [...UIQ.cnt.querySelectorAll('.n,.l')] : [], start: 5.63, count: 1, units: null }];
     for (const ln of IN.lines) { if (on && t >= 4.5 && t < ln.start + 0.75) { splitLine(ln); drawLine(ln, t); } else unsplitLine(ln); }
   }
   // one-off beats, only while the clock runs (igloo's webgl_show_ui_intro at 4.5, logo at 5.25, scroll at 5.0)

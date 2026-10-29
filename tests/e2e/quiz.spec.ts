@@ -60,8 +60,11 @@
 // keyboard keeps its picture while the pointer or focus leaves it during the hold; focus that is not the keyboard's shows
 // none; the shade's name and the done line draw no focus box.
 import { test, expect, type Locator, type Page } from '@playwright/test';
-import { QUIZ_COPY as Q, QUIZ_PERSONAS, QUIZ_QUESTIONS, needsRing, needsRingNight, pickShade, scoreQuiz, shadeHref, type Persona, type PersonaId } from '../../src/config/quiz.ts';
+import { QUIZ_COPY as Q, QUIZ_GATE, QUIZ_PERSONAS, QUIZ_QUESTIONS, needsRing, needsRingNight, pickShade, scoreQuiz, shadeHref, type Persona, type PersonaId } from '../../src/config/quiz.ts';
+import { ROOM_COPY } from '../../src/config/room.ts';
 import { SHADES } from '../../src/config/shades.gen.ts';
+import { easeStandard } from '../../src/scripts/hero/section4/scroll-math.ts';
+import { HALL_WAIT_MS, RIDE_GUARD_MS, RIDE_MS } from '../../src/scripts/quiz/gate.ts';
 
 /** the lazy chunk (deck.ts with config/quiz.ts), imported by Quiz.astro's loader within a screen of the section */
 const DECK = /\/deck\.[^/?]*\.js(\?.*)?$/;   // with the loader's retry query (?r=) too
@@ -522,9 +525,9 @@ test('AC5 and AC6: ten answers for The Quiet Curator with Math.random at 0.01 gi
   // three phases: the rest of card 1 wipes out (0.2 s, right to left) with the answer untouched; the answer holds on its
   // own for 120 ms, then wipes out itself (0.2 s); card 2 decodes in (0.4 s wipe, 0.05 s apart, rolling until 0.75 s)
   expect(w.phases.length, 'the rest out, the answer out, card 2 in').toBe(3);
-  expectMotion('the rest of card 1 wipes out', w, 0, { dir: 'out', keys: keys('card0', 9).filter((k) => k !== `card0:${ans}`) });
+  expectMotion('the rest of card 1 wipes out', w, 0, { dir: 'out', keys: keys('card0', 10).filter((k) => k !== `card0:${ans}`) });
   expectMotion('then the answer taken wipes out', w, 1, { dir: 'out', keys: [`card0:${ans}`] });
-  expectMotion('then card 2 decodes in', w, 2, { dir: 'in', keys: keys('card1', 10) });
+  expectMotion('then card 2 decodes in', w, 2, { dir: 'in', keys: keys('card1', 11) });
   const held = w.phases[1].on - w.phases[0].off;
   expect(held, 'the answer holds 120 ms after the rest has gone').toBeGreaterThanOrEqual(119);
   expect(held, 'and not much longer').toBeLessThan(120 + 400);
@@ -606,8 +609,8 @@ test('AC5 Back: absent on card 1; after three answers it wipes card 4 out (an an
   expect(w.timedOut).toBe(false);
   const four = (f: Frame) => part(f, 'card3'), three = (f: Frame) => part(f, 'card2');
   expect(w.phases.length, 'card 4 out, card 3 in').toBe(2);
-  expectMotion('Back wipes card 4 out', w, 0, { dir: 'out', keys: keys('card3', 10) });
-  expectMotion('then card 3 decodes in', w, 1, { dir: 'in', keys: keys('card2', 10) });
+  expectMotion('Back wipes card 4 out', w, 0, { dir: 'out', keys: keys('card3', 11) });
+  expectMotion('then card 3 decodes in', w, 1, { dir: 'in', keys: keys('card2', 11) });
   expect(frames.findIndex((f) => !!three(f)), 'card 3 comes once card 4 has gone, never beside it').toBeGreaterThan(frames.findLastIndex((f) => !!four(f)));
   expect(w.marks, 'the answer pressed during the wipe is not taken: nothing is marked').toEqual([]);
   expect(frames.every((f) => !f.pressed && f.underlined.length === 0), 'no answer is marked or underlined at 2 px').toBe(true);
@@ -779,32 +782,54 @@ test('AC5 and AC9 the guard under reduced motion is 150 ms: an answer pressed 10
   await ctx.close();
 });
 
-test('AC5 the keyboard: from the focused card Down and Up move among the answers and Enter commits; Tab from the last answer reaches Back and then leaves the deck; every other card is hidden and inert and never takes focus; Space commits too', async ({ page, baseURL }) => {
+test('AC5 the keyboard: from the focused card Down and Up move among the answers and Enter commits; Tab from the last answer reaches Back, then Skip quiz (alone on question 1), and then leaves the deck; from Skip quiz Down goes to the first answer and Up to the last; every other card is hidden and inert and never takes focus; Space commits too', async ({ page, baseURL }) => {
   await openQuiz(page, baseURL);
+  // the intro's Tab order (quiz-gate.md AC2): "Swipe to begin", then Skip quiz
+  await page.locator('#qzBegin').focus();
+  await page.keyboard.press('Tab'); await expect(page.locator('#qzSkip')).toBeFocused();
+  await expect(page.locator('#qzSkip')).toHaveAccessibleName(Q.skip);
+  await page.locator('#qzBegin').focus();
   await begin(page);
   const active = () => page.evaluate(() => { const a = document.activeElement as HTMLElement; return `${a.tagName.toLowerCase()}${a.className ? '.' + a.className.split(' ').join('.') : ''}${a.closest('.qz-card') ? '@' + (a.closest('.qz-card') as HTMLElement).dataset.i : ''}`; });
   const opts0 = page.locator('.qz-card[data-i="0"] .qz-opt'), opts1 = page.locator('.qz-card[data-i="1"] .qz-opt'), back1 = page.locator('.qz-card[data-i="1"] .qz-back');
+  const skip0 = page.locator('.qz-card[data-i="0"] .qz-skip'), skip1 = page.locator('.qz-card[data-i="1"] .qz-skip');
   const first = QUIZ_QUESTIONS[0].answers[0], last = QUIZ_QUESTIONS[1].answers[6];
   await page.keyboard.press('ArrowDown'); await expect(opts0.nth(0)).toBeFocused();
   await page.keyboard.press('ArrowDown'); await expect(opts0.nth(1)).toBeFocused();
   await page.keyboard.press('ArrowUp'); await expect(opts0.nth(0)).toBeFocused();
   await expect(opts0.nth(0)).toHaveAccessibleName(first.text);
   await expect(opts0.nth(0)).toHaveAttribute('data-persona', first.persona);
+  // question 1 has no Back: Tab from the last answer reaches Skip quiz, alone in the footer, and Up from it goes to the last answer
+  await expect(page.locator('.qz-card[data-i="0"] .qz-back')).toHaveCount(0);
+  await skip0.focus(); await expect(skip0).toHaveAccessibleName(Q.skip);
+  await page.keyboard.press('Shift+Tab'); await expect(opts0.nth(6)).toBeFocused();
+  await page.keyboard.press('Tab'); await expect(skip0).toBeFocused();
+  await page.keyboard.press('ArrowUp'); await expect(opts0.nth(6)).toBeFocused();
+  for (let k = 0; k < 6; k++) await page.keyboard.press('ArrowUp');
+  await expect(opts0.nth(0)).toBeFocused();
   await ready(page, 0);   // Enter on an answer is a press like a click: past the guard
   await page.keyboard.press('Enter');
   await onTop(page, 1);
   expect((await events(page)).filter(([n]) => n === 'quiz_answer')).toEqual([['quiz_answer', { q: 1, persona: first.persona }]]);
-  // card 2: Up from the card goes to the last answer, Tab from there to Back, and the next Tab leaves the deck
+  // card 2: Up from the card goes to the last answer, Tab from there to Back, then to Skip quiz (the footer reads left to
+  // right), and the next Tab leaves the deck; Up and Down do not stop on Skip quiz
   await page.keyboard.press('ArrowUp'); await expect(opts1.nth(6)).toBeFocused();
   await page.keyboard.press('Tab'); await expect(back1).toBeFocused();
+  await page.keyboard.press('Tab'); await expect(skip1).toBeFocused();
+  await expect(skip1).toHaveAccessibleName(Q.skip);
+  await page.keyboard.press('ArrowDown'); await expect(opts1.nth(0)).toBeFocused();
+  await skip1.focus();
+  await page.keyboard.press('ArrowUp'); await expect(opts1.nth(6)).toBeFocused();
+  await page.keyboard.press('Tab'); await page.keyboard.press('Tab'); await expect(skip1).toBeFocused();
   await page.keyboard.press('Tab');
-  expect(await active(), 'the Tab after Back leaves the deck').not.toMatch(/@/);
+  expect(await active(), 'the Tab after Skip quiz leaves the deck').not.toMatch(/@/);
   expect(await deckState(page)).toEqual(only(1));
   const next = page.locator('.qz-card[data-i="2"]');
   await expect(next).toBeHidden();
   expect(await next.evaluate((c) => (c as HTMLElement).inert)).toBe(true);
   expect(await next.locator('.qz-opt').first().evaluate((b) => { (b as HTMLElement).focus(); return document.activeElement === b; }), 'not even a script can focus it').toBe(false);
-  // Shift+Tab comes back through Back to the last answer, and Space commits it
+  // Shift+Tab comes back through Skip quiz and Back to the last answer, and Space commits it
+  await page.keyboard.press('Shift+Tab'); await expect(skip1).toBeFocused();
   await page.keyboard.press('Shift+Tab'); await expect(back1).toBeFocused();
   await page.keyboard.press('Shift+Tab'); await expect(opts1.nth(6)).toBeFocused();
   await expect(opts1.nth(6)).toHaveAttribute('data-persona', last.persona);
@@ -892,7 +917,7 @@ test('AC5 "Not quite? Try again" wipes the result and the gift out, decodes card
   expect(w.phases.length, 'the result and the gift out, card 1 in').toBe(2);
   const lines = resultLines(one);
   expectMotion('the retry wipes the result and the gift out', w, 0, { dir: 'out', keys: [...keys('result', lines), ...keys('gift', GIFT_LINES, lines)] });
-  expectMotion('then card 1 decodes in', w, 1, { dir: 'in', keys: keys('card0', 9) });
+  expectMotion('then card 1 decodes in', w, 1, { dir: 'in', keys: keys('card0', 10) });
   expect(frames.findIndex((f) => !!part(f, 'card0')), 'card 1 comes once the result has gone, never beside it').toBeGreaterThan(frames.findLastIndex((f) => !!part(f, 'result') || !!part(f, 'gift')));
   await expect(page.locator('#find')).toHaveAttribute('data-state', 'quiz');
   await onTop(page, 0);
@@ -979,7 +1004,7 @@ test('AC5 the decode: the intro stands at rest, split into its glyphs at full op
   expect(await decodingLog(page), 'no decode ran at mount').toEqual([]);
   await expect(page.locator('#find')).not.toHaveAttribute('data-decoding');
   await expect(page.locator('#qzIntro')).toBeVisible();
-  for (const [sel, text] of [['.qz-h', Q.h], ['.qz-sub', Q.sub], ['#qzBegin', Q.begin]]) expect(await copies(page.locator(`#qzIntro ${sel}`)), sel).toEqual({ sr: text, row: text.toUpperCase(), faded: 0 });
+  for (const [sel, text] of [['.qz-h', Q.h], ['.qz-sub', Q.sub], ['#qzBegin', Q.begin], ['#qzSkip', Q.skip]]) expect(await copies(page.locator(`#qzIntro ${sel}`)), sel).toEqual({ sr: text, row: text.toUpperCase(), faded: 0 });
   await expect(page.getByRole('heading', { name: Q.h, exact: true })).toHaveClass(/qz-h/);
   await expect(page.locator('#qzBegin')).toHaveAccessibleName(Q.begin);
   const flow = watch(page, '.qz-card[data-i="0"].is-top');
@@ -988,14 +1013,14 @@ test('AC5 the decode: the intro stands at rest, split into its glyphs at full op
   expect(w.timedOut).toBe(false);
   expect(full(part(frames[0], 'intro')), 'the intro at full opacity until the press').toBe(true);
   expect(w.phases.length, 'the intro out, card 1 in').toBe(2);
-  expectMotion('Begin wipes the intro out', w, 0, { dir: 'out', keys: keys('intro', 3) });
-  expectMotion('card 1 decodes in', w, 1, { dir: 'in', keys: keys('card0', 9) });
+  expectMotion('Begin wipes the intro out', w, 0, { dir: 'out', keys: keys('intro', 4) });
+  expectMotion('card 1 decodes in', w, 1, { dir: 'in', keys: keys('card0', 10) });
   expect(w.rolledWrites, 'the roll writes other characters into the glyphs').toBeGreaterThan(0);
   const cards = frames.map((f) => part(f, 'card0'));
   const firstCard = cards.findIndex((c) => !!c);
   expect(firstCard, 'card 1 comes once the intro has gone, never beside it').toBeGreaterThan(frames.findLastIndex((f) => !!part(f, 'intro')));
   const reveal = cards.slice(firstCard) as Row[][];
-  expect(reveal[0].map((x) => x.k), 'the count, the question and the seven answers, in reading order; no Back on card 1').toEqual(['.qz-count', '.qz-q', ...q.answers.map((a) => `opt:${a.persona}`)]);
+  expect(reveal[0].map((x) => x.k), 'the count, the question, the seven answers and Skip quiz, in reading order; no Back on card 1').toEqual(['.qz-count', '.qz-q', ...q.answers.map((a) => `opt:${a.persona}`), '.qz-skip']);
   expect(full(reveal[reveal.length - 1]), 'settled at full opacity').toBe(true);
   await settled(page);
   const card = page.locator('.qz-card[data-i="0"]');
@@ -1482,14 +1507,14 @@ test('AC9 reduced motion: no transform anywhere and no animation but opacity; Be
   // each a 0.2 s fade on the decoder's clock (a 2 s one fails: a line still part-way after 0.2 s), staggered as the
   // decode is, with no roll; the answer taken goes the moment the rest has gone
   expect(a.phases.length, 'Begin: the intro out, card 1 in').toBe(2);
-  expectMotion('Begin: the intro fades out', a, 0, { dir: 'out', reduced: true, keys: keys('intro', 3) });
-  expectMotion('Begin: card 1 fades in', a, 1, { dir: 'in', reduced: true, keys: keys('card0', 9) });
+  expectMotion('Begin: the intro fades out', a, 0, { dir: 'out', reduced: true, keys: keys('intro', 4) });
+  expectMotion('Begin: card 1 fades in', a, 1, { dir: 'in', reduced: true, keys: keys('card0', 10) });
   const ans = answerAt(0, 'curator');
   expect(b.phases.length, 'the commit: the rest out, the answer out, card 2 in').toBe(3);
-  expectMotion('the commit: the rest of card 1 fades out', b, 0, { dir: 'out', reduced: true, keys: keys('card0', 9).filter((k) => k !== `card0:${ans}`) });
+  expectMotion('the commit: the rest of card 1 fades out', b, 0, { dir: 'out', reduced: true, keys: keys('card0', 10).filter((k) => k !== `card0:${ans}`) });
   expectMotion('the commit: then the answer taken', b, 1, { dir: 'out', reduced: true, keys: [`card0:${ans}`] });
   expect(b.phases[1].on - b.phases[0].off, 'no 120 ms hold under reduced motion').toBeLessThan(20);
-  expectMotion('the commit: card 2 fades in', b, 2, { dir: 'in', reduced: true, keys: keys('card1', 10) });
+  expectMotion('the commit: card 2 fades in', b, 2, { dir: 'in', reduced: true, keys: keys('card1', 11) });
   expect(c.phases.length, 'card 10 out (the rest, then the answer), the result in').toBe(3);
   expect(c.phases[1].on - c.phases[0].off, 'no hold on the last card either').toBeLessThan(20);
   expectMotion('the result and the gift fade in', c, 2, { dir: 'in', reduced: true, keys: [...keys('result', lines), ...keys('gift', GIFT_LINES, lines)] });
@@ -1609,7 +1634,7 @@ test('AC8 Try again while a send is in flight, for a 500, a 200 and a 409 each a
     expect(w.timedOut, at).toBe(false);
     expect(w.phases.length, `${at}: the result and the gift out, card 1 in`).toBe(2);
     expectMotion(`${at}: Try again wipes the result and the gift out, Send with them`, w, 0, { dir: 'out', keys: gone });
-    expectMotion(`${at}: then card 1 decodes in`, w, 1, { dir: 'in', keys: keys('card0', 9) });
+    expectMotion(`${at}: then card 1 decodes in`, w, 1, { dir: 'in', keys: keys('card0', 10) });
     expect(aborted, `${at}: the request aborted at the press, before its answer came`).toEqual(STATUSES.slice(0, k + 1).map(() => 'net::ERR_ABORTED'));
     await land;
     await page.waitForTimeout(500);   // a window for anything the answer would set off had it reached the page
@@ -1775,6 +1800,11 @@ test('AC10 without JavaScript the intro reads as the server drew it, each line i
   for (const [sel, text] of [['.qz-h', Q.h], ['.qz-sub', Q.sub]] as const) expect(await labelCopies(page.locator(`#qzIntro ${sel}`)), sel).toEqual(twoCopies(text));
   await expect(page.getByRole('heading', { name: Q.h, exact: true })).toHaveClass(/qz-h/);
   await expect(page.locator('#qzBegin')).toBeHidden();
+  await expect(page.locator('#qzSkip'), 'nothing is locked without JavaScript, so there is nothing to skip (quiz-gate.md D3)').toBeHidden();
+  // and section 4 shows as it does today without JavaScript: display block for the locked section, its noscript column
+  await expect(page.locator('#room')).toHaveAttribute('data-locked', '');
+  expect(await page.locator('#room').evaluate((e) => getComputedStyle(e).display)).toBe('block');
+  await expect(page.locator('#room .rm-scenes-static')).toBeVisible();
   const line = page.locator('.qz-noscript');
   expect(await labelCopies(line), 'the no-JS line: its words in two copies round the link').toEqual([...twoCopies(Q.noscriptLead), `|null|${Q.noscriptLink}|uppercase`, ...twoCopies(Q.noscriptTail)]);
   await expect(page.getByRole('link', { name: Q.noscriptLink, exact: true })).toHaveAttribute('href', '/#families');
@@ -1801,13 +1831,13 @@ test('AC1 assistive technology gets Sam\'s sentence case: the browser\'s accessi
     const off = want.map((w) => ({ w, seen: names.filter((n) => n.toLowerCase() === w.toLowerCase()) })).filter((x) => x.seen.length === 0 || x.seen.some((n) => n !== x.w)).map((x) => `${x.w} -> ${x.seen.length ? x.seen.join(' | ') : 'missing'}`);
     expect(off, `${at}: each as Sam wrote it`).toEqual([]);
   };
-  await cased('the intro', [Q.h, Q.sub, Q.begin]);
+  await cased('the intro', [Q.h, Q.sub, Q.begin, Q.skip]);
   await begin(page);
   await answer(page, ['main']);
   await onTop(page, 1);
   await settled(page);
   const q = QUIZ_QUESTIONS[1];
-  await cased('card 2', [q.q, ...q.answers.map((a) => a.text), Q.back]);
+  await cased('card 2', [q.q, ...q.answers.map((a) => a.text), Q.back, Q.skip]);
   await answer(page, CURATOR, 1);
   const r = drawn(['main', ...CURATOR.slice(1)], 0.01);
   await expectResult(page, r);
@@ -1870,17 +1900,20 @@ for (const [w, h] of [[360, 780], [430, 932], [768, 1024], [1024, 768], [1280, 8
     await openQuiz(page, baseURL);
     await fits('intro', '.qz-intro');
     await tap('intro', '#qzBegin');
+    await tap('intro', '#qzSkip');
     expect(await offType(page, sizes), 'the intro (and every other line, hidden ones included)').toEqual([]);
     await begin(page);
     await settled(page);
     await fits('card 1', '.qz-card:not([hidden])');
     await tap('card 1', '.qz-card.is-top .qz-opt');
+    await tap('card 1', '.qz-card.is-top .qz-skip');
     await answer(page, ['curator']);
     await onTop(page, 1);
     await settled(page);
     await fits('card 2', '.qz-card:not([hidden])');
     await tap('card 2', '.qz-card.is-top .qz-opt');
     await tap('card 2', '.qz-card.is-top .qz-back');
+    await tap('card 2', '.qz-card.is-top .qz-skip');
     await answer(page, CURATOR, 1);
     await expect(page.locator('#find')).toHaveAttribute('data-state', 'result');
     await settled(page);
@@ -2763,5 +2796,532 @@ test('Pictures, a tap dropped by the guard at 390 x 844: a touch press on an ans
   expect((await events(page)).filter(([n]) => n === 'quiz_answer'), 'not taken').toEqual([]);
   expect(await deckState(page), 'question 1 stays').toEqual(only(0));
   expect(await picNow(page, 0), `the press dropped: no picture on (${t.loaded ? 'its picture had loaded' : 'its picture loaded after the press'})`).toEqual(allOff(0));
+  await ctx.close();
+});
+
+// ---- The quiz gate (docs/specs/quiz-gate.md 7, AC1 to AC6; Sam, 2026-10-26: "it shouldnt scroll past the quiz untill
+// someone takes the quiz, section 4 should be locked ... the moment they click on skip quiz, it should go to section 4
+// automatically, with the transition included"). section#room is rendered hidden and data-locked, so the page ends at
+// the quiz; the result or Skip quiz opens it (room_unlock, the visit's flag in sessionStorage, skreed:quiz-unlock), and
+// a press on Skip quiz rides the page to the hall over 1.2 s on --ease-standard (one instant scrollTo a frame, ended by
+// any wheel, touch or key from 350 ms after the press or by a scroll it did not write), then moves focus (a keyboard
+// press) or announces where it landed (a pointer press). The poster tier carries all of it but the third wipe and the
+// glue, so most cases run there; the 3D cases run on SwiftShader by the island's hooks (room.spec.ts's pattern), skip
+// the intro, and take the island's long start-up. Built as the spec's Built paragraph records: the hall loads lock or
+// no lock, and a ride on the 3D path waits for it at most 1.5 s. Written against the spec on 2026-10-26 and not yet run
+// (no Playwright browser on the build machine; the build record says so).
+
+type RideSample = { t: number; y: number; ride: boolean };
+/** #room's gate state: the lock's two attributes, how it opened, whether a ride runs, its computed display */
+const roomState = (page: Page) => page.evaluate(() => { const r = document.getElementById('room')!; return { hidden: r.hasAttribute('hidden'), locked: r.hasAttribute('data-locked'), open: r.dataset.open ?? null, ride: r.hasAttribute('data-ride'), display: getComputedStyle(r).display }; });
+const LOCKED = { hidden: true, locked: true, open: null, ride: false, display: 'none' };
+const opened = (by: string) => ({ hidden: false, locked: false, open: by, ride: false, display: 'block' });
+/** the gate's events in order: quiz_skip and room_unlock */
+const gateEvents = async (page: Page): Promise<Ev[]> => (await events(page)).filter(([n]) => n === 'quiz_skip' || n === 'room_unlock');
+/** the document's end, the quiz's foot, section 4's top and the scroll position, in document px */
+const ends = (page: Page) => page.evaluate(() => ({ doc: document.documentElement.scrollHeight, quiz: document.getElementById('find')!.getBoundingClientRect().bottom + scrollY, room: document.getElementById('room')!.getBoundingClientRect().top + scrollY, y: scrollY }));
+/** section 4's own files: the walk chunk, the director chunk, hall.bin, its lightmap and its stills */
+const ROOM_FILES = /\/_astro\/(walk|director|hall)[.-][^/]*\.(js|bin|avif|webp)(\?|$)/;
+const scrollAt = (page: Page) => page.evaluate(() => scrollY);
+/** the quiz's top at the viewport's top */
+const toQuiz = (page: Page) => page.evaluate(() => { const top = document.getElementById('find')!.getBoundingClientRect().top + scrollY; scrollTo({ top, behavior: 'instant' }); window.__skreedSnap?.(top / innerHeight); });
+/** the ride sampled every animation frame from now: the time, scrollY and whether data-ride is on #room; pressAt is written by pressSkip */
+const sampleRide = (page: Page): Promise<void> => page.evaluate(() => {
+  const room = document.getElementById('room')!, w = window as unknown as { __qzRide?: { samples: RideSample[]; t0: number; pressAt: number; stop(): void } };
+  const samples: RideSample[] = []; let on = true;
+  const t0 = performance.now();
+  const tick = (t: number) => { if (!on) return; samples.push({ t: t - t0, y: scrollY, ride: room.hasAttribute('data-ride') }); requestAnimationFrame(tick); };
+  requestAnimationFrame(tick);
+  w.__qzRide = { samples, t0, pressAt: NaN, stop: () => { on = false; } };
+});
+/** a pointer press on a Skip quiz control, as a tap lands (no scroll to reach it), timed on the sampler's clock */
+const pressSkip = (page: Page, sel = '#qzSkip'): Promise<void> => page.evaluate((sel) => { const w = window as unknown as { __qzRide?: { t0: number; pressAt: number } }; if (w.__qzRide) w.__qzRide.pressAt = performance.now() - w.__qzRide.t0; document.querySelector<HTMLButtonElement>(sel)!.click(); }, sel);
+/** the press's time on the sampler's clock for a press made by the keyboard (Playwright's), set just before the key */
+const markPress = (page: Page): Promise<void> => page.evaluate(() => { const w = window as unknown as { __qzRide?: { t0: number; pressAt: number } }; if (w.__qzRide) w.__qzRide.pressAt = performance.now() - w.__qzRide.t0; });
+const rideSamples = (page: Page): Promise<{ samples: RideSample[]; pressAt: number }> => page.evaluate(() => { const w = window as unknown as { __qzRide: { samples: RideSample[]; pressAt: number; stop(): void } }; w.__qzRide.stop(); return { samples: w.__qzRide.samples, pressAt: w.__qzRide.pressAt }; });
+/** the ride over (data-ride off #room after having been on), the samples stopped a frame later */
+async function rideOver(page: Page): Promise<{ samples: RideSample[]; pressAt: number }> {
+  await expect(page.locator('#room')).toHaveAttribute('data-ride', '', { timeout: 5_000 });
+  await expect(page.locator('#room')).not.toHaveAttribute('data-ride', { timeout: 10_000 });
+  await page.waitForTimeout(80);
+  return rideSamples(page);
+}
+const FRAME = 1000 / 60;
+/**
+ * The ride's samples against the spec (AC4): it starts moving within two frames of the press, never moves back, stays
+ * within 2 px of from + (to minus from) times easeStandard of the time since its first written frame over RIDE_MS (the
+ * sampler may read a frame before or after the ride's write, so each sample is held between the curve one frame earlier
+ * and one frame later), lands on `to` within 1 px at RIDE_MS plus or minus two frames of the sampler, and data-ride is on
+ * from the press to the landing and off after.
+ */
+function expectRide(at: string, s: { samples: RideSample[]; pressAt: number }, to: number): void {
+  const { samples, pressAt } = s;
+  const from = samples[0].y;
+  expect(Math.abs(from - to), `${at}: the page starts off the target`).toBeGreaterThan(10);
+  const pressIdx = samples.findIndex((x) => x.t >= pressAt);
+  expect(pressIdx, `${at}: samples after the press`).toBeGreaterThanOrEqual(0);
+  const moveIdx = samples.findIndex((x, k) => k > pressIdx && Math.abs(x.y - from) > 0.5);
+  expect(moveIdx, `${at}: the page moves`).toBeGreaterThan(pressIdx);
+  expect(moveIdx - pressIdx, `${at}: within two frames of the press (the sampler one frame behind at most)`).toBeLessThanOrEqual(3);
+  const tA = samples[moveIdx - 1].t, tB = samples[moveIdx].t;   // the ride's first write (p 0) lies between these two samples
+  const curve = (dt: number) => from + (to - from) * easeStandard(Math.max(0, Math.min(1, dt / RIDE_MS)));
+  let prev = from;
+  const landIdx = samples.findIndex((x, k) => k >= moveIdx && Math.abs(x.y - to) <= 1);
+  expect(landIdx, `${at}: lands on ${to}`).toBeGreaterThan(0);
+  for (let k = moveIdx; k <= landIdx; k++) {
+    const x = samples[k], lo = curve(x.t - tB - FRAME) - 2, hi = curve(x.t - tA + FRAME) + 2;
+    expect(x.y, `${at}: ${x.t.toFixed(0)} ms: ${x.y} never moves back from ${prev}`).toBeGreaterThanOrEqual(prev - 0.01);
+    expect(x.y >= Math.min(lo, hi) && x.y <= Math.max(lo, hi), `${at}: ${x.t.toFixed(0)} ms: ${x.y.toFixed(1)} on the curve (${lo.toFixed(1)} to ${hi.toFixed(1)})`).toBe(true);
+    prev = x.y;
+  }
+  const landedAfter = samples[landIdx].t - tA;
+  expect(landedAfter, `${at}: landed ${landedAfter.toFixed(0)} ms after the first written frame, RIDE_MS plus or minus two frames`).toBeGreaterThanOrEqual(RIDE_MS - 2 * FRAME - (tB - tA));
+  expect(landedAfter).toBeLessThanOrEqual(RIDE_MS + 2 * FRAME);
+  expect(samples.slice(pressIdx + 1, landIdx).every((x) => x.ride), `${at}: data-ride on from the press to the landing`).toBe(true);
+  expect(samples[samples.length - 1].ride, `${at}: and off after`).toBe(false);
+  expect(Math.abs(samples[samples.length - 1].y - to), `${at}: at rest on the target`).toBeLessThanOrEqual(1);
+}
+/** an init script that records how #room was parsed, every change to its gate attributes while loading, and its state at DOMContentLoaded */
+const watchGate = (page: Page): Promise<void> => page.addInitScript(() => {
+  const w = window as unknown as { __qzGate: { parsed: { hidden: boolean; locked: boolean } | null; changes: string[]; atDCL: unknown } };
+  w.__qzGate = { parsed: null, changes: [], atDCL: null };
+  new MutationObserver((recs) => { for (const r of recs) { if (r.type === 'childList') for (const n of r.addedNodes) if (n instanceof Element && n.id === 'room') w.__qzGate.parsed = { hidden: n.hasAttribute('hidden'), locked: n.hasAttribute('data-locked') }; if (r.type === 'attributes' && (r.target as Element).id === 'room') w.__qzGate.changes.push(`${r.attributeName}:${(r.target as Element).getAttribute(r.attributeName!)}@${document.readyState}`); } })
+    .observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'data-locked', 'data-open'] });
+  document.addEventListener('DOMContentLoaded', () => { const r = document.getElementById('room'); w.__qzGate.atDCL = r ? { hidden: r.hasAttribute('hidden'), locked: r.hasAttribute('data-locked'), open: r.dataset.open ?? null } : null; });
+});
+const gateWatched = (page: Page) => page.evaluate(() => (window as unknown as { __qzGate: unknown }).__qzGate);
+
+test('QG AC1 the lock on the poster tier: section#room hidden and data-locked from the parse, display none, out of the accessibility tree; the page ends at the quiz\'s foot; with the quiz in view for 5 s nothing of section 4 is fetched', async ({ page, baseURL }) => {
+  const fetched: string[] = [];
+  page.on('request', (r) => { if (ROOM_FILES.test(r.url())) fetched.push(r.url()); });
+  await watchGate(page);
+  await openQuiz(page, baseURL);
+  expect(await gateWatched(page), 'parsed hidden and locked, nothing changed, locked at DOMContentLoaded').toEqual({ parsed: { hidden: true, locked: true }, changes: [], atDCL: { hidden: true, locked: true, open: null } });
+  expect(await roomState(page)).toEqual(LOCKED);
+  // out of the accessibility tree: no node named as the section or its prompt is
+  const cdp = await page.context().newCDPSession(page);
+  const { nodes } = await cdp.send('Accessibility.getFullAXTree') as { nodes: { name?: { value: string }; ignored?: boolean }[] };
+  expect(nodes.filter((n) => !n.ignored && n.name?.value === ROOM_COPY.aria), 'section 4 absent from the tree').toEqual([]);
+  expect(nodes.filter((n) => !n.ignored && n.name?.value === ROOM_COPY.enter), 'and its prompt').toEqual([]);
+  // the document ends at the quiz's foot
+  const e = await ends(page);
+  expect(Math.abs(e.doc - e.quiz), `scrollHeight ${e.doc} against the quiz's foot ${e.quiz}`).toBeLessThanOrEqual(1);
+  await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+  await page.waitForTimeout(300);
+  const after = await ends(page), vh = await page.evaluate(() => innerHeight);
+  expect(Math.abs(after.y + vh - after.quiz), 'scrolled to its end, the quiz\'s foot is at the viewport\'s foot').toBeLessThanOrEqual(1);
+  await toQuiz(page);
+  await page.waitForTimeout(5_000);
+  expect(fetched, 'no walk chunk, director chunk, hall.bin, lightmap or still while locked').toEqual([]);
+  expect(await roomState(page)).toEqual(LOCKED);
+});
+
+test('QG AC2 Skip quiz at 390 x 844 and 1280 x 800: "Skip quiz" in sentence case for assistive technology, drawn in capitals, the intro\'s fourth row under "Swipe to begin" at the column\'s left, at the right of every footer (its right edge at the text column\'s right edge within 1 px, alone on question 1), nowhere on the result; 44 px, underlined at 1 px, 2 px on hover, the two-tone ring on focus; drawn at rest with no decode; a press inside the guard or during a change of screen is dropped', async ({ browser, baseURL }) => {
+  test.setTimeout(300_000);
+  for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
+    const ctx = await browser.newContext({ viewport: vp });
+    const page = await ctx.newPage();
+    await pin(page, 0.01);
+    await logDecoding(page);
+    await openQuiz(page, baseURL);
+    const at = `${vp.width} x ${vp.height}`;
+    const skip = page.locator('#qzSkip'), beginBtn = page.locator('#qzBegin');
+    await expect(skip).toHaveAccessibleName(Q.skip);
+    expect(await copies(skip), `${at}: in two copies, drawn in capitals, at rest`).toEqual({ sr: Q.skip, row: Q.skip.toUpperCase(), faded: 0 });
+    expect(await decodingLog(page), `${at}: no decode ran at mount`).toEqual([]);
+    const [b, s] = await Promise.all([beginBtn.boundingBox(), skip.boundingBox()]);
+    expect(s!.y, `${at}: the fourth row, under "Swipe to begin" at the intro's gap`).toBeGreaterThanOrEqual(b!.y + b!.height + 16 - 0.5);
+    expect(Math.abs(s!.x - b!.x), `${at}: at the column's left, as Begin is`).toBeLessThanOrEqual(0.5);
+    expect(s!.width, `${at}: at least 44 px wide`).toBeGreaterThanOrEqual(44); expect(s!.height).toBeGreaterThanOrEqual(44);
+    const underline = (el: Locator) => el.evaluate((e) => { const cs = getComputedStyle(e); return `${cs.textDecorationLine} ${cs.textDecorationThickness}`; });
+    expect(await underline(skip)).toBe('underline 1px');
+    await skip.hover();
+    expect(await underline(skip), `${at}: thicker under the pointer`).toBe('underline 2px');
+    await page.mouse.move(2, 2);
+    await beginBtn.focus();
+    await page.keyboard.press('Tab');   // a keyboard focus, so :focus-visible matches
+    await expect(skip).toBeFocused();
+    expect(await focusLook(skip), `${at}: the two-tone ring`).toEqual({ outline: `solid 2px ${EMBER} offset 2px`, ring: `solid 2px ${URBAN_SLATE} inset -2px` });
+    await beginBtn.focus();
+    // question 1: Skip quiz alone in the footer, at its right edge; it decoded in with its question
+    await begin(page);
+    await settled(page);
+    const foot = (i: number) => page.locator(`.qz-card[data-i="${i}"] .qz-foot`), skipOf = (i: number) => page.locator(`.qz-card[data-i="${i}"] .qz-skip`);
+    await expect(page.locator('.qz-card[data-i="0"] .qz-back')).toHaveCount(0);
+    let [f, k] = await Promise.all([foot(0).boundingBox(), skipOf(0).boundingBox()]);
+    expect(Math.abs(k!.x + k!.width - (f!.x + f!.width)), `${at}: question 1's Skip quiz at the text column's right edge`).toBeLessThanOrEqual(1);
+    expect(k!.width).toBeGreaterThanOrEqual(44); expect(k!.height).toBeGreaterThanOrEqual(44);
+    await expect(skipOf(0)).toHaveAccessibleName(Q.skip);
+    expect(await copies(skipOf(0))).toEqual({ sr: Q.skip, row: Q.skip.toUpperCase(), faded: 0 });
+    // a press inside the guard is dropped (question 2 put on screen, Skip quiz pressed 100 ms later), as an answer's would be
+    await ready(page, 0);
+    await page.evaluate(() => { const c = document.querySelector<HTMLElement>('.qz-card[data-i="1"]')!; const mo = new MutationObserver(() => { if (!c.classList.contains('is-top')) return; mo.disconnect(); setTimeout(() => c.querySelector<HTMLButtonElement>('.qz-skip')!.click(), 100); }); mo.observe(c, { attributes: true, attributeFilter: ['class'] }); });
+    await page.locator('.qz-card.is-top .qz-opt[data-persona="curator"]').click();
+    await onTop(page, 1);
+    await settled(page);
+    expect(await gateEvents(page), `${at}: the press inside the guard dropped`).toEqual([]);
+    expect(await roomState(page)).toEqual(LOCKED);
+    // question 2: Back at the left, Skip quiz at the right
+    [f, k] = await Promise.all([foot(1).boundingBox(), skipOf(1).boundingBox()]);
+    const bk = (await page.locator('.qz-card[data-i="1"] .qz-back').boundingBox())!;
+    expect(Math.abs(bk.x - f!.x), `${at}: Back at the column's left`).toBeLessThanOrEqual(1);
+    expect(Math.abs(k!.x + k!.width - (f!.x + f!.width)), `${at}: Skip quiz at its right`).toBeLessThanOrEqual(1);
+    expect(k!.x, `${at}: Skip quiz right of Back`).toBeGreaterThan(bk.x + bk.width);
+    // a press during a change of screen is dropped: an answer taken, then Skip quiz pressed while the question wipes out
+    await ready(page, 1);
+    await page.locator('.qz-card.is-top .qz-opt[data-persona="curator"]').evaluate((b) => { (b as HTMLButtonElement).click(); (b.closest('.qz-card')!.querySelector('.qz-skip') as HTMLButtonElement).click(); });
+    await onTop(page, 2);
+    await settled(page);
+    expect(await gateEvents(page), `${at}: the press during the change of screen dropped`).toEqual([]);
+    expect(await roomState(page)).toEqual(LOCKED);
+    // never on the result or the gift
+    await answer(page, CURATOR, 2);
+    await expect(page.locator('#find')).toHaveAttribute('data-state', 'result');
+    await expect(page.locator('#qzResults .qz-skip, #qzGift .qz-skip')).toHaveCount(0);
+    await ctx.close();
+  }
+});
+
+test('QG AC3 the unlock by the result: after ten answers #room loses both attributes and takes data-open="result", room_unlock { by: result } is tracked once, the scroll position does not change, focus goes to the shade\'s name; "Not quite? Try again" leaves section 4 open', async ({ page, baseURL }) => {
+  await pin(page, 0.01);
+  await openQuiz(page, baseURL);
+  await begin(page);
+  await answer(page, CURATOR.slice(0, 9));
+  await onTop(page, 9);
+  expect(await roomState(page), 'locked through nine answers').toEqual(LOCKED);
+  const before = await scrollAt(page);
+  await answer(page, CURATOR, 9);
+  await expect(page.locator('#find')).toHaveAttribute('data-state', 'result');
+  expect(await roomState(page)).toEqual(opened('result'));
+  expect(await gateEvents(page)).toEqual([['room_unlock', { by: 'result' }]]);
+  expect(await scrollAt(page), 'the page did not move').toBe(before);
+  await expect(page.locator('.qz-result:not([hidden]) .qz-shade')).toBeFocused();
+  expect(await page.evaluate((key) => sessionStorage.getItem(key), QUIZ_GATE.key), 'the visit\'s flag').toBe('1');
+  await settled(page);
+  await page.locator('.qz-result:not([hidden]) .qz-retry').click();
+  await onTop(page, 0);
+  expect(await roomState(page), 'Try again never re-locks').toEqual(opened('result'));
+  expect(await gateEvents(page), 'and tracks no second unlock').toEqual([['room_unlock', { by: 'result' }]]);
+});
+
+test('QG AC3 and AC4 Skip quiz on the intro at 390 x 844 (poster tier): quiz_skip { q: 0 } then room_unlock { by: skip } once, the flag written; the ride starts within two frames, never moves back, follows --ease-standard within 2 px, lands on #room\'s top within 1 px at 1,200 ms, data-ride on throughout; the quiz stays as it is; a second press later rides only', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await ctx.newPage();
+  await openQuiz(page, baseURL);
+  expect(await roomState(page)).toEqual(LOCKED);
+  await sampleRide(page);
+  await pressSkip(page);
+  const s = await rideOver(page);
+  expect(await roomState(page)).toEqual(opened('skip'));
+  expect(await gateEvents(page)).toEqual([['quiz_skip', { q: 0 }], ['room_unlock', { by: 'skip' }]]);
+  expect(await page.evaluate((key) => sessionStorage.getItem(key), QUIZ_GATE.key)).toBe('1');
+  const e = await ends(page);
+  expectRide('the first press', s, e.room);
+  await expect(page.locator('#find'), 'the quiz itself does not change').toHaveAttribute('data-state', 'intro');
+  expect(await copies(page.locator('#qzSkip')), 'Skip quiz as it stood').toEqual({ sr: Q.skip, row: Q.skip.toUpperCase(), faded: 0 });
+  // the second press, back at the quiz: the ride alone
+  await toQuiz(page);
+  await page.waitForTimeout(300);
+  await sampleRide(page);
+  await pressSkip(page);
+  const s2 = await rideOver(page);
+  expectRide('the second press', s2, e.room);
+  expect(await gateEvents(page), 'quiz_skip only, no second unlock').toEqual([['quiz_skip', { q: 0 }], ['room_unlock', { by: 'skip' }], ['quiz_skip', { q: 0 }]]);
+  await ctx.close();
+});
+
+test('QG AC3 Skip quiz on question 2 tracks quiz_skip { q: 2 }, and the question stays as it is with its answer kept', async ({ page, baseURL }) => {
+  await openQuiz(page, baseURL);
+  await begin(page);
+  await answer(page, ['main']);
+  await onTop(page, 1);
+  await ready(page, 1);
+  await sampleRide(page);
+  await pressSkip(page, '.qz-card[data-i="1"] .qz-skip');
+  await rideOver(page);
+  expect(await gateEvents(page)).toEqual([['quiz_skip', { q: 2 }], ['room_unlock', { by: 'skip' }]]);
+  expect(await roomState(page)).toEqual(opened('skip'));
+  expect(await deckState(page), 'question 2 still on top').toEqual(only(1));
+  expect((await events(page)).filter(([n]) => n === 'quiz_answer')).toEqual(answered(['main']));
+});
+
+test('QG AC3 the visit: a reload in the same tab opens section 4 before the first paint (parsed locked, the attributes gone while loading, open at DOMContentLoaded) with data-open="visit" and room_unlock { by: visit }; a new browser context starts locked', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await ctx.newPage();
+  await watchGate(page);
+  await openQuiz(page, baseURL);
+  await sampleRide(page);
+  await pressSkip(page);
+  await rideOver(page);
+  expect(await roomState(page)).toEqual(opened('skip'));
+  await page.reload();
+  await expect(page.locator('html')).toHaveClass('js poster');
+  expect(await gateWatched(page), 'parsed locked, opened by the inline step while loading, open at DOMContentLoaded').toEqual({ parsed: { hidden: true, locked: true }, changes: ['hidden:null@loading', 'data-locked:null@loading', 'data-open:visit@loading'], atDCL: { hidden: false, locked: false, open: 'visit' } });
+  expect(await roomState(page)).toEqual(opened('visit'));
+  await expect.poll(() => gateEvents(page)).toEqual([['room_unlock', { by: 'visit' }]]);
+  await ctx.close();
+  const fresh = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const p2 = await fresh.newPage();
+  await openQuiz(p2, baseURL);
+  expect(await roomState(p2), 'a new context starts locked').toEqual(LOCKED);
+  await fresh.close();
+});
+
+test('QG AC3 with sessionStorage throwing, a press still unlocks and rides, and a reload starts locked', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await ctx.newPage();
+  await page.addInitScript(() => { Object.defineProperty(window, 'sessionStorage', { get() { throw new DOMException('blocked', 'SecurityError'); } }); });
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await openQuiz(page, baseURL);
+  expect(await roomState(page)).toEqual(LOCKED);
+  await sampleRide(page);
+  await pressSkip(page);
+  const s = await rideOver(page);
+  expect(await roomState(page)).toEqual(opened('skip'));
+  expectRide('with storage throwing', s, (await ends(page)).room);
+  expect(await gateEvents(page)).toEqual([['quiz_skip', { q: 0 }], ['room_unlock', { by: 'skip' }]]);
+  await page.reload();
+  await expect(page.locator('html')).toHaveClass('js poster');
+  expect(await roomState(page), 'nothing was remembered: locked again').toEqual(LOCKED);
+  expect(errors, 'no uncaught error from the storage').toEqual([]);
+  await ctx.close();
+});
+
+test('QG AC4 what ends the ride (poster tier, 390 x 844): a wheel at 0.5 s (after it scrollY moves only by the wheel), a touchstart at 0.5 s, an Escape keydown at 0.5 s and a scrollTo from elsewhere at 0.5 s each end it where it is, with no focus moved; a touchstart at 0.2 s does not; a second press during the ride does nothing', async ({ browser, baseURL }) => {
+  test.setTimeout(300_000);
+  const touch = (page: Page) => page.evaluate(() => { window.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, cancelable: true, touches: [new Touch({ identifier: 1, target: document.body, clientX: 100, clientY: 400 })] })); });
+  const cases: { name: string; at: number; act: (page: Page) => Promise<void>; ends: boolean; own: number }[] = [
+    { name: 'a wheel at 0.5 s', at: 500, act: async (page) => { await page.mouse.move(200, 400); await page.mouse.wheel(0, 40); }, ends: true, own: 40 },
+    { name: 'a touchstart at 0.5 s', at: 500, act: touch, ends: true, own: 0 },
+    { name: 'an Escape keydown at 0.5 s', at: 500, act: async (page) => { await page.keyboard.press('Escape'); }, ends: true, own: 0 },
+    { name: 'a scrollTo from elsewhere at 0.5 s', at: 500, act: async (page) => { await page.evaluate(() => scrollTo({ top: scrollY + 30, behavior: 'instant' })); }, ends: true, own: 30 },
+    { name: 'a touchstart at 0.2 s', at: 200, act: touch, ends: false, own: 0 },
+  ];
+  for (const c of cases) {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await ctx.newPage();
+    await openQuiz(page, baseURL);
+    const focusedBefore = await page.evaluate(() => document.activeElement?.id || document.activeElement?.tagName || '');
+    await sampleRide(page);
+    await pressSkip(page);
+    await page.waitForTimeout(c.at);
+    const yAt = await scrollAt(page);
+    await c.act(page);
+    if (c.ends) {
+      await expect(page.locator('#room'), `${c.name}: the ride ends at once`).not.toHaveAttribute('data-ride', { timeout: 300 });
+      await page.waitForTimeout(1_500);
+      const { room } = await ends(page), yEnd = await scrollAt(page);
+      expect(yEnd, `${c.name}: the page stays where the ride stopped (plus the input's own ${c.own} px)`).toBeGreaterThanOrEqual(yAt - 2);
+      expect(yEnd).toBeLessThanOrEqual(yAt + c.own + 60);
+      expect(room - yEnd, `${c.name}: short of the target`).toBeGreaterThan(40);
+      expect(await page.evaluate(() => document.activeElement?.id || document.activeElement?.tagName || ''), `${c.name}: no focus moved`).toBe(focusedBefore);
+      await expect(page.locator('#rmEnter')).not.toBeFocused();
+    } else {
+      const s = await rideOver(page);
+      expectRide(c.name, s, (await ends(page)).room);
+    }
+    expect(await gateEvents(page), `${c.name}: one quiz_skip, one unlock`).toEqual([['quiz_skip', { q: 0 }], ['room_unlock', { by: 'skip' }]]);
+    await ctx.close();
+  }
+  // a second press during the ride: nothing (one quiz_skip), and the ride lands
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await ctx.newPage();
+  await openQuiz(page, baseURL);
+  await sampleRide(page);
+  await pressSkip(page);
+  await page.waitForTimeout(300);
+  await page.evaluate(() => document.querySelector<HTMLButtonElement>('#qzSkip')!.click());
+  const s = await rideOver(page);
+  expectRide('with a second press at 0.3 s', s, (await ends(page)).room);
+  expect(await gateEvents(page)).toEqual([['quiz_skip', { q: 0 }], ['room_unlock', { by: 'skip' }]]);
+  await ctx.close();
+});
+
+test('QG AC4 under reduced motion the page is at the target in the first frame after the press, with nothing between', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+  const page = await ctx.newPage();
+  await openQuiz(page, baseURL);
+  await sampleRide(page);
+  await pressSkip(page);
+  await expect(page.locator('#room')).toHaveAttribute('data-open', 'skip');
+  await expect(page.locator('#room')).not.toHaveAttribute('data-ride');
+  await page.waitForTimeout(200);
+  const { samples, pressAt } = await rideSamples(page), { room } = await ends(page);
+  const from = samples[0].y, pressIdx = samples.findIndex((x) => x.t >= pressAt), moveIdx = samples.findIndex((x, k) => k > pressIdx && Math.abs(x.y - from) > 0.5);
+  expect(moveIdx - pressIdx, 'the frame after the press').toBeLessThanOrEqual(3);
+  expect(Math.abs(samples[moveIdx].y - room), 'at the target at once').toBeLessThanOrEqual(1);
+  expect(samples.slice(moveIdx).every((x) => Math.abs(x.y - room) <= 1), 'and it stays').toBe(true);
+  await ctx.close();
+});
+
+test('QG AC5 the arrival (poster tier): a keyboard press (Enter, and Space) lands with focus on #rmEnter, matching :focus-visible, named "Enter Skreed universe", scrollY unchanged by the focus; a click leaves focus out of section 4 and off Skip quiz and #qzLive takes the section\'s name once', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await ctx.newPage();
+  await openQuiz(page, baseURL);
+  for (const key of ['Enter', 'Space'] as const) {
+    await toQuiz(page);
+    await page.locator('#qzBegin').focus();
+    await page.keyboard.press('Tab');
+    await expect(page.locator('#qzSkip')).toBeFocused();
+    await sampleRide(page);
+    await markPress(page);
+    await page.keyboard.press(key);
+    const s = await rideOver(page);
+    expectRide(`a ${key} press`, s, (await ends(page)).room);
+    const landed = await scrollAt(page);
+    await expect(page.locator('#rmEnter'), `${key}: focus on the prompt (the pad is not drawn on the poster tier)`).toBeFocused();
+    expect(await page.locator('#rmEnter').evaluate((e) => e.matches(':focus-visible')), `${key}: a keyboard focus`).toBe(true);
+    await expect(page.locator('#rmEnter')).toHaveAccessibleName(ROOM_COPY.enter);
+    await page.waitForTimeout(300);
+    expect(Math.abs(await scrollAt(page) - landed), `${key}: the focus moved no scroll`).toBeLessThanOrEqual(1);
+  }
+  // a click: focus not in section 4 and not on Skip quiz; the destination's name announced once
+  await toQuiz(page);
+  const heardBefore = (await heard(page)).length;
+  await page.locator('#qzSkip').click();
+  await expect(page.locator('#room')).toHaveAttribute('data-ride', '');
+  await expect(page.locator('#room')).not.toHaveAttribute('data-ride', { timeout: 10_000 });
+  await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+  expect(await page.evaluate(() => !!document.activeElement?.closest('#room')), 'focus not in section 4').toBe(false);
+  await expect(page.locator('#qzSkip')).not.toBeFocused();
+  expect((await heard(page)).slice(heardBefore), 'the section\'s name, once').toEqual([ROOM_COPY.aria]);
+  await ctx.close();
+});
+
+// ---- the 3D path, on SwiftShader by the island's hooks (room.spec.ts's open3d): the intro skipped, the island's start-up awaited
+async function open3dQuiz(page: Page, baseURL: string | undefined, query: string): Promise<void> {
+  await page.goto(new URL(`/?tier=hero3d${query}`, baseURL).href);
+  await page.waitForFunction(() => window.__heroStarted && !!window.__skreedIntro, null, { timeout: 540_000, polling: 500 });
+  await page.evaluate(() => (window.__skreedIntro as unknown as { skip(): void }).skip());
+  await page.waitForFunction(() => !document.documentElement.classList.contains('loading'), null, { timeout: 300_000, polling: 500 });
+  await page.waitForFunction(() => !document.documentElement.classList.contains('intro'), null, { timeout: 60_000, polling: 250 }).catch(() => {});
+  await page.waitForTimeout(2_500);   // the page scroll chunk is imported once the intro ends
+}
+/** the quiz's top in view (17.2 screens), the hero's followers snapped there, the deck chunk mounted */
+async function atQuiz3d(page: Page): Promise<void> {
+  await toQuiz(page);
+  await expect(page.locator('#qzBegin > .dc')).toHaveCount(1, { timeout: 60_000 });
+  await page.waitForTimeout(500);
+}
+const s4q = (page: Page) => page.evaluate(() => { const s = window.__s4?.state() as { q: number; qRaw: number; state: string } | null; return s ? { q: s.q, qRaw: s.qRaw, state: s.state } : null; });
+
+test('QG AC1 and AC6 on ?tier=hero3d with the glue on and section 4 locked: a wheel run that stops at 10 screens is still there 1 s later (no span round the hidden section); at scroll 0 after the intro a wheel burst up and a 16 px touch down leave the page at 0 with no skreed:room-state event', async ({ browser, baseURL }) => {
+  test.setTimeout(900_000);
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+  const page = await ctx.newPage();
+  await page.addInitScript(() => { const w = window as unknown as { __qzRoomStates: string[] }; w.__qzRoomStates = []; addEventListener('skreed:room-state', (e) => w.__qzRoomStates.push(String((e as CustomEvent).detail))); });
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await open3dQuiz(page, baseURL, '');
+  expect(await roomState(page)).toEqual(LOCKED);
+  // a wheel run stopping at 10 screens, outside the first wipe's span and the quiz seam's: nothing settles it
+  await page.evaluate(() => scrollTo({ top: 10 * innerHeight - 300, behavior: 'instant' }));
+  await page.waitForTimeout(400);
+  await page.mouse.move(200, 400);
+  await page.mouse.wheel(0, 300);
+  await page.waitForTimeout(600);
+  const stopped = await scrollAt(page);
+  await page.waitForTimeout(1_000);
+  expect(Math.abs(await scrollAt(page) - stopped), 'still where the run stopped 1 s later').toBeLessThanOrEqual(1);
+  // the top of the page: no wrap while locked
+  await page.evaluate(() => { scrollTo({ top: 0, behavior: 'instant' }); window.__skreedSnap?.(0); });
+  await page.waitForTimeout(600);
+  const statesBefore = await page.evaluate(() => [...(window as unknown as { __qzRoomStates: string[] }).__qzRoomStates]);
+  await page.mouse.move(200, 400);
+  for (let k = 0; k < 4; k++) { await page.mouse.wheel(0, -120); await page.waitForTimeout(40); }
+  await page.waitForTimeout(800);
+  expect(await scrollAt(page), 'the wheel burst up leaves the page at 0').toBe(0);
+  await page.evaluate(() => {
+    const mk = (type: string, cy: number) => new TouchEvent(type, { bubbles: true, cancelable: true, touches: [new Touch({ identifier: 1, target: document.body, clientX: 180, clientY: cy })] });
+    window.dispatchEvent(mk('touchstart', 300)); window.dispatchEvent(mk('touchmove', 310)); window.dispatchEvent(mk('touchmove', 320));
+    window.dispatchEvent(new TouchEvent('touchend', { bubbles: true, cancelable: true, touches: [] }));
+  });
+  await page.waitForTimeout(800);
+  expect(await scrollAt(page), 'the touch down leaves the page at 0').toBe(0);
+  expect(await page.evaluate(() => (window as unknown as { __qzRoomStates: string[] }).__qzRoomStates), 'no seam ran').toEqual(statesBefore);
+  expect(await roomState(page)).toEqual(LOCKED);
+  expect(errors).toEqual([]);
+  await ctx.close();
+});
+
+for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
+  test(`QG AC4 and AC5 on ?tier=hero3d at ${vp.width} x ${vp.height} with the hall resident (?room=open): a keyboard press rides to section 4's q 1 within 1 px, the third wipe's progress between 0 and 1 during the ride and 1 after, focus on #rmPad with its name, and with the glue on the landing is not settled`, async ({ browser, baseURL }) => {
+    test.setTimeout(900_000);
+    const ctx = await browser.newContext({ viewport: vp, deviceScaleFactor: 1 });
+    const page = await ctx.newPage();
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    await open3dQuiz(page, baseURL, '&room=open');
+    expect(await roomState(page)).toEqual(opened('visit'));
+    await atQuiz3d(page);
+    await page.waitForFunction(() => window.__s4?.ready, null, { timeout: 300_000, polling: 500 });
+    await page.locator('#qzBegin').focus();
+    await page.keyboard.press('Tab');
+    await expect(page.locator('#qzSkip')).toBeFocused();
+    const progress: number[] = [];
+    const poll = setInterval(() => { void s4q(page).then((s) => { if (s) progress.push(s.q); }).catch(() => {}); }, 60);
+    await sampleRide(page);
+    await markPress(page);
+    await page.keyboard.press('Enter');
+    const s = await rideOver(page);
+    clearInterval(poll);
+    const e = await ends(page), one = await page.evaluate(() => document.getElementById('rmStage')!.offsetHeight);
+    expectRide('the ride to q 1', s, Math.round(e.room + one));
+    expect(progress.some((q) => q > 0.02 && q < 0.98), 'the wipe part way during the ride').toBe(true);
+    await expect.poll(async () => (await s4q(page))!.q, { timeout: 5_000 }).toBeGreaterThan(0.98);
+    await expect(page.locator('#rmPad')).toBeFocused();
+    await expect(page.locator('#rmPad')).toHaveAccessibleName(ROOM_COPY.stageAria);
+    expect(await gateEvents(page), 'the section was open: the ride alone').toEqual([['room_unlock', { by: 'visit' }], ['quiz_skip', { q: 0 }]]);
+    const landed = await scrollAt(page);
+    await page.waitForTimeout(1_200);
+    expect(Math.abs(await scrollAt(page) - landed), 'the glue finds nothing to settle at q 1').toBeLessThanOrEqual(1);
+    expect(errors).toEqual([]);
+    await ctx.close();
+  });
+}
+
+test('QG AC4 on ?tier=hero3d at 390 x 844 with a cold hall (hall.bin held back by route): the press unlocks and the ride waits, "Loading..." with aria-busy on the control and no scroll, until the 1.5 s cap, then rides over the fog and lands at q 1 within 1 px with the label back; released, the hall arrives and the wipe plays to q 1', async ({ browser, baseURL }) => {
+  test.setTimeout(900_000);
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+  const page = await ctx.newPage();
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  // the hall's model held on the network until released: the hall cannot become ready, however fast the machine
+  let release = (): void => undefined; const held = new Promise<void>((r) => { release = r; });
+  await page.route(/\/_astro\/hall\.[^/?]*\.bin(\?|$)/, async (route) => { await held; await route.continue(); });
+  await open3dQuiz(page, baseURL, '&glue=0');
+  expect(await roomState(page)).toEqual(LOCKED);
+  await atQuiz3d(page);
+  expect(await page.evaluate(() => !!window.__s4?.ready), 'the hall is cold').toBe(false);
+  const yStart = await scrollAt(page);
+  await sampleRide(page);
+  await pressSkip(page);
+  // the wait: unlocked at once, the ride marked, the control busy and reading "Loading...", the page where it was
+  await expect(page.locator('#qzSkip')).toHaveAttribute('aria-busy', 'true', { timeout: 300 });
+  await expect(page.locator('#qzSkip')).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.locator('#qzSkip')).toHaveAccessibleName(Q.loading);
+  expect(await roomState(page)).toEqual({ ...opened('skip'), ride: true });
+  await page.waitForTimeout(1_000);
+  expect(await scrollAt(page), 'no scroll a second into the wait').toBe(yStart);
+  await expect(page.locator('#qzSkip')).toHaveAttribute('aria-busy', 'true');
+  // the cap: the wait ends at HALL_WAIT_MS, the label comes back and the ride runs over the fog
+  await expect(page.locator('#qzSkip')).not.toHaveAttribute('aria-busy', 'true', { timeout: HALL_WAIT_MS });
+  await expect(page.locator('#qzSkip')).toHaveAccessibleName(Q.skip);
+  const s = await rideOver(page);
+  const from = s.samples[0].y, pressIdx = s.samples.findIndex((x) => x.t >= s.pressAt), moveIdx = s.samples.findIndex((x, k) => k > pressIdx && Math.abs(x.y - from) > 0.5);
+  expect(moveIdx, 'the page moved').toBeGreaterThan(pressIdx);
+  expect(s.samples[moveIdx].t - s.pressAt, 'and not before the cap, less a frame').toBeGreaterThanOrEqual(HALL_WAIT_MS - 2 * FRAME);
+  expect(s.samples[moveIdx].t - s.pressAt, 'nor long after it').toBeLessThan(HALL_WAIT_MS + 400);
+  const e = await ends(page), one = await page.evaluate(() => document.getElementById('rmStage')!.offsetHeight);
+  expect(Math.abs(e.y - Math.round(e.room + one)), 'landed at q 1, over the fog').toBeLessThanOrEqual(1);
+  expect(await page.evaluate(() => !!window.__s4?.ready), 'the hall still out at the landing').toBe(false);
+  expect(await gateEvents(page)).toEqual([['quiz_skip', { q: 0 }], ['room_unlock', { by: 'skip' }]]);
+  // released: the hall arrives and the third wipe plays on its clock to q 1
+  release();
+  await page.waitForFunction(() => window.__s4?.ready, null, { timeout: 300_000, polling: 500 });
+  await expect.poll(async () => (await s4q(page))!.q, { timeout: 5_000 }).toBeGreaterThan(0.98);
+  expect(Math.abs(await scrollAt(page) - Math.round(e.room + one)), 'the page did not move for the hall').toBeLessThanOrEqual(1);
+  expect(errors).toEqual([]);
   await ctx.close();
 });

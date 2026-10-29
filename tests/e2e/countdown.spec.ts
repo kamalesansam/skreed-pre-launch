@@ -3,6 +3,7 @@ import { test, expect, type Page } from '@playwright/test';
 import { boxStats, contrast, luminanceOfHex, type Box } from '../harness/pixels.ts';
 import { PEARL_WHISPER, URBAN_SLATE, EMBER_LUXE } from '../../src/config/tokens.ts';
 import { pauseClockAt } from '../harness/settle.ts';
+import { DIGITS, PAIR_W, PAIR_H, DIGIT_ADVANCE } from '../../src/config/countdown-digits.ts';
 
 const digits = (page: Page) => page.evaluate(() => ['cd-d', 'cd-h', 'cd-m', 'cd-s'].map((i) => document.getElementById(i)!.textContent).join(' '));
 
@@ -37,31 +38,41 @@ test.describe('AC4.1 values', () => {
   });
 });
 
-test('AC4.2 numerals: Open Sans 600 tabular, two digits, 2ch, hidden until the first tick, ticks on the wall-clock second', async ({ page }) => {
+test('AC4.2 numerals: dot-matrix pairs (E-CD-font) from the ten dot paths, hidden until the first tick, ticks on the wall-clock second', async ({ page }) => {
   await pauseClockAt(page, '2026-10-09T09:00:00.400+05:30');
   await page.goto('/?tier=poster');
-  for (const id of ['cd-d', 'cd-h', 'cd-m', 'cd-s']) {
-    const s = await page.locator('#' + id).evaluate((e) => { const c = getComputedStyle(e); return { ff: c.fontFamily, fw: c.fontWeight, fvn: c.fontVariantNumeric, t: e.textContent }; });
-    expect(s.ff).toMatch(/^"Open Sans"/);
-    expect(s.fw).toBe('600');
-    expect(s.fvn).toBe('tabular-nums');
+  // the ten digit paths, built by the plain script from the bitmaps, one circle a dot, filled with the current colour
+  const dots = DIGITS.map((d) => d.split('#').length - 1);
+  const paths = await page.evaluate(() => [...document.querySelectorAll<SVGPathElement>('svg.sprite path[id^="dg-"]')].map((p) => [p.id, p.getAttribute('fill'), (p.getAttribute('d') || '').split('M').length - 1]));
+  expect(paths).toEqual(dots.map((n, i) => ['dg-' + i, 'currentColor', n]));
+  for (const u of ['d', 'h', 'm', 's']) {
+    const s = await page.locator(`#cd-${u}`).evaluate((e, u) => {
+      const svg = e.parentElement!.querySelector('svg.n')!, uses = [...svg.querySelectorAll<SVGUseElement>(`#cdg-${u} use`)];
+      return { t: e.textContent, vb: svg.getAttribute('viewBox'), base: svg.querySelector('.gl-base')!.getAttribute('href'), hrefs: uses.map((x) => x.getAttribute('href')), x2: uses[1].getAttribute('x'), color: getComputedStyle(svg).color, h: svg.getBoundingClientRect().height };
+    }, u);
     expect(s.t).toMatch(/^\d\d$/);
+    expect(s.vb).toBe(`0 0 ${PAIR_W} ${PAIR_H}`);
+    expect(s.base).toBe(`#cdg-${u}`);
+    expect(s.hrefs).toEqual([...s.t!].map((c) => '#dg-' + c));   // the drawn digits are the spoken ones
+    expect(s.x2).toBe(String(DIGIT_ADVANCE));
+    expect(s.color).toBe('rgb(247, 246, 243)');   // Pearl Whisper
+    expect(s.h).toBeGreaterThanOrEqual(40);       // clamp(2.5rem, 10.5vw, 4rem)
   }
   const rules = await page.evaluate(() => {
     const out: Record<string, string> = {};
     for (const sh of Array.from(document.styleSheets)) for (const r of Array.from(sh.cssRules)) {
-      if (r instanceof CSSStyleRule && r.selectorText === '.count .n') out.minWidth = r.style.minWidth;
       if (r instanceof CSSStyleRule && r.selectorText === '.count:not([data-ready]) .n') out.hidden = r.style.visibility;
     }
     return out;
   });
-  expect(rules).toEqual({ minWidth: '2ch', hidden: 'hidden' });
+  expect(rules).toEqual({ hidden: 'hidden' });
   expect(await page.locator('#count').getAttribute('data-ready')).toBe('');
   expect(await digits(page)).toBe('36 14 59 59');
   await page.clock.runFor(590);
   expect(await digits(page)).toBe('36 14 59 59');   // the next tick waits for the wall-clock second (plus 5 ms)
   await page.clock.runFor(20);
   expect(await digits(page)).toBe('36 14 59 58');
+  expect(await page.locator('#cdg-s use').evaluateAll((us) => us.map((u) => u.getAttribute('href')))).toEqual(['#dg-5', '#dg-8']);
 });
 
 test('AC4.3 semantics: role timer with its label', async ({ page }) => {

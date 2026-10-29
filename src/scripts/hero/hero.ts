@@ -60,6 +60,11 @@ export async function startHero(o: StartOptions): Promise<void> {
   if (HOOKS) installStall();
   // the loader hands over at its cut: until then the hero holds the plotted pose exactly
   const initiallyIntroDone = !document.documentElement.classList.contains('loading');
+  // the return path (family-page.md 2.2 and 13, step 3; round 5, section 23): Back from a family page, or /#families; the loader runs in
+  // full, its exit held for this island's word, and section 2 is the destination. The loader decided (loader.inline.js RET:
+  // isReturnVisit()'s two conditions, and not Back to top's way home, whose sessionStorage flag to-top.ts has cleared by now), so its
+  // decision is read, never made again
+  const ret = !!document.getElementById('intro')?.classList.contains('ret');
 
   // 1. the hero chunk and pieces.json
   const pieces = await data.pieces; life.check();
@@ -70,7 +75,7 @@ export async function startHero(o: StartOptions): Promise<void> {
   const tune = import.meta.env.PUBLIC_TUNE === '1' ? window.__skreedTune : undefined;
   const P: HeroParams = tune ? tune.params : heroParams(reduced);
   const dpr = Math.min(devicePixelRatio, touch ? DPR_CAP.touch : DPR_CAP.fine);
-  const intro = createIglooIntro({ reduced, touch, dpr, mist: P.mist, bloom: P.bloom, hooks: HOOKS });
+  const intro = createIglooIntro({ reduced, touch, dpr, mist: P.mist, bloom: P.bloom, hooks: HOOKS, skip: ret });
 
   // 3. renderer
   const canvas = document.getElementById('stage') as HTMLCanvasElement;
@@ -195,10 +200,39 @@ export async function startHero(o: StartOptions): Promise<void> {
   // 18. hooks, the loader's cut, the stage observer
   const loop = createLoop(ctx, pointer, labels, initiallyIntroDone, tex);
   life.onKill(() => { loop.stop(); labels.clear(); labels.dispose(); });
-  section2.snapTo = (screens) => { scrollTo({ top: Math.round(screens * innerHeight), behavior: 'instant' }); loop.snap(screens); };
+  // never a scroll of the poster page (a soft poster's one-screen track, boot.ts onSoftPoster): only the visitor moves that; the followers are set all the same, for the recovery
+  section2.snapTo = (screens) => { if (!document.documentElement.classList.contains('poster')) scrollTo({ top: Math.round(screens * innerHeight), behavior: 'instant' }); loop.snap(screens); };
   // section 1 in place (the back-to-top control, scripts/shell/to-top.ts): the loop's own jump, without the fourth wipe
   window.__skreedTop = () => { scrollTo({ top: 0, behavior: 'instant' }); loop.snap(0); ctx.room?.reset(); };
   life.onKill(() => { window.__skreedTop = undefined; });
+  // the return path (family-page.md 2.2 and 13, step 3; built with round 4, section 22; the loader in full since round 5,
+  // section 23): Back from a family page, or /#families, the landing is section 2 at rest with the gems live, never the
+  // quiz the fragment's own scroll aimed at (nav#families stands in flow after the track). The page and both followers
+  // snap to S2T.LAND now, under the loader (loader.inline.js: a return visit runs the first visit's loader, but schedules
+  // its exit only after ready() below), and once the loader has its frame2 and the gems are built (or have failed, or the
+  // loop is not running to build them) the island gives its word through the loader's own ready(): the exit runs at the
+  // next light pass and the lift opens on the gems. frame2 still gates the lift, so the readiness model holds (hero.md 12.7)
+  if (ret) {
+    const snapTo = section2.snapTo;
+    snapTo(S2T.LAND);
+    // the third snap, at every lift (bridge/loader.ts: __introDone runs life.recover() first), the loader's own lift and a
+    // soft poster's recovery on frame2 alike: section 2 in place as the fade starts, whatever the browser's own scroll to
+    // the fragment did under the loader's 7.5 s
+    life.onRecover(() => snapTo(S2T.LAND));
+    const settle = () => {
+      if (life.dead) return;
+      const L = window.__skreedLoader;
+      if (!L) return;
+      if (!L.state().ready || !(section2.ready || section2.failed || !loop.running)) { requestAnimationFrame(settle); return; }
+      snapTo(S2T.LAND); L.ready();
+    };
+    requestAnimationFrame(settle);
+  }
+  // restored from the back-forward cache with its context gone (iOS can return a cached page that way): the hero's one
+  // answer to a lost context is the poster page (boot.ts, no restore attempt), reached through onHardFail
+  const onShow = (e: PageTransitionEvent) => { if (e.persisted && renderer.getContext().isContextLost()) o.onHardFail('webglcontextlost after restore'); };
+  addEventListener('pageshow', onShow);
+  life.onKill(() => removeEventListener('pageshow', onShow));
   if (HOOKS) installHooks(ctx, loop, { skyClass: () => ctx.sky.cls });
   // section 4 (docs/specs/section-4.md 5; section-4-flux.md 5, "Loading"): its director chunk comes at idle once the intro
   // ends (phase 0: the cloud's pass readied, so a wrap from the top has its cover), or when the quiz or the section itself
@@ -219,13 +253,33 @@ export async function startHero(o: StartOptions): Promise<void> {
     return room;
   }).catch((e: unknown) => { console.warn('section 4: the section chunk did not load; the stills stand in', e); document.getElementById('room')?.setAttribute('data-tier', 'poster'); return null; }));
   const loadHall = () => loadDirector().then((room) => room?.load().then(() => { if (room.hall.failed) document.getElementById('room')?.setAttribute('data-tier', 'poster'); }));
+  // the quiz gate (docs/specs/quiz-gate.md D1, D2, D5): section#room is hidden and data-locked until the quiz's result or
+  // Skip quiz opens it (scripts/quiz/gate.ts). While locked there is no wrap from the top (canWrap, below) and no glue
+  // span at its seam (docTop reads NaN for an element with no box, below); the hall and the director chunk still load as
+  // they always did (the stage observer and afterIntro), so the hall is ready for a press on Skip quiz. The unlock's
+  // event re-evaluates the page scroll and loads the hall if nothing has; __skreedHall tells the quiz's ride whether the
+  // hall is in, and lets it wait for it (at most 1.5 s).
+  const roomEl = document.getElementById('room');
+  const roomLocked = () => !!roomEl?.hasAttribute('data-locked');
+  const onUnlock = () => { pageScroll?.notify(); void loadHall(); };
+  addEventListener('skreed:quiz-unlock', onUnlock);
+  life.onKill(() => removeEventListener('skreed:quiz-unlock', onUnlock));
+  // the hall's own load() returns at once when its load has started (hall.ts), and it always has by the time the quiz's
+  // ride asks (the stage observer, then the unlock's listener), so the hook waits a frame at a time until the hall is in
+  // or has failed, or the director is gone; the ride races this against its 1.5 s (quiz-gate.md, amendment 2)
+  const hallSettled = () => { const h = ctx.room?.hall; return life.dead || !h || h.ready || h.failed; };
+  const untilHall = () => new Promise<void>((res) => { const tick = () => { if (hallSettled()) res(); else requestAnimationFrame(tick); }; tick(); });
+  window.__skreedHall = { get ready() { return !!ctx.room?.hall.ready; }, load: () => loadHall().then(untilHall) };
+  life.onKill(() => { window.__skreedHall = undefined; });
   // the page scroll (section4/scroll.ts, its own chunk, marker skreed:scroll): the glue over the three seams, the wrap from
   // the top and the carousel's gestures, from the intro's end; the director is its adapter's other side. One viewport for
   // the spans is a probe's 100svh (the track is in svh, the hero's map in innerHeights)
   const probe = document.createElement('div');
   probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:100svh;visibility:hidden;pointer-events:none';
   document.body.append(probe); life.onKill(() => probe.remove());
-  const docTop = (id: string) => { const el = document.getElementById(id); return el ? el.getBoundingClientRect().top + scrollY : NaN; };
+  // an element with no box (section#room hidden behind the quiz gate) reads NaN, and its span is dropped below: a display:
+  // none element's rect is all zeros and would read as the current scroll position, a span the glue would settle into
+  const docTop = (id: string) => { const el = document.getElementById(id); return el && el.getClientRects().length ? el.getBoundingClientRect().top + scrollY : NaN; };
   const svh = () => probe.offsetHeight || innerHeight;
   let pageScroll: PageScroll | null = null, scrollImport: Promise<void> | null = null;
   const startScroll = () => (scrollImport ??= import('./section4/scroll.ts').then((m) => {
@@ -239,7 +293,7 @@ export async function startHero(o: StartOptions): Promise<void> {
       room: {
         inRange: () => !!ctx.room?.inRange(), edge: (d) => ctx.room?.edge(d) ?? null, step: (d) => !!ctx.room?.stepScene(d),
         back: () => { ctx.room?.back(); }, wrap: () => { void loadDirector().then((r) => r?.wrap()); },
-        canWrap: () => loop.state.introDone && !ctx.room?.lock(), lock: () => !!ctx.room?.lock(), busy: () => !!ctx.room?.busy(),
+        canWrap: () => loop.state.introDone && !ctx.room?.lock() && !roomLocked(), lock: () => !!ctx.room?.lock(), busy: () => !!ctx.room?.busy(),
       },
     });
     life.onKill(() => pageScroll?.dispose());

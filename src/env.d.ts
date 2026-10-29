@@ -31,6 +31,8 @@ interface Window {
   __introDone?: () => void;
   __heroStarted?: boolean;
   __skreedLogo?: import('./scripts/logotype/glitch.ts').LogoGlitch;
+  /** the countdown's glitch on / (E-CD-glitch): its four numeral pairs as one */
+  __skreedCount?: import('./scripts/logotype/glitch.ts').LogoGlitch;
   __skreedLogoQ?: [string, ...unknown[]][];
   __skreedCountV?: string[];
   __skreedTierOverride?: () => string;
@@ -48,6 +50,8 @@ interface Window {
   __skreedTop?: () => void;
   /** section 4: the island's side of the bridge, installed with the section's director */
   __skreedRoom?: import('./config/room.ts').RoomIsland;
+  /** the quiz gate (quiz-gate.md D4, amended): whether the hall is in, and its load, installed by the island; the quiz's ride waits on it, at most 1.5 s */
+  __skreedHall?: { readonly ready: boolean; load(): Promise<unknown> };
   /** hooks builds: section 4's state, entering without the walk, the entry by its clock (seconds), a scene at rest, one step, the way back, the wrap, the glue on or off (section-4-flux.md 5, "Build modes") */
   __s4?: { state(): unknown; enter(): boolean; seek(sec: number): void; scene(i: number): boolean; step(dir: 1 | -1): boolean; back(): boolean; wrap(): void; glue(on: boolean): void; lights(o: Partial<import('./scripts/hero/section4/carousel.ts').LightSetting>): import('./scripts/hero/section4/carousel.ts').LightSetting | null; shade(dark: number, height?: number, solid?: number): void; skip(): void; readonly ready: boolean };
   // test hooks (test and staging builds only; hero-architecture.md 10)

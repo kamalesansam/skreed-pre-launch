@@ -1,4 +1,4 @@
-// AC1.1 at the source: the shipped defaults carry Sam's 13 locked values and logoIdle 0 (hero.md section 0, D20).
+// AC1.1 at the source: the shipped defaults carry Sam's 13 locked values and logoIdle 1 (hero.md section 0; the idle twitch on since 2026-10-26, E-CD-glitch).
 // The runtime check of the built hero (__skreedParams) is tests/e2e/locked-values.spec.ts (build step 8). The intro lines
 // (not a P key: the constant INTRO_LINES of the intro) are checked against the prose paragraph of LOCKED_VALUES.md.
 import { test } from 'node:test';
@@ -52,10 +52,10 @@ test('the 13 locked values equal LOCKED_VALUES.md and hero.md section 0, and shi
   }
 });
 
-test('logoIdle is 0 (no idle twitch in production, D20); every other key equals the prototype', () => {
+test('logoIdle is 1 (the idle twitch on, E-CD-glitch; D20 had it 0); every key equals the prototype', () => {
   const P = prototypeP();
-  assert.equal(HERO_PARAMS.logoIdle, 0);
-  for (const [k, v] of Object.entries(P)) if (k !== 'logoIdle') assert.equal(HERO_PARAMS[k as keyof typeof HERO_PARAMS], v, k);
+  assert.equal(HERO_PARAMS.logoIdle, 1);
+  for (const [k, v] of Object.entries(P)) assert.equal(HERO_PARAMS[k as keyof typeof HERO_PARAMS], v, k);
 });
 
 test('reduced motion zeroes breath only, and HERO_PARAMS is frozen', () => {

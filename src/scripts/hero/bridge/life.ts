@@ -6,6 +6,12 @@ export class IslandDead extends Error {
   constructor(reason: string) { super('hero island stopped: ' + reason); this.name = 'IslandDead'; }
 }
 
+/** A cross-document view transition the browser skipped (the way back from a family page, family-page.md 22) rejects
+ * its promises with this; it is never a failure of the island, so boot.ts's rejection guard lets it pass. */
+export function isAbortError(reason: unknown): boolean {
+  return reason instanceof DOMException && reason.name === 'AbortError';
+}
+
 export interface Life {
   readonly dead: boolean;
   readonly reason: string;

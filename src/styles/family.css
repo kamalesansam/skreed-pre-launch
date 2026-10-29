@@ -1,7 +1,7 @@
 /* Family pages, /shades/<family>/ (docs/specs/family-page.md 19 to 21). ciao's look: the stage fixed behind the page over
    ciao's studio backdrop (a fixed grey-to-night ramp and a fade over the bottom of the first screen, exception E-F1),
-   the page scrolling seven screens over it (the carousel, the zoom, the four case types, the argument screen). Chrome
-   is Pearl Whisper on the night, Ember Luxe for focus. Round 3 (Sam, 2026-10-15): no header bar; the wordmark top left
+   the page scrolling seven screens over it (the carousel, the zoom, the four case types, the argument screen, whose way
+   out is "Back to main page", section 22). Chrome is Pearl Whisper on the night, Ember Luxe for focus. Round 3 (Sam, 2026-10-15): no header bar; the wordmark top left
    with the hero's glitch (E-F4), "All families" top right as plain text; the family's name the only words on the first
    screen (D9); the bar carries the shade's swatch and name only (D7); on phones nothing overlaps (D8). Phone first; the
    wide layout applies at 900 px wide and 600 px tall or more (2.8). Colours: tokens only; shades only as swatches
@@ -67,6 +67,19 @@ ol { padding: 0; list-style: none; }
 @media (prefers-reduced-motion: reduce) { .site-logo .logo-tiles { display: none !important; } .site-logo svg { opacity: 1 !important; } }
 .allfam { position: fixed; top: calc(var(--inset) + var(--sat) + var(--mark-h) / 2 - var(--hit) / 2); right: calc(var(--inset) + env(safe-area-inset-right, 0px) - var(--s2)); z-index: 6;
   min-height: var(--hit); padding: 0 var(--s2); display: inline-flex; align-items: center; font-size: var(--fs-label); font-weight: 600; line-height: 1; white-space: nowrap; color: var(--pearl-whisper); }
+/* the argument screen's way out (section 22, E-F5; its place on phones, section 23): "Back to main page", a link to
+   /#families set as "All families" is, level with the beat nav (z-index 4), under the corners and Back to top (6).
+   Declared after .allfam so its position: fixed wins over .ring2's position: relative. Phone first: on the phone layout
+   it is on Back to top's row with Back to top's offsets (D5), its bottom the same expression (--to-top-bottom plus the
+   bottom safe area, to-top.css) and its left the mirror of Back to top's right (--inset plus the side safe area, less
+   --s2), so its words start at --inset as the wordmark does and Back to top's chevron ends at --inset on the right, the
+   way the wordmark and "All families" share the top; with right left auto the box shrinks to its words. The wide layout
+   (the block below) centres it under the letters by the margins, never a transform, since .press owns the transform,
+   its bottom one --inset above the safe area. It transitions nothing, since [hidden] is display: none, which no
+   transition can start from; the fade in and out is a Web Animations API animation in page.ts (--dur-fade and --dur-out,
+   tokens.css) */
+.fam-back { position: fixed; z-index: 4; left: calc(var(--inset) + env(safe-area-inset-left, 0px) - var(--s2)); bottom: calc(var(--to-top-bottom) + var(--sab));
+  min-height: var(--hit); padding: 0 var(--s2); display: inline-flex; align-items: center; font-size: var(--fs-label); font-weight: 600; line-height: 1; white-space: nowrap; color: var(--pearl-whisper); text-decoration: none; }
 
 /* the first screen: the family's name under the wordmark (D9), the stage behind, the HUD rows over it */
 .fp { display: block; }
@@ -206,7 +219,7 @@ html.arg-on .arg { opacity: 1; visibility: visible; transition: opacity 0.5s cub
 html.beats-on .beatnav { opacity: 1; visibility: visible; transition: opacity 0.5s cubic-bezier(0.333, 0, 0.667, 1), visibility 0s; }
 .beatnav button { width: 36px; height: 36px; border-radius: var(--radius-round); border: 1.5px solid color-mix(in srgb, var(--pearl-whisper) 50%, transparent); display: grid; place-items: center; font-size: 0.8125rem; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; color: var(--pearl-whisper); transition: background-color var(--dur-press) var(--ease-standard), color var(--dur-press) var(--ease-standard), border-color var(--dur-press) var(--ease-standard); }
 .beatnav button[aria-current="true"] { background: var(--pearl-whisper); color: var(--night); border-color: var(--pearl-whisper); }
-html:not(.m3d) .beats, html:not(.m3d) .beatnav, html:not(.m3d) #tint, html:not(.m3d) .arg { display: none; }
+html:not(.m3d) .beats, html:not(.m3d) .beatnav, html:not(.m3d) #tint, html:not(.m3d) .arg, html:not(.m3d) .fam-back { display: none; }
 
 /* the family switcher: the popover attribute; light dismiss and Escape are native; no animation */
 @supports selector(:popover-open) {
@@ -261,6 +274,7 @@ html:not(.m3d) .intro { display: none; }
   .beat-in { align-content: center; padding: 0 var(--inset) 0 max(var(--inset), 10%); }
   .beatnav { right: var(--inset); }
   .beatnav button { width: 44px; height: 44px; font-size: 0.875rem; }
+  .fam-back { left: 0; right: 0; width: max-content; margin-inline: auto; bottom: calc(var(--inset) + var(--sab)); }
   .sw { inset: calc(var(--chrome-top) + var(--s3)) var(--inset) auto auto; width: 340px; max-height: calc(100svh - 96px); border: 1px solid var(--pearl-whisper); }
   .sw-in { padding: 0 var(--s3) var(--s3); }
 }

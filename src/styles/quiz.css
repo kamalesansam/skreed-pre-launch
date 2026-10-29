@@ -31,6 +31,7 @@
   .quiz .qz-check:has(input:focus-visible)::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
 }
 html:not(.js) .qz-begin { display: none; }   /* without JavaScript the noscript line stands in for the button */
+html:not(.js) .qz-skip { display: none; }   /* and nothing is locked there, so there is nothing to skip (quiz-gate.md D3) */
 :where(.quiz) :where(p, h2, h3, ul) { margin: 0; }   /* no specificity, so each element's own rule below sets its size and gap */
 :where(.quiz) :where(h2, h3) { font: inherit; }
 
@@ -64,7 +65,10 @@ html:not(.js) .qz-begin { display: none; }   /* without JavaScript the noscript 
 .qz-opt { display: block; width: 100%; min-height: 44px; padding: 0.4em 0; background: none; border: 0; border-radius: 0; color: inherit; font: inherit; text-transform: inherit; letter-spacing: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; text-underline-offset: 0.4em; }
 @media (hover: hover) { .qz-opt:hover { text-decoration-line: underline; text-decoration-thickness: 1px; } }
 .qz-opt[aria-pressed="true"] { text-decoration-line: underline; text-decoration-thickness: 2px; }
-.qz-foot { display: flex; min-height: 44px; }
+/* the footer: Back at the left of the text column and Skip quiz at its right (quiz-gate.md D3), two auto columns spread
+   to the column's ends; Skip quiz keeps the second column on question 1, where there is no Back, so it stays at the right */
+.qz-foot { display: grid; grid-template-columns: auto auto; justify-content: space-between; min-height: 44px; }
+.qz-foot .qz-skip { grid-column: 2; }
 
 /* the result: the shade large, the words under it (beside it on laptops) */
 .qz-results { display: grid; }

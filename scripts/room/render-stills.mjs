@@ -42,7 +42,7 @@ async function open(setup) {
   const ctx = await browser.newContext(SETUPS[setup]);
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.warn(`[${setup}] page error:`, e.message));
-  await page.goto(new URL('/?tier=hero3d&glue=0', base).href, { waitUntil: 'load' });
+  await page.goto(new URL('/?tier=hero3d&glue=0&room=open', base).href, { waitUntil: 'load' });
   await page.waitForFunction(() => window.__heroStarted && !document.documentElement.classList.contains('loading'), null, { timeout: 240_000 });
   await page.evaluate(() => window.__skreedIntro?.skip?.());
   await page.waitForFunction(() => !document.documentElement.classList.contains('intro'), null, { timeout: 30_000 }).catch(() => console.warn(`[${setup}] the intro class did not leave within 30 s`));
@@ -123,7 +123,7 @@ if (framesDir) {
     await ctx.close();
     // the poster tier's column: the still with the prompt over it, then each scene on its own screen after the press
     const pc = await browser.newContext(SETUPS[setup]), pp = await pc.newPage();
-    await pp.goto(new URL('/?tier=poster', base).href, { waitUntil: 'load' });
+    await pp.goto(new URL('/?tier=poster&room=open', base).href, { waitUntil: 'load' });
     // each frame with its element's top at the viewport's top, as a visitor scrolling down reaches it
     await pp.evaluate(() => document.getElementById('room').scrollIntoView({ block: 'start', behavior: 'instant' })); await pp.waitForTimeout(1500);
     await shot(pp, f('poster-hall'));
