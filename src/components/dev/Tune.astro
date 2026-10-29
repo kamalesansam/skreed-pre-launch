@@ -56,6 +56,12 @@
     <label for="amb">Sky ambient <output id="o-amb"></output><input id="amb" type="range" min="0" max="3" step="0.05"></label>
     <label for="bloom">Bloom <output id="o-bloom"></output><input id="bloom" type="range" min="0" max="2" step="0.05"></label>
     <div><button type="button" id="ghost">Auto sweep: on</button></div>
+    <h3>Sections 2 and 3: the fog's hues (config/fog-hues.ts, E-fog-hue)</h3>
+    <label for="f-hueOn">Hues (0 off, 1 on) <output id="o-f-hueOn"></output><input id="f-hueOn" type="range" min="0" max="1" step="1"></label>
+    <label for="f-hueAmt">Hue strength <output id="o-f-hueAmt"></output><input id="f-hueAmt" type="range" min="0" max="1" step="0.01"></label>
+    <label for="f-hueCycle">One patch, in and out (s) <output id="o-f-hueCycle"></output><input id="f-hueCycle" type="range" min="4" max="30" step="0.5"></label>
+    <label for="f-hueSize">Patch scale (higher is smaller) <output id="o-f-hueSize"></output><input id="f-hueSize" type="range" min="0.4" max="1.4" step="0.05"></label>
+    <label for="f-hueCover">Patch cover <output id="o-f-hueCover"></output><input id="f-hueCover" type="range" min="0" max="1" step="0.01"></label>
     <h3>Section 4: the entrance (docs/specs/section-4.md)</h3>
     <label for="r-eye">Eye height (m) <output id="o-r-eye"></output><input id="r-eye" type="range" min="0.6" max="1.8" step="0.01"></label>
     <label for="r-fov">Field of view (deg) <output id="o-r-fov"></output><input id="r-fov" type="range" min="40" max="100" step="1"></label>
