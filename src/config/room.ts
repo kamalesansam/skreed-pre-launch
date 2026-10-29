@@ -71,7 +71,7 @@ export function relLuminance(hex: string): number {
   return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
 }
 
-export type ProductId = 'case' | 'wallet' | 'lenskin' | 'airpods';
+export type ProductId = 'case' | 'wallet' | 'lenskin' | 'airpods' | 'airpods-max';
 export interface RoomProduct {
   readonly id: ProductId;
   readonly name: string;
@@ -89,6 +89,8 @@ export const ROOM_PRODUCTS: readonly RoomProduct[] = Object.freeze([
   { id: 'wallet', name: 'MagSafe wallet', line: 'Sleek and secure MagSafe-compatible phone wallet for convenient card storage without the bulk. Available in 240 shades. Matte, gloss, metallic matte or metallic gloss.' },
   { id: 'lenskin', name: 'Lenskin', line: "Sleek metal accent for the latest iPhone's camera lens area, designed to personalize your look. Available in a range of contrasting solid shades and patterns. Matte, metallic matte or metallic gloss." },
   { id: 'airpods', name: 'AirPods case', line: 'Durable polycarbonate case with a sleek profile and precise cut-outs for charging. Includes a carabiner ring for easy attachment to bags. Available in 240 shades. Matte or gloss.' },
+  // Sam's AirPods Max model (2026-10-26); the catalog names AirPods Max among the AirPods cases (page 13) and gives it no line of its own, so this one is the range's sentence and the AirPods case page's availability, pending his words (section-4-flux.md 11)
+  { id: 'airpods-max', name: 'AirPods Max case', line: 'Our AirPods case range covers AirPods Max too. Available in 240 shades. Matte or gloss.' },
 ]);
 /** a product by id */
 export const productById = (id: ProductId): RoomProduct => ROOM_PRODUCTS.find((p) => p.id === id)!;
@@ -106,7 +108,7 @@ export interface RoomScene {
   readonly i: number;
   /** 1 to 5, the count line's number */
   readonly order: number;
-  /** the product in front (ROOM_PRODUCTS by id); the lanyard takes scene 5's slot when Sam's model lands (X-8) */
+  /** the product in front (ROOM_PRODUCTS by id); scene 5 is the AirPods Max case since 2026-10-26 (X-8); the lanyard and the PopSocket take slots when their models land */
   readonly product: ProductId;
   /** the product's shade: the catalog id, its name, its family in lower case words and its hex (SHADES; tests/unit/room.test.ts holds them to the catalog) */
   readonly shade: string;
@@ -160,7 +162,7 @@ const SCENE_ROWS: readonly SceneRow[] = [
     alt: 'A red sunset over the sea, a leaning slab and a wet stone floor of flat slabs.' },
   { id: 'palace', order: 4, product: 'lenskin', shade: 'playful-pink-06', shadeName: 'Ballerina', family: 'playful pink', hex: '#efa3af', finish: 'metallic', keyLight: '#ffc9a3', baseYaw: 0.55, basePitch: 0.12, toneDark: false,
     alt: 'A pink palace with a royal marble floor, statues and lattice screens open to the sea.' },
-  { id: 'dawn', order: 5, product: 'case', shade: 'vivid-violet-04', shadeName: 'Pastel', family: 'vivid violet', hex: '#d7b9ed', finish: 'matte', keyLight: '#cbb0ff', baseYaw: 0, toneDark: false,
+  { id: 'dawn', order: 5, product: 'airpods-max', shade: 'vivid-violet-04', shadeName: 'Pastel', family: 'vivid violet', hex: '#d7b9ed', finish: 'matte', keyLight: '#cbb0ff', baseYaw: -0.5, basePitch: 0.1, toneDark: false,   // minus: rotation.y turns +x away from the camera, and the Skreed S is on the +x (right) cup
     alt: 'A lilac dawn through sheer curtains, a starry disc and fog across the floor.' },
 ];
 /**

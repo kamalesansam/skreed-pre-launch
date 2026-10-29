@@ -162,14 +162,14 @@ test("budget.mjs: section 6's lines exit 1 when broken (a still, a loop, product
   };
   broken({ ...twin('grove', 'wide', 10, 177) }, ['--mode', 'build'], /still grove: wide, WebP/);
   broken({ '_astro/ember-wide.Ab3_x9Zq.mp4': kb(1201) }, ['--mode', 'staging'], /loop ember, wide/);
-  broken({ '_astro/products.Ab3_x9Zq.bin': kb(271) }, ['--mode', 'build'], /products\.bin/);
+  broken({ '_astro/products.Ab3_x9Zq.bin': kb(1001) }, ['--mode', 'build'], /products\.bin/);   // the line is 1,000 KB since 2026-10-26 (the AirPods Max at full detail)
   broken({ '_astro/park.Ab3_x9Zq.glb': kb(1) }, ['--mode', 'build'], /park\.Ab3_x9Zq\.glb: not a file the section ships/);
   broken({ 'media/extra.mp4': kb(1) }, ['--mode', 'build'], /extra\.mp4: not a file the section ships/);
   // at the lines, everything passes, and every loop and still has its row
-  const ok = budget(fixture({ ...loops(1200), ...SCENE_IDS.flatMap((id) => [twin(id, 'wide', 110, 176), twin(id, 'portrait', 80, 128)]).reduce((a, b) => ({ ...a, ...b }), {}), '_astro/products.Ab3_x9Zq.bin': kb(270) }), '--mode', 'build');
+  const ok = budget(fixture({ ...loops(1200), ...SCENE_IDS.flatMap((id) => [twin(id, 'wide', 110, 176), twin(id, 'portrait', 80, 128)]).reduce((a, b) => ({ ...a, ...b }), {}), '_astro/products.Ab3_x9Zq.bin': kb(1000) }), '--mode', 'build');
   assert.equal(ok.status, 0, ok.stdout + ok.stderr);
   for (const id of SCENE_IDS) for (const cls of CLASSES) assert.match(ok.stdout, new RegExp(`^ {2}ok +1200\\.0 KB of +1200\\.0 KB {2}loop ${id}, ${cls}`, 'm'));
-  assert.match(ok.stdout, /^ {2}ok +270\.0 KB of +270\.0 KB {2}products\.bin/m);
+  assert.match(ok.stdout, /^ {2}ok +1000\.0 KB of +1000\.0 KB {2}products\.bin/m);
   assert.match(ok.stdout, /the whole section in dist/);
   assert.match(ok.stdout, /one visit, portrait, AVIF/);
   assert.match(ok.stdout, /to the press, wide, AVIF/);

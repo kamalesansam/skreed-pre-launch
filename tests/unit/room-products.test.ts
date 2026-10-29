@@ -17,15 +17,16 @@ type Entry = { path: string; sha256: string; bytes: number; tris: number; sizeMm
 const ENTRIES = Object.entries(PRODUCTS as Record<string, Entry>);
 const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url));
 
-test('the manifest names the three products, each file present with its hash and size', () => {
-  assert.deepEqual(ENTRIES.map(([k]) => k).sort(), ['airpods', 'lenskin', 'wallet']);
+test('the manifest names the four products, each file present with its hash and size', () => {
+  assert.deepEqual(ENTRIES.map(([k]) => k).sort(), ['airpods', 'airpods-max', 'lenskin', 'wallet']);
   for (const [k, e] of ENTRIES) {
-    assert.match(e.path, /^scripts\/room\/models\/[a-z]+\.[0-9a-f]{8}\.glb$/, `${k}: a Blender reference, not a public file`);
+    assert.match(e.path, /^scripts\/room\/models\/[a-z-]+\.[0-9a-f]{8}\.glb$/, `${k}: a Blender reference, not a public file`);
     const buf = file(e.path);
     assert.equal(buf.length, e.bytes, k);
     assert.equal(createHash('sha256').update(buf).digest('hex'), e.sha256, k);
     assert.ok(e.path.includes(e.sha256.slice(0, 8)), `${k}: the name carries the hash`);
-    assert.ok(e.bytes <= 50_000, `${k}: ${e.bytes} B`);
+    // the three of 2026-10-16 were simplified to under 50 KB each; the AirPods Max ships at full detail (Sam, 2026-10-26), 434,572 B meshopt-packed
+    assert.ok(e.bytes <= (k === 'airpods-max' ? 500_000 : 50_000), `${k}: ${e.bytes} B`);
   }
 });
 

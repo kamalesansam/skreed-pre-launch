@@ -164,17 +164,17 @@ line('section 4 on the poster tier: its script (gzip)', posterScript, 8.5);
 const PIC = { wide: { avif: 110, webp: 176 }, portrait: { avif: 80, webp: 128 } };
 for (const id of scenes) for (const cls of CLASSES) line(`loop ${id}, ${cls} (${cls === 'wide' ? '1328 x 692' : '720 x 1280'}, 5.0 s)`, loop(id, cls), 1200, { note: loop(id, cls) ? '' : 'not in this build' });
 for (const f of room.filter((x) => x.group === 'room scene' && SHIPS.has(x.fmt))) line(`still ${f.id}: ${f.cls}, ${FMT[f.fmt]}`, f.stored, PIC[f.cls][f.fmt], { note: f.name });
-line('products.bin', productsBin, 270, { note: productsBin ? 'u16 positions, i8 normals, u16 indices' : 'not in this build' });
+line('products.bin', productsBin, 1000, { note: productsBin ? 'u16 positions, i8 normals, u16 indices; the AirPods Max at full detail since 2026-10-26' : 'not in this build' });
 // to the press (script excluded): products.bin, scene 1's loop and still, hall.bin and its lightmap, per class and format
 for (const fmt of ['avif', 'webp']) for (const cls of CLASSES) {
-  line(`to the press, ${cls}, ${fmt === 'avif' ? 'AVIF' : 'WebP-only browsers'} (script excluded)`, productsBin + loop(scene1, cls) + pic(scene1, cls, fmt) + hallModel + hallLight(fmt), 1700, { note: `scene 1 is ${scene1}` });
+  line(`to the press, ${cls}, ${fmt === 'avif' ? 'AVIF' : 'WebP-only browsers'} (script excluded)`, productsBin + loop(scene1, cls) + pic(scene1, cls, fmt) + hallModel + hallLight(fmt), 2500, { note: `scene 1 is ${scene1}; products.bin carries the AirPods Max at full detail` });
 }
 // the whole section in dist: the ten loops, the twenty stills, products.bin, the hall (its model, lightmap and stills in both formats)
-line('the whole section in dist', storedOf((f) => f.group === 'room loop' || f.group === 'room scene' || f.group === 'room still' || !!f.hall || !!f.products), 15000, { note: `${room.filter((f) => f.group === 'room loop').length} loop(s), ${room.filter((f) => f.group === 'room scene').length} still(s)` });
+line('the whole section in dist', storedOf((f) => f.group === 'room loop' || f.group === 'room scene' || f.group === 'room still' || !!f.hall || !!f.products), 15800, { note: `${room.filter((f) => f.group === 'room loop').length} loop(s), ${room.filter((f) => f.group === 'room scene').length} still(s)` });
 // one visit, per class and format: the class's five loops and five stills, products.bin, the hall
 for (const fmt of ['avif', 'webp']) for (const cls of CLASSES) {
   const bytes = scenes.reduce((a, id) => a + loop(id, cls) + pic(id, cls, fmt), 0) + productsBin + hallModel + hallLight(fmt);
-  line(`one visit, ${cls}, ${FMT[fmt]}`, bytes, 7300);
+  line(`one visit, ${cls}, ${FMT[fmt]}`, bytes, 8100);
 }
 // the poster tier: the hall's still and the five scene stills, one class, one format
 const POSTER = { avif: { portrait: 420, wide: 570 }, webp: { portrait: 660, wide: 900 } };

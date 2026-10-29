@@ -2,16 +2,17 @@
  "bin": {
   "path": "src/assets/room/flux/products.bin",
   "format": "SHP1",
-  "bytes": 269900,
-  "sha256": "3181b030f039246f8648c37e7fa11a1c02d53209f53424227c25e5ac57df57f6",
+  "bytes": 653620,
+  "sha256": "1a9c1f5ad2c3c7413e6af4d4a970732beb6853d72594198dacc5ee5749ab3a17",
   "products": [
    "wallet",
    "airpods",
    "lenskin",
-   "case"
+   "case",
+   "airpods-max"
   ],
-  "vertices": 16472,
-  "triangles": 20203,
+  "vertices": 37110,
+  "triangles": 53176,
   "writtenBy": "scripts/room/products-bin.mjs"
  },
  "products": {
@@ -89,14 +90,14 @@
    "unitMM": null
   },
   "lenskin": {
-   "source": "scripts/room/models/lenskin.3831acd1.glb",
-   "sha256": "3831acd1ffd8f45e2e04cf3d33e8987305e2a9f0e90fa6159f174c020d7fd21b",
+   "source": "scripts/room/models/lenskin.09416015.glb",
+   "sha256": "094160153cac445064e771d011128f9dd929f1682af979fc77af47f732a6a4ef",
    "parts": [
     "shell"
    ],
-   "vertices": 1707,
+   "vertices": 2375,
    "triangles": 1400,
-   "bytes": 23763,
+   "bytes": 29775,
    "sizeMm": [
     65.59,
     38.89,
@@ -157,6 +158,43 @@
    ],
    "gridStepMm": 0.003,
    "unitMM": 196.43
+  },
+  "airpods-max": {
+   "source": "scripts/room/models/airpods-max.cf7f8298.glb",
+   "sha256": "cf7f82984522f468a574455b30cac5d791e8f46d2e7889288e0cb764e92bec84",
+   "parts": [
+    "device",
+    "device-dark",
+    "logo",
+    "shell"
+   ],
+   "vertices": 19970,
+   "triangles": 32973,
+   "bytes": 377568,
+   "sizeMm": [
+    174.36,
+    187.3,
+    79.91
+   ],
+   "boxMm": {
+    "min": [
+     -87.18,
+     -93.65,
+     -39.96
+    ],
+    "max": [
+     87.18,
+     93.65,
+     39.96
+    ]
+   },
+   "centreMovedMm": [
+    0,
+    93.65,
+    0
+   ],
+   "gridStepMm": 0.0114,
+   "unitMM": null
   }
  }
 }

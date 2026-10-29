@@ -17,7 +17,7 @@ import { readFileSync } from 'node:fs';
 import { BufferAttribute, BufferGeometry, Color, DoubleSide, Group, Mesh, MeshPhysicalMaterial, Scene, Texture, type Object3D, type WebGLRenderer } from 'three';
 import { LIGHT, LINES, LOOP_ASPECT, PLACE, STEP, anglesAt, boxOverlap, cloudCover, coverFit, easeStep, fovAt, frameSource, insetPx, keyLight, lightGain, lightTarget, lightUp, linesBox, loopShouldPlay, loopShouldReset, planeCoverage, poseWeight, productFit, productPlacement, productScale, productScreenBox, productYaw, proximity, ringPlace, smoothstep, toView, type LoopClass } from '../../src/scripts/hero/section4/carousel-math.ts';
 import { VIDEO, allowed, create as createPool, wholeBuffered, type VideoElement, type VideoHost, type VideoPool } from '../../src/scripts/hero/section4/video.ts';
-import { CLASS_FILL, CLOUD, EXHIBIT, FINISH, LIGHTS, PARTS, SHADE, createCarousel, type CarouselTune, type SceneDef } from '../../src/scripts/hero/section4/carousel.ts';
+import { CLASS_FILL, CLOUD, EXHIBIT, FINISH, LIGHTS, PARTS, SHADE, createCarousel, partRole, type CarouselTune, type SceneDef } from '../../src/scripts/hero/section4/carousel.ts';
 
 const near = (a: number, b: number, eps = 1e-9, msg?: string) => assert.ok(Math.abs(a - b) <= eps, msg ?? `${a} against ${b}`);
 const DEG = Math.PI / 180;
@@ -192,10 +192,16 @@ test('productYaw: face out at every rest, edge-on at every half step; the scale 
     const w = poseWeight(i + 0.25, i); assert.ok(w > 0 && w < 1, `part of the pose a quarter step out (${w})`); near(w, 0.5, 1e-12, 'the cubic smoothstep\'s half at the quarter');
     assert.ok(poseWeight(i + 0.1, i) > poseWeight(i + 0.2, i), 'falling away from rest');
   }
-  assert.equal(productScale(0, 1, 2), 1); assert.equal(productScale(0.35, 1, 2), 1); assert.equal(productScale(0.5, 1, 2), 1.5);
+  // the scale, each product held within 1.3 of its own size: 1 to 2 is a 2 times change, so the outgoing reaches 1.3 at the swap and the incoming starts at 2 / 1.3
+  assert.equal(productScale(0, 1, 2), 1); assert.equal(productScale(0.35, 1, 2), 1); near(productScale(0.5, 1, 2, false), 1.3, 1e-12, 'the outgoing at the swap'); near(productScale(0.5, 1, 2), 2 / 1.3, 1e-12, 'the incoming at the swap');
   assert.equal(productScale(0.65, 1, 2), 2); assert.equal(productScale(1, 1, 2), 2);
-  assert.ok(productScale(0.45, 1, 2) > 1 && productScale(0.45, 1, 2) < 1.5);
-  assert.equal(STEP.scaleFrom, 0.35); assert.equal(STEP.scaleTo, 0.65);
+  assert.ok(productScale(0.45, 1, 2) > 1 && productScale(0.45, 1, 2) < 1.3);
+  assert.ok(productScale(0.55, 1, 2) > 2 / 1.3 && productScale(0.55, 1, 2) < 2);
+  // a change inside the reach eases the whole way, as before: 1 to 1.2
+  near(productScale(0.5, 1, 1.2, false), 1.2, 1e-12); near(productScale(0.5, 1, 1.2), 1, 1e-12); near(productScale(0.65, 1, 1.2), 1.2, 1e-12);
+  // the Lenskin (2.2) to the AirPods Max (0.62): never more than 1.3 times the Max's size, never under 2.2 / 1.3 for the Lenskin
+  near(productScale(0.5, 2.2, 0.62), 0.62 * 1.3, 1e-12, 'the Max appears at 1.3 times its size, not 3.5'); near(productScale(0.5, 2.2, 0.62, false), 2.2 / 1.3, 1e-12); near(productScale(0.65, 2.2, 0.62), 0.62, 1e-12);
+  assert.equal(STEP.scaleFrom, 0.35); assert.equal(STEP.scaleTo, 0.65); assert.equal(STEP.scaleReach, 1.3);
   // the class scale (spec 3): the case 0.1047 x 0.19674 m in a view 2.8215 units tall at its distance
   const [cw, ch] = [0.1047, 0.19674], viewH = 2 * Math.tan((45 * DEG) / 2) * Math.hypot(0.2, 3.4);
   near(viewH, 2.8215, 5e-4);
@@ -405,7 +411,7 @@ test("the refusal under the carousel's per-frame play() (AC7; the build record's
 }));
 
 test("carousel.ts's constants: the exhibit factors, the class scale's lines, the physical finishes, the lights, the parts, the shade, the cloud's tones", () => {
-  assert.deepEqual(EXHIBIT, { case: 1, wallet: 1.55, airpods: 1.75, lenskin: 2.2 });
+  assert.deepEqual(EXHIBIT, { case: 1, wallet: 1.55, airpods: 1.75, lenskin: 2.2, 'airpods-max': 0.62 });
   assert.deepEqual(CLASS_FILL, { height: 0.55, width: 0.62, centre: null });
   assert.deepEqual(PLACE, { wide: { height: 0.55, width: 0.62, centre: null }, portrait: { height: 0.50, width: 0.62, centre: 0.60 } });
   assert.deepEqual(LINES, { insetMin: 16, insetVw: 0.035, insetMax: 56, column: 520, block: 0.34, gap: 2 });
@@ -415,7 +421,10 @@ test("carousel.ts's constants: the exhibit factors, the class scale's lines, the
   // the metallic finish mirrors the environment's bright ceiling from the raised portrait placement, so its environment is lower there (product-check.mjs at 390 x 844: 96 percent of the Lenskin's face at 255 at 1.0, 2.2 percent at 0.6)
   assert.ok(LIGHTS.metalEnvPortrait < LIGHTS.metalEnv);
   for (const k of ['key', 'env', 'fill'] as const) near(LIGHTS[k] / { key: 1.6, env: 0.575, fill: 0.2 }[k], 0.83, 0.03, `${k}: the spec's balance kept (within 0.03 of 0.83)`);
-  assert.deepEqual(PARTS, { trim: [0.073, 0.077, 0.077], trimRoughness: 0.55, logoTint: 0.8468 });
+  assert.deepEqual(PARTS, { trim: [0.073, 0.077, 0.077], trimRoughness: 0.55, logoTint: 0.8468, device: [0.80, 0.80, 0.79], deviceRoughness: 0.22, deviceDark: [0.02, 0.02, 0.022], deviceDarkRoughness: 0.5 }, "render-products.py's trim, logo and device numbers");
+  // the roles: the AirPods case's "trim" part is its Skreed S (the logo), every other product's trim is trim, device and device-dark are the device a case holds, the rest the body
+  assert.equal(partRole('airpods', 'trim'), 'logo'); assert.equal(partRole('wallet', 'trim'), 'trim'); assert.equal(partRole('case', 'logo'), 'logo');
+  assert.equal(partRole('airpods-max', 'device'), 'device'); assert.equal(partRole('airpods-max', 'device-dark'), 'device-dark'); assert.equal(partRole('airpods-max', 'shell'), 'body'); assert.equal(partRole('airpods', 'lid'), 'body');
   assert.deepEqual(SHADE, { dark: 0.45, solid: 0.45, height: 0.72 }, 'the bottom shade as the contrast check set it (AC12, 2026-10-23)');
   assert.deepEqual(CLOUD.shadow, [0.80, 0.84, 0.93]);
   CLOUD.light.forEach((v, k) => near(v, [0xf7, 0xf6, 0xf3][k] / 255), 'Pearl Whisper');
@@ -432,7 +441,7 @@ function stubRenderer() {
   return { renderer, shown: () => holder()?.children.find((g) => g.visible) ?? null, draws };
 }
 const geometry = () => { const g = new BufferGeometry(); g.setAttribute('position', new BufferAttribute(new Float32Array(9), 3)); g.setAttribute('normal', new BufferAttribute(new Float32Array(9), 3)); g.setIndex(new BufferAttribute(new Uint16Array([0, 1, 2]), 1)); return g; };
-const products = () => (['wallet', 'airpods', 'lenskin', 'case'] as const).map((name) => ({ name, size: name === 'case' ? [0.1047, 0.19674, 0.02656] as [number, number, number] : [0.07, 0.09, 0.005] as [number, number, number], parts: [{ name: 'shell', geometry: geometry() }, { name: 'trim', geometry: geometry() }, { name: 'logo', geometry: geometry() }] }));
+const products = () => (['wallet', 'airpods', 'lenskin', 'case', 'airpods-max'] as const).map((name) => ({ name, size: name === 'case' ? [0.1047, 0.19674, 0.02656] as [number, number, number] : name === 'airpods-max' ? [0.17436, 0.1873, 0.07992] as [number, number, number] : [0.07, 0.09, 0.005] as [number, number, number], parts: name === 'airpods-max' ? [{ name: 'shell', geometry: geometry() }, { name: 'logo', geometry: geometry() }, { name: 'device', geometry: geometry() }, { name: 'device-dark', geometry: geometry() }] : [{ name: 'shell', geometry: geometry() }, { name: 'trim', geometry: geometry() }, { name: 'logo', geometry: geometry() }] }));
 function fakePool(n: number) {
   const st = Array.from({ length: n }, () => ({ playing: false, plays: 0, resets: 0, pauses: 0, tex: null as Texture | null, made: 0 }));
   const pool: VideoPool = { n, unlock() {}, fetch: async () => true, in: () => true, refused: () => false, aspect: () => LOOP_ASPECT.wide, size: () => [1328, 692], texture(i) { if (!st[i].tex) { st[i].tex = new Texture(); st[i].made++; } return st[i].tex as never; }, release(i) { st[i].tex = null; }, resident: (i) => st[i].tex !== null, playing: (i) => st[i].playing, play(i) { st[i].playing = true; st[i].plays++; }, pause(i) { if (st[i].playing) st[i].pauses++; st[i].playing = false; }, reset(i) { if (st[i].playing) st[i].resets++; st[i].playing = false; }, dispose() {} };
@@ -560,8 +569,8 @@ test('D3: at rest every scene\'s product clears the lines\' box (the bottom 34 p
   const bin = JSON.parse(readFileSync(new URL('../../src/data/room-products-bin.json', import.meta.url), 'utf8')) as { products: Record<string, { sizeMm: [number, number, number] }> };
   const sizeOf = (name: string): readonly [number, number, number] => { const e = EXHIBIT[name], m = bin.products[name].sizeMm; return [(m[0] / 1000) * e, (m[1] / 1000) * e, (m[2] / 1000) * e]; };
   const caseM = bin.products.case.sizeMm.map((v) => v / 1000);
-  const order = ['case', 'airpods', 'wallet', 'lenskin', 'case'];
-  const sizes = ['wallet', 'airpods', 'lenskin', 'case'].map(sizeOf);
+  const order = ['case', 'airpods', 'wallet', 'lenskin', 'airpods-max'];
+  const sizes = ['wallet', 'airpods', 'lenskin', 'case', 'airpods-max'].map(sizeOf);
   for (const [w, h] of [[390, 844], [1280, 800]] as const) {
     const p = productPlacement(w, h, caseM[0], caseM[1], sizes), lines = linesBox(w, h);
     const px = (b: { x0: number; y0: number; x1: number; y1: number }) => `x ${Math.round(b.x0 * w)} to ${Math.round(b.x1 * w)}, y ${Math.round(b.y0 * h)} to ${Math.round(b.y1 * h)}`;
