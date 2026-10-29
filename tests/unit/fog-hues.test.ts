@@ -87,8 +87,7 @@ test('both instances write the hues from the shared clock, and no build gate rem
   assert.match(read('src/scripts/hero/section2/background.ts'), /uHueAmt: \{ value: 0 \}/);
   assert.match(read('src/scripts/hero/section2/gems.ts'), /writeHues\(bg\.uniforms, hueFrame\(t, REDUCE\), 1\);/);
   const ground = read('src/scripts/hero/section3/ground.ts');
-  assert.match(ground, /const F = hueFrame\(t, reduced\)/);
-  assert.match(ground, /writeHues\(U, F, 1 - grey\);/);
-  assert.match(ground, /dataset\.state === 'result'/);          // the fade to grey under the quiz's result
+  assert.match(ground, /writeHues\(U, hueFrame\(t, reduced\), 1\);/);   // at full strength under the quiz's result too (Sam, 2026-10-29: "keep it on")
+  assert.doesNotMatch(ground, /dataset\.state|getElementById|toGrey|1 - grey/, 'the ground reads nothing from the DOM: no fade to grey under the result');
   for (const f of ['src/scripts/hero/section3/ground.ts', 'src/env.d.ts', 'package.json']) assert.doesNotMatch(read(f), /PUBLIC_FOG_HUES/, `${f} has no build gate`);
 });
