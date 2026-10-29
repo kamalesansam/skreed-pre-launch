@@ -3,7 +3,7 @@
   "path": "src/assets/room/flux/products.bin",
   "format": "SHP1",
   "bytes": 653620,
-  "sha256": "1a9c1f5ad2c3c7413e6af4d4a970732beb6853d72594198dacc5ee5749ab3a17",
+  "sha256": "4c685a6adc331ec4d3e16d300a5b134f70de9c49bd2528e0569f68086b29bc15",
   "products": [
    "wallet",
    "airpods",
@@ -160,8 +160,8 @@
    "unitMM": 196.43
   },
   "airpods-max": {
-   "source": "scripts/room/models/airpods-max.cf7f8298.glb",
-   "sha256": "cf7f82984522f468a574455b30cac5d791e8f46d2e7889288e0cb764e92bec84",
+   "source": "scripts/room/models/airpods-max.99af041b.glb",
+   "sha256": "99af041be93869cc039f0eee1bfad5f410946a37baf6f864f1a269ca4252ecc4",
    "parts": [
     "device",
     "device-dark",

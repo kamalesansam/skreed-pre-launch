@@ -27,7 +27,12 @@
 #                review of 2026-10-26 found when it was roled device and the cups read grey with a lilac ring) and the
 #                cups' side bands (Pod1, Pod2); the Skreed S on the right cup (lambert24) as "logo"; the headband frame
 #                and arms (head) as "device"; the headband's canopy (clothhead), the cushions (lambert25) and the cushion
-#                mesh (Pods_Cloth) as "device-dark"; the file is drawn at 1,189 mm tall and is scaled to Apple's 187.3 mm
+#                mesh (Pods_Cloth) as "device-dark"; the file is drawn at 1,189 mm tall and is scaled to Apple's 187.3 mm.
+#                The Digital Crown (1,861 faces, 62 by 61 by 53 mm in the file's frame), the noise button (192 faces, 22 by
+#                63 by 26) and the crown's cap (14 faces, 43 by 41 by 29) are islands inside the right band's slot (Pod1),
+#                beside the band (386 by 493 by 562), the inner lip (236 by 382 by 444) and the faces (over 300 each way), so
+#                every island of a shell slot under carve_small_mm (70) in all three dimensions is cut out as "device"
+#                (Sam, 2026-10-26: "no dont", to the crown and the button taking the shade)
 #   wallet       as products.py's plan, for a re-export at full detail when the FBX is to hand
 import bpy, sys, os, math, json
 from mathutils import Vector, Matrix
@@ -47,7 +52,7 @@ PLANS = {
                 'source': "Sam's lenskin FBX (2026-10-16), cleaned at full detail by scripts/room/products-full.py"},
     'airpods-max': {'roles': {'Pod1': 'shell', 'Pod2': 'shell', 'lambert7': 'shell', 'lambert24': 'logo', 'head': 'device',
                               'clothhead': 'device-dark', 'lambert25': 'device-dark', 'Pods_Cloth': 'device-dark'},
-                    'default': 'device', 'height_m': 0.1873, 'stand': False, 'smooth_deg': 30.0,
+                    'default': 'device', 'height_m': 0.1873, 'stand': False, 'smooth_deg': 30.0, 'carve_small_mm': 70.0,
                     'source': "Sam's AirPods Max FBX (2026-10-26), cleaned at full detail by scripts/room/products-full.py (the device kept, E-S4-device)"},
     'wallet': {'roles': {'lambert3': 'shell', 'lambert25': 'shell', 'lambert2': 'edge', 'standardSurface2': 'trim', 'lambert24': 'logo'},
                'default': 'drop', 'height_m': 0.0938, 'stand': False,
@@ -91,12 +96,26 @@ for o in meshes:
         bpy.ops.mesh.separate(type='MATERIAL'); bpy.ops.object.mode_set(mode='OBJECT')
 pieces = [o for o in bpy.context.scene.objects if o.type == 'MESH']
 by_role = {}
+carved = []
+def island_size_mm(ob):
+    vs = ob.data.vertices
+    return [round((max(v.co[i] for v in vs) - min(v.co[i] for v in vs)) * 1000, 1) for i in range(3)]
 for o in pieces:
     used = {p.material_index for p in o.data.polygons}
     names = [(o.data.materials[i].name if o.data.materials[i] else f'slot{i}') for i in used if i < len(o.data.materials)]
     name = names[0] if names else 'slot0'
     r = role_of(name)
     if r == 'drop': bpy.data.objects.remove(o); continue
+    if r == 'shell' and plan.get('carve_small_mm'):
+        # the slot's mesh islands apart: the small ones (the crown, the button, the cap) are the device, the rest the cover
+        bpy.ops.object.select_all(action='DESELECT'); o.select_set(True); bpy.context.view_layer.objects.active = o
+        bpy.ops.object.mode_set(mode='EDIT'); bpy.ops.mesh.select_all(action='SELECT'); bpy.ops.mesh.separate(type='LOOSE'); bpy.ops.object.mode_set(mode='OBJECT')
+        for isl in [x for x in bpy.context.selected_objects if x.type == 'MESH']:
+            size = island_size_mm(isl)
+            small = max(size) < plan['carve_small_mm']
+            if small: carved.append({'slot': name, 'faces': len(isl.data.polygons), 'size_mm_file': size})
+            by_role.setdefault('device' if small else 'shell', []).append(isl)
+        continue
     by_role.setdefault(r, []).append(o)
 parts = {}
 for r, objs in by_role.items():
@@ -128,7 +147,7 @@ for ob in parts.values(): ob.data.transform(T)
 size = hi - lo
 
 # triangulate (quads_convert_to_tris keeps custom normals), and only over the budget, collapse to it
-report = {'which': WHICH, 'size_mm': [round(v * 1000, 2) for v in size], 'parts': {}, 'slots_in': slots_in, 'source': plan['source'], 'tris_budget': TRIS}
+report = {'which': WHICH, 'size_mm': [round(v * 1000, 2) for v in size], 'parts': {}, 'slots_in': slots_in, 'source': plan['source'], 'tris_budget': TRIS, 'carved': carved}
 for name in ROLE_ORDER:
     if name not in parts: continue
     ob = parts[name]

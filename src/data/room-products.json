@@ -50,9 +50,9 @@
   "source": "Sam's lenskin FBX (2026-10-16), cleaned by scripts/room/products.py; normals re-smoothed at 20 degrees by scripts/room/renormal.mjs (2026-10-26), geometry unchanged"
  },
  "airpods-max": {
-  "path": "scripts/room/models/airpods-max.cf7f8298.glb",
-  "sha256": "cf7f82984522f468a574455b30cac5d791e8f46d2e7889288e0cb764e92bec84",
-  "bytes": 164864,
+  "path": "scripts/room/models/airpods-max.99af041b.glb",
+  "sha256": "99af041be93869cc039f0eee1bfad5f410946a37baf6f864f1a269ca4252ecc4",
+  "bytes": 165264,
   "tris": 32973,
   "sizeMm": [
    174.36,
