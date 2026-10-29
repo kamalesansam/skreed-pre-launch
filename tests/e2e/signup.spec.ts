@@ -1,21 +1,39 @@
-// Section 5, the sign-up (docs/specs/section-5.md 7): AC3 the follow (a press on a follow word is an https link to a
-// new tab with noopener, counts the platform as collected, pours its worth into your jar over 0.9 s, a second press
-// pours nothing, the follows survive a reload within the visit and are gone in a new session; nothing on a jar moves
-// at rest), AC5 the form with its endpoint routed to a stub (validation on blur and submit, a 5xx keeps the address
-// and shows the error line, offline queues and sends on `online`, a 422 marks the field, a 409 reads as success, success
-// shows the done line and "Not you?" puts the fields back), AC9 the links' names and the live region, AC10 the poster
-// tier (the stills with the words, your jar's count in words, no island, no tall track) and the still3d tier (the fill
-// instant). The 3D path runs on SwiftShader here (?tier=hero3d), the glue off (?glue=0) and section 4 open (?room=open),
-// as room.spec does; the exit seam and the wrap onto section 5 are room.spec's cases. The test build (PUBLIC_HERO_HOOKS
-// 1) renders the form (PUBLIC_LEADS unset is on there).
+// Section 5, the sign-up (docs/specs/section-5-sand.md 8): AC2 the jar's placement (its projected box inside its slot at
+// 0.9 of the slot's height, at rest and after a scroll), AC3 nothing moving at rest (two stills 1.5 s apart byte-equal,
+// the level and the stream unchanged), AC4 the pour's schedule (the Instagram press on the empty jar held by the
+// stream's clock at its lead, a quarter, a half, past its total; data-pouring and the poured event), AC5 a second
+// press on the same word pours nothing, AC6 the extension (YouTube pressed while Facebook's stream emits: one stream,
+// the switch at the old window's end, the level continuous) and the queue (pressed after the window has closed: its
+// own stream after the first's total), AC7 the reload within the visit, a new session and a throwing sessionStorage,
+// AC8 the layers' order in the jar's description, AC9 the poster tier (the still of the state swapped on a press, one
+// request each, a saved follow's still first) and the still3d tier (everything set at once); and, as built, the
+// follow words (https links to a new tab with noopener), the live region and the form's states against a stub. The 3D
+// path runs on SwiftShader here (?tier=hero3d), the glue off (?glue=0) and section 4 open (?room=open), as room.spec
+// does; the exit seam and the wrap onto section 5 are room.spec's cases. The test build (PUBLIC_HERO_HOOKS 1) renders
+// the form (PUBLIC_LEADS unset is on there).
 import { test, expect, type Page } from '@playwright/test';
 
-type S5 = { ready: boolean; failed: boolean; order: string[]; levels: Record<string, number>; filling: string[] };
+type Box = { x: number; y: number; w: number; h: number };
+type Pour = { id: string; ids: string[]; t: number; phase: string; lead: number; pour: number; emit: number; total: number; switches: number[]; owners: number[]; grains: number; dust: number };
+type S5 = { ready: boolean; failed: boolean; order: string[]; level: number; target: number; pour: Pour | null; queue: string[]; layers: { id: string; from: number; to: number }[]; mound: { cone: number; dome: number }; bands: number[]; owners: number[]; slot: Box | null; placed: { px: number; box: Box; tilt: number } | null };
+type Poured = { id: string; level: number };
 const s5 = (page: Page): Promise<S5 | null> => page.evaluate(() => (window.__s5?.state() ?? null) as S5 | null);
 const events = (page: Page): Promise<string[]> => page.evaluate(() => ((window as unknown as { __skreedEvents?: { name: string }[] }).__skreedEvents ?? []).map((e) => e.name));
+const poured = (page: Page): Promise<Poured[]> => page.evaluate(() => (window as unknown as { __poured?: Poured[] }).__poured ?? []);
 const said = (page: Page, sel: string) => page.locator(`${sel} .sr-only`).first().textContent({ timeout: 5_000 }).catch(() => '');
+/** the stream held at t seconds of its clock (two frames drawn), or let run from where it stands (null) */
+const scrub = async (page: Page, t: number | null) => { await page.evaluate((t) => window.__s5?.scrub(t), t); await page.waitForTimeout(160); };
+/** a still's bytes folded to a hash (FNV-1a over the pixels), taken in the page */
+const stillHash = (page: Page, order: string[]) => page.evaluate(async (order) => {
+  const s = await window.__s5!.still(order);
+  if (!s) return null;
+  let h = 2166136261;
+  for (let i = 0; i < s.data.length; i++) { h ^= s.data[i]; h = Math.imul(h, 16777619) >>> 0; }
+  return `${s.width}x${s.height}:${h}`;
+}, order);
 
 async function open3d(page: Page, baseURL: string | undefined, extra = ''): Promise<void> {
+  await page.addInitScript(() => { const w = window as unknown as { __poured: Poured[] }; w.__poured = []; addEventListener('skreed:signup-poured', (e) => { w.__poured.push((e as CustomEvent<Poured>).detail); }); });
   await page.goto(new URL('/?tier=hero3d&glue=0&room=open' + extra, baseURL).href);
   await page.waitForFunction(() => window.__heroStarted && !!window.__skreedIntro, null, { timeout: 540_000, polling: 500 });
   await page.evaluate(() => (window.__skreedIntro as unknown as { skip(): void }).skip());
@@ -32,8 +50,15 @@ async function atSignup(page: Page): Promise<void> {
 async function press(page: Page, id: string): Promise<void> {
   await page.evaluate((id) => { const a = document.querySelector<HTMLAnchorElement>(`a.su-follow[data-id="${id}"]`)!; a.addEventListener('click', (e) => e.preventDefault(), { once: true }); a.click(); }, id);
 }
+/** the running stream let run until it has settled and the queue is empty */
+async function settled(page: Page, timeout = 12_000): Promise<void> {
+  await scrub(page, null);
+  await page.waitForFunction(() => { const s = window.__s5?.state() as S5 | null; return !!s && s.pour === null && s.queue.length === 0; }, null, { timeout, polling: 100 });
+  await page.waitForTimeout(150);
+}
+const inside = (b: Box, s: Box) => b.x >= s.x - 1 && b.y >= s.y - 1 && b.x + b.w <= s.x + s.w + 1 && b.y + b.h <= s.y + s.h + 1;
 
-test('section 5 at 390 x 844: the follow words, the pour, the stacking, the second press, the visit\'s memory, and nothing moving at rest (AC3, AC9)', async ({ browser, baseURL }) => {
+test('section 5 at 390 x 844: the follow words, the placement, nothing at rest, the pour by its clock, the second press, the extension, the layers, the visit\'s memory (AC2 to AC8)', async ({ browser, baseURL }) => {
   test.setTimeout(900_000);
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
@@ -54,60 +79,176 @@ test('section 5 at 390 x 844: the follow words, the pour, the stacking, the seco
     const box = await a.boundingBox();
     expect(box!.height).toBeGreaterThanOrEqual(44);
   }
-  // at rest: the three platform jars at their worth, your jar empty, nothing filling
+  // AC2: the one slot 218 x 273, the jar's projected box inside it at 0.9 of its height, at rest and after a scroll of 120 px
   const s0 = (await s5(page))!;
   expect(s0.ready).toBe(true);
-  expect(s0.levels).toEqual({ facebook: 0.25, youtube: 0.25, instagram: 0.5, yours: 0 });
-  expect(s0.filling).toEqual([]);
+  expect(s0.slot && Math.round(s0.slot.w)).toBe(218); expect(s0.slot && Math.round(s0.slot.h)).toBe(273);
+  expect(s0.placed!.tilt).toBe(10);
+  expect(inside(s0.placed!.box, s0.slot!)).toBe(true);
+  expect(Math.abs(s0.placed!.box.h - 0.9 * s0.slot!.h)).toBeLessThan(3);
+  await page.evaluate(() => { scrollTo({ top: scrollY + 120, behavior: 'instant' }); window.__skreedSnap?.(scrollY / innerHeight); });
+  await page.waitForTimeout(400);
+  const s1 = (await s5(page))!;
+  expect(inside(s1.placed!.box, s1.slot!)).toBe(true);
+  expect(Math.abs(s1.placed!.box.h - 0.9 * s1.slot!.h)).toBeLessThan(3);
+  expect(s1.slot!.y - s0.slot!.y).toBeCloseTo(-120, 0);
+  await page.evaluate(() => { scrollTo({ top: scrollY - 120, behavior: 'instant' }); window.__skreedSnap?.(scrollY / innerHeight); });
+  await page.waitForTimeout(400);
+  await expect(page.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('aria-label', 'An empty glass jar.');
+  // AC3: nothing moves at rest: two stills 1.5 s apart byte-equal, the level and the stream unchanged
+  expect(s0.level).toBe(0); expect(s0.pour).toBeNull(); expect(s0.queue).toEqual([]);
+  const h1 = await stillHash(page, ['instagram']);
   await page.waitForTimeout(1500);
-  expect((await s5(page))!.levels.yours).toBe(0);
-  // the Instagram press: collected, your jar half full after the fill, the live region once
+  const h2 = await stillHash(page, ['instagram']);
+  expect(h1).not.toBeNull(); expect(h2).toBe(h1);
+  expect((await s5(page))!.level).toBe(0); expect((await s5(page))!.pour).toBeNull();
+  // AC4: the Instagram press: the stream within 100 ms, its schedule, the level by its clock, settled past its total
   await press(page, 'instagram');
-  await expect(page.locator('li.su-jar[data-id="instagram"]')).toHaveAttribute('data-collected', '1');
-  await expect(page.locator('li.su-jar[data-id="yours"]')).toHaveAttribute('data-n', '1');
+  await page.waitForTimeout(100);
+  const p0 = (await s5(page))!;
+  expect(p0.pour?.id).toBe('instagram');
+  await expect(page.locator('#signup')).toHaveAttribute('data-pouring', 'instagram');
+  expect(Math.abs(p0.pour!.lead - 0.512)).toBeLessThan(0.005);
+  expect(p0.pour!.pour).toBeCloseTo(1.8, 6);
+  expect(Math.abs(p0.pour!.total - 2.912)).toBeLessThan(0.005);
+  expect(p0.pour!.switches).toEqual([]); expect(p0.pour!.owners).toEqual([2]);
+  expect(p0.pour!.grains).toBeGreaterThan(3000); expect(p0.pour!.dust).toBeGreaterThan(600);
+  await scrub(page, 0.2);
+  const pa = (await s5(page))!;
+  expect(pa.pour!.phase).toBe('lead'); expect(pa.level).toBe(0); expect(pa.pour!.t).toBe(0.2);
+  await scrub(page, p0.pour!.lead + 0.9);
+  expect(Math.abs((await s5(page))!.level - 0.25)).toBeLessThan(0.02);
+  expect((await s5(page))!.mound.cone).toBeGreaterThan(0.05);
+  await scrub(page, p0.pour!.lead + 1.8);
+  expect((await s5(page))!.level).toBe(0.5);
+  await scrub(page, p0.pour!.total + 0.05);
+  const pe = (await s5(page))!;
+  expect(pe.level).toBe(0.5); expect(pe.pour).toBeNull();
+  await scrub(page, null);
+  await page.waitForTimeout(400);
+  await expect(page.locator('#signup')).not.toHaveAttribute('data-pouring');
+  expect(await poured(page)).toEqual([{ id: 'instagram', level: 0.5 }]);
+  expect(Math.abs((await s5(page))!.mound.dome - 0.012)).toBeLessThan(1e-6);
+  // the state lines and the live region as built; the jar's description reads the layer
+  await expect(page.locator('li.su-follow-row[data-id="instagram"]')).toHaveAttribute('data-collected', '1');
+  await expect(page.locator('.su-jar')).toHaveAttribute('data-n', '1');
+  await expect(page.locator('.su-jar')).toHaveAttribute('data-level', '0.500');
   await expect(page.locator('#suLive')).toHaveText('Instagram collected. Your jar: 1 of 3.');
-  await expect.poll(async () => (await s5(page))!.levels.yours, { timeout: 5_000 }).toBe(0.5);
-  await expect.poll(() => said(page, 'li.su-jar[data-id="instagram"] .su-state'), { timeout: 5_000 }).toBe('Collected');
-  await expect.poll(() => said(page, 'li.su-jar[data-id="yours"] .su-state'), { timeout: 5_000 }).toBe('1 of 3 collected');
+  await expect.poll(() => said(page, 'li.su-follow-row[data-id="instagram"] .su-state'), { timeout: 5_000 }).toBe('Collected');
+  await expect.poll(() => said(page, '.su-count'), { timeout: 5_000 }).toBe('1 of 3 collected');
+  await expect(page.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('aria-label', 'A glass jar half full of sand, from the bottom: Playful Pink and Vivid Violet.');
   expect(await events(page)).toContain('follow_click');
-  // a second press pours nothing
+  // AC5: a second press on the same word opens the page and pours nothing
   await press(page, 'instagram');
-  await page.waitForTimeout(1200);
-  expect((await s5(page))!.levels.yours).toBe(0.5);
+  await page.waitForTimeout(600);
+  expect((await s5(page))!.level).toBe(0.5); expect((await s5(page))!.pour).toBeNull();
   expect((await s5(page))!.order).toEqual(['instagram']);
-  // the other two: full, in order
+  await expect(page.locator('a.su-follow[data-id="instagram"]')).toHaveAttribute('href', 'https://www.instagram.com/skreedofficial/');
+  await expect(page.locator('#suLive')).toHaveText('Instagram collected. Your jar: 1 of 3.');
+  expect((await poured(page)).length).toBe(1);
+  // AC6: the extension: Facebook pressed on the half-full jar, YouTube pressed while its stream emits (at 0.3 s of its clock)
   await press(page, 'facebook');
-  await expect.poll(async () => (await s5(page))!.levels.yours, { timeout: 5_000 }).toBe(0.75);
+  await page.waitForTimeout(60);
+  await scrub(page, 0.3);
+  const f0 = (await s5(page))!;
+  expect(f0.pour!.ids).toEqual(['facebook']);
+  expect(f0.pour!.t).toBe(0.3); expect(0.3).toBeLessThan(f0.pour!.emit);
+  await expect(page.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('aria-label', 'A glass jar three quarters full of sand, from the bottom: Playful Pink and Vivid Violet, then Blissful Blue.');
   await press(page, 'youtube');
-  await expect.poll(async () => (await s5(page))!.levels.yours, { timeout: 5_000 }).toBe(1);
-  await expect(page.locator('#suLive')).toHaveText('YouTube collected. Your jar is full.');
-  await expect.poll(() => said(page, 'li.su-jar[data-id="yours"] .su-state'), { timeout: 5_000 }).toBe('Full');
-  expect((await s5(page))!.order).toEqual(['instagram', 'facebook', 'youtube']);
+  await page.waitForTimeout(160);
+  const f1 = (await s5(page))!;
+  expect(f1.pour!.ids).toEqual(['facebook', 'youtube']);
+  expect(f1.pour!.switches.length).toBe(1); expect(Math.abs(f1.pour!.switches[0] - f0.pour!.emit)).toBeLessThan(1e-6);
+  expect(f1.pour!.owners).toEqual([0, 1]);
+  expect(f1.queue).toEqual([]);
+  expect(Math.abs(f1.level - f0.level)).toBeLessThan(0.005);
+  // the level is rebased at the press, or at the lead when the press comes before the first grain lands (0.3 s is inside Facebook's 0.405 s lead here)
+  expect(f1.pour!.lead).toBeCloseTo(Math.max(0.3, f0.pour!.lead), 6);
+  expect(Math.abs(f1.pour!.total - (f1.pour!.lead + (1 - 0.5) * 3.6 + 0.6))).toBeLessThan(1e-6);
+  expect(Math.abs(f1.pour!.total - (0.3 + (1 - f0.level) * 3.6 + 0.6))).toBeLessThan(0.15);
+  await settled(page);
+  const f2 = (await s5(page))!;
+  expect(f2.level).toBe(1); expect(f2.pour).toBeNull();
+  expect(f2.layers).toEqual([{ id: 'instagram', from: 0, to: 0.5 }, { id: 'facebook', from: 0.5, to: 0.75 }, { id: 'youtube', from: 0.75, to: 1 }]);
+  expect(f2.bands).toEqual([0.5, 0.75, 1, 1]); expect(f2.owners).toEqual([2, 0, 1, 1]);
   expect(await events(page)).toContain('jar_full');
-  // remembered for the visit: the follows stand after a reload, in order
+  expect(await poured(page)).toEqual([{ id: 'instagram', level: 0.5 }, { id: 'youtube', level: 1 }]);
+  await expect(page.locator('#suLive')).toHaveText('YouTube collected. Your jar is full.');
+  await expect.poll(() => said(page, '.su-count'), { timeout: 5_000 }).toBe('Full');
+  await expect(page.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('aria-label', 'A glass jar full of sand, from the bottom: Playful Pink and Vivid Violet, then Blissful Blue, then Roaring Red.');
+  expect((await s5(page))!.order).toEqual(['instagram', 'facebook', 'youtube']);
+  // AC7: remembered for the visit: the follows stand after a reload, in order, with no stream and no poured event
   await page.reload();
   await page.waitForFunction(() => window.__heroStarted && !!window.__skreedIntro, null, { timeout: 540_000, polling: 500 });
   await page.evaluate(() => (window.__skreedIntro as unknown as { skip(): void }).skip());
   await page.waitForFunction(() => !document.documentElement.classList.contains('loading'), null, { timeout: 300_000, polling: 500 });
   await atSignup(page);
-  await expect(page.locator('li.su-jar[data-id="yours"]')).toHaveAttribute('data-n', '3');
-  expect((await s5(page))!.order).toEqual(['instagram', 'facebook', 'youtube']);
-  expect((await s5(page))!.levels.yours).toBe(1);
+  await expect(page.locator('.su-jar')).toHaveAttribute('data-n', '3');
+  const r = (await s5(page))!;
+  expect(r.order).toEqual(['instagram', 'facebook', 'youtube']);
+  expect(r.level).toBe(1); expect(r.pour).toBeNull();
+  expect(await poured(page)).toEqual([]);
   expect(errors).toEqual([]);
   await ctx.close();
   // gone in a new session
   const fresh = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
   const p2 = await fresh.newPage();
   await p2.goto(new URL('/?tier=poster&room=open', baseURL).href);
-  await expect(p2.locator('li.su-jar[data-id="yours"]')).not.toHaveAttribute('data-n', '3');
+  await expect(p2.locator('.su-jar')).toHaveAttribute('data-n', '0');
   await fresh.close();
 });
 
-test('section 5 at 390 x 844 on the poster tier: the text on night, the stills with the words, the count in words, no island, and the form\'s states against a stub (AC5, AC10)', async ({ page, baseURL }) => {
+test('section 5 at 390 x 844: the queue (YouTube pressed after Facebook\'s window has closed), and the follows with sessionStorage throwing (AC6, AC7)', async ({ browser, baseURL }) => {
+  test.setTimeout(600_000);
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+  const page = await ctx.newPage();
+  await open3d(page, baseURL);
+  await atSignup(page);
+  await press(page, 'instagram');
+  await settled(page);
+  expect((await s5(page))!.level).toBe(0.5);
+  await press(page, 'facebook');
+  await page.waitForTimeout(60);
+  await scrub(page, 1.0);
+  const f = (await s5(page))!;
+  expect(f.pour!.ids).toEqual(['facebook']);
+  expect(1.0).toBeGreaterThan(f.pour!.emit);
+  await press(page, 'youtube');
+  await page.waitForTimeout(160);
+  const q = (await s5(page))!;
+  expect(q.pour!.ids).toEqual(['facebook']); expect(q.queue).toEqual(['youtube']);
+  await scrub(page, null);
+  // the second stream begins at the first's total with its own lead, from three quarters
+  await page.waitForFunction(() => (window.__s5?.state() as S5 | null)?.pour?.id === 'youtube', null, { timeout: 8_000, polling: 50 });
+  const y = (await s5(page))!;
+  expect(y.queue).toEqual([]); expect(y.pour!.switches).toEqual([]); expect(y.pour!.owners).toEqual([1]);
+  expect(Math.abs(y.pour!.lead - 0.341)).toBeLessThan(0.01);
+  await expect(page.locator('#signup')).toHaveAttribute('data-pouring', 'youtube');
+  await page.waitForFunction(() => { const s = window.__s5?.state() as S5 | null; return !!s && s.level === 1 && s.pour === null; }, null, { timeout: 8_000, polling: 100 });
+  expect(await poured(page)).toEqual([{ id: 'instagram', level: 0.5 }, { id: 'facebook', level: 0.75 }, { id: 'youtube', level: 1 }]);
+  await ctx.close();
+  // with sessionStorage throwing the follows hold for the page's life and a reload starts empty
+  const noStore = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+  const p3 = await noStore.newPage();
+  await p3.addInitScript(() => { Object.defineProperty(window, 'sessionStorage', { get() { throw new Error('no storage'); } }); });
+  await p3.goto(new URL('/?tier=poster&room=open', baseURL).href);
+  await p3.locator('#signup').scrollIntoViewIfNeeded();
+  await p3.waitForTimeout(800);
+  await press(p3, 'facebook');
+  await expect(p3.locator('.su-jar')).toHaveAttribute('data-n', '1');
+  await p3.reload();
+  await p3.locator('#signup').scrollIntoViewIfNeeded();
+  await expect(p3.locator('.su-jar')).toHaveAttribute('data-n', '0');
+  await noStore.close();
+});
+
+test('section 5 at 390 x 844 on the poster tier: the text on night, the still of the state, the count in words, no island, a saved follow\'s still first, and the form\'s states against a stub (AC9, the form as built)', async ({ browser, baseURL }) => {
   test.setTimeout(300_000);
-  await page.setViewportSize({ width: 390, height: 844 });
-  const calls: Record<string, string>[] = [];
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+  const page = await ctx.newPage();
+  const calls: Record<string, string>[] = [], stills: string[] = [];
   let answer: { status: number } = { status: 500 }, offline = false;
+  page.on('request', (r) => { if (/\/jar-[0fyi]{1,3}-(1x|2x)\./.test(r.url())) stills.push(r.url()); });
   // the stub answers as the Worker would; while the context is offline it fails the request as the network would (a route
   // fulfils before the offline emulation, so the stub has to refuse on its own)
   // the page opened with the quiz gate's override (?room=open, hooks builds): section 5 is locked with section 4 until the quiz
@@ -118,14 +259,32 @@ test('section 5 at 390 x 844 on the poster tier: the text on night, the stills w
   await page.waitForTimeout(800);
   expect(await page.evaluate(() => !!window.__s5?.state?.())).toBe(false);
   await expect(root).toHaveCSS('background-color', 'rgb(5, 5, 6)');
-  await expect(page.locator('#signup .su-jar')).toHaveCount(4);
-  // the stills come in on this tier (the build carries them: absent files render no picture, and the words stand)
-  const stills = await page.locator('#signup picture.su-still').count();
-  if (stills) { await expect(page.locator('#signup picture.su-still')).toHaveCount(4); await expect(page.locator('#signup picture.su-still img').first()).toHaveJSProperty('complete', true); expect(await page.locator('#signup picture.su-still[data-lazy]').count()).toBe(0); }
-  // a press counts in words
+  await expect(page.locator('#signup .su-jar')).toHaveCount(1);
+  await expect(page.locator('#signup li.su-follow-row')).toHaveCount(3);
+  await expect(page.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('role', 'img');
+  await expect(page.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('aria-label', 'An empty glass jar.');
+  // the still comes in on this tier (the build carries them: absent files render no picture, and the words stand)
+  const pics = await page.locator('#signup picture.su-still').count();
+  if (pics) {
+    await expect(page.locator('#signup picture.su-still')).toHaveCount(1);
+    await expect(page.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('data-still', '0');
+    await expect(page.locator('#signup picture.su-still img')).toHaveJSProperty('complete', true);
+    await expect(page.locator('#signup picture.su-still img')).toHaveAttribute('alt', '');
+    expect(await page.locator('#signup picture.su-still[data-lazy]').count()).toBe(0);
+    expect(stills.length).toBe(1); expect(stills[0]).toMatch(/jar-0-(1x|2x)\./);
+  }
+  // a press counts in words and swaps the still of the state, one request
   await page.evaluate(() => { const a = document.querySelector<HTMLAnchorElement>('a.su-follow[data-id="facebook"]')!; a.addEventListener('click', (e) => e.preventDefault(), { once: true }); a.click(); });
-  await expect(page.locator('li.su-jar[data-id="yours"]')).toHaveAttribute('data-n', '1');
-  await expect.poll(() => said(page, 'li.su-jar[data-id="yours"] .su-state'), { timeout: 5_000 }).toBe('1 of 3 collected');
+  await expect(page.locator('.su-jar')).toHaveAttribute('data-n', '1');
+  await expect.poll(() => said(page, '.su-count'), { timeout: 5_000 }).toBe('1 of 3 collected');
+  await expect(page.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('aria-label', 'A glass jar a quarter full of sand, from the bottom: Blissful Blue.');
+  await expect(root).not.toHaveAttribute('data-pouring');
+  if (pics) {
+    await expect(page.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('data-still', 'f');
+    await expect.poll(() => page.locator('#signup picture.su-still img').evaluate((img: HTMLImageElement) => (img.complete ? img.currentSrc : '')), { timeout: 10_000 }).toMatch(/jar-f-(1x|2x)\./);
+    expect(stills.filter((u) => /jar-f-/.test(u)).length).toBe(1);
+    expect(stills.length).toBe(2);
+  }
   // the form: validation on blur and submit, never per keystroke
   const email = page.locator('#suEmail'), consent = page.locator('#suConsent'), send = page.locator('#suSend');
   await email.fill('not-an-address');
@@ -176,9 +335,25 @@ test('section 5 at 390 x 844 on the poster tier: the text on night, the stills w
   expect(await events(page)).toContain('signup_success');
   // the request carries no cookie
   expect(await page.evaluate(() => document.cookie)).toBe('');
+  await ctx.close();
+  // a mount with saved follows requests the right state's still first, never the empty jar's
+  if (pics) {
+    const saved = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+    const p2 = await saved.newPage();
+    const got: string[] = [];
+    p2.on('request', (r) => { if (/\/jar-[0fyi]{1,3}-(1x|2x)\./.test(r.url())) got.push(r.url()); });
+    await p2.addInitScript(() => { try { sessionStorage.setItem('skreed:signup-follows', '["instagram"]'); } catch { /* none */ } });
+    await p2.goto(new URL('/?tier=poster&room=open', baseURL).href);
+    await p2.locator('#signup').scrollIntoViewIfNeeded();
+    await expect(p2.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('data-still', 'i');
+    await expect.poll(() => p2.locator('#signup picture.su-still img').evaluate((img: HTMLImageElement) => (img.complete ? img.currentSrc : '')), { timeout: 10_000 }).toMatch(/jar-i-(1x|2x)\./);
+    expect(got.length).toBe(1); expect(got[0]).toMatch(/jar-i-/);
+    await expect(p2.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('aria-label', 'A glass jar half full of sand, from the bottom: Playful Pink and Vivid Violet.');
+    await saved.close();
+  }
 });
 
-test('section 5 at 390 x 844 under reduced motion (still3d): the jars drawn, the fill instant (AC10)', async ({ browser, baseURL }) => {
+test('section 5 at 390 x 844 under reduced motion (still3d): the jar drawn, the level set at once, no stream, the poured event at once (AC9)', async ({ browser, baseURL }) => {
   test.setTimeout(900_000);
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, reducedMotion: 'reduce' });
   const page = await ctx.newPage();
@@ -186,10 +361,18 @@ test('section 5 at 390 x 844 under reduced motion (still3d): the jars drawn, the
   await atSignup(page);
   const s = await s5(page);
   if (s && s.ready) {
+    let pouring = false;
+    await page.exposeFunction('__pouringSeen', () => { pouring = true; });
+    await page.evaluate(() => { new MutationObserver(() => { if (document.getElementById('signup')!.hasAttribute('data-pouring')) (window as unknown as { __pouringSeen(): void }).__pouringSeen(); }).observe(document.getElementById('signup')!, { attributes: true, attributeFilter: ['data-pouring'] }); });
     await press(page, 'instagram');
     await page.waitForTimeout(80);
-    expect((await s5(page))!.levels.yours).toBe(0.5);
-    expect((await s5(page))!.filling).toEqual([]);
+    const after = (await s5(page))!;
+    expect(after.level).toBe(0.5); expect(after.pour).toBeNull(); expect(after.queue).toEqual([]);
+    expect(after.mound.cone).toBe(0); expect(Math.abs(after.mound.dome - 0.012)).toBeLessThan(1e-6);
+    expect(await poured(page)).toEqual([{ id: 'instagram', level: 0.5 }]);
+    await page.waitForTimeout(400);
+    expect(pouring).toBe(false);
+    await expect(page.locator('#signup')).not.toHaveAttribute('data-pouring');
   }
   await ctx.close();
 });

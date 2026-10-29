@@ -122,8 +122,8 @@ for (const vp of [{ name: '390 x 844', viewport: { width: 390, height: 844 }, cl
 test('AC8.4 poster markup: one <picture>, four sources split at aspect 0.9, one <img>, two AVIF preloads', async ({ page }) => {
   await page.goto('/?tier=poster');
   // the hero's poster is the page's one picture outside section 4 (whose stills load later, on the poster tier only),
-  // section 3 (the visual questions' answer pictures, lazy, loaded only with their question) and section 5 (the four
-  // jars' stills, lazy, shown on the poster tier only)
+  // section 3 (the visual questions' answer pictures, lazy, loaded only with their question) and section 5 (the jar's
+  // still of its state, lazy, shown on the poster tier only)
   const pics = await page.locator('picture').evaluateAll((els) => els.filter((e) => !e.closest('#room') && !e.closest('#find') && !e.closest('#signup')).length);
   expect(pics).toBe(1);
   const sources = await page.locator('picture.hero-poster source').evaluateAll((els) => els.map((e) => ({

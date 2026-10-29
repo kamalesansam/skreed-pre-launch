@@ -1,18 +1,29 @@
-// Section 5's DOM side (docs/specs/section-5.md 2, 4 and 5): the text split into glyphs as it stands (visible at rest,
-// rule 12) by section 3's decode; the follows (a press on a follow word lets the link open its page in a new tab and,
-// in the same press, counts the platform as collected: the honour system of docs/00-IDEATION.md decision 11; the jar's
-// island pours its colours, the state lines decode to their new words, the live region says it once; remembered for
-// the visit in sessionStorage); the email form as the quiz's gift form (validation on blur and submit, sending, the
-// error line, the offline queue sent on `online`, a duplicate read as success, the done line with "Not you?"); the
-// frame the island hands over (the body goes under a seam's cloud with the cover); and the poster tier's loop end (the
-// 300 ms fade through --night to the top, moved here from section 4's walk script). Every string comes from config/signup.ts.
-import { FILL_MS, FOLLOW_COUNT, SIGNUP_COPY as C, SIGNUP_FOLLOWS, SIGNUP_KEYS, SIGNUP_LEAD_ENDPOINT, fill, jarById, yoursState, type SignupFrame } from '../../config/signup.ts';
+// Section 5's DOM side (docs/specs/section-5.md 2, 4 and 5; docs/specs/section-5-sand.md 2, 3 and 6): the text split
+// into glyphs as it stands (visible at rest, rule 12) by section 3's decode; the follows (a press on a follow word lets
+// the link open its page in a new tab and, in the same press, counts the platform as collected: the honour system of
+// docs/00-IDEATION.md decision 11; the island pours its colours, the row's state and the count line decode to their
+// new words, the slot's description reads the jar's layers in press order, the live region says it once; remembered
+// for the visit in sessionStorage); data-pouring from the frame the island hands over, with the body going under a
+// seam's cloud with the cover; the poster tier's still swapped by the state's key with no transition; the email form
+// as the quiz's gift form (validation on blur and submit, sending, the error line, the offline queue sent on `online`,
+// a duplicate read as success, the done line with "Not you?"); and the poster tier's loop end (the 300 ms fade through
+// --night to the top). Every string comes from config/signup.ts.
+import { FOLLOW_COUNT, SIGNUP_COPY as C, SIGNUP_FOLLOWS, SIGNUP_KEYS, SIGNUP_LEAD_ENDPOINT, fill, jarById, stillAlt, stillKey, yoursLevel, yoursState, type SignupFrame } from '../../config/signup.ts';
 import { reducedMQ } from '../motion.ts';
 import { createDecoder } from '../quiz/decode.ts';
 import { track } from '../quiz/track.ts';
 
 const SLOW_MS = 8000, HARD_MS = 20000, FADE_MS = 300;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+// the poster tier's stills by key (sixteen states at 1x and 2x, AVIF and WebP), hashed by the build; under Node there is no glob
+let STILLS: Record<string, string> = {};
+try { STILLS = import.meta.glob<string>('../../assets/signup/stills/*.{avif,webp}', { eager: true, query: '?url', import: 'default' }); } catch { STILLS = {}; }
+/** a state's four files, or null when the build has none */
+function stillFiles(key: string): { avif: string; webp: string; src: string } | null {
+  const f = (k: string) => STILLS[`../../assets/signup/stills/jar-${key}-${k}`];
+  const a1 = f('1x.avif'), a2 = f('2x.avif'), w1 = f('1x.webp'), w2 = f('2x.webp');
+  return a1 && a2 && w1 && w2 ? { avif: `${a1} 160w, ${a2} 320w`, webp: `${w1} 160w, ${w2} 320w`, src: w1 } : null;
+}
 
 /** the follows pressed this visit, in order, from sessionStorage (try and catch: without storage, none) */
 function readFollows(): string[] {
@@ -38,69 +49,77 @@ export function mountSignup(root: HTMLElement): void {
   /** a line's new words: wiped out, set, decoded in (the quiz's idiom) */
   const setLine = (el: HTMLElement, text: string) => { void dec.hide(el).then(() => { dec.set(el, text); dec.conceal(el); void dec.show(el); }); };
 
-  // ---- the follows
-  const jars = [...root.querySelectorAll<HTMLLIElement>('li.su-jar')].map((li) => ({ li, id: li.dataset.id ?? '', link: li.querySelector<HTMLAnchorElement>('a.su-follow'), state: li.querySelector<HTMLElement>('.su-state') }));
-  const yours = jars.find((j) => j.id === 'yours');
+  // ---- the follows and the jar
+  const jar = root.querySelector<HTMLElement>('.su-jar'), slot = root.querySelector<HTMLElement>('.su-slot[data-slot="yours"]'), count = root.querySelector<HTMLElement>('.su-count');
+  const rows = [...root.querySelectorAll<HTMLLIElement>('li.su-follow-row')].map((li) => ({ li, id: li.dataset.id ?? '', link: li.querySelector<HTMLAnchorElement>('a.su-follow'), state: li.querySelector<HTMLElement>('.su-state') }));
   const follows = readFollows().filter((id) => SIGNUP_FOLLOWS.some((f) => f.id === id));
-  /** the DOM carries the follows as data-collected (their order, 1-based), the source of truth the island reads at its start */
+  /** the poster tier's still of a state: the sources, the image and the slot's key, swapped with no transition (this tier is the reduced-motion tier too) */
+  function setStill(key: string) {
+    const pic = slot?.querySelector<HTMLElement>('picture.su-still');
+    if (!pic) return;
+    const files = stillFiles(key);
+    if (files) {
+      for (const src of pic.querySelectorAll<HTMLSourceElement>('source')) src.srcset = src.type === 'image/avif' ? files.avif : files.webp;
+      const img = pic.querySelector<HTMLImageElement>('img'); if (img) img.src = files.src;
+      pic.removeAttribute('data-lazy');
+    } else if (pic.hasAttribute('data-lazy')) {
+      // no map (a build without the files): the markup's own empty jar
+      for (const src of pic.querySelectorAll<HTMLSourceElement>('source[data-srcset]')) src.srcset = src.dataset.srcset ?? '';
+      const img = pic.querySelector<HTMLImageElement>('img[data-src]'); if (img) img.src = img.dataset.src ?? '';
+      pic.removeAttribute('data-lazy');
+    }
+    if (slot) slot.dataset.still = key;
+  }
+  /** the DOM carries the follows as data-collected (their order, 1-based), the source of truth the island reads at its start; the jar's count, level and description follow */
   function mark(animated: boolean) {
     follows.forEach((id, k) => {
-      const j = jars.find((x) => x.id === id);
-      if (!j) return;
-      j.li.dataset.collected = String(k + 1);
-      if (j.state) { if (animated) setLine(j.state, C.collected); else dec.set(j.state, C.collected); }
+      const r = rows.find((x) => x.id === id);
+      if (!r) return;
+      r.li.dataset.collected = String(k + 1);
+      if (r.state) { if (animated) setLine(r.state, C.collected); else dec.set(r.state, C.collected); }
     });
-    if (yours) {
-      yours.li.dataset.n = String(follows.length);
-      const text = yoursState(follows.length);
-      if (yours.state) { if (animated) setLine(yours.state, text); else dec.set(yours.state, text); }
-    }
+    if (jar) { jar.dataset.n = String(follows.length); jar.dataset.level = yoursLevel(follows).toFixed(3); }
+    if (count) { const text = yoursState(follows.length); if (animated) setLine(count, text); else dec.set(count, text); }
+    slot?.setAttribute('aria-label', stillAlt(follows));
+    if (isPoster()) setStill(stillKey(follows));
   }
   mark(false);
   // saved follows at mount: the island may have read the DOM before this script marked it (its chunk comes at idle, this
-  // one when the section nears), so it hears them now and sets the jar at once (no press, no tween)
-  if (follows.length) window.dispatchEvent(new CustomEvent('skreed:signup', { detail: { id: '', follows: [...follows], ms: 0 } }));
-  for (const j of jars) {
-    const link = j.link;
+  // one when the section nears), so it hears them now and sets the jar at once (no press, no stream)
+  if (follows.length) window.dispatchEvent(new CustomEvent('skreed:signup', { detail: { id: '', follows: [...follows] } }));
+  for (const r of rows) {
+    const link = r.link;
     if (!link) continue;
     link.addEventListener('click', () => {
       // the link opens its page as a link does (a new tab); the press is the follow's one evidence
-      track('follow_click', { platform: j.id });
-      if (follows.includes(j.id)) return;
-      follows.push(j.id); writeFollows(follows);
-      j.li.dataset.collected = String(follows.length);
-      if (j.state) setLine(j.state, C.collected);
-      if (yours) { yours.li.dataset.n = String(follows.length); if (yours.state) setLine(yours.state, yoursState(follows.length)); }
-      const platform = jarById(j.id)?.platform ?? j.id;
+      track('follow_click', { platform: r.id });
+      if (follows.includes(r.id)) return;
+      follows.push(r.id); writeFollows(follows);
+      mark(true);
+      const platform = jarById(r.id)?.platform ?? r.id;
       announce(follows.length >= FOLLOW_COUNT ? fill(C.liveFull, { platform }) : fill(C.live, { platform, n: follows.length, N: FOLLOW_COUNT }));
       if (follows.length >= FOLLOW_COUNT) track('jar_full');
       // the island hears the press and pours the platform's colours (hero/section5/jars.ts); the hooks read the event too
-      window.dispatchEvent(new CustomEvent('skreed:signup', { detail: { id: j.id, follows: [...follows], ms: FILL_MS } }));
+      window.dispatchEvent(new CustomEvent('skreed:signup', { detail: { id: r.id, follows: [...follows] } }));
     });
   }
 
-  // ---- the frame from the island: the body goes under a seam's cloud with the cover
+  // ---- the frame from the island: the body goes under a seam's cloud with the cover; data-pouring while a stream runs
   let opacity = 1, viewed = false;
   window.__skreedSignupFrame = (f: SignupFrame) => {
     const op = f.cover > 0 ? Math.max(0, 1 - f.cover) : 1;
     if (op !== opacity) { opacity = op; body.style.opacity = op < 1 ? op.toFixed(3) : ''; }
     const state = f.cover > 0 ? 'seam' : 'rest';
     if (root.dataset.state !== state) root.dataset.state = state;
+    if (f.pour) { if (root.dataset.pouring !== f.pour) root.dataset.pouring = f.pour; } else if (root.dataset.pouring !== undefined) delete root.dataset.pouring;
   };
   addEventListener('skreed:room-state', (e) => { if ((e as CustomEvent<string>).detail === 'wrap') announce(C.wrapLive); });
   if ('IntersectionObserver' in window) {
     new IntersectionObserver((es) => { if (!viewed && es.some((x) => x.isIntersecting)) { viewed = true; track('signup_view'); } }, { rootMargin: '0px 0px -50% 0px' }).observe(root);
   }
 
-  // ---- the poster tier: the stills load now (never on the 3D path), and the loop is a fade through --night to the top
-  const swapIn = (pic: Element) => {
-    if (!pic.hasAttribute('data-lazy')) return;
-    for (const src of pic.querySelectorAll<HTMLSourceElement>('source[data-srcset]')) src.srcset = src.dataset.srcset ?? '';
-    const img = pic.querySelector<HTMLImageElement>('img[data-src]'); if (img) img.src = img.dataset.src ?? '';
-    pic.removeAttribute('data-lazy');
-  };
-  const loadStills = () => { for (const pic of root.querySelectorAll('picture.su-still[data-lazy]')) swapIn(pic); };
-  if (isPoster()) loadStills();
+  // ---- the poster tier: the still of the state now (never on the 3D path), and the loop is a fade through --night to the top
+  const loadStills = () => { if (!slot?.dataset.still) setStill(stillKey(follows)); };
   if (loopEnd && fade && 'IntersectionObserver' in window) {
     let fading = false;
     new IntersectionObserver((es) => {
@@ -111,9 +130,9 @@ export function mountSignup(root: HTMLElement): void {
         .catch(() => {}).finally(() => { fade.hidden = true; fading = false; });
     }, { threshold: 0.95 }).observe(loopEnd);
   }
-  // a fall to the poster path while the section is on screen: the stills come in, the body's opacity is put back
-  new MutationObserver(() => { if (isPoster()) { loadStills(); body.style.opacity = ''; root.dataset.state = 'rest'; } }).observe(H, { attributes: true, attributeFilter: ['class'] });
-  new MutationObserver(() => { if (isPoster()) { loadStills(); body.style.opacity = ''; root.dataset.state = 'rest'; } }).observe(root, { attributes: true, attributeFilter: ['data-tier'] });
+  // a fall to the poster path while the section is on screen: the still comes in, the body's opacity is put back
+  new MutationObserver(() => { if (isPoster()) { loadStills(); body.style.opacity = ''; root.dataset.state = 'rest'; delete root.dataset.pouring; } }).observe(H, { attributes: true, attributeFilter: ['class'] });
+  new MutationObserver(() => { if (isPoster()) { loadStills(); body.style.opacity = ''; root.dataset.state = 'rest'; delete root.dataset.pouring; } }).observe(root, { attributes: true, attributeFilter: ['data-tier'] });
 
   // ---- the form (section-5.md 2 "The form", 5; the quiz's gift form, quiz.md 5): rendered only with PUBLIC_LEADS on
   const form = $<HTMLFormElement>('suForm');

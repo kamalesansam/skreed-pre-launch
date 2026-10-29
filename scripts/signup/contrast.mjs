@@ -34,12 +34,17 @@ for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
   await page.evaluate(() => window.__s5?.load());
   await page.waitForFunction(() => !!window.__s5?.ready, null, { timeout: 120_000 });
   for (const where of ['top', 'end']) {
-    await page.evaluate((where) => {
-      const el = document.getElementById('signup'), top = el.getBoundingClientRect().top + scrollY;
-      const y = where === 'top' ? top : window.__s4.state().restY;
-      scrollTo({ top: y, behavior: 'instant' }); window.__skreedSnap?.(y / innerHeight);
-    }, where);
-    await sleep(1200);
+    // the jump from the hall moves the room's layout under section 5 (its top read in the hall state is lower than at
+    // rest in the world), so the place is read again once the page has settled and the scroll corrected
+    for (let pass = 0; pass < 2; pass++) {
+      await page.evaluate((where) => {
+        const el = document.getElementById('signup'), top = el.getBoundingClientRect().top + scrollY;
+        const y = where === 'top' ? top : window.__s4.state().restY;
+        if (Math.abs(scrollY - y) < 1) return;
+        scrollTo({ top: y, behavior: 'instant' }); window.__skreedSnap?.(y / innerHeight);
+      }, where);
+      await sleep(pass ? 1200 : 600);
+    }
     const boxes = await page.evaluate(() => [...document.querySelectorAll('#signup [data-dc]')].filter((e) => e.getClientRects().length && !e.closest('[hidden]'))
       .map((e) => { const r = e.querySelector('.dc')?.getBoundingClientRect() ?? e.getBoundingClientRect(); return { cls: (e.className || e.tagName).split(' ')[0], text: (e.querySelector('.sr-only')?.textContent ?? '').slice(0, 24), x: r.x, y: r.y, w: r.width, h: r.height }; })
       .filter((b) => b.w > 0 && b.y + b.h > 0 && b.y < innerHeight));

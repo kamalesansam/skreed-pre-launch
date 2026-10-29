@@ -1,10 +1,11 @@
-/* Section 5, the sign-up (docs/specs/section-5.md 2 and 5). Plain text on section 2's fog, as the quiz and section 4
-   (E-S5-bg, E-S5-font pending): IBM Plex Mono Medium in capitals, Pearl Whisper, no letter-spacing, at the quiz's sizes;
-   no panels, no fills, no borders round anything but the email field's line, no shadows; the controls are words,
-   underlined as links are. The jars are drawn by the hero island where the slots are (the slots themselves are empty
-   boxes of air on the 3D path; the poster tier puts a still in each). scripts/signup/signup.ts decodes the text and
-   drives the states; without JavaScript the same text stands, still. Phone first: one column, the jars two by two, four
-   in a row from 720 px. */
+/* Section 5, the sign-up (docs/specs/section-5.md 2 and 5; docs/specs/section-5-sand.md 2). Plain text on section 2's
+   fog, as the quiz and section 4 (E-S5-bg, E-S5-font pending): IBM Plex Mono Medium in capitals, Pearl Whisper, no
+   letter-spacing, at the quiz's sizes; no panels, no fills, no borders round anything but the email field's line, no
+   shadows; the controls are words, underlined as links are. The jar is drawn by the hero island where the slot is (the
+   slot itself is an empty box of air on the 3D path; the poster tier puts a still of the state in it).
+   scripts/signup/signup.ts decodes the text and drives the states; without JavaScript the same text stands, still.
+   Phone first: one column (the jar, the count line under it, the three follow rows); from 720 px the follows stand
+   left of the jar, the count line under the jar. Nothing here animates; hover is the links' underline alone. */
 .signup {
   --su-font: "IBM Plex Mono", ui-monospace, monospace;
   /* the quiz's sizes, held equal by tests/unit/signup.test.ts: body 15 to 22 px, the headings 24 to 52 px */
@@ -38,14 +39,21 @@
 .su-got { margin-top: var(--s3); }
 .su-keep { margin-top: var(--s3); }
 
-/* the jars: a two-by-two grid, four in a row from 720 px; each a slot of air (the island draws the jar where it is) over its words */
-.su-jars { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s4) var(--s3); width: 100%; }
-@media (min-width: 720px) { .su-jars { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.su-jar { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s1); justify-items: center; text-align: center; }   /* one column the cell wide: a word longer than the cell wraps inside it, and the slot never grows past the cell (the inner column was sized to the longest word) */
-.su-slot { position: relative; width: 100%; max-width: 184px; aspect-ratio: 4 / 5; }
+/* the jar block: the slot of air (the island draws the jar where it is), the count line under it, the three follow rows;
+   one column with a 12 px gap, left-aligned as the quiz's pictures are on a phone */
+.su-jar { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s2); width: 100%; justify-items: start; }
+.su-slot { position: relative; width: clamp(176px, 56vw, 240px); aspect-ratio: 4 / 5; }
 .su-still { display: none; }
-.su-word { min-height: 44px; display: inline-flex; align-items: center; }
-.su-state { font-variant-numeric: tabular-nums; }
+.su-count, .su-state { font-variant-numeric: tabular-nums; }
+.su-follows { list-style: none; padding: 0; display: grid; width: 100%; }
+.su-follow-row { display: flex; justify-content: space-between; align-items: center; gap: var(--s2); min-height: 44px; }
+/* from 720 px: the quiz's laptop arrangement, the words left and the picture right; the follows centred against the jar, the count under the jar */
+@media (min-width: 720px) {
+  .su-jar { grid-template-columns: minmax(0, 1fr) 240px; column-gap: var(--s4); grid-template-areas: "follows slot" "follows count"; }
+  .su-slot { grid-area: slot; width: 240px; }
+  .su-count { grid-area: count; }
+  .su-follows { grid-area: follows; align-self: center; }
+}
 
 /* the controls are words (the quiz's link): underlined, at least 44 px each way to tap; hover thickens the line at once */
 .su-link { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; padding: 0; background: none; border: 0; border-radius: 0; color: inherit; font: inherit; text-transform: inherit; letter-spacing: inherit; text-align: inherit; text-decoration-line: underline; text-decoration-thickness: 1px; text-underline-offset: 0.4em; cursor: pointer; -webkit-tap-highlight-color: transparent; appearance: none; }   /* longhands: Safari before 26.2 drops a shorthand with a thickness in it */
@@ -78,7 +86,7 @@
 .su-fade[hidden] { display: none; }
 
 /* the poster tier (no island: html without hero3d, html.poster, or the section fallen to it): the text on --night, the
-   jars as stills on a --skeleton box until they decode */
+   jar as a still of its state on a --skeleton box until it decodes */
 :is(html:not(.hero3d), html.poster) .signup, .signup[data-tier="poster"] { background: var(--night); }
 :is(html:not(.hero3d), html.poster) .su-still, .signup[data-tier="poster"] .su-still { display: block; position: absolute; inset: 0; background: var(--skeleton); }
 :is(html:not(.hero3d), html.poster) .su-still img, .signup[data-tier="poster"] .su-still img { display: block; width: 100%; height: 100%; object-fit: contain; }

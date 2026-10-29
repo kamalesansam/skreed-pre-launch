@@ -238,7 +238,8 @@ test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scene
   await page.evaluate((y) => { scrollTo({ top: y, behavior: 'instant' }); window.__skreedSnap?.(y / innerHeight); }, rest0);
   await page.waitForTimeout(800);
   expect(await noHScroll(page)).toBe(true);
-  await expect(page.locator('#signup .su-jar')).toHaveCount(4);
+  await expect(page.locator('#signup .su-jar')).toHaveCount(1);
+  await expect(page.locator('#signup li.su-follow-row')).toHaveCount(3);
   expect((await s4(page)).state).toBe('world');
   // the seam held at full cover, the clock frozen on the first frame after the jump: the logotype and the Back to top
   // control read Urban Slate over the Pearl Whisper cloud (the regression the checker found in D5's first fix), the page at 0

@@ -255,7 +255,7 @@ export async function startHero(o: StartOptions): Promise<void> {
   }).catch((e: unknown) => { console.warn('section 4: the section chunk did not load; the stills stand in', e); document.getElementById('room')?.setAttribute('data-tier', 'poster'); return null; }));
   const loadHall = () => loadDirector().then((room) => room?.load().then(() => { if (room.hall.failed) document.getElementById('room')?.setAttribute('data-tier', 'poster'); }));
   // section 5 (docs/specs/section-5.md 5, "Loading"): its jar chunk comes at idle once section 4's cloud has warmed, when
-  // the section is within two screens, or with a wrap; it draws the four jars over the fog and caches the section's
+  // the section is within two screens, or with a wrap; it draws the jar over the fog and caches the section's
   // layout. Until it is in (and for good if it fails: the section stands as text over the fog), the director reads the
   // exit's trigger and the wrap's landing from the DOM, at most twice a second
   const signupEl = document.getElementById('signup');
@@ -348,12 +348,15 @@ export async function startHero(o: StartOptions): Promise<void> {
       skip: () => window.__skreedRoom?.skip(),
       get ready() { return !!ctx.room?.hall.ready; },
     };
-    // section 5's hooks (section-5.md 5, "Build modes"): its state, a follow poured, the follows set, one jar's still, the chunk's load
+    // section 5's hooks (section-5-sand.md 5, "Hooks"): its state, a follow poured, the follows set, the jar's still by
+    // the follows' order, the stream's clock, the tilt, the chunk's load; the chunk carries them in hooks builds alone
     window.__s5 = {
-      state: () => ctx.signup?.hooks() ?? null,
+      state: () => ctx.signup?.hooks?.() ?? null,
       pour: (id) => ctx.signup?.pour(id),
       follows: (ids) => ctx.signup?.follows(ids),
-      still: (id, level) => ctx.signup?.still(id, level) ?? Promise.resolve(null),
+      still: (order, level) => ctx.signup?.still?.(order, level) ?? Promise.resolve(null),
+      scrub: (t) => ctx.signup?.scrub?.(t),
+      tilt: (deg) => ctx.signup?.tilt?.(deg),
       load: () => loadSignup().then(() => {}),
       get ready() { return !!ctx.signup?.ready; },
     };

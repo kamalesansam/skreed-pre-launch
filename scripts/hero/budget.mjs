@@ -95,8 +95,9 @@ const H = '[A-Za-z0-9_-]+', IMG = 'avif|webp|jpe?g|png|gif';
 const SCENE = new RegExp(`^(${SCENE_IDS.join('|')})-(${CLASSES.join('|')})\\.${H}\\.(${IMG})$`);
 const STILL = new RegExp(`^hall-(portrait|wide)\\.${H}\\.(${IMG})$`);
 const HALL_MODEL = new RegExp(`^hall\\.${H}\\.(?:bin|glb)$`), HALL_LIGHT = new RegExp(`^hall-lightmap\\.${H}\\.(${IMG})$`), PRODUCTS = new RegExp(`^products\\.${H}\\.bin$`);
-// section 5's files (section-5.md 6): jar.bin and the poster tier's four stills at two sizes
-const JAR_BIN = new RegExp(`^jar\\.${H}\\.bin$`), JAR_STILL = new RegExp(`^jar-(facebook|youtube|instagram|yours)-(1x|2x)\\.${H}\\.(${IMG})$`);
+// section 5's files (section-5.md 6, section-5-sand.md 7): jar.bin and the poster tier's sixteen stills (the follows'
+// order as a key: 0, or the platforms' letters f, y, i in press order) at two sizes
+const JAR_BIN = new RegExp(`^jar\\.${H}\\.bin$`), JAR_STILL = new RegExp(`^jar-(0|[fyi]{1,3})-(1x|2x)\\.${H}\\.(${IMG})$`);
 /** the formats a picture may ship in (AC8), and a name's extension as the format key (jpg and jpeg alike) */
 const SHIPS = new Set(['avif', 'webp']);
 const fmtOf = (ext) => ext.toLowerCase().replace(/^jpg$/, 'jpeg');
@@ -178,7 +179,10 @@ line("section 4's script (director, carousel, video, assets, walk, lazy; gzip)",
 line('scroll.ts (its own chunk, marker skreed:scroll; gzip)', scrollScript, 4, { note: 'counted in total JS, not critical JS' });
 // section 5's lines (section-5.md 6)
 const signupScript = gzOf(signupGraph), signupDomScript = gzOf(signupDomGraph);
-line("section 5's jar chunk (section5/jars.ts, marker skreed:signup; gzip)", signupScript, 8, { note: signupScript ? 'lazy, at idle after the cloud or within two screens' : 'not in this build' });
+// the jar chunk's line is 9.5 since the sand (section-5-sand.md 7, the budget note of 2026-10-29): the body, the two
+// shader pairs, the schedule, the cone, the layers and the palette measured 9.2 with the shared config chunk against the
+// beads' 8.0, and the enforced total holds under the shader strip (scripts/build/glsl-strip.mjs)
+line("section 5's jar chunk (section5/jars.ts, marker skreed:signup; gzip)", signupScript, 9.5, { note: signupScript ? 'lazy, at idle after the cloud or within two screens' : 'not in this build' });
 line("section 5's DOM script (scripts/signup/signup.ts; gzip)", signupDomScript, 6, { note: signupDomScript ? 'lazy, within a screen' : 'not in this build' });
 line('total JS with sections 4 and 5 and scroll.ts (gzip)', totalJs + roomScript + scrollScript + signupScript + signupDomScript, 250, { enforced: !tune, note: tune ? "production's line; this staging build carries Tune" : 'production' });
 const jarBin = storedOf((f) => f.jar);
@@ -186,7 +190,7 @@ line('jar.bin (section 5)', jarBin, 20, { note: jarBin ? 'u16 positions, i8 norm
 const JAR_PIC = { '2x': { avif: 24, webp: 40 }, '1x': { avif: 10, webp: 16 } };
 const jarStills = room.filter((x) => x.group === 'signup still' && SHIPS.has(x.fmt));
 for (const f of jarStills) line(`jar still ${f.id} at ${f.size}, ${FMT[f.fmt]}`, f.stored, JAR_PIC[f.size][f.fmt], { note: f.name });
-if (!jarStills.length) line("section 5's stills (the poster tier's four jars)", 0, 1, { enforced: false, note: 'none in this build: the slots stand empty on the poster tier (scripts/signup/render-stills.mjs makes them)' });
+if (!jarStills.length) line("section 5's stills (the poster tier's sixteen states)", 0, 1, { enforced: false, note: 'none in this build: the slot stands as air on the poster tier (scripts/signup/render-stills.mjs makes them)' });
 line('section 4 on the poster tier: its script (gzip)', posterScript, 8.5);
 // each loop, each still, products.bin
 const PIC = { wide: { avif: 110, webp: 176 }, portrait: { avif: 80, webp: 128 } };
@@ -248,7 +252,7 @@ let markup5 = '';
 if (at5 >= 0) { const re = /<\/?section\b[^>]*>/g; re.lastIndex = at5; let d = 0; for (let m; (m = re.exec(html));) { d += m[0][1] === '/' ? -1 : 1; if (!d) { markup5 = html.slice(at5, re.lastIndex); break; } } }
 const css5Path = join(ROOT, 'src/styles/signup.css');
 const css5 = existsSync(css5Path) ? readFileSync(css5Path, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').replace(/\s*([{};,>])\s*/g, '$1').replace(/;}/g, '}') : '';
-line("the first view: section 5's markup and signup.css (gzip)", gzipSync(markup5 + css5, { level: 9 }).length, 4, { note: `markup ${markup5.length} B (the slots carry their beads' hexes), signup.css about ${css5.length} B` });
+line("the first view: section 5's markup and signup.css (gzip)", gzipSync(markup5 + css5, { level: 9 }).length, 4, { note: `markup ${markup5.length} B (the follow links carry their families' hexes), signup.css about ${css5.length} B` });
 
 console.log(`\nsection 4 (section-4-flux.md 6; the ${BUILD}; scripts at gzip, everything else as stored; KB = 1024 B)`);
 const PENDING = 'over, pending Sam';
