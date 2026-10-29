@@ -21,3 +21,9 @@ src/assets/quiz/pics/
 /dist*/
 # review frames that show those licensed pictures (scripts/quiz/frames.mjs writes them here)
 docs/specs/screenshots/licensed/
+
+# graphify knowledge graph (docs/research/11-graphify.md): built per checkout with npm run graph, never committed
+graphify-out/
+
+# Claude Code per-machine settings (the graphify PreToolUse hooks go here when wanted; docs/research/11-graphify.md 8)
+.claude/settings.local.json
