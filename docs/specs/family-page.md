@@ -431,13 +431,13 @@ Round 5: criteria 1 to 8 of section 23 (the landing's loader on the way back, th
 3. The family standfirst: first person in Source Serif 4 (adds 48.9 KB) or Open Sans; written by whom, by when?
 4. Which case type and device is the supplied model (it decides the device line on the reserve form)?
 5. Can a Cloudflare Compression Rule be added for `model/gltf-binary` (the model budgets could then be brotli and the triangle caps raised)?
-6. Round 4 (section 22), the words: "Back to main page" (yours), or "Back to the families", which names where it lands?
+6. Round 4 (section 22), the words: "Back to main page" (yours), or "Back to the families", which names where it lands? Answered 2026-10-29: "back to main page itself sounds fine, dont touch anything"; the words stay (section 23, "For Sam" 1).
 7. Round 4, the wait: 2.5 s, inside your "2 -3 seconds"; 2 or 3 is one constant.
 8. Round 4, the place: centred under the letters at the bottom of the screen, and on phones one row above Back to top, which already sits at the bottom right. Right there? Answered 2026-10-26, "make sure it follows and alligns correctly on phones": section 23, B.
 9. Round 4: should it also come on the fourth case type (Armor), before the argument screen? Answered 2026-10-26: "no" (section 23, D8).
 10. Round 4, the return (section 22, "Built"): a plain night screen while the landing loads again after the press, or the 0-100 wordmark loader there too? Answered 2026-10-26, "yeah do this": section 23, A.
-11. Round 5 (section 23), the way back's length: the landing's full timing, the gems in view about 8.2 s after the landing starts on a warm cache (this round's plan), or the family pages' faster finish, about 3 s after the landing is ready?
-12. Round 5 (section 23), the phone row: "Back to main page" bottom left and Back to top bottom right on one line (this round's plan), or both stacked at the right, or the control just under the letters?
+11. Round 5 (section 23), the way back's length: the landing's full timing, the gems in view about 8.2 s after the landing starts on a warm cache (this round's plan), or the family pages' faster finish, about 3 s after the landing is ready? Answered 2026-10-29, "Keep as built": the landing's full timing (section 23, "For Sam" 3).
+12. Round 5 (section 23), the phone row: "Back to main page" bottom left and Back to top bottom right on one line (this round's plan), or both stacked at the right, or the control just under the letters? Answered 2026-10-29, "Keep as built": one row (section 23, "For Sam" 4).
 
 ## 13. Section 2 integration note for the hero owner (run 1, amended in review iteration 2, 2026-10-09)
 
@@ -709,7 +709,7 @@ Sam, 2026-10-26, verbatim (the first part of his message, on the quiz and sectio
 5. The return (step 3, built below): a press lands on the gems after a plain night screen while the landing loads again (no wordmark and no count, since the full loader is for first visits). How long it can last: about 2 to 6 s on a warm cache; the loader's stall rule (`loader.inline.js`) holds it for up to 20 s with no progress, or 12 s once the scene is in, and gaps of more than 500 ms between frames are not counted, so on a slow device it can be longer; from 4 s without progress the screen reads "Still loading" or "Slow connection"; a stall then shows the poster page centred on the families, and the gems once the 3D arrives unless the visitor has scrolled (iteration 4). Is the plain screen right, or should the 0-100 wordmark loader run on the way back too?
    Sam, 2026-10-26, quoting "run the 0 to 100 wordmark loader on the way back too?": "yeah do this". Planned in section 23 (A, D1 to D3): the landing's full loader on the way back, its exit held until the gems are at rest.
 
-Questions 1 and 2, the words and the wait, stay open (section 23, "For Sam" 1 and 2).
+Question 1, the words, was answered on 2026-10-29: "Back to main page" stays (section 23, "For Sam" 1). Question 2, the wait, stays open (section 23, "For Sam" 2).
 
 **Documents this round changes.**
 - `CLAUDE.md`, the family pages paragraph (line 16): a round 4 sentence (2.5 s after the argument screen comes on, "Back to main page" fades in, centred under the letters, a link to `/#families`, the landing's section 2; section 22), and E-F5 beside E-F1 to E-F4, which that paragraph names.
@@ -738,7 +738,7 @@ Questions 1 and 2, the words and the wait, stay open (section 23, "For Sam" 1 an
 
 ## 23. Round 5: the loader on the way back and the controls' row on phones (Sam, 2026-10-26)
 
-Sam, 2026-10-26, verbatim, his answers to three of section 22's five "For Sam" questions (the first two, the words and the wait, are not answered and stay open):
+Sam, 2026-10-26, verbatim, his answers to three of section 22's five "For Sam" questions (the first two, the words and the wait, were not answered then; the words were, on 2026-10-29, "For Sam" 1 below):
 - To question 5, the way back's plain night screen, quoting its words "run the 0 to 100 wordmark loader on the way back too?": "yeah do this".
 - To question 3, the place, after the report to him added that both controls read "Back to" and sit out of line on phones: "make sure it follows and alligns correctly on phones".
 - To question 4, the fourth case type (Armor): "no".
@@ -1019,17 +1019,19 @@ How they are graded:
 - **E-F5** is unchanged: it covers the control's wait and fades, not its place.
 - **No new exception.** The place changes with no motion; rules 12, 14, 45 and 48 hold as in section 22.
 
-**For Sam.**
-1. **The words** (section 22, "For Sam" 1): "Back to main page" (yours), or "Back to the families"? Still open. Both bottom controls read "Back to"; on phones they now share one row.
+**For Sam.** Sam, 2026-10-29, on the merged round 5 build with its nine frames in hand. To the report's question "Do the phone row and the way back's loader stay as built?": "Keep as built" (questions 3 and 4 below). To question 1, quoting it: "families"; then, quoting "Back to the families": "back to main page itself sounds fine, dont touch anything". Nothing changes for any of the three; question 2 stays open.
+1. **The words** (section 22, "For Sam" 1): "Back to main page" (yours), or "Back to the families"? Both bottom controls read "Back to"; on phones they now share one row. Answered 2026-10-29: "Back to main page" stays, by his second reply; his "families" of the minute before is withdrawn by it.
 2. **The wait** (section 22, "For Sam" 2): 2.5 s, inside your "2 -3 seconds"? Still open.
 3. **New: the way back's length.**
    - With the wordmark loader, the gems are fully in view about 8.2 s after the landing starts on a warm cache (100 at about 7.2 s), against about 2 to 6 s with the plain screen. On a slow load it is the load plus about 3 to 5 s, with the stall rule as before.
    - The family pages' loader finishes faster: once the page is ready, the fill snaps full and the dim runs, about 3 s to the gems.
    - Keep the landing's full timing (as planned), or take the family pages' faster finish? See the frames `family-r5-*-return-loader` and `-return-gems`.
+   - Answered 2026-10-29, "Keep as built": the landing's full timing stands.
 4. **New: the phone row** (frames `family-r5-390-arg-after`, `-360-` and `-844-`).
    - As planned: "Back to main page" bottom left and Back to top bottom right, on one line, as the wordmark and "All families" share the top.
    - Or both stacked at the right, or "Back to main page" just under the letters?
    - Laptops keep it centred under the letters, with Back to top at the top right.
+   - Answered 2026-10-29, "Keep as built": one row, as built.
 
 **Documents this round changes.**
 - **`CLAUDE.md`, the family pages paragraph (line 16).**
