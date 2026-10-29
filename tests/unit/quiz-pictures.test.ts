@@ -105,7 +105,7 @@ test('the pictures stay out of git: .gitignore names src/assets/quiz/pics/ and e
   assert.deepEqual(licensed(git('ls-files', '-z', '--others', '--exclude-standard')), [], 'a licensed picture git would add (untracked and not ignored)');
 });
 
-test('the type scale: quiz.css sets the three sizes as clamp() tokens once, with no portrait override; the laptop query is the same in the CSS, deck.ts and the pictures\' sizes', () => {
+test('the type scale: quiz.css sets the three sizes as clamp() tokens once, with no portrait override; the laptop query and the sideways-phone query are each the same in the CSS, deck.ts and the pictures\' sizes', () => {
   const css = read('src/styles/quiz.css');
   const tokens = css.replace(/\/\*[\s\S]*?\*\//g, '');
   assert.match(tokens, /--qz-fs: clamp\(15px, min\(calc\(0\.6rem \+ 0\.95vw\), 2\.6vh\), 22px\);/);
@@ -116,7 +116,12 @@ test('the type scale: quiz.css sets the three sizes as clamp() tokens once, with
   const wide = '(min-width: 900px) and (min-height: 600px)';
   assert.ok(css.includes(`@media ${wide} {`), 'quiz.css');
   assert.ok(read('src/scripts/quiz/deck.ts').includes(`matchMedia('${wide}')`), 'deck.ts');
-  assert.ok(read('src/components/quiz/Quiz.astro').includes(`const PIC_SIZES = '${wide} min(30vw, 440px), calc(100vw - 32px)';`), 'Quiz.astro');
+  // a phone held sideways (2026-10-29): the frame is the card's left column, two fifths of the width inside the two insets and the gap
+  const side = '(min-width: 640px) and (max-height: 599px)';
+  assert.ok(css.includes(`@media ${side} {`), 'quiz.css, the sideways block');
+  assert.ok(read('src/scripts/quiz/deck.ts').includes(`matchMedia('${side}')`), 'deck.ts, the sideways query');
+  assert.ok(read('src/components/quiz/Quiz.astro').includes(`const PIC_SIZES = '${wide} min(30vw, 440px), ${side} calc((100vw - 92px) * 0.4), calc(100vw - 32px)';`), 'Quiz.astro');
+  assert.match(tokens, /\.qz-card \{ grid-template-columns: minmax\(0, 2fr\) minmax\(0, 3fr\); column-gap: clamp\(32px, 4vw, 64px\); \}/, 'the left column is two fifths of the card less the gap');
   // the picture's column on a laptop is the width the sizes attribute names
   assert.match(tokens, /--qz-pic-w: clamp\(260px, 30vw, 440px\)/);
 });

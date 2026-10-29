@@ -5,13 +5,20 @@
 // (the rest of its question wiped out); card 4; card 3 after Back; the result (The Quiet Curator, Porcelain with its
 // hairline); the gift, its validation state, the network error, the duplicate, the offline queue and
 // the done state; then two more results (The Spark, The Calm Strategist). Writes docs/specs/screenshots/quiz-<w>x<h>-<state>.png.
-// Serve a hooks build first (PUBLIC_HERO_HOOKS=1 astro build --outDir dist-s3, then wrangler dev --assets dist-s3 --port 8799).
-//   node scripts/quiz/frames.mjs [baseUrl]
+// Then the phone pass (2026-10-29; Sam: the quiz laid out "properly for the mobile aspect ratio size"): at 360x780,
+// 412x915 and 844x390 (a phone held sideways), the intro, question 1 (its words, then a finger's picture held, a licensed
+// frame where a picture shows), question 8 (the longest answers), the result and the gift; on the sideways phone the
+// deck's foot too (Back and Skip quiz, below the fold at 390 px tall). Then the quiz gate's frames (below).
+// Serve a hooks build first (PUBLIC_HERO_HOOKS=1 astro build --outDir dist-s3, then wrangler dev --assets dist-s3 --port 8799),
+// or the dev server. CHROME_PATH runs the installed Chrome in place of Playwright's Chromium (tests/harness/browser.ts does
+// the same); --phone-only takes the phone pass alone, --no-gate skips the gate's frames.
+//   node scripts/quiz/frames.mjs [baseUrl] [--phone-only] [--no-gate]
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-const BASE = process.argv[2] || 'http://127.0.0.1:8799/?tier=hero3d';
+const FLAGS = new Set(process.argv.slice(2).filter((a) => a.startsWith('--')));
+const BASE = process.argv.slice(2).find((a) => !a.startsWith('--')) || 'http://127.0.0.1:8799/?tier=hero3d';
 const OUT = fileURLToPath(new URL('../../docs/specs/screenshots', import.meta.url));
 // frames that show the licensed answer pictures go to a git-ignored folder: the Envato licence does not allow the
 // photographs to be shared outside the site, and this repository is public
@@ -22,10 +29,25 @@ const SETUPS = [
   { name: '390x844', viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 },
   { name: '1280x800', viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 },
 ];
+const PHONE_SETUPS = [
+  { name: '360x780', viewport: { width: 360, height: 780 }, deviceScaleFactor: 1 },
+  { name: '412x915', viewport: { width: 412, height: 915 }, deviceScaleFactor: 1 },
+  { name: '844x390', viewport: { width: 844, height: 390 }, deviceScaleFactor: 1 },
+];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+/** the decode: data-decoding is on #find while any text moves; this waits for it to go */
+const settledOn = (page) => page.waitForFunction(() => !document.getElementById('find').hasAttribute('data-decoding'), null, { timeout: 30_000 }).then(() => sleep(150));
+/** the section's top at the viewport's top, the followers pinned there */
+const toQuizOn = async (page) => { await page.evaluate(() => { const top = document.getElementById('find').getBoundingClientRect().top + scrollY; scrollTo({ top, behavior: 'instant' }); if (window.__skreedSnap) window.__skreedSnap(top / innerHeight); }); await sleep(900); };
+/** one answer per card from card `from`, each pressed once its card is on top, focused and settled (a press within 350 ms of a question appearing is dropped, deck.ts GUARD), then the next card (or the result) settled */
+const answerOn = async (page, personas, from = 0) => {
+  const onTop = async (i) => { if (i < 10) { await page.locator(`.qz-card[data-i="${i}"].is-top`).waitFor(); await page.waitForFunction((i) => document.activeElement?.closest?.('.qz-card')?.getAttribute('data-i') === String(i), i); } else await page.waitForFunction(() => document.getElementById('find').dataset.state === 'result'); await settledOn(page); };
+  for (const [k, p] of personas.entries()) { await onTop(from + k); await sleep(400); await page.locator(`.qz-card[data-i="${from + k}"] .qz-opt[data-persona="${p}"]`).evaluate((b) => b.click()); }
+  await onTop(from + personas.length);
+};
 
-const browser = await chromium.launch({ args: GL_ARGS });
-for (const s of SETUPS) {
+const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || undefined, args: GL_ARGS });
+for (const s of FLAGS.has('--phone-only') ? [] : SETUPS) {
   const ctx = await browser.newContext({ viewport: s.viewport, deviceScaleFactor: s.deviceScaleFactor });
   await ctx.addInitScript(() => { Math.random = () => 0.01; });
   const page = await ctx.newPage();
@@ -134,6 +156,52 @@ for (const s of SETUPS) {
   await ctx.close();
 }
 
+// The phone pass: three more sizes through the intro, question 1 (words, then a finger's picture, held by a touch
+// pointerdown with no click), question 8, the result and the gift. The picture frame is a licensed frame where a picture
+// shows (above the question at 412x915, under it at 844x390); at 360x780 the frame has no room (data-none), so the
+// frame shows the words alone and is written beside the others.
+for (const s of PHONE_SETUPS) {
+  const ctx = await browser.newContext({ viewport: s.viewport, deviceScaleFactor: s.deviceScaleFactor, hasTouch: true });
+  await ctx.addInitScript(() => { Math.random = () => 0.01; });
+  const page = await ctx.newPage();
+  await page.route('**/api/quiz-lead', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
+  const shot = (state) => page.screenshot({ path: `${OUT}/quiz-${s.name}-${state}.png` });
+  await page.goto(BASE, { waitUntil: 'load' });
+  const t0 = Date.now();
+  const ready = await page.waitForFunction(() => window.__s2 && window.__s2() && window.__s2().ready, null, { timeout: 420_000 }).then(() => true).catch(() => false);
+  console.log(s.name, 'phone pass, section 2 ready:', ready, 'after', Math.round((Date.now() - t0) / 1000), 's');
+  await page.addStyleTag({ content: 'astro-dev-toolbar { display: none !important; }' }).catch(() => {});   // the dev server's toolbar is not the site; a served build's CSP refuses the inline style and has no toolbar
+  await toQuizOn(page);
+  await page.locator('#qzBegin > .dc').waitFor();
+  await shot('intro');
+  await page.locator('#qzBegin').evaluate((b) => b.click());
+  await page.locator('.qz-card[data-i="0"].is-top').waitFor();
+  await settledOn(page);
+  await shot('card');
+  const opt = page.locator('.qz-card[data-i="0"] .qz-opt[data-persona="optimist"]');
+  await opt.evaluate((b) => b.dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'touch', bubbles: true })));
+  await sleep(1300);
+  const drawn = await page.locator('.qz-card[data-i="0"] .qz-pics').evaluate((f) => !f.hasAttribute('data-none'));
+  await page.screenshot({ path: `${drawn ? LICENSED : OUT}/quiz-${s.name}-card-picture.png` });
+  await opt.evaluate((b) => b.dispatchEvent(new PointerEvent('pointercancel', { pointerType: 'touch', bubbles: true })));
+  await sleep(400);
+  await answerOn(page, Array(7).fill('curator'), 0);
+  await shot('card8');
+  if (s.viewport.height < s.viewport.width) {
+    await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+    await sleep(400);
+    await shot('card8-foot');
+    await toQuizOn(page);
+  }
+  await answerOn(page, Array(3).fill('curator'), 7);
+  await shot('result');
+  await page.evaluate(() => document.getElementById('qzGift').scrollIntoView({ block: 'end' }));
+  await sleep(400);
+  await shot('gift');
+  console.log(s.name, 'phone pass done', await page.evaluate(() => ({ frame: document.querySelector('.qz-card[data-i="0"] .qz-pics')?.hasAttribute('data-none') ? 'none' : 'drawn', scrollW: document.scrollingElement.scrollWidth })));
+  await ctx.close();
+}
+
 // The quiz gate's frames (docs/specs/quiz-gate.md 7): on a page with no flag, section 4 locked, `intro` (17.2 screens,
 // the intro at rest with Skip quiz) and `card2-foot` (question 2 settled, Back and Skip quiz in its footer; no pictures
 // on that question, so no licensed photograph is in the frame); on ?room=open once the hall is resident (__s4.ready),
@@ -141,7 +209,7 @@ for (const s of SETUPS) {
 // keyboard press, the pad's ring); and at 390 x 844 on the poster tier `poster-arrival` (the hall's still with its
 // prompt). Written to docs/specs/screenshots/quiz-gate-<w>x<h>-<state>.png.
 const GATE_BASE = new URL(BASE);
-for (const s of SETUPS) {
+for (const s of FLAGS.has('--phone-only') || FLAGS.has('--no-gate') ? [] : SETUPS) {
   const shotGate = (page, state) => page.screenshot({ path: `${OUT}/quiz-gate-${s.name}-${state}.png` });
   const settledIn = (page) => page.waitForFunction(() => !document.getElementById('find').hasAttribute('data-decoding'), null, { timeout: 30_000 }).then(() => sleep(150));
   const toQuiz = async (page) => { await page.evaluate(() => { const top = document.getElementById('find').getBoundingClientRect().top + scrollY; scrollTo({ top, behavior: 'instant' }); if (window.__skreedSnap) window.__skreedSnap(top / innerHeight); }); await sleep(900); };

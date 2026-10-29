@@ -107,7 +107,7 @@ html:not(.hero3d) .qz-big[data-ring-night], html:not(.hero3d) .qz-mini-sw[data-r
 .qz-input[aria-invalid="true"] { border-bottom-width: 2px; }
 /* the consent tick is text too: the box itself stays in the tree for the keyboard and assistive technology, unseen, and
    the row shows [ ] or [X] in the same type */
-.qz-check { display: grid; grid-template-columns: auto 1fr; gap: var(--s2); align-items: center; min-height: 44px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.qz-check { display: grid; grid-template-columns: auto 1fr; gap: var(--s2); align-items: start; min-height: 44px; cursor: pointer; -webkit-tap-highlight-color: transparent; }   /* the tick on the words' first line (the words take two lines on a phone; centred, it floated between them) */
 .qz-check input { position: absolute; width: 1px; height: 1px; margin: 0; opacity: 0; }
 .qz-tick { white-space: pre; }
 .qz-tick::before { content: "[ ]"; }
@@ -120,14 +120,38 @@ html:not(.hero3d) .qz-big[data-ring-night], html:not(.hero3d) .qz-mini-sw[data-r
 
 /* the answer pictures of the visual questions (Sam, 2026-10-20; picture.ts): one frame per card, the picture of the answer
    under the pointer (or in focus, or pressed on a touch screen) decoding in strip by strip. On a phone the frame stands in
-   the open space above the question (deck.ts sizes it: --qz-pic-h, none under 96 px); beside the question on a laptop.
-   Hidden cards render no frame, so a card's pictures load only once it is on screen. */
+   the open space above the question (deck.ts sizes it: --qz-pic-h, none under 96 px); beside the question on a laptop,
+   and under it on a phone held sideways (below). Hidden cards render no frame, so a card's pictures load only once it is
+   on screen. */
 .qz-pics { position: absolute; left: 0; right: 0; bottom: calc(100% + var(--s4)); height: var(--qz-pic-h, 0px); pointer-events: none; overflow: hidden; }
 .qz-card[hidden] .qz-pics, .qz-pics[data-none] { display: none; }
 .qz-pic { position: absolute; inset: 0; opacity: 0; }   /* the <picture> only loads the right source; the strips draw it */
 .qz-pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .qz-shot { position: absolute; inset: 0; visibility: hidden; transform-origin: 50% 50%; }
 .qz-strip { position: absolute; top: 0; bottom: 0; background-repeat: no-repeat; }
+
+/* a phone held sideways, and any screen under 600 px tall from 640 px wide (a 1280 x 599 window included; the laptop query
+   below never matches under 600 px): no screen this short holds a question in one column, so the count, the question and
+   the footer stand at the left and the seven answers at the right, the intro's heading at the left of its lines, and the
+   result's swatch at the left of its words, as on a laptop. The stage pads the logotype's band at the top (as it does over
+   the result on every phone), centres what fits and scrolls what does not. The picture frame is the left column's third
+   row, between the question and the footer, as tall as the answers' column leaves it (deck.ts marks it data-none under
+   96 px). Sam, 2026-10-29: the quiz laid out "properly for the mobile aspect ratio size". */
+@media (min-width: 640px) and (max-height: 599px) {
+  .qz-stage { align-content: center; padding-top: calc(var(--inset) + 56px + env(safe-area-inset-top, 0px)); }
+  .qz-intro, .qz-cards, .qz-results, .qz-gift-in { max-width: 960px; }
+  .qz-intro { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: clamp(32px, 4vw, 64px); align-content: start; }
+  .qz-intro > .qz-h { grid-column: 1; }
+  .qz-intro > :not(.qz-h) { grid-column: 2; }
+  .qz-card { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); column-gap: clamp(32px, 4vw, 64px); }
+  .qz-card > .qz-count { grid-area: 1 / 1; }
+  .qz-card > .qz-q { grid-area: 2 / 1; }
+  .qz-card > .qz-opts { grid-area: 1 / 2 / span 4 / 3; }
+  .qz-card > .qz-foot { grid-area: 4 / 1; }
+  .qz-pics { position: relative; bottom: auto; left: auto; right: auto; grid-area: 3 / 1; height: auto; }
+  .qz-result { grid-template-columns: 120px minmax(0, 1fr); align-items: start; column-gap: var(--s5); }
+  .qz-gift-in { padding-left: calc(120px + var(--s5)); }   /* the gift's words start on the result's text column, as on a laptop */
+}
 
 /* laptops: the text takes most of the screen; the question's picture stands beside it */
 @media (min-width: 900px) and (min-height: 600px) {

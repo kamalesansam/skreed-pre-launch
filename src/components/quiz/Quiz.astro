@@ -16,7 +16,7 @@ import '../../styles/quiz.css';
 const picUrls = import.meta.glob<string>('../../assets/quiz/pics/*.{avif,webp}', { eager: true, query: '?url', import: 'default' });
 const picIndex: Record<string, { width: number; height: number; widths: number[] }> =
   Object.values(import.meta.glob<{ default: Record<string, { width: number; height: number; widths: number[] }> }>('../../assets/quiz/pics/index.json', { eager: true }))[0]?.default ?? {};
-const PIC_SIZES = '(min-width: 900px) and (min-height: 600px) min(30vw, 440px), calc(100vw - 32px)';
+const PIC_SIZES = '(min-width: 900px) and (min-height: 600px) min(30vw, 440px), (min-width: 640px) and (max-height: 599px) calc((100vw - 92px) * 0.4), calc(100vw - 32px)';   // the frame's width: the laptop's column, a sideways phone's left column (two insets and the gap are 92 px at 844; 300.8 px there, quiz.css), the width between an upright phone's gutters
 const picture = (key: string) => {
   const m = picIndex[key];
   if (!m || !QUIZ_PICTURES.some((p) => p.key === key)) return null;
