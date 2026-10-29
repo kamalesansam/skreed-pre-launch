@@ -14,7 +14,7 @@ export const QUIZ_COPY = {
   /** Sam's alternative headline, kept for him; not rendered */
   hAlt: 'Overwhelmed by 240 shades? Let’s fix that.',
   sub: 'Grab a coffee, sit back and get comfortable. Answer a few questions and we’ll match you to your perfect Skreed shade.',
-  begin: 'Swipe to begin',
+  begin: 'Click to begin',   // Sam, 2026-10-29: "rename it to click to begin, since we're not swiping anything" ("Swipe to begin" until then)
   /** the way past the quiz without taking it (quiz-gate.md D3; Sam, 2026-10-26: "a button which says, rskip quiz", his slip for the "skip quiz" of the same sentence) */
   skip: 'Skip quiz',
   loading: 'Loading...',

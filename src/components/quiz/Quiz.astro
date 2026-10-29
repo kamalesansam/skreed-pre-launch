@@ -135,7 +135,7 @@ const shade = (id: string) => {
   </div>}
 </section>
 <script>
-  // the loader: the chunk comes once the section is within a screen, or at once when "Swipe to begin" or "Skip quiz" is
+  // the loader: the chunk comes once the section is within a screen, or at once when "Click to begin" or "Skip quiz" is
   // pressed first. Any press on either before the chunk has mounted (whether or not the import is already in flight)
   // shows "Loading..." on that button and is replayed by mountQuiz through data-pending; a press on the other button
   // while one is pending does nothing; once mounted, deck.ts owns both.

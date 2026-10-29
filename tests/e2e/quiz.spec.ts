@@ -183,7 +183,7 @@ async function openQuiz(page: Page, baseURL: string | undefined, chunk = true): 
   await expect(page.locator('#qzBegin')).toBeInViewport();
   if (deck) {
     await (await deck).finished();
-    await expect(page.locator('#qzBegin > .dc')).toHaveCount(1);   // mounted: deck.ts has split "Swipe to begin"
+    await expect(page.locator('#qzBegin > .dc')).toHaveCount(1);   // mounted: deck.ts has split "Click to begin"
   }
 }
 
@@ -224,7 +224,7 @@ const deckState = (page: Page) => page.locator('.qz-card').evaluateAll((cards) =
 });
 const only = (i: number) => ({ unhidden: [i], top: [i], tabbable: [] as number[], live: [i] });
 
-/** "Swipe to begin" with the chunk in (openQuiz): the press begins at once */
+/** "Click to begin" with the chunk in (openQuiz): the press begins at once */
 async function begin(page: Page): Promise<void> {
   await page.locator('#qzBegin').click();
   await expect(page.locator('#find')).toHaveAttribute('data-state', 'quiz');
@@ -672,7 +672,7 @@ async function doubleClick(page: Page, x: number, y: number, next: number): Prom
   return { one, two, at };
 }
 
-test('AC5 the guard, a double click on "Swipe to begin": its second click lands about 0.2 s after the first, on an answer of question 1 just put on screen where Begin stood, and is dropped (question 1 stays on top, nothing marked, no answer taken); a click at that spot once the question has settled is taken', async ({ page, baseURL }) => {
+test('AC5 the guard, a double click on "Click to begin": its second click lands about 0.2 s after the first, on an answer of question 1 just put on screen where Begin stood, and is dropped (question 1 stays on top, nothing marked, no answer taken); a click at that spot once the question has settled is taken', async ({ page, baseURL }) => {
   await openQuiz(page, baseURL);
   await quiet(page);
   const b = (await page.locator('#qzBegin').boundingBox())!, x = b.x + b.width / 2, y = b.y + b.height / 2;
@@ -784,7 +784,7 @@ test('AC5 and AC9 the guard under reduced motion is 150 ms: an answer pressed 10
 
 test('AC5 the keyboard: from the focused card Down and Up move among the answers and Enter commits; Tab from the last answer reaches Back, then Skip quiz (alone on question 1), and then leaves the deck; from Skip quiz Down goes to the first answer and Up to the last; every other card is hidden and inert and never takes focus; Space commits too', async ({ page, baseURL }) => {
   await openQuiz(page, baseURL);
-  // the intro's Tab order (quiz-gate.md AC2): "Swipe to begin", then Skip quiz
+  // the intro's Tab order (quiz-gate.md AC2): "Click to begin", then Skip quiz
   await page.locator('#qzBegin').focus();
   await page.keyboard.press('Tab'); await expect(page.locator('#qzSkip')).toBeFocused();
   await expect(page.locator('#qzSkip')).toHaveAccessibleName(Q.skip);
@@ -963,7 +963,7 @@ test('AC5 a press while the chunk is in flight shows "Loading..." (in two copies
   expect(await deckState(page)).toEqual(only(0));
 });
 
-test('AC5 an aborted chunk leaves "Swipe to begin" live; a press retries through a fresh URL and shows "Loading..." until that fails too, then gives the button back (its label read from data-label, in two copies), and the next press begins once the chunk can load', async ({ page, baseURL }) => {
+test('AC5 an aborted chunk leaves "Click to begin" live; a press retries through a fresh URL and shows "Loading..." until that fails too, then gives the button back (its label read from data-label, in two copies), and the next press begins once the chunk can load', async ({ page, baseURL }) => {
   let mode: 'abort' | 'hold' | 'load' = 'abort';
   let release = (): void => undefined; const held = new Promise<void>((r) => { release = r; });
   await page.route(DECK, async (route) => { if (mode === 'load') return route.continue(); if (mode === 'hold') await held; return route.abort('failed'); });
@@ -1790,7 +1790,7 @@ test('AC8 the form\'s errors reach assistive technology: Enter in the email fiel
   expect((await events(page)).filter(([n]) => n.startsWith('lead_'))).toEqual([['lead_submit', {}], ['lead_error', { kind: 'invalid' }], ['lead_submit', {}], ['lead_error', { kind: 'invalid' }]]);
 });
 
-test('AC10 without JavaScript the intro reads as the server drew it, each line in two copies (Sam\'s case for assistive technology, capitals drawn), "Swipe to begin" is not shown, and the no-JS line links to /#families, which exists on the page, its link named "ten families"', async ({ browser, baseURL }) => {
+test('AC10 without JavaScript the intro reads as the server drew it, each line in two copies (Sam\'s case for assistive technology, capitals drawn), "Click to begin" is not shown, and the no-JS line links to /#families, which exists on the page, its link named "ten families"', async ({ browser, baseURL }) => {
   const ctx = await browser.newContext({ javaScriptEnabled: false });
   const page = await ctx.newPage();
   await page.goto(new URL('/?tier=poster', baseURL).href);
@@ -2916,7 +2916,7 @@ test('QG AC1 the lock on the poster tier: section#room hidden and data-locked fr
   expect(await roomState(page)).toEqual(LOCKED);
 });
 
-test('QG AC2 Skip quiz at 390 x 844 and 1280 x 800: "Skip quiz" in sentence case for assistive technology, drawn in capitals, the intro\'s fourth row under "Swipe to begin" at the column\'s left, at the right of every footer (its right edge at the text column\'s right edge within 1 px, alone on question 1), nowhere on the result; 44 px, underlined at 1 px, 2 px on hover, the two-tone ring on focus; drawn at rest with no decode; a press inside the guard or during a change of screen is dropped', async ({ browser, baseURL }) => {
+test('QG AC2 Skip quiz at 390 x 844 and 1280 x 800: "Skip quiz" in sentence case for assistive technology, drawn in capitals, the intro\'s fourth row under "Click to begin" at the column\'s left, at the right of every footer (its right edge at the text column\'s right edge within 1 px, alone on question 1), nowhere on the result; 44 px, underlined at 1 px, 2 px on hover, the two-tone ring on focus; drawn at rest with no decode; a press inside the guard or during a change of screen is dropped', async ({ browser, baseURL }) => {
   test.setTimeout(300_000);
   for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
     const ctx = await browser.newContext({ viewport: vp });
@@ -2930,7 +2930,7 @@ test('QG AC2 Skip quiz at 390 x 844 and 1280 x 800: "Skip quiz" in sentence case
     expect(await copies(skip), `${at}: in two copies, drawn in capitals, at rest`).toEqual({ sr: Q.skip, row: Q.skip.toUpperCase(), faded: 0 });
     expect(await decodingLog(page), `${at}: no decode ran at mount`).toEqual([]);
     const [b, s] = await Promise.all([beginBtn.boundingBox(), skip.boundingBox()]);
-    expect(s!.y, `${at}: the fourth row, under "Swipe to begin" at the intro's gap`).toBeGreaterThanOrEqual(b!.y + b!.height + 16 - 0.5);
+    expect(s!.y, `${at}: the fourth row, under "Click to begin" at the intro's gap`).toBeGreaterThanOrEqual(b!.y + b!.height + 16 - 0.5);
     expect(Math.abs(s!.x - b!.x), `${at}: at the column's left, as Begin is`).toBeLessThanOrEqual(0.5);
     expect(s!.width, `${at}: at least 44 px wide`).toBeGreaterThanOrEqual(44); expect(s!.height).toBeGreaterThanOrEqual(44);
     const underline = (el: Locator) => el.evaluate((e) => { const cs = getComputedStyle(e); return `${cs.textDecorationLine} ${cs.textDecorationThickness}`; });

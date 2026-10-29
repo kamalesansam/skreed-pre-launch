@@ -42,6 +42,8 @@ interface Window {
     subscribe(fn: (p: import('./config/params.ts').HeroParams, key: string | null) => void): () => unknown;
     /** section 4's parameters (Tune's "Section 4" group) */
     room?: { params: import('./config/room.ts').RoomParams; subscribe(fn: (p: import('./config/room.ts').RoomParams, key: string | null) => void): () => unknown };
+    /** the fog's shade hues (Tune's "Sections 2 and 3" group; config/fog-hues.ts), read live every frame */
+    fog?: { params: import('./config/fog-hues.ts').FogHueParams };
   };
   /** section 4: the island hands the walk script a frame each step; the walk script hands back the head's turn from the keys and the drag */
   __skreedRoomFrame?: (f: import('./config/room.ts').RoomFrame) => void;
