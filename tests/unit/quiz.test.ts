@@ -4,7 +4,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { QUIZ_COPY, QUIZ_PERSONAS, QUIZ_QUESTIONS, QUIZ_QUESTION_COUNT, needsRing, needsRingNight, pickShade, scoreQuiz, shadeHref, type PersonaId } from '../../src/config/quiz.ts';
+import { QUIZ_COPY, QUIZ_PERSONAS, QUIZ_QUESTIONS, QUIZ_QUESTION_COUNT, luminance, pickShade, scoreQuiz, shadeHref, type PersonaId } from '../../src/config/quiz.ts';
+import { chipInk, chipRim, resultTones } from '../../src/config/quiz-tones.ts';
+import { hexToOklab } from '../../src/scripts/family/tint.ts';
 import { SHADES } from '../../src/config/shades.gen.ts';
 
 const byId = new Map(SHADES.map((s) => [s.id, s]));
@@ -73,24 +75,43 @@ test('the shade draw: any shade of the group can come up, the others are the com
   }
 });
 
-test('the family link carries the three-digit catalog number, and the hairline goes on exactly the shades under 1.5:1 on Pearl', () => {
+test('the family link carries the three-digit catalog number', () => {
   assert.equal(shadeHref('frosty-white', 10), '/shades/frosty-white/?shade=010');
   assert.equal(shadeHref('mellow-yellow', 107), '/shades/mellow-yellow/?shade=107');
-  const ringed = [...new Set(QUIZ_PERSONAS.flatMap((p) => p.shades))].filter((id) => needsRing(byId.get(id)!.hex));
-  // the near-whites, the pale yellows and the palest pastel: Porcelain, Almond, Powder, Linen, Sunflower, Mimosa, Bumblebee, Daffodil, Pale Violet
-  assert.deepEqual(ringed.sort(), ['basic-brown-01', 'blissful-blue-03', 'frosty-white-10', 'frosty-white-20', 'mellow-yellow-10', 'mellow-yellow-11', 'mellow-yellow-15', 'mellow-yellow-20', 'vivid-violet-02']);
-  // the CSS carries the generic rule the component's data-ring relies on
-  const css = readFileSync(new URL('../../src/styles/quiz.css', import.meta.url), 'utf8');
-  assert.match(css, /\.qz-big\[data-ring\][^{]*\{[^}]*border: 1px solid var\(--urban-slate\)/);
 });
 
-test('on the night ground (the poster tier) the dark shades under 3:1 against --night take a Pearl hairline instead, and the pale ones none (review 2026-10-19)', () => {
-  const night = [...new Set(QUIZ_PERSONAS.flatMap((p) => p.shades))].filter((id) => needsRingNight(byId.get(id)!.hex));
-  // Burgundy, Claret, Wine, Midnight, Sapphire, Chestnut, Fig, Pine, Navy, Prussian
-  assert.deepEqual(night.sort(), ['basic-brown-20', 'blissful-blue-15', 'blissful-blue-21', 'blissful-blue-22', 'blissful-blue-24', 'go-green-21', 'roaring-red-15', 'roaring-red-21', 'roaring-red-23', 'vivid-violet-16']);
+test('the result\'s tones (E-S3-result; Sam, 2026-11-02: "dynamic to all the colors that we got"): every quiz shade gives its own deep ground, a lighter band, a lighter layer for its name and the stroke\'s edge and ridge, Pearl Whisper reads AA on the ground and the band, each chip\'s name takes the better of --night and Pearl Whisper, and the darkest chips and strokes a Pearl hairline', () => {
+  const ratio = (a: string, b: string) => { const x = luminance(a), y = luminance(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const L = (h: string) => hexToOklab(h)[0];
+  const ids = [...new Set(QUIZ_PERSONAS.flatMap((p) => p.shades))];
+  for (const id of ids) {
+    const hex = byId.get(id)!.hex, t = resultTones(hex);
+    for (const v of Object.values(t)) assert.match(v, /^#[0-9a-f]{6}$/, `${id}: ${v}`);
+    assert.ok(L(t.deep) <= 0.275, `${id}: the ground is deep (${t.deep}; OKLab 0.27 and the hex's rounding)`);
+    assert.ok(L(t.band) > L(t.deep) && L(t.mid) > L(t.band), `${id}: the band a step over the ground, the name's layer over the band`);
+    assert.ok(L(t.dark) < L(hex) + 1e-3 && L(t.light) >= L(hex) - 1e-3, `${id}: the stroke's edge darker, its ridge lighter`);
+    assert.ok(ratio('#f7f6f3', t.deep) >= 4.5 && ratio('#f7f6f3', t.band) >= 4.5, `${id}: Pearl Whisper on the ground and the band, AA`);
+    assert.ok(L(t.light) >= 0.415, `${id}: the stroke's ridge at 0.42 at the least, so a dark shade's stroke shows on its ground`);
+    // the chip's name, on the chip as Sam's reference sets it, in the better of --night and Pearl Whisper
+    const ink = chipInk(hex) === 'night' ? '#050506' : '#f7f6f3', other = ink === '#050506' ? '#f7f6f3' : '#050506';
+    assert.ok(ratio(hex, ink) >= ratio(hex, other), `${id}: the chip's name in the better ink`);
+    assert.ok(ratio(hex, ink) >= 4.39, `${id}: the chip's name at 4.4:1 at the least (${ratio(hex, ink).toFixed(2)})`);
+  }
+  // the two under AA's 4.5 (no ink of the brand's reaches it on them): Fuchsia 4.43 and Teal 4.40
+  assert.deepEqual(ids.filter((id) => { const h = byId.get(id)!.hex; return Math.max(ratio(h, '#050506'), ratio(h, '#f7f6f3')) < 4.5; }).map((id) => byId.get(id)!.name).sort(), ['Fuchsia', 'Teal']);
+  // Burgundy, Wine, Midnight, Sapphire, Chestnut, Fig, Pine, Navy, Prussian: under 1.5:1 against the lightest ground
+  assert.deepEqual(ids.filter((id) => chipRim(byId.get(id)!.hex)).sort(), ['basic-brown-20', 'blissful-blue-15', 'blissful-blue-21', 'blissful-blue-22', 'blissful-blue-24', 'go-green-21', 'roaring-red-21', 'roaring-red-23', 'vivid-violet-16']);
   const css = readFileSync(new URL('../../src/styles/quiz.css', import.meta.url), 'utf8');
-  assert.match(css, /html:not\(\.hero3d\) \.qz-big\[data-ring\], html:not\(\.hero3d\) \.qz-mini-sw\[data-ring\] \{ border: 0; \}/);
-  assert.match(css, /html:not\(\.hero3d\) \.qz-big\[data-ring-night\], html:not\(\.hero3d\) \.qz-mini-sw\[data-ring-night\] \{ border: 1px solid var\(--pearl-whisper\); \}/);
+  assert.match(css, /\.qz-mini\[data-rim\] \{ border: 1px solid var\(--pearl-whisper\); \}/);
+  // every chip's name on the chip in its ink, and the darkest strokes outlined
+  assert.match(css, /\.qz-mini \{ --qz-ink: var\(--night\);[^}]*color: var\(--qz-ink\);/);
+  assert.match(css, /\.qz-mini\[data-ink="pearl"\] \{ --qz-ink: var\(--pearl-whisper\); \}/);
+  assert.match(css, /\.quiz\[data-sm-rim\] \.qz-sm-body \{ stroke: var\(--pearl-whisper\);/);
+  // the component writes every chip's tones and deck.ts copies the drawn shade's onto the section
+  const astro = readFileSync(new URL('../../src/components/quiz/Quiz.astro', import.meta.url), 'utf8');
+  for (const a of ['data-ink={s.ink}', 'data-deep={s.tones.deep}', 'data-band={s.tones.band}', 'data-mid={s.tones.mid}', 'data-sd={s.tones.dark}', 'data-sl={s.tones.light}']) assert.ok(astro.includes(a), a);
+  const deck = readFileSync(new URL('../../src/scripts/quiz/deck.ts', import.meta.url), 'utf8');
+  for (const k of ['--qz-deep', '--qz-band', '--qz-mid', '--qz-sd', '--qz-sl']) assert.ok(deck.includes(`'${k}'`), k);
 });
 
 test('copy: sentence case headings, no em or en dash, no emoji, no banned words, no digits in a question (CLAUDE.md 3, 4, 16, 17)', () => {
@@ -99,7 +120,7 @@ test('copy: sentence case headings, no em or en dash, no emoji, no banned words,
     assert.doesNotMatch(s, /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u, s);
     assert.doesNotMatch(s, /\b(seamless|elevate|unleash|next-level|revolutionary)\b/i, s);
   }
-  for (const h of [QUIZ_COPY.h, QUIZ_COPY.own, QUIZ_COPY.gift, ...QUIZ_QUESTIONS.map((q) => q.q)]) {
+  for (const h of [QUIZ_COPY.h, QUIZ_COPY.eyebrow, QUIZ_COPY.toGift, QUIZ_COPY.toResult, ...QUIZ_QUESTIONS.map((q) => q.q)]) {
     assert.notEqual(h, h.toUpperCase(), `all caps: ${h}`);
     assert.equal(h[0], h[0].toUpperCase(), h);
   }
@@ -107,6 +128,9 @@ test('copy: sentence case headings, no em or en dash, no emoji, no banned words,
   // the gate's control (quiz-gate.md 3): Sam's "rskip quiz" in sentence case, read into the rules above with the rest of QUIZ_COPY
   assert.equal(QUIZ_COPY.skip, 'Skip quiz');
   assert.ok(allStrings().includes(QUIZ_COPY.skip));
+  // the offer is Sam's reference of 2026-11-02 word for word, its middle in bold (E-S3-result)
+  assert.equal(`${QUIZ_COPY.offerLead} ${QUIZ_COPY.offerStrong} ${QUIZ_COPY.offerTail}`, 'Get an exclusive launch discount on any Skreed product in your signature shade or any other shade you love!');
+  assert.equal(QUIZ_COPY.send, 'Send my code');
   // no invented counts on the result (Sam, 2026-10-16: the confidence and rarity figures stay out)
   for (const p of QUIZ_PERSONAS) assert.doesNotMatch(`${p.profile} ${p.palette}`, /%|Top \d/, p.id);
 });

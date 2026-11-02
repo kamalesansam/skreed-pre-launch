@@ -5,7 +5,9 @@ import { chromium, type Browser, type BrowserContextOptions } from '@playwright/
 export const CHROME_PATH = process.env.CHROME_PATH || chromium.executablePath();
 
 /** WebGL in headless Chromium is SwiftShader; these flags let the 3D path run there (test builds force the tier). */
-export const GL_ARGS = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
+// SKREED_GL=gpu runs the browser on the machine's GPU instead: on Sam's Mac (2026-11-02) headless Chrome has one, and
+// SwiftShader there ticks the page's animation clock about twice a second, so Web Animations never report finished.
+export const GL_ARGS = process.env.SKREED_GL === 'gpu' ? ['--ignore-gpu-blocklist', '--enable-gpu'] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
 
 /** The three rendering setups of hero.md section 7. */
 export const SETUPS = {
