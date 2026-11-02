@@ -6,7 +6,7 @@ import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import { PHONE, WIDE, watch, cspViolations } from './util.ts';
 import sharp from 'sharp';
 
-type St = { s: number; target: number; G: number; busy: boolean; tier: string; detail: string; probe: { tier: string; period: number; median: number } | null };
+type St = { s: number; target: number; G: number; busy: boolean; tier: string; detail: string; probe: { P: number; median: number; cpuMedian: number } | null };
 const st = (p: Page) => p.evaluate(() => (window as unknown as { __famStage: { state(): St } }).__famStage.state());
 async function supplierBuild(p: Page): Promise<void> {
   const ok = await p.evaluate(() => { const c = document.getElementById('fam-3d'); return !!c && JSON.parse(c.textContent || '{}').mode === 'on'; });
@@ -58,7 +58,7 @@ test('tier probe: the verdict decides LOD0; a low verdict never downloads it, DP
   await live(page);
   const s = await st(page);
   expect(s.probe, 'the probe ran').not.toBeNull();
-  expect(s.probe!.period).toBeGreaterThan(0);
+  expect(s.probe!.P, 'the display period the probe measured').toBeGreaterThan(0);
   expect(['high', 'low']).toContain(s.tier);
   if (s.tier === 'low') {
     expect(glbs(urls)).toEqual(['lod1']);

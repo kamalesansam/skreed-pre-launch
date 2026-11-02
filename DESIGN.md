@@ -796,7 +796,7 @@ Motion is reserved for the hero canvas, the Wall, the tilt card and the manifest
 
 ### Family pages (`/shades/<family>/`; `docs/specs/family-page.md` 4, R5, R13)
 
-Tokens in `src/styles/family.css`; the script twins in `src/scripts/family/timing.ts` (a unit test keeps them equal). No GSAP on these pages: CSS transitions, the Web Animations API and the lineup's own loop.
+Tokens in `src/styles/family.css`; the script twins in `src/scripts/family/timing.ts` (a unit test keeps them equal). No GSAP on these pages: CSS transitions, the Web Animations API and the lineup's own loop, which also ticks the case-type takeover's controller on the page's clock (round 6, `src/scripts/family/three/takeover.ts`; its constants in `src/config/takeover.ts`, each beside its measured value).
 
 ```css
 :root {
@@ -822,8 +822,9 @@ Tokens in `src/styles/family.css`; the script twins in `src/scripts/family/timin
 | "Back to main page" arrives (round 4, family-page.md 22, E-F5) | 2.5 s after the argument screen comes on (one timer): `hidden` dropped, then opacity 0 to 1 over 400 ms (`--dur-fade`) by the Web Animations API; nothing moves | `--ease-standard` |
 | "Back to main page" leaves | the argument screen goes off after it showed: opacity 1 to 0 over 200 ms (`--dur-out`), then `hidden`; leaving before 2.5 s drops the timer and shows nothing | `--ease-in` |
 | Between family pages and back to `/` | the browser's cross-document view transition (root cross-fade) | browser default |
+| The case-type hand-over's takeover (round 6, family-page.md 24, E-F6) | from the turn's edge-on frame (2.85, 3.85 and 4.85 screens) the incoming case takes the outgoing one over in a sweep from the screen's right to its left, 1,350 ms on the page's clock, never on the scroll; the boundary runs from -0.12 to 1.12 of the two cases' extent along the sweep, roughened by two layers of value-noise fBm (2.4 and 8 per unit of the case's height) and lined with an icy band 0.03 wide either side with a bump relief; the half turn plays in front of it; scrolled up it runs left to right; a request for the case it came from reverses it at the same rate; a third target finishes the run within 240 ms, then runs | an in-out cubic, 4t^3 below a half and 1 - (2 - 2t)^3 / 2 above |
 
-Reduced motion: swatch grid mode by default (no island; `REDUCED_MOTION_TIER`), every DOM move instant, the view transition off; under `still3d` the lineup jumps, with no entrance, tilt or turn, and "Back to main page" is shown at full opacity at 2.5 s and hidden at once.
+Reduced motion: swatch grid mode by default (no island; `REDUCED_MOTION_TIER`), every DOM move instant, the view transition off; under `still3d` the lineup jumps, with no entrance, tilt or turn, "Back to main page" is shown at full opacity at 2.5 s and hidden at once, and the case type changes in one frame at the edge-on frame with no sweep and no band (round 6).
 
 ### Section 3, the quiz (`src/scripts/quiz/decode.ts` and `deck.ts`; E-S3-motion)
 

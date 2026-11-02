@@ -19,6 +19,9 @@ async function open(p: Page, slug: string, q = '') {
   const has = await p.evaluate(() => !!document.getElementById('fam-3d'));
   test.skip(!has, 'this build has no 3D island (PUBLIC_FAMILY_3D=off)');
   await p.waitForFunction(() => document.querySelector('#st3d canvas.on'), null, { timeout: 90_000 });
+  // the loader stays up past the island's first frame (3.5 s against 0.8 s on a fast machine) and everything under it is
+  // inert, so a tap before it lifts lands on nothing: wait for its exit before any row acts
+  await p.waitForFunction(() => !document.documentElement.classList.contains('loading'), null, { timeout: 90_000 });
   await settled(p);
   await p.waitForFunction(() => (window as unknown as { __famStage: { state(): { detail: string } } }).__famStage.state().detail !== 'loading', null, { timeout: 90_000 });
 }

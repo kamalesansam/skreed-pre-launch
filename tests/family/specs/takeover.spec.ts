@@ -131,9 +131,16 @@ test('criterion 6: from rest at Snap, up through 3.85 the run is mirrored (left 
   expect(run[0].dir, 'a run to an earlier type sweeps mirrored').toBe(-1);
   const down = await glide(page, 3.6, 4.2, 300, 1500);
   expect(down.some((r) => r.phase === 'reversing'), 'the same sweep plays back').toBe(true);
-  let step = 0;
-  for (let k = 1; k < down.length; k++) if (down[k].from === down[k - 1].from && down[k].to === down[k - 1].to) step = Math.max(step, Math.abs(down[k].raw - down[k - 1].raw));
-  expect(step, 'the progress never jumps between frames').toBeLessThan(0.05);
+  // the progress between two frames of one run never moves further than the frames' own time allows (dt over 1,350 ms,
+  // the longer of the two intervals round the sample since the stage's frame may run either side of the sampler's, plus
+  // a frame of slack): a slow frame under the software renderer is not a jump; a reset or a skip of the run would be
+  let worst = -1;
+  for (let k = 1; k < down.length; k++) {
+    if (down[k].from !== down[k - 1].from || down[k].to !== down[k - 1].to) continue;
+    const dt = Math.max(down[k].t - down[k - 1].t, k > 1 ? down[k - 1].t - down[k - 2].t : 0);
+    worst = Math.max(worst, Math.abs(down[k].raw - down[k - 1].raw) - (dt / 1350 + 0.013));
+  }
+  expect(worst, 'the progress never jumps between frames beyond what their time allows').toBeLessThanOrEqual(0);
   expect(down.at(-1)!.type).toBe('snap');
   expect(down.at(-1)!.phase).toBe('idle');
   await ctx.close();
