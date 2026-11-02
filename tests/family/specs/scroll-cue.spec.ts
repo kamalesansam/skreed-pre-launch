@@ -1,5 +1,5 @@
 // The cue's words on a family page (docs/specs/family-page.md 25, docs/specs/scroll-cue.md 7, acceptance 5): the cue's words on a family page,
-// at 390 x 844 and 1280 x 800, then at 360 x 780, 430 x 932, 375 x 667 and 375 x 553 against the front case's box.
+// at 390 x 844, 1280 x 800 and 1024 x 768, then at 360 x 780, 430 x 932, 375 x 667, 768 x 1024 and 375 x 553 against the front case's box.
 // The 3D rows need a PUBLIC_FAMILY_3D=on (or dev) build and force the 3D path past SwiftShader (?render=force&tier=high,
 // as back.spec.ts does); grid mode runs on any build. The words settle by their own fade, awaited, never a fixed frame.
 import { test, expect, type Page } from '@playwright/test';
@@ -33,7 +33,8 @@ const scene = (page: Page, sel: string) => page.evaluate((sel) => {
     style: { family: cs.fontFamily.split(',')[0].replace(/"/g, ''), weight: cs.fontWeight, size: cs.fontSize, color: cs.color }, label: w.textContent, vw: innerWidth };
 }, sel);
 
-for (const [name, setup] of [['390', PHONE], ['1280', WIDE]] as const) {
+const TABLET_WIDE = { viewport: { width: 1024, height: 768 }, deviceScaleFactor: 1 };
+for (const [name, setup] of [['390', PHONE], ['1280', WIDE], ['1024x768', TABLET_WIDE]] as const) {
   test(`${name}: the first screen's words with the columns, the story's at rest at the bottom right, none on the argument screen`, async ({ browser }) => {
     test.setTimeout(300_000);
     const ctx = await browser.newContext(setup);
@@ -44,15 +45,23 @@ for (const [name, setup] of [['390', PHONE], ['1280', WIDE]] as const) {
     expect(top.label).toBe('Scroll to see more');
     expect(top.style).toMatchObject({ family: 'IBM Plex Mono', weight: '500', size: '14px', color: PEARL });
     expect(Math.abs((top.words.l + top.words.r) / 2 - top.vw / 2), 'centred').toBeLessThan(1);
-    if (name === '390') expect(Math.abs(top.el.b - top.cue.b), 'on the columns\' bottom line').toBeLessThan(2);
+    if (setup.viewport.width < 900) {
+      expect(Math.abs(top.el.b - top.cue.b), 'on the columns\' bottom line').toBeLessThan(2);
+      const fc = await frontCase(page);
+      expect(fc, 'the skeleton gives the front case').not.toBeNull();
+      expect(top.el.t - fc!.b, 'the line clears the front case by 4 px or more').toBeGreaterThanOrEqual(4);
+    }
     for (const o of top.others.filter((o) => !['cue', 'cue2'].includes(o.id))) expect(meets(top.words, o.box), `first screen: clear of ${o.id}`).toBe(false);
     expect(meets(top.words, top.cue) || meets(top.words, top.cue2)).toBe(false);
     await settled(page, '.cuetext.is-story', false);
     // the story: shown only once the page has rested, at the bottom right, clear of Back to top's words and the beat text
-    await page.evaluate(() => scrollTo({ top: 2.1 * innerHeight, behavior: 'instant' }));
+    await page.evaluate(() => { const w = window as unknown as { __stillAt: number }; w.__stillAt = 0; new MutationObserver(() => { if (document.documentElement.hasAttribute('data-still') && !w.__stillAt) w.__stillAt = performance.now(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-still'] }); });
+    const t0 = await page.evaluate(() => { scrollTo({ top: 2.1 * innerHeight, behavior: 'instant' }); return performance.now(); });
     await page.waitForTimeout(400);
     expect(await page.evaluate(() => document.documentElement.hasAttribute('data-still'))).toBe(false);
     await settled(page, '.cuetext.is-story', true);
+    const stillAt = await page.evaluate(() => (window as unknown as { __stillAt: number }).__stillAt);
+    expect(stillAt - t0, 'the story shown no sooner than 1.5 s after the scroll (CUE_STILL_MS)').toBeGreaterThanOrEqual(1490);
     const story = await scene(page, '.cuetext.is-story');
     expect(story.vw - story.words.r, 'right-aligned on --inset').toBeLessThan(Math.max(16, 0.035 * story.vw) + 1.5);
     for (const o of story.others) expect(meets(story.words, o.box), `story: clear of ${o.id}`).toBe(false);
@@ -76,7 +85,7 @@ const frontCase = (page: Page) => page.evaluate(() => {
   return best ? { l: Math.min(...best.map((q) => q[0])), r: Math.max(...best.map((q) => q[0])), b: Math.max(...best.map((q) => q[1])) } : null;
 });
 
-for (const [w, h, shown] of [[360, 780, true], [430, 932, true], [375, 667, true], [375, 553, false]] as const) {
+for (const [w, h, shown] of [[360, 780, true], [430, 932, true], [375, 667, true], [768, 1024, true], [375, 553, false]] as const) {
   test(`${w} x ${h}: the first screen's words ${shown ? 'clear the front case by 4 px or more' : 'stand down, the case reaching their line; the columns stay'}`, async ({ browser }) => {
     test.setTimeout(300_000);
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });

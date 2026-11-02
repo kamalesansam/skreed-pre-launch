@@ -3,9 +3,9 @@
 // rested CUE.stillMs, wherever the pin goes on below: the pull-back, the cascade and the gems at rest. At the top they come
 // back alone too, after the same rest, when the chevrons stay hidden there (a jump to the top that the camera's lagging
 // followers reach late, while the ride keeps the chevrons off for the wipe) and the page still goes on below. Never while
-// the loader or the intro lock the page: the layout read behind "goes on below" is kept until the scroll position next
-// changes, and a read taken under the lock, where the track is collapsed, would say nothing is below for as long as the
-// page stays at the top (iteration 4, 2026-11-02).
+// the loader, the intro or a soft poster lock the page: the layout read behind "goes on below" is kept until the scroll
+// position next changes, and a read taken under the lock, where the document measures as one screen (the countdown
+// script's own finding), would say nothing is below for as long as the page stays at the top (iteration 4, 2026-11-02).
 import { S2T } from '../../../config/hero.ts';
 import { CUE } from '../../../config/cue.ts';
 
@@ -20,12 +20,15 @@ export interface CueWordsIn {
   restMs: number;
   /** the first wipe's progress from the lagged scroll (mapScroll) */
   tp: number;
-  /** section 2 is built (until it is, the scene holds at the pull-back's end and scrolling shows nothing new) */
+  /** section 2 is built (until it is, the scene holds at the pull-back's end and scrolling shows nothing new; after a
+   *  failure the hold is released but the wipe opens on black, where neither tone of the words reads, so they stay off
+   *  past the pull-back there too) */
   s2ready: boolean;
   /** the chevrons are off (#cue.is-off) */
   cueOff: boolean;
-  /** the page is locked (html.loading, html.intro: the loader and the intro hold it with overflow hidden and the track
-   *  collapsed, so nothing is below until they end); the words are hidden by CSS meanwhile, and no layout is read */
+  /** the page is locked (html.loading, html.intro: the loader and the intro hold it with overflow hidden, so nothing is
+   *  below until they end; html.poster: a soft poster's page under a still loading island, never pinned over); the words
+   *  are hidden by CSS meanwhile, no layout is read, and the rest clock runs from the lock's end */
   locked: boolean;
   /** the quiz's section still wholly below the screen: a layout read, so asked last and only when all else holds */
   quizBelow: () => boolean;

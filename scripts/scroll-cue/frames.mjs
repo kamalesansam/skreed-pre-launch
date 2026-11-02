@@ -126,10 +126,12 @@ for (const s of SETUPS) {
         for (let n = 0; n < 3; n++) { if (n) await sleep(4000); reads.push(await behind(page, '#cueText')); }
         log(s.name, state, { want, settled: ok, showMs: Math.round(onAt - sent), contrast: reads, ...(await probe(page, '#cueText')) });
         if (['pull', 'wipe1-end', 'cascade', 'gems', 'gems-glue'].includes(state)) await frame(page, `${OUT}/scroll-cue-${s.name}-${state}.png`);
+        if (state === 'gems-glue') {   // moving from a shown place: the class goes on the island's next frame and the words fade out within 0.5 s of it
+          await page.evaluate(() => scrollBy(0, -40));
+          const goneAt = Date.now(); const gone = await settle(page, '#cueText', false, 20_000);
+          log(s.name, 'gems-moving', { settled: gone, ms: Date.now() - goneAt, ...(await probe(page, '#cueText')) });
+        }
       }
-      await page.evaluate(() => scrollBy(0, -40));
-      const goneAt = Date.now(); const gone = await settle(page, '#cueText', false, 20_000);
-      log(s.name, 'gems-moving', { settled: gone, ms: Date.now() - goneAt, ...(await probe(page, '#cueText')) });
       await ctx.close();
     }
   }

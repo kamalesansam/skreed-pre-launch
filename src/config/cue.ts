@@ -8,4 +8,7 @@ export const CUE = {
   stillMs: 1500,
   /** at or under this scroll position the words stand with the chevrons, which hide past it, px */
   top: 8,
+  /** the words' fade, shell.css's and family.css's transition, ms: the pin place is held this long after the words go off at the
+   *  top, so they leave the corner hidden (ride.ts; D10). Shorter than stillMs, so the place is always dropped before they can come back */
+  fadeMs: 500,
 } as const;

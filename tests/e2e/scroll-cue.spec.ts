@@ -63,6 +63,26 @@ test.describe('the landing at the top, poster tier', () => {
     });
   }
 
+  for (const [w, h] of [[390, 844], [1280, 800]]) {
+    test(`${w} x ${h}: the countdown's eyebrow and unit labels in the chrome's face (E-chrome-font); the countdown lifted 106 px up to 1100 px for the column and the words`, async ({ browser }) => {
+      const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+      const page = await ctx.newPage();
+      await page.goto('/?tier=poster');
+      await page.evaluate(() => document.fonts.ready);
+      const r = await page.evaluate(() => {
+        const face = (e: Element) => { const c = getComputedStyle(e); return { family: c.fontFamily.split(',')[0].replace(/"/g, ''), weight: c.fontWeight, size: c.fontSize, transform: c.textTransform, style: c.fontStyle }; };
+        return { eyebrow: face(document.getElementById('cdEyebrow')!), labels: Array.from(document.querySelectorAll('#count .l')).map(face), countBottom: document.getElementById('count')!.getBoundingClientRect().bottom };
+      });
+      const PLEX = { family: 'IBM Plex Mono', weight: '500', size: '14px', transform: 'uppercase', style: 'normal' };
+      expect(r.eyebrow).toMatchObject(PLEX);
+      expect(r.labels.length).toBe(4);
+      for (const l of r.labels) expect(l).toMatchObject(PLEX);
+      const inset = Math.min(56, Math.max(16, 0.035 * w));
+      expect(Math.abs(h - r.countBottom - inset - (w <= 1100 ? 106 : 0)), 'the countdown\'s bottom edge on --inset, lifted 106 px up to 1100 px (shell.css .copy)').toBeLessThan(2);
+      await ctx.close();
+    });
+  }
+
   test('hidden past 8 px with the column, back at 8 px; hidden while loading; without JavaScript, not displayed', async ({ page, browser }) => {
     await page.goto('/?tier=poster');
     await settled(page, true);
@@ -82,9 +102,9 @@ test.describe('the landing at the top, poster tier', () => {
 });
 
 test.describe('the landing in the pin, 3D path', () => {
-  for (const [w, h] of [[390, 844], [1280, 800]]) {
-    test(`${w} x ${h}: back after 1.5 s at rest in the pull-back, at both ends of the first wipe, in the cascade and at the gems, on the page edge; never in a wipe or on the quiz`, async ({ browser }) => {
-      test.setTimeout(1_200_000);
+  for (const [w, h, full] of [[390, 844, true], [1280, 800, true], [768, 1024, false], [1024, 768, false]] as const) {
+    test(`${w} x ${h}: back after 1.5 s at rest ${full ? 'in the pull-back, at both ends of the first wipe, in the cascade and at the gems' : 'in the pull-back, the cascade and at the gems'}, on the page edge; never in a wipe or on the quiz`, async ({ browser }) => {
+      test.setTimeout(full ? 1_200_000 : 600_000);
       const ctx = await browser.newContext({ viewport: { width: w, height: h } });
       const page = await ctx.newPage();
       await page.goto('/?tier=hero3d');
@@ -101,8 +121,9 @@ test.describe('the landing in the pin, 3D path', () => {
         return performance.now();
       }, k);
       const inset = Math.min(56, Math.max(16, 0.035 * w));
-      const rows = [[1, true, PEARL], [2.5, true, PEARL], [3, true, PEARL], [5, true, PEARL], [5.5, false, ''], [6, true, SLATE], [10, true, SLATE],
+      const all = [[1, true, PEARL], [2.5, true, PEARL], [3, true, PEARL], [5, true, PEARL], [5.5, false, ''], [6, true, SLATE], [10, true, SLATE],
         [14.8, true, SLATE], [15.2, true, SLATE], [15.7, false, ''], [16.2, false, ''], [17.2, false, '']] as const;
+      const rows = full ? all : all.filter(([k]) => [2.5, 5.5, 10, 14.8, 15.2, 15.7].includes(k));   // the two tablet sizes (G10): one place of each kind
       for (const [k, want, color] of rows) {
         const t0 = await at(k);
         if (!want) {
@@ -121,16 +142,19 @@ test.describe('the landing in the pin, 3D path', () => {
         expect(g.style.color, `${k}`).toBe(color);
         if (w <= 1100) expect(Math.abs(g.text.l - inset), `${k}: on the left inset`).toBeLessThan(1.5);
         else expect(Math.abs(w - g.text.r - inset), `${k}: on the right inset`).toBeLessThan(1.5);
+        expect(Math.abs(h - g.el.b - inset), `${k}: on the bottom inset`).toBeLessThan(1.5);
         for (const c of g.countdown) if (k < 5.5) expect(hit(g.text, c), `${k}: clear of the countdown`).toBe(false);
         if (k >= 14.8) {
           const labels = await page.evaluate(() => Array.from(document.querySelectorAll('.s2lab')).map((e) => { const r = e.getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom }; }).filter((r) => r.r > r.l));
           for (const l of labels) expect(hit(g.text, l), `${k}: clear of the gem label ${JSON.stringify(l)}`).toBe(false);
         }
+        if (k === 15.2) {
+          // moving from a shown place: the class goes on the island's next frame, and the words fade out within their 0.5 s of it
+          await page.evaluate(() => scrollBy(0, -40));
+          await page.waitForFunction(() => !document.getElementById('cueText')!.classList.contains('is-on'), null, { timeout: 10_000 });
+          await settled(page, false, 5_000, `${k} moving:`);   // the 0.5 s fade, read between the island's frames (a second or more each under SwiftShader on a loaded machine)
+        }
       }
-      // moving: the class goes on the next frame, and the line fades out
-      await page.evaluate(() => scrollBy(0, -40));
-      await page.waitForFunction(() => !document.getElementById('cueText')!.classList.contains('is-on'), null, { timeout: 10_000 });
-      await settled(page, false, 10_000);
       await ctx.close();
     });
   }
@@ -163,6 +187,41 @@ test.describe('the landing in the pin, 3D path', () => {
     expect(g.style.color).toBe(PEARL);
     await ctx.close();
   });
+
+  test('390 x 844: a jump to the top from the pin: the words leave the corner hidden and come back over the column, never moving while they show (D10)', async ({ browser }) => {
+    test.setTimeout(900_000);
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await ctx.newPage();
+    await page.goto('/?tier=hero3d');
+    await page.waitForFunction(() => !!(window.__s2?.() as { ready?: boolean } | undefined)?.ready, null, { timeout: 420_000 });
+    // every change of the words' place (data-at) or state (class), with their computed opacity and visibility at that moment:
+    // the place is CSS keyed on data-at alone (shell.css), so "a change of place only while hidden" is "every change of
+    // data-at at opacity 0", whatever the frame rate
+    await page.evaluate(() => {
+      const el = document.getElementById('cueText')!, w = window as unknown as { __places: { at?: string; on: boolean; opacity: number; visibility: string; y: number }[] };
+      w.__places = [];
+      new MutationObserver(() => { const c = getComputedStyle(el); w.__places.push({ at: el.dataset.at, on: el.classList.contains('is-on'), opacity: Number(c.opacity), visibility: c.visibility, y: scrollY }); }).observe(el, { attributes: true, attributeFilter: ['data-at', 'class'] });
+    });
+    for (const from of [2.5, 10]) {
+      await page.evaluate((k) => { scrollTo(0, k * innerHeight); window.__skreedSnap?.(k); }, from);
+      await page.waitForFunction(() => document.getElementById('cueText')!.classList.contains('is-on'), null, { timeout: 90_000 });
+      await settled(page, true, 90_000, `${from} in the pin:`);
+      const pin = await geometry(page);
+      await page.evaluate(() => scrollTo(0, 0));   // no snap: the Home key, a scrollbar drag, a status-bar tap
+      await settled(page, false, 30_000, `${from} leaving:`);
+      // back at the top: with the chevrons once the camera's followers arrive, or alone after the rest if they stay off
+      await settled(page, true, 90_000, `${from} at the top:`);
+      const top = await geometry(page);
+      expect(Math.abs((top.text.l + top.text.r) / 2 - (top.cue.l + top.cue.r) / 2), `${from}: centred over the column`).toBeLessThan(1.5);
+      expect(Math.abs(top.cue.t - top.el.b - 8), `${from}: a --s1 over the column`).toBeLessThan(1.5);
+      expect(pin.el.l, `${from}: the pin was the corner, left of the column`).toBeLessThan(top.el.l - 20);
+    }
+    const places = await page.evaluate(() => (window as unknown as { __places: { at?: string; on: boolean; opacity: number; visibility: string; y: number }[] }).__places);
+    const moves = places.filter((p, i) => i > 0 && p.at !== places[i - 1].at);
+    expect(moves.length, `the place changed into the pin and back for each jump: ${JSON.stringify(places)}`).toBeGreaterThanOrEqual(4);
+    for (const m of moves) expect(m.opacity < 0.01 || m.visibility === 'hidden', `the place changed while the words showed: ${JSON.stringify(m)}`).toBe(true);
+    await ctx.close();
+  });
 });
 
 test('the offline soft poster: the words at the top, hidden from 8 px, never pinned over the page', async ({ page, context }) => {
@@ -175,7 +234,7 @@ test('the offline soft poster: the words at the top, hidden from 8 px, never pin
   await page.evaluate(() => scrollTo(0, 9));
   await settled(page, false, 5_000);
   await page.evaluate(() => scrollTo(0, document.scrollingElement!.scrollHeight));
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(1_700);   // past the 1.5 s rest: a pin over the soft poster's page would have shown by now (ride.ts treats html.poster as the lock)
   await settled(page, false, 5_000);
   await context.setOffline(false);
 });

@@ -232,7 +232,7 @@ const skel = document.getElementById('skel');
 // the first screen's cue words (family-page.md 25) stand on the columns' line only where they clear the front case (cue.ts):
 // on a short phone screen the fit brings the case down to that line, so the columns stand alone there (html.cue-tight)
 const landLine = document.querySelector<HTMLElement>('.cuetext.is-land');
-let skelKey = '';
+let skelKey = '', fitKey = '';
 function drawSkel(): void {
   if (!skel || !st3d || !H.classList.contains('m3d')) return;
   const W = st3d.clientWidth, Hh = st3d.clientHeight;
@@ -242,8 +242,12 @@ function drawSkel(): void {
   if (key === skelKey) return;
   skelKey = key;
   const fit = solve(W, Hh, cls, D.dims);
-  H.style.setProperty('--case-y', `${fit.caseY.toFixed(1)}px`); H.style.setProperty('--case-hw', `${fit.caseHW.toFixed(1)}px`);
-  if (landLine) H.classList.toggle('cue-tight', cls === 'phone' && !landClear(fit.caseBottom, Hh, parseFloat(getComputedStyle(landLine).bottom) || 0));   // its bottom read, so the safe area counts
+  const sizeKey = `${W}x${Hh}${cls}`;
+  if (sizeKey !== fitKey) {   // the case's place and the words' clearance depend on the size alone: set once per size, so a shade change reads no layout (CHECKLIST C3)
+    fitKey = sizeKey;
+    H.style.setProperty('--case-y', `${fit.caseY.toFixed(1)}px`); H.style.setProperty('--case-hw', `${fit.caseHW.toFixed(1)}px`);
+    if (landLine) H.classList.toggle('cue-tight', cls === 'phone' && !landClear(fit.caseBottom, Hh, parseFloat(getComputedStyle(landLine).bottom) || 0));   // its bottom read, so the safe area counts
+  }
   skel.setAttribute('viewBox', `0 0 ${W} ${Hh}`);
   skel.replaceChildren(...skeletonPolys(W, Hh, cls, D.dims, sel).map((pts) => { const p = document.createElementNS('http://www.w3.org/2000/svg', 'polygon'); p.setAttribute('points', pts); return p; }));
 }

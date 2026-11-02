@@ -25,6 +25,8 @@ const at = (screens: number, o: Partial<CueWordsIn> = {}): CueWordsIn => ({
 test('the constants: 1.5 s of rest, and the chevrons\' 8 px edge, which the family page shares', () => {
   assert.equal(CUE.stillMs, 1500);
   assert.equal(CUE.top, 8);
+  assert.equal(CUE.fadeMs, 500, 'the words\' fade, the stylesheets\' .5s');
+  assert.ok(CUE.stillMs > CUE.fadeMs, 'the rest outlasts the fade: the pin place is dropped before the words can come back at the top (ride.ts, D10)');
   assert.equal(CUE_STILL_MS, CUE.stillMs, 'the family page\'s own copy (timing.ts), so grid mode loads no chunk shared with the island');
   assert.doesNotMatch(read('src/scripts/family/page.ts'), /config\/cue/, 'the family page module never imports the landing\'s config');
   assert.match(read('src/inline/countdown.inline.js'), /scrollY>8\|\|/, 'the landing\'s chevrons hide past 8 px');
@@ -44,7 +46,7 @@ test('the pin: off at the top, while moving, across the first wipe, from the sec
   assert.equal(cueWordsOn(at(S2T.PULL, { tp: REST_EPS / 2 })), true, 'the wipe\'s rest within the tolerance');
   assert.equal(cueWordsOn(at(S2T.W2 + 0.05)), false, 'the second wipe');
   for (const s of [15.7, 16.2, 17.2, 20]) assert.equal(cueWordsOn(at(s)), false, `${s} screens`);
-  assert.equal(cueWordsOn(at(8, { s2ready: false })), false, 'held at the pull-back\'s end while section 2 builds');
+  assert.equal(cueWordsOn(at(8, { s2ready: false })), false, 'held at the pull-back\'s end while section 2 builds, and after it has failed (the wipe opens on black there, where neither tone reads)');
   assert.equal(cueWordsOn(at(3, { s2ready: false })), true, 'the pull-back itself does not wait for section 2');
   assert.equal(cueWordsOn(at(14.8, { quizBelow: () => false })), false, 'the quiz\'s section in view (phones whose bars have collapsed)');
   assert.equal(cueWordsOn(at(1, { vh: 0 })), false);
@@ -99,10 +101,13 @@ test('the landing\'s CSS: Plex Mono capitals at the label size, in the corner or
   assert.ok(base.includes('font:500 var(--fs-label)/1 var(--font-mono);text-transform:uppercase;letter-spacing:0'), 'IBM Plex Mono Medium in capitals (E-chrome-font)');
   assert.ok(base.includes('right:calc(var(--inset) + env(safe-area-inset-right,0px));bottom:calc(var(--inset) + env(safe-area-inset-bottom,0px))'), 'above 1100 px the bottom right corner, at the top and in the pin');
   assert.ok(css.includes('@media (max-width:1100px){.cuetext{right:auto;left:50%;bottom:calc(var(--inset) + 73px + var(--s1) + env(safe-area-inset-bottom,0px));transform:translateX(-50%)}'), 'up to 1100 px centred a --s1 over the 73 px column at the top');
-  assert.ok(css.includes('.scrollcue.is-off~.cuetext[data-at="pin"]{left:calc(var(--inset) + env(safe-area-inset-left,0px));bottom:calc(var(--inset) + env(safe-area-inset-bottom,0px));transform:none}}'), 'up to 1100 px in the pin: the bottom left corner');
+  assert.ok(css.includes('.cuetext[data-at="pin"]{left:calc(var(--inset) + env(safe-area-inset-left,0px));bottom:calc(var(--inset) + env(safe-area-inset-bottom,0px));transform:none}.cuetext[data-at="pin"]:not(.is-on){opacity:0;visibility:hidden;transition:opacity .5s cubic-bezier(.333,0,.667,1),visibility 0s .5s}}'), 'up to 1100 px in the pin: the bottom left corner, keyed on the place alone, and hidden while the place is held without the words being on, so they leave the corner hidden (D10); the bottom left corner');
   assert.ok(css.includes('@media (max-width:1100px){.copy{padding-bottom:calc(var(--inset) + 106px + env(safe-area-inset-bottom,0px))}}'), 'the countdown lifts for the column (73), the words over it (8 and 14) and 11 px');
   assert.ok(!css.includes('.intro.po~.cuetext'), 'no forced show over the loader poster state: the words follow is-off there');
   assert.match(css, /\.scrollcue\.is-off~\.cuetext:not\(\.is-on\),html\.loading \.cuetext,html\.uh3 \.cuetext\{opacity:0;visibility:hidden;/);
+  const fade = `opacity ${String(CUE.fadeMs / 1000).replace(/^0\./, '.')}s`;   // .5s: the ride holds the pin place this long after the words go off (CUE.fadeMs)
+  assert.ok(base.includes(`transition:${fade} `), 'the fade in');
+  assert.equal([...css.matchAll(/[^{}]*\.cuetext[^{]*\{[^}]*visibility 0s \.5s\}/g)].length, 2, 'the fade out of the words: with the chevrons, and while the pin place is held');
   assert.match(css, /,html:not\(\.js\) \.cuetext\{display:none\}/, 'without JavaScript, as the chevrons');
   for (const m of css.matchAll(/\.cuetext[^{]*\{([^}]*)\}/g)) {
     assert.doesNotMatch(m[1], /animation|text-shadow|box-shadow|background|border|letter-spacing:[^0]|text-transform:(?!uppercase)/, m[0]);
@@ -139,6 +144,19 @@ test('the family first screen line clears the front case or stands down (cue.ts 
   assert.equal(landClear(623, 844, 204), false, 'the gap is 4 px: this is 3 px short');
   assert.equal(landClear(622, 844, 204), true);
   assert.ok(read('src/scripts/family/page.ts').includes("H.classList.toggle('cue-tight', cls === 'phone' && !landClear(fit.caseBottom, Hh, parseFloat(getComputedStyle(landLine).bottom) || 0));"));
+  assert.match(read('src/scripts/family/page.ts'), /if \(sizeKey !== fitKey\) \{[^\n]*\n\s+fitKey = sizeKey;\n[^\n]*\n\s+if \(landLine\) H\.classList\.toggle\('cue-tight'/, 'the clearance is read once per size, never on a shade change (CHECKLIST C3)');
+});
+
+test('the family page\'s CSS: every .cuetext transition is opacity and visibility only (or none under reduced motion)', () => {
+  const css = read('src/styles/family.css');
+  let rules = 0;
+  for (const m of css.matchAll(/\.cuetext[^{]*\{([^}]*)\}/g)) {
+    rules++;
+    assert.doesNotMatch(m[1], /animation|text-shadow|box-shadow|background|border|letter-spacing:(?!\s*0)|text-transform:(?!\s*uppercase)/, m[0]);
+    for (const t of m[1].matchAll(/transition:([^;}]+)/g)) for (const part of t[1].replace(/\([^)]*\)/g, '()').split(',')) assert.ok(['opacity', 'visibility', 'none'].includes(part.trim().split(/\s+/)[0]), part);
+  }
+  assert.ok(rules >= 4, `${rules} rules read`);
+  assert.ok(css.includes('transition: opacity 0.5s cubic-bezier(0.333, 0, 0.667, 1), visibility 0s 0.5s;') || css.includes('transition: opacity .5s'), 'the words\' fade is the landing\'s 0.5 s (CUE.fadeMs)');
 });
 
 test('the chrome\'s small words in IBM Plex Mono Medium capitals (E-chrome-font): Back to top, All families, Back to main page, the countdown\'s eyebrow and labels, the words', () => {

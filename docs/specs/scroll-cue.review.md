@@ -105,3 +105,59 @@ Graded against `docs/CHECKLIST.md` and `docs/specs/scroll-cue.md` section 7 (AC1
 - On a family page's story the line sits right above Back to top in the same type, so the pair can read as a two-item menu. Kept: the bottom right is the only place on a phone where the wash keeps Pearl Whisper at AA (D6).
 - Back at the top the words fade in at once while the chevrons appear after their 0.5 s visibility delay. Kept: both are complete at 0.5 s.
 - The scope stops short of the quiz's result into section 4 (another session is reworking those files), so the brief is not covered there yet.
+
+## Round 2, 2026-11-02 to 03: FAIL, then iteration 5
+
+### How it was checked
+
+- Four independent reviewers, one lens each, on the lighter models (Opus): the checklist, the code and its tests, the spec's criteria and records, and the frames read by eye as the stand-in for E2. Graded at the branch's tip of the night (4249bf3 to abe953a; the records moved under them, the code did not). Each asked the graph first, re-ran `node --test tests/unit/scroll-cue.test.ts` (11 of 11) and `npm run test:family` (64 of 64), read the logs of iteration 4, and ran no build or browser.
+- The skeptics (three per failure on Sonnet) were started on the 28 findings and stopped at Sam's word ("wrap it up real quick"); each finding was checked by hand instead, against the file and line it cites, and the verdict is recorded below.
+- Not run: builds, browsers, Lighthouse; E1 and E2 are not installed here (BLOCKED, the checklist's own default).
+
+### Checklist (the checklist lens)
+
+| Item | Verdict | Evidence |
+|---|---|---|
+| A1 to A5, B1 to B4, C1, C3, C4, D1 to D4, E3, G21, F2 | PASS | 57 items graded; the rules checked against every changed file, the frames and the logs; C4 from lh-summary.log (100 against 100, three runs each) |
+| C2, E4, E5, G1 to G9, G11 to G20, G22 to G27, H1 to H4 | NA | no image, media, data, form, copy section or launch state in this change |
+| E1, E2 | BLOCKED | neither skill installed; the frames lens stands in for E2 |
+| G10 | FAIL (held) | the pin's words and the family's words untested at 768 x 1024 and 1024 x 768 |
+| F1 | FAIL (held) | section 12 graded every criterion PASS while back.spec.ts's Plex rows, grid.spec.ts's faces row and the v11-cue parity test had no run, and AC7 was broken by code-1 |
+| record-1 | FAIL (held) | DESIGN.md's fog figures over "two runs", section 6's "no font", "adds nothing to the critical path", and unit figures from a log older than the lock commit |
+
+### Acceptance criteria (the spec lens)
+
+| AC | Verdict | Evidence |
+|---|---|---|
+| 1, 2, 4, 5, 6, 7 | PASS as graded | with AC4 and AC7 then broken by code-1 (the held place), fixed in iteration 5 |
+| 3 | FAIL (held) | the v11-cue parity test named by the criterion had no run in any iteration |
+| 8 | FAIL (held) | no browser row read the countdown's eyebrow or labels' face; back.spec.ts and grid.spec.ts had no run on this branch |
+| record-1 to record-8 | FAIL (held) | the records against the code: the jump to the top (as code-1), Back to top named on the landing, D5's counts, DESIGN.md's figures, section 9's lists, iteration 4's dated figures, D6's figures with no committed script, D13's section number |
+
+### Confirmed failures, most important first, and what iteration 5 changed
+
+1. **code-1 / spec record-1 / checklist F1 (severity 3; three lenses).** Up to 1100 px a jump to the top from the pin moved the shown words from the corner to the column while visible (trace-4.log: `at=pin op=1` then `at= op=1 visible`), against section 4, D10 and AC7. Confirmed by reading ride.ts 27 to 28 and shell.css 45. Fixed: the pin place keyed on `data-at` alone, hidden while held without `is-on`, and dropped at the top only after the 0.5 s fade (`CUE.fadeMs`); a unit row and a browser row; verified on the real GPU (spec section 12, iteration 5).
+2. **G10 (3).** The tablet sizes added to the landing's pin rows (one place of each kind) and the family rows.
+3. **F1 / AC8 / AC3 (3).** A face row for the eyebrow and labels and the 106 px lift; the family and parity runs named in the record as not run here (stopped at Sam's word) and left as the follow-up after the landing; the overlay test's whole-countdown hide explained in AC3.
+4. **code-2 (2).** The lock's wiring was in no test and the stuck-top row could not tell the fix from its own wait: a unit file over ride.ts with a stub document covers the three locks, the rest from the lock's end and the held place; iteration 4's unit and check figures marked as older than the lock commit.
+5. **code-3 (2).** The pin rows' move check ran from a hidden place: moved to the 15.2 place (the spec and frames.mjs); the bottom inset asserted; AC4's quiz clause recorded as the unit rule's.
+6. **code-4 (2).** The overlay parity test hides the countdown whole: the face row pins the eyebrow's and labels' face and lift instead; AC3 says so.
+7. **spec record-2 to record-8, checklist record-1, frames record-1 to record-4 (1 to 3).** Every one confirmed against the file and fixed (the list in section 12, iteration 5); D6's figures re-computed by a committed script (`scripts/scroll-cue/wash-contrast.mjs`).
+8. **code-5 (1).** The family clearance read on every shade change: read once per size now.
+9. **code-6 (1).** The soft poster's page under a still loading island: `html.poster` is the lock to the rule; the offline row waits past the rest.
+10. **code-8 (1).** family.css's transitions walked by the unit test; the front case measured at 390; the story's show time stamped.
+11. **code-9 (1).** Section 9's touch list completed, the countdown's lift struck from "Must not move".
+
+### Held without a change, with the reason
+
+- **code-7 (1).** After section 2 has failed to build the words stay off past the pull-back's end. Kept: the wipe opens on black there (the composite's black stands in for section 2's output), where neither tone of the words reads; the states table now carries the row and the unit row's message says so.
+- **frames-23 (1, design).** On phones the words can read as a fifth line of the countdown rather than the arrows' caption (17 rows under the labels, 10 over the chevrons' faint arms). A design call for Sam (section 12, iteration 5, For Sam); the reviewer's fix, a further 12 px lift of the countdown, is recorded there.
+
+### Design notes the reviewers left (not failures)
+
+- The section index's four words stay Open Sans beside the Plex chrome; the family bottom bar mixes faces on one row (E-chrome-font's own clause); the phone story's two lines sit 4 px over BACK TO TOP in the same face. For Sam.
+- The 1280 landing's words sit 2 px lower than the countdown's labels on the same bottom row (line-height 1 against normal); invisible at 600 px apart.
+- The phone drawer of the section index sits in the top layer, so words pinned at the bottom left show cut by its edge in the strip it leaves.
+- The two lines of the phone story depend on `max-width: 9ch` being exactly SCROLL TO's width; no row covers another engine.
+- Lighthouse's LCP element is the eyebrow, now in Plex; a quiet-machine rerun would show whether the font swap moves LCP (100 throughout).
+- cueWords reads scrollY and innerHeight after the ride's style writes in the same frame; passing the loop's own values would save a style flush during the first wipe.
