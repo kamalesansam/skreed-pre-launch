@@ -55,22 +55,29 @@ export function mountQuiz(root: HTMLElement): void {
   const side = matchMedia('(min-width: 640px) and (max-height: 599px)');
   /** the logotype's band, 56 px, and 16 px more before a picture */
   const BAND = 56 + 16, MIN_FRAME = 96;
-  /** where the band ends, in the viewport: 72 px under the viewport's top while the section's top is at it or below it (a phone browser whose bars have hidden leaves the stage lower than the viewport's top, and the frame may then stand above the section's top), and 72 px under the stage's top while the stage is above it (a measure taken with the page scrolled into the result, as retry's is before its scroll back, reads the same room the pinned section gives) */
-  const bandEnd = () => Math.min(0, stage?.getBoundingClientRect().top ?? 0) + BAND;
-  /** a phone held upright has no room beside the question: the frame takes the open space above the deck, under the band, at most 40% of the screen; none under 96 px */
-  function fitPics() {
-    for (const [card, ctl] of pics) {
-      const frame = card.querySelector<HTMLElement>('.qz-pics')!;
-      frame.style.removeProperty('--qz-pic-h'); frame.removeAttribute('data-none');
-      if (side.matches) { if (!card.hidden) frame.toggleAttribute('data-none', frame.getBoundingClientRect().height < MIN_FRAME); }
-      else if (!wide.matches) {
-        const free = Math.min(card.getBoundingClientRect().top - 24 - bandEnd(), innerHeight * 0.4);
-        frame.toggleAttribute('data-none', free < MIN_FRAME);
-        frame.style.setProperty('--qz-pic-h', `${Math.max(0, Math.floor(free))}px`);
-      }
-      ctl.layout();
+  /** the island draws the fog above the section on the 3D tier, where the family links are see-through or fixed; on the poster tier and under reduced motion no island draws, and the family-links grid stands above the section on the night ground */
+  const island = () => { const c = document.documentElement.classList; return c.contains('hero3d') && !c.contains('poster'); };
+  /** where the band ends, in the viewport, measured for the stage where it comes to rest with the page scrolled as far toward the quiz as it goes, so the room is the same at every scroll (since 2026-11-02, D44: the measure of 2026-10-29 followed the viewport and went stale with a scroll that fired no resize). That rest is the viewport's top while the page goes on below the quiz (section 4 open; retry's measure, taken before its scroll back, too), and lower where the page ends at the locked quiz's foot with a phone's bars hidden (the viewport taller than the stage's 100svh): there, with the island, the band ends 72 px under the viewport's top and the frame may stand above the section's top, over the fog. With no island the family-links grid stands above the section and ends at its top, so the band never ends above the section's top there */
+  const bandEnd = () => {
+    const top = stage?.getBoundingClientRect().top ?? 0;
+    const rest = Math.max(0, top + scrollY + innerHeight - (document.scrollingElement ?? document.documentElement).scrollHeight);
+    const end = top - rest + BAND;
+    return island() ? end : Math.max(end, top);
+  };
+  /** one card's frame. A phone held upright has no room beside the question: the frame takes the open space above the deck, under the band, at most 40% of the screen; none under 96 px. A phone held sideways: the grid row the answers leave it, none under 96 px. The page's length can change with no resize (section 4 opening by Skip quiz), so each show path below fits its card's frame again just before the picture comes (2026-11-02) */
+  function fitPic(card: HTMLDivElement, ctl: Pictures, always = true) {
+    const frame = card.querySelector<HTMLElement>('.qz-pics')!;
+    const state = () => `${frame.style.getPropertyValue('--qz-pic-h')} ${frame.hasAttribute('data-none')}`, was = state();
+    frame.style.removeProperty('--qz-pic-h'); frame.removeAttribute('data-none');
+    if (side.matches) { if (!card.hidden) frame.toggleAttribute('data-none', frame.getBoundingClientRect().height < MIN_FRAME); }
+    else if (!wide.matches) {
+      const free = Math.min(card.getBoundingClientRect().top - 24 - bandEnd(), innerHeight * 0.4);
+      frame.toggleAttribute('data-none', free < MIN_FRAME);
+      frame.style.setProperty('--qz-pic-h', `${Math.max(0, Math.floor(free))}px`);
     }
+    if (always || state() !== was) ctl.layout();   // a show path lays the pictures out again only when the frame changed: layout() rewrites every built picture's strips (their image, size and slice), too much for each Tab or pointer move
   }
+  function fitPics() { for (const [card, ctl] of pics) fitPic(card, ctl); }
   addEventListener('resize', fitPics); wide.addEventListener('change', fitPics); side.addEventListener('change', fitPics);
 
   // ---- the result's one screen (Sam, 2026-11-02: "it should fit inside one screen, after the results, there should be no
@@ -286,11 +293,11 @@ export function mountQuiz(root: HTMLElement): void {
       const key = opt.dataset.persona ?? '';
       if (!ctl.has(key)) continue;
       const live = () => card.classList.contains('is-top') && !busy;
-      opt.addEventListener('pointerenter', (e) => { if (e.pointerType !== 'touch' && live()) void ctl.show(key); });
+      opt.addEventListener('pointerenter', (e) => { if (e.pointerType !== 'touch' && live()) { fitPic(card, ctl, false); void ctl.show(key); } });
       opt.addEventListener('pointerleave', (e) => { if (e.pointerType !== 'touch' && opt.getAttribute('aria-pressed') !== 'true') void ctl.hide(key); });
-      opt.addEventListener('focus', () => { if (live() && opt.matches(':focus-visible')) void ctl.show(key); });
+      opt.addEventListener('focus', () => { if (live() && opt.matches(':focus-visible')) { fitPic(card, ctl, false); void ctl.show(key); } });
       opt.addEventListener('blur', () => { if (opt.getAttribute('aria-pressed') !== 'true') void ctl.hide(key); });
-      opt.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' && live()) { touchPic = opt; void ctl.show(key); } });
+      opt.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' && live()) { touchPic = opt; fitPic(card, ctl, false); void ctl.show(key); } });
       // a press that turns into a scroll (or a long press) ends with no click: its picture goes
       opt.addEventListener('pointercancel', (e) => { if (e.pointerType === 'touch' && touchPic === opt) { touchPic = null; void ctl.hide(key); } });
     }

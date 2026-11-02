@@ -36,7 +36,7 @@ html:not(.js) .qz-skip { display: none; }   /* and nothing is locked there, so t
 :where(.quiz) :where(h2, h3) { font: inherit; }
 
 /* the stage: the intro, then the deck, then the result, in place */
-.qz-stage { position: relative; min-height: 100svh; display: grid; align-content: end; justify-items: center; padding: calc(var(--inset) + env(safe-area-inset-top, 0px)) var(--inset) calc(var(--inset) + env(safe-area-inset-bottom, 0px)); }
+.qz-stage { position: relative; min-height: 100svh; display: grid; align-content: end; justify-items: center; padding: calc(var(--inset) + env(safe-area-inset-top, 0px)) calc(var(--inset) + env(safe-area-inset-right, 0px)) calc(var(--inset) + env(safe-area-inset-bottom, 0px)) calc(var(--inset) + env(safe-area-inset-left, 0px)); }   /* the side safe areas as the site's other edges take them (shell.css .copy, the logotype, Back to top): 0 on upright phones and laptops, 47 to 62 px a side on a notched phone held sideways, whose two columns would otherwise reach under the notch (2026-11-02) */
 .quiz[data-state="result"] .qz-stage { min-height: 0; align-content: center; padding-top: calc(var(--inset) + 56px + env(safe-area-inset-top, 0px)); padding-bottom: calc(var(--s4) * var(--qz-rs, 1)); }   /* the result starts under the fixed logotype's band, and the offer's band closes the same screen (below) */
 .qz-intro, .qz-cards, .qz-results { width: 100%; max-width: 560px; }
 .qz-intro { display: grid; gap: var(--s3); justify-items: start; }

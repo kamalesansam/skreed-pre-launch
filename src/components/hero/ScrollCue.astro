@@ -5,6 +5,9 @@
 // five-dot chevrons at the bottom centre (Sam, 2026-10-20: "put only one in the middle", the two side ones clashed with the
 // countdown), drawn top down, held and wiped on a 2.5 s cycle (shell.css). Our own SVG and CSS, timed by measurement;
 // nothing of ciao's ships. Decorative: aria-hidden, no text (the loader's and the intro's gates hide it).
+// Its words, "Scroll to see more" (docs/specs/scroll-cue.md; the brief of 2026-11-02), follow it as the next sibling, so
+// shell.css shows and hides them with the chevrons at the top; in the pin the island shows them alone once the page has
+// rested (scroll/ride.ts). Aria-hidden, as the chevrons they explain.
 import countdown from '../../inline/countdown.inline.js?raw';
 import { COPY } from '../../config/copy.ts';
 import { LAUNCH_ISO, LIVE_URL } from '../../config/site.ts';
@@ -38,4 +41,5 @@ const svg = `<svg viewBox="0 0 35 146" width="100%" xmlns="http://www.w3.org/200
   </svg>`;
 ---
 {part === 'cue' && <div class="scrollcue" id="cue" aria-hidden="true" set:html={svg} />}
+{part === 'cue' && <p class="cuetext" id="cueText" aria-hidden="true">{COPY.cue.label}</p>}
 {part === 'script' && <script is:inline set:html={code}></script>}

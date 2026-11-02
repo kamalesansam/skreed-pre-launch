@@ -22,12 +22,20 @@ export const COPY = {
     noscriptDate: '15 November 2026',
     noscriptDatetime: '2026-11-15T00:00+05:30',
   },
-  cue: { label: 'Scroll' },
+  /** the cue's words: over the chevrons on phones, in the bottom right corner on laptops (docs/specs/scroll-cue.md; the brief of 2026-11-02) */
+  cue: { label: 'Scroll to see more' },
   /** section 2's labels (section-2.md 3): igloo's three slots, carrying our facts, uppercase (E-S2-font) */
   s2: { count: '24 SHADES', click: 'CLICK TO EXPLORE', tap: 'TAP TO EXPLORE', aria: 'Colour families' },
   logo: { aria: 'Skreed, home' },
   /** the back-to-top control on every page (Sam, 2026-10-19): back to the landing page's section 1, without a reload */
   toTop: { label: 'Back to top' },
+  /** the section index at the top of the landing page (docs/specs/navbar.md 3): its name, the phone's Menu and panel, the four sections in page order (2026-11-02: "instead of countdown name it as home, instead of universe, name it as products") */
+  nav: {
+    aria: 'Sections',
+    menu: 'Menu',
+    close: 'Close',
+    items: { top: 'Home', families: 'Families', quiz: 'Quiz', room: 'Products' },
+  },
   page: {
     h1: 'Skreed. Tech essentials that go beyond basic.',
     title: 'Skreed. Tech essentials that go beyond basic.',

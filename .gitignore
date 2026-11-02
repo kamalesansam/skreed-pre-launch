@@ -29,3 +29,9 @@ graphify-out/
 
 # Claude Code per-machine settings (the graphify PreToolUse hooks go here when wanted; docs/research/11-graphify.md 8)
 .claude/settings.local.json
+
+# Tool state some plugins drop into a checkout (never part of the site)
+.claude-flow/
+.claude/proven-config.json
+.claude/.proven-config-version
+__pycache__/

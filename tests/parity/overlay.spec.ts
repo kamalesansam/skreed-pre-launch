@@ -18,7 +18,9 @@ const NOW = new Date('2026-10-09T09:00:00+05:30');
 // tests/parity/v11-cue.spec.ts against the v11.4 prototype; section 2's layers and the family links are the port's only.
 // 2026-10-26: the countdown's numerals are the port's dot digits (E-CD-font), not the prototype's Open Sans, so both pages
 // hide them and compare the eyebrow, the labels and the logotype; the idle twitch (E-CD-glitch) is switched off first.
-const HIDE = '#stage,.hero-poster,#intro,.tune,.labels,.fallback,#wallCopy,.cue,.scrollcue,#s2labels,#s2links,#families,#count .n{display:none!important}';
+// 2026-11-02: the eyebrow and the unit labels are IBM Plex Mono in capitals (E-chrome-font), not the prototype's Open Sans,
+// and the countdown lifts 22 px more for the cue's words up to 1100 px, so both are hidden too: the logotype is compared.
+const HIDE = '#stage,.hero-poster,#intro,.tune,.labels,.fallback,#wallCopy,.cue,.scrollcue,.cuetext,#s2labels,#s2links,#families,#siteNav,#count,#cdEyebrow{display:none!important}';
 const VIEWPORTS = [
   { name: '390', viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 },
   { name: '1280', viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1.5 },

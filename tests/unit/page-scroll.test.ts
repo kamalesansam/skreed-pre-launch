@@ -28,11 +28,11 @@ test('the numbers: 2 px dead band, 150 ms still, 300 ms input, 500 ms settle, th
   assert.deepEqual(GLUE, { dead: 2, stillMs: 150, inputMs: 300, settleMs: 500 });
   assert.deepEqual(BURST, { silenceMs: 200, keep: 0.5 });
   assert.deepEqual(TOUCH, { stepPx: 12, wrapPx: 16 });
-  assert.deepEqual(threeSpans(745, 844).map((s) => [s.start, s.end]), [[3725, 4470], [11324, 14516.8], [14516.8, 16204.8]]);
+  assert.deepEqual(threeSpans(745, 844).map((s) => [s.start, s.end]), [[1862.5, 2235], [3911.25, 5697], [5697, 7385]]);   // the map of 2026-11-02 (section-2.md 14)
 });
 
 test('the glue at the three spans with innerHeight 745 and svh 844: every settle lands on an end, by the midpoint, and is itself at rest', () => {
-  for (const [ih, svh, quizH] of [[745, 844, 844], [745, 844, 1132], [745, 664, 664], [844, 745, 745], [844, 844, 969]] as const) {
+  for (const [ih, svh, quizH] of [[745, 844, 844], [745, 844, 1132], [745, 664, 664], [844, 745, 745], [844, 844, 969], [844, 600, 600]] as const) {
     const spans = threeSpans(ih, svh, quizH);
     let settles = 0;
     for (let y = 0; y <= spans[2].end + 2000; y += 0.5) {
@@ -44,7 +44,7 @@ test('the glue at the three spans with innerHeight 745 and svh 844: every settle
       assert.equal(t, y <= (s.start + s.end) / 2 ? s.start : s.end, `${ih}/${svh}/${quizH} at ${y}: the midpoint decides`);
       assert.equal(glueDecision(t, spans, ih, svh), null, `${ih}/${svh}/${quizH} at ${y}: the target ${t} settles again (ping-pong)`);
     }
-    // an inverted quiz seam (innerHeight over 100svh by more than 17.2 / 15.2: W2 x 844 is past 17.2 x 745) settles nowhere; the two others still do
+    // an inverted quiz seam (innerHeight over 100svh by more than TRACK_SVH / 100 / W2, 6.75 / 5.25 since 2026-11-02: W2 x 844 is past 6.75 x 600) settles nowhere; the two others still do
     assert.ok(settles > 0);
     assert.equal(spans[1].start > spans[1].end, ih / svh > TRACK_SVH / 100 / S2T.W2, `${ih}/${svh}: the quiz seam's shape`);
     if (spans[1].start > spans[1].end) {

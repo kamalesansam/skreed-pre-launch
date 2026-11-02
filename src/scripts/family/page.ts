@@ -9,11 +9,12 @@ import { reducedMQ } from '../motion.ts';
 import { FAM_COPY, splitLine, type CopyShade } from './copy.ts';
 import { track } from './track.ts';
 import { emit, on, type Finish, type Input } from './bus.ts';
-import { SWAP_MS, SHADE_MS, URL_DEBOUNCE_MS, SETTLE_MS, DRAG_HUD_MS, LIVE_MS } from './timing.ts';
+import { SWAP_MS, SHADE_MS, URL_DEBOUNCE_MS, SETTLE_MS, DRAG_HUD_MS, LIVE_MS, CUE_STILL_MS } from './timing.ts';
 import { tintOf } from './tint.ts';
 import { createSmoke } from './smoke.ts';
 import { createArgument } from './argument.ts';
 import { backFade, backTimer } from './back.ts';
+import { landClear } from './cue.ts';
 import { WIDE_MQ, activeBeat, scrollClasses, skeletonPolys, solve, type Dims } from './three/pose.ts';
 
 interface PageData { slug: string; name: string; first: number; key: number; has3d: boolean; size3d: string | null; names: string[]; dims: Dims }
@@ -228,7 +229,10 @@ sw?.addEventListener('toggle', (e) => {
 // ---- the skeleton (rule 41): the 24 silhouettes at the carousel pose, drawn in the stage's own pixels; it shows until
 // the canvas is live and again while a context is lost ----
 const skel = document.getElementById('skel');
-let skelKey = '';
+// the first screen's cue words (family-page.md 25) stand on the columns' line only where they clear the front case (cue.ts):
+// on a short phone screen the fit brings the case down to that line, so the columns stand alone there (html.cue-tight)
+const landLine = document.querySelector<HTMLElement>('.cuetext.is-land');
+let skelKey = '', fitKey = '';
 function drawSkel(): void {
   if (!skel || !st3d || !H.classList.contains('m3d')) return;
   const W = st3d.clientWidth, Hh = st3d.clientHeight;
@@ -238,7 +242,12 @@ function drawSkel(): void {
   if (key === skelKey) return;
   skelKey = key;
   const fit = solve(W, Hh, cls, D.dims);
-  H.style.setProperty('--case-y', `${fit.caseY.toFixed(1)}px`); H.style.setProperty('--case-hw', `${fit.caseHW.toFixed(1)}px`);
+  const sizeKey = `${W}x${Hh}${cls}`;
+  if (sizeKey !== fitKey) {   // the case's place and the words' clearance depend on the size alone: set once per size, so a shade change reads no layout (CHECKLIST C3)
+    fitKey = sizeKey;
+    H.style.setProperty('--case-y', `${fit.caseY.toFixed(1)}px`); H.style.setProperty('--case-hw', `${fit.caseHW.toFixed(1)}px`);
+    if (landLine) H.classList.toggle('cue-tight', cls === 'phone' && !landClear(fit.caseBottom, Hh, parseFloat(getComputedStyle(landLine).bottom) || 0));   // its bottom read, so the safe area counts
+  }
   skel.setAttribute('viewBox', `0 0 ${W} ${Hh}`);
   skel.replaceChildren(...skeletonPolys(W, Hh, cls, D.dims, sel).map((pts) => { const p = document.createElementNS('http://www.w3.org/2000/svg', 'polygon'); p.setAttribute('points', pts); return p; }));
 }
@@ -302,9 +311,20 @@ function backCheck(): void {
 }
 backEl?.addEventListener('click', () => track('family_back', { from: 'argument' }));   // the browser follows the link (D4)
 
+// ---- the cue's words (docs/specs/family-page.md 25, docs/specs/scroll-cue.md, E-cue-text): html[data-still] once the scroll position has
+// not changed for CUE_STILL_MS (timing.ts); family.css shows the words from it. Any scroll, the visitor's or the page's own (the beat
+// nav's), drops it at once and starts the wait again ----
+let stillT = 0;
+function stillCheck(): void {
+  H.removeAttribute('data-still');
+  clearTimeout(stillT);
+  stillT = window.setTimeout(() => H.setAttribute('data-still', ''), CUE_STILL_MS);
+}
+
 function onScroll(): void {
   sv = innerHeight > 0 ? scrollY / innerHeight : 0;
   if (scrollY > 8) H.setAttribute('data-scrolled', ''); else H.removeAttribute('data-scrolled');
+  stillCheck();
   const c = scrollClasses(sv);
   H.classList.toggle('hud-off', c.hudOff);
   H.classList.toggle('beats-on', c.beatsOn);

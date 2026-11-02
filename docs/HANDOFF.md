@@ -1,5 +1,7 @@
 # Hand-off: the Skreed pre-launch site, as of 2026-10-23
 
+**Superseded on 2026-11-02 for what is in flight:** read `docs/HANDOFF-2026-11-02.md` first. It lists every paused session, branch and the carry folder of files kept out of git. Sections 3 and 5 below (how to run it, the standing rules) still hold.
+
 For a fresh Claude Code session (or a person) picking this repo up without the previous conversations. Read this file, then `CLAUDE.md`, then the specs it points to. Everything below is the state of branch `claude/youthful-planck-objwf5` at commit c25398d, which is also the GitHub default branch of `kamalesansam/skreed-pre-launch` (there is no `main`). Every change of the last two weeks is on that branch and pushed; nothing of the site lives only on a machine. The earlier hand-off (2026-10-15, the round 3 brief) is superseded by this one; its decisions are in the specs.
 
 ## 1. What this is

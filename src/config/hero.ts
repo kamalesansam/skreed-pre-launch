@@ -1,4 +1,5 @@
-// Hero configuration (hero-architecture.md 3, 5.5, 8; round 3: the v11.4 scroll map). Plain data, read by the Astro
+// Hero configuration (hero-architecture.md 3, 5.5, 8; round 3: the v11.4 scroll map; round 4, 2026-11-02: that map halved and
+// the stagger gone, section-2.md 14). Plain data, read by the Astro
 // components at build time and by the island at runtime. Inline scripts receive what they need as JSON prepended by
 // their component (architecture 4.3).
 
@@ -12,17 +13,22 @@ export const MOON_POSE = { cam: [0, 3.2, 36], tgt: [0, -1.2, -6], fogNear: 60, f
 export const INTRO_POSE = { cam: [0, 20.5, 19.8], tgt: [0, 0, 0] } as const;
 
 export interface ScrollSegment { readonly name: string; readonly screens: number }
-/** The scroll map in screens (v11.2, section-2.md 13): the pull-back, then the wipe into section 2. */
-export const SCROLL_MAP: readonly ScrollSegment[] = [{ name: 'pull', screens: 5.0 }, { name: 'wipe', screens: 1.0 }];
+/**
+ * The scroll map in screens: the pull-back, then the wipe into section 2. Half of v11.2's 5 and 1 since 2026-11-02 (Sam:
+ * "remove half of the scroll from the hero section, that's just too much scrolling"; section-2.md 14, hero.md 12.8).
+ */
+export const SCROLL_MAP: readonly ScrollSegment[] = [{ name: 'pull', screens: 2.5 }, { name: 'wipe', screens: 0.5 }];
 
 /**
- * Section 2's timings in screens (prototype template.html v11.4, `S2T`): from mid-wipe a block leaves the logo every GAP
- * screens and lands FLY screens later; a short rest; then the wipe to the Wall (W2 to W2 + WIPE).
+ * Section 2's timings in screens (round 4, Sam, 2026-11-02: "all the blocks from the logo will disperse and align itself in
+ * one single go at a time, at the same time"): from mid-wipe (CAS0) every block leaves the logo at once and lands FLY
+ * screens later (LAND); a short rest; then the wipe to section 3 (W2 to W2END). The v11.4 prototype's stagger (a block
+ * every GAP 0.8 screens, the last landing 7.2 screens after the first) is gone, not set to zero: there is no GAP.
  */
 export const S2T = (() => {
-  const PULL = SCROLL_MAP[0].screens, WIPE = SCROLL_MAP[1].screens, CAS0 = PULL + 0.5, GAP = 0.8, FLY = 1.8;
-  const LAND = CAS0 + 9 * GAP + FLY;
-  return { PULL, WIPE, CAS0, GAP, FLY, W1END: PULL + WIPE, LAND, W2: LAND + 0.7 } as const;
+  const PULL = SCROLL_MAP[0].screens, WIPE = SCROLL_MAP[1].screens, CAS0 = PULL + WIPE / 2, FLY = 1.8;
+  const LAND = CAS0 + FLY, W2 = LAND + 0.7;
+  return { PULL, WIPE, CAS0, FLY, W1END: PULL + WIPE, LAND, W2, W2END: W2 + WIPE } as const;
 })();
 
 /**
@@ -31,8 +37,12 @@ export const S2T = (() => {
  */
 export const CAMX: readonly (readonly [number, number])[] = [[0, 0], [0.25, -6], [0.6, 6], [1.0, -3], [1.5, -5.25], [2.0, -1.5]];
 
-/** Height of the scroll track on the 3D path, in svh (v11.2: 1820; 1720 from section 3, docs/specs/quiz.md D8: the quiz rises the moment the second wipe has crossed the screen). The poster path collapses it to 100. */
-export const TRACK_SVH = 1720;
+/**
+ * Height of the scroll track on the 3D path, in svh: the second wipe's end plus the one screen in which section 3 rises
+ * (docs/specs/quiz.md D8: the quiz rises the moment the second wipe has crossed the screen). 675 since 2026-11-02 (1720
+ * from section 3, 1820 in v11.2). The poster path collapses it to 100; shell.css carries the literal, kept equal by unit test.
+ */
+export const TRACK_SVH = Math.round((S2T.W2END + 1) * 100);
 
 /** Below this aspect (width / height) the hero frames for portrait: camera zoom, sky crop class, poster class, gem layout. */
 export const PORTRAIT_ASPECT = 0.9;
