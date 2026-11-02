@@ -56,7 +56,7 @@ One landing at a time, each with Sam's word, on the default branch (`main` once 
 2. **The family pages (4), the cue (5), About (6) and this map (8)**, in the order they become ready (reviewed, approved, clean). None of them touches the scroll map. The map landed as `21f1480` and the cue as `b2d629e`; About is ready and waits on Sam's word; the family pages wait on his call about a seam.
 3. ~~**The hero (7)** after the hall~~: landed first, as `ec7d5a3` on 2026-11-03, on Sam's direct word ("push and commit to main") with the review loop's verdict not yet in; verified by the hub as the recipe's merge of `21f1480` and `ef5a88d`. The hall's rebase therefore meets the halved scroll map (`TRACK_SVH` 675, the second wipe at 5.25 screens) and re-derives its own numbers on it.
 4. **Section 5 (3)** after the hall, once Sam has approved it on localhost and its entry seam is re-fixed onto the hall-less page.
-5. **The quiz result (1)** once its Canva swatch question is settled and it has taken the default in; it touches no scroll map, so it may go before 3 or 4 if it is ready first.
+5. **The quiz result (1)** once it has taken the default in; it touches no scroll map, so it may go before 3 or 4 if it is ready first. Ready since 2026-11-03 at `bfab729` (clean against `95efdc5`); the Canva swatch stays Sam's open answer and does not hold the landing, since production draws the branch's own stroke.
 
 The dependency that remains: 3 never before 2.
 
