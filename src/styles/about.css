@@ -1,0 +1,70 @@
+/* The About page, /about/ (docs/specs/about.md section 2): the brief's copy on plain Pearl Whisper, set in skreed.com's
+   face, Inter, self-hosted (exception E-About-font), text only (exception E-About-38). Imported by src/pages/about.astro
+   alone and inlined into that page by the build, so no other page carries these rules or fetches the file. The wordmark
+   at the top left is the way home: static, with the site's press idiom in place of the glitch (D6, D12). Colours are
+   tokens only; spacing is gap on flex columns and padding on the page box (rule 15). Phone first; the one breakpoint is
+   the wordmark's 1024 px. */
+
+/* Inter in one variable file (scripts/fonts/build-inter.py; scripts/fonts/manifest.txt, ABOUT PAGE), in fonts.css's
+   Open Sans pattern: tech("variations"), then plain woff2. The unicode-range is build.py's LATIN. Roman only. */
+@font-face { font-family: "Inter"; font-weight: 400 700; font-style: normal; font-display: swap;
+  src: url(/fonts/inter-400-700-latin.woff2) format("woff2") tech("variations"),
+       url(/fonts/inter-400-700-latin.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+/* the metric-matched fallbacks, quoted from the manifest's ABOUT PAGE section, never typed by hand */
+@font-face { font-family: "Inter Fallback"; font-weight: 400; font-style: normal;
+  src: local("Arial"), local("ArialMT");
+  size-adjust: 106.62%; ascent-override: 90.86%; descent-override: 22.62%; line-gap-override: 0%; }
+@font-face { font-family: "Inter Fallback"; font-weight: 600; font-style: normal;
+  src: local("Arial Bold"), local("Arial-BoldMT");
+  size-adjust: 101.48%; ascent-override: 95.47%; descent-override: 23.77%; line-gap-override: 0%; }
+@font-face { font-family: "Inter Fallback"; font-weight: 700; font-style: normal;
+  src: local("Arial Bold"), local("Arial-BoldMT");
+  size-adjust: 102.44%; ascent-override: 94.57%; descent-override: 23.55%; line-gap-override: 0%; }
+
+:root {
+  --font-about: "Inter", "Inter Fallback", Arial, sans-serif;
+  /* sizes by type-system.md's formula (slope = (max - min) / 890 px, from 390 to 1280 px), after skreed.com's measured page */
+  --ab-fs-title: clamp(2rem, 1.671rem + 1.348vw, 2.75rem);    /* 32 to 44 px */
+  --ab-fs-text: var(--fs-legal);                               /* 16 to 17 px */
+  --ab-fs-sign: clamp(1.25rem, 1.140rem + 0.449vw, 1.5rem);   /* 20 to 24 px */
+  --ab-lh-title: var(--lh-h2);                                 /* 1.05 */
+  --ab-lh-text: 1.6;                                           /* skreed.com's 25.6 px on 16 px */
+  --ab-lh-sign: 1.2;
+  --ab-ls: 0.005em;                                            /* skreed.com's heading tracking */
+  --s6: 48px;                                                  /* the spacing step past --s5, as family.css defines it */
+  --ab-mark-h: 23.25px;                                        /* the wordmark's height at 96 px (1209.46 x 292.9) */
+}
+@media (min-width: 1024px) { :root { --ab-mark-h: 32.94px; } }
+
+html, body { margin: 0; background: var(--pearl-whisper); color: var(--urban-slate); }
+body { font-family: var(--font-about); font-weight: 400; }
+
+/* the wordmark sprite: defined once, drawn by <use> (a class, not a style attribute, for the CSP) */
+.sprite { position: absolute; }
+
+/* the wordmark (DESIGN.md "Corner logotype"): the corner's artwork, inset, sizes, hit area and two-tone ring, in Urban
+   Slate. Absolute, so it scrolls away with the page; the press idiom (family.css .press) in place of the glitch. */
+.site-logo { position: absolute; top: calc(var(--inset) + env(safe-area-inset-top, 0px)); left: calc(var(--inset) + env(safe-area-inset-left, 0px));
+  display: block; line-height: 0; color: var(--urban-slate); -webkit-tap-highlight-color: transparent; transition: transform var(--dur-press) var(--ease-standard); }
+.site-logo::after { content: ""; position: absolute; inset: -11px -8px; }
+.site-logo svg { display: block; width: 96px; height: auto; overflow: visible; }
+.site-logo:focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 6px; }
+.site-logo:focus-visible::before { content: ""; position: absolute; inset: -4px; border: 2px solid var(--urban-slate); }
+@media (min-width: 1024px) { .site-logo svg { width: 136px; } }
+@media (hover: hover) { .site-logo:hover { transform: translateY(-1px); } }
+.site-logo:active { transform: scale(0.98); }
+@media (prefers-reduced-motion: reduce) { .site-logo { transition: none; } .site-logo:hover, .site-logo:active { transform: none; } }
+
+/* the page box: the gutters, the room under the wordmark and the foot; the column centred once the page is wider than it */
+.ab { box-sizing: border-box; display: flex; flex-direction: column; align-items: center; font-variant-numeric: proportional-nums;
+  padding: calc(var(--inset) + env(safe-area-inset-top, 0px) + var(--ab-mark-h) + var(--s6)) calc(var(--inset) + env(safe-area-inset-right, 0px))
+    calc(var(--s6) + env(safe-area-inset-bottom, 0px)) calc(var(--inset) + env(safe-area-inset-left, 0px)); }
+.ab-col { width: 100%; max-width: var(--measure-prose); display: flex; flex-direction: column; gap: var(--s6); }
+.ab-letter { display: flex; flex-direction: column; gap: var(--s4); }
+.ab-text { display: flex; flex-direction: column; gap: var(--s3); }
+.ab-close { display: flex; flex-direction: column; gap: var(--s1); }
+.ab h1, .ab p { margin: 0; }
+.ab h1 { font-weight: 700; font-size: var(--ab-fs-title); line-height: var(--ab-lh-title); letter-spacing: var(--ab-ls); text-wrap: balance; }
+.ab-text p, .ab-launch { font-weight: 400; font-size: var(--ab-fs-text); line-height: var(--ab-lh-text); text-wrap: pretty; }
+.ab em { font-style: normal; font-weight: 600; }
+.ab-sign { font-weight: 700; font-size: var(--ab-fs-sign); line-height: var(--ab-lh-sign); letter-spacing: var(--ab-ls); }

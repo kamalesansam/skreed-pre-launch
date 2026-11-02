@@ -194,6 +194,25 @@ The quiz is set in section 2's label type, not in the three faces above (Sam, 20
 - **Capitals.** The quiz's headline and questions are drawn in capitals, which rule 4's sentence case forbids for a headline; that is part of E-S3-font. Sam's sentence case stays in the DOM, in the decode's visually hidden copy, which sets `text-transform: none` (`.quiz .sr-only`) so that assistive technology reads it as written: Chrome names an element from its rendered text, and a copy left in the section's capitals is named "BACK" (Quiz decode, under Component Stylings). The intro's heading, sub-line and Begin, and the no-JS line, are split at build into the same pair (a sentence-case `span.sr-only` beside an `aria-hidden` span drawn in capitals), the no-JS link is named "ten families" by its `aria-label`, though Chrome still lists its drawn capitals as the link's text, and the loader writes "Loading..." the same way, so before the chunk has mounted and without JavaScript the accessibility tree carries Sam's case too, that link's text aside (`docs/specs/quiz.md` section 2).
 - **Section 4** (`.room`, `src/styles/room.css`). The same setting on the section's root: `font: 500 var(--rm-fs) / 1.45 "IBM Plex Mono", ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0; font-synthesis: none; color: var(--pearl-whisper)`. Its two sizes are the quiz's own, `--rm-fs` equal to `--qz-fs` (15 to 22 px) and `--rm-fs-q` to `--qz-fs-q` (24 to 52 px), which `tests/unit/room.test.ts` holds equal: a scene's name (`h3.rm-scene-name`) at `--rm-fs-q` / 1.25, balanced, and every other line, the prompt, Skip, the hints, the loading lines and the words at `--rm-fs` / 1.45; the count with tabular numerals. Nothing under 15 px. Sentence case stays in the DOM, in the decode's visually hidden copy (`.room .sr-only { text-transform: none }`), as in the quiz.
 
+### About page type (`/about/`; exception E-About-font in `docs/specs/about.md` section 11)
+
+The About page is set in Inter, the face skreed.com sets its text in (the brief of 2026-11-02: "use the font from skreed.com as well"; its answer in chat: "Inter, like skreed.com"), not in the three faces above. It is an exception to rules 4, 19 and 30, the banned list above and `type-system.md`'s family limit, for the About page only.
+
+| Family | Job | Weights | File (served at `/fonts/`) | Bytes |
+|---|---|---|---|---|
+| Inter | the About page, every line | 400 to 700: 700 the title and the sign-off, 400 the text and the date line, 600 the emphasis | `inter-400-700-latin.woff2` | 29,912 |
+
+- **File.** Built by `scripts/fonts/build-inter.py` (never by `build.py`, whose `main()` rewrites the manifest) from google/fonts@9710da1's `ofl/inter/Inter[opsz,wght].ttf`, its sha256 pinned: `wght` 400 to 700 kept, `opsz` pinned at 14 (the text optical size), cut to `build.py`'s LATIN range and FEATS list with every name record. Byte-identical in `public/fonts/` and `docs/brand/fonts/`, with the OFL beside the docs copy (`docs/brand/fonts/inter-OFL.txt`). Recorded in `scripts/fonts/manifest.txt` (ABOUT PAGE), outside the 120 KB cap of the three brand faces, as IBM Plex Mono is.
+- **Loading.** The `@font-face` rules and the token `--font-about: "Inter", "Inter Fallback", Arial, sans-serif` live in `src/styles/about.css`, which the build inlines into `/about/` alone, so no other page carries them or fetches the file. The page's one preload is the Inter file; `font-display: swap`. The fallback overrides, quoted from the manifest (never typed by hand):
+
+```
+Inter Fallback 400: size-adjust 106.62%; ascent-override 90.86%; descent-override 22.62%; line-gap-override 0.00%
+Inter Fallback 600: size-adjust 101.48%; ascent-override 95.47%; descent-override 23.77%; line-gap-override 0.00%
+Inter Fallback 700: size-adjust 102.44%; ascent-override 94.57%; descent-override 23.55%; line-gap-override 0.00%
+```
+
+- **Setting.** The title (`h1`) 700 at `--ab-fs-title` (`clamp(2rem, 1.671rem + 1.348vw, 2.75rem)`, 32 to 44 px) on `--lh-h2` (1.05), tracking 0.005em, balanced; the five paragraphs and the date line 400 at `--fs-legal` (16 to 17 px) on 1.6, pretty; the sign-off 700 at `clamp(1.25rem, 1.140rem + 0.449vw, 1.5rem)` (20 to 24 px) on 1.2, tracking 0.005em; the `em` upright at 600 (`font-style: normal`), never italic; proportional figures. Nothing under 16 px; sentence case; no digit in the `h1`.
+
 ### Element rules (from type-system.md)
 
 ```css
@@ -547,6 +566,14 @@ One scale, used through `gap` on flex and grid, not per-element margins (rule 15
 - **One breakpoint:** the wide layout at 900 px wide and 600 px tall or more; everything else is the phone layout.
 - **Wide layout, swatch grid mode:** title, the 80 px grid and the controls stack in flow and the page scrolls, so a short laptop screen (1280 x 609, 1366 x 657, 1024 x 600, 900 x 600) never shrinks the circles or lays the grid over the controls. Only 3D mode pins the controls into the stage's bottom band.
 - **The argument screen's way out** (round 4, `family-page.md` 22, exception E-F5; its place on phones, round 5, section 23): "Back to main page", a fixed link set as "All families" is (Open Sans 600 at `--fs-label`, a 44 px hit row, no box). On the phone layout it is on Back to top's row with Back to top's offsets (its bottom `--to-top-bottom` plus the safe area, its left `--inset` plus the side safe area less `--s2`), so its words start at `--inset` on the left as the wordmark does and Back to top keeps the right (hit row y 786 to 830 at 390 x 844, the boxes 107.7 px apart); on the wide layout it is centred under the letters by its margins, its bottom one `--inset` above the safe area (y 711.2 to 755.2 at 1280 x 800). Its layer is `z-index: 4`, level with the beat nav and the HUD and under the corners, Back to top (6) and the loader (40); it exists in 3D mode only and is `hidden` until 2.5 s after the argument screen comes on.
+
+### The About page's layout (`/about/`, `docs/specs/about.md` section 2)
+
+- **Ground.** Pearl Whisper edge to edge (skreed.com's own background, measured), with no panel, card, rule, image or texture; text only (exception E-About-38 in `docs/specs/about.md` section 11). Every line and the wordmark in Urban Slate (9.9:1); Ember Luxe only in the wordmark's focus outline.
+- **The wordmark.** The corner logotype's artwork, inset, sizes (96 px, 136 px from 1024 px), hit area and two-tone ring, in Urban Slate, as the one way home (a link to `/`). It is `position: absolute`, so it scrolls away with the page instead of sitting over the text. In place of the glitch it takes the site's press idiom (a 1 px lift on hover, a 0.98 scale on press, `--dur-press` on `--ease-standard`, none under reduced motion), and the page carries no script.
+- **The column.** One reading column of `--measure-prose` (34rem, 544 px), its text flush left, in the gutters of `--inset` plus the side safe areas; the column fills the width on a phone and is centred once the page is wider than it (about 585 px).
+- **Spacing.** `--s6: 48px`, defined in `src/styles/about.css` as `family.css` defines it, for the room under the wordmark (the page's top padding is `--inset`, the top safe area, the wordmark's height and `--s6`), the gap before the sign-off and the foot (with the bottom safe area). `--s4` from the title to the text, `--s3` between paragraphs, `--s1` from the sign-off to the date line, all through `gap`. The wordmark's height is a component dimension, `--ab-mark-h` (23.25 px; 32.94 px from 1024 px), as the family pages' `--mark-h`.
+- **Breakpoints.** None but the wordmark's 1024 px; the type follows its clamps from 390 to 1280 px.
 
 ### Whitespace
 

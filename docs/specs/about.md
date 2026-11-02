@@ -1,0 +1,299 @@
+# The About page: /about/ (spec)
+
+Slug `about`. Written 2026-11-02 by the plan stage for the brief "The About page (/about/)", on branch `claude/skreed-about-page-477c0e`, cut from 71678ed; every file and line named below is read at that commit. Status: the plan for the build loop (`.claude/commands/ship-section.md`: `plan`, then `build`, then `review`), graded against `docs/CHECKLIST.md` and section 7. Review log: `docs/specs/about.review.md`. Frames: `docs/specs/screenshots/about-390.png` and `docs/specs/screenshots/about-1280.png`.
+
+**Not a spine section.** `docs/00-IDEATION.md` plans one scrolling page (the spine table, section 2, lines 41 to 52) and has no About page; its nearest row, "7 Manifesto + founders' note", is a section of that page. This is a page of its own at its own route, planned the way the family pages and the 404 were: its own file, its own stylesheet, and nothing added to the landing page (D1). The scope is the brief and its answers, no wider.
+
+**The brief, verbatim (2026-11-02).** "we need an about page, just add it in the navbar, no need a seperate section on the hero page, so add this content for the about page, just use a plain beige backround as similar tot he skreed.com, and use the font from skreed.com as well", with this pasted copy, in WhatsApp markup (`*bold*`, `_italic_`):
+
+> \*About Skreed\*
+>
+> Skreed started with a simple idea: colour is personal.
+>
+> We've always believed that the things we carry every day should feel a little more like us. That's why we went looking beyond the usual handful of colours and built a world of our own: a spectrum of over 240 shades across an ecosystem of premium tech accessories, each designed to feel every bit as unique as the person using them.
+>
+> And while colour is at the heart of what we do, thoughtful design is what brings it all together. Backed by a team recognised with multiple CES Innovation Awards, Red Dot Design Awards, and New York Design Awards, Skreed brings a premium, considered approach to personal tech.
+>
+> And now we're bringing it all to India.
+>
+> Welcome to Skreed. We hope you find something here that makes you stop scrolling for a second and think, \_that's the one\_.
+>
+> Your perfect shade.
+>
+> Launching October 4.
+
+**Answers in chat, the same day.** Four questions were asked and answered.
+- Font: "Inter, like skreed.com". The question said skreed.com sets all its text in Inter and that CLAUDE.md bans Inter in every role (rules 4, 19 and 30); the chosen option read: "Downloads Inter from Google Fonts (free OFL licence) and hosts it ourselves, cut down to Latin like the site's other fonts. Used on the About page only, and recorded as an exception quoting your words."
+- Launch line: "Launching November 15." The question said the copy's "Launching October 4." has passed and the site counts down to 15 November 2026 (`LAUNCH_ISO`, `src/config/site.ts` line 4).
+- Swatches: "Text only". The question cited rule 38; the chosen option read: "Only the copy on beige, recorded as an exception to rule 38."
+- Nav link: "the site does have navbar,it's just being built on a diffferent session".
+
+**skreed.com, measured.** By the orchestrator, 2026-11-02 (its About page is https://www.skreed.com/en-in/pages/about-skreed): body background rgb(247, 246, 243), #F7F6F3, exactly the site's Pearl Whisper; text rgb(23, 23, 23); every element in Inter (`--font-body-family` and `--font-heading-family` "Inter, sans-serif"), 400 for body text, 500 for buttons and navigation, 700 for headings; the About page's headings 32 px on a 32 px line at 700 with 0.005em tracking, its body 16 px on a 25.6 px line at 400; its `em` styled not-italic, with an amber gradient underline that this page does not copy (rule 1). By the planner the same day, read only, in headless Chrome at 390 x 844 and 1280 x 800: the page as served today carries other copy ("Welcome to Skreed!" over a paragraph, then image-and-text blocks), so its layout is the reference and not its words. Its first block is a centred heading over a centred paragraph in a column 350 px wide at 390 (20 px gutters) and 1,024 px wide at 1280 (a 1,120 px page width with 48 px padding); the heading is 32 px at 390 and 43.1 px at 1280 on a line of 1, 0.005em tracking at both; the paragraph 16 px on 25.6 px at both; 20 px from the heading's foot to the paragraph; the block's section padded 54 px above and 36 px below at 390, 72 and 48 at 1280. Its store header, announcement bar and floating "Shop by color" button are skreed.com's shop chrome, not part of the reference.
+
+**Read with.** `CLAUDE.md`; `DESIGN.md` sections 3, 4 ("Corner logotype", lines 240 to 250) and 5; `docs/brand/type-system.md`; `docs/CHECKLIST.md`; `src/styles/tokens.css`; `src/pages/404.astro` (the site's other text page on Pearl Whisper); the corner logotype's rules in `src/styles/shell.css` (lines 40, 42 to 45 and 100) and `src/styles/family.css` (lines 51 to 67, with the press idiom); `scripts/fonts/build.py` and `scripts/fonts/manifest.txt`.
+
+## 1. Goal
+
+A visitor who opens `/about/` reads, in Skreed's own words, why colour is personal and that Skreed launches in India on November 15, on a plain Pearl Whisper page set in skreed.com's Inter, with the wordmark one tap back to the landing page.
+
+Brand goals (`docs/00-IDEATION.md` lines 11 to 15): **1** first (a lifestyle brand that connects, not a tech brand: "colour is personal", "the things we carry every day should feel a little more like us"), **2** second (the shades across an ecosystem and a team of award-winning designers say what is new in the space). Goals 3 and 4 are not served on this page: it has no form and no Instagram link (section 8).
+
+## 2. Phone-first wireframe in words
+
+### 2.1 The route
+
+`src/pages/about.astro`, built to `dist/about/index.html` and served at `/about/`; `/about` answers with the platform's redirect to `/about/` (`wrangler.jsonc` line 5, `html_handling: "auto-trailing-slash"`). Canonical `https://skreed.in/about/`. Listed in the sitemap after the landing page (D16). Nothing on the site links to it in this loop: the navbar's About link is added after the navbar's branch merges (D7).
+
+### 2.2 390 x 844, at rest
+
+The whole screen is Pearl Whisper, edge to edge, with no panel, card, rule, image or texture (D2, D5). Everything is Urban Slate.
+
+- **The wordmark** at the top left: the SKREED logotype, 96 px wide and 23.25 px tall, its top-left corner at the corner inset (16 px from the top and from the left, plus the safe areas), a link to `/` named "Skreed, home" (D6, D12). Its hit area reaches 112 x 45.25 px. It is placed absolutely at the top of the page, not fixed, so it scrolls away with the page (D12).
+- **The title**, "About Skreed", Inter 700 at 32 px on a 1.05 line, tracking 0.005em, flush left on the 16 px gutter, its top 48 px under the wordmark's foot (y about 87).
+- **The letter**, 24 px under the title: five paragraphs in Inter 400 at 16 px on a 1.6 line (25.6 px), 16 px apart, flush left in the 358 px column (about 42 characters a line). The fifth paragraph ends on "that’s the one" set in Inter 600, upright, then the full stop.
+- **The sign-off**, 48 px under the letter: "Your perfect shade." in Inter 700 at 20 px on a 1.2 line, tracking 0.005em; 8 px under it, "Launching November 15." in the letter's 16 px at 400, "November 15" never split across lines.
+- **The foot**: 48 px of Pearl Whisper under the date line, plus the bottom safe area.
+
+The page is a little over one screen: estimated from the copy's length, the letter runs to about y 746, the sign-off to about 818, and the date line sits just under the fold at about y 826 to 852, so a short scroll shows it; the document is about 900 px tall. The build measures and records the real boxes (AC5).
+
+### 2.3 On scroll, tap, hover and focus
+
+- **Scroll.** A plain document scroll. Nothing is pinned, nothing reveals, nothing moves (rule 12). The wordmark scrolls away with the page.
+- **Tap or click on the wordmark.** Goes to `/`, a plain link; the landing page loads as it does from any link.
+- **Hover** (pointer devices, `hover: hover`). The wordmark lifts 1 px; **press** scales it to 0.98; both over 150 ms (`--dur-press`) on `--ease-standard`, the site's press idiom (`family.css` lines 55 to 57). No colour or opacity change. Nothing else responds to hover.
+- **Keyboard.** The wordmark is the page's one control and the first Tab stop: the two-tone ring, a 2 px Ember Luxe outline 6 px out and a 2 px Urban Slate ring 2 to 4 px outside the box (DESIGN.md "Focus ring").
+- **Text.** Selectable, with the browser's default selection colours.
+
+### 2.4 1280 x 800
+
+The same page at laptop sizes. The wordmark is 136 px wide (32.94 px tall) at the corner inset, 44.8 px from the top and from the left. The reading column is 544 px (`--measure-prose`, 34rem), centred in the page (x 368 to 912), its text still flush left (D9). The title is 44 px, the letter 17 px on 27.2 px (about 60 characters a line), the sign-off 24 px, the date line 17 px; the gaps are the phone's (48, 24, 16, 48, 8 and 48 px). The title's top sits 48 px under the wordmark's foot (y about 126); estimated from the copy, the letter is 15 lines, the date line ends about y 780 and the whole letter, sign-off included, is in the first screen, the document about 828 px tall.
+
+### 2.5 Other widths
+
+- **360 x 780.** As 390, in a 328 px column; the title stays on one line (about 209 px at 32 px).
+- **430 x 932.** As 390, in a 398 px column.
+- **768 x 1024 and 1024 x 768.** The 544 px column centred; the wordmark 96 px at 768 and 136 px from 1024 px, its only breakpoint (DESIGN.md section 8). The column fills the content box until the page is about 585 px wide and is centred from there.
+- **844 x 390, a phone held sideways.** The column centred in the 844 px width; the page scrolls through the letter; the side safe areas pad the gutters.
+- **1920 x 1080.** The inset stops at 56 px (`--inset` clamp), the column centred, the type at its 1280 px sizes (the clamps stop there); the page is shorter than the screen, and Pearl Whisper fills the rest.
+
+### 2.6 Type, colour and spacing
+
+**Faces.** Inter only, from one self-hosted variable file (D3, E-About-font), through the page's own token `--font-about: "Inter", "Inter Fallback", Arial, sans-serif`, set on `body` (D17).
+
+| Role | Element | Weight | 390 px | 1280 px | Line height | Tracking | Size token |
+|---|---|---|---|---|---|---|---|
+| Title | `h1` "About Skreed" | 700 | 32 px | 44 px | 1.05 | 0.005em | `clamp(2rem, 1.671rem + 1.348vw, 2.75rem)` |
+| Letter | the five paragraphs | 400 | 16 px | 17 px | 1.6 | 0 | `clamp(1rem, 0.973rem + 0.112vw, 1.0625rem)` (the value of `--fs-legal`) |
+| Emphasis | `em` "that’s the one" | 600, upright | as the letter | | | | |
+| Sign-off | "Your perfect shade." | 700 | 20 px | 24 px | 1.2 | 0.005em | `clamp(1.25rem, 1.140rem + 0.449vw, 1.5rem)` |
+| Date line | "Launching November 15." | 400 | 16 px | 17 px | 1.6 | 0 | as the letter |
+
+Every fluid size follows `type-system.md`'s formula (slope = (max - min) / 890, intercept = min - slope x 390, in rem). Nothing is under 16 px. The letter declares `font-variant-numeric: proportional-nums` (prose figures for "240" and "15", whatever the font's default); the title takes `text-wrap: balance` and the paragraphs `text-wrap: pretty`; hyphenation stays manual (the default). `font-synthesis: none` comes from `tokens.css` line 78; no italic of any face exists or is asked for. Inter's 500, which skreed.com uses for its buttons and navigation, is in the file but unused: the page has neither (D10).
+
+**Colour.** `html` and `body` background `--pearl-whisper`; every text and the wordmark `--urban-slate` (9.9:1); `--ember-luxe` only in the wordmark's focus outline. No `--shade-*`, `--skeleton` or `--night`, no other colour value.
+
+**Spacing.** All through `gap` on flex columns and padding on the page box (rule 15). Side padding `--inset` plus the side safe areas. Top padding `--inset` plus the top safe area plus the wordmark's height (`--ab-mark-h`, 23.25 px, 32.94 px from 1024 px: 96 or 136 x 292.9 / 1209.46) plus `--s6`. Title to letter `--s4` (24 px); paragraph to paragraph `--s3` (16 px); letter to sign-off `--s6` (48 px); sign-off to date line `--s1` (8 px); foot `--s6` plus the bottom safe area. `--s6: 48px` is defined in `about.css` as `family.css` defines it for the family pages (line 18; DESIGN.md section 5, "The family pages' layout"); `--ab-mark-h` is a component dimension, as the family pages' `--mark-h` (lines 20 and 31, the same two values). The measure is `--measure-prose` (34rem) for the whole column.
+
+**The structure**, in document order: the wordmark sprite (`WordmarkSprite.astro`, hidden); `header.ab-top` holding `a.site-logo`; `main.ab` holding the column, which holds the letter group (the `h1`, then `div.ab-text` with the five paragraphs) and the sign-off group (`div.ab-close` with `p.ab-sign` and `p.ab-launch`). The sign-off lines are paragraphs, not headings (D11).
+
+## 3. Content
+
+Every string, exactly as it renders. The apostrophes are U+2019 RIGHT SINGLE QUOTATION MARK, never U+0027; the one no-break space is written below as `{U+00A0}`. The copy is the paste verbatim with only the changes D4 lists.
+
+| Id | As rendered | Element | Notes |
+|---|---|---|---|
+| `h1` | About Skreed | `h1` | the paste's `*About Skreed*` (WhatsApp bold) |
+| `p1` | Skreed started with a simple idea: colour is personal. | `p` | |
+| `p2` | We’ve always believed that the things we carry every day should feel a little more like us. That’s why we went looking beyond the usual handful of colours and built a world of our own: a spectrum of over 240 shades across an ecosystem of premium tech accessories, each designed to feel every bit as unique as the person using them. | `p` | U+2019 in "We’ve" and "That’s" |
+| `p3` | And while colour is at the heart of what we do, thoughtful design is what brings it all together. Backed by a team recognised with multiple CES Innovation Awards, Red Dot Design Awards, and New York Design Awards, Skreed brings a premium, considered approach to personal tech. | `p` | the serial comma before "and New York" as pasted |
+| `p4` | And now we’re bringing it all to India. | `p` | U+2019 in "we’re" |
+| `p5` | Welcome to Skreed. We hope you find something here that makes you stop scrolling for a second and think, that’s the one. | `p`, with "that’s the one" in `em` | the paste's `_that's the one_` (WhatsApp italic): `em` set upright at 600 (D4); the full stop follows the `em`, outside it; U+2019 in "that’s" |
+| `sign` | Your perfect shade. | `p.ab-sign` | |
+| `launch` | Launching November{U+00A0}15. | `p.ab-launch`, with "November{U+00A0}15" in `time datetime="2026-11-15T00:00:00+05:30"` | the answer's "Launching November 15." in place of the paste's "Launching October 4."; the `datetime` is `LAUNCH_ISO` (`src/config/site.ts` line 4) |
+| `title` | About Skreed | `<title>`, `og:title`, the JSON-LD page name | proposed (section 14); the `h1`, which carries the brand already, so the site's ". Skreed" suffix is not added |
+| `description` | Skreed started with a simple idea: colour is personal. And now we’re bringing it all to India. Launching November 15. | meta description, `og:description` | proposed (section 14); three of the copy's own sentences, in order; a plain space before "15" in this attribute |
+| `logo` | Skreed, home | `aria-label` of `a.site-logo` | `COPY.logo.aria` (`src/config/copy.ts` line 28), read, not copied |
+
+Words kept as written (D4): "colour" and "colours", "recognised" (the site's spelling); "over 240 shades" (the brief's own words, though the catalog holds exactly 240; section 14); the three award names (the brief's words; section 14); "premium", "considered", "ecosystem" (none is on rule 17's list). The copy has no em or en dash, no emoji, none of rule 17's words, no "it's not X, it's Y", and no digit in the `h1` (A3).
+
+**Names in the code.** The strings live in `src/config/about.ts` as `ABOUT_COPY`, keyed by the ids above; `p5` in three parts (the words before the `em`, the `em`'s words, the full stop) and `launch` in three ("Launching ", "November{U+00A0}15", "."). Classes: `header.ab-top`, `a.site-logo`, `main.ab`, `div.ab-text`, `div.ab-close`, `p.ab-sign`, `p.ab-launch`. No shade, render or picture is referenced (E-About-38).
+
+## 4. Motion plan
+
+No library and no script: the page ships no JavaScript (D6), so it has no GSAP and nothing for `gsap.matchMedia()` to hold. CLAUDE.md's Stack paragraph puts every tween inside `gsap.matchMedia()` where GSAP runs; this page has no tween, and its one CSS transition is dropped under reduced motion in CSS, as the 404's button's is (`src/pages/404.astro` line 37).
+
+| Trigger | What moves | How | Reduced motion |
+|---|---|---|---|
+| Pointer over the wordmark (`hover: hover`) | the wordmark | `translateY(-1px)`, transform only, 150 ms on `--ease-standard` | nothing moves |
+| Press on the wordmark | the wordmark | `scale(0.98)`, the same timing | nothing moves |
+| Focus on the wordmark | nothing | the two-tone ring appears at once | the same |
+| The Inter file arrives | nothing moves | the text re-renders in Inter behind its metric-matched fallback (`font-display: swap`; D3) | the same |
+| Scroll | nothing | | |
+
+Nothing reveals on scroll and nothing observes the viewport (rule 12, CHECKLIST D1). Nothing moves on its own, so WCAG 2.2.2 holds without a control, and nothing flashes (2.3.1).
+
+## 5. Data and states
+
+**Inputs.** None at runtime. At build: `ABOUT_COPY`; `SITE_URL` and `LAUNCH_ISO` (`src/config/site.ts`); `COPY.logo.aria`; `SITE_COPY.org` (`src/scripts/family/site-copy.ts` lines 14 to 21) for the JSON-LD; `PEARL_WHISPER` (`src/config/tokens.ts`) for `theme-color`; the wordmark's six paths from `docs/brand/logo/skreed-logotype.svg` through `WordmarkSprite.astro`. **Outputs.** None: no events, no requests beyond the page, its font and its icon. **Storage.** None (CHECKLIST B3).
+
+**States** (CHECKLIST D3 and the H table; the page has no data and no input, so most rows are argued n/a).
+
+| State | What the visitor sees |
+|---|---|
+| Empty | n/a: static copy, always present; the unit test asserts every string is there (AC4). |
+| Loading | First paint is the HTML with its CSS inlined, the text already set in "Inter Fallback" (Arial with Inter's measured size-adjust and overrides); the preloaded Inter file swaps in behind it, the line boxes held by the fallback's metrics (CLS at most 0.1, AC8). No skeleton (nothing loads data; rule 41 needs none), no loader (H1). |
+| Error | The Inter file fails (404, blocked, corrupt): the page stays in "Inter Fallback", whole and readable. On Android, which has no Arial, `local("Arial")` fails and the stack falls to the system sans (Roboto) with no size-adjust, as `type-system.md` line 213 records for every face of the site. |
+| No internet | A loaded page needs nothing more. A first visit offline is the browser's own offline page: the site has no service worker. |
+| Slow network | The text is the LCP and paints with the fallback as soon as the HTML arrives (no render-blocking request); the font swaps in when it lands. |
+| JavaScript off | Identical: the page has none (AC8). |
+| Reduced motion | Identical at rest; the wordmark's lift and press scale are off. |
+| Zoom to 200 percent, reflow at 320 px | One column, no horizontal scroll, nothing clipped or overlapped (WCAG 1.4.4, 1.4.10; AC7). |
+| Text spacing overrides | No fixed heights on text, so WCAG 1.4.12's spacing clips nothing (AC7). |
+| Forced colours (Windows high contrast) | The browser's system colours; the focus outline and the ring's border survive. Nothing designed beyond the defaults. |
+| Dark colour-scheme preference | The page stays Pearl Whisper, as every page of the site: there is no dark mode and no page-wide `color-scheme` (DESIGN.md section 2). |
+| Print | n/a: the checklist has no print line; the browser prints the text in Urban Slate. |
+| Instagram's in-app browser | Plain https links only, no storage (B3). |
+| No results, permission denied, session expired, validation, success | n/a: no search, no permission, no session, no form. |
+
+## 6. Budget
+
+| Item | Line | Note |
+|---|---|---|
+| JavaScript | 0 bytes | no script file, no module, no inline executable script; the one `<script>` is the JSON-LD data block, which is not executed and needs no CSP hash (`scripts/csp.mjs` line 29) |
+| Critical JS (C1) | 0 of 60 KB | |
+| Total JS of the site | unchanged | no chunk is added or changed (AC11) |
+| `dist/about/index.html`, CSS inlined | at most 30,000 bytes raw and 10,000 bytes gzip (level 9) | the 404 is 15,472 raw and 4,532 gzip with the same global CSS (measured on the main clone's build of 2026-10-29); this page adds the wordmark's paths (about 4.4 KB raw), its own stylesheet, the head tags and the copy |
+| The Inter file | at most 50,000 bytes | the only font the page fetches; outside the 120,000-byte cap of the three brand faces, as the IBM Plex Mono files are (D3, section 12) |
+| Images | none | E-About-38; the icons are the site's, as on every page |
+| First view | at most 80,000 bytes transferred | the HTML, the font and one icon; against 1.5 MB in CLAUDE.md's budget |
+| LCP, CLS, TBT | LCP under 2.5 s on Lighthouse's throttled mobile, CLS at most 0.1, TBT 0 ms | text LCP, metric-matched fallback, no script |
+| Other pages | 0 bytes | every other page keeps its bytes (D17, AC11) |
+| The CSP line | one more style hash, 54 characters with its space | under the 1,900-character cap (`scripts/csp.mjs` line 21; 1,352 characters on the main clone's build of 2026-10-29) |
+
+## 7. Acceptance criteria
+
+Each is PASS or FAIL with evidence. "Served" means the production build (`PUBLIC_HERO_HOOKS=0 PUBLIC_TUNE=0 PUBLIC_STAGING=0 PUBLIC_FAMILY_3D=on npx astro build --outDir <dir>` then `node scripts/csp.mjs --dist <dir>`) served by `npx wrangler dev --ip 127.0.0.1 --port <8800 up> --assets <dir>` from this worktree; the e2e runs with `BASE_URL` and `SKREED_DIST` pointing at it. CHECKLIST E1 (`/web-design-guidelines` on `about.astro` and `about.css`) and E2 (`visual-critique:critique-screen` on the 390 frame) run as the checklist says, outside these criteria.
+
+1. **Palette and rules (A1, A2, A5 under E-About-38).** Served: `html` and `body` compute `background-color` rgb(247, 246, 243); every text element and the wordmark compute `color` rgb(56, 63, 67); rgb(255, 153, 0) appears only as the focused wordmark's outline. `src/styles/about.css` and `src/pages/about.astro` hold no colour literal (`#` hex, `rgb(`, `hsl(`, `color-mix(`), no `--shade-`, `--skeleton` or `--night`, no `gradient`, `box-shadow`, `filter`, `backdrop-filter`, `blur(`, `border-radius` or `background-image`; the page has no `img`, `picture`, `canvas` or `video` and no `svg` but the sprite and the wordmark's. A scan of the diff against rules 1 to 50 cites only rules 4, 19 and 30 (E-About-font) and 38 (E-About-38). `git diff 71678ed -- CLAUDE.md` is one hunk that only adds section 11's block between the E-fog-hue paragraph and "Still pending Sam for section 4"; `git diff 71678ed -- DESIGN.md` is two hunks that only add section 13's two subsections at their places.
+2. **Inter from the one self-hosted file, no other face, nothing italic (A3 under E-About-font; rules 18 and 41).** On a cold load of `/about/` at 390 x 844 and at 1280 x 800, the page makes exactly one font request, `/fonts/inter-400-700-latin.woff2`, status 200, same origin, the one the preload names; no other file under `/fonts/` is requested and no request leaves the origin. In `document.fonts` the "Inter" face (weight "400 700") is `loaded` and every Poppins, Open Sans, Source Serif 4 and IBM Plex Mono face is `unloaded`. The `h1`, every `p`, the `em` and the `time` compute a `font-family` that starts with Inter; weights 700 (`h1`, sign-off), 400 (letter, date line) and 600 (`em`); `font-style` is `normal` for every element of `header` and `main`. Sizes within 0.1 px: 32, 16 and 20 px at 390; 44, 17 and 24 px at 1280; line heights 1.05, 1.6 and 1.2; the `h1`'s `letter-spacing` 0.005em. In `about.css`: `font-display: swap`; the `unicode-range` is `build.py`'s LATIN (lines 41 and 42); no `italic` or `oblique`; the `em` rule sets `font-style: normal` and `font-weight: 600`; the only `@font-face` families are "Inter" and "Inter Fallback". Under `src/`, the word Inter (`\bInter\b`) and "inter-400-700" appear only in `about.css`, `about.astro` (the preload) and comments in `about.ts` (at 71678ed they appear nowhere under `src/`).
+3. **The file and its records (A3, F1; D3, D19, D20, section 12).** `public/fonts/inter-400-700-latin.woff2` and `docs/brand/fonts/inter-400-700-latin.woff2` are byte-identical and at most 50,000 bytes. Read with fontTools: one variable axis, `wght` 400 to 700, no `opsz`; the cmap holds every character of section 3's strings, U+2019 and U+00A0 included, and nothing outside the LATIN range; every layout feature tag is in `build.py`'s FEATS (line 45); name records 0, 13 and 14 are present; the italic bits of `head.macStyle` and `OS/2.fsSelection` are off. `scripts/fonts/build-inter.py` pins the source's sha256 and stops on a mismatch (a changed byte in the cached file stops it with a message); two runs give the same bytes and the second leaves `git status` as it was. `scripts/fonts/manifest.txt` lines 1 to 37 are byte-identical to 71678ed and one section is appended, headed "== ABOUT PAGE", with the source's sha256 and path, the licence's sha256, the file's bytes and sha256 (equal to the file's), its glyph count and metrics, the three "Inter Fallback" lines and the clone fonts used; the three "Inter Fallback" faces in `about.css` carry exactly those numbers. `docs/brand/fonts/inter-OFL.txt` is byte-identical to `ofl/inter/OFL.txt` at the source commit (its sha256 in the manifest) and names no Reserved Font Name. `git diff --stat 71678ed -- public/fonts docs/brand/fonts` lists only the three additions: the six existing site files and the four docs copies are untouched.
+4. **The copy, exactly (A4, F2).** `tests/unit/about.test.ts` holds `ABOUT_COPY` to section 3 character for character: U+2019 in "We’ve", "That’s", "we’re" and "that’s" and in the description's "we’re"; U+00A0 between "November" and "15" in `launch`; no U+0027, U+2014 or U+2013 in any string; no emoji (`\p{Extended_Pictographic}`); none of "seamless", "elevate", "unleash", "next-level" or "revolutionary"; `launch`'s month and day equal `LAUNCH_ISO`'s (November 15). Served: `main`'s text, element by element, equals the table (the `h1`, the five paragraphs, the sign-off, the date line); the `em`'s text is exactly "that’s the one" and the character after it is "."; the `time`'s `datetime` equals `LAUNCH_ISO`; `<title>` and the meta description are section 3's. No TODO, placeholder, lorem ipsum or commented-out code in the new files.
+5. **360 to 1280 px with no horizontal scroll (B1, B2, G10).** At 360 x 780, 390 x 844, 430 x 932, 768 x 1024, 1024 x 768, 844 x 390 and 1280 x 800: `document.documentElement.scrollWidth - innerWidth` is 0; the wordmark's and every text element's boxes keep at least 16 px from each side, and sit on `--inset` within 0.5 px wherever the column fills the width; the column is at most 544 px wide and, wherever the page is wider than about 585 px, its left and right gaps differ by at most 1 px; the `h1` is one line; the wordmark is 96 px wide below 1024 px and 136 px from 1024 px, its top-left corner at (`--inset`, `--inset`) within 0.5 px, and its box meets no text box. At 390 and at 1280, within 1 px: 48 px from the wordmark's foot to the `h1`'s top, 24 from the `h1` to the first paragraph, 16 between paragraphs, 48 from the fifth paragraph to the sign-off, 8 from the sign-off to the date line, and `main`'s padding-bottom 48 px. Full-page frames at 390 x 844 and 1280 x 800, device scale 1: `docs/specs/screenshots/about-390.png` and `about-1280.png`.
+6. **Visible at rest; the one motion (D1, D2, D4, C3; rule 12).** After load every element of `header` and `main` computes `opacity` 1 and `visibility` visible, and `document.getAnimations()` is empty. The wordmark: hovered in a hover-capable context, its `transform` is `matrix(1, 0, 0, 1, 0, -1)` once the transition ends; pressed (mouse down), `matrix(0.98, 0, 0, 0.98, 0, 0)` (the press rule follows the hover rule, as in `family.css` lines 56 and 57, so a pressed pointer scales); its transition is `transform` over 150 ms on `cubic-bezier(0.2, 0, 0, 1)`; its `opacity` and `color` never change. Under emulated reduced motion its transition duration is 0s and neither hover nor press changes its `transform`.
+7. **Accessibility, the focus ring and contrast (E3, B2).** `html[lang="en-IN"]`. The accessibility tree reads a banner with the link "Skreed, home", then the main landmark with one heading, level 1, "About Skreed", then the seven paragraphs in section 3's order. The first Tab focuses `a.site-logo`, which computes `outline` 2px solid rgb(255, 153, 0) with `outline-offset` 6px, and its `::before` a 2px solid rgb(56, 63, 67) border at inset -4px; the link's hit box (its `::after`) is at least 44 x 44 CSS px (112 x 45.25 at 96 px). Every text element's colour against its background, computed in the test from the computed values, is at least 9.9:1. At 320 x 640 (WCAG 1.4.10) and at 640 x 400 (1280 x 800 at 200 percent, 1.4.4) there is no horizontal scroll and no text box leaves the viewport or meets another; with 1.4.12's overrides injected (line height 1.5, paragraph spacing 2em, letter spacing 0.12em, word spacing 0.16em) nothing is clipped and no horizontal scroll appears.
+8. **Zero JavaScript and the performance lines (C1, C4, H1).** Served, `/about/` requests no script; its DOM's only `script` element has `type="application/ld+json"`; no element carries an `on*` attribute; there is no `noscript`. With JavaScript disabled, every box of `header` and `main` at 390 x 844 equals the enabled run's within 0.5 px. `dist/about/index.html` is at most 30,000 bytes raw and 10,000 gzip; the first view is at most 80,000 bytes transferred. Lighthouse mobile (`node node_modules/lighthouse/cli/index.js` with the machine's headless shell as `CHROME_PATH`, its JSON in the scratchpad, never under `test-results/`) on the served `/about/`: performance at least 90 with LCP under 2.5 s, CLS at most 0.1 and TBT 0 ms; accessibility, best practices and SEO each at least 90; the four scores go in the hand-off. If Lighthouse cannot run on this machine, the attempts are recorded and C4 stays open, never PASS.
+9. **The head, the sitemap, caching and the CSP (G3, G4, G6, G7, G8, G26, B3).** `/about/` answers 200 and `/about` redirects (307 or 308) to it. The head holds `<title>About Skreed</title>`, section 3's description, `link rel="canonical"` `https://skreed.in/about/`, `theme-color` #F7F6F3, the preload of `/fonts/inter-400-700-latin.woff2` (as font, `font/woff2`, `crossorigin`), `og:type` website, `og:site_name` Skreed, `og:locale` en_IN, `og:title`, `og:description`, `og:url` `https://skreed.in/about/`, `twitter:card` summary, the three icon links and the manifest link of the family pages (`src/pages/shades/[family].astro` lines 63 to 73), and JSON-LD that parses to an `@graph` of the Organization node exactly as the family pages build it (lines 38 and 39), an `AboutPage` (`url` `https://skreed.in/about/`, `name` "About Skreed", `about` the Organization's `@id`) and a `BreadcrumbList` (Skreed at `https://skreed.in/`, About Skreed at `https://skreed.in/about/`); there is no robots meta in the production build. `/sitemap.xml` lists `https://skreed.in/`, `https://skreed.in/about/`, then the ten family pages; `/robots.txt` is unchanged. The served response carries `Content-Security-Policy` with `default-src 'self'` and `font-src 'self'`; no `securitypolicyviolation` fires on load or on a Tab to the wordmark (`tests/harness/csp.ts`); `node scripts/csp.mjs --dist <dir>` passes with its line at most 1,900 characters. `/about/` is served with `Cache-Control: public, max-age=0, s-maxage=60`. The page has no app-scheme link and touches no storage.
+10. **The tests and the build (B1, F1).** `node --test tests/unit/about.test.ts tests/unit/headers.test.ts tests/unit/tokens.test.ts` passes, and so does `npm run test:unit` apart from its known skip (`room-flux.test.ts`'s ffprobe probe) and `node --test tests/family/data.test.ts` (whose guard list holds `sitemap.xml.ts`, line 207). The new unit test holds AC2's source checks, AC3's file and manifest checks, AC4's copy checks, and that `about.astro` imports no component that carries a `<script>` (neither `SiteLogo.astro` nor `BackToTop.astro`), has no `client:` directive and no `style=` attribute. The new `tests/e2e/about.spec.ts` holds AC2 and AC4 to AC9's browser checks and passes with `npx playwright test tests/e2e/about.spec.ts` against the served build. `npm run build` passes (`astro build`, `csp.mjs`, `budget.mjs`, `guards.mjs`), with npm's script shell set to Git's bash. `tests/family/specs/grid.spec.ts`'s sitemap expectation (line 33) lists `/about/` after the landing page. `graphify update .` is run after the build.
+11. **The landing page, the family pages and the 404 are unchanged (A1, C1; D1, D17).** `git diff --name-status 71678ed`, committed and not, lists only section 9's New and Changed files. In the branch's production build, `dist/index.html`, `dist/404.html` and the ten `dist/shades/<family>/index.html` contain neither "Inter" nor "inter-400-700", and the served `/?tier=poster` and `/404.html` request no Inter file. Those twelve files are byte-identical to a production build of 71678ed made with the same flags in a scratch worktree of 71678ed that has the same git-ignored inputs (`src/assets/quiz/pics/` copied from this worktree, `node_modules` as a junction that is removed before the worktree is); the hand-off lists the twelve sha256 pairs. `graphify affected "sitemapPaths()"` reaches `GET()` only.
+
+## 8. Out of scope
+
+- The About link in the navbar, and any link to `/about/` from the landing page, the family pages or the 404 (D7: the orchestrator adds the navbar's link once that branch merges). A navbar on `/about/` itself.
+- Back to top on `/about/` (D13) and the logotype's glitch on its wordmark (E-24 is not extended; D6).
+- Swatches, renders, pictures and icons (E-About-38), and skreed.com's amber underline under the `em` (rule 1).
+- Any change to the landing page, the family pages, the 404, `Base.astro`, `tokens.css`, `fonts.css` or the six existing font files (D3, D17).
+- An Open Graph image (CHECKLIST G5 is site-wide and still to come; the text tags ship, as on the family pages).
+- A footer, contact details and the FAQs (G19, G23, G24: site-wide, later), analytics (G18; the page has no script), privacy and terms (rules 46 and 47, their own pages).
+- Hindi or any other language; a print stylesheet; a dark mode.
+- Checking the award names or "over 240" against a record (section 14).
+- `docs/CHECKLIST.md`, `docs/brand/type-system.md` and `docs/HANDOFF.md` (D18).
+- Re-running `scripts/fonts/build.py` (D19).
+
+## 9. Touches
+
+Surfaced by the graph (`graphify explain` on `Base.astro`, `404.astro`, `SiteLogo.astro`, `WordmarkSprite.astro`, `sitemap.xml.ts`, `build.py`, `LAUNCH_ISO`, `csp.mjs` and `headers.test.ts`; `graphify affected` on `sitemapPaths()` and `SITE_COPY`; `graphify query` on the pages and on the corner logotype), then read at the lines named.
+
+**Read and imported, unchanged.**
+- `src/layouts/Base.astro` (imported by `index.astro`, `404.astro` and `[family].astro`; imports `tokens.css`, `shades.gen.css`, `fonts.css`, `SITE_URL` and `PEARL_WHISPER`): the page passes `title`, `description`, `path="/about/"`, `preloadFonts` and `themeColor` (lines 11 to 22) and fills the `head` slot (line 34). Its staging `noindex` (line 38) applies as on every page.
+- `src/components/shell/WordmarkSprite.astro` (imported by `index.astro` and `[family].astro`; reads `docs/brand/logo/skreed-logotype.svg?raw`): the sprite, script-free.
+- `src/config/copy.ts` `COPY.logo.aria` (line 28; imported by `SiteLogo.astro`): the link's name.
+- `src/config/site.ts` `SITE_URL` and `LAUNCH_ISO` (lines 3 and 4; `LAUNCH_ISO` is imported by `ScrollCue.astro`).
+- `src/config/tokens.ts` `PEARL_WHISPER`.
+- `src/scripts/family/site-copy.ts` `SITE_COPY.org` (imported by `404.astro`, `[family].astro` and `tests/family/data.test.ts`).
+- `scripts/fonts/build.py` (`main()`, `fetch_sources()`, `sha256()`, `build_one()`, `metrics()`, `avg_advance()`, `log()`): imported by `build-inter.py` for its constants and functions; its `main()` never runs.
+- `scripts/csp.mjs` (`walk()`, `sha()`, the `styles` set): hashes the page's inline style as it hashes every page's.
+
+**Not used, on purpose.** `src/components/shell/SiteLogo.astro` (it imports `src/scripts/logotype/install.ts`, the glitch) and `src/components/shell/BackToTop.astro` (`to-top.ts`): both would put a script on the page.
+
+**Changed.**
+- `src/pages/sitemap.xml.ts` `sitemapPaths()` (lines 8 to 10; called by `GET()` only): `/about/` after `/`, unconditional.
+- `public/_headers`: a `/about/` rule with the pages' `Cache-Control` (as `/` and `/shades/*`, lines 8 to 11).
+- `tests/unit/headers.test.ts` line 22: `/about/` joins the pages that revalidate.
+- `tests/family/specs/grid.spec.ts` line 33: the sitemap's expected list.
+- `scripts/fonts/manifest.txt`: one section appended (section 12).
+- `CLAUDE.md` and `DESIGN.md`: section 13.
+
+**New.** `src/pages/about.astro`; `src/styles/about.css`; `src/config/about.ts`; `scripts/fonts/build-inter.py`; `public/fonts/inter-400-700-latin.woff2`; `docs/brand/fonts/inter-400-700-latin.woff2`; `docs/brand/fonts/inter-OFL.txt`; `tests/unit/about.test.ts`; `tests/e2e/about.spec.ts`; this spec; `docs/specs/about.review.md` (the reviewer's); the two frames.
+
+**Must not move** (the review checks the diff). `src/layouts/Base.astro`; `src/styles/tokens.css`, `fonts.css`, `shades.gen.css`, `shell.css`, `family.css`, `family-links.css`, `quiz.css`, `room.css` and `to-top.css`; `src/pages/index.astro`, `404.astro`, `shades/[family].astro` and `robots.txt.ts`; everything under `src/components/` and `src/scripts/`; `src/config/copy.ts`, `site.ts` and `tokens.ts`; `scripts/fonts/build.py`; the six existing files in `public/fonts/` and the four in `docs/brand/fonts/`; `docs/brand/type-system.md`; `docs/CHECKLIST.md`; `astro.config.mjs`; `scripts/csp.mjs`; `wrangler.jsonc`; `package.json`. Several of these (`copy.ts`, `index.astro`, `BackToTop.astro`, `to-top.css`, `CHECKLIST.md`) carry the navbar session's uncommitted edits, so leaving them alone is also what lets the two branches merge cleanly.
+
+## 10. Decisions taken
+
+**Settled with the brief (carried as they are).**
+- **D1 The route.** `/about/` (`src/pages/about.astro`), a page of its own. Nothing is added to the landing page in this loop.
+- **D2 The ground.** Plain Pearl Whisper: no gradient, texture, image, card or panel. Text in Urban Slate: skreed.com's #171717 is outside the palette, and Urban Slate on Pearl Whisper is 9.9:1.
+- **D3 Inter, self-hosted, on the About page only** (E-About-font). Built as `scripts/fonts/build.py` builds the site's faces: from google/fonts' OFL source `ofl/inter/Inter[opsz,wght].ttf` at the commit `build.py` pins (9710da1eacb3be272583c3224dcb70f9da6eadbb; Inter is there, so no other commit is needed: section 12), sha256-checked, instanced to `wght` 400 to 700 with `opsz` pinned at 14 (the text optical size, the closest to the Inter on skreed.com), subset to `build.py`'s LATIN range and FEATS list, one variable WOFF2 named in the site's pattern (`inter-400-700-latin.woff2`) written to `public/fonts/` and `docs/brand/fonts/` as `build.py` writes its files, with a metric-matched "Inter Fallback" computed the way `build.py` computes the others, recorded in `scripts/fonts/manifest.txt` as a section of its own outside the 120,000-byte cap of the three brand faces (as the IBM Plex Mono sections are). The four brand files and the two Plex files stay byte-identical: Inter is built on its own (D19), never by re-running the build over the existing files. fontTools is not installed here: `python -m pip install fonttools==4.66.1 brotli`. The licence goes where D20 says. The `@font-face` and the family token are loaded by the About page alone, so the landing page, the family pages and the 404 keep their bytes; the repo's pattern allows it as is (D17).
+- **D4 The copy.** The paste verbatim, with only these changes: "Launching October 4." becomes "Launching November{U+00A0}15."; the straight apostrophes become U+2019, the site's convention (the quiz's copy in `src/config/quiz.ts` uses U+2019 throughout, on 23 lines, and no straight apostrophe); `_that's the one_` (WhatsApp italic) becomes an `em` set upright at Inter 600, never italic (rule 18; skreed.com's own `em` is not italic either); `*About Skreed*` (WhatsApp bold) becomes the page's `h1`, "About Skreed". "over 240 shades", "recognised", "colour", the three award names and every other word stay as written: this is the brief's own copy, not invented content. There are no em dashes in it.
+- **D5 Text only** (E-About-38): no swatch, render, image or icon on the page.
+- **D6 The way back.** The wordmark at the top left, a link to `/`, at the corner inset and sizes the other pages use (96 px, 136 px from 1024 px), in Urban Slate. Static, with no glitch script, so the page ships no JavaScript and E-24's glitch is not extended to it.
+- **D7 The navbar link is out of scope.** The navbar lives in another session's uncommitted worktree; the orchestrator adds the About link after that branch merges. No navbar is built here.
+- **D8 The records.** E-About-font and E-About-38 go into CLAUDE.md with the words above, attributed to the brief of 2026-11-02 and its answers in chat (no person named), each with the rules it waives and its default if withdrawn, as one new block directly after the E-fog-hue block and before "Still pending Sam for section 4"; nothing else in CLAUDE.md changes. DESIGN.md gains only two subsections, directly after "### Section 3 type" and directly after "### The family pages' layout" (section 13). These places miss the navbar session's edits (CLAUDE.md's Section 3 and Section 4 bullets, the bullet after them, E-QG-lock and a paragraph before "## Stack"; DESIGN.md around Back to top and near lines 407, 670 and 752).
+
+**Taken by the planner.** Each is cheap on a phone, follows the site's own system or skreed.com's measured page, and is easy to change.
+- **D9 The column.** One reading column of `--measure-prose` (34rem), its text flush left, the column centred in the page wherever the page is wider than the column and its gutters (from about 585 px). Flush left is how the site sets its text (the 404, the quiz; `type-system.md` role note 5 gives prose a 34rem measure and no indent) and reads better across eight-line paragraphs than a centred block; centring the column on wide screens gives the page the balance of skreed.com's centred block. skreed.com also centres its text; that one property is the difference (section 14).
+- **D10 Type from skreed.com's measured page.** Title 32 px at 390 as skreed.com, rising to 44 px at 1280 (skreed.com 43.1), on 1.05 (skreed.com 1; the site's `--lh-h2` keeps a wrapped title clear at 400 percent zoom), tracking 0.005em as skreed.com; letter 16 px on 1.6 as skreed.com, rising to 17 px at 1280 on the site's `--fs-legal` curve; weights 700, 400 and 600 from the one variable file.
+- **D11 The closing two lines.** One group, 48 px under the letter and flush left with it: "Your perfect shade." one step up at 700 (20 to 24 px, the sign-off), "Launching November 15." under it at the letter's size and weight, 8 px apart. Neither is a heading: the sign-off is no section, and a heading may not carry the date's digits (A3). "November{U+00A0}15" is a `time` element whose `datetime` is `LAUNCH_ISO`, so the line and the countdown share one source.
+- **D12 The wordmark on a text page.** The corner logotype's artwork, inset, sizes, hit area and two-tone ring (DESIGN.md "Corner logotype"; `shell.css` lines 40, 42 to 45 and 100; `family.css` lines 61 to 66), in Urban Slate, with three changes. It is `position: absolute`, not fixed: on a page of text with no bar behind it (there is none on the family pages either), a fixed wordmark would sit over the letter as it scrolls by, so it scrolls away with the page instead. Without the glitch it is still a control, so it takes the site's press idiom (`family.css` lines 55 to 57: hover lift, press scale), as "All families" and Back to top do, and none of it under reduced motion. It sits in a `header` (the banner landmark), so every piece of content is inside a landmark. It is drawn from `WordmarkSprite.astro` and its own markup, never `SiteLogo.astro`, whose script installs the glitch.
+- **D13 No Back to top.** DESIGN.md lists Back to top on every page, but it is a script (`to-top.ts`), D6 makes the wordmark the one way back with no JavaScript, the 404 has none, and the navbar session is reworking Back to top on the landing page.
+- **D14 The head.** The title "About Skreed" and a description made of three of the copy's own sentences, both proposed (section 14); the family pages' Open Graph text tags, Twitter card, icons and manifest; JSON-LD with the family pages' Organization node, an `AboutPage` and a `BreadcrumbList`; `theme-color` Pearl Whisper; one preload, the Inter file (the 404 preloads its headline face the same way). No `noindex` in production.
+- **D15 The copy module.** `src/config/about.ts` (`ABOUT_COPY`), not `src/config/copy.ts`, which the navbar session is editing, so the branches merge without a conflict; the page reads `COPY.logo.aria` from `copy.ts` without changing it.
+- **D16 Sitemap and caching.** `/about/` in `sitemapPaths()` after `/`, in every build; `public/_headers` gives it the pages' rule (`public, max-age=0, s-maxage=60`), and `headers.test.ts` holds it.
+- **D17 The stylesheet.** `src/styles/about.css`, imported by `about.astro` alone. Astro inlines every stylesheet into its page (`astro.config.mjs` line 8, `inlineStylesheets: 'always'`), so Inter's `@font-face`, the three fallback faces, `--font-about` and the page's rules reach `/about/` only and every other page keeps its bytes; `tokens.css`, `fonts.css` and `Base.astro` do not change. The page also carries the global sheets `Base.astro` imports (the tokens, the 240 shade tokens, the brand and Plex `@font-face` rules), as every page does; none of those faces is used, so none is fetched (AC2). The page's own rules: the ground and the text colour, the column, the type of section 2.6, the wordmark's corner rules, its press idiom with the reduced-motion rule, and `.sprite { position: absolute; }` as `shell.css` (line 77) and `family.css` (line 260) have it.
+- **D18 The other records.** `docs/CHECKLIST.md` and `docs/brand/type-system.md` do not change in this loop. The navbar session's uncommitted edits touch CHECKLIST A1, D1 and E3, and `type-system.md` has never carried the site's exception faces (IBM Plex Mono is recorded in CLAUDE.md, DESIGN.md, its specs and the manifest only). The reviewer grades A3 and A5 against E-About-font and E-About-38 as CLAUDE.md's new block names them; CHECKLIST lines for the two can follow once the navbar has merged. `docs/HANDOFF.md` is a snapshot of 2026-10-23 and is left as it is.
+- **D19 The font build is a separate script**, `scripts/fonts/build-inter.py`, which imports `build.py`'s recipe (its constants and functions) and never calls its `main()`. `build.py`'s `main()` rewrites `manifest.txt` from scratch (line 166) and would drop the two IBM Plex Mono sections, which it does not produce; the new script writes only its own file, its licence copy and its own manifest section (section 12).
+- **D20 The licence.** The repo keeps no licence file for its faces, only the table in `type-system.md`'s Licence section (lines 258 to 267). So google/fonts' `ofl/inter/OFL.txt` at the source commit goes beside the docs copy as `docs/brand/fonts/inter-OFL.txt`, byte for byte, and the WOFF2 keeps every name record (`build_one()`'s `name_IDs = ["*"]`, line 83), copyright and licence included, as the OFL asks of a modified version. Inter's OFL.txt opens "Copyright 2020 The Inter Project Authors (https://github.com/rsms/inter)" and names no Reserved Font Name, so the subset may keep the name Inter.
+
+## 11. Exceptions this page needs
+
+**Recorded as approved by the brief's words and its answers.** Both go into CLAUDE.md as this block, word for word (section 13 gives its place):
+
+> The About page (the brief of 2026-11-02 and its answers in chat the same day; full wording in `docs/specs/about.md` section 11). The brief's words and the answers cover these, so they are recorded as approved with them. They apply to `/about/` (`src/pages/about.astro`, `src/styles/about.css`) only:
+> - E-About-font: the page is set in Inter, the face skreed.com sets its text in: one variable WOFF2, self-hosted and cut down to Latin as the site's faces are (`inter-400-700-latin.woff2`, built by `scripts/fonts/build-inter.py` from google/fonts@9710da1's `ofl/inter/Inter[opsz,wght].ttf`, weight 400 to 700 kept, optical size pinned at 14, OFL), with a metric-matched "Inter Fallback", recorded in `scripts/fonts/manifest.txt` (ABOUT PAGE) outside the 120 KB cap of the three brand faces; its `@font-face` rules and its token `--font-about` are in `src/styles/about.css`, which no other page loads; 700 for the title and the sign-off, 400 for the text, 600 for the emphasis, which is set upright; never italic. Against rules 4, 19 and 30, the typography line under Brand facts, `docs/brand/type-system.md` (its family limit and "Inter. ... banned in every role") and CHECKLIST A3 (only the four shipped files), as E-S3-font is for the quiz's IBM Plex Mono. The brief: "use the font from skreed.com as well"; the answer: "Inter, like skreed.com", with the option "Downloads Inter from Google Fonts (free OFL licence) and hosts it ourselves, cut down to Latin like the site's other fonts. Used on the About page only, and recorded as an exception quoting your words." Default if withdrawn: the site's own faces and no new file: Poppins 700 for the title, Source Serif 4 for the letter (400, with the emphasis and the sign-off at 600) and Open Sans for the date line.
+> - E-About-38: the page is the brief's copy on Pearl Whisper alone, with no swatch, render, image or icon. Against rule 38 and CHECKLIST A5. The brief: "just use a plain beige backround as similar tot he skreed.com"; the answer: "Text only", with the option "Only the copy on beige, recorded as an exception to rule 38." Default if withdrawn: a row of ten real swatches under the sign-off, one per family in catalog order, each family's index 12 (Parchment, Royal, Salmon Pink, Orchid, Dandelion, Cocoa, Tangerine, Fog, Lawn, Mars: `frosty-white-12` to `roaring-red-12`), circles filled with `var(--shade-<id>)`, each named by shade and family.
+
+**What each waives, in brief.**
+- **E-About-font.** Rules 4 (the four shipped files; "Inter is banned in every role"), 19 and 30; the Brand facts typography line; `type-system.md` principle 4 (the family limit) and its "What is banned" list; DESIGN.md section 3's banned list; CHECKLIST A3's "only the four shipped files". Rule 18 holds (no italic: the `em` is upright), as do A3's other clauses (sentence case, no digit in the `h1`, nothing under 12 px). Default if withdrawn: as the block says; the page then preloads Poppins and loads Source Serif 4 and Open Sans from `fonts.css`, and `inter-400-700-latin.woff2`, its licence copy and its manifest section are removed.
+- **E-About-38.** Rule 38 and CHECKLIST A5. Default if withdrawn: as the block says; the ten circles `--s6` under the date line, `--s3` apart, wrapping on a phone, each named by shade and family ("Parchment, Frosty White"; G9), with no motion and no link.
+
+**Covered by exceptions in place.** None needed. **Not extended.** E-24, the logotype's glitch (D6). **Pending.** None.
+
+## 12. The Inter file: recipe and records
+
+- **Environment.** fontTools 4.66.1 and brotli (`python -m pip install fonttools==4.66.1 brotli`; `build.py` was measured with 4.66.1). This machine has only `python`, so the command is `python scripts/fonts/build-inter.py` from the repo root (`python3` elsewhere).
+- **Source.** google/fonts at 9710da1eacb3be272583c3224dcb70f9da6eadbb: `ofl/inter/Inter%5Bopsz,wght%5D.ttf` (read on 2026-11-02 with a HEAD request: 200, 876,576 bytes; its METADATA.pb names Inter, designer Rasmus Andersson, licence OFL, axes `opsz` 14 to 32 and `wght` 100 to 900, from rsms/inter's 4.1 release) and `ofl/inter/OFL.txt` (200, 4,377 bytes). Fetched as `build.py` fetches (`RAW`, its User-Agent), cached in `scripts/fonts/src/` (git-ignored), each sha256 computed on the first fetch, pinned in the script and checked on every run.
+- **Instance and subset.** `build_one(src, {"wght": (400, 700), "opsz": 14})`: fontTools' instancer keeps `wght` 400 to 700 and pins `opsz` at 14 (its minimum, the text optical size), then `build.py`'s subset: WOFF2, the LATIN range, the FEATS list, every name record, no hinting, the notdef outline, `recalcTimestamp=False`, so two runs give the same bytes.
+- **Outputs.** `public/fonts/inter-400-700-latin.woff2` and `docs/brand/fonts/inter-400-700-latin.woff2`, byte-identical; `docs/brand/fonts/inter-OFL.txt`, a byte copy of the licence. The script exits without writing if the file is over 50,000 bytes, as `build.py` exits over its cap.
+- **Fallback overrides.** As `build.py` computes them (lines 154 to 164): size-adjust is the mean advance of the shipped file over the clone's on `build.py`'s SAMPLE (line 108), at `wght` 400, 600 and 700; the overrides are the file's typo metrics (or hhea where USE_TYPO_METRICS is off, as `build.py` reads them) divided by size-adjust. Clones: Liberation Sans Regular for 400 and Liberation Sans Bold for 600 and 700 where `/usr/share/fonts/truetype/liberation/` exists; on this machine, which has none, `C:/Windows/Fonts/arial.ttf` and `arialbd.ttf`, whose advance widths Liberation Sans matches by design, so the ratios are the same; the manifest names the clone used. Faces: "Inter Fallback" 400 on `local("Arial"), local("ArialMT")`, 600 and 700 on `local("Arial Bold"), local("Arial-BoldMT")`, each with its four numbers, `font-style: normal`.
+- **The `@font-face` rule** in `about.css`, in `fonts.css`'s Open Sans pattern (lines 5 to 7): family "Inter", `font-weight: 400 700`, `font-style: normal`, `font-display: swap`, `src` the file with `format("woff2") tech("variations")` then `format("woff2")`, `unicode-range` the LATIN range. Never `format("woff2-variations")`.
+- **Manifest.** The script rewrites only its own section, from the line "== ABOUT PAGE (the brief, 2026-11-02; exception E-About-font; outside the 120,000 byte cap of the three brand faces)" to the end of the file, appended after line 37; nothing above it changes. The section records the fontTools version and the commit; the source's path, bytes and sha256; the licence's sha256 and where it was copied; the file's bytes, KB, sha256, glyph count and axes; its metrics in `build.py`'s format (line 150); the three "Inter Fallback" lines in `build.py`'s format (line 163); the clone used; and the command.
+
+## 13. Documents this page changes
+
+- **CLAUDE.md.** Section 11's block, inserted after line 124 (the blank line under the E-fog-hue bullet) and before line 125 ("Still pending Sam for section 4"), with one blank line after it. Nothing else.
+- **DESIGN.md**, two new subsections and nothing else:
+  - "### About page type (`/about/`; exception E-About-font in `docs/specs/about.md` section 11)", after line 195 (the end of "Section 3 type") and before line 197 ("### Element rules"). It holds: a row in the "Families and files" table's form (Inter; the About page, every line; 400 to 700, with 700 for the title and the sign-off, 400 for the text and 600 for the emphasis; `inter-400-700-latin.woff2`; its bytes from the manifest); the sentence that it is an exception to rules 4, 19 and 30, the banned list above and `type-system.md`'s family limit, for the About page only; the file (built by `scripts/fonts/build-inter.py` from google/fonts@9710da1, `wght` 400 to 700 kept, `opsz` pinned at 14, LATIN and FEATS, byte-identical in `public/fonts/` and `docs/brand/fonts/`, the licence beside the docs copy, outside the 120 KB cap); the loading (`src/styles/about.css`, inlined into `/about/` only, the one preload, `font-display: swap`, the three "Inter Fallback" lines quoted from the manifest, never typed by hand); and the setting (`--font-about`, section 2.6's sizes, line heights and tracking, the `em` upright at 600, nothing under 16 px).
+  - "### The About page's layout (`/about/`, `docs/specs/about.md` section 2)", after line 549 (the end of "The family pages' layout") and before line 551 ("### Whitespace"). It holds: the Pearl Whisper ground with no panel; the wordmark at the corner inset and sizes, in Urban Slate, scrolling with the page, with the press idiom in place of the glitch; the 34rem column, flush left, centred from about 585 px; the spacing (`--s6: 48px` defined in `about.css` for the gap under the wordmark, before the sign-off and at the foot; `--s4`, `--s3` and `--s1` for the rest) and the component dimension `--ab-mark-h`; no breakpoint but the wordmark's 1024 px.
+- **`scripts/fonts/manifest.txt`.** Section 12's appended section.
+- **Not changed:** `docs/CHECKLIST.md`, `docs/brand/type-system.md` and `docs/HANDOFF.md` (D18).
+
+## 14. For the owner (not blocking; graded as built)
+
+The page ships as this spec says; each item below can change later without touching the rest.
+
+1. **The title and description** are proposed: "About Skreed", and "Skreed started with a simple idea: colour is personal. And now we’re bringing it all to India. Launching November 15."
+2. **The text is flush left** in a centred column (D9). skreed.com centres its About text; one property (`text-align` on the column) would centre it here.
+3. **The sign-off** "Your perfect shade." is set one step up at 700, with the date line under it at the letter's size (D11).
+4. **The wordmark scrolls away with the page**, and the page has no Back to top (D12, D13).
+5. **"over 240 shades"** is kept as the brief wrote it, though the catalog holds exactly 240 (CLAUDE.md, Brand facts).
+6. **The award names** ("CES Innovation Awards, Red Dot Design Awards, and New York Design Awards") are the brief's words; nothing in this repository records them.
+7. **Nothing links to `/about/` yet.** It is in the sitemap; the navbar's About link arrives after the navbar merges (D7). Whether the navbar also appears on `/about/` is the navbar's question: today it is the landing page's section index.
