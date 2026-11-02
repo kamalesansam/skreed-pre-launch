@@ -4,8 +4,11 @@
 // following and a second press during a jump honoured; Products always listed, opening the quiz gate as Skip quiz does;
 // on the 3D path a keyboard press on Products leaves focus in section 4 (its pad, which the arrival at scene 1 moves on
 // to scene 1's name); plain fragment links without JavaScript.
+// About, the page link (navbar.md D7, AC11), is last in the bar and the drawer and leaves for /about/ with no veil, the
+// drawer closed as the page goes (the Back row launches Chromium with the back-forward cache allowed; the runner's has it off).
 // The 3D path's rest positions are nav-map.ts's, checked in tests/unit/site-nav.test.ts.
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, chromium, type Page } from '@playwright/test';
+import { CHROME_PATH, GL_ARGS } from '../harness/browser.ts';
 
 const PEARL = 'rgb(247, 246, 243)', SLATE = 'rgb(56, 63, 67)';
 const docTop = (page: Page, id: string) => page.evaluate((i) => document.getElementById(i)!.getBoundingClientRect().top + scrollY, id);
@@ -23,7 +26,7 @@ for (const width of [360, 390, 430, 768, 1024, 1280]) {
       const inset = parseFloat(getComputedStyle(document.getElementById('siteLogo')!).left);
       return { items, logo: box(document.getElementById('siteLogo')!), inset, sw: document.documentElement.scrollWidth, vw: innerWidth };
     });
-    expect(g.items.map((i) => i.t)).toEqual(width < 768 ? ['Menu'] : ['Home', 'Families', 'Quiz', 'Products']);   // Products with the gate still locked
+    expect(g.items.map((i) => i.t)).toEqual(width < 768 ? ['Menu'] : ['Home', 'Families', 'Quiz', 'Products', 'About']);   // Products with the gate still locked; About, the page link, last
     expect(g.sw).toBeLessThanOrEqual(g.vw);
     const last = g.items[g.items.length - 1];
     expect(Math.abs(last.r - (g.vw - g.inset + 12))).toBeLessThan(1);   // the last word's text ends on --inset, its hit padded past it
@@ -49,7 +52,7 @@ test('the phone: Menu opens a light drawer from the right, 75 percent wide; a ro
   expect(Math.abs(box.height - 844)).toBeLessThan(1);   // the screen's full height
   expect(await panel.evaluate((el) => { const s = getComputedStyle(el); return [s.backgroundColor, s.color]; })).toEqual([PEARL, SLATE]);
   expect(await drawer.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgba(0, 0, 0, 0)');   // the layer beside it is clear
-  await expect(drawer.locator('a:visible')).toHaveText(['Home', 'Families', 'Quiz', 'Products']);
+  await expect(drawer.locator('a:visible')).toHaveText(['Home', 'Families', 'Quiz', 'Products', 'About']);
   await drawer.locator('a', { hasText: 'Quiz' }).click();
   await expect(drawer).toBeHidden();
   await expect.poll(async () => page.evaluate(() => scrollY)).toBe(Math.round(await docTop(page, 'find')));
@@ -120,7 +123,7 @@ test('the phone: the drawer closes when the window widens past its Menu', async 
   await expect(page.locator('#site-sections')).toBeVisible();
   await page.setViewportSize({ width: 1024, height: 844 });
   await expect(page.locator('#site-sections')).toBeHidden();
-  await expect(page.locator('#siteNav .snav-list a')).toHaveCount(4);
+  await expect(page.locator('#siteNav .snav-list a')).toHaveCount(5);
 });
 
 test('a browser without the popover API: the words still jump', async ({ page, baseURL }) => {
@@ -271,17 +274,83 @@ test('the bar has no fill, box or shadow, and takes the logotype\'s tone', async
 test.describe('without JavaScript', () => {
   test.use({ javaScriptEnabled: false });
   for (const width of [360, 1280]) {
-    test(`at ${width} px the four words are plain fragment links`, async ({ page, baseURL }) => {
+    test(`at ${width} px the four section words are plain fragment links, and About a plain page link`, async ({ page, baseURL }) => {
       await page.setViewportSize({ width, height: 800 });
       await page.goto(new URL('/', baseURL).href);
       const links = page.locator('#siteNav .snav-list a');
-      await expect(links).toHaveText(['Home', 'Families', 'Quiz', 'Products']);
+      await expect(links).toHaveText(['Home', 'Families', 'Quiz', 'Products', 'About']);
+      await expect(links.last()).toHaveAttribute('href', '/about/');
       await expect(page.locator('#siteNav .snav-menu')).toBeHidden();
       const boxes = await links.evaluateAll((els) => els.map((e) => { const b = e.getBoundingClientRect(); return { x: b.x, y: b.y, r: b.right }; }));
       const logo = await page.locator('#siteLogo').evaluate((e) => e.getBoundingClientRect().bottom);
       for (const b of boxes) { expect(b.r).toBeLessThanOrEqual(width); if (width < 768) expect(b.y).toBeGreaterThanOrEqual(logo); }
+      for (const b of boxes) expect(Math.abs(b.y - boxes[0].y)).toBeLessThanOrEqual(1);   // one row: About beside the four section words (AC9, AC11)
       await links.filter({ hasText: 'Quiz' }).click();
       await expect(page).toHaveURL(/#find$/);
     });
   }
+});
+
+test('About (AC11): last in the bar, a plain link to /about/, never current, no veil; the press is tracked and leaves for the page', async ({ page, baseURL }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(new URL('/?tier=poster', baseURL).href);
+  const about = page.locator('#siteNav .snav-list a[data-page="about"]');
+  await expect(about).toHaveText('About');
+  await expect(about).toHaveAttribute('href', '/about/');
+  expect(await about.getAttribute('data-sec')).toBeNull();
+  expect(await about.getAttribute('aria-current')).toBeNull();
+  expect(await page.locator('#siteNav .snav-list li:last-child a').getAttribute('data-page')).toBe('about');
+  expect(await page.locator('#site-sections .snav-rows li:last-child a').getAttribute('data-page')).toBe('about');
+  // the press, held back from navigating once, so the landing page's own record of it can be read
+  await page.evaluate(() => { const hold = (e: Event) => e.preventDefault(); (window as unknown as { __hold: typeof hold }).__hold = hold; addEventListener('click', hold, true); });
+  await about.click();
+  expect((await events(page)).filter(([n]) => n === 'nav').pop()).toEqual(['nav', { to: 'about' }]);
+  await page.waitForTimeout(300);
+  await veilDown(page);   // no veil for a page link
+  expect(await page.evaluate(() => scrollY)).toBe(0);   // and no jump
+  expect(await about.getAttribute('aria-current')).toBeNull();
+  await page.evaluate(() => removeEventListener('click', (window as unknown as { __hold: (e: Event) => void }).__hold, true));
+  await about.click();
+  await expect(page).toHaveURL(/\/about\/$/);
+  await expect(page.locator('main h1')).toHaveText('A message from our founder');
+  await expect(page.locator('#siteNav')).toHaveCount(0);   // the About page carries no index: its wordmark is the way home
+  await page.locator('a.site-logo').click();
+  await expect(page).toHaveURL(/\/$/);
+});
+
+test('the phone: the drawer\'s About row leaves for /about/', async ({ page, baseURL }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(new URL('/?tier=poster', baseURL).href);
+  await page.locator('#siteNav .snav-menu').click();
+  const row = page.locator('#site-sections a[data-page="about"]');
+  await expect(row).toBeVisible();
+  await expect(row).toHaveAttribute('href', '/about/');
+  await row.click();
+  await expect(page).toHaveURL(/\/about\/$/);
+  await expect(page.locator('main h1')).toHaveText('A message from our founder');
+});
+
+test('the phone: Back from About restores the landing page from the back-forward cache without the drawer (navbar.md D7)', async ({ baseURL }) => {
+  // the runner launches Chromium with --disable-back-forward-cache, so this row launches its own with the cache allowed:
+  // Playwright's full Chromium (the headless shell never caches), or CHROME_PATH where the environment names a browser
+  const browser = await chromium.launch({ ...(process.env.CHROME_PATH ? { executablePath: CHROME_PATH } : { channel: 'chromium' }), args: GL_ARGS, ignoreDefaultArgs: ['--disable-back-forward-cache'] });
+  try {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    // a listener set before leaving survives only in a page restored from the cache; a reload starts a fresh document
+    await context.addInitScript(() => { addEventListener('pageshow', (e) => { (window as unknown as { __shown: boolean[] }).__shown = [...((window as unknown as { __shown?: boolean[] }).__shown ?? []), e.persisted]; }); });
+    const page = await context.newPage();
+    await page.goto(new URL('/?tier=poster', baseURL).href);
+    await page.locator('#siteNav .snav-menu').click();
+    const sheet = page.locator('#site-sections');
+    await expect.poll(async () => sheet.evaluate((e) => e.matches(':popover-open'))).toBe(true);
+    await page.locator('#site-sections a[data-page="about"]').click();
+    await expect(page).toHaveURL(/\/about\/$/);
+    await expect(page.locator('main h1')).toHaveText('A message from our founder');
+    await page.goBack({ waitUntil: 'commit' });   // a restore from the cache fires pageshow, never load, so the row waits for the commit and polls
+    await expect(page).toHaveURL(/\/\?tier=poster$/);
+    const shown = () => page.evaluate(() => (window as unknown as { __shown?: boolean[] }).__shown ?? []);
+    await expect.poll(async () => (await shown()).length, { timeout: 10_000 }).toBeGreaterThanOrEqual(2);   // the first load's pageshow, then the restore's
+    expect((await shown()).at(-1)).toBe(true);   // the page came back from the cache, as it does on a phone
+    await expect.poll(async () => sheet.evaluate((e) => e.matches(':popover-open'))).toBe(false);   // and without the drawer: closed as the page left (pagehide)
+  } finally { await browser.close(); }
 });
