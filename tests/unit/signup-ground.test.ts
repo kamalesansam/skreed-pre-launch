@@ -202,7 +202,7 @@ test('the wiring: the loop cuts onto the texel and rests on it, renders no fog u
   assert.match(loop, /stop\(\) \{ running = false; cancelAnimationFrame\(raf\); ctx\.signup\?\.mark\(false\); \}/, 'a stopped loop draws no ground');
   assert.doesNotMatch(loop, /S5\.step|s5want|p5/, 'the jar\'s frame is gone');
   const hero = read('src/scripts/hero/hero.ts');
-  assert.match(hero, /if \(signup\) life\.onKill\(\(\) => signup\.dispose\(\)\);/, 'the mark goes with the island');
+  assert.match(hero, /if \(signup\) life\.onKill\(\(\) => \{ signup\.dispose\(\); window\.__skreedSignupFrame\?\.\(\{ on: false, cover: 0, wipe: 0, pour: null \}\); \}\);/, 'the mark goes with the island, and the page is told so (a cut\'s mask or a seam\'s cover cleared)');
   const director = read('src/scripts/hero/section4/director.ts');
   assert.match(director, /const want = on \|\| !!seam;\n\s*if \(want !== drawn\) \{ drawn = want; syncMotion\(\); \}/, 'drawn while the section is on screen or a seam runs over it (the hall-less director, 2026-11-03)');
   assert.match(director, /if \(drawn\) \{\n\s*const live = state === 'world';\n\s*carousel\.look\(live \? lookX : 0, live \? lookY : 0, live && aimed\);\n\s*carousel\.update\(f\.t, f\.dt, curW, curH\); tex = carousel\.out; toneDark = sceneTone\(\);/);

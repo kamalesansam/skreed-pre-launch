@@ -175,7 +175,9 @@ export async function startHero(o: StartOptions): Promise<void> {
   // and the island holds under section#signup, and the section's layout read from the DOM for the exit seam and the wrap
   const signupEl = document.getElementById('signup');
   const signup = signupEl ? createSignupGround(signupEl) : null;
-  if (signup) life.onKill(() => signup.dispose());   // the mark goes with the island (the poster path, a teardown)
+  // the mark goes with the island (the poster path, a teardown), and the page is told the island is gone, so a cut's mask
+  // or a seam's cover never outlives the frames that set them
+  if (signup) life.onKill(() => { signup.dispose(); window.__skreedSignupFrame?.({ on: false, cover: 0, wipe: 0, pour: null }); });
 
   const skyState: SkyState = { dome, cls: data.cls, onAspect() {}, onFrame2() {} };   // stage 2: world/skyClass.ts
   const ctx: HeroContext = {
