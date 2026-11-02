@@ -95,6 +95,22 @@ for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
   });
 }
 
+test('section 5 at 390 x 844, the poster tier: the logotype is Urban Slate while the section\'s cream ground is under its middle, and not once the section is below it', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+  const page = await ctx.newPage();
+  await open(page, baseURL);   // the section's top at the viewport's top, under the logotype
+  const logo = page.locator('a.site-logo');
+  await expect(logo).toHaveAttribute('data-tone', 'light');
+  await expect(logo).toHaveCSS('color', 'rgb(56, 63, 67)');   // Urban Slate (shell.css)
+  // the section's top 20 px below the logotype's bottom: the dark scenes are under it again
+  await page.evaluate(() => { const l = document.querySelector('a.site-logo')!.getBoundingClientRect(); scrollBy({ top: -(l.bottom + 20), behavior: 'instant' }); });
+  await expect(logo).not.toHaveAttribute('data-tone', 'light');
+  // and the ground under the logotype's middle again
+  await page.evaluate(() => { const l = document.querySelector('a.site-logo')!.getBoundingClientRect(); scrollBy({ top: l.bottom + 20 - (l.top + l.bottom) / 2 + 2, behavior: 'instant' }); });
+  await expect(logo).toHaveAttribute('data-tone', 'light');
+  await ctx.close();
+});
+
 test('section 5 at 390 x 844: the fill waits for the page to be visible (300 ms after it is), presses during a fill queue, reduced motion at once', async ({ browser, baseURL }) => {
   test.setTimeout(180_000);
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });

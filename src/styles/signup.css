@@ -219,7 +219,11 @@
     --text-w: calc(0.4 * var(--frame));
     --ujx: calc(0.55 * var(--frame) / 880);
     --ujy: calc((100svh - var(--top) - var(--bot) - 24px) / 820);
-    --u: max(0.3px, min(var(--ujx), var(--ujy), 1.15px));
+    /* under about 640 px of height the text's floors (15 px lines, the 44 px pill, 6 px gaps) stop shrinking with --u and
+       the body outgrew the screen (2026-11-03: 8 px over at 1366 x 600, 27 at 1100 x 520), so a second height bound
+       takes over there, from the measured slope (the body 629 px per unit of --u, plus 138 px of floors, and 7 px spare) */
+    --ujy2: calc((100svh - var(--top) - var(--bot) - 146px) / 629);
+    --u: max(0.3px, min(var(--ujx), var(--ujy), var(--ujy2), 1.15px));
     grid-template-columns: minmax(0, 40fr) minmax(0, 56fr);
     column-gap: 4%;
     justify-content: stretch;
@@ -228,6 +232,7 @@
   }
   .su-body.su-noform {
     --ujy: calc((100svh - var(--top) - var(--bot) - 12px) / 590);
+    --ujy2: var(--ujy);   /* no pill and no grey lines: the floors left (the footer, the labels) fit inside the 12 px */
     grid-template-areas: ". ." "top every" "top row" ". ." "keep keep" ". .";
     grid-template-rows: minmax(0, 25fr) auto auto minmax(var(--g0), 160fr) auto minmax(0, 42fr);
   }
@@ -238,8 +243,12 @@
     background: linear-gradient(90deg, var(--su-ground), var(--su-fall-0) 12%, var(--su-fall-1) 36%, var(--su-fall-2) 58%, var(--su-fall-3) 78%, var(--su-fall-4));
   }
   .su-top { grid-area: top; align-self: center; padding-left: 0; }
-  .su-h { font-size: min(calc(107.9 * var(--u)), calc(100cqw / 6.95)); }   /* the picture's size, or the text column's width for its first line */
-  .su-sub { min-width: 0; padding-left: calc(0.0255 * var(--text-w)); }
+  .su-h { font-size: min(calc(107.9 * var(--u)), calc(100cqw / 7.25)); }   /* the picture's size, or the text column's width for its first line (7.12 em in Inter 300, so the single column's divisor; 6.95 ran it 2.4 percent over, 2026-11-03) */
+  /* the sub-line wraps at its column: the 38em rule above would set it max-content from about 2400 px wide, 40.9 em of
+     text in a column that is not 41 em until about 2570 px, so the picture's breaks show only from 41 em here (2026-11-03) */
+  .su-sub { min-width: 0; width: auto; max-width: 100%; padding-left: calc(0.0255 * var(--text-w)); }
+  .su-sub .su-br { display: none; }
+  @container (min-width: 41em) { .su-sub .su-br { display: inline; } .su-sub { width: max-content; } }
   .su-every { grid-area: every; align-self: end; margin-bottom: calc(40 * var(--u)); }
   .su-row { grid-area: row; grid-template-columns: repeat(4, calc(220 * var(--u))); }
 }

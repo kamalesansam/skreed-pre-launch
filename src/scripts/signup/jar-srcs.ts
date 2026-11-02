@@ -12,9 +12,11 @@ const files = import.meta.glob<string>('../../assets/signup/jars/*.{avif,webp}',
 const frames = import.meta.glob<JarsManifest['frame']>('../../assets/signup/jars/jars.json', { eager: true, import: 'frame' });
 const boxes = import.meta.glob<JarsManifest['jar']>('../../assets/signup/jars/jars.json', { eager: true, import: 'jar' });
 const tops = import.meta.glob<JarsManifest['states']>('../../assets/signup/jars/jars.json', { eager: true, import: 'states' });
-const frame = Object.values(frames)[0], box = Object.values(boxes)[0];
+/** the one entry of a glob over one file (marked pure where it is read, so a chunk that never reads JARS drops the frame and the box with it) */
+const first = <T>(o: Record<string, T>): T | undefined => Object.values(o)[0];
+const frame = /* @__PURE__ */ first(frames), box = /* @__PURE__ */ first(boxes);
 /** each state's surface top from jars.json ('0': the inner floor), or none without the renders */
-export const STATE_TOPS: JarsManifest['states'] = Object.values(tops)[0] ?? {};
+export const STATE_TOPS: JarsManifest['states'] = /* @__PURE__ */ first(tops) ?? {};
 /** jars.json as the build found it (the frame, the jar's box, the states' tops), or C2's default frame without the renders */
 export const JARS: JarsManifest = frame && box ? { frame, jar: box, states: STATE_TOPS } : JARS_DEFAULT;
 /** a state's renders: the AVIF and WebP srcsets (200w and 400w) and the fallback (the 1x WebP); the surfaces are STATE_TOPS */

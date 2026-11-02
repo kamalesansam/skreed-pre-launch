@@ -96,6 +96,9 @@ if (nav) {
   const unlock = (): boolean => {
     if (!room?.hasAttribute('data-locked')) return false;
     room.removeAttribute('hidden'); room.removeAttribute('data-locked'); room.dataset.open = 'nav';
+    // section 5 (section#signup), locked with the room since it follows it in the page, opens in the same press, as gate.ts unlock() opens it (2026-11-03)
+    const signup = document.getElementById('signup');
+    if (signup) { signup.removeAttribute('hidden'); signup.removeAttribute('data-locked'); signup.dataset.open = 'nav'; }
     const key = nav.dataset.gateKey;
     if (key) { try { sessionStorage.setItem(key, '1'); } catch { /* no storage: the attributes, once removed, stay removed for the page's life */ } }
     track('room_unlock', { by: 'nav' });

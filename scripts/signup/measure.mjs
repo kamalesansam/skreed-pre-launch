@@ -196,7 +196,7 @@ if (want('fill')) {
   const t1 = await page.evaluate(() => { const t = performance.now(); window.__skreedSignupHooks.press('youtube'); return t; });
   await page.waitForFunction(() => window.__su.nextShown.length > 1, null, { timeout: 5000 });
   // the reveal's very first frame: the animation held at its start while the capture is taken, then let run
-  await page.evaluate(() => { const a = document.getAnimations().find((x) => x.effect?.target?.matches?.('picture.su-pic')); if (a) { a.pause(); a.currentTime = 0; } });
+  await page.evaluate(() => { for (const a of document.getAnimations()) if (a.effect?.target?.matches?.('picture.su-pic')) { a.pause(); a.currentTime = 0; } });   // both layers' clips (the old layer's complement since 2026-11-03)
   const firstY = await pixels(page);
   await page.evaluate(() => { for (const a of document.getAnimations()) if (a.playState === 'paused') a.play(); });
   const oldTop = await page.evaluate(() => { const j = document.querySelector('.su-yours .su-jar'); const p = j.querySelector('picture.su-pic[data-layer="next"]') ?? j.querySelector('picture'); const b = p.getBoundingClientRect(); return { y: b.top, h: b.height }; });

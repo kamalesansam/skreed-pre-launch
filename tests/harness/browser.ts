@@ -7,6 +7,9 @@ export const CHROME_PATH = process.env.CHROME_PATH || chromium.executablePath();
 /** WebGL in headless Chromium is SwiftShader; these flags let the 3D path run there (test builds force the tier). */
 // SKREED_GL=gpu runs the browser on the machine's GPU instead: on Sam's Mac (2026-11-02) headless Chrome has one, and
 // SwiftShader there ticks the page's animation clock about twice a second, so Web Animations never report finished.
+// For section 5's specs and measuring and the specs that pin a tier with ?tier= only: with a real renderer boot.ts keeps
+// the 3D path, so the two cases that rely on SwiftShader being refused (tiers.spec.ts AC8.1 and the family suite's
+// "the landing, poster path") skip under it, and the pixel parity specs, tuned to SwiftShader's raster, are not for it.
 export const GL_ARGS = process.env.SKREED_GL === 'gpu' ? ['--ignore-gpu-blocklist', '--enable-gpu'] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
 
 /** The three rendering setups of hero.md section 7. */

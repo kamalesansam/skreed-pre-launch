@@ -164,7 +164,8 @@ test('the jars (C2): read by name with import.meta.glob, each state only with al
   assert.match(srcsMod, /return a1 && a2 && w1 && w2 \? \{ a: `\$\{a1\} 200w, \$\{a2\} 400w`, w: `\$\{w1\} 200w, \$\{w2\} 400w`/);
   assert.match(astro, /import \{ JARS, SIZES, STATE_SRCS \} from '\.\.\/\.\.\/scripts\/signup\/jar-srcs\.ts';/, 'the page lays the jars out from the same table');
   assert.match(dom, /import \{ SIZES, STATE_SRCS, STATE_TOPS, type Srcs \} from '\.\/jar-srcs\.ts';/, 'the script reads the same table, so the sixteen states\' URLs ride its chunk');
-  assert.doesNotMatch(astro, /data-jars/, 'no table of URLs in the first view\'s markup');
+  assert.doesNotMatch(astro, /data-jars|JSON\.stringify\(STATE_SRCS\)|set:html=\{[^}]*STATE_SRCS|define:vars=\{[^}]*STATE_SRCS/, 'no table of URLs in the first view\'s markup, under any name');
+  assert.match(srcsMod, /const frame = \/\* @__PURE__ \*\/ first\(frames\), box = \/\* @__PURE__ \*\/ first\(boxes\);/, 'the frame and the box are read as pure, so the script\'s chunk drops them with JARS');
   assert.match(astro, /<source type="image\/avif" srcset=\{j\.pic\.a\} sizes=\{SIZES\} \/>\s+<source type="image\/webp" srcset=\{j\.pic\.w\} sizes=\{SIZES\} \/>\s+<img src=\{j\.pic\.s\} alt="" width=\{W1\} height=\{H1\} loading="lazy" decoding="async" \/>/);
   assert.match(astro, /data-layer="cur"/); assert.match(astro, /data-layer="next" hidden/);
   assert.doesNotMatch(astro.replace(/<style is:inline set:html=\{frameCss\}><\/style>/, ''), /\sstyle=/, 'no style attribute (the CSP)');
@@ -174,6 +175,8 @@ test('the jars (C2): read by name with import.meta.glob, each state only with al
 
 test('the script (C3, C4, C5): the fill by clip-path, the visibility gate, the events, data-ready, the hooks behind the constant, nothing of the island\'s jar', () => {
   assert.match(dom, /nxt\.animate\(\[\{ clipPath: `inset\(\$\{span\.from\}% 0 0 0\)` \}, \{ clipPath: `inset\(\$\{span\.to\}% 0 0 0\)` \}\], \{ duration: ms, easing: 'ease-out', fill: 'forwards' \}\)/);
+  assert.match(dom, /const under = cur\.animate\(\[\{ clipPath: `inset\(0 0 \$\{100 - span\.from\}% 0\)` \}, \{ clipPath: `inset\(0 0 \$\{100 - span\.to\}% 0\)` \}\], \{ duration: ms, easing: 'ease-out', fill: 'forwards' \}\);/, 'the old layer clipped to the complement on the same clock, so no pixel composites twice');
+  assert.match(dom, /under\.cancel\(\);\n\s+if \(end === 'cancelled'\) return;/, 'both clips gone at the reveal\'s end, on a reset too');
   assert.match(dom, /const tops = \{ states: STATE_TOPS \};/, 'the reveal reads the renders\' tops and seams as jars.json gives them');
   assert.match(dom, /reducedMQ\.matches \|\| !span \? 0 : fillMs\(id\)/, 'at once under reduced motion');
   assert.match(dom, /document\.visibilityState !== 'visible'/);
@@ -187,7 +190,8 @@ test('the script (C3, C4, C5): the fill by clip-path, the visibility gate, the e
   assert.match(dom, /window\.__skreedSignupFrame = \(f\) => \{/);
   assert.match(dom, /addEventListener\('skreed:room-state'/, 'the wrap announcement');
   assert.match(dom, /if \(window\.__skreedLogo\?\.setTone\) window\.__skreedLogo\.setTone\(on\);/, 'the logotype turns Urban Slate over the cream ground on the poster tier, through the logotype\'s own setTone');
-  assert.match(dom, /setTone\(r\.top < band && r\.bottom > 0\)/, 'while the section sits under the logotype\'s band');
+  assert.match(dom, /setTone\(r\.top < mid && r\.bottom > mid\)/, 'while the section\'s ground is under the logotype\'s middle');
+  assert.match(dom, /if \(on === \(logo\.dataset\.tone === 'light'\)\) return;/, 'the tone read from the logotype, never from a stale flag');
   assert.match(css, /\.su-loopend \{ height: 100svh; \}/);
   assert.match(css, /\.su-fade \{ position: fixed; inset: 0; z-index: 5; background: var\(--night\); pointer-events: none; \}/);
   assert.match(astro, /<div class=\{LEADS \? 'su-body' : 'su-body su-noform'\} id="suBody">/, '.su-body the one-screen block');

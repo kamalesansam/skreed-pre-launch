@@ -43,6 +43,7 @@ test('the Gate picks hero3d with WebGL2 and DecompressionStream and no data save
 });
 
 test('AC8.1 (test build, no override): boot.ts finds the software renderer and lands on the poster with no island bytes', async ({ browser, baseURL }) => {
+  test.skip(process.env.SKREED_GL === 'gpu', 'needs the software renderer: on a GPU boot.ts keeps the 3D path (tests/harness/browser.ts)');
   const ctx = await browser.newContext();
   const reqs: string[] = [];
   ctx.on('request', (r) => reqs.push(r.url()));

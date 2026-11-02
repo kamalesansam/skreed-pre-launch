@@ -53,7 +53,7 @@ export function mountSignup(root: HTMLElement): void {
   const live = $('suLive'), loopEnd = $('suLoopEnd'), fade = $('suFade'), jar = $('suYours');
   if (!live) return;
   const H = document.documentElement;
-  const isPoster = () => !H.classList.contains('hero3d') || H.classList.contains('poster') || root.dataset.tier === 'poster';
+  const isPoster = () => !H.classList.contains('hero3d') || H.classList.contains('poster');
   const announce = (text: string) => { live.textContent = ''; live.textContent = text; };
 
   // ---- the visitor's jar: two stacked renders, the current state and the incoming one
@@ -121,10 +121,15 @@ export function mountSignup(root: HTMLElement): void {
     const span = revealSpan(tops, shown, state), ms = reducedMQ.matches || !span ? 0 : fillMs(id);
     nxt.hidden = false;
     if (ms > 0 && span) {
+      // the two layers never draw one pixel both (the renders' soft rims and shadows would composite twice, up to 37 of 255
+      // darker, and pop back when the old layer is hidden; 2026-11-03): the incoming layer shows the rows below the rising
+      // edge, the old one the rows above it, each clip the other's complement on the same clock
       anim = nxt.animate([{ clipPath: `inset(${span.from}% 0 0 0)` }, { clipPath: `inset(${span.to}% 0 0 0)` }], { duration: ms, easing: 'ease-out', fill: 'forwards' });
+      const under = cur.animate([{ clipPath: `inset(0 0 ${100 - span.from}% 0)` }, { clipPath: `inset(0 0 ${100 - span.to}% 0)` }], { duration: ms, easing: 'ease-out', fill: 'forwards' });
       // the reveal's end: the animation's own word, or its duration and a frame more where the browser's animation clock
       // does not run (a throttled tab, a software-rendered page), so the layer stands as the new state either way
       const end = await Promise.race([anim.finished.then(() => 'finished', () => 'cancelled'), sleep(ms + 100).then(() => 'timer')]);
+      under.cancel();
       if (end === 'cancelled') return;   // a reset
       anim.cancel(); anim = null;
     }
@@ -192,20 +197,21 @@ export function mountSignup(root: HTMLElement): void {
     root.dataset.state = op < 1 ? 'seam' : 'rest';
   };
 
-  // ---- the logotype over the section on the poster tier: Urban Slate while section 5 sits under its band, as the island
-  // sets it on the 3D path from the ground's tone (hero/loop.ts), and Pearl Whisper again once the section has left it (a
-  // scroll back to the scenes, the wrap to the top). The band is the clearance the body keeps under the logotype, its top
-  // padding; one rect read per frame while the page scrolls, on the poster tier alone
+  // ---- the logotype over the section on the poster tier: Urban Slate while the section's cream ground is under the
+  // logotype's middle, as the island sets it on the 3D path from the ground's tone (hero/loop.ts), and Pearl Whisper again
+  // once the section has left it (a scroll back to the scenes, the wrap to the top). Two rect reads per frame while the
+  // page scrolls, on the poster tier alone; the tone is read from the logotype itself, so another writer's word (the
+  // island's setTone, a reset) is never contradicted by a stale flag (the band's clearance was the threshold until
+  // 2026-11-03, 23 to 33 px of scroll before the ground reached the logotype)
   const logo = document.querySelector<HTMLElement>('a.site-logo');
   if (logo) {
-    let light = false, pending = false;
+    let pending = false;
     const setTone = (on: boolean) => {
-      if (on === light) return;
-      light = on;
+      if (on === (logo.dataset.tone === 'light')) return;
       if (window.__skreedLogo?.setTone) window.__skreedLogo.setTone(on);
       else if (on) logo.dataset.tone = 'light'; else delete logo.dataset.tone;
     };
-    const readTone = () => { pending = false; if (!isPoster()) return; const r = root.getBoundingClientRect(), band = body ? parseFloat(getComputedStyle(body).paddingTop) || 0 : 0; setTone(r.top < band && r.bottom > 0); };
+    const readTone = () => { pending = false; if (!isPoster()) return; const r = root.getBoundingClientRect(), l = logo.getBoundingClientRect(), mid = (l.top + l.bottom) / 2; setTone(r.top < mid && r.bottom > mid); };
     const onMove = () => { if (!pending) { pending = true; requestAnimationFrame(readTone); } };
     addEventListener('scroll', onMove, { passive: true });
     addEventListener('resize', onMove, { passive: true });
