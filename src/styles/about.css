@@ -85,6 +85,9 @@ body { font-family: var(--font-about); font-weight: 400; }
 .ab-text p, .ab-launch { font-weight: 400; font-size: var(--ab-fs-text); line-height: var(--ab-lh-text); text-wrap: pretty; color: var(--ab-ink); }
 .ab em { font-style: normal; font-weight: 600; }
 .ab-sign { font-weight: 700; font-size: var(--ab-fs-sign); line-height: var(--ab-lh-sign); color: var(--ab-ink); }
-/* the ringed words: kept on one line, the drawn ellipse laid over them in Ember Luxe, its stroke the same at every size */
-.ab-ring { position: relative; white-space: nowrap; }
-.ab-ring svg { position: absolute; left: -0.38em; top: -0.34em; width: calc(100% + 0.8em); height: calc(100% + 0.64em); overflow: visible; color: var(--ember-luxe); pointer-events: none; }
+/* the ringed words (the owner's crop of 2026-11-03, "it's supposed to be big like this"): kept on one line as an inline block
+   with 0.6em of room above it, so the ring clears the line before; the drawn ellipse in Ember Luxe reaches about an em
+   above the caps and an em below the baseline and 0.45em past each end, with the pen's second pass along its top; the
+   stroke is 2.75 px at every size */
+.ab-ring { position: relative; display: inline-block; margin-top: 0.6em; white-space: nowrap; }
+.ab-ring svg { position: absolute; left: -0.45em; top: -0.56em; width: calc(100% + 0.9em); height: calc(100% + 1.05em); overflow: visible; color: var(--ember-luxe); pointer-events: none; }
