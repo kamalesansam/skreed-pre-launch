@@ -21,13 +21,17 @@ export const DIMS_DEFAULT: Dims = { w: 0.5322, d: 0.1352 };
  * slotPx: ciao's 175 px of drag per slot. phoneTop and phoneBottom: on phones the scene is lifted so the front case sits
  * between the title and the controls. turn: the 10 degree tap turn; tiltYaw and tiltPitch: the pointer's tilt in degrees.
  * rate: the lag of the line in per second (50% at 63 ms); gRate: the entrance's light, twice as fast. spot: ciao's 50 cd.
+ * wideBack and wideDrift (section 24, Sam, 2026-11-03: "make sure that the entire phone case is fully visible for all 4 case
+ * types, not keep going down the case"): on the wide layout the beats' camera stands back by wideBack as the phone's does
+ * (ciao's beats camera cut the case at the top or the bottom of an 800 px screen) and the beats' vertical drift (CY) is
+ * damped to wideDrift of ciao's, so every beat's case sits whole inside the screen; the argument screen's camera is untouched.
  * envRot: the studio turned -40 degrees about y (section 20). phoneBack and phoneCentre (section 21, D8): on phones the
  * zoomed and argument cameras stand 1.75 times further back and the case is centred at 36% of the screen height, in
  * the band above the text.
  */
 export const CFG = {
   sp: 3.5, cs: 4.884, camZ: 29, fov: 20, rx: -20, ry: -20, rz: 11.25, face: 1, slotPx: 175, phoneTop: 132, phoneBottom: 262,
-  tiltYaw: 5, tiltPitch: 3, turn: 10, rate: 10.94, gRate: 2, spot: 50, envRot: -40, phoneBack: 1.75, phoneCentre: 0.36,
+  tiltYaw: 5, tiltPitch: 3, turn: 10, rate: 10.94, gRate: 2, spot: 50, envRot: -40, phoneBack: 1.75, phoneCentre: 0.36, wideBack: 1.6, wideDrift: 0.4,
 } as const;
 
 export interface Pose { p: number; X: number; Y: number; Z: number; rx: number; ry: number; rz: number; spin: number; sc: number }

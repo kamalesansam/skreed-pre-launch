@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MeshPhysicalMaterial, ShaderChunk, ShaderLib } from 'three';
 import { TAKEOVER, easeTakeover, takeoverP } from '../../src/config/takeover.ts';
-import { SWEEP_SPAN, availableType, handoverTypes, takeoverAt, takeoverSeed } from '../../src/scripts/family/three/takeover.ts';
+import { SWEEP_END_SLACK, SWEEP_SPAN, availableType, handoverTypes, takeoverAt, takeoverSeed } from '../../src/scripts/family/three/takeover.ts';
 import { TAKEOVER_PROGRAM, createRunUniforms, createSideUniforms, injectTakeover, withTakeover } from '../../src/scripts/family/three/takeover-material.ts';
 import { CASE_TYPES, HANDOVERS, TURN_LEN, beatPose, type CaseType } from '../../src/scripts/family/three/pose.ts';
 
@@ -49,6 +49,11 @@ test('the mapping (D3 to D6): one case outside the hand-overs; inside each, the 
     }
     const end = takeoverAt(h + SWEEP_SPAN, { has: all });
     assert.deepEqual([end.a, end.b, end.raw], [to, null, 0], `at the beat's rest the new case alone`);
+    // the page scrolls by whole pixels and can rest a hair short of the beat: within the slack the new case stands alone too
+    const hair = takeoverAt(h + SWEEP_SPAN - SWEEP_END_SLACK / 2, { has: all });
+    assert.deepEqual([hair.a, hair.b], [to, null], 'a hair short of the rest');
+    assert.ok(takeoverAt(h + SWEEP_SPAN - SWEEP_END_SLACK * 2, { has: all }).b === to, 'two hairs short is still the sweep');
+    assert.ok(SWEEP_END_SLACK > 0 && SWEEP_END_SLACK <= 0.002);
     assert.equal(beatPose(h + SWEEP_SPAN).yaw, 0, 'the turn ends there too');
   }
   for (const sv of [3, 3.5, 3.849]) assert.equal(takeoverAt(sv, { has: all }).a, 'magtough');

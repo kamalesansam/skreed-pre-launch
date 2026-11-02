@@ -30,6 +30,8 @@ export interface TakeoverOptions {
 
 /** The scroll a hand-over's sweep spans: the turn's second half, from the edge-on frame to the beat's rest. */
 export const SWEEP_SPAN = TURN_LEN / 2;
+/** The hair before the span's end where the beat's case stands alone: the page scrolls by whole pixels, so it can rest a fraction of a screen short of the beat (0.001 of a screen is under a pixel at any size). */
+export const SWEEP_END_SLACK = 0.001;
 
 /** The two case types a hand-over joins: the type before and the type after the edge-on frame at HANDOVERS[i]. */
 export const handoverTypes = (i: number): [CaseType, CaseType] => [CASE_TYPES[i], CASE_TYPES[i + 1]];
@@ -51,7 +53,7 @@ export function takeoverAt(sv: number, opts: TakeoverOptions): TakeoverView {
   if (!(beatPose(sv).k > 0)) return rest('tough');
   for (let i = 0; i < HANDOVERS.length; i++) {
     const h = HANDOVERS[i];
-    if (sv < h || sv >= h + SWEEP_SPAN) continue;
+    if (sv < h || sv >= h + SWEEP_SPAN - SWEEP_END_SLACK) continue;
     const [from, to] = handoverTypes(i);
     const a = availableType(from, opts.has), b = availableType(to, opts.has);
     // nothing to sweep into (the model is not here), or reduced motion: the case at once

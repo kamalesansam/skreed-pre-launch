@@ -112,11 +112,11 @@ test('criteria 4 and 7: scrolled at a steady pace over each hand-over, the sweep
     for (const r of running) {
       expect([r.from, r.to], `the pair at ${r.sv.toFixed(3)}`).toEqual([from, type]);
       expect(r.sv, 'a sweep only inside the turn\'s second half').toBeGreaterThanOrEqual(h);
-      expect(r.sv).toBeLessThan(h + 0.15);
+      expect(r.sv).toBeLessThan(h + 0.15 - 0.0005);
       expect(Math.abs(r.raw - rawAt(r.sv, h)), `raw is the scroll\'s at ${r.sv.toFixed(3)}`).toBeLessThan(1e-6);
     }
     for (const r of log) if (r.sv < h) expect(r.type, `before the edge-on frame at ${r.sv.toFixed(3)}`).toBe(from);
-    const after = log.filter((r) => r.sv >= h + 0.15);
+    const after = log.filter((r) => r.sv >= h + 0.15 - 0.002);   // the page scrolls by whole pixels, so its rest can sit a hair short of the beat
     expect(after.length).toBeGreaterThan(0);
     for (const r of after) expect([r.phase, r.type], `at rest at ${r.sv.toFixed(3)}`).toEqual(['idle', type]);
     expect(log.at(-1)!.type).toBe(type);

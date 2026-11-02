@@ -249,7 +249,9 @@ export async function createStage(o: StageOptions) {
     // then the argument pose by B.A; f carries the float (the pointer's yaw and tilt in degrees, the bob in units)
     const zoomMatrix = (i: number, s: number, B: ReturnType<typeof beatPose>, f: { yaw: number; tilt: number; y: number }, out: Matrix4) => {
       const p = poseOf(i, s, W || 1280, null), k = B.k, A = B.A;
-      const X = p.X * (1 - k), Y = p.Y * (1 - k) + B.cy * k + f.y, Z = p.Z * (1 - k) - 0.5 * A, sc = p.sc * (1 - k / 6);
+      // the beats' vertical drift, damped on the wide layout so every beat's case sits whole in the screen (section 24, 2026-11-03)
+      const drift = phone() ? 1 : CFG.wideDrift;
+      const X = p.X * (1 - k), Y = p.Y * (1 - k) + B.cy * k * drift + f.y, Z = p.Z * (1 - k) - 0.5 * A, sc = p.sc * (1 - k / 6);
       eu.set(p.rx * (1 - k) + (-0.3491 + f.tilt * DEG) * A, p.ry * (1 - k) + (-0.2618) * k * (1 - A) + f.yaw * DEG + B.yaw, p.rz * (1 - k) + (-0.0873) * A, 'XYZ');
       qv.setFromEuler(eu).multiply(qs.setFromAxisAngle(YAX, p.spin * (1 - k)));
       return out.compose(vp.set(X, Y, Z), qv, vs.set(sc, sc, sc));
@@ -345,8 +347,10 @@ export async function createStage(o: StageOptions) {
       gobo.intensity = 35 * B.k * (1 - B.A) * G;
       scene.environmentIntensity = CAL.environmentIntensity * (1 - 0.8 * B.k * (1 - B.A));
       for (const m of glossMats()) m.envMapIntensity = scene.environmentIntensity;
-      const back = phone() ? 1 + (CFG.phoneBack - 1) * B.k : 1;
-      cam.position.set(0, -2.4 * B.k * (1 - B.A) * back, CFG.camZ - 17 * B.k - 4 * B.k * B.A + (12 * back - 12) * B.k * (1 - B.A) + (8 * back - 8) * B.k * B.A);
+      // the argument's camera stands back on phones only; the beats' on phones (section 21 D8) and, since 2026-11-03, on
+      // the wide layout too (section 24: the whole case in the screen at every beat)
+      const back = phone() ? 1 + (CFG.phoneBack - 1) * B.k : 1, backB = phone() ? back : 1 + (CFG.wideBack - 1) * B.k;
+      cam.position.set(0, -2.4 * B.k * (1 - B.A) * backB, CFG.camZ - 17 * B.k - 4 * B.k * B.A + (12 * backB - 12) * B.k * (1 - B.A) + (8 * back - 8) * B.k * B.A);
       cam.rotation.set(0.1745 * B.k * (1 - B.A), 0, B.rz * B.k);
       const fov = CFG.fov + 25 * B.k * B.A;
       if (Math.abs(fov - cam.fov) > 1e-6) { cam.fov = fov; cam.updateProjectionMatrix(); }
