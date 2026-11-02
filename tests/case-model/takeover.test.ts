@@ -53,7 +53,7 @@ test('the mapping (D3 to D6): one case outside the hand-overs; inside each, the 
     const hair = takeoverAt(h + SWEEP_SPAN - SWEEP_END_SLACK / 2, { has: all });
     assert.deepEqual([hair.a, hair.b], [to, null], 'a hair short of the rest');
     assert.ok(takeoverAt(h + SWEEP_SPAN - SWEEP_END_SLACK * 2, { has: all }).b === to, 'two hairs short is still the sweep');
-    assert.ok(SWEEP_END_SLACK > 0 && SWEEP_END_SLACK <= 0.005);
+    assert.equal(SWEEP_END_SLACK, 0.004, 'the browser row of criteria 4 and 7 carries this figure');
     assert.equal(beatPose(h + SWEEP_SPAN).yaw, 0, 'the turn ends there too');
   }
   for (const sv of [3, 3.5, 3.849]) assert.equal(takeoverAt(sv, { has: all }).a, 'magtough');
