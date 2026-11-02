@@ -136,7 +136,7 @@ test('the copy: short words, no em dashes, no emojis', () => {
   }
 });
 
-test('About is a plain link: site-nav.ts jumps only the data-sec links, tracks a press on a page link, and the About page carries no index', () => {
+test('About is a plain link: site-nav.ts jumps only the data-sec links, tracks a press on a page link, and the About page carries the index without the script', () => {
   const js = read('src/scripts/shell/site-nav.ts');
   assert.match(js, /const links = \[\.\.\.document\.querySelectorAll<HTMLAnchorElement>\('a\[data-sec\]'\)\];/);
   // a plain press is tracked; a modifier press (a new tab) returns first, as the sections' handler does
@@ -146,6 +146,38 @@ test('About is a plain link: site-nav.ts jumps only the data-sec links, tracks a
   assert.match(js, /addEventListener\('pagehide', \(\) => \{ if \(open\(\)\) sheet\.hidePopover\(\); \}\);/);
   assert.match(js, /addEventListener\('pageshow', \(e\) => \{ if \(e\.persisted && open\(\)\) sheet\.hidePopover\(\); \}\);/);
   const about = read('src/pages/about.astro');
-  assert.doesNotMatch(about, /SiteNav|site-nav/, 'the About page ships no script: its wordmark is its way home (docs/specs/about.md D6, D13)');
+  assert.match(about, /<SiteNav page="about" \/>/, 'the About page carries the index since round 2 (2026-11-03), with no script: its wordmark stays its way home (docs/specs/about.md D6, D13)');
+  assert.doesNotMatch(about, /site-nav\.ts/, 'the script never reaches the page');
   assert.match(about, /<a class="site-logo" href="\/" aria-label=\{COPY\.logo\.aria\}>/);
+});
+
+test('the face (E-NAV-font, 2026-11-03): Work Sans Light capitals in the bar and the drawer, its token, its preload on both pages, and the fallback\'s numbers quoted from the manifest', () => {
+  const css = read('src/styles/site-nav.css'), tokens = read('src/styles/tokens.css'), fonts = read('src/styles/fonts.css'), m = read('scripts/fonts/manifest.txt');
+  assert.match(tokens, /--font-nav: "Work Sans", "Work Sans Fallback", Arial, sans-serif;/);
+  assert.match(css, /\.snav-a \{[^}]*font-family: var\(--font-nav\); font-size: var\(--fs-label\); font-weight: 300; line-height: 1; letter-spacing: 0\.04em; text-transform: uppercase;/);
+  assert.match(css, /\.snav-in \{[^}]*font-family: var\(--font-nav\); font-weight: 300; letter-spacing: 0\.04em; text-transform: uppercase; \}/);
+  assert.doesNotMatch(css, /font-weight: 600|--font-ui/, 'one weight: the file ships 300 alone, so nothing is set bolder');
+  for (const page of ['src/pages/index.astro', 'src/pages/about.astro']) assert.ok(read(page).includes("'/fonts/work-sans-300-latin.woff2'"), `${page} preloads the file`);
+  const face = fonts.match(/@font-face \{ font-family: "Work Sans Fallback"; font-weight: 300; font-style: normal;\s*src: local\("Arial"\), local\("ArialMT"\);\s*([^}]*)\}/);
+  assert.ok(face, 'the metric-matched fallback face in fonts.css');
+  assert.match(m, /^== SECTION INDEX \(the navbar's face, 2026-11-03; exception E-NAV-font; the quiz result's Work Sans file, preloaded on \/ and \/about\/\)$/m);
+  const line = m.match(/^Work Sans Fallback 300: (.+)$/m);
+  assert.ok(line, 'the manifest\'s line, written by scripts/fonts/nav-fallback.py');
+  const num = (s: string, k: string) => Number(s.match(new RegExp(`${k}[:\\s]+([\\d.]+)%`))![1]);
+  for (const k of ['size-adjust', 'ascent-override', 'descent-override', 'line-gap-override']) assert.equal(num(face![1], k), num(line![1], k), k);
+});
+
+test('the About page carries the index with no script: About current, the section words plain links into the landing page, the drawer closed by a button over the strip (about.md round 2; navbar.md D7)', () => {
+  const nav = read('src/components/shell/SiteNav.astro'), css = read('src/styles/site-nav.css'), about = read('src/pages/about.astro'), index = read('src/pages/index.astro');
+  assert.doesNotMatch(nav, /<script\b/i, 'the component carries no script, so the About page renders it script-free');
+  assert.match(index, /<script>\s*(?:\/\/[^\n]*\n\s*)*import '\.\.\/scripts\/shell\/site-nav\.ts';\s*<\/script>/, 'the landing page imports the script itself');
+  assert.match(about, /<SiteNav page="about" \/>/);
+  assert.match(nav, /href: \(page \? '\/' : ''\) \+ HREF\[id\]/, 'on a page the fragments point into the landing page');
+  assert.match(nav, /const sec = \(id: SectionId\) => \(page \? undefined : id\);/, 'no data-sec on a page: every word a plain link');
+  assert.match(nav, /const current = \(id: string\) => \(page === id \? 'page' : undefined\);/);
+  assert.match(nav, /<nav class:list=\{\['snav', \{ 'snav-page': !!page \}\]\} id="siteNav" aria-label=\{N\.aria\} data-gate-key=\{QUIZ_GATE\.key\} data-tone=\{page \? 'light' : undefined\}>/);
+  assert.match(nav, /<button class="snav-strip" type="button" popovertarget="site-sections" popovertargetaction="hide" tabindex="-1" aria-hidden="true"><\/button>/);
+  assert.match(css, /\.snav-page \{ position: absolute; \}/, 'on the About page the bar scrolls away with the wordmark');
+  assert.match(css, /\.snav-strip \{ position: absolute; inset: 0 75% 0 0;[^}]*background: transparent;/);
+  assert.match(css, /html:not\(\.js\) \.snav:not\(\.snav-page\) \{ top:/, 'the no-script row is the landing page\'s alone; the About page keeps its drawer');
 });

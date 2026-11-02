@@ -4,8 +4,9 @@
    mark at the top right, the letter larger and in a warm catalog brown, the brand line ringed in Ember Luxe by a drawn
    stroke. Imported by src/pages/about.astro alone and inlined into that page by the build, so no other page carries
    these rules or fetches the file. The wordmark at the top left is the way home: static, with the site's press idiom in
-   place of the glitch (D6, D12). Colours are tokens only; spacing is gap on flex columns and padding on the page box
-   (rule 15). Phone first; the one breakpoint is the wordmark's 1024 px. */
+   place of the glitch (D6, D12); the section index beside it since round 2 (site-nav.css, its own rules). Colours are
+   tokens only; spacing is gap on flex columns and padding on the page box (rule 15). Phone first; the one breakpoint is
+   the wordmark's 1024 px, where the page becomes one screen in three columns (the laptop layout, at the end). */
 
 /* Inter in one variable file (scripts/fonts/build-inter.py; scripts/fonts/manifest.txt, ABOUT PAGE), in fonts.css's
    Open Sans pattern: tech("variations"), then plain woff2. The unicode-range is build.py's LATIN. Roman only. */
@@ -41,6 +42,9 @@
   --ab-mark-h: 23.25px;                                          /* the wordmark's height at 96 px (1209.46 x 292.9) */
 }
 @media (min-width: 1024px) { :root { --ab-mark-h: 32.94px; } }
+/* a browser with no popover (Safari 16.4 to 16.6 and its peers): on a phone the index's words take a second row under
+   the wordmark's (site-nav.css), so the page and the quotation mark start that row lower */
+@supports not selector(:popover-open) { @media (max-width: 767.98px) { :root { --ab-nav-row: calc(44px + var(--s1)); } } }
 /* the narrowest phones (under 360 px): the title a step down and the mark smaller, so "A message" stays clear of the mark */
 @media (max-width: 359.98px) { :root { --ab-fs-title: 2.5rem; --ab-fs-quote: 6rem; } }
 
@@ -66,7 +70,7 @@ body { font-family: var(--font-about); font-weight: 400; }
 /* the page box: the gutters, the room under the wordmark and the foot; the column at the left gutter, as the reference
    sets its text, capped at the measure */
 .ab { box-sizing: border-box; display: flex; flex-direction: column; align-items: flex-start; font-variant-numeric: proportional-nums;
-  padding: calc(var(--inset) + env(safe-area-inset-top, 0px) + var(--ab-mark-h) + var(--s6)) calc(var(--inset) + env(safe-area-inset-right, 0px))
+  padding: calc(var(--inset) + env(safe-area-inset-top, 0px) + var(--ab-mark-h) + var(--ab-nav-row, 0px) + var(--s6)) calc(var(--inset) + env(safe-area-inset-right, 0px))
     calc(var(--s6) + env(safe-area-inset-bottom, 0px)) calc(var(--inset) + env(safe-area-inset-left, 0px)); }
 .ab-col { width: 100%; max-width: var(--ab-measure); display: flex; flex-direction: column; gap: var(--s6); }
 .ab-letter { display: flex; flex-direction: column; gap: var(--s5); }
@@ -79,7 +83,7 @@ body { font-family: var(--font-about); font-weight: 400; }
 /* the closing quotation mark at the top right, the reference's ornament: Inter's own glyph, light grey, decorative only
    (aria-hidden, no pointer, no selection), placed from the page's corner as the wordmark is; its box starts a little
    above the title so the glyph's top meets the title's */
-.ab-quote { position: absolute; top: calc(var(--inset) + env(safe-area-inset-top, 0px) + var(--ab-mark-h) + var(--s6) - 0.14em); right: calc(var(--inset) + env(safe-area-inset-right, 0px));
+.ab-quote { position: absolute; top: calc(var(--inset) + env(safe-area-inset-top, 0px) + var(--ab-mark-h) + var(--ab-nav-row, 0px) + var(--s6) - 0.14em); right: calc(var(--inset) + env(safe-area-inset-right, 0px));
   font-weight: 700; font-size: var(--ab-fs-quote); line-height: 1; letter-spacing: -0.04em; color: var(--urban-slate); opacity: var(--ab-quote-tone); pointer-events: none; user-select: none; }
 /* the letter and the date line in the warm brown; the sign-off a step up */
 .ab-text p, .ab-launch { font-weight: 400; font-size: var(--ab-fs-text); line-height: var(--ab-lh-text); text-wrap: pretty; color: var(--ab-ink); }
@@ -91,3 +95,29 @@ body { font-family: var(--font-about); font-weight: 400; }
    stroke is 2.75 px at every size */
 .ab-ring { position: relative; display: inline-block; margin-top: 0.6em; white-space: nowrap; }
 .ab-ring svg { position: absolute; left: -0.45em; top: -0.56em; width: calc(100% + 0.9em); height: calc(100% + 1.05em); overflow: visible; color: var(--ember-luxe); pointer-events: none; }
+
+/* the laptop layout (round 2, 2026-11-03: "the desktop ratio has a lot of free space, and content goes out of the page,
+   it should be under the same page, and also utilise all the free space, layout it perfectly so it looks good on the
+   desktop as well"): from 1024 px the page is one screen. The column becomes a grid of three: the title at the left with
+   the sign-off at its foot, the letter beside it at the measure, and the quotation mark at the right gutter on the title's
+   row, where the reference places it. The type scales with the screen's width and is held by its height, so the letter
+   fits above the fold at 1280 x 800 and grows to 24 px on a wide screen; the block is centred in the screen's height under
+   the wordmark's row. The DOM order stays the phone's (the title, the letter, the sign-off): .ab-letter dissolves into the
+   grid (display: contents). The title is also sized to its column (its widest line, "A message", measures 5.70em at
+   -0.02em, given 5.85; the column is 11/24 of what the gaps and the mark's 0.492em advance leave), so it never wraps or
+   overflows at 1024 to 1440 px. */
+@media (min-width: 1024px) {
+  :root {
+    --ab-fs-title: clamp(2.75rem, 1.545rem + 4.944vw, 6.5rem);   /* 88 px at 1280, up to 104 px on a wide screen, held by the column below */
+    --ab-fs-text: clamp(1.125rem, min(1.6vw, 2.3vh), 1.5rem);    /* 18 to 24 px: 18.4 px at 1280 x 800, 22.8 at 1728 x 990, 24 px from 1500 px wide and 1044 px tall */
+    --ab-fs-quote: clamp(9rem, 12.5vw, 16rem);                   /* 144 to 256 px: 160 px at 1280, 216 at 1728 */
+    --ab-gap: clamp(48px, 5vw, 96px);                            /* the column gap: 64 px at 1280, 86 at 1728 */
+  }
+  .ab { min-height: 100svh; justify-content: center; }
+  .ab-col { container-type: inline-size; max-width: none; display: grid; grid-template-columns: minmax(0, 11fr) minmax(0, 13fr) auto; grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "title text quote" "close text quote"; column-gap: var(--ab-gap); row-gap: var(--s6); }
+  .ab-letter { display: contents; }
+  .ab h1 { grid-area: title; font-size: min(var(--ab-fs-title), calc((100cqw - 2 * var(--ab-gap) - 0.492 * var(--ab-fs-quote)) * 11 / 24 / 5.85)); }   /* "A message" measures 5.70em; the mark's advance 0.492em */
+  .ab-text { grid-area: text; max-width: var(--ab-measure); }
+  .ab-close { grid-area: close; align-self: end; }
+  .ab-quote { grid-area: quote; position: relative; top: -0.14em; right: auto; justify-self: end; align-self: start; }
+}

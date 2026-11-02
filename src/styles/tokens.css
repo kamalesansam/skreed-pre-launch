@@ -16,6 +16,7 @@
   --font-ui: "Open Sans", "Open Sans Fallback", Arial, sans-serif;
   --font-num: var(--font-ui);
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;   /* the later sections' face (E-S2-font to E-S4-font, the sign-up) and, since 2026-11-02, the chrome's small words in capitals (E-chrome-font) */
+  --font-nav: "Work Sans", "Work Sans Fallback", Arial, sans-serif;   /* the section index's face since 2026-11-03 (E-NAV-font, docs/specs/navbar.md 10): the quiz result's Work Sans Light, in capitals */
 
   --w-display: 700; --w-text: 400; --w-text-strong: 600; --w-ui: 400; --w-ui-strong: 600;
 

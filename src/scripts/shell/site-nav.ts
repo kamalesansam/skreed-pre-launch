@@ -80,7 +80,7 @@ if (nav) {
   // It closes when the window widens past its Menu.
   if (POPOVER && sheet) {
     const panel = sheet.querySelector<HTMLElement>('.snav-in');
-    sheet.addEventListener('click', (e) => { if (e.target === sheet) sheet.hidePopover(); });
+    sheet.addEventListener('click', (e) => { if (e.target === sheet) sheet.hidePopover(); });   // a button over the strip hides it with no script (SiteNav.astro .snav-strip); this covers the layer itself
     const stop = (e: Event) => { e.stopPropagation(); };
     for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'pointerover', 'pointerout', 'touchstart', 'touchend', 'touchcancel']) sheet.addEventListener(type, stop, { passive: true });
     const hold = (e: Event) => {

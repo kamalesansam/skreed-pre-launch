@@ -1,46 +1,58 @@
 ---
 // The section index (docs/specs/navbar.md; 2026-11-02: "we need to add a navbar, which is locked, so it's easier for ppl
-// to navigate"), the landing page only: the four sections in page order, fixed at the top right on the logotype's row,
-// then the one page the index links to, About (docs/specs/about.md, its brief: "just add it in the navbar"): a plain
-// link to /about/, last in the bar and in the drawer, with data-page and no data-sec, so site-nav.ts never jumps or marks
-// it current and a press leaves the page as any link does (navbar.md D7). From 768 px the words in a row; on phones one
-// word, Menu, opening a light drawer from the right, 75 percent of the screen ("make it come from the side, and just
-// 75 % OF THE SCREEN from the side"), with the family switcher's layout (the popover attribute; Escape native, and a tap
-// beside the panel closes it through site-nav.ts, which also keeps that tap from the page). The drawer sits inside the
-// nav, so the index is one landmark. No fill, no box: the words on the scene as the logotype is (site-nav.css). Home is
-// Back to top's jump, so the landing page draws no Back to top (BackToTop.astro). Plain fragment links, so the index
-// works without JavaScript on the poster layout; with it, scripts/shell/site-nav.ts jumps in place under the --night
-// veil and marks the section on screen. Products is always listed ("its okay add products as well no problem"): pressed
-// while the quiz gate holds section 4, it opens it as Skip quiz does, with the gate's key from config/quiz.ts
-// (data-gate-key, read at build time so the quiz's config stays out of the index's chunk). In the logo slot, after the
-// logotype: a flat child of body after the loader, and next in the tab order.
+// to navigate"): the four sections in page order, fixed at the top right on the logotype's row, then the one page the
+// index links to, About (docs/specs/about.md, its brief: "just add it in the navbar"): a plain link to /about/, last in
+// the bar and in the drawer, with data-page and no data-sec, so site-nav.ts never jumps or marks it current and a press
+// leaves the page as any link does (navbar.md D7). From 768 px the words in a row; on phones one word, Menu, opening a
+// light drawer from the right, 75 percent of the screen ("make it come from the side, and just 75 % OF THE SCREEN from
+// the side"), with the family switcher's layout (the popover attribute; Escape native; a tap beside the panel lands on a
+// button over the strip that hides the popover, and site-nav.ts keeps that tap from the page). The drawer sits inside
+// the nav, so the index is one landmark. No fill, no box: the words on the scene as the logotype is, in Work Sans Light
+// capitals since 2026-11-03 (E-NAV-font; site-nav.css). Home is Back to top's jump, so the landing page draws no Back to
+// top (BackToTop.astro). Plain fragment links, so the index works without JavaScript on the poster layout; with it,
+// scripts/shell/site-nav.ts (imported by the landing page, src/pages/index.astro, never by this component) jumps in
+// place under the --night veil and marks the section on screen. Products is always listed ("its okay add products as
+// well no problem"): pressed while the quiz gate holds section 4, it opens it as Skip quiz does, with the gate's key from
+// config/quiz.ts (data-gate-key, read at build time so the quiz's config stays out of the index's chunk). In the logo
+// slot, after the logotype: a flat child of body after the loader, and next in the tab order.
+// On the About page (page="about"; docs/specs/about.md round 2, 2026-11-03: "if about page had landed, it should also be
+// landed in the navbar"): the same bar and drawer with no script at all, the section words plain links into the landing
+// page (/#top and so on, no data-sec), About current (aria-current="page"), the bar in Urban Slate on the page's Pearl
+// Whisper (data-tone="light") and absolute, so it scrolls away with that page's wordmark (site-nav.css .snav-page).
 import { COPY } from '../../config/copy.ts';
 import { QUIZ_GATE } from '../../config/quiz.ts';
 import { SECTION_IDS, type SectionId } from '../../scripts/shell/nav-map.ts';
 import '../../styles/site-nav.css';
 
+interface Props {
+  /** the page the index stands on: the landing page (unset), or About, where the section words are plain links into the landing page and About is current */
+  page?: 'about';
+}
+const { page } = Astro.props;
 const N = COPY.nav;
 const HREF: Record<SectionId, string> = { top: '#top', families: '#families', quiz: '#find', room: '#room' };
-const items = SECTION_IDS.map((id) => ({ id, href: HREF[id], label: N.items[id] }));
+const items = SECTION_IDS.map((id) => ({ id, href: (page ? '/' : '') + HREF[id], label: N.items[id] }));
 /** the pages the index links to, after the sections: About (docs/specs/about.md D7) */
 const pages = [{ id: 'about', href: '/about/', label: N.pages.about }];
+/** data-sec on the landing page only (site-nav.ts jumps and marks those); on a page every word is a plain link */
+const sec = (id: SectionId) => (page ? undefined : id);
+/** the page's own link is current there; on the landing page site-nav.ts marks the section on screen */
+const current = (id: string) => (page === id ? 'page' : undefined);
 ---
-<nav class="snav" id="siteNav" aria-label={N.aria} data-gate-key={QUIZ_GATE.key}>
+<nav class:list={['snav', { 'snav-page': !!page }]} id="siteNav" aria-label={N.aria} data-gate-key={QUIZ_GATE.key} data-tone={page ? 'light' : undefined}>
   <ol class="snav-list">
-    {items.map((s) => <li><a class="snav-a" href={s.href} data-sec={s.id}>{s.label}</a></li>)}
-    {pages.map((p) => <li><a class="snav-a" href={p.href} data-page={p.id}>{p.label}</a></li>)}
+    {items.map((s) => <li><a class="snav-a" href={s.href} data-sec={sec(s.id)}>{s.label}</a></li>)}
+    {pages.map((p) => <li><a class="snav-a" href={p.href} data-page={p.id} aria-current={current(p.id)}>{p.label}</a></li>)}
   </ol>
   <button class="snav-a snav-menu" type="button" popovertarget="site-sections">{N.menu}</button>
   <div id="site-sections" class="snav-sheet" popover>
+    <button class="snav-strip" type="button" popovertarget="site-sections" popovertargetaction="hide" tabindex="-1" aria-hidden="true"></button>
     <div class="snav-in">
       <div class="snav-head"><p class="snav-h">{N.aria}</p><button class="snav-a snav-close" type="button" popovertarget="site-sections" popovertargetaction="hide">{N.close}</button></div>
       <ol class="snav-rows">
-        {items.map((s) => <li><a href={s.href} data-sec={s.id}><span>{s.label}</span></a></li>)}
-        {pages.map((p) => <li><a href={p.href} data-page={p.id}><span>{p.label}</span></a></li>)}
+        {items.map((s) => <li><a href={s.href} data-sec={sec(s.id)}><span>{s.label}</span></a></li>)}
+        {pages.map((p) => <li><a href={p.href} data-page={p.id} aria-current={current(p.id)}><span>{p.label}</span></a></li>)}
       </ol>
     </div>
   </div>
 </nav>
-<script>
-  import '../../scripts/shell/site-nav.ts';
-</script>

@@ -16,7 +16,7 @@ Outputs, byte-identical in both places, plus the licence and the manifest sectio
   public/fonts/inter-400-700-latin.woff2      served at /fonts/, preloaded by src/pages/about.astro
   docs/brand/fonts/inter-400-700-latin.woff2  next to the brand faces' docs copies
   docs/brand/fonts/inter-OFL.txt              the licence, byte for byte (the OFL travels with a modified version)
-  scripts/fonts/manifest.txt                  only its own section, from "== ABOUT PAGE" to the end of the file
+  scripts/fonts/manifest.txt                  only its own section, "== ABOUT PAGE" (a later section, SECTION INDEX, is kept)
 
 Run from the repo root:  python3 scripts/fonts/build-inter.py   (python on Windows). Needs fontTools 4.66.1 and brotli,
 as build.py (pip install fonttools==4.66.1 brotli). Two runs write the same bytes.
@@ -168,7 +168,9 @@ def main():
     with open(B.MANIFEST, encoding="utf-8", newline="") as f: text = f.read()
     at = text.find(HEAD)
     keep = (text[:at] if at >= 0 else text).rstrip("\n") + "\n"
-    with open(B.MANIFEST, "w", encoding="utf-8", newline="\n") as f: f.write(keep + "\n" + out.getvalue())
+    nxt = text.find("\n== ", at + 1) if at >= 0 else -1   # a section after this one (SECTION INDEX, nav-fallback.py) stays
+    tail = ("\n" + text[nxt + 1:]) if nxt >= 0 else ""
+    with open(B.MANIFEST, "w", encoding="utf-8", newline="\n") as f: f.write(keep + "\n" + out.getvalue() + tail)
     print(f"\nwrote {rel(os.path.join(B.OUTS[0], NAME))}, {rel(os.path.join(B.OUTS[1], NAME))}, "
           f"{rel(os.path.join(B.OUTS[1], LICENCE))} and the ABOUT PAGE section of {rel(B.MANIFEST)}")
 

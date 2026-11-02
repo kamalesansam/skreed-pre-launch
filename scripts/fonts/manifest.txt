@@ -51,3 +51,11 @@ Inter Fallback 600: size-adjust 101.48%; ascent-override 95.47%; descent-overrid
 Inter Fallback 700: size-adjust 102.44%; ascent-override 94.57%; descent-override 23.55%; line-gap-override 0.00%
 clone  Arial (C:/Windows/Fonts/arial.ttf for 400, C:/Windows/Fonts/arialbd.ttf for 600 and 700), on build.py's SAMPLE: Liberation Sans is not installed here, and it matches Arial's advance widths by design, so the ratios are the same
 via python3 scripts/fonts/build-inter.py (python on Windows), fontTools 4.66.1 and brotli
+
+== SECTION INDEX (the navbar's face, 2026-11-03; exception E-NAV-font; the quiz result's Work Sans file, preloaded on / and /about/)
+file                                         bytes      KB     KiB  sha256
+work-sans-300-latin.woff2                    20616    20.6    20.1  ff2dad979feb77b1b7857c65b3e18868c13621e943cdf8651fe65bdd5813b173
+work-sans-300-latin.woff2: glyphs 340, upm 1000, x-height 0.500, cap 0.660, useTypo True, typo asc/desc/gap 0.930/-0.243/0.000, hhea asc/desc/gap 0.930/-0.243/0.000, digit advances [355, 530, 550, 560, 578, 582, 591, 593, 607], axes None, features calt,ccmp,cswh,dnom,frac,liga,locl,numr,pnum,tnum
+Work Sans Fallback 300: size-adjust 105.92%; ascent-override 87.80%; descent-override 22.94%; line-gap-override 0.00%
+clone  Arial (/System/Library/Fonts/Supplemental/Arial.ttf), on build.py's SAMPLE; the local() face is Arial, whose advance widths Liberation Sans matches by design, so the ratios are the same
+via python3 -I scripts/fonts/nav-fallback.py (python on Windows) and fontTools

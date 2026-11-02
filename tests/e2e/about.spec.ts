@@ -1,9 +1,12 @@
-// The About page, /about/ (docs/specs/about.md AC2 and AC4 to AC9), against a production build served by wrangler dev:
+// The About page, /about/ (docs/specs/about.md AC2 and AC4 to AC9, and AC12 since round 2), against a production build
+// served by wrangler dev:
 //   PUBLIC_HERO_HOOKS=0 PUBLIC_TUNE=0 PUBLIC_STAGING=0 PUBLIC_FAMILY_3D=on npx astro build --outDir dist-about
 //   node scripts/csp.mjs --dist dist-about; npx wrangler dev --ip 127.0.0.1 --port <port> --assets dist-about
 //   BASE_URL=http://127.0.0.1:<port>/ SKREED_DIST=dist-about npx playwright test tests/e2e/about.spec.ts --project=e2e
 // The page ships no script, so every row reads what a visitor's browser has: the network, the DOM, the computed styles
-// and, through the DevTools protocol, the platform font each run of text was drawn with.
+// and, through the DevTools protocol, the platform font each run of text was drawn with. Since round 2 (2026-11-03) the
+// page carries the section index, script-free, in its own face (Work Sans Light), and from 1024 px it is one screen in
+// three columns (the title and the sign-off, the letter, the quotation mark).
 import { test, expect, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -14,10 +17,13 @@ import { LAUNCH_ISO } from '../../src/config/site.ts';
 
 const PATH = '/about/';
 const FONT = '/fonts/inter-400-700-latin.woff2';
+/** the section index's face (E-NAV-font): preloaded here as on the landing page */
+const NAV_FONT = '/fonts/work-sans-300-latin.woff2';
 const DIST = resolve(process.env.SKREED_DIST || 'dist');
 const PHONE = { width: 390, height: 844 }, LAPTOP = { width: 1280, height: 800 };
 const SLATE = 'rgb(56, 63, 67)', PEARL = 'rgb(247, 246, 243)', EMBER = 'rgb(255, 153, 0)';
 const TEXT = 'main h1, main p';
+const NAV_WORDS = ['Home', 'Families', 'Quiz', 'Products', 'About'], NAV_HREFS = ['/#top', '/#families', '/#find', '/#room', '/about/'];
 const inset = (w: number) => Math.min(56, Math.max(16, 0.035 * w));
 
 type Box = { sel: string; x: number; y: number; w: number; h: number };
@@ -34,7 +40,7 @@ async function open(page: Page, viewport = PHONE) {
   await page.evaluate(() => document.fonts.ready);
 }
 
-test.describe('AC2 Inter from the one self-hosted file, no other face, nothing italic', () => {
+test.describe('AC2 Inter from the one self-hosted file for the page, Work Sans for the index, no other face, nothing italic', () => {
   for (const vp of [PHONE, LAPTOP]) {
     test(`cold load at ${vp.width} x ${vp.height}`, async ({ browser, baseURL }) => {
       const ctx = await browser.newContext({ viewport: vp });
@@ -48,31 +54,39 @@ test.describe('AC2 Inter from the one self-hosted file, no other face, nothing i
       const origin = new URL(baseURL!).origin;
       expect(reqs.filter((r) => new URL(r.url).origin !== origin), 'nothing leaves the origin').toEqual([]);
       const fonts = reqs.filter((r) => new URL(r.url).pathname.startsWith('/fonts/'));
-      expect(fonts.map((r) => [new URL(r.url).pathname, r.status])).toEqual([[FONT, 200]]);
-      expect(await page.locator('link[rel="preload"][as="font"]').evaluateAll((ls) => ls.map((l) => (l as HTMLLinkElement).href))).toEqual([new URL(FONT, baseURL).href]);
-      // the faces: Inter loaded, every face of the site's own set left unloaded
+      expect(fonts.map((r) => [new URL(r.url).pathname, r.status]).sort(), 'the page\'s face and the index\'s, each once').toEqual([[FONT, 200], [NAV_FONT, 200]]);
+      expect(await page.locator('link[rel="preload"][as="font"]').evaluateAll((ls) => ls.map((l) => (l as HTMLLinkElement).href))).toEqual([new URL(FONT, baseURL).href, new URL(NAV_FONT, baseURL).href]);
+      // the faces: Inter and Work Sans loaded, every other face of the site's own set left unloaded
       const faces = await page.evaluate(() => [...document.fonts].map((f) => ({ family: f.family.replace(/^"|"$/g, ''), weight: f.weight, style: f.style, status: f.status })));
       expect(faces.filter((f) => f.family === 'Inter')).toEqual([{ family: 'Inter', weight: '400 700', style: 'normal', status: 'loaded' }]);
-      // the site's own faces (the brand's, the quiz's, the result's) all unloaded: Inter is the one face the page loads
-      const brand = faces.filter((f) => ['Poppins', 'Open Sans', 'Source Serif 4', 'IBM Plex Mono'].includes(f.family));
-      expect(brand.length).toBeGreaterThanOrEqual(6);
+      expect(faces.filter((f) => f.family === 'Work Sans')).toEqual([{ family: 'Work Sans', weight: '300', style: 'normal', status: 'loaded' }]);
+      const brand = faces.filter((f) => ['Poppins', 'Open Sans', 'Source Serif 4', 'IBM Plex Mono', 'Anton'].includes(f.family));
+      expect(brand.length).toBeGreaterThanOrEqual(7);
       for (const f of brand) expect(f.status, `${f.family} ${f.weight}`).toBe('unloaded');
-      expect(faces.filter((f) => f.status !== 'unloaded').map((f) => f.family)).toEqual(['Inter']);
+      // the metric-matched fallbacks are local() faces (Arial), fetched from nowhere; the installed Chrome marks them loaded
+      // once the swap period has drawn with them, the bundled Chromium leaves them unloaded, so they are not counted here
+      expect(faces.filter((f) => f.status !== 'unloaded' && !f.family.endsWith(' Fallback')).map((f) => f.family).sort()).toEqual(['Inter', 'Work Sans']);
       // the face actually drawn, run by run: the DevTools protocol's platform fonts for each element's own text
       const cdp = await ctx.newCDPSession(page);
       await cdp.send('DOM.enable'); await cdp.send('CSS.enable');
       const { root } = await cdp.send('DOM.getDocument', { depth: -1 });
-      for (const sel of ['h1 span', '.ab-text p', '.ab-text em', '.ab-sign', '.ab-launch', '.ab-launch time', '.ab-quote']) {
+      const drawn = async (sel: string) => {
         const { nodeIds } = await cdp.send('DOM.querySelectorAll', { nodeId: root.nodeId, selector: sel });
         expect(nodeIds.length, sel).toBeGreaterThan(0);
+        const out: { family: string; custom: boolean }[] = [];
         for (const nodeId of nodeIds) {
           const { fonts: used } = await cdp.send('CSS.getPlatformFontsForNode', { nodeId });
           expect(used.length, sel).toBeGreaterThan(0);
-          for (const u of used) expect({ sel, family: u.familyName, custom: u.isCustomFont }).toEqual({ sel, family: 'Inter', custom: true });
+          out.push(...used.map((u) => ({ family: u.familyName, custom: u.isCustomFont })));
         }
+        return out;
+      };
+      for (const sel of ['h1 span', '.ab-text p', '.ab-text em', '.ab-sign', '.ab-launch', '.ab-launch time', '.ab-quote']) {
+        for (const u of await drawn(sel)) expect({ sel, ...u }).toEqual({ sel, family: 'Inter', custom: true });
       }
+      // the index's words in Work Sans (the file names its family "Work Sans Light" and "Work Sans"): the bar on a laptop, Menu on a phone
+      for (const u of await drawn(vp.width < 768 ? '#siteNav .snav-menu' : '#siteNav .snav-list a')) { expect(u.family, 'the index').toMatch(/^Work Sans\b/); expect(u.custom).toBe(true); }
       // computed: the family, the weights, the sizes and line heights, the title's tracking; nothing italic anywhere
-      const px = vp.width < 1024 ? { h1: 44, text: 18, sign: 20 } : { h1: 88, text: 22, sign: 24 };   // E-About-look: the reference's tall title and larger letter
       const cs = await page.evaluate(() => [...document.querySelectorAll('h1, main p, main em, main time')].map((e) => {
         const c = getComputedStyle(e);
         return { tag: e.tagName.toLowerCase(), cls: e.className, family: c.fontFamily, weight: c.fontWeight, size: parseFloat(c.fontSize), lh: parseFloat(c.lineHeight), ls: c.letterSpacing };
@@ -82,9 +96,24 @@ test.describe('AC2 Inter from the one self-hosted file, no other face, nothing i
       const letter = cs.filter((c) => c.tag === 'p' && !c.cls);
       expect(letter.length).toBe(5);
       expect([h1.weight, sign.weight, launch.weight, ...letter.map((c) => c.weight), cs.find((c) => c.tag === 'em')!.weight]).toEqual(['700', '700', '400', '400', '400', '400', '400', '400', '600']);
-      expect(Math.abs(h1.size - px.h1)).toBeLessThanOrEqual(0.1);
-      expect(Math.abs(sign.size - px.sign)).toBeLessThanOrEqual(0.1);
-      for (const c of [...letter, launch]) { expect(Math.abs(c.size - px.text)).toBeLessThanOrEqual(0.1); expect(Math.abs(c.lh - 1.6 * c.size)).toBeLessThanOrEqual(0.1); }
+      // E-About-look: the reference's tall title and larger letter; on the laptop layout (round 2) the title is held by its
+      // column (11/24 of what the gaps and the mark leave, over 5.85em) and the letter by the screen's height (2.3vh)
+      if (vp.width < 1024) {
+        expect(Math.abs(h1.size - 44)).toBeLessThanOrEqual(0.1);
+        for (const c of [...letter, launch]) expect(Math.abs(c.size - 18)).toBeLessThanOrEqual(0.1);
+        expect(Math.abs(sign.size - 20)).toBeLessThanOrEqual(0.1);
+      } else {
+        const want = await page.evaluate(() => {
+          const col = document.querySelector('.ab-col')!.getBoundingClientRect().width, gap = parseFloat(getComputedStyle(document.querySelector('.ab-col')!).columnGap);
+          const mark = parseFloat(getComputedStyle(document.querySelector('.ab-quote')!).fontSize);
+          return Math.min(88, (col - 2 * gap - 0.492 * mark) * 11 / 24 / 5.85);
+        });
+        expect(Math.abs(h1.size - want), `the title sized to its column: ${h1.size} against ${want}`).toBeLessThanOrEqual(0.5);
+        expect(h1.size).toBeGreaterThanOrEqual(76);   // 77.1 px at 1280 x 800
+        for (const c of [...letter, launch]) expect(Math.abs(c.size - Math.max(18, Math.min(24, Math.min(0.016 * vp.width, 0.023 * vp.height))))).toBeLessThanOrEqual(0.1);   // 18.4 px at 1280 x 800
+        expect(Math.abs(sign.size - 24)).toBeLessThanOrEqual(0.1);
+      }
+      for (const c of [...letter, launch]) expect(Math.abs(c.lh - 1.6 * c.size)).toBeLessThanOrEqual(0.1);
       expect(Math.abs(h1.lh - 0.95 * h1.size)).toBeLessThanOrEqual(0.1);
       expect(Math.abs(sign.lh - 1.2 * sign.size)).toBeLessThanOrEqual(0.1);
       expect(Math.abs(parseFloat(h1.ls) + 0.02 * h1.size)).toBeLessThanOrEqual(0.01);   // tightened caps
@@ -110,36 +139,60 @@ test('AC4 the words on the page are section 3\'s, element by element; the title,
   expect(await page.locator('meta[name="description"]').getAttribute('content')).toBe(C.description);
 });
 
-test.describe('AC5 360 to 1280 px: no horizontal scroll, the gutters, the column, the wordmark', () => {
-  for (const [w, h] of [[360, 780], [390, 844], [430, 932], [768, 1024], [1024, 768], [844, 390], [1280, 800]] as const) {
+test.describe('AC5 360 to 1728 px: no horizontal scroll, the gutters, the column or the three columns, the wordmark, one screen from 1280 x 800', () => {
+  for (const [w, h] of [[360, 780], [390, 844], [430, 932], [768, 1024], [1024, 768], [844, 390], [1280, 800], [1440, 900], [1728, 990]] as const) {
     test(`${w} x ${h}`, async ({ page }) => {
       await open(page, { width: w, height: h });
       expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
       const all = await boxes(page), logo = all[0], text = all.slice(1), i = inset(w);
       for (const b of all) { expect(b.x, `${b.sel} left`).toBeGreaterThanOrEqual(16); expect(w - (b.x + b.w), `${b.sel} right`).toBeGreaterThanOrEqual(16); }
-      const col = (await page.locator('.ab-col').boundingBox())!;
-      expect(col.width).toBeLessThanOrEqual(704 + 0.01);   // the measure, 44rem (E-About-look)
+      const col = (await page.locator('.ab-col').boundingBox())!, letterCol = (await page.locator('.ab-text').boundingBox())!;
       expect(Math.abs(col.x - i), 'the column starts at the gutter').toBeLessThanOrEqual(0.5);   // at the left, as the reference sets its text
       expect(w - col.x - col.width, 'the right gutter').toBeGreaterThanOrEqual(i - 0.5);
-      for (const b of text) expect(Math.abs(b.x - col.x), `${b.sel} flush left`).toBeLessThanOrEqual(0.5);
+      expect(letterCol.width, 'the letter at most the measure, 44rem (E-About-look)').toBeLessThanOrEqual(704 + 0.01);
+      const [hd, ...ps] = text, sign = ps[5], launch = ps[6], letter = ps.slice(0, 5);
+      if (w < 1024) {
+        expect(col.width).toBeLessThanOrEqual(704 + 0.01);
+        for (const b of text) expect(Math.abs(b.x - col.x), `${b.sel} flush left`).toBeLessThanOrEqual(0.5);
+      } else {
+        // the laptop layout (round 2): the title and the sign-off in the left column at the gutter, the letter in the second, flush left in its own column
+        for (const b of [hd, sign, launch]) expect(Math.abs(b.x - col.x), `${b.sel} at the gutter`).toBeLessThanOrEqual(0.5);
+        for (const b of letter) expect(Math.abs(b.x - letterCol.x), `${b.sel} flush left in the letter's column`).toBeLessThanOrEqual(0.5);
+        expect(letterCol.x, 'the letter beside the title').toBeGreaterThanOrEqual(hd.x + hd.w + 47);
+        expect(Math.abs(letter[0].y - hd.y), 'the letter starts on the title\'s row').toBeLessThanOrEqual(0.5);
+        expect(Math.abs(launch.y + launch.h - (letter[4].y + letter[4].h)), 'the date line ends level with the letter').toBeLessThanOrEqual(1);
+        if (w >= 1280) expect(await page.evaluate(() => document.scrollingElement!.scrollHeight - innerHeight), 'one screen').toBeLessThanOrEqual(0);
+      }
       const h1 = await page.locator('main h1').evaluate((e) => e.getBoundingClientRect().height / parseFloat(getComputedStyle(e).lineHeight));
       expect(Math.abs(h1 - 3), 'the h1 is three lines, as the reference breaks it').toBeLessThanOrEqual(0.1);
-      // the quotation mark: at the top right, clear of the title's text, never past the right gutter
+      // the quotation mark: at the top right, clear of the title's text and of the letter, never past the right gutter
       const quote = (await page.locator('.ab-quote').boundingBox())!, h1Box = (await page.locator('main h1').boundingBox())!;
       expect(w - (quote.x + quote.width), 'the quotation mark inside the right gutter').toBeGreaterThanOrEqual(i - 1);
       const words = await page.locator('main h1 span').evaluateAll((es) => es.map((e) => e.getBoundingClientRect().right));
       expect(Math.max(...words), 'the title clear of the quotation mark').toBeLessThan(quote.x);
+      if (w >= 1024) expect(letterCol.x + letterCol.width, 'the letter clear of the quotation mark').toBeLessThanOrEqual(quote.x - 31);
       expect(quote.y, 'the quotation mark on the title\'s row').toBeLessThan(h1Box.y + h1Box.height);
       expect(Math.abs(logo.w - (w >= 1024 ? 136 : 96))).toBeLessThanOrEqual(0.5);
       expect(Math.abs(logo.x - i)).toBeLessThanOrEqual(0.5); expect(Math.abs(logo.y - i)).toBeLessThanOrEqual(0.5);
       for (const b of text) expect(meets(logo, b), `the wordmark meets ${b.sel}`).toBe(false);
-      if (w === 390 || w === 1280) {
-        const [hd, ...ps] = text, sign = ps[5], launch = ps[6], letter = ps.slice(0, 5);
-        const near = (got: number, want: number, what: string) => expect(Math.abs(got - want), `${what}: ${got}`).toBeLessThanOrEqual(1);
+      // the index on the wordmark's row: Menu on a phone, the five words from 768 px, nothing of it over the text
+      const nav = await page.locator(w < 768 ? '#siteNav .snav-menu' : '#siteNav .snav-list').boundingBox();
+      expect(nav, 'the index').toBeTruthy();
+      expect(Math.abs(nav!.y + nav!.height / 2 - (logo.y + logo.h / 2)), 'on the wordmark\'s row').toBeLessThanOrEqual(1.5);
+      for (const b of text) expect(meets({ sel: 'nav', x: nav!.x, y: nav!.y, w: nav!.width, h: nav!.height }, b), `the index meets ${b.sel}`).toBe(false);
+      const near = (got: number, want: number, what: string) => expect(Math.abs(got - want), `${what}: ${got}`).toBeLessThanOrEqual(1);
+      if (w === 390) {
         near(hd.y - (logo.y + logo.h), 48, 'wordmark foot to h1');
         near(letter[0].y - (hd.y + hd.h), 32, 'h1 to the first paragraph');
         for (let k = 1; k < 5; k++) near(letter[k].y - (letter[k - 1].y + letter[k - 1].h), 24, `paragraph ${k} to ${k + 1}`);
         near(sign.y - (letter[4].y + letter[4].h), 48, 'the fifth paragraph to the sign-off');
+      }
+      if (w === 1280) {
+        expect(hd.y - (logo.y + logo.h), 'at least 48 px under the wordmark (the block is centred in the screen\'s height)').toBeGreaterThanOrEqual(47);
+        for (let k = 1; k < 5; k++) near(letter[k].y - (letter[k - 1].y + letter[k - 1].h), 24, `paragraph ${k} to ${k + 1}`);
+        expect(sign.y - (hd.y + hd.h), 'the sign-off below the title, at its column\'s foot').toBeGreaterThanOrEqual(47);
+      }
+      if (w === 390 || w === 1280) {
         near(launch.y - (sign.y + sign.h), 8, 'the sign-off to the date line');
         expect(await page.locator('main').evaluate((m) => getComputedStyle(m).paddingBottom)).toBe('48px');
         test.info().annotations.push({ type: 'boxes', description: JSON.stringify(all.map((b) => ({ ...b, x: +b.x.toFixed(2), y: +b.y.toFixed(2), w: +b.w.toFixed(2), h: +b.h.toFixed(2) }))) });
@@ -194,13 +247,16 @@ const contrast = (a: string, b: string) => {
 test('AC7 the landmarks and the tree, the focus ring, the hit box, the contrast', async ({ page }) => {
   await open(page);
   expect(await page.locator('html').getAttribute('lang')).toBe('en-IN');
-  // the tree as Chromium exposes it: the em as emphasis and the time as time inside their paragraphs (the snapshot trims
-  // the text runs and reads the no-break space as a space)
+  // the tree as Chromium exposes it: the banner holds the wordmark and the index (its bar is display: none on a phone, so
+  // only Menu is in the tree, and the closed drawer is not); the em as emphasis and the time as time inside their
+  // paragraphs (the snapshot trims the text runs and reads the no-break space as a space)
   const q = (s: string) => JSON.stringify(s.replace(/ /g, ' ').trim());
   await expect(page.locator('body')).toMatchAriaSnapshot(`
     - banner:
       - link "Skreed, home":
         - /url: /
+      - navigation "Sections":
+        - button "Menu"
     - main:
       - heading "A message from our founder" [level=1]
       - paragraph: ${q(C.p1)}
@@ -219,7 +275,7 @@ test('AC7 the landmarks and the tree, the focus ring, the hit box, the contrast'
   `);
   expect(await page.locator('main').getByRole('heading').count()).toBe(1);
   expect(await page.locator('main').getByRole('paragraph').count()).toBe(7);
-  // the first Tab: the wordmark, with the two-tone ring
+  // the first Tab: the wordmark, with the two-tone ring; the second, Menu (the index follows the wordmark in the tab order)
   await page.keyboard.press('Tab');
   const ring = await page.evaluate(() => {
     const a = document.activeElement as HTMLElement, c = getComputedStyle(a), b = getComputedStyle(a, '::before'), h = getComputedStyle(a, '::after');
@@ -227,21 +283,25 @@ test('AC7 the landmarks and the tree, the focus ring, the hit box, the contrast'
       before: `${b.borderTopStyle} ${b.borderTopWidth} ${b.borderTopColor}`, beforeInset: [b.top, b.right, b.bottom, b.left], after: [h.top, h.right, h.bottom, h.left] };
   });
   expect(ring).toEqual({ cls: 'site-logo', outline: `solid 2px ${EMBER}`, offset: '6px', before: `solid 2px ${SLATE}`, beforeInset: ['-4px', '-4px', '-4px', '-4px'], after: ['-11px', '-8px', '-11px', '-8px'] });
+  await page.keyboard.press('Tab');
+  expect(await page.evaluate(() => (document.activeElement as HTMLElement).className)).toBe('snav-a snav-menu');
   // the hit box: the link answers at its ::after's corners, at least 44 x 44 px
   const r = (await page.locator('a.site-logo').boundingBox())!;
   expect(r.width + 16).toBeGreaterThanOrEqual(44); expect(r.height + 22).toBeGreaterThanOrEqual(44);
   for (const [x, y] of [[r.x - 7.5, r.y - 10.5], [r.x + r.width + 7.5, r.y + r.height + 10.5]]) {
     expect(await page.evaluate(([px, py]) => document.elementFromPoint(px, py)?.closest('a')?.className ?? null, [x, y])).toBe('site-logo');
   }
-  // contrast: every text element and the wordmark against the page's ground, from the computed values
+  // contrast: every text element, the wordmark and the index against the page's ground, from the computed values
   const colours = await page.evaluate(() => ({ ground: [getComputedStyle(document.documentElement).backgroundColor, getComputedStyle(document.body).backgroundColor],
-    fg: [...document.querySelectorAll('a.site-logo, main h1, main p, main em, main time')].map((e) => [getComputedStyle(e).color, getComputedStyle(e).backgroundColor]) }));
+    fg: [...document.querySelectorAll('a.site-logo, main h1, main p, main em, main time')].map((e) => [getComputedStyle(e).color, getComputedStyle(e).backgroundColor]),
+    nav: [...document.querySelectorAll('#siteNav .snav-a')].map((e) => [getComputedStyle(e).color, getComputedStyle(e).backgroundColor]) }));
   expect(colours.ground).toEqual([PEARL, PEARL]);
   // the wordmark and the title in Urban Slate (9.9:1); the letter, its emphasis, the sign-off and the date in Coffee (E-About-look; 5.9:1, over AA's 4.5)
   const COFFEE = 'rgb(122, 88, 63)';
   for (const [fg, bg] of colours.fg) { expect([SLATE, COFFEE]).toContain(fg); expect(bg).toBe('rgba(0, 0, 0, 0)'); expect(contrast(fg, PEARL)).toBeGreaterThanOrEqual(fg === SLATE ? 9.9 : 5.8); }
   expect(colours.fg.slice(0, 2).map(([fg]) => fg)).toEqual([SLATE, SLATE]);
   expect(colours.fg.slice(2).map(([fg]) => fg).every((fg) => fg === COFFEE)).toBe(true);
+  for (const [fg, bg] of colours.nav) { expect(fg, 'the index in Urban Slate on the page').toBe(SLATE); expect(bg).toBe('rgba(0, 0, 0, 0)'); }
 });
 
 test.describe('AC7 reflow, zoom and text spacing', () => {
@@ -288,10 +348,10 @@ test('AC8 zero JavaScript: no script fetched, one data block, no handlers; the s
   expect(await page.evaluate(() => [...document.scripts].map((s) => s.type))).toEqual(['application/ld+json']);
   expect(await page.evaluate(() => [...document.querySelectorAll('*')].flatMap((e) => [...e.attributes].filter((a) => /^on/i.test(a.name)).map((a) => `${e.tagName} ${a.name}`)))).toEqual([]);
   expect(await page.locator('noscript').count()).toBe(0);
-  // the first view's bytes as transferred: the document and every resource it fetched
+  // the first view's bytes as transferred: the document and every resource it fetched (the two fonts since round 2)
   const transferred = await page.evaluate(() => [...performance.getEntriesByType('navigation'), ...performance.getEntriesByType('resource')].reduce((a, e) => a + (e as PerformanceResourceTiming).transferSize, 0));
-  expect(transferred).toBeGreaterThan(0); expect(transferred).toBeLessThanOrEqual(80_000);
-  const sel = ['a.site-logo', 'main', 'main h1', ...Array.from({ length: 7 }, (_, i) => `main p >> nth=${i}`)];
+  expect(transferred).toBeGreaterThan(0); expect(transferred).toBeLessThanOrEqual(110_000);
+  const sel = ['a.site-logo', 'main', 'main h1', ...Array.from({ length: 7 }, (_, i) => `main p >> nth=${i}`), '#siteNav .snav-menu'];
   const read = async (p: Page) => Promise.all(sel.map(async (s) => (await p.locator(s).boundingBox())!));
   const withJs = await read(page);
   await on.close();
@@ -302,8 +362,8 @@ test('AC8 zero JavaScript: no script fetched, one data block, no handlers; the s
   for (const [i, b] of noJs.entries()) for (const k of ['x', 'y', 'width', 'height'] as const) expect(Math.abs(b[k] - withJs[i][k]), `${sel[i]} ${k}`).toBeLessThanOrEqual(0.5);
   await off.close();
   const html = readFileSync(resolve(DIST, 'about/index.html'));
-  expect(html.length, 'dist/about/index.html raw').toBeLessThanOrEqual(30_000);
-  expect(gzipSync(html, { level: 9 }).length, 'gzip').toBeLessThanOrEqual(10_000);
+  expect(html.length, 'dist/about/index.html raw').toBeLessThanOrEqual(40_000);
+  expect(gzipSync(html, { level: 9 }).length, 'gzip').toBeLessThanOrEqual(12_000);
 });
 
 test('AC9 the head, the JSON-LD, the sitemap, the redirect, caching and the CSP', async ({ browser, baseURL, request }) => {
@@ -328,8 +388,8 @@ test('AC9 the head, the JSON-LD, the sitemap, the redirect, caching and the CSP'
   expect(await attr('link[rel="canonical"]', 'href')).toBe('https://skreed.in/about/');
   expect(await attr('meta[name="theme-color"]', 'content')).toBe('#F7F6F3');
   const pre = page.locator('link[rel="preload"]');
-  await expect(pre).toHaveCount(1);
-  expect(await pre.evaluate((l) => [l.getAttribute('as'), l.getAttribute('type'), l.hasAttribute('crossorigin'), l.getAttribute('href')])).toEqual(['font', 'font/woff2', true, FONT]);
+  await expect(pre).toHaveCount(2);
+  expect(await pre.evaluateAll((ls) => ls.map((l) => [l.getAttribute('as'), l.getAttribute('type'), l.hasAttribute('crossorigin'), l.getAttribute('href')]))).toEqual([['font', 'font/woff2', true, FONT], ['font', 'font/woff2', true, NAV_FONT]]);
   for (const [p, v] of [['og:type', 'website'], ['og:site_name', 'Skreed'], ['og:locale', 'en_IN'], ['og:title', C.title], ['og:description', C.description], ['og:url', 'https://skreed.in/about/']]) expect(await attr(`meta[property="${p}"]`, 'content'), p).toBe(v);
   expect(await attr('meta[name="twitter:card"]', 'content')).toBe('summary');
   expect(await page.locator('link[rel="icon"], link[rel="apple-touch-icon"], link[rel="manifest"]').evaluateAll((ls) => ls.map((l) => `${l.getAttribute('rel')} ${l.getAttribute('href')}`)))
@@ -343,8 +403,8 @@ test('AC9 the head, the JSON-LD, the sitemap, the redirect, caching and the CSP'
     { '@type': 'ListItem', position: 1, name: 'Skreed', item: 'https://skreed.in/' },
     { '@type': 'ListItem', position: 2, name: 'About Skreed', item: 'https://skreed.in/about/' }] });
   expect(ld['@graph']).toHaveLength(3);
-  // links: https or same-origin paths only; no storage touched; no CSP violation on load or on the first Tab
-  expect(await page.locator('a[href]').evaluateAll((as) => as.map((a) => a.getAttribute('href')))).toEqual(['/']);
+  // links: same-origin paths only (the wordmark, then the index's words in the bar and in the drawer); no storage touched; no CSP violation on load or on the first Tab
+  expect(await page.locator('a[href]').evaluateAll((as) => as.map((a) => a.getAttribute('href')))).toEqual(['/', ...NAV_HREFS, ...NAV_HREFS]);
   await page.keyboard.press('Tab');
   await page.waitForTimeout(200);
   expect(await cspViolations(page)).toEqual([]);
@@ -356,4 +416,65 @@ test('AC9 the head, the JSON-LD, the sitemap, the redirect, caching and the CSP'
   expect(locs.slice(0, 2)).toEqual(['https://skreed.in/', 'https://skreed.in/about/']);
   expect(locs).toHaveLength(12);
   expect(await (await request.get('/robots.txt')).text()).toContain('Sitemap: https://skreed.in/sitemap.xml');
+});
+
+test.describe('AC12 the index on the page (round 2, 2026-11-03): About current, the words plain links into the landing page, Work Sans Light capitals, script-free', () => {
+  test('the laptop: the five words on the wordmark\'s row in Urban Slate, About underlined and current, the bar absolute; Quiz leaves for the landing page\'s quiz', async ({ page, baseURL }) => {
+    await open(page, LAPTOP);
+    const g = await page.evaluate(() => {
+      const nav = document.getElementById('siteNav')!, logo = document.querySelector('a.site-logo')!.getBoundingClientRect();
+      const words = [...nav.querySelectorAll<HTMLAnchorElement>('.snav-list a')].map((a) => { const b = a.getBoundingClientRect(), c = getComputedStyle(a); return { t: a.textContent, href: a.getAttribute('href'), sec: a.dataset.sec ?? null, cur: a.getAttribute('aria-current'), y: b.y + b.height / 2, r: b.right, h: b.height, w: b.width, family: c.fontFamily.split(',')[0], weight: c.fontWeight, size: c.fontSize, transform: c.textTransform, color: c.color, line: c.textDecorationLine }; });
+      const n = getComputedStyle(nav);
+      return { words, logoY: logo.y + logo.height / 2, position: n.position, tone: nav.dataset.tone, inset: parseFloat(getComputedStyle(document.querySelector('a.site-logo')!).left), vw: innerWidth, menuShown: nav.querySelector('.snav-menu')!.getClientRects().length > 0 };
+    });
+    expect(g.words.map((w) => [w.t, w.href, w.sec, w.cur])).toEqual(NAV_WORDS.map((t, k) => [t, NAV_HREFS[k], null, t === 'About' ? 'page' : null]));
+    expect(g.position).toBe('absolute'); expect(g.tone).toBe('light'); expect(g.menuShown).toBe(false);
+    expect(Math.abs(g.words[4].r - (g.vw - g.inset + 12))).toBeLessThan(1);   // the last word's text ends on --inset, its hit padded past it
+    for (const w of g.words) {
+      expect(Math.abs(w.y - g.logoY)).toBeLessThan(1.5);
+      expect(w.h).toBeGreaterThanOrEqual(44); expect(w.w).toBeGreaterThanOrEqual(44);
+      expect([w.family, w.weight, w.size, w.transform, w.color]).toEqual(['"Work Sans"', '300', '14px', 'uppercase', SLATE]);
+      expect(w.line, w.t!).toBe(w.t === 'About' ? 'underline' : 'none');
+    }
+    await page.locator('#siteNav .snav-list a', { hasText: 'Quiz' }).click();
+    await expect(page).toHaveURL(/\/#find$/);
+    await expect(page.locator('section#find')).toBeAttached();
+  });
+
+  test('the phone: Menu on the wordmark\'s row opens the drawer with no script; About current in its rows; a tap beside the panel, Escape and Close each shut it', async ({ browser, baseURL }) => {
+    for (const javaScriptEnabled of [true, false]) {
+      const ctx = await browser.newContext({ viewport: PHONE, javaScriptEnabled });
+      const page = await ctx.newPage();
+      await page.goto(new URL(PATH, baseURL).href, { waitUntil: 'load' });
+      await page.waitForTimeout(400);
+      const menu = page.locator('#siteNav .snav-menu'), drawer = page.locator('#site-sections'), panel = drawer.locator('.snav-in');
+      await expect(menu).toBeVisible();
+      await expect(page.locator('#siteNav .snav-list')).toBeHidden();
+      expect(await menu.evaluate((e) => { const c = getComputedStyle(e); return [c.fontFamily.split(',')[0], c.fontWeight, c.textTransform, c.color]; })).toEqual(['"Work Sans"', '300', 'uppercase', SLATE]);
+      await expect(drawer).toBeHidden();
+      /** the panel at rest: its slide over (a press inside it waits for this, as site-nav.spec.ts's drawer row does) */
+      const slidIn = () => expect.poll(() => panel.evaluate((el) => getComputedStyle(el).transform)).toMatch(/^(none|matrix\(1, 0, 0, 1, 0, 0\))$/);
+      await menu.click();
+      await expect(drawer).toBeVisible();
+      await slidIn();
+      const box = (await panel.boundingBox())!;
+      expect(Math.abs(box.x + box.width - PHONE.width)).toBeLessThan(1); expect(Math.abs(box.width - 0.75 * PHONE.width)).toBeLessThan(1);
+      await expect(drawer.locator('.snav-rows a:visible')).toHaveText(NAV_WORDS);
+      expect(await drawer.locator('.snav-rows a').evaluateAll((as) => as.map((a) => [a.getAttribute('href'), a.getAttribute('aria-current'), a.hasAttribute('data-sec')]))).toEqual(NAV_HREFS.map((h) => [h, h === '/about/' ? 'page' : null, false]));
+      expect(await drawer.locator('.snav-rows a[aria-current] span').evaluate((e) => getComputedStyle(e).textDecorationLine)).toBe('underline');
+      // the strip beside the panel: a button that hides the popover, with or without a script, and nothing under it is pressed
+      await page.mouse.click(40, 400);
+      await expect(drawer).toBeHidden();
+      await expect(page).toHaveURL(/\/about\/$/);
+      await menu.click(); await expect(drawer).toBeVisible();
+      await page.keyboard.press('Escape'); await expect(drawer).toBeHidden();
+      await menu.click(); await expect(drawer).toBeVisible(); await slidIn();
+      await drawer.locator('.snav-close').click(); await expect(drawer).toBeHidden();
+      // a row leaves for the landing page
+      await menu.click(); await expect(drawer).toBeVisible(); await slidIn();
+      await drawer.locator('.snav-rows a', { hasText: 'Families' }).click();
+      await expect(page).toHaveURL(/\/#families$/);
+      await ctx.close();
+    }
+  });
 });

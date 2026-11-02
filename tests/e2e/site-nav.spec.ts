@@ -5,7 +5,9 @@
 // on the 3D path a keyboard press on Products leaves focus in section 4 (its pad, which the arrival at scene 1 moves on
 // to scene 1's name); plain fragment links without JavaScript.
 // About, the page link (navbar.md D7, AC11), is last in the bar and the drawer and leaves for /about/ with no veil, the
-// drawer closed as the page goes (the Back row launches Chromium with the back-forward cache allowed; the runner's has it off).
+// drawer closed as the page goes (the Back row launches Chromium with the back-forward cache allowed; the runner's has it off);
+// the About page carries the same index without the script, About current (tests/e2e/about.spec.ts AC12). The words are
+// Work Sans Light capitals since 2026-11-03 (E-NAV-font; the look row reads the colour, the face is read in about.spec.ts).
 // The 3D path's rest positions are nav-map.ts's, checked in tests/unit/site-nav.test.ts.
 import { test, expect, chromium, type Page } from '@playwright/test';
 import { CHROME_PATH, GL_ARGS } from '../harness/browser.ts';
@@ -313,7 +315,9 @@ test('About (AC11): last in the bar, a plain link to /about/, never current, no 
   await about.click();
   await expect(page).toHaveURL(/\/about\/$/);
   await expect(page.locator('main h1')).toHaveText('A message from our founder');
-  await expect(page.locator('#siteNav')).toHaveCount(0);   // the About page carries no index: its wordmark is the way home
+  await expect(page.locator('#siteNav')).toHaveCount(1);   // the About page carries the index since round 2 (2026-11-03), script-free, with About current
+  await expect(page.locator('#siteNav a[data-page="about"][aria-current="page"]')).toHaveCount(2);   // the bar's word and the drawer's row
+  expect(await page.locator('#siteNav a[data-sec]').count(), 'no data-sec on the page: plain links into the landing page').toBe(0);
   await page.locator('a.site-logo').click();
   await expect(page).toHaveURL(/\/$/);
 });

@@ -1,23 +1,31 @@
 /* The section index (src/components/shell/SiteNav.astro; docs/specs/navbar.md; DESIGN.md "Section index"), the landing
-   page only. Fixed at the top right on the logotype's row (2026-11-02: "stick it more from the center to the top right"),
-   where Back to top sat before Home took its job, the logotype's layer (z-index 4), under the veil (5) and the loader. No
-   fill, no hairline, no blur, no shadow: the words on the scene, set as Back to top was (Open Sans 600 at the label size,
-   a 44 px tall hit row with --s2 at its sides, the last word's right edge on --inset), --s4 between the hits ("flex it
+   page and, since 2026-11-03, the About page. Fixed at the top right on the logotype's row (2026-11-02: "stick it more
+   from the center to the top right"), where Back to top sat before Home took its job, the logotype's layer (z-index 4),
+   under the veil (5) and the loader. No fill, no hairline, no blur, no shadow: the words on the scene, in Work Sans Light
+   capitals since 2026-11-03 (E-NAV-font, spec 10: "use a different font from some of the other new fonts that we added
+   recently for the navbar"; the quiz result's label face, Open Sans 600 before) at the label size with a little tracking,
+   a 44 px tall hit row with --s2 at its sides, the last word's right edge on --inset, --s4 between the hits ("flex it
    throughout the navbar"), in the logotype's colour (site-nav.ts copies its data-tone: Pearl Whisper, Urban Slate over
    the light fog and a seam's cloud; below AA over the mid-grey fog and the lit hall, pending, spec 10, E-NAV-contrast).
    The bar's box lets the pointer through; only the words take it. Phone first: under 768 px one word, Menu, opening a
    light drawer from the right ("make it come from the side, and just 75 % OF THE SCREEN from the side"); from 768 px the
    five words (the four sections and About, a plain page link; spec D7) in a row, which clear the logotype from there.
-   The section on screen is underlined, and in the drawer also
-   set at 600, as the family switcher sets the current family. States as Back to top's: hover lift 1 px, press scale
-   0.98, the two-tone focus ring. Hidden with the logotype while the intro runs. */
+   The section on screen is underlined, and in the drawer also, as the family switcher marks the current family (the face
+   has one weight, so nothing is set bolder). States as Back to top's: hover lift 1 px, press scale 0.98, the two-tone
+   focus ring. Hidden with the logotype while the intro runs. */
 .snav { position: fixed; z-index: 4; top: calc(var(--inset) + env(safe-area-inset-top, 0px) + 11.625px - 22px); right: calc(var(--inset) + env(safe-area-inset-right, 0px) - var(--s2)); display: flex; align-items: center; pointer-events: none; color: var(--pearl-whisper); }   /* centred on the logotype's row: it is 23.25 px tall at --inset (32.94 px from 1024 px) */
 @media (min-width: 1024px) { .snav { top: calc(var(--inset) + env(safe-area-inset-top, 0px) + 16.47px - 22px); } }
 .snav[data-tone="light"] { color: var(--urban-slate); }
 html.uh1 .snav { visibility: hidden; opacity: 0; }
+/* the About page (docs/specs/about.md, round 2 of 2026-11-03; navbar.md D7 amended): the same bar and drawer with no script.
+   Absolute, as that page's wordmark is, so it scrolls away with the page instead of sitting over the letter; Urban Slate on
+   the page's Pearl Whisper (data-tone="light" in the markup); About current (aria-current="page"), the section words plain
+   links into the landing page. The drawer runs on the popover attribute alone: Menu and Close through popovertarget, Escape
+   native, and the strip beside the panel a button that hides it (.snav-strip, below). */
+.snav-page { position: absolute; }
 .snav-list { display: none; gap: var(--s4); margin: 0; padding: 0; list-style: none; }
 .snav-list li { display: flex; }
-.snav-a { position: relative; pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-width: 44px; min-height: 44px; margin: 0; padding: 0 var(--s2); border: 0; border-radius: var(--radius-none); background: none; font-family: var(--font-ui); font-size: var(--fs-label); font-weight: 600; line-height: 1; white-space: nowrap; text-decoration: none; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform var(--dur-press) var(--ease-standard); }
+.snav-a { position: relative; pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-width: 44px; min-height: 44px; margin: 0; padding: 0 var(--s2); border: 0; border-radius: var(--radius-none); background: none; font-family: var(--font-nav); font-size: var(--fs-label); font-weight: 300; line-height: 1; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; text-decoration: none; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform var(--dur-press) var(--ease-standard); }
 .snav-a[aria-current] { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 @media (hover: hover) { .snav-a:hover { transform: translateY(-1px); } }
 .snav-a:active { transform: scale(0.98); }
@@ -29,8 +37,9 @@ html.uh1 .snav { visibility: hidden; opacity: 0; }
    hairlines) in a panel from the right edge, 75 percent of the screen wide and the screen's full height, on Pearl
    Whisper with Urban Slate words and hairlines (the page's light pair, "bright grey or something, not black"), a hairline
    on its left edge where it meets the scene. The popover itself is a transparent full-screen layer with the panel at its
-   right: the strip of page left in view beside the panel is the layer, so a tap there only closes the drawer
-   (site-nav.ts) and never presses what is under it; it takes no pan of its own (touch-action), the panel a vertical one.
+   right: the strip of page left in view beside the panel is the layer, so a tap there only closes the drawer (a plain
+   button over the strip hides the popover with no script, .snav-strip; site-nav.ts closes it too for a tap on the layer
+   itself) and never presses what is under it; it takes no pan of its own (touch-action), the panel a vertical one.
    The panel slides in from the right and back out over --dur-card on --ease-standard (a transform; the layer's display
    and top layer held for the way out, the pointer let through at once), at once under reduced motion. Escape closes it too. It sits inside the bar's nav, so it sets its own colour and takes the pointer the bar lets through. */
 @supports selector(:popover-open) {
@@ -44,33 +53,39 @@ html.uh1 .snav { visibility: hidden; opacity: 0; }
     transform: translateX(100%); transition: transform var(--dur-card) var(--ease-standard); }
   .snav-sheet:popover-open .snav-in { transform: none; }
   @starting-style { .snav-sheet:popover-open .snav-in { transform: translateX(100%); } }
+  .snav-strip { position: absolute; inset: 0 75% 0 0; margin: 0; padding: 0; border: 0; border-radius: var(--radius-none); background: transparent; appearance: none; cursor: default; }   /* the strip beside the panel: a press hides the drawer (popovertargetaction), script or no script */
 }
-.snav-in { display: flex; flex-direction: column; gap: var(--s2); padding: env(safe-area-inset-top, 0px) calc(var(--inset) + env(safe-area-inset-right, 0px)) calc(var(--s4) + env(safe-area-inset-bottom, 0px)) var(--inset); font-family: var(--font-ui); }
+.snav-in { display: flex; flex-direction: column; gap: var(--s2); padding: env(safe-area-inset-top, 0px) calc(var(--inset) + env(safe-area-inset-right, 0px)) calc(var(--s4) + env(safe-area-inset-bottom, 0px)) var(--inset); font-family: var(--font-nav); font-weight: 300; letter-spacing: 0.04em; text-transform: uppercase; }
 .snav-head { display: flex; align-items: center; justify-content: space-between; min-height: 56px; }
-.snav-h { margin: 0; font-size: 1rem; font-weight: 600; line-height: var(--lh-ui); }
+.snav-h { margin: 0; font-size: 1rem; font-weight: 300; line-height: var(--lh-ui); }
 .snav-close { font-size: var(--fs-button); margin-right: calc(var(--s2) * -1); }
 .snav-rows { margin: 0; padding: 0; list-style: none; }
 .snav-rows a { position: relative; display: flex; align-items: center; min-height: 56px; font-size: var(--fs-button); line-height: var(--lh-ui); color: inherit; text-decoration: none; border-bottom: 1px solid var(--urban-slate); -webkit-tap-highlight-color: transparent; }
 .snav-rows a span { display: inline-block; transform-origin: 0 50%; transition: transform var(--dur-press) var(--ease-standard); }
 .snav-rows a:active span { transform: scale(0.98); }   /* the press, as the bar's words have it; the row's hairlines stay put */
 .snav-rows li:first-child a { border-top: 1px solid var(--urban-slate); }
-.snav-rows a[aria-current] { font-weight: 600; }
 .snav-rows a[aria-current] span { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 @media (hover: hover) { .snav-rows a:hover span { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; } }
 
-/* no drawer (no JavaScript, or no popover in the browser): under 768 px the five words in a second row under the
-   logotype's row, the last ending on --inset; a drawer opened with no script would stay open over the section it jumped to */
+/* no drawer (no JavaScript on the landing page, or no popover in the browser): under 768 px the five words in a second
+   row under the logotype's row, the last ending on --inset; a drawer opened with no script would stay open over the
+   section it jumped to. The About page never has the js class and keeps its drawer: its rows leave the page, and the
+   popover attribute runs the drawer on its own there. The capitals run wider than Open Sans did, so the row's hits are
+   padded --s1 a side, not --s2, and the bar moves in by the difference: one row from 360 px (346.5 px of words at 360,
+   at least 50 px a hit), the last word's text still on --inset. */
 @media (max-width: 767.98px) {
-  html:not(.js) .snav { top: calc(var(--inset) + env(safe-area-inset-top, 0px) + 23.25px + var(--s1)); }
-  html:not(.js) .snav-list { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0; }
-  html:not(.js) .snav-menu { display: none; }
+  html:not(.js) .snav:not(.snav-page) { top: calc(var(--inset) + env(safe-area-inset-top, 0px) + 23.25px + var(--s1)); right: calc(var(--inset) + env(safe-area-inset-right, 0px) - var(--s1)); }
+  html:not(.js) .snav:not(.snav-page) .snav-list { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0; }
+  html:not(.js) .snav:not(.snav-page) .snav-menu { display: none; }
+  html:not(.js) .snav:not(.snav-page) .snav-list .snav-a { padding: 0 var(--s1); }
 }
 @supports not selector(:popover-open) {
   .snav-sheet { display: none; }
   @media (max-width: 767.98px) {
-    .snav { top: calc(var(--inset) + env(safe-area-inset-top, 0px) + 23.25px + var(--s1)); }
+    .snav { top: calc(var(--inset) + env(safe-area-inset-top, 0px) + 23.25px + var(--s1)); right: calc(var(--inset) + env(safe-area-inset-right, 0px) - var(--s1)); }
     .snav-list { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0; }
     .snav-menu { display: none; }
+    .snav-list .snav-a { padding: 0 var(--s1); }
   }
 }
 @media (prefers-reduced-motion: reduce) { .snav-a, .snav-sheet, .snav-in, .snav-rows a span { transition: none; } .snav-a:hover, .snav-a:active, .snav-rows a:active span { transform: none; } }

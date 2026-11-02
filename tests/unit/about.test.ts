@@ -1,6 +1,7 @@
 // The About page (docs/specs/about.md): its words held character for character (AC4), the launch line against LAUNCH_ISO,
 // the sitemap entry (D16), the source rules of the page and its stylesheet (AC2, AC10), and the Inter file with its
-// records (AC3). The file is read here directly, its WOFF2 tables decompressed with node:zlib's Brotli, so its axes,
+// records (AC3). Since round 2 (2026-11-03) the page carries the section index, script-free, and preloads its face too
+// (tests/unit/site-nav.test.ts holds the index's own rules). The file is read here directly, its WOFF2 tables decompressed with node:zlib's Brotli, so its axes,
 // characters, features, names and style bits are checked without fontTools and without trusting the build script.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -79,7 +80,8 @@ test('about.astro: no script but the JSON-LD block, no script-carrying component
   assert.deepEqual([...page.matchAll(/<script\b[^>]*>/gi)].map((x) => x[0]), ['<script type="application/ld+json" is:inline set:html={ld}>']);
   assert.doesNotMatch(page, /\bclient:/);
   assert.doesNotMatch(page, /\sstyle=/);
-  assert.match(page, /preloadFonts=\{\['\/fonts\/inter-400-700-latin\.woff2'\]\}/);
+  assert.match(page, /preloadFonts=\{\['\/fonts\/inter-400-700-latin\.woff2', '\/fonts\/work-sans-300-latin\.woff2'\]\}/, 'Inter first, then the index\'s face (round 2)');
+  assert.match(page, /<SiteNav page=\"about\" \/>/, 'the index on the page, script-free (round 2, 2026-11-03)');
 });
 
 // build.py's recipe, read from its source: the LATIN range and the FEATS list
@@ -223,7 +225,7 @@ test('the manifest: lines 1 to 37 as at 71678ed, then one ABOUT PAGE section tha
   assert.equal(sha(lines.slice(0, 37).join('\n') + '\n'), 'fdca742668f77ba77ba9bc5159b8eb54bcc7e5ea4d8db4abf209800f809f5c01', 'lines 1 to 37 moved');
   assert.equal(lines[37], '');
   assert.match(lines[38], /^== ABOUT PAGE \(the brief, 2026-11-02; exception E-About-font; outside the 120,000 byte cap of the three brand faces\)$/);
-  assert.equal(m.split('\n== ').length - 1, 6, 'BYTES, METRICS, FALLBACK OVERRIDES, SECTION 2, SECTION 3 and ABOUT PAGE');
+  assert.equal(m.split('\n== ').length - 1, 7, 'BYTES, METRICS, FALLBACK OVERRIDES, SECTION 2, SECTION 3, ABOUT PAGE and SECTION INDEX (the index\'s Work Sans fallback, 2026-11-03)');
   const section = lines.slice(38).join('\n');
   const file = section.match(new RegExp(`^${FONT.replace(/\./g, '\\.')}\\s+(\\d+)\\s+[\\d.]+\\s+[\\d.]+\\s+([0-9a-f]{64})$`, 'm'))!;
   assert.ok(file, 'the file line');

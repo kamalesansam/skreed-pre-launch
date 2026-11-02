@@ -1,12 +1,17 @@
 ---
 // /about/ (docs/specs/about.md): the brief's copy on plain Pearl Whisper in skreed.com's face (exception E-About-font,
-// src/styles/about.css), text only (E-About-38), and the wordmark at the top left as the way home. The page ships no
+// src/styles/about.css), text only (E-About-38), the wordmark at the top left as the way home and, since round 2
+// (2026-11-03, "if about page had landed, it should also be landed in the navbar"), the section index beside it, About
+// current and the section words plain links into the landing page (SiteNav.astro page="about"). The page ships no
 // JavaScript: the wordmark is drawn from the sprite here, never through SiteLogo.astro, whose script installs the glitch
-// (E-24 is not extended to this page), and there is no Back to top (D13). The one script element is the JSON-LD data
-// block, which is not executed. The landing page's section index links here (D7; navbar.md AC11); the sitemap lists it.
+// (E-24 is not extended to this page), the index comes without its script (the drawer runs on the popover attribute),
+// and there is no Back to top (D13). The one script element is the JSON-LD data block, which is not executed. The
+// landing page's section index links here (D7; navbar.md AC11); the sitemap lists it. From 1024 px the page is one
+// screen: the title and the sign-off at the left, the letter beside them, the quotation mark at the right (about.css).
 import Base from '../layouts/Base.astro';
 import '../styles/about.css';
 import WordmarkSprite from '../components/shell/WordmarkSprite.astro';
+import SiteNav from '../components/shell/SiteNav.astro';
 import { ABOUT_COPY as c, ABOUT_H1_LINES, ABOUT_RING } from '../config/about.ts';
 import { COPY } from '../config/copy.ts';
 import { LAUNCH_ISO, SITE_URL } from '../config/site.ts';
@@ -34,7 +39,7 @@ const ld = JSON.stringify({
   ],
 }).replace(/</g, '\\u003c');
 ---
-<Base title={c.title} description={c.description} path={path} preloadFonts={['/fonts/inter-400-700-latin.woff2']} themeColor={PEARL_WHISPER}>
+<Base title={c.title} description={c.description} path={path} preloadFonts={['/fonts/inter-400-700-latin.woff2', '/fonts/work-sans-300-latin.woff2']} themeColor={PEARL_WHISPER}>
   <Fragment slot="head">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content={o.name}>
@@ -52,10 +57,11 @@ const ld = JSON.stringify({
   <WordmarkSprite />
   <header class="ab-top">
     <a class="site-logo" href="/" aria-label={COPY.logo.aria}><svg viewBox="0 0 1209.46 292.9" aria-hidden="true" focusable="false"><use href="#skreed-wordmark"/></svg></a>
+    <SiteNav page="about" />
   </header>
   <main class="ab">
-    <span class="ab-quote" aria-hidden="true">”</span>
     <div class="ab-col">
+      <span class="ab-quote" aria-hidden="true">”</span>
       <div class="ab-letter">
         <h1>{ABOUT_H1_LINES.map((line, i) => <>{i > 0 ? ' ' : ''}<span>{line}</span></>)}</h1>
         <div class="ab-text">
