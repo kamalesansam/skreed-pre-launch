@@ -51,7 +51,7 @@ export const CAM_DRIFT = (S2T.LAND - S2T.PULL) / (PROTO_MAP.LAND - PROTO_MAP.PUL
 /**
  * The pull-back path (Sam, 2026-10-11): straight back, weaving like a road, 6 units left, 6 right, then slowly back
  * left; v runs 0..1 over the prototype's pull-back and 1..2 after it (the port's pull-back reaches CAM_TRAVEL, 0.5: left
- * to -6 and back across to about +3.4). [v, x] pairs, smoothstep between them (camera/rig.ts camX).
+ * to -6 and back across to +4.26, camX(0.5) on the quintic ease between the keys at 0.25 and 0.6). [v, x] pairs, smoothstep between them (camera/rig.ts camX).
  */
 export const CAMX: readonly (readonly [number, number])[] = [[0, 0], [0.25, -6], [0.6, 6], [1.0, -3], [1.5, -5.25], [2.0, -1.5]];
 
