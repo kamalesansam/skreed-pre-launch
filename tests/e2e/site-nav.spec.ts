@@ -330,23 +330,26 @@ test('the phone: the drawer\'s About row leaves for /about/', async ({ page, bas
 });
 
 test('the phone: Back from About restores the landing page from the back-forward cache without the drawer (navbar.md D7)', async ({ baseURL }) => {
-  // the runner launches Chromium with --disable-back-forward-cache, so this row launches its own with the cache allowed
-  const browser = await chromium.launch({ executablePath: CHROME_PATH, args: GL_ARGS, ignoreDefaultArgs: ['--disable-back-forward-cache'] });
+  // the runner launches Chromium with --disable-back-forward-cache, so this row launches its own with the cache allowed:
+  // Playwright's full Chromium (the headless shell never caches), or CHROME_PATH where the environment names a browser
+  const browser = await chromium.launch({ ...(process.env.CHROME_PATH ? { executablePath: CHROME_PATH } : { channel: 'chromium' }), args: GL_ARGS, ignoreDefaultArgs: ['--disable-back-forward-cache'] });
   try {
-    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    // a listener set before leaving survives only in a page restored from the cache; a reload starts a fresh document
+    await context.addInitScript(() => { addEventListener('pageshow', (e) => { (window as unknown as { __shown: boolean[] }).__shown = [...((window as unknown as { __shown?: boolean[] }).__shown ?? []), e.persisted]; }); });
+    const page = await context.newPage();
     await page.goto(new URL('/?tier=poster', baseURL).href);
-    // a listener set before leaving survives only in a page restored from the cache; a reload starts without it
-    await page.evaluate(() => { addEventListener('pageshow', (e) => { (window as unknown as { __shown: boolean[] }).__shown = [...((window as unknown as { __shown?: boolean[] }).__shown ?? []), e.persisted]; }); });
     await page.locator('#siteNav .snav-menu').click();
     const sheet = page.locator('#site-sections');
     await expect.poll(async () => sheet.evaluate((e) => e.matches(':popover-open'))).toBe(true);
     await page.locator('#site-sections a[data-page="about"]').click();
     await expect(page).toHaveURL(/\/about\/$/);
     await expect(page.locator('main h1')).toHaveText('About Skreed');
-    await page.goBack();
+    await page.goBack({ waitUntil: 'commit' });   // a restore from the cache fires pageshow, never load, so the row waits for the commit and polls
     await expect(page).toHaveURL(/\/\?tier=poster$/);
-    const back = await page.evaluate(() => ({ persisted: (window as unknown as { __shown?: boolean[] }).__shown?.at(-1), open: document.getElementById('site-sections')!.matches(':popover-open') }));
-    expect(back.persisted).toBe(true);   // the page came back from the cache, as it does on a phone
-    expect(back.open).toBe(false);       // and without the drawer: closed as the page left (pagehide)
+    const shown = () => page.evaluate(() => (window as unknown as { __shown?: boolean[] }).__shown ?? []);
+    await expect.poll(async () => (await shown()).length, { timeout: 10_000 }).toBeGreaterThanOrEqual(2);   // the first load's pageshow, then the restore's
+    expect((await shown()).at(-1)).toBe(true);   // the page came back from the cache, as it does on a phone
+    await expect.poll(async () => sheet.evaluate((e) => e.matches(':popover-open'))).toBe(false);   // and without the drawer: closed as the page left (pagehide)
   } finally { await browser.close(); }
 });
