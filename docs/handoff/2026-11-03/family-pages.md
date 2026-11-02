@@ -1,6 +1,6 @@
 # Family pages, round 6: hand-off of 2026-11-03
 
-Branch `claude/case-3d-model-transitions-a08c64` (worktree `.claude/worktrees/agitated-ellis-54d854` on Sam's Mac), merged with the default at 7444d38 and pushed for the hand-off session to land. Spec: `docs/specs/family-page.md` section 24 (decisions D1 to D13, acceptance criteria 1 to 14, 24.7 for Sam, 24.8 the build record of iterations 1 to 3). Review log: `docs/specs/family-page.review.md`.
+Branch `claude/case-3d-model-transitions-a08c64` (worktree `.claude/worktrees/agitated-ellis-54d854` on Sam's Mac), landed on the default as cab2d6d on 2026-11-03 by the hand-off session (the review of iteration 3 followed it as one more commit). Spec: `docs/specs/family-page.md` section 24 (decisions D1 to D13, acceptance criteria 1 to 14, 24.7 for Sam, 24.8 the build record of iterations 1 to 3). Review log: `docs/specs/family-page.review.md`.
 
 ## What the branch does
 
@@ -32,7 +32,10 @@ Measured with `scripts/case-model/gpu/` (figures in 24.8): nothing see-through u
 
 ## Unfinished
 
-- **The review of iteration 3.** The review loop (`.claude/skills/review/SKILL.md`, three readers and three refuters per finding) was started on this Mac at 04:31 IST on 2026-11-03 and was still running at the hand-off. If `docs/specs/family-page.review.md` does not end with an entry headed "Round 6, iteration 3, 2026-11-03", it did not finish: run it again for round 6, iteration 3 on the other computer. Iteration 2's entry (FAIL, ten findings, all documents and suite rows) is in the log, and iteration 3 fixed each of them (24.8). The loop has used 3 of its 5 iterations.
+- **The review of iteration 3 finished FAIL** (the last entry of `docs/specs/family-page.review.md`): all ten of iteration 2's findings fixed and D13 doing what it says, with two corrections to the record standing, neither changing the product. They are iteration 4's work, for the other computer (the loop has used 3 of its 5 iterations):
+  1. Criterion 7 and D9's parenthesis still promise round 5's colour at beat 1 at 1280 x 800, which D12's camera and D13's light change there by design. Limit the comparison with the base build to the carousel at both sizes and to beat 1 at 390 x 844 (where the light's lift is 0 and D12 does not apply), read the 1280 x 800 beat 1 against this round's own build with the takeover off at the same pose, and name D12 and D13 as the reason. Re-measure on a GPU with `scripts/case-model/gpu/sample-compare.mjs`, matte and gloss, against a build of the default before round 6 (7444d38) served on a second port, and record the figures in 24.8. Optionally let `sample()` project the zoomed case at the beats, as `project()` does.
+  2. `DESIGN.md`'s bullet "The beats' light on every case type" says the light is held where ciao's were through the zoom at both sizes; on the wide layout it is lifted by what the damped drift took (0.58 units at beat 1, D13). Reword it to follow D13.
+  Then run the review for iteration 4.
 - **Not verified:** a real phone; Sam's FBX files beside the shipped models; E1 and E2 (the `web-design-guidelines` and `visual-critique` skills are not installed on the Mac, so the review grades them BLOCKED); Lighthouse was not re-run in round 6 (no file of the first view changed).
 
 ## Sam's open questions
@@ -71,10 +74,11 @@ for t in 2.00 2.33 2.47 2.60 2.73 2.87 3.33; do ffmpeg -loglevel error -ss "$t" 
 Resume the Skreed family pages, round 6 (the case types' own models, depth.fyi's material takeover between case types,
 the whole case at every beat, the beats' light on every type). Read CLAUDE.md, docs/specs/family-page.md section 24
 (D1 to D13, criteria 1 to 14, 24.7 and 24.8), the last entry of docs/specs/family-page.review.md and
-docs/handoff/2026-11-03/family-pages.md. If the review log has no entry for round 6, iteration 3, run the review skill
-for it against docs/CHECKLIST.md and section 24's criteria (the browser figures are 24.8's; to re-measure on a GPU use
-scripts/case-model/gpu/ and tests/family/playwright.gpu.config.ts). Fix any FAIL through the loop (3 of 5 iterations
-used), then send Sam the frames and the five questions of 24.7. Work in a new git worktree on a new branch; land only
+docs/handoff/2026-11-03/family-pages.md. The review of iteration 3 (the log's last entry) is FAIL on two corrections
+to the record, listed under Unfinished in the hand-off file: make them as iteration 4, re-measure criterion 7 on a GPU
+(scripts/case-model/gpu/ and tests/family/playwright.gpu.config.ts), run the review skill for iteration 4 against
+docs/CHECKLIST.md and section 24's criteria (3 of 5 iterations used), then send Sam the frames and the five questions
+of 24.7. Work in a new git worktree on a new branch; land only
 with Sam's word, by git merge --no-ff after a git merge-tree --write-tree check, then push; no pull requests unless he
 asks; never a bare git stash; nothing licensed or from his uploads in the repository; no deploy without his word; no
 em dashes, no emoji, British spelling, no AI product names in files.

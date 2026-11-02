@@ -1958,3 +1958,173 @@ These are not FAIL in the builder's hands. Each needs a machine, a tool or an in
 - **depth.fyi stays outside the repository.** The test's guard walks `src` and `public` only. A manual check of every tracked path and a grep of its identifiers across the repository found nothing beyond the spec's prose and the test's own pattern list. The licensed comparison sheets are git-ignored (`.gitignore:25`).
 - **The Snap's two LODs** are the same size (21,940 B) with the same triangle count (3,944) and different hashes, as the manifest and 24.8 say.
 - **Commands run by the readers:** `takeover.test.ts` 7 of 7; `npm run test:unit` 231 of 231; the family and case-model unit tests 74 of 74; `npx astro check` 0 errors, 0 warnings, 33 hints over 278 files; `graphify explain` for `takeover.ts` before its source was read.
+
+## Round 6, iteration 3, 2026-11-03: FAIL
+
+Iteration 3 answers Sam's words on the light (section 24, D13: the beats' light rides with the case, so every case type stands in it as the Tough does) and the ten FAILs of the iteration 2 entry above. This entry reviews the build at bbab6ee, with the default branch at ebb7e66 (section 2 round 5's review log and record) merged in.
+
+All ten of iteration 2's findings are fixed, and D13 does what it says. The round still fails, on two records of the same kind as before:
+- criterion 7 and D9 still promise that the 1280 x 800 frame at beat 1 reads round 5's colour, which D12 and D13 change by design, and nothing re-measured it;
+- one bullet in `DESIGN.md` says the light is held through the zoom "at both sizes", which is true on phones only.
+
+Both are corrections to prose and to one criterion's wording. No product change is outstanding.
+
+### How it was checked
+
+- **Verdicts.** PASS, FAIL, BLOCKED, UNPROVEN, PENDING and n/a, as in the earlier entries.
+- **Three readers.** One graded the checklist. One graded criteria 1 to 14 and decisions D1 to D13 of section 24. One covered the blast radius of the changed symbols, the documents and the hygiene.
+- **Frames first.** The readers looked at the round's frames before the code: the beat and argument frames at 390 and 1280, the held takeover sheets, the motion sheets and the models sheet.
+- **Blast radius by graph.** `graphify explain profileLightOffset` and `graphify affected` were run before any source was read.
+- **Unit suites, run here.**
+  - `node --test tests/case-model/pose.test.ts tests/case-model/takeover.test.ts`: 16 of 16.
+  - `npm run test:unit`: 231 of 231.
+  - `npm run test:family`: 75 of 75.
+  - `npx astro check`: 0 errors, 0 warnings, 33 hints over 278 files.
+- **No browser run.** Every browser figure (the light bands, the fit, the programs, the loading rows, Lighthouse) is taken from the build record in 24.8, iteration 3, and the frames.
+- **Refuters.** Each FAIL was put to three refuters and kept only if at most one refuted it. Both FAILs below were refuted by none of the three. No finding was dropped.
+- **Hygiene scripted** over the 18 changed text files since 3081253: UTF-8, no CR, a final newline; no em or en dash and no emoji in the added lines; no AI product or model name; no TODO, FIXME or lorem; no rule 17 buzzword.
+
+### Iteration 2's findings
+
+| # | Finding of iteration 2 | Verdict | Evidence |
+|---|---|---|---|
+| 1 | `docs/CHECKLIST.md:18` described the removed 1.35 s clock | FIXED | The line now reads "riding the turn's second half, 0.15 screens of scroll from each edge-on frame to the beat's rest, played back on the way up, never under reduced motion". No "1.35 s" is left |
+| 2 | `DESIGN.md` family motion line named the page's clock | FIXED | `DESIGN.md:832` says the loop "draws the case-type takeover as a function of the stage's own scroll". The motion table row at `DESIGN.md:859` matches |
+| 3 | `pose.ts:143` said the takeover "runs from there on its own clock" | FIXED | `pose.ts:142-144` now says the sweep rides the turn's second half from there, its progress the stage's scroll (D6) |
+| 4 | `pose.ts` `CASE_REST` comment named a sweep axis | FIXED | The comment now reads "The screen each type rests at: its beat, where the turn's yaw is 0 and its sweep has ended" |
+| 5 | `pose.test.ts:133` named a sweep axis | FIXED | The comment now says each type rests at its beat, where the turn's yaw is 0 and its sweep has ended |
+| 6 | `playwright.gpu.config.ts` header named the 1,350 ms run | FIXED | Line 3 now says "the takeover riding the stage's scroll"; line 6 says the software-renderer row skips itself on a GPU |
+| 7 | `budget.mjs` header paired the takeover with 161.6 KB of 2026-10-15 | FIXED | `scripts/case-model/budget.mjs:6` now says 162,840 B on 2026-11-03, equal to `size3d.ts:6` `ISLAND_JS_BYTES` and 24.8 iteration 3 |
+| 8 | Criterion 12: `case3d` and `supplier3d` specs did not pass | FIXED | Criterion 12 is amended to skip, with the reason given, what round 3 removed. `supplier3d.spec.ts` carries seven `test.skip` rows naming round 3 (6af5ad9), and `git log -S slotBox` and `-S st-poster` confirm that commit removed both. T4 reads `state().renders` (incremented only by `frame()`, `stage.ts:455`). T14 at 390 finds cases by the pick and asks for two, as `pose.test.ts` does. The software-renderer row skips on a GPU. 24.8 records 6 passed and 1 skipped, and 6 passed and 7 skipped, on the GPU. Not re-run here |
+| 9 | D7 did not name its departures from depth.fyi's values | FIXED | D7 now names transmission 0.06 and the sheen left out, with the reason, and the relief carried through `reliefRef` 0.8, matching `src/config/takeover.ts:49-50` and `:52-64` |
+| 10 | Criterion 4 and D6 omitted `SWEEP_END_SLACK` | FIXED | Criterion 4 reads "between 2.85 and 2.996 ... from 2.996 (D6's SWEEP_END_SLACK)". D6 names the 0.004 slack. Both match `takeover.ts:34` and `:56` and the spec rows at `takeover.spec.ts:115,119` |
+
+### Checklist
+
+| Item | Verdict | Evidence |
+|---|---|---|
+| A1 | PENDING | **The diff against rules 1 to 50** (`ebb7e66...HEAD`, 50 files): no CSS, gradient, shadow, backdrop, italic, font, storage, dash, emoji, buzzword or pill was added. The rules touched are 12 (the sweep, `takeover.ts:52-65`), 20 and 42 (the band's noise and relief, `takeover-material.ts`) and 24 (the band's colour). All sit inside E-F6 (24.3; `CLAUDE.md`; `docs/CHECKLIST.md:18`, now worded for the scroll-ridden sweep), whose five questions wait on Sam, so this is graded against its default. D13's light rides with the scroll and the case, not the cursor, so rule 13 holds (`stage.ts:353-354`). Rule 38 holds: every beat and takeover frame shows the real case. `DESIGN.md:585` misstates the light (FAIL 2) |
+| A2 | PENDING | No CSS colour added. The band's #D5F6F3 and #B7C1FF are render parameters (`src/config/takeover.ts`) recorded under A2's E-F6 line (`docs/CHECKLIST.md:24`); 24.7 item 3 is pending. D13's spot is the existing white `SpotLight` (`stage.ts:159`), moved and not recoloured |
+| A3 | PASS | No text, face or font file added. Iteration 3 changes no `.astro` or `.css` file. The beat frames show the beats' existing Poppins and Open Sans and the Plex chrome (E-chrome-font) |
+| A4 | PASS | D11: no copy changed. No copy module is in the diff |
+| A5 | PASS | Sam's MagTough, Snap and Armor ship (`public/models/{magtough,snap,armor}.lod{0,1}.*.glb`, `src/data/case-model.json`). Each real case is visible in the beat 2 to 4 frames at both sizes and in `family-r6-models.png` |
+| B1 | PASS | Looked at before any code: the beat 1 to 4 and argument frames at 390 and 1280, the takeover sheets, the three motion sheets and the models sheet. Every beat's case is lit top to bottom as the Tough is: MagTough, Snap and Armor have no dark top at either size |
+| B2 | PASS | No DOM, CSS or control added. The 390 frames show no overflow, with gutters and tap targets as in round 5 |
+| B3 | PASS | No `localStorage`, `sessionStorage` or app-scheme link in the round's added lines |
+| B4 | n/a | No CSS unit touched. The canvas sizing is unchanged |
+| C1 | PASS | 24.8 iteration 3: lazy island 162,840 of 170,000 B (40 B for the light), total JS 235.7 of 250 KB. `size3d.ts:6` and the `budget.mjs` header agree. The models plus the island make the 0.6 MB shown. The type models load past 0.5 screens (`island.ts:23,107`) |
+| C2 | n/a | No site image added. The PNGs are review frames, and the models carry their own LOD budgets (criterion 9) |
+| C3 | PASS | The sweep and the riding light live in the existing 3D island (`stage.ts:350-354`). Nothing in the DOM animates. The sweep's motion is covered by E-F6 |
+| C4 | PASS | As 24.8 records it: `/shades/blissful-blue/` mobile, GPU 72, 100 and 99 (median 99), grid path 100, 100 and 100. Not re-run in iterations 2 or 3, because no first-view file changed, only the island constant and the lazy stage. The 72 is the cold compile |
+| D1 | PASS | Nothing in the DOM waits at opacity 0 for an observer. The type models load on the scroll threshold (`island.ts:107`), and a type not yet landed leaves the case before it standing (`takeover.ts:40-44`) |
+| D2 | PASS | Under reduced motion `takeover.ts:60` changes the type at the edge-on frame with no sweep (`takeover.test.ts`, run here). The light offset is a pure function of the scroll with no motion of its own. The reduced-motion default is still swatch grid mode |
+| D3 | PASS | Loading: the case before stands until a model lands. Error: `typeFailed` in the hooks and nothing on screen (`island.ts:95-98`). Late arrival stands at its beat. The browser rows passed on the GPU per 24.8 |
+| D4 | PASS | No hover or press state added. T14's pick rows were rewritten as tests only |
+| E1 | BLOCKED | `/web-design-guidelines` is not installed on this machine |
+| E2 | BLOCKED | `visual-critique` is not installed on this machine |
+| E3 | PASS | No DOM, control or text change. The stage stays `role="img"` with its label. The beat text over the case's left edge at 1280 is section 20's layout, outside 24.5. Measured on the frames, iteration 3 makes it no worse: the brightest 2 percent of the text area's ground reads 3.42 to 4.16:1 against 3.22 to 3.47:1 at 3081253 (see the notes) |
+| E4, E5 | n/a | Nothing in the round writes data or touches a schema |
+| G1 to G9, G11 to G20, G22 to G27 | n/a | Page-level or site-level items the round does not touch. No `<img>` added, so G9 holds |
+| G10 | UNPROVEN | Only 390 x 844 and 1280 x 800 were shot and measured (criteria 13 and 14). D12's wide camera and D13's wide lift (drift 0.4) apply from 900 x 600 up, and 360, 430, 768, 1024 and 900 x 600 were not shot |
+| G21 | PASS | The argument screen and Back to main page are untouched (24.6). The argument frames show the screen as before. At rest the gobo's intensity is 35 x k x (1 - A) = 0 at 6 screens (`stage.ts:352`), so D13's lift does not change it |
+| H1 | PASS | No loader added. The type models load behind the standing case (`island.ts` `loadTypes`) |
+| H2 to H4 | n/a | No input, reserve form or validation in the round |
+| F1 | FAIL | Criteria 2 to 6 and 8 to 14 are met or recorded. Run here: the pose and takeover tests 16 of 16, `test:unit` 231 of 231, `test:family` 75 of 75, `astro check` clean. Criterion 14's unit test holds the light geometry (`pose.test.ts:137-149`). Criterion 1's renders beside Sam's FBX stay UNPROVEN: the files are not on this Mac. **Criterion 7 (family-page.md, 24.4) and D9 still ask for the base build's colour at beat 1 at both sizes.** At 1280 x 800 that frame now differs by design, and 24.8 never re-measured or amended it (FAIL 1). `DESIGN.md:585` disagrees with D13 and `pose.ts` (FAIL 2) |
+| F2 | PASS | No TODO, FIXME, lorem, placeholder or commented-out code in the round's added lines (the only hits are review-log prose). The unused `TAKEOVER.feather` is labelled as recorded |
+
+The blast-radius reader graded each changed symbol and found every dependent inside the round's files.
+- `profileLightOffset`: `createStage` (`stage.ts:353`), the import at `stage.ts:16`, `pose.test.ts:7`, `island.ts` by the stage import, and the documents. The stage passes the layout's drift (phone 1, else `CFG.wideDrift`), the same drift `zoomMatrix` uses (`stage.ts:258-259`).
+- `CY`: only `pose.ts:147`, `:153` and `:169`; its values are unchanged.
+- `beatPose`: `caseTargetAt`, `profileLightOffset`, `createStage`, `takeoverAt` and the two tests; unchanged by `git diff 3081253 HEAD`.
+- The island hooks `project` and `sample` now forward the local point (`island.ts:142,148` to `stage.ts:763,786`), which already took it. The only caller, `case3d.spec.ts:12`, calls `project(k)` and stays valid. Both sit under `if (HOOKS)`, so production is untouched.
+- `ISLAND_JS_BYTES` feeds `size3dMb` (read only by `FamilyPage.astro:28`) and `budget.mjs:63`. `states.spec.ts:199` matches the figure by regex, so no test pins the old value.
+
+### Acceptance criteria (section 24.4)
+
+| # | Verdict | Evidence |
+|---|---|---|
+| 1 | UNPROVEN | Checked here: the manifest has `magtough`, `snap` and `armor`, each with `caseType` and `model` and no `standsInFor`. All six GLBs match the manifest's bytes and sha256 (MagTough 110,136 and 58,016; Snap 21,940 and 21,940; Armor 57,768 and 49,372). `family-r6-models.png` shows plain insides with no hexagon and no lettering. **Not met:** the renders beside Sam's FBX, which is not on this Mac (24.8, "Not verified") |
+| 2 | PASS | Frames looked at: the beat 1 to 4 frames at both sizes show the Tough with its window, the MagTough with its ring, the thin Snap and the Armor with its camera plate. The argument frames show the Armor under GO / BEYOND BASIC. The type readings are from `takeover.spec.ts` on the GPU (24.8 iteration 3: 8 of 8). The last row reads 6, not 6.5, screens |
+| 3 | PASS | Pose and takeover tests 16 of 16, run here. `takeover.ts:52-65` maps raw = (sv - h) / `SWEEP_SPAN`, gives the in-out cubic with p from -0.12 to 1.12, keeps the case before when a model is missing (`availableType`) and makes the instant change under reduced motion (`rest(b)`) |
+| 4 | PASS | The criterion now carries 2.996 and `SWEEP_END_SLACK`, matching `takeover.ts:34,56`. Nothing of the sweep before h (`sv < h` continues). The browser row passed on the GPU per 24.8 |
+| 5 | PASS | The takeover sheets at both sizes, looked at: the boundary crosses each hand-over right to left, roughened, with a narrow pale band that crumbles, and each case keeps its colour up to it. The shader is unchanged since iteration 2 (0 transparent pixels per 24.8). Re-shot under iteration 3's light, the tops are lit in every column |
+| 6 | PASS | The view is a pure function of `st.sv` (`stage.ts` `update`, `takeoverAt`), so the sweep plays back as the scroll falls. The suite row passed per 24.8. In `family-r6-takeover-motion-1280-up.png` no frame catches the band (see the notes) |
+| 7 | FAIL | The programs half holds per 24.8 (`uTkOn` 0 at rest; `takeover.spec` compares `info().programs`). The sample half asks that `sample()` at beat 1 read the base build's colour within 2 per channel. At 1280 the code now rules that out: D12 moved the wide beats' camera (`stage.ts:359-360`) and D13 lifts the profile light by `profileLightOffset(2, 0.4)` = 0.576 at wide beat 1 (`stage.ts:353-354`). The only figure (8 137 180 at 1280, 9 137 181 at 390) is iteration 1's and predates both changes. `sample()` (`stage.ts:786-790`) also projects `poseMatrix`, the carousel pose, and not the zoomed case, as `project()` does at `stage.ts:763-765`. Phones are unaffected: `profileLightOffset(2, 1)` is 0 and `phoneBack` is unchanged, so 390 x 844 beat 1 and the carousel at both sizes still hold. See FAIL 1 |
+| 8 | PASS | `island.ts:23` sets `TYPES_FROM` 0.5 and `:106` loads only past it, in beat order. A failure keeps the case before it with nothing on screen. The three loading rows passed per 24.8 (one flaked under a load average of 29 and passed at 6) |
+| 9 | PASS | 24.8 iteration 3: lazy island 162,840 of 170,000 B; `ISLAND_JS_BYTES` 162,840. Every LOD is within its limit, confirmed here against the files. "Show in 3D, 0.6 MB" matches the sum (479,860 B of models plus 162,840 B of island). Frame interval 16.7 ms on both tiers in iteration 1; the light adds two uniform writes a frame, so that figure stands |
+| 10 | PASS | Under `instant`, `takeover.ts:60` returns `rest(b)`: the type changes at the edge-on frame with no band. Covered by the unit test, and the suite row passed per 24.8. Grid mode is untouched |
+| 11 | PASS | E-F6 is in `CLAUDE.md`'s family pages paragraph (which now also carries the riding light), `docs/CHECKLIST.md:18` (A1, now "riding the turn's second half") and `:24` (A2). `DESIGN.md:832` and `:859` describe the sweep as a function of the scroll. No other rule is touched; D13 amends section 20's measured light, not a rule |
+| 12 | PASS | Run here: `test:unit` 231 of 231, `test:family` 75 of 75, `astro check` clean. T4 (`case3d.spec.ts:44-48`) reads `state().renders`. T14 at 390 (`:103-124`) finds cases by `pickAt` inside `#stage`. The software row skips on a GPU (`:172-174`). `supplier3d.spec.ts` skips seven rows at `:81`, `:118` (four sizes), `:149` and `:167`, each naming round 3 (6af5ad9), which is true. GPU results per 24.8: takeover 8 of 8; case3d 6 passed, 1 skipped; supplier3d 6 passed, 7 skipped |
+| 13 | PASS | 24.8: at 1280 x 800 the boxes run 144 to 643, 145 to 617, 102 to 597 and 94 to 562 px; at 390 x 844, 64 to 547 to 86 to 534. All clear the 5 percent margin (40 and 42 px). The argument box is unchanged. The frames agree: every case is whole on screen at both sizes |
+| 14 | PASS | `profileLightOffset` (`pose.ts:167-170`) is set each frame for the light and its target (`stage.ts:353-354`) with the layout's drift. `pose.test.ts:137-150` holds no lift on the carousel, phones' zoom where ciao's had it, the case at -0.96 under the light from 2 to 5 for both drifts, and continuity at 2. 24.8: the case points read within 4 levels of the Tough at both sizes. Frames: every type at 390 and 1280 is lit top to bottom, the Armor's plate included (the 1280 Tough's top bands read 13/15/57 before and 70/37/74 after) |
+
+### Decisions (section 24.2)
+
+| # | Verdict | Evidence |
+|---|---|---|
+| D1 | PASS | The manifest entries carry `caseType` and `model`, with no `standsInFor`. Files, hashes, triangles (MagTough 23,458 and 9,157; Snap 3,944 and 3,944; Armor 11,979 and 9,537) and bytes are within the limits. `intake-fbx.py` and `pack-case.mjs` are present. The FBX side-by-side is outstanding (criterion 1) |
+| D2 | PASS | `island.ts:23,106`: loads past 0.5 in beat order, LOD1 first. `availableType` keeps the case before a missing or failed model. `size3d` counts every model's two LODs |
+| D3 | PASS | `caseTargetAt` gives the Tough below 2.85, MagTough from 2.85, Snap from 3.85 and Armor from 4.85, the Tough on the carousel, and the Armor at 6.5 (`pose.test.ts:116-136`, passing here) |
+| D4 | PASS | The shader is unchanged since iteration 2: the field comes from `gl_FragCoord` over the projected LOD1 box (`frameRun`), the discard is complementary, and the seed is `takeoverSeed`. The constants are in `src/config/takeover.ts` beside their measured values |
+| D5 | PASS | There is no run state or axis; the view is `takeoverAt(st.sv)`, so scrolling up lowers raw and the band crosses left to right |
+| D6 | PASS | `SWEEP_SPAN` = `TURN_LEN` / 2 = 0.15 and `SWEEP_END_SLACK` = 0.004, both now stated in D6. "About 3 px at 800 px tall" is 0.004 x 800 = 3.2 px, and "p is past 1.115" holds (raw 0.9733 eases to 0.99992, giving p = 1.1199). The stage's scroll lags at 10 per second. The half turn is unchanged |
+| D7 | PASS | D7 now names transmission 0.06 and the sheen left out, with the reason, and the relief carried through `reliefRef` 0.8, matching `src/config/takeover.ts:49-50` and `:52-64`. `bandMix` 0.82 and relief 0.07. Band brightness after iteration 3's light: 210 to 246 against the recording's 216 (24.8) |
+| D8 | PASS | Reduced motion gives the one-frame change in `takeover.ts:60`. The low tier runs the same program without iridescence. Grid mode is untouched |
+| D9 | FAIL | The mechanism holds: front materials are switched off by `uTkOn` and compiled at boot under the loader (`stage.ts:626-672`), and programs are equal across sweeps per 24.8. But the decision's parenthesis (family-page.md line 1156) says a frame at rest is round 5's and the sample point reads the same colour. At 1280 x 800 and beat 1 that is no longer so, for the reason given under criterion 7 (FAIL 1) |
+| D10 | PASS | `StageState` carries `type`, `takeover` and `types` (`stage.ts:51`). `holdTakeover` is hooks-only (`island.ts:152`). The mapping is the pure `takeover.ts` with unit tests. `project` and `sample` now pass their local point through |
+| D11 | PASS | No beat copy changed in the round. The frames show the beat names and descriptions as before |
+| D12 | PASS | `CFG` has `wideBack` 1.6 and `wideDrift` 0.4 (`pose.ts:34`). `zoomMatrix` damps cy by the drift (`stage.ts:258-259`); the camera's `backB` applies on the wide layout only, scaled by k(1 - A) (`stage.ts:359-360`). The argument is untouched by construction. The boxes agree with `DESIGN.md:584` |
+| D13 | PASS | `profileLightOffset` (`pose.ts:167-170`) gives cy x k x (drift - 1) under 2 screens: 0 on the carousel (k 0) and 0 on phones (drift 1), and the wide drift's loss made up through the zoom. From 2 screens it gives cy x drift - CY[1], so the case sits at -0.96 under the light. Continuous at 2 (both branches give -0.96 x (drift - 1)). It is applied to `gobo.position.y` and its target with the same lift, so the aim is unchanged. Intensity (35 x k x (1 - A) x G), the cone (PI/8, penumbra 1), x and z, the two carousel spots, the environment and the camera lines are unchanged (`git diff 3081253..HEAD`). D13's figures check: 0.38, 0.98 and 1.56 are CY[2..4] - CY[1]; 0.58 is 0.96 x (1 - 0.4) = 0.576; 22.5 degrees is PI/8 (`stage.ts:117`); 35 cd is `stage.ts:352`. At the argument's rest A is 1, so the gobo is off and that screen is unchanged |
+
+### Verdict: FAIL
+
+PASS needs no standing FAIL. Two stand, each refuted by none of its three refuters (the checklist and criteria readers raised the first independently, and the three refuters of each confirmed it). Both are corrections to the record; none changes the product. Most important first.
+
+1. **Criterion 7 and D9 still promise round 5's colour at beat 1 at 1280 x 800, which D12 and D13 change by design (criterion 7, D9; CHECKLIST F1).** In 24.4 criterion 7 (family-page.md line 1178) and in D9's parenthesis (line 1156), limit the comparison with the base build to the carousel at both sizes and to beat 1 at 390 x 844, where `profileLightOffset` is 0 and D12 does not apply. Read the 1280 x 800 beat 1 against this round's own build with every `uTkOn` at 0 at the same pose, and name D12 and D13 as the reason. Then re-measure on the GPU (`gpu/sample-compare.mjs`, matte and gloss) and record in 24.8's iteration 3 paragraph which figures stand (the carousel's and 390's) and which are superseded (iteration 1's 8 137 180 at 1280). Optionally make `sample()` use `zoomMatrix` for the front slot when `beatPose(st.sv).k > 0`, as `project()` does, so the point lies on the case; or say in the criterion that `sample()` reads through the carousel's pose. Unblocks criterion 7, D9 and F1.
+2. **`DESIGN.md:585` says the light is held where ciao's were through the zoom "at both sizes".** On the wide layout `pose.ts:169` lifts it by B.cy x B.k x (drift - 1), up to 0.96 x (1 - 0.4) = 0.576 at beat 1, which D13 states ("on the wide layout lifted by what the damped drift took"). Reword the bullet to follow D13, for example: "through the zoom it keeps ciao's place against ciao's own path (unchanged on phones; on the wide layout lifted by what the damped drift took, 0.58 at beat 1), and from beat 1 on it rises with the case". Unblocks the documents line of F1.
+
+### Open records
+
+These are not FAIL in the builder's hands. Each needs a machine, a tool or an input the loop does not have.
+
+- **E1 and E2 (BLOCKED).** The `web-design-guidelines` and `visual-critique` skills are not installed on this machine.
+- **Criterion 1 (UNPROVEN).** Sam's FBX files are not on this Mac, so the models cannot be rendered beside them.
+- **G10 (UNPROVEN).** The wide-layout clearance and the light's lift are measured at 1280 x 800 only. 900 x 600, 1024 x 768, 768, 430 and 360 are not shot.
+- **Browser figures from the record.** Every browser figure in 24.8 was not re-run by the readers, who were barred from browsers and builds. Lighthouse (C4) was not re-run.
+- **`src/assets/quiz/pics`.** 177 licensed quiz pictures are tracked on this branch and on the default alike (994f653, Sam's word of 2026-10-23, "i will delete them later"). None is in this round's diff. They wait on Sam.
+
+### Pending Sam (graded against each default)
+
+- **E-F6 as a whole.** Recorded by his words of 2026-11-03 with its default (round 3's swap, no band). It stays pending until the five questions below are answered.
+- **Item 3 of 24.7**, the band's ice colour, also covers A2's render parameters.
+
+### For Sam
+
+1. The Armor's two tones: its bumper keeps the file's dark grey and its back takes the shade. All in the shade instead?
+2. The half turn before the sweep (D6): keep it, or let the case face the camera and only sweep?
+3. The band's ice colour on every shade (depth.fyi's), or a light tint of the shade?
+4. The argument screen shows the Armor, the last case type. Or the Tough again?
+5. Scrolling back up plays the sweep back, so the band runs left to right (D5). Or right to left both ways, as depth.fyi's code does for every new change?
+
+### Notes (not graded as FAIL)
+
+- **Raised and not upheld:** none. Both FAILs survived their three refuters each.
+- **The argument's entrance is lit a little differently from round 5's.** Between 5 and 6 screens the gobo fades (35 x k x (1 - A)) while it now rides the case (lift = cy x drift + 0.96, with cy falling 0.6 to 0), so the fading light lands on the case where it used to stand above it. The rest at 6 and 6.5 is unchanged because the light is off. D13's "from beat 1 on" covers it, but `pose.test.ts` checks only 2 to 5 and 24.6 does not say so. One frame at 5.5 is worth Sam's eye.
+- **`pose.test.ts`'s new test rebuilds the case's Y formula** (`caseY`) and does not read `zoomMatrix`. It pins `profileLightOffset` against a copy, so a later change to `zoomMatrix`'s Y would not be caught. Consider exporting the Y term from `pose.ts` and using it in both places.
+- **Criterion 14's point measure** covers y -0.4 to 0.1 of the case's height, the middle and lower back, and not the top that left the pool in Sam's complaint. The top is shown by 24.8's band measure (MagTough 58/49/82, Snap 68/46/78, Armor 82/100/94 in the top three bands) and by the frames, but the criterion's own numbers do not cover it.
+- **`case3d.spec.ts` T14 at 390** now asks for two or more visible cases, not five, matching `pose.test.ts` ("two at 390", ciao's lineup since round 3). A case's run extends to any later hit on the same row (`:113`), so a gap in its strip could put the tap midpoint on another case. Not seen to fail (24.8: passed on the GPU).
+- **The software-renderer row's new skip** is checked on the GPU only. Iteration 3 records no harness (SwiftShader) run of it.
+- **`takeover.spec.ts`'s frame-timed rows** (criteria 6 and 8) failed under a load average of 29 and passed at 6 (24.8). They are sensitive to machine load.
+- **Hooks.** `project` and `sample` now pass the given point through. With no point, the stage's defaults keep the old callers' behaviour. `sample()` still projects the carousel's `poseMatrix` at the beats, so criterion 7's beat-1 sample is comparable between builds but not on the case. The comment on `project` (`stage.ts:762`, "a slot's centre") no longer says that a local point can be given.
+- **24.6 Touches** names neither `tests/family/specs/takeover.spec.ts` nor `tests/family/playwright.gpu.config.ts`, though both are in the round's scope and iteration 3 changed the GPU config's header. Adding them would make 24.6 complete.
+- **The default branch** has moved to 7444d38 since ebb7e66, touching only `docs/handoff/2026-11-02/MERGE-MAP.md`. `git merge-tree` against HEAD is clean. The merge of ebb7e66 (a94827a) carries `src/config/hero.ts`, `docs/specs/hero.md`, `section-2.md` and `section-2.review.md`; their hygiene passes and their content belongs to section 2's round.
+- **Carried from iteration 2, still open and not FAILs.**
+  - The band is barely visible at real speed and invisible in `family-r6-takeover-motion-1280-up.png`.
+  - The beat titles switch before the case type between rests ("Snap" over the MagTough on the way up).
+  - The Armor's copy promises a "built-in magnetic ring" its model does not show (a question for Sam).
+  - D9's compile on arrival compiles nothing of hidden type meshes (`traverseVisible`, `stage.ts:622,698`), so it is latent: no program compiles on a sweep only because each type part's key equals the Tough front's.
+  - 24.8's iteration 1 paragraphs still describe the clock controller and are not marked superseded.
+  - The top-level Tough entry in `case-model.json` has `caseType` empty, where the three type entries carry theirs.
+- **Beat text over the case's left edge at 1280** reads about 3.4 to 4.2:1 at its brightest ground in iteration 3's frames, under AA. Iteration 2's frames were worse (3.2 to 3.5:1), so this is not a regression. The text layout is section 20's and outside 24.5, but it is worth Sam's eye.
+- **The 1280 and 390 beat frames carry no "Scroll to see more"**, because they were shot before the cue's 1.5 s rest. The motion sheets show it coming in at rest, as E-cue-text says.
+- **Commands run by the readers:** the pose and takeover tests 16 of 16; `npm run test:unit` 231 of 231; `npm run test:family` 75 of 75; `npx astro check` 0 errors, 0 warnings, 33 hints over 278 files; `graphify explain profileLightOffset` and `graphify affected` before the source was read. No Playwright, build, server or GPU run.
