@@ -43,3 +43,9 @@ The reference image is in the carry folder: `sam-sources/references/quiz-result-
 - May the Canva swatch ship? Until Sam says the Canva licence covers the site, production draws our own stroke.
 - The Fuchsia and Teal chip names read 4.4:1, just under AA; the test allows 4.39.
 - The reward wording and what the gift is (standing since 2026-10-19).
+
+## Resumed on Sam's Mac (2026-11-02 to 2026-11-03)
+
+- The carry folder never reached the Mac. Sam pasted the reference image into the session, and `scripts/quiz/prepare-rub.mjs` regenerated the swatch from it into the git-ignored folder (the same 256 x 624, 14 KB); a partial carry folder in the hand-off's layout sits at `/Users/apple/skreed-handoff-carry-2026-11-02`.
+- Done: the e2e spec finished (an escaped apostrophe, the hold frame's nine lines, the motion check, the keyboard row) and run on the GPU (`SKREED_GL=gpu`, session 3's switch, in the harness and the frames script): 78 of 84, the six gate ride rows failing identically on the untouched default's build on this machine; our own stroke takes the swatch's box so a build from git fits one screen where one with the swatch does; the frames re-shot for both paints; review iteration 4 (`docs/specs/quiz.review.md`), stopped on Sam's word after five of seven readers, its proven defects fixed and its records open; the default merged in at ec7d5a3.
+- Left open, in the review log's verdict: the spec's older criteria and tables for the result as built, two e2e rows, hero-architecture.md's file map, the fonts manifest, CHECKLIST's E-S3-result lines; and for Sam, item 20 and the Canva licence.

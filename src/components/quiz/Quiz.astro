@@ -6,9 +6,16 @@
 // states and the decode (every element marked data-dc decodes in and out as section 2's labels do). Shade names,
 // numbers and hexes are resolved here at build from the catalog (the lazy chunk carries ids only). No style attributes
 // (the CSP has no style-src-attr): the swatches carry data-shade and deck.ts paints them through the CSSOM.
-import { QUIZ_COPY as Q, QUIZ_PERSONAS, QUIZ_QUESTIONS, needsRing, needsRingNight, shadeHref } from '../../config/quiz.ts';
+// The result screen follows Sam's reference of 2026-11-02 (E-S3-result): one screen on the drawn shade's deep tone, his
+// design's faces (Anton for the name, Poppins for the words and the chips, Work Sans Light for the labels) and placement,
+// his paint swatch recoloured (our own stroke where the build has no copy of it), the rest of the group as chips and the
+// offer as a band along the bottom; every line decodes as the site's text does (decode.ts, data-dc="prop"). Each chip carries its shade's tones (config/quiz-tones.ts), computed
+// here at build, and deck.ts sets the drawn shade's on the section.
+import { QUIZ_COPY as Q, QUIZ_PERSONAS, QUIZ_QUESTIONS, shadeHref } from '../../config/quiz.ts';
+import { chipInk, chipRim, resultTones } from '../../config/quiz-tones.ts';
 import { SHADES } from '../../config/shades.gen.ts';
 import { QUIZ_PICTURES } from '../../config/quiz-pictures.ts';
+import Smear from './Smear.astro';
 import '../../styles/quiz.css';
 // The visual questions' answer pictures (Sam, 2026-10-20; config/quiz-pictures.ts): AVIF and WebP at two widths from
 // scripts/quiz/encode-pictures.mjs, in a git-ignored folder (the Envato licence does not allow the files to be shared and
@@ -16,6 +23,12 @@ import '../../styles/quiz.css';
 const picUrls = import.meta.glob<string>('../../assets/quiz/pics/*.{avif,webp}', { eager: true, query: '?url', import: 'default' });
 const picIndex: Record<string, { width: number; height: number; widths: number[] }> =
   Object.values(import.meta.glob<{ default: Record<string, { width: number; height: number; widths: number[] }> }>('../../assets/quiz/pics/index.json', { eager: true }))[0]?.default ?? {};
+// The result's paint (E-S3-result; Sam, 2026-11-02: "the paint rub on the page should look exactly how it looks on the
+// image"): his swatch, a Canva element, taken from his reference by scripts/quiz/prepare-rub.mjs into a git-ignored folder
+// (out of the public repository until he confirms the licence); a build without it draws our own stroke (Smear.astro).
+const rubUrl = Object.values(import.meta.glob<string>('../../assets/quiz/rub/rub.webp', { eager: true, query: '?url', import: 'default' }))[0];
+const rubIndex = Object.values(import.meta.glob<{ default: { width: number; height: number } }>('../../assets/quiz/rub/index.json', { eager: true }))[0]?.default;
+const rub = rubUrl && rubIndex ? { src: rubUrl, width: rubIndex.width, height: rubIndex.height } : null;
 const PIC_SIZES = '(min-width: 900px) and (min-height: 600px) min(30vw, 440px), (min-width: 640px) and (max-height: 599px) min(calc((100vw - 92px) * 0.4), 368px), calc(100vw - 32px)';   // the frame's width: the laptop's column, a sideways phone's left column (two insets and the gap are 92 px at 844; 300.8 px there, quiz.css; at most 368 px, since the columns stop at 960 px: the left one peaks near 367.5 px at about 1032 px wide and is 363.5 px at 1280), the width between an upright phone's gutters
 const picture = (key: string) => {
   const m = picIndex[key];
@@ -34,10 +47,12 @@ const familyName = (f: string) => f.split('-').map((w) => w[0].toUpperCase() + w
 const shade = (id: string) => {
   const s = byId.get(id);
   if (!s) throw new Error(`quiz: ${id} is not a catalog shade`);
-  return { ...s, fam: Q.fam(familyName(s.family), s.index), href: shadeHref(s.family, s.n), ring: needsRing(s.hex), night: needsRingNight(s.hex) };
+  return { ...s, fam: Q.fam(familyName(s.family), s.index), href: shadeHref(s.family, s.n), tones: resultTones(s.hex), ink: chipInk(s.hex), rim: chipRim(s.hex) };
 };
 ---
 <section class="quiz" id="find" aria-label={Q.aria} data-state="intro">
+  <div class="qz-ground" aria-hidden="true"></div>
+  <div class="qz-vh" aria-hidden="true"></div>
   <div class="qz-stage">
     <div class="qz-intro" id="qzIntro">
       <h2 class="qz-h" data-dc><span class="sr-only">{Q.h}</span><span aria-hidden="true">{Q.h}</span></h2>
@@ -81,58 +96,63 @@ const shade = (id: string) => {
         const first = shade(p.shades[0]);
         return (
           <article class="qz-result" data-persona={p.id} data-finish={p.finish} hidden>
-            <span class="qz-big" data-shade={first.id} data-ring={first.ring ? '' : undefined} data-ring-night={first.night ? '' : undefined} aria-hidden="true"></span>
+            <div class="qz-r-head">
+              <p class="qz-eyebrow" data-dc="prop">{Q.eyebrow}</p>
+              <h3 class="qz-shade" tabindex="-1" data-dc="prop">{first.name}</h3>
+              <p class="qz-fam" data-dc="prop">{first.fam}</p>
+              <p class="qz-finish" data-dc="prop">{Q.finish(p.finish)}</p>
+            </div>
+            {rub ? <div class="qz-smear qz-rub" aria-hidden="true"><span class="qz-rub-col"></span><img class="qz-rub-img" src={rub.src} width={rub.width} height={rub.height} alt="" decoding="async" loading="lazy" /></div> : <Smear gloss={p.finish === 'gloss'} />}
             <div class="qz-rtext">
-              <p class="qz-eyebrow" data-dc>{Q.eyebrow}</p>
-              <h3 class="qz-shade" tabindex="-1" data-dc>{first.name}.</h3>
-              <p class="qz-fam" data-dc>{first.fam}</p>
-              <p class="qz-finish" data-dc>{Q.finish(p.finish)}</p>
-              <p class="qz-persona" data-dc>{p.name}</p>
-              <p class="qz-text" data-dc>{p.profile}</p>
-              <p class="qz-palette" data-dc>{p.palette}</p>
-              <p class="qz-also-h" data-dc>{Q.also}</p>
+              <p class="qz-persona" data-dc="prop">{p.name}</p>
+              <p class="qz-text" data-dc="prop">{p.profile}</p>
+              <p class="qz-palette"><span data-dc="prop">{p.palette}</span>{' '}<span class="qz-also-h" data-dc="prop">{Q.also}</span></p>
+              <div class="qz-r-more">
               <ul class="qz-also">
                 {p.shades.map((id) => { const s = shade(id); return (
-                  <li class="qz-mini" data-shade={s.id} data-family={s.family} data-name={s.name} data-fam={s.fam} data-href={s.href} data-ring={s.ring ? '' : undefined} data-ring-night={s.night ? '' : undefined} hidden={id === first.id}>
-                    <span class="qz-mini-sw" data-shade={s.id} data-ring={s.ring ? '' : undefined} data-ring-night={s.night ? '' : undefined} aria-hidden="true"></span>
-                    <span class="qz-mini-name" data-dc>{s.name}</span>
+                  <li class="qz-mini" data-shade={s.id} data-family={s.family} data-name={s.name} data-fam={s.fam} data-href={s.href} data-ink={s.ink} data-rim={s.rim ? '' : undefined} data-deep={s.tones.deep} data-band={s.tones.band} data-mid={s.tones.mid} data-sd={s.tones.dark} data-sl={s.tones.light} hidden={id === first.id}>
+                    <span class="qz-mini-name" data-dc="prop">{s.name}</span>
                   </li>
                 ); })}
               </ul>
-              <p class="qz-own" data-dc>{Q.own}</p>
               <div class="qz-actions">
-                <a class="qz-link qz-see" href={first.href} data-dc>{Q.see}</a>
-                <button type="button" class="qz-link qz-retry" data-dc>{Q.retry}</button>
+                <a class="qz-link qz-see" href={first.href} data-dc="prop">{Q.see}</a>
+                <button type="button" class="qz-link qz-retry" data-dc="prop">{Q.retry}</button>
+                {LEADS && <button type="button" class="qz-link qz-togift" data-dc="prop">{Q.toGift}</button>}
+              </div>
               </div>
             </div>
           </article>
         );
       })}
     </div>
-    <p class="sr-only" id="qzLive" aria-live="polite"></p>
   </div>
   {LEADS && <div class="qz-gift" id="qzGift" hidden>
     <div class="qz-gift-in">
-      <h3 class="qz-gift-h" data-dc>{Q.gift}</h3>
-      <p class="qz-gift-sub" data-dc>{Q.giftSub}</p>
+      <p class="qz-offer" tabindex="-1"><span data-dc="prop">{Q.offerLead}</span>{' '}<strong data-dc="prop">{Q.offerStrong}</strong>{' '}<span data-dc="prop">{Q.offerTail}</span></p>
       <form class="qz-form" id="qzForm" novalidate>
         <div class="qz-fields">
-          <label class="qz-label" for="qzEmail" data-dc>{Q.email}</label>
-          <input class="qz-input" id="qzEmail" name="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" required aria-describedby="qzErrEmail">
+          <div class="qz-row">
+            <label class="qz-label sr-only" for="qzEmail">{Q.email}</label>
+            <input class="qz-input" id="qzEmail" name="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" required aria-describedby="qzErrEmail" placeholder={Q.emailPlaceholder}>
+            <button type="submit" class="qz-send" id="qzSend" data-dc="prop">{Q.send}</button>
+          </div>
           <p class="qz-err" id="qzErrEmail"></p>
-          <label class="qz-check"><input type="checkbox" id="qzConsent" name="consent" required aria-describedby="qzErrConsent"><span class="qz-tick" aria-hidden="true"></span><span data-dc>{Q.consent}</span></label>
+          <label class="qz-check"><input type="checkbox" id="qzConsent" name="consent" required aria-describedby="qzErrConsent"><span class="qz-tick" aria-hidden="true"></span><span data-dc="prop">{Q.consent}</span></label>
           <p class="qz-err" id="qzErrConsent"></p>
-          <button type="submit" class="qz-link" id="qzSend" data-dc>{Q.send}</button>
           <p class="qz-msg" id="qzMsg" role="status"></p>
-          <p class="qz-fine" data-dc>{Q.fine}</p>
+          <p class="qz-fine" data-dc="prop">{Q.fine}</p>
         </div>
         <div class="qz-done" id="qzDone" hidden>
           <p class="qz-done-text" tabindex="-1"></p>
           <button type="button" class="qz-link qz-notyou">{Q.notYou}</button>
         </div>
       </form>
+      <button type="button" class="qz-link qz-toresult" data-dc="prop">{Q.toResult}</button>
     </div>
   </div>}
+  {/* the live region outside the stage and the band, so it is heard whichever of the two has the screen */}
+  <p class="sr-only" id="qzLive" aria-live="polite"></p>
 </section>
 <script>
   // the loader: the chunk comes once the section is within a screen, or at once when "Click to begin" or "Skip quiz" is

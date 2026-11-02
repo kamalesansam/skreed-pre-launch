@@ -9,6 +9,13 @@
 // case) and an aria-hidden row of one span per character, upper-cased as section 2 prints its labels. Only printable
 // ASCII rolls: the font has no U+201B or U+201F, so a curly quote, the no-break space and anything else outside ASCII
 // fades in without rolling, and no glyph ever falls back to another font mid-roll (the line would change width).
+//
+// The result screen (2026-11-02, E-S3-result) is set in Sam's reference's faces, Anton, Poppins and Work Sans,
+// proportional, with "the text animation of the site intact" (Sam, the same day). An element marked data-dc="prop" keeps
+// its case (the style sheet sets capitals where it wants them) and takes the same wipe and the same roll, but a rolled
+// glyph is drawn over the face's own (`data-r`, quiz.css), which keeps its place unseen, so no line changes width as the
+// glyphs count down; once its reveal has settled the row is joined back into one text node, so the face keeps its kerning
+// at rest, and it is split again when the next wipe starts.
 
 export const REVEAL_ALPHA = 0.4, REVEAL_ROLL = 0.75, ROLL_STEPS = 5.753, HIDE = 0.2, REDUCED = 0.2;
 /** labels.ts's roll, limited to printable ASCII (see above) */
@@ -16,7 +23,7 @@ export const roll = (ch: string, k: number): string => { const c = ch.charCodeAt
 const clamp = (v: number) => Math.max(0, Math.min(1, v));
 
 interface Glyph { s: HTMLSpanElement; ch: string; shown: string; a: number; a0: number }
-interface Run { el: HTMLElement; text: string; glyphs: Glyph[]; on: boolean; t0: number; settled: boolean; hidden: boolean; wait: (() => void)[] }
+interface Run { el: HTMLElement; text: string; row: HTMLSpanElement; glyphs: Glyph[]; on: boolean; t0: number; settled: boolean; hidden: boolean; prop: boolean; whole: boolean; wait: (() => void)[] }
 
 export interface Decoder {
   /** split the element's text (or `text`) into glyphs, hidden (or `visible`, settled as it stands); a second call with the same text keeps the glyphs */
@@ -37,19 +44,35 @@ export interface Decoder {
 export function createDecoder(reduced: () => boolean, onBusy: (busy: boolean) => void = () => {}): Decoder {
   const runs = new WeakMap<HTMLElement, Run>(), active = new Set<Run>();
   let raf = 0;
-  const put = (g: Glyph, a: number) => { if (Math.abs(a - g.a) > 1e-3 || a === 0 || a === 1) { g.a = a; g.s.style.opacity = a >= 1 ? '' : a.toFixed(3); } };
-  const glyph = (g: Glyph, ch: string) => { if (ch !== g.shown) { g.shown = ch; g.s.textContent = ch; } };
+  const put = (g: Glyph, a: number) => { if (Math.abs(a - g.a) > 1e-3 || a === 0 || a === 1) { g.a = a; g.s.style.opacity = a >= 1 ? '' : a <= 0 ? '0' : a.toFixed(3); } };
+  /** the glyph a character shows: swapped in the labels' mono (every advance the same), drawn over the face's own in a proportional face */
+  const glyph = (r: Run, g: Glyph, ch: string) => {
+    if (ch === g.shown) return;
+    g.shown = ch;
+    if (!r.prop) g.s.textContent = ch;
+    else if (ch === g.ch) delete g.s.dataset.r;
+    else g.s.dataset.r = ch;
+  };
 
+  /** the row as one span per character at opacity `a` (every character, spaces too, as labels.ts does: a link's underline is
+   *  drawn per span, so a bare space would show its piece of underline before the words have decoded) */
+  function split(r: Run, a: number) {
+    r.row.textContent = ''; r.glyphs = []; r.whole = false;
+    for (const ch of r.prop ? r.text : r.text.toUpperCase()) {
+      const s = document.createElement('span'); s.textContent = ch; if (a < 1) s.style.opacity = a <= 0 ? '0' : a.toFixed(3);
+      r.row.append(s); r.glyphs.push({ s, ch, shown: ch, a, a0: 0 });
+    }
+  }
+  /** a proportional face at rest: its row back to one text node, so the face keeps its kerning once the decode has settled */
+  function join(r: Run) { if (!r.prop || r.whole) return; r.row.textContent = r.text; r.glyphs = []; r.whole = true; }
   function build(el: HTMLElement, text: string, visible: boolean): Run {
     el.textContent = '';
     const sr = document.createElement('span'); sr.className = 'sr-only'; sr.textContent = text;
     const row = document.createElement('span'); row.className = 'dc'; row.setAttribute('aria-hidden', 'true');
-    const glyphs: Glyph[] = [];
-    // every character gets a span, spaces too (labels.ts does the same): a link's underline is drawn per span, so a bare
-    // space would show its piece of underline before the words have decoded
-    for (const ch of text.toUpperCase()) { const s = document.createElement('span'); s.textContent = ch; if (!visible) s.style.opacity = '0'; row.append(s); glyphs.push({ s, ch, shown: ch, a: visible ? 1 : 0, a0: 0 }); }
     el.append(sr, row);
-    const r: Run = { el, text, glyphs, on: visible, t0: 0, settled: true, hidden: !visible, wait: [] };
+    const r: Run = { el, text, row, glyphs: [], on: visible, t0: 0, settled: true, hidden: !visible, prop: el.dataset?.dc === 'prop', whole: false, wait: [] };
+    split(r, visible ? 1 : 0);
+    if (visible) join(r);
     runs.set(el, r); return r;
   }
   function prepare(el: HTMLElement, text?: string, visible = false): Run {
@@ -66,32 +89,34 @@ export function createDecoder(reduced: () => boolean, onBusy: (busy: boolean) =>
   function step(r: Run, now: number, instant: boolean) {
     const t = instant ? 1e3 : Math.max(0, (now - r.t0) / 1000), n = r.glyphs.length, xs = (i: number) => (n > 1 ? i / (n - 1) : 0);
     if (r.on) {
-      if (reduced()) { const a = Math.min(1, t / REDUCED); for (const g of r.glyphs) { put(g, a); glyph(g, g.ch); } if (a >= 1) r.settled = true; return; }
+      if (reduced()) { const a = Math.min(1, t / REDUCED); for (const g of r.glyphs) { put(g, a); glyph(r, g, g.ch); } if (a >= 1) r.settled = true; return; }
       const u = Math.min(1, t / REVEAL_ALPHA), v = Math.min(1, t / REVEAL_ROLL);
-      r.glyphs.forEach((g, i) => { const x = xs(i); put(g, clamp(11 * u - 10 * x)); glyph(g, roll(g.ch, Math.floor((1 - clamp(2 * v - x)) * ROLL_STEPS) % 8)); });
+      r.glyphs.forEach((g, i) => { const x = xs(i); put(g, clamp(11 * u - 10 * x)); glyph(r, g, roll(g.ch, Math.floor((1 - clamp(2 * v - x)) * ROLL_STEPS) % 8)); });
       if (t >= REVEAL_ROLL) r.settled = true;
     } else {
       const u = Math.min(1, t / HIDE);
-      r.glyphs.forEach((g, i) => { put(g, Math.min(g.a0, reduced() ? 1 - u : clamp(11 * (1 - u) - 10 * xs(i)))); glyph(g, g.ch); });
+      r.glyphs.forEach((g, i) => { put(g, Math.min(g.a0, reduced() ? 1 - u : clamp(11 * (1 - u) - 10 * xs(i)))); glyph(r, g, g.ch); });
       if (u >= 1) r.hidden = true;
     }
   }
+  function finish(r: Run) { active.delete(r); if (r.on) join(r); done(r); }
   function frame(now: number) {
     raf = 0;
     const instant = document.visibilityState === 'hidden';
-    for (const r of [...active]) { step(r, now, instant); if (r.on ? r.settled : r.hidden) { active.delete(r); done(r); } }
+    for (const r of [...active]) { step(r, now, instant); if (r.on ? r.settled : r.hidden) finish(r); }
     if (active.size) raf = requestAnimationFrame(frame); else onBusy(false);
   }
   function start(r: Run, on: boolean, delay: number): Promise<void> {
     if (r.on === on && (on ? r.settled : r.hidden)) return Promise.resolve();
     // the same way while it is under way: join it, as labels.ts's setOn() does (restarting would flash the glyphs back)
     if (r.on === on && active.has(r)) return new Promise<void>((res) => r.wait.push(res));
+    if (r.whole) split(r, 1);   // a proportional row at rest is one text node: its glyphs again, as they stand, before the wipe
     if (r.on !== on) { r.on = on; if (!on) for (const g of r.glyphs) g.a0 = g.a; }
     r.t0 = performance.now() + delay * 1000; r.settled = false; r.hidden = false;
     const p = new Promise<void>((res) => r.wait.push(res));
     active.add(r); onBusy(true);
     // a hidden page draws no frames: the text goes straight to its end state, so a background tab never stalls the quiz
-    if (document.visibilityState === 'hidden') { step(r, 0, true); active.delete(r); done(r); if (!active.size) onBusy(false); }
+    if (document.visibilityState === 'hidden') { step(r, 0, true); finish(r); if (!active.size) onBusy(false); }
     else if (!raf) raf = requestAnimationFrame(frame);
     return p;
   }
@@ -103,7 +128,7 @@ export function createDecoder(reduced: () => boolean, onBusy: (busy: boolean) =>
     hide: (el, delay = 0) => start(prepare(el), false, delay),
     showAll(els, step = 0.05) { const s = els.length > 1 ? Math.min(step, 0.6 / (els.length - 1)) : 0; return Promise.all(els.map((el, i) => start(prepare(el), true, i * s))).then(() => {}); },
     hideAll(els) { return Promise.all(els.map((el) => start(prepare(el), false, 0))).then(() => {}); },
-    set(el, text) { const r = prepare(el, text); active.delete(r); r.on = true; r.settled = true; r.hidden = false; for (const g of r.glyphs) { put(g, 1); glyph(g, g.ch); } done(r); },
-    conceal(el) { const r = prepare(el); active.delete(r); r.on = false; r.settled = true; r.hidden = true; for (const g of r.glyphs) { put(g, 0); glyph(g, g.ch); } done(r); },
+    set(el, text) { const r = prepare(el, text); active.delete(r); if (r.whole) split(r, 1); r.on = true; r.settled = true; r.hidden = false; for (const g of r.glyphs) { put(g, 1); glyph(r, g, g.ch); } join(r); done(r); },
+    conceal(el) { const r = prepare(el); active.delete(r); if (r.whole) split(r, 0); r.on = false; r.settled = true; r.hidden = true; for (const g of r.glyphs) { put(g, 0); glyph(r, g, g.ch); } done(r); },
   };
 }

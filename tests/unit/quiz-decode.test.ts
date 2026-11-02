@@ -54,13 +54,21 @@ test('every character the quiz draws, and every glyph its roll passes through, i
   }
 });
 
-test('no boxes: no panel, no fill, no shadow; the controls are words (Sam, 2026-10-19)', () => {
+test('no boxes outside the result: no panel, no fill, no shadow, the controls are words (Sam, 2026-10-19); on the result only the fills of his reference of 2026-11-02 (E-S3-result)', () => {
   const css = read('src/styles/quiz.css').replace(/\/\*[\s\S]*?\*\//g, '');
-  for (const m of css.matchAll(/background(?:-color)?:\s*([^;}]+)/g)) assert.match(m[1].trim(), /^(none|transparent)$/, `a fill in quiz.css: ${m[0]}`);
-  assert.doesNotMatch(css, /box-shadow|text-shadow|backdrop-filter|filter:/);
-  // borders: the swatch hairline, the email field's underline and the focus ring's inner line only
+  // fills: none, but the result's ground, the offer's band (and its run to the screen's foot), the paint's colour layer
+  // (Sam's swatch's outline filled with the drawn shade), the field and Send (the chips are painted through the CSSOM)
+  for (const m of css.matchAll(/([^{}]+)\{[^{}]*?\bbackground(?:-color)?:\s*([^;}]+)/g)) {
+    if (/^(none|transparent)$/.test(m[2].trim())) continue;
+    assert.match(m[1].trim(), /^(\.qz-ground|\.qz-gift|\.qz-gift::after|\.qz-rub-col|\.qz-input|\.qz-send|\.qz-send:hover:not\(\[aria-disabled="true"\]\))$/, `a fill in quiz.css: ${m[1].trim()} ${m[2]}`);
+  }
+  // shadows: the shade name's one hard offset (the reference's darker copy behind the letters) and nothing else
+  // (the decode's roll in a proportional face draws the rolled glyph over the face's own: the name's layer goes with it)
+  for (const m of css.matchAll(/([^{}]+)\{[^{}]*\btext-shadow:/g)) assert.ok(['.qz-shade', '.quiz .dc > span[data-r]', '.quiz .dc > span[data-r]::after'].includes(m[1].trim()), `a text-shadow on ${m[1].trim()}`);
+  assert.doesNotMatch(css, /box-shadow|backdrop-filter|(^|[^-])filter:/m);
+  // borders: the dark chips' hairline, the invalid field's line and the focus ring's inner line only
   for (const m of css.matchAll(/([^{}]+)\{([^}]*\bborder(?:-bottom)?(?:-width)?:(?!\s*0\b)\s*[^;}]+)/g)) {
-    assert.match(m[1].trim(), /data-ring|\.qz-input|focus-visible/, `a border in quiz.css: ${m[1].trim()}`);
+    assert.match(m[1].trim(), /data-rim|\.qz-input|focus-visible/, `a border in quiz.css: ${m[1].trim()}`);
   }
   const astro = read('src/components/quiz/Quiz.astro');
   assert.doesNotMatch(astro, /qz-panel|class="btn|txtbtn/);
