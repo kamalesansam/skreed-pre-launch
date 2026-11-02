@@ -488,8 +488,10 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       // the position
       if (!seam) { holdFrame(f.t); arrival(f.t, eps); }
       prevRaw = qRaw;
-      // the fourth wipe (section-5.md 2): from q 3.8 over one screen, on the raw position; no exit seam follows it (2026-11-03)
-      const wipeOut = clamp01((qRaw - WIPE4_START) / ROOM_SCREENS.out);
+      // the fourth wipe (section-5.md 2): from q 3.8 over one screen, on the raw position; no exit seam follows it (2026-11-03).
+      // Done within 2 px of its end: the page's last position stops a fraction of a pixel short of section 5's sub-pixel
+      // top, and a cut a hair short of whole kept section 4's frame on and the island's ground off at the section's rest
+      const wipeOut = qRaw >= WIPE4_START + ROOM_SCREENS.out - eps ? 1 : clamp01((qRaw - WIPE4_START) / ROOM_SCREENS.out);
       lastWipeOut = wipeOut;
       // a seam first: its phase sets the carousel's cloud for this frame's draw, and may change the state (the exit's jump, the wrap's landing)
       const cover = seam ? seamFrame(f.t, seam) : 0;
@@ -514,7 +516,8 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       const showable = state !== 'approach' || first;
       const clock = revealAt >= 0 ? clamp01((f.t - revealAt) / 1.0) : 1;
       const wipeIn = showable ? Math.min(clamp01(q / ROOM_SCREENS.wipe), clock) : 0;
-      const on = showable && inRoom && qRaw > 0;
+      // the cut done, section 4's frame is off (its carousel and loops idle under section 5): the ground is the island's alone
+      const on = showable && inRoom && qRaw > 0 && wipeOut < 1;
       // the carousel draws, and its loops run, while the section is on or a seam's cloud needs it
       const want = on || !!seam;
       if (want !== drawn) { drawn = want; syncMotion(); }

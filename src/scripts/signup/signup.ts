@@ -13,6 +13,7 @@
 // announcement. No loop from the section's end since 2026-11-03 (Sam: "remove the loop"). Strings from config/signup.ts.
 import { FILL_GATE, FOLLOW_COUNT, SIGNUP_COPY as C, SIGNUP_FOLLOWS, SIGNUP_KEYS, SIGNUP_LEAD_ENDPOINT, addedLine, fill, fillMs, jarById, pressFollow, revealSpan, stateOf, yoursAlt } from '../../config/signup.ts';
 import { SIZES, STATE_SRCS, STATE_TOPS, type Srcs } from './jar-srcs.ts';
+import { clearMask } from './cut.ts';
 import { reducedMQ } from '../motion.ts';
 import { track } from '../quiz/track.ts';
 
@@ -190,12 +191,35 @@ export function mountSignup(root: HTMLElement): void {
     };
   }
 
-  // ---- the island's word on a change (hero/loop.ts): the body goes under a seam's cloud with the cover, back at rest
+  // ---- the fourth wipe on the 3D path (Sam, 2026-11-03: "the transition is not done properly, i could see that box"):
+  // the island's cut draws the cream ground over the scene along its ragged diagonal, so while it runs the section leaves
+  // its own ground to the canvas (no cream box rising with a flat edge under the cut) and shows its lines only below the
+  // cut's clear line (cut.ts), ramping in over an eighth of a screen just behind the band; at either end, nothing. Lead and
+  // soft in px: the line is the worst texel's, and the lead covers a frame of scroll the compositor runs ahead of the draw
+  const stage = document.getElementById('stage');
+  let cutOn = false;
+  const cut = (w: number) => {
+    if (!(w > 0 && w < 1)) {
+      if (!cutOn) return;
+      cutOn = false; delete root.dataset.cut;
+      root.style.removeProperty('mask-image'); root.style.removeProperty('-webkit-mask-image');
+      return;
+    }
+    const vw = H.clientWidth || innerWidth, vh = innerHeight, r = stage?.getBoundingClientRect();
+    const canvas = r && r.width > 0 && r.height > 0 ? r : { left: 0, top: 0, width: vw, height: vh };
+    const m = clearMask(w, canvas, vw / vh, root.getBoundingClientRect(), 0.02 * vh, 0.12 * vh);
+    root.style.setProperty('mask-image', m); root.style.setProperty('-webkit-mask-image', m);
+    if (!cutOn) { cutOn = true; root.dataset.cut = ''; }
+  };
+
+  // ---- the island's word on a change (hero/loop.ts): the body goes under a seam's cloud with the cover, back at rest;
+  // the cut's progress while the island draws the fourth wipe under the section
   const body = $('suBody');
   window.__skreedSignupFrame = (f) => {
     const op = f.cover > 0 && !isPoster() ? Math.max(0, 1 - f.cover) : 1;
     if (body) body.style.opacity = op < 1 ? op.toFixed(3) : '';
     root.dataset.state = op < 1 ? 'seam' : 'rest';
+    cut(f.on && !isPoster() ? f.wipe : 0);
   };
 
   // ---- the logotype over the section on the poster tier: Urban Slate while the section's cream ground is under the

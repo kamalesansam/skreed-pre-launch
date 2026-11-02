@@ -404,6 +404,55 @@ test('section 4 at 390 x 844: the glue at section 4\'s seam settles a visitor\'s
   await ctx.close();
 });
 
+test('section 4 to 5 at 390 x 844: the fourth wipe shows no box of section 5\'s own, and the glue settles a wheel run in it to the nearer end with the navbar\'s menu button focused (Sam, 2026-11-03)', async ({ browser, baseURL }) => {
+  test.setTimeout(900_000);
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+  const page = await ctx.newPage();
+  // the glue on: no ?glue=0 here
+  await page.goto(new URL('/?tier=hero3d&room=open', baseURL).href);
+  await page.waitForFunction(() => window.__heroStarted && !!window.__skreedIntro, null, { timeout: 540_000, polling: 500 });
+  await page.evaluate(() => (window.__skreedIntro as unknown as { skip(): void }).skip());
+  await page.waitForFunction(() => !document.documentElement.classList.contains('loading'), null, { timeout: 300_000, polling: 500 });
+  await page.waitForTimeout(2500);   // the page scroll chunk is imported once the intro ends
+  await scenesIn(page);
+  await page.evaluate(() => window.__s4!.scene(4));
+  await expect.poll(async () => (await s4(page)).scene, { timeout: 10_000 }).toBe(4);
+  await page.waitForTimeout(800);
+  const span = await page.evaluate(() => { const top = document.getElementById('room')!.getBoundingClientRect().top + scrollY; return { start: top + 3.8 * innerHeight, end: top + 4.8 * innerHeight }; });
+  const y = () => page.evaluate(() => scrollY);
+  // mid-cut, the glue held off: the section leaves its ground to the canvas's cut and masks its lines in behind the band
+  await page.evaluate(() => window.__s4!.glue(false));
+  await page.evaluate((t) => scrollTo({ top: t, behavior: 'instant' }), span.start + 0.5 * (span.end - span.start));
+  await page.waitForTimeout(500);
+  await expect(page.locator('#signup')).toHaveAttribute('data-cut', '');
+  await expect(page.locator('#signup')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  expect(await page.evaluate(() => getComputedStyle(document.getElementById('signup')!).maskImage)).toContain('linear-gradient');
+  await page.evaluate((t) => scrollTo({ top: t, behavior: 'instant' }), span.start);
+  await page.waitForTimeout(500);
+  await page.evaluate(() => window.__s4!.glue(true));
+  // the navbar's control focused, as a tap leaves it (on a phone the menu button, which the sheet hands the focus back to;
+  // fixed to the viewport, it never scrolls out of view)
+  await page.locator('.snav-menu').focus();
+  expect(await page.evaluate(() => document.activeElement === document.querySelector('.snav-menu'))).toBe(true);
+  await page.mouse.move(200, 400);
+  // a run that stops 30% into the cut settles back to its start
+  await page.mouse.wheel(0, 0.3 * (span.end - span.start));
+  await expect.poll(y, { timeout: 5_000 }).toBeCloseTo(span.start, 0);
+  // one that stops past the middle settles on to section 5's rest, the page's last position
+  await page.mouse.wheel(0, 0.7 * (span.end - span.start));
+  const rest = await restY(page);
+  await expect.poll(async () => Math.abs((await y()) - rest), { timeout: 5_000 }).toBeLessThan(2);
+  expect(await page.evaluate(() => document.activeElement === document.querySelector('.snav-menu'))).toBe(true);
+  // at rest the cut is done: the ground the island's whole frame, section 4's loops idle, no mask, the logotype Urban Slate
+  await expect(page.locator('#signup')).toHaveAttribute('data-ground', 'island');
+  await expect(page.locator('#signup')).not.toHaveAttribute('data-cut', '');
+  expect((await s4(page)).wipeOut).toBe(1);
+  expect((await s4(page)).loops.filter((l) => l.playing)).toHaveLength(0);
+  expect(await page.evaluate(() => getComputedStyle(document.getElementById('signup')!).maskImage)).toBe('none');
+  await expect(page.locator('.site-logo')).toHaveAttribute('data-tone', 'light');
+  await ctx.close();
+});
+
 test('section 4 at 390 x 844: Ctrl+wheel in range is the browser\'s zoom and never steps; a one-finger pan at visualViewport.scale 2 never steps (AC3)', async ({ browser, baseURL }) => {
   test.setTimeout(900_000);
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, hasTouch: true });

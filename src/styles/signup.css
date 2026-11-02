@@ -31,6 +31,9 @@
 }
 /* the island draws the same ground under the section on the 3D path (D10) and says so: the page leaves it to the canvas */
 .signup[data-ground="island"] { background: transparent; }
+/* and while its cut runs (the fourth wipe, signup.ts with cut.ts): the canvas draws the ground behind the ragged band, so
+   the section shows no box of its own, its lines masked in just behind the band (Sam, 2026-11-03: "i could see that box") */
+.signup[data-cut] { background: transparent; }
 .signup, .signup *, .signup *::before, .signup *::after { box-sizing: border-box; }
 :where(.signup) :where(p, h2, h3) { margin: 0; }
 :where(.signup) :where(h2, h3) { font: inherit; }

@@ -124,9 +124,16 @@ export function createPageScroll(o: PageScrollOptions): PageScroll {
   };
 
   // ---- the glue's decision, once the run is still
+  // The focused element a settle must keep in view: only a focus the visitor sees (:focus-visible, a keyboard's), and only
+  // one the page's scroll moves. A link or a button keeps the focus after a click with no ring to show for it, and the
+  // navbar's links are fixed to the viewport while their document rect moves with every scroll, so either froze every
+  // settle forward after a visit through the navbar or a click in the scenes (Sam, 2026-11-03: "the glue stick is not
+  // working")
+  const seen = (el: Element) => { try { return el.matches(':focus-visible'); } catch { return true; } };
+  const fixed = (el: Element) => { try { for (let n: Element | null = el; n && n !== html; n = n.parentElement) if (getComputedStyle(n).position === 'fixed') return true; } catch { /* no styles to read */ } return false; };
   const keepRect = () => {
     const el = document.activeElement;
-    if (!el || el === document.body || el === html) return null;
+    if (!el || el === document.body || el === html || !seen(el) || fixed(el)) return null;
     const r = el.getBoundingClientRect();
     return r.height > 0 ? { top: r.top + scrollY, bottom: r.bottom + scrollY } : null;
   };

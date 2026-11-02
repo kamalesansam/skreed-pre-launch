@@ -43,7 +43,7 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
   // section 5's ground held (section5/ground.ts): the canvas size it was last drawn at, flat and uncovered, or null; and
   // the last frame handed to the page (NaN at first, so the first is always sent)
   let flatAt: string | null = null;
-  const sent = { on: null as boolean | null, cover: NaN, wipe: NaN };
+  const sent = { on: null as boolean | null, cover: NaN, wipe: NaN, whole: false };
 
   function step() {
     if (import.meta.env.PUBLIC_HERO_HOOKS === '1') window.__skreedFrame = (window.__skreedFrame ?? 0) + 1;
@@ -155,6 +155,10 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
     // scenes, Urban Slate under a seam's cloud, after the exit's jump too, when the section is off and the cloud thins
     // over the hero at rest
     if (plan && (cover > 0 || (roomOn && plan.wipeIn >= 0.5))) window.__skreedLogo?.setTone(plan.toneDark);
+    // and over section 5's ground as the whole frame (section 4's frame off, its plan silent): Urban Slate, said on the change
+    const whole5 = s5 === 'whole';
+    if (whole5 && !sent.whole) window.__skreedLogo?.setTone(true);
+    sent.whole = whole5;
   }
   function frame() {
     raf = requestAnimationFrame(frame);                                          // F1: the request first, so one bad frame can never stop the loop
