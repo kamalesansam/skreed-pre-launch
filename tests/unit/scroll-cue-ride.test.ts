@@ -6,6 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CUE } from '../../src/config/cue.ts';
+import { S2T } from '../../src/config/hero.ts';
 
 const VH = 844;
 const g = globalThis as unknown as Record<string, unknown>;
@@ -31,7 +32,9 @@ const { rideCopy } = await import('../../src/scripts/hero/scroll/ride.ts');
 const more = mkEl(), cue = mkEl();
 const els = { heroCopy: null, cue: cue as unknown as HTMLElement, labels: null, siteLogo: null, more: more as unknown as HTMLElement };
 /** one island frame at `screens`, section 2 built, the first wipe at rest */
-const frame = (screens: number, dt = 100) => { now += dt; g.scrollY = screens * VH; const tp = Math.min(1, Math.max(0, screens - 5)); rideCopy(els, tp, 0.46, true); };
+const frame = (screens: number, dt = 100) => { now += dt; g.scrollY = screens * VH; const tp = Math.min(1, Math.max(0, (screens - S2T.PULL) / S2T.WIPE)); rideCopy(els, tp, 0.46, true); };
+/** two pin places by the scroll map (halved on 2026-11-02): mid pull-back, and the cascade's middle past the first wipe */
+const PIN_A = S2T.PULL / 2, PIN_B = (S2T.W1END + S2T.LAND) / 2;
 const on = () => more.classes.has('is-on');
 
 test('under the lock (loading, intro, poster) at the top with the chevrons off: never on, nothing measured, and the rest counts from the lock\'s end', () => {
@@ -55,21 +58,21 @@ test('under the lock (loading, intro, poster) at the top with the chevrons off: 
 
 test('the pin: the place is set in the frame the words come on, the reads are kept per rest, and the tone follows the wipe', () => {
   rootClasses.clear(); reads = { doc: 0, quiz: 0 };
-  frame(2.5); cue.classes.add('is-off');   // the plain script hides the chevrons past 8 px
-  for (let i = 0; i < 14; i++) frame(2.5);
+  frame(PIN_A); cue.classes.add('is-off');   // the plain script hides the chevrons past 8 px
+  for (let i = 0; i < 14; i++) frame(PIN_A);
   assert.equal(on(), false, 'not before the rest'); assert.equal(more.dataset.at, undefined, 'no place before the words come on');
-  frame(2.5);
+  frame(PIN_A);
   assert.equal(on(), true); assert.equal(more.dataset.at, 'pin', 'placed in the same frame'); assert.equal(more.dataset.tone, undefined, 'Pearl Whisper before the wipe');
-  for (let i = 0; i < 20; i++) frame(2.5);
+  for (let i = 0; i < 20; i++) frame(PIN_A);
   assert.equal(reads.quiz, 1, 'the quiz read once per rest, never per frame'); assert.equal(reads.doc, 0, 'the document only at the top');
-  frame(10); assert.equal(on(), false, 'moving: off at once'); assert.equal(more.dataset.at, 'pin', 'the place kept between two pin places');
-  for (let i = 0; i < 16; i++) frame(10);
+  frame(PIN_B); assert.equal(on(), false, 'moving: off at once'); assert.equal(more.dataset.at, 'pin', 'the place kept between two pin places');
+  for (let i = 0; i < 16; i++) frame(PIN_B);
   assert.equal(on(), true); assert.equal(more.dataset.tone, 'light', 'Urban Slate over the fog'); assert.equal(reads.quiz, 2, 'read again after the move');
 });
 
 test('a jump to the top from the pin: off at once, the pin place held through the fade out, then dropped, and back over the column after the rest (D10)', () => {
   rootClasses.clear(); cue.classes.add('is-off');
-  frame(10); for (let i = 0; i < 16; i++) frame(10);
+  frame(PIN_B); for (let i = 0; i < 16; i++) frame(PIN_B);
   assert.equal(on(), true); assert.equal(more.dataset.at, 'pin');
   frame(0);   // the Home key, a scrollbar drag, a status-bar tap: the chevrons stay off while the camera's followers lag
   assert.equal(on(), false, 'off in the frame the scroll changed'); assert.equal(more.dataset.at, 'pin', 'still in the corner while it fades');

@@ -3,6 +3,12 @@
 // (acceptance 5's grid row; its 3D rows are tests/family/specs/scroll-cue.spec.ts). The pin's rows wait for the words to
 // settle rather than for a fixed time: under SwiftShader a frame can take a second.
 import { test, expect, type Page } from '@playwright/test';
+import { S2T } from '../../src/config/hero.ts';
+
+/** the pin's places by the scroll map (halved on 2026-11-02, section-2.md 14), never literal screens: the pull-back's fifth, half, 0.6 and end,
+ *  mid first wipe (hidden), its end, the cascade's middle, the gems' rest, the glue's rest, mid second wipe, its end and the quiz (hidden) */
+const { PULL, WIPE, W1END, LAND, W2, W2END } = S2T;
+const P = { pull1: PULL * 0.2, pull: PULL / 2, pull3: PULL * 0.6, pullEnd: PULL, wipe1Mid: PULL + WIPE / 2, wipe1End: W1END, cascade: (W1END + LAND) / 2, gems: LAND + 0.3, gemsGlue: W2, wipe2Mid: W2 + WIPE / 2, wipe2End: W2END, quiz: W2END + 1 };
 
 const PEARL = 'rgb(247, 246, 243)', SLATE = 'rgb(56, 63, 67)';
 type Box = { l: number; t: number; r: number; b: number };
@@ -121,9 +127,9 @@ test.describe('the landing in the pin, 3D path', () => {
         return performance.now();
       }, k);
       const inset = Math.min(56, Math.max(16, 0.035 * w));
-      const all = [[1, true, PEARL], [2.5, true, PEARL], [3, true, PEARL], [5, true, PEARL], [5.5, false, ''], [6, true, SLATE], [10, true, SLATE],
-        [14.8, true, SLATE], [15.2, true, SLATE], [15.7, false, ''], [16.2, false, ''], [17.2, false, '']] as const;
-      const rows = full ? all : all.filter(([k]) => [2.5, 5.5, 10, 14.8, 15.2, 15.7].includes(k));   // the two tablet sizes (G10): one place of each kind
+      const all = [[P.pull1, true, PEARL], [P.pull, true, PEARL], [P.pull3, true, PEARL], [P.pullEnd, true, PEARL], [P.wipe1Mid, false, ''], [P.wipe1End, true, SLATE], [P.cascade, true, SLATE],
+        [P.gems, true, SLATE], [P.gemsGlue, true, SLATE], [P.wipe2Mid, false, ''], [P.wipe2End, false, ''], [P.quiz, false, '']] as const;
+      const rows = full ? all : all.filter(([k]) => [P.pull, P.wipe1Mid, P.cascade, P.gems, P.gemsGlue, P.wipe2Mid].includes(k));   // the two tablet sizes (G10): one place of each kind
       for (const [k, want, color] of rows) {
         const t0 = await at(k);
         if (!want) {
@@ -143,12 +149,12 @@ test.describe('the landing in the pin, 3D path', () => {
         if (w <= 1100) expect(Math.abs(g.text.l - inset), `${k}: on the left inset`).toBeLessThan(1.5);
         else expect(Math.abs(w - g.text.r - inset), `${k}: on the right inset`).toBeLessThan(1.5);
         expect(Math.abs(h - g.el.b - inset), `${k}: on the bottom inset`).toBeLessThan(1.5);
-        for (const c of g.countdown) if (k < 5.5) expect(hit(g.text, c), `${k}: clear of the countdown`).toBe(false);
-        if (k >= 14.8) {
+        for (const c of g.countdown) if (k < P.wipe1Mid) expect(hit(g.text, c), `${k}: clear of the countdown`).toBe(false);
+        if (k >= P.gems) {
           const labels = await page.evaluate(() => Array.from(document.querySelectorAll('.s2lab')).map((e) => { const r = e.getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom }; }).filter((r) => r.r > r.l));
           for (const l of labels) expect(hit(g.text, l), `${k}: clear of the gem label ${JSON.stringify(l)}`).toBe(false);
         }
-        if (k === 15.2) {
+        if (k === P.gemsGlue) {
           // moving from a shown place: the class goes on the island's next frame, and the words fade out within their 0.5 s of it
           await page.evaluate(() => scrollBy(0, -40));
           await page.waitForFunction(() => !document.getElementById('cueText')!.classList.contains('is-on'), null, { timeout: 10_000 });
@@ -165,7 +171,7 @@ test.describe('the landing in the pin, 3D path', () => {
     const page = await ctx.newPage();
     await page.goto('/?tier=hero3d');
     await page.waitForFunction(() => !!(window.__s2?.() as { ready?: boolean } | undefined)?.ready, null, { timeout: 420_000 });
-    await page.evaluate(() => { scrollTo(0, 10 * innerHeight); window.__skreedSnap?.(10); });
+    await page.evaluate((k) => { scrollTo(0, k * innerHeight); window.__skreedSnap?.(k); }, P.cascade);
     // on by the island's own class (is-on), not merely visible: at the top the words were visible with the chevrons, and under
     // SwiftShader a frame can take a second, so a jump back inside that frame would leave the island's rest clock at the top
     await page.waitForFunction(() => document.getElementById('cueText')!.classList.contains('is-on'), null, { timeout: 90_000 });
@@ -202,7 +208,7 @@ test.describe('the landing in the pin, 3D path', () => {
       w.__places = [];
       new MutationObserver(() => { const c = getComputedStyle(el); w.__places.push({ at: el.dataset.at, on: el.classList.contains('is-on'), opacity: Number(c.opacity), visibility: c.visibility, y: scrollY }); }).observe(el, { attributes: true, attributeFilter: ['data-at', 'class'] });
     });
-    for (const from of [2.5, 10]) {
+    for (const from of [P.pull, P.cascade]) {
       await page.evaluate((k) => { scrollTo(0, k * innerHeight); window.__skreedSnap?.(k); }, from);
       await page.waitForFunction(() => document.getElementById('cueText')!.classList.contains('is-on'), null, { timeout: 90_000 });
       await settled(page, true, 90_000, `${from} in the pin:`);

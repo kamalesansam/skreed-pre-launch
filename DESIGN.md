@@ -316,7 +316,7 @@ Sam, 2026-10-19: "add a back to top button throughout the site which navigates b
 - **Poster state.** On a stall or offline the loader becomes a transparent overlay over the poster image, showing only the status line ("You are offline. The countdown still runs." when offline, nothing on a stall).
 - **Semantics.** `role="progressbar"` with `aria-valuenow`, removed in its poster state. Everything behind it is `inert` while it shows.
 - **Compositor only.** Everything moves by transform and opacity through Web Animations.
-- **A return visit.** Back from a family page, or `/#families`, on the 3D path shows the same loader with the same rules (`family-page.md` 23); its exit also waits for section 2's gems to be built and lifts onto them at 14.5 screens.
+- **A return visit.** Back from a family page, or `/#families`, on the 3D path shows the same loader with the same rules (`family-page.md` 23); its exit also waits for section 2's gems to be built and lifts onto them at `S2T.LAND` (4.55 screens since 2026-11-02; 14.5 before).
 
 ### Block labels (hero canvas overlay)
 
@@ -554,7 +554,7 @@ One scale, used through `gap` on flex and grid, not per-element margins (rule 15
 
 ### The hero's layout
 
-- A fixed full-screen canvas over a 1720svh scroll track (`TRACK_SVH`: the pull-back 5 screens, the first wipe 1 screen, section 2's cascade and rest to 15.2, the second wipe to 16.2, then section 3 rising over the fog).
+- A fixed full-screen canvas over a 675svh scroll track (`TRACK_SVH`, since 2026-11-02: the pull-back 2.5 screens, the first wipe half a screen, the ten blocks leaving together at 2.75 and landing at 4.55, the rest to 5.25, the second wipe to 5.75, then section 3 rising over the fog; 1720svh with a 5-screen pull-back and one block every 0.8 screens before that, `docs/specs/section-2.md` section 14).
 - DOM riders (countdown, cue, logotype) are fixed and move only by transform and clip-path.
 - On the poster path the track is 100svh, and the poster and the countdown sit in that first screen.
 - Slots follow the track: section 2's riders, then `<main>` with section 3, the quiz (`section#find`; the Wall is a later section).

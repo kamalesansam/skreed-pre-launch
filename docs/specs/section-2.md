@@ -12,7 +12,7 @@ Sources (measured; all numbers below come from them):
 igloo.inc was measured, never copied. No igloo code, model, texture, font or string ships.
 
 ## 1. Goal
-The ten blocks of the Skreed mark leave the logo one at a time, fly down into a field of ten floating gems, one per colour family, and each gem opens its family's 24 shades. Brand goals served: 1 (the 240 shades are the product) and 2 (a site people remember and share).
+The ten blocks of the Skreed mark leave the logo together (one at a time until 2026-11-02, section 14), fly down into a field of ten floating gems, one per colour family, and each gem opens its family's 24 shades. Brand goals served: 1 (the 240 shades are the product) and 2 (a site people remember and share).
 
 ## 2. Wireframe in words
 
@@ -65,8 +65,8 @@ Same scroll map. The logo rides up to v 0.26 at 0.313 H. Two rows of five in rea
 ## 5. Motion plan
 Everything lives in the hero's one WebGL island (CLAUDE.md "Always do", E-C3). No GSAP; the hero loads none (E-GSAP). Reduced motion through `matchMedia` and CSS.
 
-- **Scroll map (screens of 100svh, S is the lagged scroll; Sam, 2026-10-10: a longer scene move, nothing flies up, a long slow flight):** PULL 0 to 2.6, the camera backing away along a level S-curve round the logo (heights within a metre, over the ground's measured heights; points in degrees, distance, height: (0, 24, -2.5), (-9, 26.5, -2.15), (5, 29, -1.95), (24, 32, -1.85), (35, 34, -1.8), then on past the pull-back, where only the logo is seen, (44, 38, -1.7), (40, 44, -1.5), (28, 50, -1.3), (15, 56, -1.1)). WIPE 1 2.6 to 3.6: igloo's cut, the hero layer held still (no slide) and the logo kept over section 2 through a mask, behind anything section 2 draws in front of it. CASCADE from 3.1: block j lifts off at 3.1 + 0.8 j and lands 1.8 screens later; the last lands at 12.1. REST 12.1 to 12.8. WIPE 2 12.8 to 13.8 into section 3's fog ground (the quiz). Track 1580svh. Built in v11 (`prototypes/hero-v9/`, live on the hero link).
-- **Per block j:** L_j = clamp((S - 3.1 - 0.8 j) / 1.8, 0, 1), e = cubic-bezier(0.42, 0, 0.12, 1) of L (a slow lift, a long glide, a long settle). The block's copy (its own triangles, matte black) starts at the block's exact view-space pose in the receding logo and follows a cubic curve that lifts and swings out to one side (0.38 of the distance), then comes in from above and in front to its slot; it tumbles mid-flight and its edges warm to its shade, folds into a point (L 0.42 to 0.62) as the gem grows out of it (0.50 to 0.78) and its core lights (0.5 to 0.85); the gem eases into its resting pose and igloo's float fades in over the last 15 percent.
+- **Scroll map (screens of 100svh, S is the lagged scroll; Sam, 2026-10-10: a longer scene move, nothing flies up, a long slow flight; superseded by section 13 and then by section 14, the map of 2026-11-02):** PULL 0 to 2.6, the camera backing away along a level S-curve round the logo (heights within a metre, over the ground's measured heights; points in degrees, distance, height: (0, 24, -2.5), (-9, 26.5, -2.15), (5, 29, -1.95), (24, 32, -1.85), (35, 34, -1.8), then on past the pull-back, where only the logo is seen, (44, 38, -1.7), (40, 44, -1.5), (28, 50, -1.3), (15, 56, -1.1)). WIPE 1 2.6 to 3.6: igloo's cut, the hero layer held still (no slide) and the logo kept over section 2 through a mask, behind anything section 2 draws in front of it. CASCADE from 3.1: block j lifts off at 3.1 + 0.8 j and lands 1.8 screens later; the last lands at 12.1. REST 12.1 to 12.8. WIPE 2 12.8 to 13.8 into section 3's fog ground (the quiz). Track 1580svh. Built in v11 (`prototypes/hero-v9/`, live on the hero link).
+- **Per block j:** L_j = clamp((S - 3.1 - 0.8 j) / 1.8, 0, 1) (since 2026-11-02 one L = clamp((S - CAS0) / FLY, 0, 1) for the ten, section 14), e = cubic-bezier(0.42, 0, 0.12, 1) of L (a slow lift, a long glide, a long settle). The block's copy (its own triangles, matte black) starts at the block's exact view-space pose in the receding logo and follows a cubic curve that lifts and swings out to one side (0.38 of the distance), then comes in from above and in front to its slot; it tumbles mid-flight and its edges warm to its shade, folds into a point (L 0.42 to 0.62) as the gem grows out of it (0.50 to 0.78) and its core lights (0.5 to 0.85); the gem eases into its resting pose and igloo's float fades in over the last 15 percent.
 - **Followers and speed limit:** igloo's two followers (0.075 then 0.15 per frame) with a cap of 0.075 screens per frame on the first; K moves at most 3 blocks per second.
 - **Holds:** re-frame and wipe 2 read min(S, 6.1) until every block has landed (K = 10.25); wipe 1 reads max(S, 2.0) until the logo is whole again (K = 0).
 - **Auto-settle (igloo's 1.4 s rule):** wheel and keys only, never on touch or under reduced motion. In the cascade it goes to the nearest K in {0..9, 10.25}; duration clamp(6 |dS|, 1.6, 2.4) s, inOut3. Section 4's glue is a separate settle and acts on touch too, instantly under reduced motion, by E-S4-snap (Sam, 2026-10-22: "page sections only, same on touch"; `docs/specs/section-4-flux.md` section 2, "The elastic glue", and section 10): only over the page's three seams (the first wipe, `S2T.PULL` to `S2T.W1END`; the quiz seam; section 4's own seam), never inside the cascade, where this auto-settle, on touch too by the same exception, is section 2's to build (section-4-flux.md section 8).
@@ -95,7 +95,7 @@ Everything lives in the hero's one WebGL island (CLAUDE.md "Always do", E-C3). N
 - Frame: the settled field with one gem hovered must not cost more than 1.6x the hero's rest frame (measured as a ratio under SwiftShader and on a real device before the port).
 
 ## 8. Acceptance criteria
-1. **Cascade, one at a time (CHECKLIST F1, D4).** Frame sets at S 2.0, 2.2, 2.5, 3.0, 4.0, 5.0, 6.1, 6.8 at 390 x 844 and 1280 x 800 show the blocks leaving in catalog order, at most one block in flight in any frame, each landing in its slot. A scripted wheel fling of 4800 px still gives lift-off gaps of 0.33 s or more.
+1. **Cascade, one at a time (CHECKLIST F1, D4).** Frame sets at S 2.0, 2.2, 2.5, 3.0, 4.0, 5.0, 6.1, 6.8 at 390 x 844 and 1280 x 800 show the blocks leaving in catalog order, at most one block in flight in any frame, each landing in its slot. A scripted wheel fling of 4800 px still gives lift-off gaps of 0.33 s or more. (Withdrawn on 2026-11-02: the ten leave together, section 14.7, criterion 2.)
 2. **Gem C read (A5, F1).** At rest the gems match the approved Gem C render (the live comparison page, look C) within 2 sRGB levels median per gem at the same pose and time; shimmer under 3 levels median frame to frame.
 3. **Float (F1).** Logged gem rotations match rot_a(t) = 0.1 sigma sin(w t + K_a s) within 1e-4 rad over 30 s; gem centres move under 0.5 px; per-gem w spread within plus or minus 10 percent of 0.3 rad/s.
 4. **Labels (A3, A4).** Ten titles with the exact strings of section 3 in IBM Plex Mono 500 at 13 px (desktop) and 12 px (phone), each inside 16 px gutters and none overlapping another gem or title at rest at 360, 390, 430, 768, 1024 and 1280 wide; the active gem adds its shade pair and call to action; reveal timings within one frame of 0.2 / 0.4 / 0.75 s on a virtual clock; the roll lands every character on its own glyph.
@@ -107,7 +107,7 @@ Everything lives in the hero's one WebGL island (CLAUDE.md "Always do", E-C3). N
 10. **Performance and safety (C1, C4, E1).** Section 2 adds at most 7 KB gz of JS; page module parses (`node --check`); under the artifact's strict CSP there are zero violations, zero console errors, no fetch, eval or WebAssembly; the settled-field frame costs at most 1.6x the hero's rest frame.
 
 ## 9. Decisions taken (cheaper on a phone where the brief was open)
-- Pace: 0.4 screens per lift-off, track 910svh (igloo's own pace of one screen per block would make the track about 15 screens).
+- Pace: 0.4 screens per lift-off, track 910svh (igloo's own pace of one screen per block would make the track about 15 screens). Since 2026-11-02 there is no pace: the ten leave together and the track is 675svh (section 14).
 - Departure order: catalog order (some paths cross in front of the logo; changing that would change the approved hero's colours).
 - Phone layout: all ten on one screen at 83 px in a zig-zag, not igloo's one stone per screen.
 - Desktop layout: 5 + 5 band, not a 3-4-3 hex.
@@ -134,7 +134,7 @@ Everything lives in the hero's one WebGL island (CLAUDE.md "Always do", E-C3). N
 - Real-device traces (recorded as pending, as for the hero).
 
 ## 12. Open for Sam
-1. Pace: decided (Sam, 2026-10-10): slower; built at 0.8 screens between lift-offs and 1.8 screens per flight.
+1. Pace: decided (Sam, 2026-10-10): slower; built at 0.8 screens between lift-offs and 1.8 screens per flight. Decided again (Sam, 2026-11-02): no stagger, the ten leave together, the flight still 1.8 screens, the hero's scroll halved (section 14).
 2. Per-gem float speed varied by up to 10 percent (default yes).
 3. Label contrast: decided, igloo's look (approved).
 5. Label content: decided, the singular family name; the call to action on hover. Pending: whether the singular names (and Basic Brown) replace the catalog family names everywhere, in `docs/data/shades-240.json` and the family page URLs.
@@ -145,3 +145,53 @@ Everything lives in the hero's one WebGL island (CLAUDE.md "Always do", E-C3). N
 - Clicking a gem opens its family page over the scene (the family-pages prototype embedded); the Skreed mark there, or Back, returns.
 - Slower (Sam: "the scene is moving so fast with less scroll, make it more scroll, less scene movement"): the pull-back now takes 5 screens (was 2.6) on a smoothstep ease (peak rate 1.5, the old cubic ease peaked at 3), and the weave is 6 units each way (was 8), then 3, 5.25 and 1.5 left after it. Measured on the bake's ground: the logo's peak drift across the frame fell from 2.6 to 0.56 of the screen width per screen of scroll, the camera's peak speed from 92 to 20 units per screen, and the camera keeps at least 0.47 units over the ground (0.37 before). Everything after the pull-back moves by 2.4 screens: the wipe 5 to 6, the cascade from 5.5, the last landing at 14.5, the rest to 15.2, the wipe into section 3's fog ground 15.2 to 16.2. Track 1720svh since section 3 (1820 on this date). Artifact version 31.
 
+## 14. Half the scroll, the blocks together (Sam, 2026-11-02)
+
+Status: planned and built 2026-11-02 on the Astro island (the `hero-scroll-half` work), reviewed against this section; review log `docs/specs/section-2.review.md`. Sam's brief, in his words: "remove half of the the scroll from the hero section, that' jsut too much scrolling ... And make sure the other half px render is deleted so that it is more optimized. And also in the second section, each block will not align itself one by one in order. All the blocks from the logo will disperse and align itself in one single go at a time, at the same time. So all the blocks will align at the same time in the same scroll, not one block at a time. So there also scroll is reduced. So the basic point of this is to reduce too much scrolling."
+
+### 14.1 Goal in one sentence
+The hero and section 2 ask for under half the scrolling they did: the pull-back and both wipes take half their screens, and the ten blocks leave the logo in one go, so the page reaches section 3 after 5.75 screens instead of 16.2. Brand goals 1 and 2 as before; this serves the reader's patience.
+
+### 14.2 Wireframe in words (390 x 844 first, 1280 x 800 the same map)
+- **0 to 2.5 screens, the pull-back.** The camera backs away along the same level weaving curve (section 13), over 2.5 screens instead of 5; the ease, the path and the look are unchanged, so the scene moves twice as far per screen of scroll.
+- **2.5 to 3.0, the first wipe.** igloo's cut, over half a screen (it was one). The hero copy holds still, the logotype turns light past the half, the cue hides.
+- **2.75, mid-wipe: lift-off, all ten.** Every block leaves the logo in the same frame, each on its own bowed curve (its own side, tumble and seeds, section 5), turns into its gem in the air and settles in its slot 1.8 screens later, at 4.55. In every frame of the flight all ten are in the air; none waits its turn.
+- **4.55 to 5.25, the rest.** Ten gems, ten labels, hover, tap and keyboard as before.
+- **5.25 to 5.75, the second wipe** into section 3's fog ground, over half a screen; the quiz's top reaches the bottom edge at 5.75 and fills the screen at 6.75 (the track's end, `docs/specs/quiz.md` D8).
+- Reduced motion: the same map and track; every block fades out of the logo as its gem fades in, all together at L 0.5; the labels at L 0.6; no flight.
+
+### 14.3 Content
+Unchanged: no copy; the ten labels of section 3; the ten links.
+
+### 14.4 Motion plan
+The constants (`src/config/hero.ts`), in screens: `PULL` 2.5, `WIPE` 0.5, `CAS0` = `PULL` + `WIPE` / 2 = 2.75, `FLY` 1.8, `W1END` 3.0, `LAND` = `CAS0` + `FLY` = 4.55, `W2` = `LAND` + 0.7 = 5.25, `W2END` 5.75; `TRACK_SVH` = (`W2END` + 1) x 100 = 675 (1720 before). `S2T` has no `GAP`: the departure schedule (block j at `CAS0` + j x 0.8) is deleted from the island, not set to zero; one flight progress L = clamp((S - `CAS0`) / `FLY`, 0, 1) drives the ten (`section2/gems.ts`). Nothing else moves: the curve (`CAMX`, `camX`, `camCurve`), the flight's ease and curve, the morph, the labels' reveal, the float, the hover, the fog's treadmill (0.3 per screen from `W1END`), the composite's two wipes. The camera's post-pull travel (the curve's v 1 to 2) now runs over `PULL` to `LAND`, 2.05 screens instead of 9.5, as it always ran over that span.
+
+What "the other half's render" means here: the island renders one frame per animation frame from the scroll follower, never one frame per pixel of scroll, so halving the scroll removes scrolling, not per-frame work. What is deleted is the stagger's machinery (`GAP`, the per-block departure times, the per-block flight progress) and ten screens of track; the warm-up and the shader set are unchanged.
+
+### 14.5 Data and states
+Unchanged (section 6). The seams follow the map: the glue's first span `PULL` to `W1END`, the quiz seam from `W2`, the section index's zones (`shell/nav-map.ts`), the return path's landing at `LAND` (`hero.ts`), the quiz's review frames at `W2` + 0.5, `W2END` and `W2END` + 0.5 and its intro at `TRACK_SVH` / 100 (`scripts/quiz/frames.mjs`, `contrast.mjs`).
+
+### 14.6 Budget
+No new bytes: the island loses the stagger's arithmetic. The build's budget lines (critical, total, the island chunk) must not rise.
+
+### 14.7 Acceptance criteria
+1. **The map (F1, C3).** `S2T` reads PULL 2.5, WIPE 0.5, CAS0 2.75, FLY 1.8, W1END 3.0, LAND 4.55, W2 5.25, W2END 5.75 and has no GAP; `TRACK_SVH` is 675 and `.track{height:675svh}` in `shell.css` equals it (unit test). From rest to the second wipe's end is 5.75 screens, under half of 16.2.
+2. **All ten together (F1, D4).** On the 3D path `__s2().L` reads ten equal values at every scroll: all 0 at 2.75 and below, all between 0 and 1 at 3.0, 3.65 and 4.3, all 1 from 4.55 on; the ten gems land in the same frame and the ten labels show together. No block waits for another: there is no `GAP` in the island (`grep`).
+3. **The camera's path is the prototype's (F1).** `camX` and `camCurve` equal the v11.4 prototype's at every v (unit test); the pull-back camera at the port's 0, 0.625, 1.25, 1.875 and 2.5 screens equals the prototype's at 0, 1.25, 2.5, 3.75 and 5 to 4 decimals, and inside the wipe at equal v (parity, `tests/parity/pullback.spec.ts`).
+4. **Dead code gone (F2).** No departure schedule in `section2/gems.ts`, no `GAP` in `config/hero.ts`; comments and specs say the blocks leave together; `npm run test:unit` and `astro check` pass.
+5. **Budgets hold (C1).** `npm run build`'s budget lines are at or below the figures of the default branch's build.
+6. **Frames (B1, D1).** `docs/specs/screenshots/hero-r4-<w>-<state>.png` at 390 x 844 and 1280 x 800: `pull-end` (2.5), `wipe-mid` (2.75), `flight` (3.65, every block in the air, none on the logo and none landed), `rest` (5.0, ten gems and ten labels), `wipe2-mid` (5.5), `quiz` (6.75, the quiz's intro).
+7. **The seams and the scripts follow the map (F1).** The glue's spans (`tests/unit/page-scroll.test.ts`), the section index (`tests/unit/site-nav.test.ts`), the return path's landing (`tests/family/return-path.test.ts`, `tests/family/specs/back.spec.ts`), the quiz's gate test and frames script read their positions from `S2T` and `TRACK_SVH`, never a literal of the old map.
+8. **Reduced motion (D2).** Under `prefers-reduced-motion` the same map and track; every block fades at L 0.5 and the labels at L 0.6, all together; the parity frame at `W1END` (3.0) against the prototype's at 6.0 reaches the prototype's own noise floor less 1 dB (`tests/parity/v11-frames.spec.ts`).
+9. **The record (A4).** `CLAUDE.md`, `docs/specs/hero.md` 12.8, this section, `docs/specs/quiz.md`, `DESIGN.md` and `docs/specs/hero-architecture.md` carry the new numbers; no em dashes, no emoji, British spelling.
+
+### 14.8 Out of scope
+The flight's length (1.8 screens, Sam's "long slow flight" of 2026-10-10), the rest's 0.7, the fog treadmill's rate, the wipes' look, the curve, section 3's content, section 4. Each is a one-line change in `S2T` if Sam wants it.
+
+### 14.9 Decisions taken (cheaper on a phone where the brief was open)
+- Both wipes halve with the pull-back (one `WIPE` constant serves both): "half of the scroll from the hero section" read as the whole of section 1, pull-back and wipe, 6 screens to 3.
+- `CAS0` stays mid-wipe, now written as `PULL` + `WIPE` / 2 (the prototype's `PULL` + 0.5 was that for a one-screen wipe).
+- The flight keeps 1.8 screens: Sam asked for the stagger to go, not for a shorter flight, and section 2's scroll falls from 9.7 screens to 2.5 by the stagger alone.
+- The fog treadmill keeps 0.3 per screen (the fog drifts the same amount per finger movement), so the mid-wipe and rest frames no longer share the pinned prototype's fog position at any matching state; the parity frame suite grades the pixel floor at `W1END` only, where the treadmill agrees, and records the other two frames with their ride, labels and tone compared (`tests/parity/v11-frames.spec.ts`).
+- The pinned prototype (`tests/fixtures/hero-v11.4/`) is not edited: it is the approved v11.4 record; the port's map is the prototype's halved, asserted as such by the unit test.
+- The v11 frames capture turns E-fog-hue's patches off on the port (`hueOn` 0 through the live copy `liveFogHues()` reads, set by an init script; Tune is off on a hooks build, so nothing else reads the object): the pinned prototype predates the hues (2026-10-29) and its fog is grey, and with the hues on the wipe's end read 41.4 dB against the prototype's own 99 dB floor (2026-11-03). The hues keep their own grade (`tests/unit/fog-hues.test.ts`, quiz.md 6.1). With the hues off the wipe's end read 43.8 dB with no bias (the mean levels equal to a hundredth, a zero-mean grain of up to 7 levels): the fog's dither is keyed to the frame counter, the port reaches its position in fewer frames than the prototype on the halved map, and the prototype's two runs read 99 dB against each other only because they froze at the same frame count. The spec's floor is now the lower of the prototype's second run captured as frozen and one frame on (43.9 dB at the rest pair), so the grade is "the port within 1 dB of the dither's own floor", which is what the spec's header always meant. At the wipe's middle the hero camera sits at another curve parameter on the halved map (u2 0.12 against the prototype's 0.05), a second reason that frame is recorded and not graded on its pixels; `pullback.spec.ts` grades the camera at equal u2.

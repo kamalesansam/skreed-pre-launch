@@ -18,9 +18,11 @@ const read = (p: string) => readFileSync(new URL(p, root), 'utf8');
 const VH = 844;
 /** the page at rest at `screens`, its first wipe settled to the matching end, section 2 built, the quiz below */
 const at = (screens: number, o: Partial<CueWordsIn> = {}): CueWordsIn => ({
-  y: screens * VH, vh: VH, restMs: CUE.stillMs, tp: Math.min(1, Math.max(0, screens - S2T.PULL)), s2ready: true, cueOff: screens * VH > CUE.top, locked: false,
+  y: screens * VH, vh: VH, restMs: CUE.stillMs, tp: Math.min(1, Math.max(0, (screens - S2T.PULL) / S2T.WIPE)), s2ready: true, cueOff: screens * VH > CUE.top, locked: false,
   quizBelow: () => true, pageBelow: () => true, ...o,
 });
+/** the places by the scroll map (halved on 2026-11-02, section-2.md 14), never literal screens */
+const { PULL, WIPE, W1END, LAND, W2, W2END } = S2T, MID = (W1END + LAND) / 2;
 
 test('the constants: 1.5 s of rest, and the chevrons\' 8 px edge, which the family page shares', () => {
   assert.equal(CUE.stillMs, 1500);
@@ -34,22 +36,22 @@ test('the constants: 1.5 s of rest, and the chevrons\' 8 px edge, which the fami
 });
 
 test('the pin: on at rest in the pull-back, at both ends of the first wipe, in the cascade and at the gems\' rest', () => {
-  for (const s of [0.05, 1, 3, S2T.PULL, S2T.W1END, 8, 10, 12.7, S2T.LAND, 14.8, S2T.W2]) assert.equal(cueWordsOn(at(s)), true, `${s} screens`);
+  for (const s of [0.05, PULL / 2, PULL * 0.6, PULL, W1END, MID, LAND - 0.2, LAND, LAND + 0.3, W2 - 0.05, W2]) assert.equal(cueWordsOn(at(s)), true, `${s} screens`);
 });
 
 test('the pin: off at the top, while moving, across the first wipe, from the second wipe on, while section 2 builds, with the quiz in view', () => {
   assert.equal(cueWordsOn(at(0)), false, 'at 0 the words follow the chevrons (shell.css), not this rule');
   assert.equal(cueWordsOn(at(8 / VH)), false, 'at 8 px still the chevrons\' top');
-  assert.equal(cueWordsOn(at(1, { restMs: CUE.stillMs - 1 })), false, 'not yet rested');
-  assert.equal(cueWordsOn(at(5.5, { tp: 0.5 })), false, 'the first wipe crossing');
-  assert.equal(cueWordsOn(at(5.02, { tp: 0.02 })), false, 'past the wipe\'s rest tolerance');
+  assert.equal(cueWordsOn(at(PULL / 2, { restMs: CUE.stillMs - 1 })), false, 'not yet rested');
+  assert.equal(cueWordsOn(at(PULL + WIPE / 2, { tp: 0.5 })), false, 'the first wipe crossing');
+  assert.equal(cueWordsOn(at(PULL + 0.02 * WIPE, { tp: 0.02 })), false, 'past the wipe\'s rest tolerance');
   assert.equal(cueWordsOn(at(S2T.PULL, { tp: REST_EPS / 2 })), true, 'the wipe\'s rest within the tolerance');
   assert.equal(cueWordsOn(at(S2T.W2 + 0.05)), false, 'the second wipe');
-  for (const s of [15.7, 16.2, 17.2, 20]) assert.equal(cueWordsOn(at(s)), false, `${s} screens`);
-  assert.equal(cueWordsOn(at(8, { s2ready: false })), false, 'held at the pull-back\'s end while section 2 builds, and after it has failed (the wipe opens on black there, where neither tone reads)');
-  assert.equal(cueWordsOn(at(3, { s2ready: false })), true, 'the pull-back itself does not wait for section 2');
-  assert.equal(cueWordsOn(at(14.8, { quizBelow: () => false })), false, 'the quiz\'s section in view (phones whose bars have collapsed)');
-  assert.equal(cueWordsOn(at(1, { vh: 0 })), false);
+  for (const s of [W2 + WIPE / 2, W2END, W2END + 1, W2END + 3]) assert.equal(cueWordsOn(at(s)), false, `${s} screens`);
+  assert.equal(cueWordsOn(at(W1END + 0.5, { s2ready: false })), false, 'held at the pull-back\'s end while section 2 builds, and after it has failed (the wipe opens on black there, where neither tone reads)');
+  assert.equal(cueWordsOn(at(PULL / 2, { s2ready: false })), true, 'the pull-back itself does not wait for section 2');
+  assert.equal(cueWordsOn(at(LAND + 0.3, { quizBelow: () => false })), false, 'the quiz\'s section in view (phones whose bars have collapsed)');
+  assert.equal(cueWordsOn(at(PULL / 2, { vh: 0 })), false);
 });
 
 test('the top: the chevrons speak there, unless they stay hidden at rest with the page going on below', () => {
@@ -58,13 +60,13 @@ test('the top: the chevrons speak there, unless they stay hidden at rest with th
   assert.equal(cueWordsOn(at(0, { cueOff: true, restMs: CUE.stillMs - 1 })), false, 'not before the rest');
   assert.equal(cueWordsOn(at(0, { cueOff: true, pageBelow: () => false })), false, 'nothing below (a one-screen document): the chevrons alone');
   assert.equal(cueWordsOn(at(0, { cueOff: true, locked: true })), false, 'the loader and the intro lock the page: off, whatever the document says');
-  assert.equal(cueWordsOn(at(3, { locked: true })), false, 'locked in the pin too (a jump the loader lands on)');
+  assert.equal(cueWordsOn(at(PULL / 2, { locked: true })), false, 'locked in the pin too (a jump the loader lands on)');
   assert.equal(cueWordsOn(at(8 / VH, { cueOff: true })), true, 'at 8 px still the top');
   let reads = 0;
   const count = () => { reads++; return true; };
   cueWordsOn(at(0, { cueOff: false, pageBelow: count }));
   cueWordsOn(at(0, { cueOff: true, restMs: 0, pageBelow: count }));
-  cueWordsOn(at(3, { pageBelow: count }));
+  cueWordsOn(at(PULL / 2, { pageBelow: count }));
   cueWordsOn(at(0, { cueOff: true, locked: true, pageBelow: count }));
   assert.equal(reads, 0, 'the document is measured only at the top, at rest, with the chevrons off, and never under the lock (a read kept from there, where the track is collapsed, would say nothing is below until the scroll position next changes)');
 });
@@ -73,11 +75,11 @@ test('the pin: the quiz is read last, only when everything else holds (one layou
   let reads = 0;
   const q = () => { reads++; return true; };
   cueWordsOn(at(0, { quizBelow: q }));
-  cueWordsOn(at(1, { restMs: 0, quizBelow: q }));
-  cueWordsOn(at(5.5, { tp: 0.5, quizBelow: q }));
-  cueWordsOn(at(16, { quizBelow: q }));
+  cueWordsOn(at(PULL / 2, { restMs: 0, quizBelow: q }));
+  cueWordsOn(at(PULL + WIPE / 2, { tp: 0.5, quizBelow: q }));
+  cueWordsOn(at(W2END + 0.3, { quizBelow: q }));
   assert.equal(reads, 0);
-  cueWordsOn(at(10, { quizBelow: q }));
+  cueWordsOn(at(MID, { quizBelow: q }));
   assert.equal(reads, 1);
 });
 

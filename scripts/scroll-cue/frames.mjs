@@ -11,6 +11,7 @@
 // never passes on the place before. CHROME_PATH runs the installed Chrome in place of Playwright's Chromium.
 //   node scripts/scroll-cue/frames.mjs [baseUrl] [--landing-only] [--family-only] [--contrast-only] [--390-only]
 import { chromium } from 'playwright';
+import { S2T } from '../../src/config/hero.ts';
 import sharp from 'sharp';
 import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -114,8 +115,10 @@ for (const s of SETUPS) {
       await at(0);
       log(s.name, 'hero-top', { settled: await settle(page, '#cueText', true), contrast: await behind(page, '#cueText'), ...(await probe(page, '#cueText')) });
       await frame(page, `${OUT}/scroll-cue-${s.name}-top.png`);
-      const rows = [[1, 'pull-1', true], [2.5, 'pull', true], [3, 'pull-3', true], [5, 'pull-end', true], [5.5, 'wipe1-mid', false], [6, 'wipe1-end', true],
-        [10, 'cascade', true], [14.8, 'gems', true], [15.2, 'gems-glue', true], [15.7, 'wipe2-mid', false], [17.2, 'quiz', false]];
+      // the places by the scroll map (halved on 2026-11-02), as tests/e2e/scroll-cue.spec.ts has them
+      const { PULL, WIPE, W1END, LAND, W2, W2END } = S2T;
+      const rows = [[PULL * 0.2, 'pull-1', true], [PULL / 2, 'pull', true], [PULL * 0.6, 'pull-3', true], [PULL, 'pull-end', true], [PULL + WIPE / 2, 'wipe1-mid', false], [W1END, 'wipe1-end', true],
+        [(W1END + LAND) / 2, 'cascade', true], [LAND + 0.3, 'gems', true], [W2, 'gems-glue', true], [W2 + WIPE / 2, 'wipe2-mid', false], [W2END + 1, 'quiz', false]];
       for (const [k, state, want] of rows) {
         const sent = await at(k);
         if (want) await page.waitForFunction(() => window.__onAt > 0, null, { timeout: 90_000 }).catch(() => {});   // a class added after this move: never pass on the place before

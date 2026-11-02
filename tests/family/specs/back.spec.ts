@@ -20,13 +20,14 @@
 import { test, expect, type BrowserContext, type Page } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
 import { PHONE, WIDE, watch, cspViolations, events } from './util.ts';
+import { S2T } from '../../../src/config/hero.ts';
 
 const SHOTS = new URL('../../../docs/specs/screenshots/', import.meta.url);
 const shot = (name: string) => fileURLToPath(new URL(`family-r5-${name}.png`, SHOTS));
 const ARG_ON = 5.6;                     // pose.ts SV.argOn, in screens
 const DELAY = 2500, IN_MS = 400, OUT_MS = 200;   // timing.ts BACK_DELAY_MS, BACK_IN_MS, BACK_OUT_MS
 const PEARL = 'rgb(247, 246, 243)';
-const LAND = 14.5;                      // config/hero.ts S2T.LAND, section 2 at rest, in screens
+const LAND = S2T.LAND;                  // config/hero.ts, section 2 at rest, in screens (4.55 since 2026-11-02; 14.5 before)
 const LOADER_END = 7.05, LOADER_MIN_LIFT_MS = 7500;   // loader.inline.js END; the lift no earlier than 7.5 s after the time origin (criterion 2)
 /** --inset at a viewport width (tokens.css: clamp(16px, 3.5vw, 56px)). */
 const inset = (w: number) => Math.min(56, Math.max(16, 0.035 * w));
