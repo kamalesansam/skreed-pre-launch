@@ -323,7 +323,7 @@ export function mountRoom(root: HTMLElement): void {
   addEventListener('skreed:room-scene', (e) => { arrive((e as CustomEvent<{ i: number }>).detail.i); });
   addEventListener('skreed:room-step', (e) => { const d = (e as CustomEvent<{ from: number; to: number }>).detail; startStep(d.from, d.to); });
 
-  /** the page jumped to the top (the exit seam's cover, or the back-to-top control): the next lap's DOM, by the state the section returns to */
+  /** the page jumped (the exit seam's cover, or the section index): the next lap's DOM, by the state the section returns to */
   function newLap(s: string | undefined = root.dataset.state) {
     down.clear();
     if (s === 'hall') {

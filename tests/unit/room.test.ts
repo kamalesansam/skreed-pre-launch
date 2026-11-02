@@ -61,7 +61,8 @@ test('the five scenes (section-4-flux.md 3): the rooms in order, the products, t
     for (const cls of ['wide', 'portrait'] as const) for (const k of ['loop', 'avif', 'webp'] as const) assert.equal(typeof s.files[cls][k], 'string', `${s.id} ${cls} ${k}: a URL string (empty under Node, the build's glob fills it)`);
   }
   // the logotype's tone over each scene (D5): scripts/room/scene-tone.mjs on 2026-10-23 measured Pearl Whisper at 5.0 to 18.6:1
-  // and Urban Slate at 1.05 to 1.98:1 under the logotype's and the control's boxes at both viewports, so every scene keeps Pearl
+  // and Urban Slate at 1.05 to 1.98:1 under the logotype's and the control's boxes at both viewports, so every scene keeps Pearl;
+  // re-measured on 2026-11-02 with the section index's boxes in the control's place: Pearl 5.0 to 18.7:1, the picks unchanged
   assert.deepEqual(ROOM_SCENES.map((s) => s.toneDark), [false, false, false, false, false]);
   const director = read('src/scripts/hero/section4/director.ts');
   assert.match(director, /const sceneTone = \(\) => ROOM_SCENES\[carousel\.front\(\)\]\?\.toneDark \?\? false;/, 'the director takes the front scene\'s tone');
