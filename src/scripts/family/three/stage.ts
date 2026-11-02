@@ -13,7 +13,7 @@ import {
 } from 'three';
 import type { CaseAsset, CasePart } from './case-asset.ts';
 import { makeStudio, TONE, toneInverse, albedoFit } from './studio.ts';
-import { CASE_TYPES, CFG, DEG, beatPose, poseOf, solve, type CaseType, type Fit, type Fx, type Layout } from './pose.ts';
+import { CASE_TYPES, CFG, DEG, beatPose, poseOf, profileLightOffset, solve, type CaseType, type Fit, type Fx, type Layout } from './pose.ts';
 import { takeoverAt, takeoverSeed } from './takeover.ts';
 import { createRunUniforms, createSideUniforms, withTakeover, type TakeoverSideUniforms } from './takeover-material.ts';
 import { TAKEOVER, easeTakeover, takeoverP } from '../../../config/takeover.ts';
@@ -109,8 +109,13 @@ export async function createStage(o: StageOptions) {
     });
     // ciao's profile light: one spot from above the zoomed case (its spotY 2.2 and its target 2.5 below, scaled by 1.2),
     // a 22.5 degree cone with full penumbra in place of its soft mask, 35 cd, range 15
+    // Since 2026-11-03 it rides with the zoomed case (section 24 D13; Sam: "it should be the same as tough case for all
+    // other case types"): held where ciao's had it, the cases of beats 2 to 4 rose 0.38, 0.98 and 1.56 units through it on
+    // phones and their tops left its pool; lifted with the case (pose.ts profileLightOffset), every type stands in it as
+    // the Tough does at beat 1, on the wide layout too, where the damped drift had left the Tough's own top out of it
+    const GOBO_Y = 2.64, GOBO_TY = -0.36;
     const gobo = new SpotLight(0xffffff, 0, 15, Math.PI / 8, 1, 0.1);
-    gobo.position.set(0, 2.64, 2); gobo.target.position.set(0, -0.36, 0); scene.add(gobo, gobo.target);
+    gobo.position.set(0, GOBO_Y, 2); gobo.target.position.set(0, GOBO_TY, 0); scene.add(gobo, gobo.target);
 
     // materials: the previous finish under ciao's light (section 20); the base specular a fifth of a plastic's
     let tier: Tier = o.tier ?? 'high';
@@ -345,6 +350,8 @@ export async function createStage(o: StageOptions) {
       // ciao's entrance: the light comes up; the zoom hands over to the one spot; the argument brings the two spots back (45 of 50)
       for (const l of spots) l.intensity = CFG.spot * G * (1 - B.k + 0.9 * B.k * B.A);
       gobo.intensity = 35 * B.k * (1 - B.A) * G;
+      const lift = profileLightOffset(st.sv, phone() ? 1 : CFG.wideDrift);
+      gobo.position.y = GOBO_Y + lift; gobo.target.position.y = GOBO_TY + lift;
       scene.environmentIntensity = CAL.environmentIntensity * (1 - 0.8 * B.k * (1 - B.A));
       for (const m of glossMats()) m.envMapIntensity = scene.environmentIntensity;
       // the argument's camera stands back on phones only; the beats' on phones (section 21 D8) and, since 2026-11-03, on

@@ -139,8 +139,9 @@ export function scrollClasses(sv: number): { hudOff: boolean; beatsOn: boolean; 
  * The turn (section 21 D3, kept by section 24 D6): over each feature transition (into Tough 1.7 to 2, then 2.7 to 3,
  * 3.7 to 4 and 4.7 to 5) the case makes a half turn about its vertical axis; at the edge-on frame the model is re-posed a
  * half turn back, so the back that comes round is the next case's. Section 24 D3: each beat has its own case type, and
- * the edge-on frames of the three hand-over turns (2.85, 3.85, 4.85) are where the next type is asked for; the stage's
- * takeover (three/takeover.ts) runs from there on its own clock. The turn into Tough changes no model.
+ * the edge-on frames of the three hand-over turns (2.85, 3.85, 4.85) are where the next type is asked for; the sweep
+ * (three/takeover.ts) rides the turn's second half from there, its progress the stage's scroll (D6). The turn into Tough
+ * changes no model.
  */
 export const sm = (t: number): number => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
 export const RZ = [0, -0.1745, 0.0873, -0.1745, 0.0873, 0, 0] as const, CY = [0, -0.96, -0.58, 0.02, 0.6, 0, 0] as const;
@@ -156,10 +157,22 @@ export function beatPose(sv: number): BeatPose {
   return { k, rz, cy, A, yaw };
 }
 
+/**
+ * ciao's profile light rides with the zoomed case (section 24 D13; Sam, 2026-11-03: "it should be the same as tough case
+ * for all other case types"). The light and its target are lifted by how far the case stands above the place ciao's can
+ * held under that light: through the zoom (sv under 2) ciao's own path, so on phones the zoom is lit as before and on the
+ * wide layout the damped drift (wideDrift) is made up; from beat 1 on, beat 1's place (CY[1]), so the case's rise
+ * through beats 2 to 4 no longer carries its top out of the pool. drift is the layout's (1 on phones, CFG.wideDrift wide).
+ */
+export function profileLightOffset(sv: number, drift: number): number {
+  const B = beatPose(sv);
+  return sv < 2 ? B.cy * B.k * (drift - 1) : B.cy * drift - CY[1];
+}
+
 /** The four case types in beat order (section 20: Tough, MagTough, Snap, Armor at beats 1 to 4). */
 export const CASE_TYPES = ['tough', 'magtough', 'snap', 'armor'] as const;
 export type CaseType = (typeof CASE_TYPES)[number];
-/** The screen each type rests at (its beat, where the turn's yaw is 0): the takeover's sweep axis is read from that pose. */
+/** The screen each type rests at: its beat, where the turn's yaw is 0 and its sweep has ended. */
 export const CASE_REST: Readonly<Record<CaseType, number>> = { tough: 2, magtough: 3, snap: 4, armor: 5 };
 /** The hand-overs: the edge-on frames of the turns into beats 2 to 4 (TURNS[i] - TURN_LEN / 2: 2.85, 3.85, 4.85). */
 export const HANDOVERS = TURNS.slice(1).map((n) => n - TURN_LEN / 2) as readonly number[];

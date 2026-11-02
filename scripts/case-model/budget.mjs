@@ -3,7 +3,7 @@
 //   node scripts/case-model/budget.mjs [dist dir] [slug]
 // Follows the page's module scripts and every chunk they import, statically or dynamically (the island path), sums
 // gzip and brotli sizes, adds the model bytes, and checks: page module 12 KB, lazy island 170 KB (three, the GLTF loader
-// and the stage with the takeover, the studio and the argument pose: 161.6 KB on 2026-10-15), total JS on the page
+// and the stage with the takeover, the studio and the argument pose: 162,840 B on 2026-11-03), total JS on the page
 // 250 KB (gzip; PostHog and the beacon are not on the site yet and are listed as headroom), each model's LOD1 60 KB and
 // LOD0 150 KB raw (the Tough and each case type's own model, section 24 D1), and that "Show in 3D, {size} MB" in the
 // HTML equals the measured island plus every model's two LODs, one decimal. The first view counts the Tough's LOD1 only:

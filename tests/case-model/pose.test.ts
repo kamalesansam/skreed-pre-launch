@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { CASE_REST, CASE_TYPES, CFG, DIMS_DEFAULT, HANDOVERS, SV, TURNS, TURN_LEN, activeBeat, beatPose, caseBox, caseTargetAt, edgeOn, poseOf, project, scrollClasses, skeletonPolys, solve, xform } from '../../src/scripts/family/three/pose.ts';
+import { CASE_REST, CASE_TYPES, CFG, DIMS_DEFAULT, HANDOVERS, SV, TURNS, TURN_LEN, activeBeat, beatPose, caseBox, caseTargetAt, edgeOn, poseOf, profileLightOffset, project, scrollClasses, skeletonPolys, solve, xform } from '../../src/scripts/family/three/pose.ts';
 
 const manifest = JSON.parse(readFileSync(new URL('../../src/data/case-model.json', import.meta.url), 'utf8'));
 const [mw, mh, md] = manifest.sizeMm as number[];
@@ -130,7 +130,21 @@ test('24 D3: the case type each frame asks for, every 0.01 screen: Tough below 2
   for (const sv of [0, 0.5, 1]) { assert.equal(beatPose(sv).k, 0); assert.equal(caseTargetAt(sv), 'tough'); }
   assert.equal(caseTargetAt(1.85), 'tough');
   assert.equal(caseTargetAt(6.5), 'armor', 'the argument screen shows the last type');
-  // each type rests at its beat, where the turn's yaw is 0 (the sweep axis is read from that pose)
+  // each type rests at its beat, where the turn's yaw is 0 and its sweep has ended
   assert.deepEqual(CASE_REST, { tough: 2, magtough: 3, snap: 4, armor: 5 });
   for (const t of CASE_TYPES) { assert.equal(beatPose(CASE_REST[t]).yaw, 0); assert.equal(beatPose(CASE_REST[t]).k, 1); assert.equal(caseTargetAt(CASE_REST[t]), t); }
+});
+
+test('the profile light rides with the case (section 24 D13): the zoom lit as ciao\'s on phones, the wide layout\'s damped drift made up, and from beat 1 on every type in the pool as the Tough', () => {
+  const caseY = (sv: number, drift: number, poseY: number) => { const B = beatPose(sv); return poseY * (1 - B.k) + B.cy * B.k * drift; };
+  const ciaoY = (sv: number, poseY: number) => caseY(sv, 1, poseY);
+  for (const drift of [1, CFG.wideDrift]) for (const sv of [0, 0.6, 0.99]) assert.ok(Math.abs(profileLightOffset(sv, drift)) < 1e-12, `the carousel at ${sv}: no lift`);
+  for (const sv of [1, 1.25, 1.5, 1.75, 1.99]) assert.ok(Math.abs(profileLightOffset(sv, 1)) < 1e-12, `phones, the zoom at ${sv}: the light where ciao's had it`);
+  for (const drift of [1, CFG.wideDrift]) {
+    for (const sv of [1, 1.3, 1.6, 1.9]) assert.ok(Math.abs((caseY(sv, drift, 0.7) - profileLightOffset(sv, drift)) - ciaoY(sv, 0.7)) < 1e-12, `the zoom at ${sv}, drift ${drift}: the case under the light as ciao's`);
+    for (let sv = 2; sv <= 5.0001; sv += 0.05) assert.ok(Math.abs((caseY(sv, drift, 0.7) - profileLightOffset(sv, drift)) - (-0.96)) < 1e-12, `from beat 1 at ${sv.toFixed(2)}, drift ${drift}: the case under the light as the Tough at beat 1`);
+    assert.ok(Math.abs(profileLightOffset(2 - 1e-9, drift) - profileLightOffset(2, drift)) < 1e-6, 'continuous at beat 1');
+  }
+  assert.ok(Math.abs(profileLightOffset(3, 1) - 0.38) < 1e-12 && Math.abs(profileLightOffset(4, 1) - 0.98) < 1e-12 && Math.abs(profileLightOffset(5, 1) - 1.56) < 1e-12, 'phones: beats 2 to 4 lifted by their rise');
+  assert.ok(Math.abs(profileLightOffset(2, CFG.wideDrift) - 0.96 * (1 - CFG.wideDrift)) < 1e-12, 'wide: beat 1 lifted by what the damped drift left');
 });

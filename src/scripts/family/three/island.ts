@@ -139,13 +139,13 @@ export async function mountIsland(host: HTMLElement, onLive: () => void): Promis
     w.__famStage = {
       info: () => S.info(),
       state: () => S.state(),
-      project: (slot: number) => S.project(slot),
+      project: (slot: number, local?: [number, number, number]) => S.project(slot, local),
       caseBox: () => S.caseBox(),
       pickAt: (x: number, y: number) => S.pickAt(x, y),
       render: () => S.render(),
       snapshot: () => S.snapshot(),
       snapScroll: (v: number) => S.snapScroll(v),
-      sample: (slot?: number) => S.sample(slot),
+      sample: (slot?: number, local?: [number, number, number]) => S.sample(slot, local),
       calibrate: (ly?: number) => S.calibrate(ly),
       lose: () => S.lose(),
       /** section 24 D10: pins a run from one case type to another at a raw progress (0 to 1) for frames; null releases it */

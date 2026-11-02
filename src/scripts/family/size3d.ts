@@ -3,7 +3,7 @@
 // decimal. The model bytes come from the intake's manifest; the island's compressed JavaScript cannot be known while the
 // page renders, so it is this measured constant, and scripts/case-model/budget.mjs fails the check when the built
 // chunks would round to a different figure (re-measure, then update the constant).
-export const ISLAND_JS_BYTES = 162_800;   // gzip: every chunk past the page module on the 3D path, the takeover in (2026-11-03, budget.mjs on the production build with the default at 3dabb60 merged in)
+export const ISLAND_JS_BYTES = 162_840;   // gzip: every chunk past the page module on the 3D path, the takeover and the riding light in (2026-11-03, budget.mjs on the production build with the default at ebb7e66 merged in)
 type Lods = { lod0: number; lod1: number };
 export function size3dMb(bytes: Lods, types: readonly Lods[] = [], islandJs = ISLAND_JS_BYTES): string {
   const models = [bytes, ...types].reduce((s, b) => s + b.lod0 + b.lod1, 0);
