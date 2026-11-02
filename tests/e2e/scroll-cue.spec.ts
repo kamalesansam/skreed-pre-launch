@@ -88,7 +88,7 @@ test.describe('the landing in the pin, 3D path', () => {
       const ctx = await browser.newContext({ viewport: { width: w, height: h } });
       const page = await ctx.newPage();
       await page.goto('/?tier=hero3d');
-      await page.waitForFunction(() => window.__s2 && window.__s2() && window.__s2().ready, null, { timeout: 420_000 });
+      await page.waitForFunction(() => !!(window.__s2?.() as { ready?: boolean } | undefined)?.ready, null, { timeout: 420_000 });
       // the time the words gain is-on, stamped in the page; the scroll's own time stamped with it
       await page.evaluate(() => {
         const el = document.getElementById('cueText')!, w = window as unknown as { __onAt: number };
@@ -140,7 +140,7 @@ test.describe('the landing in the pin, 3D path', () => {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
     const page = await ctx.newPage();
     await page.goto('/?tier=hero3d');
-    await page.waitForFunction(() => window.__s2 && window.__s2() && window.__s2().ready, null, { timeout: 420_000 });
+    await page.waitForFunction(() => !!(window.__s2?.() as { ready?: boolean } | undefined)?.ready, null, { timeout: 420_000 });
     await page.evaluate(() => { scrollTo(0, 10 * innerHeight); window.__skreedSnap?.(10); });
     await settled(page, true, 90_000);
     await page.evaluate(() => scrollTo(0, 0));   // no snap: the Home key, a scrollbar drag, a status-bar tap
