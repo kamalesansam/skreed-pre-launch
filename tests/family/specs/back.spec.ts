@@ -105,15 +105,15 @@ test.describe('22. the control and its words (acceptance 1)', () => {
   });
 
   for (const [label, opts] of [['390', PHONE], ['1280', WIDE]] as const) {
-    test(`shown at ${label}: Open Sans 600 at 14 px, line height 1, Pearl Whisper, no underline, no fill, no border, no shadow, 44 px tall`, async ({ browser }) => {
+    test(`shown at ${label}: IBM Plex Mono 500 in capitals at 14 px (E-chrome-font), line height 1, Pearl Whisper, no underline, no fill, no border, no shadow, 44 px tall`, async ({ browser }) => {
       const ctx = await browser.newContext(opts);
       const page = await ctx.newPage();
       await open3d(page);
       await toEnd(page);
       await page.waitForTimeout(DELAY + IN_MS + 200);
       const cs = await back(page).evaluate((el) => { const c = getComputedStyle(el); return { font: c.fontFamily, weight: c.fontWeight, size: c.fontSize, lh: c.lineHeight, color: c.color, deco: c.textDecorationLine, bg: c.backgroundColor, border: c.borderStyle, shadow: c.boxShadow, h: el.getBoundingClientRect().height, pos: c.position, z: c.zIndex }; });
-      expect(cs.font).toMatch(/Open Sans/);
-      expect(cs.weight).toBe('600');
+      expect(cs.font).toMatch(/IBM Plex Mono/);
+      expect(cs.weight).toBe('500');
       expect(cs.size).toBe('14px');
       expect(cs.lh).toBe('14px');
       expect(cs.color).toBe(PEARL);
@@ -262,15 +262,15 @@ test.describe('23. one row on phones (criterion 5)', () => {
       expect(Math.abs(w - i - chevron.r)).toBeLessThanOrEqual(1);
       // one baseline: the same face, size and line height, centred in the same row, so the two text boxes share a bottom within 0.5 px
       expect(Math.abs(bw.b - tw.b)).toBeLessThanOrEqual(0.5);
-      // the two hit boxes 48 px or more apart (77.7 px at 360 x 780, the least), and nothing met
-      expect(t.x - b.r).toBeGreaterThanOrEqual(48);
+      // the two hit boxes 40 px or more apart (43.3 px at 360 x 780, the least, since both words are in Plex Mono, E-chrome-font), and nothing met
+      expect(t.x - b.r).toBeGreaterThanOrEqual(40);
       for (const sel of ['#toTop', '#famBtn', '#arg-box']) expect(meets(b, await box(page, sel)), `meets ${sel}`).toBe(false);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      // the plan's figures at 390 x 844 (section 23), each within 2 px (the words' widths are the browser's, with kerning)
+      // the plan's figures at 390 x 844 (section 23, the words' widths since round 6 Plex Mono's 0.6 em advances), each within 2 px
       if (w === 390 && h === 844) {
         expect(b.y).toBe(786); expect(b.b).toBe(830);
-        expect(Math.abs(b.x - 4)).toBeLessThanOrEqual(2); expect(Math.abs(b.r - 152.3)).toBeLessThanOrEqual(2);
-        expect(Math.abs(t.x - 260)).toBeLessThanOrEqual(2); expect(t.r).toBe(386);
+        expect(Math.abs(b.x - 4)).toBeLessThanOrEqual(2); expect(Math.abs(b.r - 170.8)).toBeLessThanOrEqual(2);
+        expect(Math.abs(t.x - 244.1)).toBeLessThanOrEqual(2); expect(t.r).toBe(386);
       }
       if (w === 360 || w === 844) await page.screenshot({ path: shot(`${w}-arg-after`) });
       await ctx.close();

@@ -15,6 +15,7 @@
   --font-text: "Source Serif 4", "Source Serif 4 Fallback", "Times New Roman", serif;
   --font-ui: "Open Sans", "Open Sans Fallback", Arial, sans-serif;
   --font-num: var(--font-ui);
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;   /* the later sections' face (E-S2-font to E-S4-font, the sign-up) and, since 2026-11-02, the chrome's small words in capitals (E-chrome-font) */
 
   --w-display: 700; --w-text: 400; --w-text-strong: 600; --w-ui: 400; --w-ui-strong: 600;
 
