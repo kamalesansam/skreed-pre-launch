@@ -1,10 +1,11 @@
-// Intake of the supplier case model into the site (docs/specs/case-model-class.md 3 and 15, amendments 1 to 3;
-// docs/specs/case-asset-contract.json). Dependency free: it reads each GLB's JSON chunk and the accessor bounds, never
-// executes or decodes anything from the file, and only copies the verified files.
+// Intake of the supplier case models into the site (docs/specs/case-model-class.md 3 and 15, amendments 1 to 3;
+// docs/specs/case-asset-contract.json; family-page.md 24 D1). Dependency free: it reads each GLB's JSON chunk and the
+// accessor bounds, never executes or decodes anything from the file, and only copies the verified files.
 //
-//   node scripts/case-model/intake.mjs <lod0.glb> <lod1.glb> [--dry]                 the Tough case (Cobalt)
-//   node scripts/case-model/intake.mjs <lod0.glb> <lod1.glb> --model magtough [--dry]  the second model (round 3: the Desert
-//       stand-in for MagTough, Snap and Armor), written as public/models/magtough.lod*.glb and the manifest's "magtough" entry
+//   node scripts/case-model/intake.mjs <lod0.glb> <lod1.glb> [--dry]                         the Tough case (Cobalt)
+//   node scripts/case-model/intake.mjs <lod0.glb> <lod1.glb> --model magtough|snap|armor [--dry]
+//       a case type's own model (round 6: Sam's files of 2026-11-02, made by scripts/case-model/intake-fbx.py and
+//       pack-case.mjs), written as public/models/<type>.lod*.glb and the manifest's entry under the type
 //
 // Checks (FAIL stops the intake, WARN is reported):
 //   C1  a binary glTF 2.0 file (magic, version, a JSON chunk first, at most one BIN chunk, lengths consistent)
@@ -22,8 +23,11 @@
 //   C8  triangles: LOD0 at most 24,000 (amendment 1: about 20k for the close-up), LOD1 at most 12,000
 //   C9  bytes: LOD0 at most 150,000 raw, LOD1 at most 60,000 raw (family-page.md 6)
 //   C10 the two LODs carry the same parts in the same order
-// Then it writes public/models/case.lod0.<sha8>.glb and case.lod1.<sha8>.glb (content-hashed, immutable), removes older
-// case.*.glb files there, and writes src/data/case-model.json, the manifest the island imports at build.
+// Then it writes public/models/<prefix>.lod0.<sha8>.glb and <prefix>.lod1.<sha8>.glb (content-hashed, immutable; the
+// prefix is case or the type), removes older files of the same prefix there, and writes src/data/case-model.json, the
+// manifest the island imports at build: the Cobalt at its root and each type's model under its key. Taking in a type
+// keeps the other entries and drops the note of 2026-10-16 that one model is every case type; taking in the Cobalt keeps
+// every type's entry.
 import { createHash } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
@@ -34,8 +38,14 @@ export const LIMITS = { lod0Bytes: 150_000, lod1Bytes: 60_000, lod0Tris: 24_000,
 const ALLOWED_REQUIRED = new Set(['KHR_mesh_quantization', 'EXT_meshopt_compression']);
 const BANNED = ['KHR_draco_mesh_compression', 'KHR_texture_basisu', 'KHR_lights_punctual', 'EXT_texture_webp', 'KHR_texture_transform'];
 const PART_NAMES = { body: ['shell', 'Case_Body'], accent: ['trim', 'Case_Accent'], logo: ['logo', 'Case_Logo'], ring: ['ring', 'Case_Ring'] };
-const MODELS = { case: { key: null, prefix: 'case', model: 'Cobalt.fbx, cleaned and simplified (scratchpad case/out, 2026-10-09)' },
-  magtough: { key: 'magtough', prefix: 'magtough', model: 'Desert.fbx (Sam, 2026-10-15): the stand-in for MagTough, Snap and Armor until their files come; split shell / ring / trim, simplified and quantised like the Cobalt (round 3)' } };
+const MODELS = {
+  case: { prefix: 'case', model: 'Cobalt.fbx, cleaned and simplified (scratchpad case/out, 2026-10-09)' },
+  magtough: { prefix: 'magtough', model: 'magsafe case.fbx (Sam, 2026-11-02), the MagTough case: shell, trim and logo by scripts/case-model/intake-fbx.py, packed by pack-case.mjs' },
+  snap: { prefix: 'snap', model: 'snap 3 (1).fbx (Sam, 2026-11-02), the Snap case: shell and logo by scripts/case-model/intake-fbx.py, packed by pack-case.mjs' },
+  armor: { prefix: 'armor', model: 'Armor 5.fbx (Sam, 2026-11-02), the Armor case: shell, trim and logo by scripts/case-model/intake-fbx.py, packed by pack-case.mjs' },
+};
+/** The case types with their own models (family-page.md 24 D1), each an entry of the manifest under its key. */
+export const CASE_TYPES = ['magtough', 'snap', 'armor'];
 const COMPONENTS = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4 };
 const NORM = { 5120: 127, 5121: 255, 5122: 32767, 5123: 65535 };
 
@@ -128,8 +138,8 @@ export function checkPair(buf0, buf1) {
   return { rows, lod0: a, lod1: b, ok: rows.every((r) => r.status !== 'FAIL') };
 }
 
-/** The manifest the island imports at build (case-model-class.md 3, amended: three parts, no device; round 3: a second
- * model under "magtough", four parts with the ring, which follows the shade). */
+/** The manifest the island imports at build (case-model-class.md 3, amended: three parts, no device; round 6: a case
+ * type's own model under its key, with a ring part when its file has one, which follows the shade). */
 export function manifestFor(r, files, which = 'case') {
   const part = (name, followsShade) => { const p = r.lod0.parts.find((q) => q.name === name); return p && { node: p.node, material: p.material, followsShade, ...(name === 'logo' ? { tint: +p.baseColor[0].toFixed(4) } : {}), ...(name === 'accent' ? { roughness: +p.roughness.toFixed(3) } : {}) }; };
   const s = r.lod0.stats;
@@ -144,7 +154,7 @@ export function manifestFor(r, files, which = 'case') {
     bytes: { lod0: r.lod0.stats.bytes, lod1: r.lod1.stats.bytes },
     lod1BackOnly: !!r.lod1.stats.extras.backOnly,
   };
-  if (which === 'magtough') return { ...common, standsInFor: ['magtough', 'snap', 'armor'] };
+  if (CASE_TYPES.includes(which)) return { ...common, caseType: which };
   return {
     source: 'supplier',
     model: common.model,
@@ -168,10 +178,10 @@ export function manifestFor(r, files, which = 'case') {
 function main() {
   const mi = process.argv.indexOf('--model');
   const which = mi > 0 ? process.argv[mi + 1] : 'case';
-  if (!MODELS[which]) { console.error(`unknown model "${which}": case or magtough`); process.exit(2); }
+  if (!MODELS[which]) { console.error(`unknown model "${which}": ${Object.keys(MODELS).join(', ')}`); process.exit(2); }
   const args = process.argv.slice(2).filter((a, i, all) => !a.startsWith('--') && all[i - 1] !== '--model');
   const dry = process.argv.includes('--dry');
-  if (args.length !== 2) { console.error('usage: node scripts/case-model/intake.mjs <lod0.glb> <lod1.glb> [--model magtough] [--dry]'); process.exit(2); }
+  if (args.length !== 2) { console.error('usage: node scripts/case-model/intake.mjs <lod0.glb> <lod1.glb> [--model magtough|snap|armor] [--dry]'); process.exit(2); }
   const [p0, p1] = args.map((a) => resolve(a));
   const b0 = readFileSync(p0), b1 = readFileSync(p1);
   const r = checkPair(b0, b1);
@@ -183,11 +193,14 @@ function main() {
   const prefix = MODELS[which].prefix;
   const files = { lod0: `${prefix}.lod0.${sha0.slice(0, 8)}.glb`, lod1: `${prefix}.lod1.${sha1.slice(0, 8)}.glb`, sha0, sha1 };
   const entry = manifestFor(r, files, which);
-  // the second model lands as an entry of the Cobalt's manifest; the Cobalt intake keeps an existing second entry
+  // a type's model lands as an entry of the Cobalt's manifest; the Cobalt intake keeps every type's entry
   const mp = join(ROOT, 'src', 'data', 'case-model.json');
   const old = existsSync(mp) ? JSON.parse(readFileSync(mp, 'utf8')) : null;
-  const manifest = which === 'case' ? { ...entry, ...(old?.magtough ? { magtough: old.magtough } : {}) } : { ...(old ?? {}), magtough: entry };
-  if (which === 'magtough' && !old) { console.error('intake: the Cobalt manifest must exist before the second model is taken in'); process.exit(1); }
+  if (which !== 'case' && !old) { console.error('intake: the Cobalt manifest must exist before a case type\'s model is taken in'); process.exit(1); }
+  const types = Object.fromEntries(CASE_TYPES.filter((k) => old?.[k]).map((k) => [k, old[k]]));
+  const rest = { ...old };
+  delete rest.allCaseTypes;     // "one model is every case type" (2026-10-16) ends with the types' own models
+  const manifest = which === 'case' ? { ...entry, ...types } : { ...rest, [which]: entry };
   if (dry) { console.log(JSON.stringify(manifest, null, 2)); return; }
   const dir = join(ROOT, 'public', 'models');
   mkdirSync(dir, { recursive: true });

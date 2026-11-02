@@ -1,17 +1,22 @@
-// The family page's stage (docs/specs/family-page.md 19 to 21; the prototype's module, ported): ciao's carousel with
-// the case in place of the can, ciao's two spots and the procedural studio, the calibrated colour, the seven-screen
-// scroll (the zoom, the four case types with the half turn and the one-case hand-over, the argument pose with its
-// float), the inputs of the first screen (tap, drag, hover tilt), the tier probe, render on demand, context loss and
-// disposal. One renderer, two models (the Tough case for the carousel, the second model from the first hand-over's
-// edge-on frame), five to eight draw calls. No GSAP: the loop lags the scroll and the line with its own rates.
+// The family page's stage (docs/specs/family-page.md 19 to 21 and 24; the prototype's module, ported): ciao's carousel
+// with the case in place of the can, ciao's two spots and the procedural studio, the calibrated colour, the seven-screen
+// scroll (the zoom, the four case types with the half turn, the argument pose with its float), the inputs of the first
+// screen (tap, drag, hover tilt), the tier probe, render on demand, context loss and disposal. Round 6 (section 24):
+// each beat shows its own case type (the Tough, then Sam's MagTough, Snap and Armor as their models land), and from a
+// hand-over's edge-on frame the incoming case takes the outgoing one over in depth.fyi's sweep, re-created for two
+// models (takeover.ts, takeover-material.ts). One renderer; the carousel's row on its plain materials, the front case on
+// materials that carry the takeover, off at rest. No GSAP: the loop lags the scroll and the line with its own rates.
 import {
-  Box3, Color, DynamicDrawUsage, Euler, InstancedMesh, Matrix4, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, NeutralToneMapping, ACESFilmicToneMapping,
+  Color, DynamicDrawUsage, Euler, InstancedMesh, Matrix4, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, NeutralToneMapping, ACESFilmicToneMapping,
   PerspectiveCamera, PMREMGenerator, Quaternion, Raycaster, Scene, SpotLight, SRGBColorSpace, Vector2, Vector3, WebGLRenderer, WebGLRenderTarget, FloatType,
   type BufferGeometry, type Material, type WebGLRenderTarget as RT,
 } from 'three';
 import type { CaseAsset, CasePart } from './case-asset.ts';
 import { makeStudio, TONE, toneInverse, albedoFit } from './studio.ts';
-import { CFG, DEG, beatPose, poseOf, solve, type Fit, type Fx, type Layout } from './pose.ts';
+import { CASE_TYPES, CFG, DEG, beatPose, poseOf, profileLightOffset, solve, type CaseType, type Fit, type Fx, type Layout } from './pose.ts';
+import { takeoverAt, takeoverSeed } from './takeover.ts';
+import { createRunUniforms, createSideUniforms, withTakeover, type TakeoverSideUniforms } from './takeover-material.ts';
+import { TAKEOVER, easeTakeover, takeoverP } from '../../../config/takeover.ts';
 import type { Finish, Input } from '../bus.ts';
 import CAL from './calibration.json' with { type: 'json' };
 
@@ -21,10 +26,12 @@ export class StageError extends Error {
   constructor(reason: StageError['reason'], msg?: string) { super(msg ?? reason); this.reason = reason; }
 }
 
+/** The case types with a model of their own after the Tough (section 24 D1), in beat order. */
+export type TypeCase = Exclude<CaseType, 'tough'>;
 export interface StageOptions {
   host: HTMLElement; canvas: HTMLCanvasElement;
-  /** the Tough case (the carousel's 24) and the second model (MagTough, Snap and Armor on the Desert stand-in), or null in a dev build */
-  tough: CaseAsset; second: CaseAsset | null;
+  /** the Tough case (the carousel's 24 and beat 1) and the type models already to hand (more land through addType) */
+  tough: CaseAsset; types?: Partial<Record<TypeCase, CaseAsset>>;
   shades: string[]; selected: number; finish: Finish;
   /** reduced motion (still3d): every move is instant, no float */
   still: boolean;
@@ -39,7 +46,9 @@ export interface StageOptions {
   onLost(): void;
 }
 
-export interface StageState { s: number; target: number; G: number; sv: number; drag: boolean; turn: boolean; raf: boolean; running: boolean; busy: boolean; renders: number; tier: Tier; detail: 'none' | 'loading' | 'loaded' | 'failed'; caseType: 'tough' | 'second'; counts: { front: number; second: number }; fov: number; probe: Probe | null }
+/** The takeover as the hooks read it (section 24 D10): from is the case in front at rest (the outgoing one in a run), to the case the run goes to. */
+export interface TakeoverState { phase: 'idle' | 'running'; from: CaseType; to: CaseType; raw: number; eased: number; p: number; held: boolean }
+export interface StageState { s: number; target: number; G: number; sv: number; drag: boolean; turn: boolean; raf: boolean; running: boolean; busy: boolean; renders: number; tier: Tier; detail: 'none' | 'loading' | 'loaded' | 'failed'; type: CaseType; takeover: TakeoverState; types: CaseType[]; counts: { front: number; types: number }; fov: number; probe: Probe | null }
 export interface Probe { P: number; median: number; cpuMedian: number }
 
 const nextFrame = () => new Promise<number>((r) => requestAnimationFrame(r));
@@ -56,6 +65,10 @@ const NOFLOAT = { yaw: 0, tilt: 0, y: 0 };
 
 /** A model's draw set: one instanced mesh per part, the parts that follow the shade coloured per instance. */
 interface Draw { part: CasePart; mesh: InstancedMesh }
+/** A front model's takeover materials: its own switch and side, the run's values shared with every other front model. */
+interface FrontSet { side: TakeoverSideUniforms; matte: MeshPhysicalMaterial; trim: MeshPhysicalMaterial; logoMatte: MeshPhysicalMaterial; gloss: MeshPhysicalMaterial | null; logoGloss: MeshPhysicalMaterial | null }
+/** A case type's model at the selected slot: its parts (1 instance each), its materials, its LOD1 points in its own space; ready once compiled. */
+interface TypeModel { draws: Draw[]; set: FrontSet; verts: Float32Array; ready: boolean }
 
 export async function createStage(o: StageOptions) {
   const { host, canvas } = o;
@@ -84,7 +97,7 @@ export async function createStage(o: StageOptions) {
       if (!keepOld) envTarget?.dispose();
       envTarget = t;
       scene.environment = t.texture;
-      for (const m of [M.gloss, M.logoGloss]) if (m) m.envMap = t.texture;
+      for (const m of glossMats()) m.envMap = t.texture;
     };
     undo.push(() => { envTarget?.dispose(); scene.environment = null; });
     scene.environmentIntensity = CAL.environmentIntensity;
@@ -96,8 +109,13 @@ export async function createStage(o: StageOptions) {
     });
     // ciao's profile light: one spot from above the zoomed case (its spotY 2.2 and its target 2.5 below, scaled by 1.2),
     // a 22.5 degree cone with full penumbra in place of its soft mask, 35 cd, range 15
+    // Since 2026-11-03 it rides with the zoomed case (section 24 D13; Sam: "it should be the same as tough case for all
+    // other case types"): held where ciao's had it, the cases of beats 2 to 4 rose 0.38, 0.98 and 1.56 units through it on
+    // phones and their tops left its pool; lifted with the case (pose.ts profileLightOffset), every type stands in it as
+    // the Tough does at beat 1, on the wide layout too, where the damped drift had left the Tough's own top out of it
+    const GOBO_Y = 2.64, GOBO_TY = -0.36;
     const gobo = new SpotLight(0xffffff, 0, 15, Math.PI / 8, 1, 0.1);
-    gobo.position.set(0, 2.64, 2); gobo.target.position.set(0, -0.36, 0); scene.add(gobo, gobo.target);
+    gobo.position.set(0, GOBO_Y, 2); gobo.target.position.set(0, GOBO_TY, 0); scene.add(gobo, gobo.target);
 
     // materials: the previous finish under ciao's light (section 20); the base specular a fifth of a plastic's
     let tier: Tier = o.tier ?? 'high';
@@ -112,6 +130,14 @@ export async function createStage(o: StageOptions) {
       gloss: null, logoGloss: null,
     };
     undo.push(() => { for (const m of Object.values(M)) m?.dispose(); });
+    // the front case's materials (section 24 D9): the plain ones with the takeover's code, one set per front model (the
+    // Tough's front pair and logo, each type model), so the outgoing and the incoming case take their own side; the
+    // run's values are shared. Off at rest: a frame at rest is the plain material's.
+    const run = createRunUniforms();
+    const sets = new Map<CaseType, FrontSet>();
+    const glossMats = () => [M.gloss, M.logoGloss, ...[...sets.values()].flatMap((t) => [t.gloss, t.logoGloss])].filter((m): m is MeshPhysicalMaterial => !!m);
+    const setMats = (t: FrontSet) => [t.matte, t.trim, t.logoMatte, t.gloss, t.logoGloss].filter((m): m is MeshPhysicalMaterial => !!m);
+    undo.push(() => { for (const t of sets.values()) for (const m of setMats(t)) m.dispose(); });
     makeEnv(false);
     o.report('env');
     await yieldMain();
@@ -122,25 +148,65 @@ export async function createStage(o: StageOptions) {
       m.envMap = envTarget!.texture; m.envMapIntensity = scene.environmentIntensity;
       return m;
     };
+    const logoGlossFor = (t: Tier, tint: number) => { const m = glossFor(t); m.color.setScalar(tint); m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -1; return m; };
     const materialFor = (part: CasePart, finish: Finish): Material => {
       if (part.name === 'accent') return M.trim;
       const g = finish === 'gloss' && M.gloss;
       if (part.name === 'logo') return g ? M.logoGloss! : M.logoMatte;
       return g ? M.gloss! : M.matte;
     };
+    // a front set: the matte, the trim (a physical twin of the plain trim, so the band's clearcoat has a path) and the
+    // logo now; the gloss pair once the tier is known (glossSet)
+    const frontSet = (tint: number): FrontSet => {
+      const side = createSideUniforms();
+      return {
+        side,
+        matte: withTakeover(new MeshPhysicalMaterial({ color: 0xffffff, roughness: CAL.matte.roughness, metalness: 0, specularIntensity: CAL.matte.specularIntensity }), run, side),
+        trim: withTakeover(new MeshPhysicalMaterial({ color: new Color(accentColor[0], accentColor[1], accentColor[2]), roughness: CAL.trim.roughness, metalness: 0, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }), run, side),
+        logoMatte: withTakeover(new MeshPhysicalMaterial({ color: new Color(tint, tint, tint), roughness: CAL.matte.roughness, metalness: 0, specularIntensity: CAL.matte.specularIntensity, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }), run, side),
+        gloss: null, logoGloss: null,
+      };
+    };
+    const glossSet = (t: FrontSet, tint: number) => { t.gloss = withTakeover(glossFor(tier), run, t.side); t.logoGloss = withTakeover(logoGlossFor(tier, tint), run, t.side); };
+    const frontMat = (t: FrontSet, part: CasePart, f: Finish): Material => {
+      if (part.name === 'accent') return t.trim;
+      const g = f === 'gloss' && t.gloss;
+      if (part.name === 'logo') return g ? t.logoGloss! : t.logoMatte;
+      return g ? t.gloss! : t.matte;
+    };
+    const toughSet = frontSet(logoTint);
+    sets.set('tough', toughSet);
 
-    // meshes: the Tough case's row (LOD1, 24, drawn for the slots that are not in front), its front pair (LOD0, 2) and
-    // its logo (24); the second model's parts (1 each), drawn from the first hand-over's edge-on frame. The case only
-    // (Sam, 2026-10-09): no phone, glass or lenses, so the camera window shows the page through.
+    // meshes: the Tough case's row (LOD1, 24, drawn for the slots that are not in front, plain), its front pair (LOD0,
+    // 2) and its logo (24, plain, the selected slot hidden) with the front logo (1, the selected slot); each type
+    // model's parts (1 each), drawn at the selected slot while it is in front or in a run. The case only (Sam,
+    // 2026-10-09): no phone, glass or lenses, so the camera window shows the page through.
     const IM = (geo: BufferGeometry, mat: Material, n: number, name: string) => { const m = new InstancedMesh(geo, mat, n); m.name = name; m.frustumCulled = false; m.instanceMatrix.setUsage(DynamicDrawUsage); scene.add(m); return m; };
     let finish: Finish = o.finish;
     const row: Draw[] = lod1.filter((p) => p.name !== 'logo').map((p) => ({ part: p, mesh: IM(p.geometry, materialFor(p, finish), 24, `${p.name}.row`) }));
-    const front: Draw[] = lod1.filter((p) => p.name !== 'logo').map((p) => ({ part: p, mesh: IM(p.geometry, materialFor(p, finish), 2, `${p.name}.front`) }));
+    const front: Draw[] = lod1.filter((p) => p.name !== 'logo').map((p) => ({ part: p, mesh: IM(p.geometry, frontMat(toughSet, p, finish), 2, `${p.name}.front`) }));
     const logoPart = lod1.find((p) => p.name === 'logo');
     const logo: Draw | null = logoPart ? { part: logoPart, mesh: IM(logoPart.geometry, materialFor(logoPart, finish), 24, 'logo') } : null;
-    const second: Draw[] = (o.second ? o.second.lods[1] : []).map((p) => { const m = IM(p.geometry, materialFor(p, finish), 1, `${p.name}.second`); m.count = 0; return { part: p, mesh: m }; });
-    const all = () => [...row, ...front, ...(logo ? [logo] : []), ...second].map((d) => d.mesh);
+    const frontLogo: Draw | null = logoPart ? { part: logoPart, mesh: IM(logoPart.geometry, frontMat(toughSet, logoPart, finish), 1, 'logo.front') } : null;
+    const toughFront = () => [...front, ...(frontLogo ? [frontLogo] : [])];
+    const models = new Map<TypeCase, TypeModel>();
+    const typeDraws = () => [...models.values()].flatMap((t) => t.draws);
+    const all = () => [...row, ...toughFront(), ...(logo ? [logo] : []), ...typeDraws()].map((d) => d.mesh);
     undo.push(() => { for (const m of all()) { m.dispose(); scene.remove(m); } });
+    // each model's LOD1 points in its own normalised space (part.base applied; getX denormalises): the sweep's range
+    const caseVerts = (parts: readonly CasePart[]): Float32Array => {
+      let n = 0;
+      for (const p of parts) n += p.geometry.getAttribute('position').count;
+      const out = new Float32Array(n * 3), v = new Vector3();
+      let k = 0;
+      for (const p of parts) {
+        const a = p.geometry.getAttribute('position');
+        for (let i = 0; i < a.count; i++) { v.fromBufferAttribute(a, i).applyMatrix4(p.base); out[k++] = v.x; out[k++] = v.y; out[k++] = v.z; }
+      }
+      return out;
+    };
+    const toughVerts = caseVerts(lod1);
+    const vertsOf = (t: CaseType) => (t === 'tough' ? toughVerts : models.get(t)?.verts ?? toughVerts);
 
     // colour (section 19): the albedo that makes the sample point read the catalog shade through the tone map
     const col = new Color();
@@ -161,9 +227,13 @@ export async function createStage(o: StageOptions) {
     const colourRow = () => { for (const d of row) if (d.part.followsShade) { for (let k = 0; k < 24; k++) d.mesh.setColorAt(k, albedo(hexes[order[k]])); d.mesh.instanceColor!.needsUpdate = true; } };
     const colourFront = () => {
       for (const d of front) if (d.part.followsShade) { for (let j = 0; j < 2; j++) d.mesh.setColorAt(j, albedo(hexes[frontSlots[j] ?? 0])); d.mesh.instanceColor!.needsUpdate = true; }
-      for (const d of second) if (d.part.followsShade) { d.mesh.setColorAt(0, albedo(hexes[frontSlots[0] ?? 0])); d.mesh.instanceColor!.needsUpdate = true; }
+      for (const d of [...(frontLogo ? [frontLogo] : []), ...typeDraws()]) if (d.part.followsShade) { d.mesh.setColorAt(0, albedo(hexes[frontSlots[0] ?? 0])); d.mesh.instanceColor!.needsUpdate = true; }
     };
+    // the band's base colour (D7): the albedo that reads #D5F6F3 through the same fit as the shades, so the band sits in
+    // the stage's light as the shade does (depth.fyi's studio lights its band at the colour's own value)
+    const BAND_HEX = `#${TAKEOVER.band.base.toString(16).padStart(6, '0')}`;
     const colourAll = () => {
+      run.uTkBand.value.copy(albedo(BAND_HEX));
       colourRow();
       if (logo) { for (let i = 0; i < 24; i++) logo.mesh.setColorAt(i, albedo(hexes[i])); logo.mesh.instanceColor!.needsUpdate = true; }
       colourFront();
@@ -184,17 +254,74 @@ export async function createStage(o: StageOptions) {
     // then the argument pose by B.A; f carries the float (the pointer's yaw and tilt in degrees, the bob in units)
     const zoomMatrix = (i: number, s: number, B: ReturnType<typeof beatPose>, f: { yaw: number; tilt: number; y: number }, out: Matrix4) => {
       const p = poseOf(i, s, W || 1280, null), k = B.k, A = B.A;
-      const X = p.X * (1 - k), Y = p.Y * (1 - k) + B.cy * k + f.y, Z = p.Z * (1 - k) - 0.5 * A, sc = p.sc * (1 - k / 6);
+      // the beats' vertical drift, damped on the wide layout so every beat's case sits whole in the screen (section 24, 2026-11-03)
+      const drift = phone() ? 1 : CFG.wideDrift;
+      const X = p.X * (1 - k), Y = p.Y * (1 - k) + B.cy * k * drift + f.y, Z = p.Z * (1 - k) - 0.5 * A, sc = p.sc * (1 - k / 6);
       eu.set(p.rx * (1 - k) + (-0.3491 + f.tilt * DEG) * A, p.ry * (1 - k) + (-0.2618) * k * (1 - A) + f.yaw * DEG + B.yaw, p.rz * (1 - k) + (-0.0873) * A, 'XYZ');
       qv.setFromEuler(eu).multiply(qs.setFromAxisAngle(YAX, p.spin * (1 - k)));
       return out.compose(vp.set(X, Y, Z), qv, vs.set(sc, sc, sc));
     };
-    let last = { A: 0, yaw: 0, second: false, k: 0 };
+    let last = { A: 0, yaw: 0, k: 0 };
     // ciao's camera (z 29, FOV 20, unrotated); on phones a view offset lifts the carousel (pose.ts solve) and, after it,
     // the camera stands further back and the case is held in the band above the text (section 21, D8)
     const cam = new PerspectiveCamera(CFG.fov, 1, 4, 75);
     cam.position.set(0, 0, CFG.camZ);
     const phone = () => o.layout() === 'phone';
+
+    // the takeover (section 24 D3 to D9; Sam, 2026-11-03): the sweep rides the turn's second half, so what the front slot
+    // shows is a function of the stage's own scroll (takeover.ts: the beat's case, or the outgoing and the incoming case
+    // at the sweep's progress; a type whose model has not landed keeps the case before it); a hooks-only hold pins a pair
+    // at a raw progress for frames
+    let held: { from: CaseType; to: CaseType; raw: number } | null = null;
+    const has = (t: CaseType) => t === 'tough' || !!models.get(t as TypeCase)?.ready;
+    // at exactly p = -0.12 the surface is all the outgoing case, at 1.12 all the incoming one, with no band (24.1 "mask")
+    const pin = (a: CaseType, b: CaseType, e: number) => (e <= 0 ? { a, b: null, e } : e >= 1 ? { a: b, b: null, e } : { a, b, e });
+    /** What the front slot shows: a alone, or a sweep's outgoing a and incoming b at eased progress e (its two ends pinned to one case). */
+    const view = (): { a: CaseType; b: CaseType | null; e: number } => {
+      if (held) return pin(held.from, held.to, easeTakeover(held.raw));
+      const v = takeoverAt(st.sv, { has, instant: instant() });
+      return v.b ? pin(v.a, v.b, v.eased) : { a: v.a, b: null, e: 0 };
+    };
+    // the sweep's frame (D4): the box round both cases in the case's own space (their LOD1 points), projected through the
+    // case's pose this frame onto the screen, so the field is the fragment's place across the case's width on the
+    // screen, the same for both cases at a pixel; the seed from 27027 and the two types; the relief per the case's width
+    const boxOf = (v: Float32Array) => {
+      const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+      for (let i = 0; i + 2 < v.length; i += 3) for (let c = 0; c < 3; c++) { if (v[i + c] < lo[c]) lo[c] = v[i + c]; if (v[i + c] > hi[c]) hi[c] = v[i + c]; }
+      return { lo, hi };
+    };
+    const boxCache = new Map<string, { lo: number[]; hi: number[] }>();
+    const pairBox = (a: CaseType, b: CaseType) => {
+      const key = `${a}>${b}`;
+      let box = boxCache.get(key);
+      if (!box) { const p = boxOf(vertsOf(a)), q = boxOf(vertsOf(b)); box = { lo: p.lo.map((x, i) => Math.min(x, q.lo[i])), hi: p.hi.map((x, i) => Math.max(x, q.hi[i])) }; boxCache.set(key, box); }
+      return box;
+    };
+    let runKey = '';
+    const corner = new Vector3();
+    const frameRun = (a: CaseType, b: CaseType, fs: number) => {
+      const key = `${a}>${b}`, box = pairBox(a, b), width = Math.max(0.2, box.hi[0] - box.lo[0]);
+      if (key !== runKey) {
+        runKey = key;
+        run.uTkSeed.value.fromArray(takeoverSeed(a, b));
+        // the relief in the sweep's own unit, as the form's (config/takeover.ts reliefRef): its noise per the case's width
+        run.uTkReliefScale.value = TAKEOVER.detailScale * TAKEOVER.reliefFreq / width;
+      }
+      // the box's eight corners on the screen, in device pixels as gl_FragCoord reads them (the origin at the bottom left)
+      cam.updateMatrixWorld();
+      const dpr = renderer.getPixelRatio();
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+      for (let c = 0; c < 8; c++) {
+        corner.set(c & 1 ? box.hi[0] : box.lo[0], c & 2 ? box.hi[1] : box.lo[1], c & 4 ? box.hi[2] : box.lo[2]).applyMatrix4(poseM[fs]).project(cam);
+        const x = ((corner.x + 1) / 2) * W * dpr, y = ((corner.y + 1) / 2) * H * dpr;
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      }
+      run.uTkRect.value.set(x0, x1, y0, y1);
+      run.uTkPx.value = Math.max(1, y1 - y0);
+      run.uTkCaseInv.value.copy(poseM[fs]).invert();
+      // and the relief's bump at the ratio of the case's width in the world (its scale this frame) to the form's
+      run.uTkRelief.value = TAKEOVER.relief * vp.setFromMatrixColumn(poseM[fs], 0).length() * width / TAKEOVER.reliefRef;
+    };
     const update = (s: number, G: number, fx: Fx | null, now: number | null) => {
       const a = Math.max(0, Math.min(23, Math.round(s))), nf = [a];
       if (Math.abs(s - a) > 1e-4) { const b = s > a ? a + 1 : a - 1; if (b >= 0 && b < 24) nf.push(b); }
@@ -207,8 +334,8 @@ export async function createStage(o: StageOptions) {
         colourRow(); colourFront();
       }
       for (let i = 0; i < 24; i++) poseMatrix(i, s, fx, poseM[i]);
-      const B = beatPose(st.sv), fs = Math.round(s);
-      const useSecond = second.length > 0 && B.k > 0 && B.second;   // one case type per frame (D3)
+      const B = beatPose(st.sv), fs = frontSlots[0];   // round(s) inside the line, as a drag past either end leaves it
+      const V = view();
       if (B.k > 0) {
         const sp = 1 + 2.5 * B.k;   // the neighbours slide out as ciao's do (its spacing 1 to 3.5)
         for (let i = 0; i < 24; i++) if (i !== fs) poseM[i].elements[12] *= sp;
@@ -219,25 +346,44 @@ export async function createStage(o: StageOptions) {
         }
         zoomMatrix(fs, s, B, f, poseM[fs]);
       }
-      last = { A: B.A, yaw: B.yaw, second: useSecond, k: B.k };
+      last = { A: B.A, yaw: B.yaw, k: B.k };
       // ciao's entrance: the light comes up; the zoom hands over to the one spot; the argument brings the two spots back (45 of 50)
       for (const l of spots) l.intensity = CFG.spot * G * (1 - B.k + 0.9 * B.k * B.A);
       gobo.intensity = 35 * B.k * (1 - B.A) * G;
+      const lift = profileLightOffset(st.sv, phone() ? 1 : CFG.wideDrift);
+      gobo.position.y = GOBO_Y + lift; gobo.target.position.y = GOBO_TY + lift;
       scene.environmentIntensity = CAL.environmentIntensity * (1 - 0.8 * B.k * (1 - B.A));
-      for (const m of [M.gloss, M.logoGloss]) if (m) m.envMapIntensity = scene.environmentIntensity;
-      const back = phone() ? 1 + (CFG.phoneBack - 1) * B.k : 1;
-      cam.position.set(0, -2.4 * B.k * (1 - B.A) * back, CFG.camZ - 17 * B.k - 4 * B.k * B.A + (12 * back - 12) * B.k * (1 - B.A) + (8 * back - 8) * B.k * B.A);
+      for (const m of glossMats()) m.envMapIntensity = scene.environmentIntensity;
+      // the argument's camera stands back on phones only; the beats' on phones (section 21 D8) and, since 2026-11-03, on
+      // the wide layout too (section 24: the whole case in the screen at every beat)
+      const back = phone() ? 1 + (CFG.phoneBack - 1) * B.k : 1, backB = phone() ? back : 1 + (CFG.wideBack - 1) * B.k;
+      cam.position.set(0, -2.4 * B.k * (1 - B.A) * backB, CFG.camZ - 17 * B.k - 4 * B.k * B.A + (12 * backB - 12) * B.k * (1 - B.A) + (8 * back - 8) * B.k * B.A);
       cam.rotation.set(0.1745 * B.k * (1 - B.A), 0, B.rz * B.k);
       const fov = CFG.fov + 25 * B.k * B.A;
       if (Math.abs(fov - cam.fov) > 1e-6) { cam.fov = fov; cam.updateProjectionMatrix(); }
       place(B.k);
-      for (const d of second) { d.mesh.count = useSecond ? 1 : 0; if (useSecond) d.mesh.setMatrixAt(0, mTmp2.multiplyMatrices(poseM[fs], d.part.base)); }
+      // the takeover's uniforms: every front model off, then the sweep's two on, each on its own side
+      for (const t of sets.values()) t.side.uTkOn.value = 0;
+      if (V.b) {
+        frameRun(V.a, V.b, fs);
+        const out = sets.get(V.a)!, inc = sets.get(V.b)!;
+        out.side.uTkOn.value = 1; out.side.uTkSide.value = 1;
+        inc.side.uTkOn.value = 1; inc.side.uTkSide.value = -1;
+        run.uTkP.value = takeoverP(V.e);
+      } else runKey = '';
+      const showTough = V.a === 'tough' || V.b === 'tough';
       for (const d of row) for (let k = 0; k < d.mesh.count; k++) d.mesh.setMatrixAt(k, mTmp.multiplyMatrices(poseM[order[k]], d.part.base));
-      // the Tough case's parts at the selected slot are away while the second model shows there
-      if (logo) for (let i = 0; i < 24; i++) logo.mesh.setMatrixAt(i, useSecond && i === fs ? mTmp.makeScale(0, 0, 0) : mTmp.multiplyMatrices(poseM[i], logo.part.base));
+      // the selected slot's logo is the front logo's (it carries the takeover); the plain 24 hide it there
+      if (logo) for (let i = 0; i < 24; i++) logo.mesh.setMatrixAt(i, frontLogo && i === fs ? mTmp.makeScale(0, 0, 0) : mTmp.multiplyMatrices(poseM[i], logo.part.base));
+      if (frontLogo) { frontLogo.mesh.count = showTough ? 1 : 0; frontLogo.mesh.setMatrixAt(0, mTmp.multiplyMatrices(poseM[fs], frontLogo.part.base)); }
+      // the Tough's parts at the selected slot are away while a type model alone is in front
       for (const d of front) {
-        frontSlots.forEach((slot, j) => d.mesh.setMatrixAt(j, useSecond && slot === fs ? mTmp.makeScale(0, 0, 0) : mTmp.multiplyMatrices(poseM[slot], d.part.base)));
-        d.mesh.count = useSecond && frontSlots.length === 1 ? 0 : frontSlots.length;
+        frontSlots.forEach((slot, j) => d.mesh.setMatrixAt(j, !showTough && slot === fs ? mTmp.makeScale(0, 0, 0) : mTmp.multiplyMatrices(poseM[slot], d.part.base)));
+        d.mesh.count = !showTough && frontSlots.length === 1 ? 0 : frontSlots.length;
+      }
+      for (const [t, m] of models) {
+        const on = t === V.a || t === V.b;
+        for (const d of m.draws) { d.mesh.visible = on; if (on) d.mesh.setMatrixAt(0, mTmp2.multiplyMatrices(poseM[fs], d.part.base)); }
       }
       for (const m of all()) { m.instanceMatrix.needsUpdate = true; m.boundingSphere = null; }
     };
@@ -277,6 +423,7 @@ export async function createStage(o: StageOptions) {
     const frameMs: number[] = [];
     const instant = () => o.still;
     const renderNow = () => { const t0 = performance.now(); renderer.render(scene, cam); return performance.now() - t0; };
+    // the takeover follows the stage's scroll (D4, 2026-11-03), so the scroll's own lag keeps the loop running through it
     const animating = () => (!st.drag && st.s !== st.target) || st.G !== st.Gt || !!st.turn || Math.abs(st.sv - st.svT) > 1e-3 || Math.abs(st.tilt.yaw - st.tiltT.yaw) > 0.01 || Math.abs(st.tilt.pitch - st.tiltT.pitch) > 0.01;
     const busy = () => !!st.drag || animating();
     let lastSig = '';
@@ -299,6 +446,7 @@ export async function createStage(o: StageOptions) {
       let turnYaw = 0;
       if (st.turn) { const t = (now - st.turn.t0) / 600; if (t >= 1) st.turn = null; else turnYaw = st.turn.side * CFG.turn * bump(Math.max(0, t)); }
       const floating = st.sv > 5.2 && !instant() && visible;   // the argument screen's bob keeps the loop alive
+      // the takeover is a function of st.sv (a hold or a model landing bumps dirty), so nothing of it is in the signature
       const sig = [st.s, st.G, st.tilt.yaw + turnYaw, st.tilt.pitch, st.sv, floating ? now : 0].join();
       if (sig !== lastSig || dirty) {
         lastSig = sig; dirty = 0;
@@ -334,12 +482,13 @@ export async function createStage(o: StageOptions) {
       const r = canvas.getBoundingClientRect();
       ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
       ray.setFromCamera(ndc, cam);
-      const hits = ray.intersectObjects(all(), false);
+      // visible meshes only: a type model away from the front keeps its last pose, and three's raycast ignores visible
+      const hits = ray.intersectObjects(all().filter((m) => m.visible), false);
       for (const h of hits) {
         const m = h.object as InstancedMesh, id = h.instanceId ?? 0;
         if (front.some((d) => d.mesh === m)) return frontSlots[id];
         if (row.some((d) => d.mesh === m)) return order[id];
-        if (second.some((d) => d.mesh === m)) return frontSlots[0] ?? null;
+        if (m === frontLogo?.mesh || typeDraws().some((d) => d.mesh === m)) return frontSlots[0] ?? null;
         return id;   // the logo: instance i is slot i
       }
       return null;
@@ -462,6 +611,20 @@ export async function createStage(o: StageOptions) {
       kick();
     });
 
+    // a type model at the selected slot (section 24 D1, D2): its parts on its own front set, hidden until it is in front
+    // or in a run; the gloss pair once the tier is known
+    let tierKnown = false;
+    const tintOf = (parts: readonly CasePart[]) => parts.find((p) => p.name === 'logo')?.tint ?? logoTint;
+    const addModel = (type: TypeCase, asset: CaseAsset, ready: boolean) => {
+      const parts = asset.lods[1], set = frontSet(tintOf(parts));
+      if (tierKnown) glossSet(set, tintOf(parts));
+      sets.set(type, set);
+      const draws = parts.map((p) => { const m = IM(p.geometry, frontMat(set, p, finish), 1, `${p.name}.${type}`); m.visible = false; return { part: p, mesh: m }; });
+      models.set(type, { draws, set, verts: caseVerts(parts), ready });
+      colourFront();   // the instance colours exist before the compile, so the program is the one the Tough's front uses
+    };
+    for (const t of CASE_TYPES) if (t !== 'tough' && o.types?.[t]) addModel(t, o.types[t]!, true);   // compiled with the Tough's, below
+
     // the tier probe (family-page.md 2.5): the display period from 10 frames, then 20 forced renders
     st.s = st.target = Math.max(0, Math.min(23, o.selected));
     update(st.s, 1, null, null);
@@ -488,13 +651,27 @@ export async function createStage(o: StageOptions) {
       }
     }
     M.gloss = glossFor(tier);
-    M.logoGloss = glossFor(tier); M.logoGloss.color.setScalar(logoTint); M.logoGloss.polygonOffset = true; M.logoGloss.polygonOffsetFactor = -1; M.logoGloss.polygonOffsetUnits = -1;
+    M.logoGloss = logoGlossFor(tier, logoTint);
+    tierKnown = true;
+    glossSet(toughSet, logoTint);
+    for (const m of models.values()) glossSet(m.set, tintOf(m.draws.map((d) => d.part)));
+    // the band's iridescence on the high tier only (D7); the program is the same on both, so nothing compiles for it
+    run.uTkIrid.value = tier === 'high' ? TAKEOVER.band.iridescence : 0;
     const applyFinish = (f: Finish) => {
       finish = f;
-      for (const d of [...row, ...front, ...(logo ? [logo] : []), ...second]) d.mesh.material = materialFor(d.part, f);
+      for (const d of row) d.mesh.material = materialFor(d.part, f);
+      if (logo) logo.mesh.material = materialFor(logo.part, f);
+      for (const d of toughFront()) d.mesh.material = frontMat(toughSet, d.part, f);
+      for (const m of models.values()) for (const d of m.draws) d.mesh.material = frontMat(m.set, d.part, f);
       colourAll();   // the calibrated albedo depends on the finish
     };
-    applyFinish(finish);
+    // the warm-up (section 18's T15, kept by 24 D9): both finishes' programs, plain and with the takeover, compile here,
+    // under the loader, so neither a first finish toggle nor a takeover compiles one; the boot finish last, so it stays
+    for (const f of [finish === 'gloss' ? 'matte' : 'gloss', finish] as const) {
+      applyFinish(f);
+      try { await compile(scene, cam); } catch { /* its first draw compiles it instead */ }
+    }
+    const warmPrograms = renderer.info.programs?.length ?? 0;
 
     // the back-plate sample point (calibration: (0, -0.25) on the outer back)
     const sampleZ = (() => {
@@ -504,13 +681,45 @@ export async function createStage(o: StageOptions) {
       return h ? h.point.z : dims.d / 2;
     })();
 
-    /** LOD0 for the front pair (the Tough case's close-up) and the second model, after a high verdict. */
-    const setDetail = (which: 'tough' | 'second', parts: CasePart[]) => {
+    /** LOD0 for the front case (the Tough's front pair and logo, or a type model), after a high verdict. */
+    const setDetail = (which: CaseType, parts: CasePart[]) => {
       if (disposed) return;
-      const set = which === 'tough' ? front : second;
-      for (const d of set) { const p = parts.find((q) => q.name === d.part.name); if (p) { d.mesh.geometry = p.geometry; (d as { part: CasePart }).part = p; } }
+      const set = which === 'tough' ? toughFront() : models.get(which)?.draws ?? [];
+      for (const d of set) { const p = parts.find((q) => q.name === d.part.name); if (p) { d.mesh.geometry = p.geometry; d.part = p; } }
       dirty++; kick();
     };
+    /**
+     * A type model that landed (D2): its meshes and materials, then the compile (its programs are the Tough front's when
+     * its parts match, else they compile here, on arrival, never on a run's first frame); then the beat may ask for it.
+     */
+    const addType = async (type: TypeCase, asset: CaseAsset): Promise<void> => {
+      if (disposed || models.has(type)) return;
+      addModel(type, asset, false);   // not available to the takeover until its programs are ready
+      try { await compile(scene, cam); } catch { /* its first draw compiles it instead */ }
+      const m = models.get(type);
+      if (disposed || !m) return;
+      m.ready = true;
+      dirty++; kick();
+    };
+    /** The hooks' pin (D10): a sweep from one type to another held at a raw progress, for frames; null lets the scroll decide again. */
+    const holdTakeover = (from: CaseType, to: CaseType, raw: number | null): boolean => {
+      if (raw === null) held = null;
+      else {
+        if (from === to || !has(from) || !has(to) || !Number.isFinite(raw)) return false;
+        held = { from, to, raw: Math.min(1, Math.max(0, raw)) };
+      }
+      runKey = '';
+      dirty++; kick();
+      return true;
+    };
+    const takeoverState = (): TakeoverState => {
+      if (held) { const e = easeTakeover(held.raw); return { phase: 'running', from: held.from, to: held.to, raw: held.raw, eased: e, p: takeoverP(e), held: true }; }
+      const v = takeoverAt(st.sv, { has, instant: instant() });
+      return v.b ? { phase: 'running', from: v.a, to: v.b, raw: v.raw, eased: v.eased, p: v.p, held: false } : { phase: 'idle', from: v.a, to: v.a, raw: 0, eased: 0, p: TAKEOVER.pFrom, held: false };
+    };
+    const typeCount = () => typeDraws().filter((d) => d.mesh.visible).length;
+    /** the case in front at rest (the run's outgoing one while a run is under way) */
+    const frontType = (): CaseType => (held ? held.from : takeoverAt(st.sv, { has, instant: instant() }).a);
 
     const api = {
       renderer, canvas, tier: () => tier, probe: () => probeResult,
@@ -518,10 +727,14 @@ export async function createStage(o: StageOptions) {
       goTo,
       setTarget: (i: number, instantMove: boolean) => goTo(i, 'key', instantMove),
       scroll(v: number) { st.svT = Math.max(0, v); kick(); },
-      snapScroll(v: number) { st.sv = st.svT = Math.max(0, v); dirty++; update(st.s, st.G, null, null); renderNow(); },
+      snapScroll(v: number) { st.sv = st.svT = Math.max(0, v); dirty++; update(st.s, st.G, null, null); renderNow(); kick(); },
       setFinish(f: Finish) { applyFinish(f); if (!instant()) st.turn = { t0: performance.now(), side: 1 }; kick(); },
       setDetail,
       setDetailState(d: StageState['detail']) { detail = d; },
+      addType,
+      /** the type models drawn so far (ready), in beat order */
+      types: (): TypeCase[] => CASE_TYPES.filter((t): t is TypeCase => t !== 'tough' && has(t)),
+      holdTakeover,
       pause() { running = false; cancelAnimationFrame(raf); raf = 0; },
       resume() { if (disposed) return; running = true; resize(); update(st.s, st.G, null, null); renderNow(); kick(); },
       kick: () => kick(),
@@ -531,6 +744,7 @@ export async function createStage(o: StageOptions) {
         disposed = true; running = false; cancelAnimationFrame(raf);
         for (const m of all()) { m.dispose(); scene.remove(m); }
         for (const m of Object.values(M)) m?.dispose();
+        for (const t of sets.values()) for (const m of setMats(t)) m.dispose();
         envTarget?.dispose(); scene.environment = null;
         renderer.dispose(); if (!gl.isContextLost()) renderer.forceContextLoss(); canvas.remove();
       },
@@ -539,12 +753,12 @@ export async function createStage(o: StageOptions) {
         const ms = renderNow();
         const i = renderer.info;
         const fm = [...frameMs].sort((a, b) => a - b);
-        return { calls: i.render.calls, triangles: i.render.triangles, frame: i.render.frame, programs: i.programs?.length ?? 0, geometries: i.memory.geometries, textures: i.memory.textures,
+        return { calls: i.render.calls, triangles: i.render.triangles, frame: i.render.frame, programs: i.programs?.length ?? 0, warmPrograms, geometries: i.memory.geometries, textures: i.memory.textures,
           tier, probe: probeResult, dpr: renderer.getPixelRatio(), canvas: [canvas.width, canvas.height], size: [W, H], fit, renderMs: +ms.toFixed(2),
           frameMsMedian: fm.length ? +fm[Math.floor(fm.length / 2)].toFixed(2) : null, s: st.s, target: st.target, G: st.G, front: frontSlots, rowCount: row[0]?.mesh.count ?? 0,
-          sv: st.sv, beat: last, counts: { front: front[0]?.mesh.count ?? 0, second: second[0]?.mesh.count ?? -1 }, fov: cam.fov, caseType: last.second ? 'second' : 'tough' };
+          sv: st.sv, beat: last, counts: { front: front[0]?.mesh.count ?? 0, types: typeCount() }, fov: cam.fov, type: frontType(), takeover: takeoverState(), types: api.types() };
       },
-      state: (): StageState => ({ s: st.s, target: st.target, G: st.G, sv: st.sv, drag: !!st.drag, turn: !!st.turn, raf: !!raf, running, busy: busy(), renders, tier, detail, caseType: last.second ? 'second' : 'tough', counts: { front: front[0]?.mesh.count ?? 0, second: second[0]?.mesh.count ?? -1 }, fov: cam.fov, probe: probeResult }),
+      state: (): StageState => ({ s: st.s, target: st.target, G: st.G, sv: st.sv, drag: !!st.drag, turn: !!st.turn, raf: !!raf, running, busy: busy(), renders, tier, detail, type: frontType(), takeover: takeoverState(), types: api.types(), counts: { front: front[0]?.mesh.count ?? 0, types: typeCount() }, fov: cam.fov, probe: probeResult }),
       /** a slot's centre on the page (CSS px), at the current pose */
       project(slot: number, local: [number, number, number] = [0, 0, 0]): { x: number; y: number } {
         const B = beatPose(st.sv);

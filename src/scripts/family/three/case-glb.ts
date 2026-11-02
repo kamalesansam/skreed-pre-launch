@@ -2,14 +2,21 @@
 // intake (src/data/case-model.json, imported at build, never fetched), our own fetch with a 20 s timeout, GLTFLoader with
 // meshoptimizer's pure-JS reference decoder (no WebAssembly, so the site CSP holds), the parts by the manifest's names,
 // one normalisation for both LODs. LOD1 loads first; LOD0 only when the stage asks for it after a high-tier verdict.
+// The same path serves the Tough (the manifest's root) and the case types' own models (family-page.md 24 D1, D2).
 import { Quaternion, type BufferGeometry, type Material, type Mesh, type Object3D } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from './vendor/meshopt-decoder-reference.js';
 import { findParts, normalising, withBase, type CaseAsset, type CasePart, type PartMap, type RawPart } from './case-asset.ts';
 import { ModelError, fetchModel } from './model-fetch.ts';
+import { CASE_TYPES, type CaseType } from './pose.ts';
 
-/** One model's entry: the Cobalt (the manifest's root, the Tough case) or the second model under "magtough" (round 3). */
+/**
+ * One model's entry: the Cobalt (the manifest's root, the Tough case) or a case type's own model under its type
+ * (section 24 D1: Sam's MagTough, Snap and Armor files, each with its caseType and the file it came from).
+ */
 export interface ModelEntry {
+  model?: string;
+  caseType?: string;
   lod0: string; lod1: string;
   sha256: { lod0: string; lod1: string };
   orient?: [number, number, number, number];
@@ -17,12 +24,20 @@ export interface ModelEntry {
   parts: { body: PartMapEntry; accent?: PartMapEntry; logo?: PartMapEntry; ring?: PartMapEntry };
   triangles: { lod0: number; lod1: number };
   bytes: { lod0: number; lod1: number };
+  lod1BackOnly?: boolean;
 }
+/** The case types with a model of their own after the Tough, in beat order (the manifest's keys). */
+export const TYPE_MODELS = CASE_TYPES.filter((t): t is Exclude<CaseType, 'tough'> => t !== 'tough');
+export type TypeModelKey = Exclude<CaseType, 'tough'>;
 export interface CaseManifest extends ModelEntry {
   source: 'supplier' | 'standin';
   orient: [number, number, number, number];
-  magtough?: ModelEntry & { standsInFor: string[] };
+  magtough?: ModelEntry;
+  snap?: ModelEntry;
+  armor?: ModelEntry;
 }
+/** The type models the manifest carries, in beat order. */
+export const typeEntries = (m: CaseManifest): [TypeModelKey, ModelEntry][] => TYPE_MODELS.flatMap((k) => (m[k] ? [[k, m[k]!] as [TypeModelKey, ModelEntry]] : []));
 interface PartMapEntry { node: string; material: string; followsShade: boolean; tint?: number }
 
 const partMap = (m: ModelEntry): PartMap => ({

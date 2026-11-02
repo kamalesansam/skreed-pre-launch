@@ -54,5 +54,127 @@
   "instancing": true,
   "caseType": "",
   "device": "",
-  "allCaseTypes": "Sam, 2026-10-16: this one model (his Cobalt.fbx) is every phone case on the family pages, Tough through Armor; the Desert second model of 2026-10-15 is withdrawn and no stand-in is drawn for any case type"
+  "magtough": {
+    "model": "magsafe case.fbx (Sam, 2026-11-02), the MagTough case: shell, trim and logo by scripts/case-model/intake-fbx.py, packed by pack-case.mjs",
+    "lod0": "/models/magtough.lod0.301971ae.glb",
+    "lod1": "/models/magtough.lod1.62c85bab.glb",
+    "sha256": {
+      "lod0": "301971ae596c88b7a8560a3ca22132a825741aa3447267a0f3f172cb0459b9dc",
+      "lod1": "62c85babe45fb7ccedf5375d1869f43fe1002870e14b95593a872fedede6ada5"
+    },
+    "sizeMm": [
+      84.1,
+      158.1,
+      15.7
+    ],
+    "parts": {
+      "body": {
+        "node": "shell",
+        "material": "shell",
+        "followsShade": true
+      },
+      "accent": {
+        "node": "trim",
+        "material": "trim",
+        "followsShade": false,
+        "roughness": 0.553
+      },
+      "logo": {
+        "node": "logo",
+        "material": "logo",
+        "followsShade": true,
+        "tint": 0.8468
+      }
+    },
+    "triangles": {
+      "lod0": 23458,
+      "lod1": 9157
+    },
+    "bytes": {
+      "lod0": 110136,
+      "lod1": 58016
+    },
+    "lod1BackOnly": false,
+    "caseType": "magtough"
+  },
+  "snap": {
+    "model": "snap 3 (1).fbx (Sam, 2026-11-02), the Snap case: shell and logo by scripts/case-model/intake-fbx.py, packed by pack-case.mjs",
+    "lod0": "/models/snap.lod0.63227432.glb",
+    "lod1": "/models/snap.lod1.773fe2f4.glb",
+    "sha256": {
+      "lod0": "63227432502d36202dd59a622db01a74c36f8c85ee51e261f2ea22e215c79c31",
+      "lod1": "773fe2f4fb20e24ed7d619d75de268497d91fc915639e61c1ffb98d1bc71aa79"
+    },
+    "sizeMm": [
+      80.4,
+      165.9,
+      13.9
+    ],
+    "parts": {
+      "body": {
+        "node": "shell",
+        "material": "shell",
+        "followsShade": true
+      },
+      "logo": {
+        "node": "logo",
+        "material": "logo",
+        "followsShade": true,
+        "tint": 0.8468
+      }
+    },
+    "triangles": {
+      "lod0": 3944,
+      "lod1": 3944
+    },
+    "bytes": {
+      "lod0": 21940,
+      "lod1": 21940
+    },
+    "lod1BackOnly": false,
+    "caseType": "snap"
+  },
+  "armor": {
+    "model": "Armor 5.fbx (Sam, 2026-11-02), the Armor case: shell, trim and logo by scripts/case-model/intake-fbx.py, packed by pack-case.mjs",
+    "lod0": "/models/armor.lod0.18155d11.glb",
+    "lod1": "/models/armor.lod1.36f9c31f.glb",
+    "sha256": {
+      "lod0": "18155d1172951b7577a2f274df78bf19f882458aa336f5ac53b3000c271ab827",
+      "lod1": "36f9c31fc189d203128b3080c7019cd3916ff67c4850bb993f175ff2c8049b15"
+    },
+    "sizeMm": [
+      78.1,
+      154.9,
+      11.4
+    ],
+    "parts": {
+      "body": {
+        "node": "shell",
+        "material": "shell",
+        "followsShade": true
+      },
+      "accent": {
+        "node": "trim",
+        "material": "trim",
+        "followsShade": false,
+        "roughness": 0.553
+      },
+      "logo": {
+        "node": "logo",
+        "material": "logo",
+        "followsShade": true,
+        "tint": 0.8468
+      }
+    },
+    "triangles": {
+      "lod0": 11979,
+      "lod1": 9537
+    },
+    "bytes": {
+      "lod0": 57768,
+      "lod1": 49372
+    },
+    "lod1BackOnly": false,
+    "caseType": "armor"
+  }
 }
