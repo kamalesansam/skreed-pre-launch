@@ -51,7 +51,7 @@ test('the loader: RET from the two conditions of isReturnVisit(), on html.hero3d
 });
 
 test('the hero: the intro skipped, the page and both followers snapped to S2T.LAND under the loader, the island\'s ready() once frame2 is in and the gems are built (never skip or cut), the third snap at the lift, the context checked on a restore; the loader\'s decision read, not made again', () => {
-  assert.equal(S2T.LAND, 14.5);
+  assert.equal(S2T.LAND, 4.55);   // 14.5 until 2026-11-02, when the hero's scroll was halved and the stagger went (section-2.md 14)
   const hero = read('src/scripts/hero/hero.ts');
   const loader = read('src/inline/loader.inline.js');
   assert.match(hero, /const ret = !!document\.getElementById\('intro'\)\?\.classList\.contains\('ret'\);/, 'the loader decided (item 2: to-top.ts has cleared its flag by now)');

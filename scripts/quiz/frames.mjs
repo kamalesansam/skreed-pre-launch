@@ -1,6 +1,7 @@
 // Section 3's review frames (docs/specs/quiz.md 7), at 390x844 and 1280x800, from a served build on the forced 3D tier,
 // with Math.random pinned (the shade draw then gives each group's first shade, Sam's recommendation): the hand-off at
-// 15.7, 16.2 and 16.7 screens; the intro (17.2), visible at rest; card 1 mid-decode and settled; on a laptop an answer's
+// W2 + 0.5, W2END and W2END + 0.5 screens (5.5, 5.75 and 6.25 since 2026-11-02; 15.7, 16.2 and 16.7 before); the intro
+// (the track's end, 6.75), visible at rest; card 1 mid-decode and settled; on a laptop an answer's
 // picture under the pointer, mid-decode and settled (card-picture-decoding, card-picture); an answer taken
 // (the rest of its question wiped out); card 4; card 3 after Back; the result (The Quiet Curator, Porcelain with its
 // hairline); the gift, its validation state, the network error, the duplicate, the offline queue and
@@ -16,10 +17,13 @@
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { S2T, TRACK_SVH } from '../../src/config/hero.ts';
 
 const FLAGS = new Set(process.argv.slice(2).filter((a) => a.startsWith('--')));
 const BASE = process.argv.slice(2).find((a) => !a.startsWith('--')) || 'http://127.0.0.1:8799/?tier=hero3d';
 const OUT = fileURLToPath(new URL('../../docs/specs/screenshots', import.meta.url));
+/** the hand-off frames (the second wipe's middle, its end, the quiz half risen) and the intro, in screens, from the map */
+const HANDOFF = [S2T.W2 + 0.5, S2T.W2END, S2T.W2END + 0.5].map((k) => +k.toFixed(2)), INTRO = TRACK_SVH / 100;
 // frames that show the licensed answer pictures go to a git-ignored folder: the Envato licence does not allow the
 // photographs to be shared outside the site, and this repository is public
 const LICENSED = `${OUT}/licensed`;
@@ -62,8 +66,8 @@ for (const s of FLAGS.has('--phone-only') ? [] : SETUPS) {
   // the decode: data-decoding is on #find while any text moves; settled() waits for it to go
   const settled = () => page.waitForFunction(() => !document.getElementById('find').hasAttribute('data-decoding'), null, { timeout: 30_000 }).then(() => sleep(150));
   const at = async (k) => { await page.evaluate((k) => { scrollTo(0, k * innerHeight); if (window.__skreedSnap) window.__skreedSnap(k); }, k); await sleep(900); };
-  for (const k of [15.7, 16.2, 16.7]) { await at(k); await shot(`handoff-${k}`); }
-  await at(17.2);
+  for (const k of HANDOFF) { await at(k); await shot(`handoff-${k}`); }
+  await at(INTRO);
   await shot('intro');
   // each tap waits for its card to be on top and focused (the island keeps the main thread busy under SwiftShader, so a fixed pause can land on the card still leaving)
   const answer = async (personas, from = 0) => { for (const [k, p] of personas.entries()) { const card = page.locator(`.qz-card[data-i="${from + k}"].is-top`); await card.waitFor(); await page.waitForFunction((i) => document.activeElement?.closest?.('.qz-card')?.getAttribute('data-i') === String(i), from + k); await settled(); await card.locator(`.qz-opt[data-persona="${p}"]`).evaluate((b) => b.click()); } await settled(); };   // page-level clicks, as a tap behaves (Playwright's click may scroll to reach a button); each waits for its question to settle, as a press within 350 ms of a question appearing is dropped (deck.ts GUARD)
@@ -202,7 +206,7 @@ for (const s of PHONE_SETUPS) {
   await ctx.close();
 }
 
-// The quiz gate's frames (docs/specs/quiz-gate.md 7): on a page with no flag, section 4 locked, `intro` (17.2 screens,
+// The quiz gate's frames (docs/specs/quiz-gate.md 7): on a page with no flag, section 4 locked, `intro` (the track's end, 6.75 screens since 2026-11-02,
 // the intro at rest with Skip quiz) and `card2-foot` (question 2 settled, Back and Skip quiz in its footer; no pictures
 // on that question, so no licensed photograph is in the frame); on ?room=open once the hall is resident (__s4.ready),
 // `ride-mid` (the ride at a raw q of about 0.5, the third wipe part way) and `arrival` (the hall fully in after a
