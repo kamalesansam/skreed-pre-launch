@@ -1,0 +1,15 @@
+---
+// The drawn shade as a brush stroke (Sam's reference of 2026-11-02: the paint swatch beside the shade's name; E-S3-result).
+// Our own drawing, in flat fills, no gradient: the body in the shade, its shaded left edge and its lit ridge in the
+// shade's own darker and lighter tones (config/quiz-tones.ts), and on a gloss result a Pearl Whisper highlight, the
+// finish shown the way the case renders show it (CLAUDE.md rule 6). Every fill is a custom property deck.ts sets on the
+// section for the drawn shade.
+interface Props { gloss: boolean }
+const { gloss } = Astro.props;
+---
+<svg class="qz-smear" viewBox="0 0 200 600" aria-hidden="true" focusable="false">
+  <path class="qz-sm-body" d="M98 6C140 2 178 26 188 74C196 112 194 160 188 206C182 252 172 298 162 344C152 390 142 432 134 474C126 514 118 552 110 584C108 592 104 597 100 597C95 597 93 590 93 582C92 566 90 550 87 534L80 536L83 520C78 494 72 466 64 438C58 418 52 400 46 380L38 384L42 366C34 336 26 302 20 268C16 246 12 224 10 202L4 200L9 186C6 150 8 110 18 76C30 34 58 10 98 6Z" />
+  <path class="qz-sm-dark" d="M18 76C8 110 6 150 9 186L4 200L10 202C12 224 16 246 20 268C26 302 34 336 42 366L38 384L46 380C52 400 58 418 64 438C72 466 78 494 83 520L80 536L87 534C90 550 92 566 93 582C93 590 95 597 100 597C100 580 99 560 97 540C93 500 85 460 75 420C63 372 49 320 40 268C32 222 29 176 31 132C32 108 37 88 45 70C36 70 26 72 18 76Z" />
+  <path class="qz-sm-light" d="M146 30C172 46 184 82 184 124C184 176 174 224 162 270C154 300 146 330 138 360C148 320 160 270 166 228C172 190 172 150 168 116C164 82 158 54 146 30Z" />
+  {gloss && <path class="qz-sm-gloss" d="M150 42C164 56 171 78 172 104C167 86 160 64 150 42ZM161 148C165 168 163 190 158 208C161 188 162 168 161 148Z" />}
+</svg>

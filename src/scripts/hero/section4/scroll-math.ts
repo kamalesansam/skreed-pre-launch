@@ -8,8 +8,13 @@ export interface Span { readonly start: number; readonly end: number }
 
 /** The glue's numbers: the dead band at a span's ends, the stillness before a settle, how recent an input must be for a run to arm it, the settle's length. */
 export const GLUE = { dead: 2, stillMs: 150, inputMs: 300, settleMs: 500 } as const;
-/** The wheel burst filter (reference 5): a burst ends after this silence; while consumed, deltas under this share of the peak are swallowed. */
-export const BURST = { silenceMs: 200, keep: 0.5 } as const;
+/**
+ * The wheel burst filter (reference 5): a burst ends after this silence; while consumed, deltas under this share of the
+ * peak are swallowed. carriedMs: the wheel input that carried the page onto scene 1 is the page's until it falls silent
+ * this long (section-4-no-hall.md 2 "The arrival"), so a tail that comes in sparsely (a slow machine coalescing a fling,
+ * a free-spinning wheel slowing down) never steps; a gesture after that silence is the visitor's own.
+ */
+export const BURST = { silenceMs: 200, keep: 0.5, carriedMs: 700 } as const;
 /** A one-finger touch: the move that is one step in the carousel, and the move down from scroll 0 that is the wrap. */
 export const TOUCH = { stepPx: 12, wrapPx: 16 } as const;
 /** --ease-standard in src/styles/tokens.css, the settle's curve. */
@@ -88,33 +93,35 @@ export function burstFeed(b: BurstState, delta: number, now: number, busy = fals
 
 /** a step or a wrap ran in this burst, or the burst was swallowed by a running step, its cooldown or the lock */
 export const burstConsume = (b: BurstState): void => { b.consumed = true; };
+/** the burst begins again with the next event, its peak and consumed flag cleared and its clock kept: a wheel event against the direction of the input that carried the page in is the visitor's own gesture, never that input's tail (scroll.ts; section-4-no-hall.md AC4) */
+export const burstReset = (b: BurstState): void => { b.peak = 0; b.consumed = false; };
 
 export interface WheelContext {
   /** scrollY is 0 and the carousel is not in range */
   readonly atTop: boolean;
   /** the intro is over and no seam runs (the adapter's canWrap) */
   readonly canWrap: boolean;
-  /** the entry, the way back or a seam with its 400 ms is running (the adapter's lock): swallowed without stepping */
+  /** a seam with its 400 ms is running (the adapter's lock): swallowed without stepping */
   readonly locked: boolean;
   /** a step runs or its 150 ms cooldown (the adapter's busy): swallowed, and the burst consumed */
   readonly busy: boolean;
   /** scene 5 is front: a forward gesture is the page's */
   readonly edgeForward: boolean;
-  /** scene 1 is front: a backward gesture is the way back */
+  /** scene 1 is front: a backward gesture is the page's (up into the third wipe and the quiz; section-4-no-hall.md 2) */
   readonly edgeBack: boolean;
   /** ctrlKey (a trackpad pinch): never captured */
   readonly ctrl?: boolean;
 }
 
-export type WheelVerdict = { kind: 'page' } | { kind: 'swallow' } | { kind: 'wrap' } | { kind: 'back' } | { kind: 'step'; dir: 1 | -1 };
+export type WheelVerdict = { kind: 'page' } | { kind: 'swallow' } | { kind: 'wrap' } | { kind: 'step'; dir: 1 | -1 };
 const PAGE: WheelVerdict = { kind: 'page' }, SWALLOW: WheelVerdict = { kind: 'swallow' };
 
 /**
  * What one wheel event does: the page's own scroll, swallowed, the wrap (a burst beginning at scroll 0 after silence,
- * moving up), the way back, or one step. The lock is checked before canWrap at the top (a seam's cover and its 400 ms
+ * moving up), or one step; at either edge (on at scene 5, back at scene 1) the page's. The lock is checked before canWrap at the top (a seam's cover and its 400 ms
  * swallow, then the intro leaves the page to itself), and the lock and busy before the edges in range, as the
- * reference's he() does; an event they swallow marks the burst consumed. The caller consumes the burst for a wrap, the
- * way back and a step the adapter accepts.
+ * reference's he() does; an event they swallow marks the burst consumed. The caller consumes the burst for a wrap and
+ * a step the adapter accepts.
  */
 export function wheelDecision(b: BurstState, deltaY: number, now: number, ctx: WheelContext): WheelVerdict {
   if (ctx.ctrl) return PAGE;
@@ -127,10 +134,10 @@ export function wheelDecision(b: BurstState, deltaY: number, now: number, ctx: W
     if (!ctx.canWrap) return PAGE;                            // the intro: its own lock
     return dir === -1 && r.fresh ? { kind: 'wrap' } : PAGE;   // only a burst that begins here after silence, moving up, wraps
   }
-  if (held) { burstConsume(b); return SWALLOW; }              // a step, its cooldown, a seam or the way back: swallowed before the edges
+  if (held) { burstConsume(b); return SWALLOW; }              // a step, its cooldown or a seam: swallowed before the edges
   if (!r.pass) return SWALLOW;                                // a consumed burst's tail
   if (dir === 1 && ctx.edgeForward) return PAGE;              // scene 5: the page scrolls on into the hold
-  if (dir === -1 && ctx.edgeBack) return { kind: 'back' };
+  if (dir === -1 && ctx.edgeBack) return PAGE;               // scene 1: the page scrolls back up into the wipe
   return { kind: 'step', dir };
 }
 
@@ -138,7 +145,7 @@ export function wheelDecision(b: BurstState, deltaY: number, now: number, ctx: W
 
 export type TouchVerdict =
   | { kind: 'none' }            // no vertical movement yet: nothing decided
-  | { kind: 'page' }            // the page's own touch: forward at scene 5, or up from the top
+  | { kind: 'page' }            // the page's own touch: forward at scene 5, back at scene 1, or up from the top
   | { kind: 'hold' }            // ours, under the threshold: preventDefault and wait
   | { kind: 'step'; dir: 1 | -1 }
   | { kind: 'wrap' };           // ours, begun at scroll 0 and moved down TOUCH.wrapPx: the reverse seam
@@ -146,9 +153,9 @@ export type TouchVerdict =
 /**
  * One touchmove, decided on the first move with a vertical component: whether the touch is the page's or ours, and once
  * ours, when it steps (TOUCH.stepPx, the direction by the sign) or wraps (TOUCH.wrapPx down from scroll 0). The finger
- * moving up the glass scrolls forward (dir 1).
+ * moving up the glass scrolls forward (dir 1). At either edge, scene 5 forward or scene 1 back, the touch is the page's.
  */
-export function touchDecision(startY: number, startScroll: number, y: number, atEdgeForward: boolean): TouchVerdict {
+export function touchDecision(startY: number, startScroll: number, y: number, atEdgeForward: boolean, atEdgeBack = false): TouchVerdict {
   const dy = y - startY;
   if (!(dy !== 0)) return { kind: 'none' };
   if (startScroll <= 0) {
@@ -156,7 +163,7 @@ export function touchDecision(startY: number, startScroll: number, y: number, at
     return dy >= TOUCH.wrapPx ? { kind: 'wrap' } : { kind: 'hold' };
   }
   const dir: 1 | -1 = dy < 0 ? 1 : -1;
-  if (dir === 1 && atEdgeForward) return { kind: 'page' };
+  if ((dir === 1 && atEdgeForward) || (dir === -1 && atEdgeBack)) return { kind: 'page' };
   return Math.abs(dy) >= TOUCH.stepPx ? { kind: 'step', dir } : { kind: 'hold' };
 }
 

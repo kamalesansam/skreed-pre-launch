@@ -2,8 +2,9 @@
 // BASE_URL points the specs at a deployed host instead (section 15) and skips the local server. SKREED_PORT moves the
 // local server off 8787 (one port per workflow); SKREED_DIST names a build written with astro build --outDir. The
 // global setup asserts, at the start and at the end of the run, that the served `/` is that build's index.html.
+// SKREED_GL=gpu runs the specs in the installed Chrome on the machine's GPU (tests/harness/browser.ts).
 import { defineConfig } from '@playwright/test';
-import { CHROME_PATH, GL_ARGS, PORT, PORT_URL } from './tests/harness/browser.ts';
+import { CHANNEL, CHROME_PATH, GL_ARGS, GPU, PORT, PORT_URL } from './tests/harness/browser.ts';
 
 export default defineConfig({
   testDir: 'tests',
@@ -15,7 +16,7 @@ export default defineConfig({
   globalSetup: './tests/harness/build-identity.ts',
   use: {
     baseURL: PORT_URL,
-    launchOptions: { executablePath: CHROME_PATH, args: GL_ARGS },
+    launchOptions: { ...(GPU ? { channel: CHANNEL } : { executablePath: CHROME_PATH }), args: GL_ARGS },   // SKREED_GL=gpu: the installed Chrome on the GPU
     trace: 'off',
   },
   projects: [

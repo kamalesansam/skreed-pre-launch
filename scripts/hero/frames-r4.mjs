@@ -42,8 +42,11 @@ for (const s of SETUPS) {
   page.on('pageerror', (e) => console.log(s.name, 'pageerror', e.message));
   await page.goto(BASE, { waitUntil: 'load' });
   const t0 = Date.now();
-  const ready = await page.waitForFunction(() => window.__s2 && window.__s2() && window.__s2().ready && !document.documentElement.classList.contains('intro'), null, { timeout: 420_000 }).then(() => true).catch(() => false);
-  console.log(s.name, 'section 2 ready and the intro over:', ready, 'after', Math.round((Date.now() - t0) / 1000), 's');
+  // the wordmark loader (#intro) leaves the DOM only after its 100 and its fade: wait for that, not for the html class
+  // (the first take of 2026-11-02 waited for the class and caught the loader in seven of twelve frames; review iteration 1)
+  const ready = await page.waitForFunction(() => window.__s2 && window.__s2() && window.__s2().ready && !document.getElementById('intro') && !document.documentElement.classList.contains('intro'), null, { timeout: 420_000 }).then(() => true).catch(() => false);
+  const loaderGone = await page.evaluate(() => !document.getElementById('intro'));
+  console.log(s.name, 'section 2 ready, the intro over and the loader gone:', ready, loaderGone, 'after', Math.round((Date.now() - t0) / 1000), 's');
   for (const [state, k] of FRAMES) {
     await page.evaluate((k) => { scrollTo(0, Math.round(k * innerHeight)); if (window.__skreedSnap) window.__skreedSnap(k); }, k);
     await sleep(1400);   // the labels' reveal (0.2 s leader, 0.4 s wipe, 0.75 s roll) and the glue's 0.5 s settle, where it applies

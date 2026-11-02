@@ -120,8 +120,6 @@ export interface Carousel {
   resize(w: number, h: number, dpr?: number): void;
   /** the degrade path (spec 6): the cloud at half its resolution while on */
   degrade(cloudHalf: boolean): void;
-  /** the director's scissor while the bubble is small (the bubble's bounding box in device pixels), or null */
-  scissor(r: { x: number; y: number; w: number; h: number } | null): void;
   /** the bottom shade, for AC12's tuning: how dark at the bottom edge (0 to 1), where it clears (a share of the frame's height) and up to where it stays solid */
   shade(dark: number, height?: number, solid?: number): void;
   /** the product's placement at the stage's CSS size, and the shown product's box on the stage (shares, x from the left, y from the top), or null with no product */
@@ -138,8 +136,8 @@ export interface Carousel {
   warmCloud(): Promise<void>;
   /** the programs and the environment, one compile a frame with the target bound (phase 2); update() starts it when it has not run */
   warm(): Promise<void>;
-  /** the stills of scene i and its neighbours fetched (phase 4; a step waits on the next scene's) */
-  prepare(i: number): void;
+  /** the stills of scene i and its neighbours fetched (phase 4; a step waits on the next scene's); around false fetches scene i's alone (the director's phase 1) */
+  prepare(i: number, around?: boolean): void;
   /** GPU bytes resident: the targets, the products' geometry, the stills and every loop texture on the GPU */
   memory(): number;
   dispose(): void;
@@ -290,7 +288,6 @@ export function createCarousel(o: CarouselOptions): Carousel {
   // the loops (seen 2026-10-26 against Sam's Cycles renders); the planes and the cloud are full-screen quads, so the
   // samples cost edges alone, and three resolves the samples when the texture is read (the hero's composite)
   let rt = new WebGLRenderTarget(8, 8, { depthBuffer: true, samples: MSAA }), W = 8, H = 8;
-  let scissorRect: { x: number; y: number; w: number; h: number } | null = null;
 
   // the planes, one a scene, sharing the light-up and shade uniforms
   const shared: Record<'uSoft' | 'uBoost' | 'uFloor' | 'uShade' | 'uShadeH' | 'uShadeSolid', { value: number }> & { uRes: { value: Vector2 } } = { uSoft: { value: LIGHT.soft }, uBoost: { value: LIGHT.boost }, uFloor: { value: LIGHT.floor }, uShade: { value: SHADE.dark }, uShadeH: { value: SHADE.height }, uShadeSolid: { value: SHADE.solid }, uRes: { value: new Vector2(8, 8) } };
@@ -456,7 +453,7 @@ export function createCarousel(o: CarouselOptions): Carousel {
   /**
    * The frame's draws: the stage into its target, then the cloud into its own while a seam runs. Under a seam's full
    * cover the stage is not drawn and its target keeps the last frame: the cloud is opaque there, so nothing under it
-   * shows, and a seam over the hall or over the hero after the exit's jump steps the carousel for the cloud alone (the
+   * shows, and a seam over the hero after the exit's jump (or before the wrap's landing) steps the carousel for the cloud alone (the
    * build record's section 10, the cost reading of the seams over the hero). The wrap's hold and the frames at either
    * end of a cover-in and a cover-out are the frames at cover 1.
    */
@@ -464,7 +461,6 @@ export function createCarousel(o: CarouselOptions): Carousel {
     const pc = renderer.getClearColor(_cc), pa = renderer.getClearAlpha(), tm = renderer.toneMapping, ac = renderer.autoClear;
     renderer.toneMapping = NoToneMapping; renderer.autoClear = false;
     if (!(seamPhase && cover >= 1)) {
-      if (scissorRect) { rt.scissor.set(scissorRect.x, scissorRect.y, scissorRect.w, scissorRect.h); rt.scissorTest = true; } else rt.scissorTest = false;
       renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 1); renderer.clear(true, true, false);
       renderer.render(stage, cam);
     }
@@ -592,7 +588,6 @@ export function createCarousel(o: CarouselOptions): Carousel {
       measure();
     },
     degrade(half) { cloudHalf = half; if (cloudRt) allocCloud(); },
-    scissor(r) { scissorRect = r; },
     shade(dark, height = SHADE.height, solid = SHADE.solid) { shared.uShade.value = clamp01(dark); shared.uShadeH.value = Math.max(1e-3, height); shared.uShadeSolid.value = Math.min(clamp01(solid), shared.uShadeH.value); },
     place() { const sh = slots[shownIdx]; return { ...placement, box: sh ? productScreenBox(placement, sh.size, W / dpr, H / dpr) : null }; },
     lights(o) {
@@ -633,7 +628,7 @@ export function createCarousel(o: CarouselOptions): Carousel {
         } catch (e) { if (!disposed) console.warn('section 4: the carousel did not warm up; its programs compile on first use', e); }
       })());
     },
-    prepare(i) { for (const j of [i, i + 1, i - 1]) if (j >= 0 && j < N) ensureStill(j); },
+    prepare(i, around = true) { for (const j of around ? [i, i + 1, i - 1] : [i]) if (j >= 0 && j < N) ensureStill(j); },
     memory() {
       // the frame target: its colour and depth renderbuffers at MSAA samples, and the texture the samples resolve into
       let b = W * H * (8 * MSAA + 4) + (cloudRt ? CW * CH * 4 : 0) + (envTarget ? envTarget.width * envTarget.height * 8 : 0);

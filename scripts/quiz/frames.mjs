@@ -12,23 +12,37 @@
 // deck's foot too (Back and Skip quiz, below the fold at 390 px tall). Then the quiz gate's frames (below).
 // Serve a hooks build first (PUBLIC_HERO_HOOKS=1 astro build --outDir dist-s3, then wrangler dev --assets dist-s3 --port 8799),
 // or the dev server. CHROME_PATH runs the installed Chrome in place of Playwright's Chromium (tests/harness/browser.ts does
-// the same); --phone-only takes the phone pass alone, --no-gate skips the gate's frames.
-//   node scripts/quiz/frames.mjs [baseUrl] [--phone-only] [--no-gate]
+// the same); --phone-only takes the phone pass alone, --no-gate skips the gate's frames. --result-only (2026-11-02, the
+// result screen after Sam's reference, quiz.md AC14) takes the result's frames alone at every size and at 1366x657 and
+// 1920x1080 (the reference's proportions): `result`, `gift` wherever the result and the offer take the screen in turn
+// (#find[data-swap]: a phone held sideways, The Quiet Curator at 360x780), and at 390x844 and 1280x800 the gift's states
+// and the results of The Spark and The Calm Strategist.
+//   node scripts/quiz/frames.mjs [baseUrl] [--phone-only] [--no-gate] [--result-only] [--only=<w>x<h>,...]
+// --only takes the passes at those sizes alone (a size that timed out under load, taken again)
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { S2T, TRACK_SVH } from '../../src/config/hero.ts';
 
-const FLAGS = new Set(process.argv.slice(2).filter((a) => a.startsWith('--')));
+const FLAGS = new Set(process.argv.slice(2).filter((a) => a.startsWith('--') && !a.startsWith('--only=')));
+const ONLY = process.argv.slice(2).find((a) => a.startsWith('--only='))?.slice(7).split(',');
+/** the sizes of a pass, less those --only leaves out */
+const sized = (list) => (ONLY ? list.filter((s) => ONLY.includes(s.name)) : list);
 const BASE = process.argv.slice(2).find((a) => !a.startsWith('--')) || 'http://127.0.0.1:8799/?tier=hero3d';
 const OUT = fileURLToPath(new URL('../../docs/specs/screenshots', import.meta.url));
 /** the hand-off frames (the second wipe's middle, its end, the quiz half risen) and the intro, in screens, from the map */
 const HANDOFF = [S2T.W2 + 0.5, S2T.W2END, S2T.W2END + 0.5].map((k) => +k.toFixed(2)), INTRO = TRACK_SVH / 100;
 // frames that show the licensed answer pictures go to a git-ignored folder: the Envato licence does not allow the
-// photographs to be shared outside the site, and this repository is public
+// photographs to be shared outside the site, and this repository is public. So do the result's frames where the build
+// has Sam's paint swatch (`.qz-rub`): a Canva element, kept out of the repository until he confirms Canva's licence
+// covers the site (quiz.md D49); a build without it draws our own stroke, and its frames are written beside the others
 const LICENSED = `${OUT}/licensed`;
+/** where a frame that shows the result goes: the git-ignored folder where the page draws Sam's swatch */
+const paintDir = async (page) => ((await page.evaluate(() => !!document.querySelector('#find .qz-rub'))) ? LICENSED : OUT);
 mkdirSync(LICENSED, { recursive: true });
-const GL_ARGS = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
+// SKREED_GL=gpu runs the browser on the machine's GPU, as tests/harness/browser.ts does (on Sam's Mac SwiftShader ticks the
+// page's animation clock about twice a second, 2026-11-02)
+const GL_ARGS = process.env.SKREED_GL === 'gpu' ? ['--ignore-gpu-blocklist', '--enable-gpu'] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
 const SETUPS = [
   { name: '390x844', viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 },
   { name: '1280x800', viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 },
@@ -51,7 +65,72 @@ const answerOn = async (page, personas, from = 0) => {
 };
 
 const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || undefined, args: GL_ARGS });
-for (const s of FLAGS.has('--phone-only') ? [] : SETUPS) {
+const RESULT_ONLY = FLAGS.has('--result-only');
+const RESULT_SETUPS = [
+  { name: '1366x657', viewport: { width: 1366, height: 657 }, deviceScaleFactor: 1 },
+  { name: '1920x1080', viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 },
+];
+if (RESULT_ONLY) for (const s of sized([...SETUPS, ...PHONE_SETUPS, ...RESULT_SETUPS])) {
+  const ctx = await browser.newContext({ viewport: s.viewport, deviceScaleFactor: s.deviceScaleFactor, hasTouch: s.viewport.width < 900 });
+  await ctx.addInitScript(() => { Math.random = () => 0.01; });
+  const page = await ctx.newPage();
+  let status = 500, offline = false, dir = OUT;
+  const shot = (state) => page.screenshot({ path: `${dir}/quiz-${s.name}-${state}.png` });   // every frame of this pass shows the result (or the offer in its turn)
+  await page.route('**/api/quiz-lead', (route) => (offline ? route.abort('internetdisconnected') : route.fulfill({ status, contentType: 'application/json', body: '{}' })));
+  await page.goto(BASE, { waitUntil: 'load' });
+  dir = await paintDir(page);
+  const ready = await page.waitForFunction(() => window.__s2 && window.__s2() && window.__s2().ready, null, { timeout: 420_000 }).then(() => true).catch(() => false);
+  console.log(s.name, 'result pass, section 2 ready:', ready, dir === LICENSED ? '(Sam\'s swatch on the build: frames to licensed/)' : '');
+  await page.addStyleTag({ content: 'astro-dev-toolbar { display: none !important; }' }).catch(() => {});
+  await toQuizOn(page);
+  await page.locator('#qzBegin > .dc').waitFor();
+  await page.locator('#qzBegin').evaluate((b) => b.click());
+  await answerOn(page, Array(10).fill('curator'), 0);
+  await sleep(500);   // the ground, the stroke and the chips faded in
+  await shot('result');
+  const fit = () => page.evaluate(() => { const f = document.getElementById('find'); return { rs: f.style.getPropertyValue('--qz-rs'), h: Math.round(f.getBoundingClientRect().height), vh: Math.round(document.querySelector('.qz-vh').getBoundingClientRect().height), scrollW: document.scrollingElement.scrollWidth }; });
+  console.log(s.name, 'result', JSON.stringify(await fit()));
+  if (await page.evaluate(() => document.getElementById('find').hasAttribute('data-swap'))) {
+    await page.locator('.qz-result:not([hidden]) .qz-togift').evaluate((b) => b.click());
+    await settledOn(page);
+    await shot('gift');
+    console.log(s.name, 'the offer\'s turn', JSON.stringify(await fit()));
+  } else if (s.name === '390x844' || s.name === '1280x800') {
+    await page.click('#qzSend');
+    await sleep(500);
+    await shot('gift-validation');
+    await page.fill('#qzEmail', 'sam@example.com');
+    await page.locator('.qz-check').click();
+    await page.click('#qzSend');
+    await sleep(600);
+    await shot('gift-error');
+    status = 409;
+    await page.click('#qzSend');
+    await sleep(600);
+    await shot('gift-duplicate');
+    await page.click('.qz-notyou');
+    await page.fill('#qzEmail', 'sam@example.com');
+    await page.locator('.qz-check').click();
+    offline = true; await ctx.setOffline(true);
+    await page.click('#qzSend');
+    await sleep(600);
+    await shot('gift-offline');
+    status = 200;
+    offline = false; await ctx.setOffline(false);
+    await sleep(900);
+    await shot('gift-done');
+    for (const [name, persona] of [['result-spark', 'spark'], ['result-strategist', 'strategist']]) {
+      await page.locator('.qz-result:not([hidden]) .qz-retry').evaluate((b) => b.click());
+      await page.locator('.qz-card[data-i="0"].is-top').waitFor();
+      await answerOn(page, Array(10).fill(persona), 0);
+      await sleep(500);
+      await shot(name);
+      console.log(s.name, name, JSON.stringify(await fit()));
+    }
+  }
+  await ctx.close();
+}
+for (const s of FLAGS.has('--phone-only') || RESULT_ONLY ? [] : sized(SETUPS)) {
   const ctx = await browser.newContext({ viewport: s.viewport, deviceScaleFactor: s.deviceScaleFactor });
   await ctx.addInitScript(() => { Math.random = () => 0.01; });
   const page = await ctx.newPage();
@@ -60,6 +139,8 @@ for (const s of FLAGS.has('--phone-only') ? [] : SETUPS) {
   const shotLicensed = (state) => page.screenshot({ path: `${LICENSED}/quiz-${s.name}-${state}.png` });
   await page.route('**/api/quiz-lead', (route) => (offline ? route.abort('internetdisconnected') : route.fulfill({ status, contentType: 'application/json', body: '{}' })));
   await page.goto(BASE, { waitUntil: 'load' });
+  const paint = await paintDir(page);
+  const shotResult = (state) => page.screenshot({ path: `${paint}/quiz-${s.name}-${state}.png` });   // the result (its paint) on screen
   const t0 = Date.now();
   const ready = await page.waitForFunction(() => window.__s2 && window.__s2() && window.__s2().ready, null, { timeout: 420_000 }).then(() => true).catch(() => false);
   console.log(s.name, 'section 2 ready:', ready, 'after', Math.round((Date.now() - t0) / 1000), 's');
@@ -119,33 +200,33 @@ for (const s of FLAGS.has('--phone-only') ? [] : SETUPS) {
   await shot('back');
   await answer(Array(8).fill('curator'), 2);
   await settled();
-  await shot('result');
+  await shotResult('result');
   await page.evaluate(() => document.getElementById('qzGift').scrollIntoView({ block: 'end' }));
   await sleep(400);
-  await shot('gift');
+  await shotResult('gift');
   await page.click('#qzSend');
   await sleep(500);
-  await shot('gift-validation');
+  await shotResult('gift-validation');
   await page.fill('#qzEmail', 'sam@example.com');
   await page.locator('.qz-check').click();
   await page.click('#qzSend');
   await sleep(600);
-  await shot('gift-error');
+  await shotResult('gift-error');
   status = 409;
   await page.click('#qzSend');
   await sleep(600);
-  await shot('gift-duplicate');
+  await shotResult('gift-duplicate');
   await page.click('.qz-notyou');
   await page.fill('#qzEmail', 'sam@example.com');
   await page.locator('.qz-check').click();
   offline = true; await ctx.setOffline(true);
   await page.click('#qzSend');
   await sleep(600);
-  await shot('gift-offline');
+  await shotResult('gift-offline');
   status = 200;
   offline = false; await ctx.setOffline(false);
   await sleep(900);
-  await shot('gift-done');
+  await shotResult('gift-done');
   for (const [name, persona] of [['result-spark', 'spark'], ['result-strategist', 'strategist']]) {
     await page.locator('.qz-result:not([hidden]) .qz-retry').evaluate((b) => b.click());
     await page.locator('.qz-card[data-i="0"].is-top').waitFor();
@@ -154,9 +235,9 @@ for (const s of FLAGS.has('--phone-only') ? [] : SETUPS) {
     await settled();
     await page.evaluate(() => document.getElementById('find').scrollIntoView({ block: 'start' }));
     await sleep(300);
-    await shot(name);
+    await shotResult(name);
   }
-  console.log(s.name, 'done', await page.evaluate(() => ({ persona: document.querySelector('.qz-result:not([hidden])')?.dataset.persona, shade: document.querySelector('.qz-result:not([hidden]) .qz-big')?.dataset.shade, scrollW: document.scrollingElement.scrollWidth })));
+  console.log(s.name, 'done', await page.evaluate(() => ({ persona: document.querySelector('.qz-result:not([hidden])')?.dataset.persona, shade: document.querySelector('.qz-result:not([hidden]) .qz-shade .sr-only')?.textContent, scrollW: document.scrollingElement.scrollWidth })));
   await ctx.close();
 }
 
@@ -164,13 +245,15 @@ for (const s of FLAGS.has('--phone-only') ? [] : SETUPS) {
 // pointerdown with no click), question 8, the result and the gift. The picture frame is a licensed frame where a picture
 // shows (above the question at 412x915, under it at 844x390); at 360x780 the frame has no room (data-none), so the
 // frame shows the words alone and is written beside the others.
-for (const s of PHONE_SETUPS) {
+for (const s of RESULT_ONLY ? [] : sized(PHONE_SETUPS)) {
   const ctx = await browser.newContext({ viewport: s.viewport, deviceScaleFactor: s.deviceScaleFactor, hasTouch: true });
   await ctx.addInitScript(() => { Math.random = () => 0.01; });
   const page = await ctx.newPage();
   await page.route('**/api/quiz-lead', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
   const shot = (state) => page.screenshot({ path: `${OUT}/quiz-${s.name}-${state}.png` });
   await page.goto(BASE, { waitUntil: 'load' });
+  const paint = await paintDir(page);
+  const shotResult = (state) => page.screenshot({ path: `${paint}/quiz-${s.name}-${state}.png` });   // the result (its paint) on screen
   const t0 = Date.now();
   const ready = await page.waitForFunction(() => window.__s2 && window.__s2() && window.__s2().ready, null, { timeout: 420_000 }).then(() => true).catch(() => false);
   console.log(s.name, 'phone pass, section 2 ready:', ready, 'after', Math.round((Date.now() - t0) / 1000), 's');
@@ -198,22 +281,23 @@ for (const s of PHONE_SETUPS) {
     await toQuizOn(page);
   }
   await answerOn(page, Array(3).fill('curator'), 7);
-  await shot('result');
+  await shotResult('result');
   await page.evaluate(() => document.getElementById('qzGift').scrollIntoView({ block: 'end' }));
   await sleep(400);
-  await shot('gift');
+  await shotResult('gift');
   console.log(s.name, 'phone pass done', await page.evaluate(() => ({ frame: document.querySelector('.qz-card[data-i="0"] .qz-pics')?.hasAttribute('data-none') ? 'none' : 'drawn', scrollW: document.scrollingElement.scrollWidth })));
   await ctx.close();
 }
 
 // The quiz gate's frames (docs/specs/quiz-gate.md 7): on a page with no flag, section 4 locked, `intro` (the track's end, 6.75 screens since 2026-11-02,
 // the intro at rest with Skip quiz) and `card2-foot` (question 2 settled, Back and Skip quiz in its footer; no pictures
-// on that question, so no licensed photograph is in the frame); on ?room=open once the hall is resident (__s4.ready),
-// `ride-mid` (the ride at a raw q of about 0.5, the third wipe part way) and `arrival` (the hall fully in after a
-// keyboard press, the pad's ring); and at 390 x 844 on the poster tier `poster-arrival` (the hall's still with its
-// prompt). Written to docs/specs/screenshots/quiz-gate-<w>x<h>-<state>.png.
+// on that question, so no licensed photograph is in the frame); on ?room=open once the scenes are resident (__s4.ready),
+// `ride-mid` (the ride at a raw q of about 0.5, the third wipe part way) and `arrival` (scene 1 fully in after a
+// keyboard press, its lines and the focus ring); and at 390 x 844 on the poster tier `poster-arrival` (the column's
+// first scene with its name focused; the hall's still with its prompt until 2026-11-02). Written to
+// docs/specs/screenshots/quiz-gate-<w>x<h>-<state>.png.
 const GATE_BASE = new URL(BASE);
-for (const s of FLAGS.has('--phone-only') || FLAGS.has('--no-gate') ? [] : SETUPS) {
+for (const s of FLAGS.has('--phone-only') || FLAGS.has('--no-gate') || RESULT_ONLY ? [] : sized(SETUPS)) {
   const shotGate = (page, state) => page.screenshot({ path: `${OUT}/quiz-gate-${s.name}-${state}.png` });
   const settledIn = (page) => page.waitForFunction(() => !document.getElementById('find').hasAttribute('data-decoding'), null, { timeout: 30_000 }).then(() => sleep(150));
   const toQuiz = async (page) => { await page.evaluate(() => { const top = document.getElementById('find').getBoundingClientRect().top + scrollY; scrollTo({ top, behavior: 'instant' }); if (window.__skreedSnap) window.__skreedSnap(top / innerHeight); }); await sleep(900); };
@@ -234,7 +318,7 @@ for (const s of FLAGS.has('--phone-only') || FLAGS.has('--no-gate') ? [] : SETUP
   await settledIn(page);
   await shotGate(page, 'card2-foot');
   await ctx.close();
-  // open, the hall resident: the ride through the third wipe from a keyboard press, and the arrival on the pad
+  // open, the scenes resident: the ride through the third wipe from a keyboard press, and the arrival at scene 1
   const open = new URL(GATE_BASE); open.searchParams.set('room', 'open');
   const ctx2 = await browser.newContext({ viewport: s.viewport, deviceScaleFactor: s.deviceScaleFactor });
   const p2 = await ctx2.newPage();
@@ -242,7 +326,7 @@ for (const s of FLAGS.has('--phone-only') || FLAGS.has('--no-gate') ? [] : SETUP
   await p2.waitForFunction(() => window.__s2 && window.__s2() && window.__s2().ready, null, { timeout: 420_000 }).catch(() => console.warn(s.name, 'gate: section 2 did not report ready'));
   await toQuiz(p2);
   await p2.locator('#qzSkip > .dc').waitFor();
-  await p2.waitForFunction(() => window.__s4 && window.__s4.ready, null, { timeout: 300_000 }).catch(() => console.warn(s.name, 'gate: the hall did not become ready'));
+  await p2.waitForFunction(() => window.__s4 && window.__s4.ready, null, { timeout: 300_000 }).catch(() => console.warn(s.name, 'gate: the scenes did not become ready'));
   await p2.locator('#qzBegin').focus();
   await p2.keyboard.press('Tab');
   await p2.keyboard.press('Enter');
@@ -253,7 +337,7 @@ for (const s of FLAGS.has('--phone-only') || FLAGS.has('--no-gate') ? [] : SETUP
   console.log(s.name, 'gate: arrival', await p2.evaluate(() => ({ focus: document.activeElement && document.activeElement.id, q: window.__s4 && window.__s4.state() && window.__s4.state().q, y: scrollY, roomTop: Math.round(document.getElementById('room').getBoundingClientRect().top + scrollY) })));
   await shotGate(p2, 'arrival');
   await ctx2.close();
-  // the poster tier at 390 x 844: the hall's still with its prompt after the ride
+  // the poster tier at 390 x 844: the column's first scene after the ride
   if (s.viewport.width < 900) {
     const poster = new URL(GATE_BASE); poster.searchParams.set('tier', 'poster');
     const ctx3 = await browser.newContext({ viewport: s.viewport, deviceScaleFactor: s.deviceScaleFactor });
@@ -263,7 +347,7 @@ for (const s of FLAGS.has('--phone-only') || FLAGS.has('--no-gate') ? [] : SETUP
     await p3.locator('#qzSkip > .dc').waitFor();
     await p3.locator('#qzSkip').evaluate((b) => b.click());
     await p3.waitForFunction(() => document.getElementById('room').dataset.open === 'skip' && !document.getElementById('room').hasAttribute('data-ride'), null, { timeout: 10_000 }).catch(() => console.warn(s.name, 'gate: the poster ride did not end'));
-    await p3.waitForFunction(() => { const img = document.querySelector('#room .rm-still img'); return !!img && img.complete && img.naturalWidth > 0; }, null, { timeout: 30_000 }).catch(() => console.warn(s.name, 'gate: the hall still did not decode'));
+    await p3.waitForFunction(() => { const img = document.querySelector('#room .rm-scene[data-i="0"] img'); return !!img && img.complete && img.naturalWidth > 0; }, null, { timeout: 30_000 }).catch(() => console.warn(s.name, 'gate: scene 1\'s still did not decode'));
     await sleep(400);
     await shotGate(p3, 'poster-arrival');
     await ctx3.close();

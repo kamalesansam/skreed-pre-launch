@@ -3,7 +3,7 @@
 // scripts/room/models/ and the phone case from public/models/case.lod1, read here under node through three's GLTFLoader with the vendored
 // pure-JS meshopt decoder (the way tests/unit/room-products.test.ts reads them; never in site code) and written as plain
 // typed-array blocks that src/scripts/hero/section4/products-bin.ts reads back with views, so the director's chunk ships
-// without a glTF loader (tests/unit/hall-bin.test.ts enforces that; hall.bin and scripts/room/hall-bin.mjs are the
+// without a glTF loader (the hall's own hall.bin and scripts/room/hall-bin.mjs, which left with the hall on 2026-11-02, were the
 // precedent). Layout, little-endian, every block padded to 4 bytes:
 //   u32 magic 'SHP1' (bytes S, H, P, 1), u32 products N, u32 parts P, u32 vertices V, u32 indices I, u32 names bytes L
 //   N x product, 36 B: f32 offset x y z (m), f32 scale (m per grid unit), f32 size x y z (m), u32 first part, u32 parts

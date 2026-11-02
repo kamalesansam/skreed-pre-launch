@@ -1,7 +1,7 @@
 // Section 4's four products from products.bin (written by scripts/room/products-bin.mjs from the four GLBs; the layout
 // is documented there): the wallet, the AirPods case, the Lenskin and the phone case, each as one BufferGeometry per
 // part, read by typed-array views in place of three's GLTFLoader and the meshopt decoder, which the director's chunk
-// must not carry (tests/unit/hall-bin.test.ts; assets.ts's hall.bin is the precedent). Positions come back as Float32
+// must not carry (the hall's own hall.bin was the precedent until the hall left on 2026-11-02). Positions come back as Float32
 // metres off each product's u16 grid (offset + scale x q), recentred so the bounding box centre is the origin, Y up as
 // the sources; normals as Float32 from the i8 (within 1 percent of unit length); the index is a Uint16Array view
 // straight into the file. Nothing here is a texture, a material or a file from the reference.

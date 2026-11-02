@@ -2,9 +2,9 @@
 // document top and height, read once and re-read when something above or inside it moves, so a frame reads only
 // scrollY and never forces layout under the quiz. A reading taken under the intro's layout is provisional: while html
 // carries the intro class the page is locked and the hero's track stands collapsed, and the director chunk can arrive
-// then (at 390 x 844 the quiz's section sits inside the viewport in that layout, so hero.ts's observer loads the hall
-// during the intro); #room's top read then is some 4,850 px short of its place once the intro ends (13,800 px with the 1720svh track of before 2026-11-02), and every snap and
-// the hall's wipe would land there (the build record's D1). So the layout is re-read when html's class changes (a
+// then (at 390 x 844 the quiz's section sits inside the viewport in that layout, so hero.ts's observer loads the
+// section during the intro); #room's top read then is some 4,850 px short of its place once the intro ends (13,800 px with the 1720svh track of before 2026-11-02), and every
+// snap and the third wipe would land there (the build record's D1). So the layout is re-read when html's class changes (a
 // MutationObserver, as the inline cue watches the loader and the intro), when the document's height changes (a
 // ResizeObserver on documentElement: the hero's track expanding moves the section), when the section or the quiz
 // changes size, and on resize; and get() re-reads on its own when the last reading was under the intro and the intro
