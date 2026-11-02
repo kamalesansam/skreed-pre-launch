@@ -13,8 +13,8 @@ import {
 } from 'three';
 import type { CaseAsset, CasePart } from './case-asset.ts';
 import { makeStudio, TONE, toneInverse, albedoFit } from './studio.ts';
-import { CASE_REST, CASE_TYPES, CFG, DEG, beatPose, caseTargetAt, poseOf, solve, type CaseType, type Fit, type Fx, type Layout } from './pose.ts';
-import { createTakeover, sweepRange, takeoverSeed, type TakeoverPhase } from './takeover.ts';
+import { CASE_TYPES, CFG, DEG, beatPose, poseOf, solve, type CaseType, type Fit, type Fx, type Layout } from './pose.ts';
+import { takeoverAt, takeoverSeed } from './takeover.ts';
 import { createRunUniforms, createSideUniforms, withTakeover, type TakeoverSideUniforms } from './takeover-material.ts';
 import { TAKEOVER, easeTakeover, takeoverP } from '../../../config/takeover.ts';
 import type { Finish, Input } from '../bus.ts';
@@ -47,7 +47,7 @@ export interface StageOptions {
 }
 
 /** The takeover as the hooks read it (section 24 D10): from is the case in front at rest (the outgoing one in a run), to the case the run goes to. */
-export interface TakeoverState { phase: TakeoverPhase; from: CaseType; to: CaseType; raw: number; eased: number; p: number; dir: 1 | -1; queued: CaseType | null; held: boolean }
+export interface TakeoverState { phase: 'idle' | 'running'; from: CaseType; to: CaseType; raw: number; eased: number; p: number; held: boolean }
 export interface StageState { s: number; target: number; G: number; sv: number; drag: boolean; turn: boolean; raf: boolean; running: boolean; busy: boolean; renders: number; tier: Tier; detail: 'none' | 'loading' | 'loaded' | 'failed'; type: CaseType; takeover: TakeoverState; types: CaseType[]; counts: { front: number; types: number }; fov: number; probe: Probe | null }
 export interface Probe { P: number; median: number; cpuMedian: number }
 
@@ -261,43 +261,59 @@ export async function createStage(o: StageOptions) {
     cam.position.set(0, 0, CFG.camZ);
     const phone = () => o.layout() === 'phone';
 
-    // the takeover (section 24 D3 to D9): the controller on the page's clock, asked each frame for the beat's case type
-    // (a type whose model has not landed keeps the case before it); a hooks-only hold pins a run for frames
-    const ctl = createTakeover<CaseType>('tough', { order: CASE_TYPES });
+    // the takeover (section 24 D3 to D9; Sam, 2026-11-03): the sweep rides the turn's second half, so what the front slot
+    // shows is a function of the stage's own scroll (takeover.ts: the beat's case, or the outgoing and the incoming case
+    // at the sweep's progress; a type whose model has not landed keeps the case before it); a hooks-only hold pins a pair
+    // at a raw progress for frames
     let held: { from: CaseType; to: CaseType; raw: number } | null = null;
     const has = (t: CaseType) => t === 'tough' || !!models.get(t as TypeCase)?.ready;
-    const available = (t: CaseType): CaseType => { let i = CASE_TYPES.indexOf(t); while (i > 0 && !has(CASE_TYPES[i])) i--; return CASE_TYPES[i]; };
-    const syncTarget = (k: number) => {
-      if (held) return;
-      const want = available(k > 0 ? caseTargetAt(st.sv) : 'tough');
-      // reduced motion changes the type in one frame (D8); on the carousel the Tough is in front, at once (D3)
-      if (instant() || !(k > 0)) ctl.snapTo(want); else ctl.request(want);
-    };
-    /** What the front slot shows: a alone, or a run's outgoing a and incoming b at eased progress e (its two ends pinned to one case). */
-    const view = (): { a: CaseType; b: CaseType | null; e: number; dir: 1 | -1 } => {
-      if (held) { const e = easeTakeover(held.raw); return pin(held.from, held.to, e, CASE_TYPES.indexOf(held.to) >= CASE_TYPES.indexOf(held.from) ? 1 : -1); }
-      const t = ctl.snapshot();
-      return t.phase === 'idle' ? { a: t.current, b: null, e: 0, dir: t.dir } : pin(t.current, t.incoming, t.eased, t.dir);
-    };
     // at exactly p = -0.12 the surface is all the outgoing case, at 1.12 all the incoming one, with no band (24.1 "mask")
-    const pin = (a: CaseType, b: CaseType, e: number, dir: 1 | -1) => (e <= 0 ? { a, b: null, e, dir } : e >= 1 ? { a: b, b: null, e, dir } : { a, b, e, dir });
-    // the run's sweep, set at its start and held for it (D4): the camera's right axis, its roll in, carried into the
-    // case's space through the case's rest pose at the beat being entered (the turn and the float left out: at the
-    // hand-over the case is edge-on), from the screen's right to its left, mirrored for a run to an earlier type (D5);
-    // the range from both models' LOD1 points; the seed from 27027 and the two types
+    const pin = (a: CaseType, b: CaseType, e: number) => (e <= 0 ? { a, b: null, e } : e >= 1 ? { a: b, b: null, e } : { a, b, e });
+    /** What the front slot shows: a alone, or a sweep's outgoing a and incoming b at eased progress e (its two ends pinned to one case). */
+    const view = (): { a: CaseType; b: CaseType | null; e: number } => {
+      if (held) return pin(held.from, held.to, easeTakeover(held.raw));
+      const v = takeoverAt(st.sv, { has, instant: instant() });
+      return v.b ? pin(v.a, v.b, v.eased) : { a: v.a, b: null, e: 0 };
+    };
+    // the sweep's frame (D4): the box round both cases in the case's own space (their LOD1 points), projected through the
+    // case's pose this frame onto the screen, so the field is the fragment's place across the case's width on the
+    // screen, the same for both cases at a pixel; the seed from 27027 and the two types; the relief per the case's width
+    const boxOf = (v: Float32Array) => {
+      const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+      for (let i = 0; i + 2 < v.length; i += 3) for (let c = 0; c < 3; c++) { if (v[i + c] < lo[c]) lo[c] = v[i + c]; if (v[i + c] > hi[c]) hi[c] = v[i + c]; }
+      return { lo, hi };
+    };
+    const boxCache = new Map<string, { lo: number[]; hi: number[] }>();
+    const pairBox = (a: CaseType, b: CaseType) => {
+      const key = `${a}>${b}`;
+      let box = boxCache.get(key);
+      if (!box) { const p = boxOf(vertsOf(a)), q = boxOf(vertsOf(b)); box = { lo: p.lo.map((x, i) => Math.min(x, q.lo[i])), hi: p.hi.map((x, i) => Math.max(x, q.hi[i])) }; boxCache.set(key, box); }
+      return box;
+    };
     let runKey = '';
-    const restM = new Matrix4(), right = new Vector3();
-    const startRun = (a: CaseType, b: CaseType, dir: 1 | -1, fs: number, s: number) => {
+    const corner = new Vector3();
+    const frameRun = (a: CaseType, b: CaseType, fs: number) => {
+      const key = `${a}>${b}`, box = pairBox(a, b), width = Math.max(0.2, box.hi[0] - box.lo[0]);
+      if (key !== runKey) {
+        runKey = key;
+        run.uTkSeed.value.fromArray(takeoverSeed(a, b));
+        // the relief in the sweep's own unit, as the form's (config/takeover.ts reliefRef): its noise per the case's width
+        run.uTkReliefScale.value = TAKEOVER.detailScale * TAKEOVER.reliefFreq / width;
+      }
+      // the box's eight corners on the screen, in device pixels as gl_FragCoord reads them (the origin at the bottom left)
       cam.updateMatrixWorld();
-      right.setFromMatrixColumn(cam.matrixWorld, 0).normalize();
-      zoomMatrix(fs, s, beatPose(CASE_REST[b]), NOFLOAT, restM);
-      const axis = run.uTkAxis.value.copy(right).transformDirection(restM.invert());
-      if (dir > 0 || !TAKEOVER.mirrorUp) axis.negate();
-      const [lo, hi] = sweepRange([axis.x, axis.y, axis.z], vertsOf(a), vertsOf(b));
-      run.uTkRange.value.set(lo, hi);
-      run.uTkSeed.value.fromArray(takeoverSeed(a, b));
-      // the relief in the sweep's own unit, as the form's (config/takeover.ts reliefRef): its noise per sweep extent
-      run.uTkReliefScale.value = TAKEOVER.detailScale * TAKEOVER.reliefFreq / Math.max(0.2, hi - lo);
+      const dpr = renderer.getPixelRatio();
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+      for (let c = 0; c < 8; c++) {
+        corner.set(c & 1 ? box.hi[0] : box.lo[0], c & 2 ? box.hi[1] : box.lo[1], c & 4 ? box.hi[2] : box.lo[2]).applyMatrix4(poseM[fs]).project(cam);
+        const x = ((corner.x + 1) / 2) * W * dpr, y = ((corner.y + 1) / 2) * H * dpr;
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      }
+      run.uTkRect.value.set(x0, x1, y0, y1);
+      run.uTkPx.value = Math.max(1, y1 - y0);
+      run.uTkCaseInv.value.copy(poseM[fs]).invert();
+      // and the relief's bump at the ratio of the case's width in the world (its scale this frame) to the form's
+      run.uTkRelief.value = TAKEOVER.relief * vp.setFromMatrixColumn(poseM[fs], 0).length() * width / TAKEOVER.reliefRef;
     };
     const update = (s: number, G: number, fx: Fx | null, now: number | null) => {
       const a = Math.max(0, Math.min(23, Math.round(s))), nf = [a];
@@ -312,7 +328,6 @@ export async function createStage(o: StageOptions) {
       }
       for (let i = 0; i < 24; i++) poseMatrix(i, s, fx, poseM[i]);
       const B = beatPose(st.sv), fs = frontSlots[0];   // round(s) inside the line, as a drag past either end leaves it
-      syncTarget(B.k);
       const V = view();
       if (B.k > 0) {
         const sp = 1 + 2.5 * B.k;   // the neighbours slide out as ciao's do (its spacing 1 to 3.5)
@@ -336,19 +351,14 @@ export async function createStage(o: StageOptions) {
       const fov = CFG.fov + 25 * B.k * B.A;
       if (Math.abs(fov - cam.fov) > 1e-6) { cam.fov = fov; cam.updateProjectionMatrix(); }
       place(B.k);
-      // the takeover's uniforms: every front model off, then the run's two on, each on its own side
+      // the takeover's uniforms: every front model off, then the sweep's two on, each on its own side
       for (const t of sets.values()) t.side.uTkOn.value = 0;
       if (V.b) {
-        const key = `${held ? 'h' : 'c'}:${V.a}>${V.b}`;
-        if (key !== runKey) { runKey = key; startRun(V.a, V.b, V.dir, fs, s); }
+        frameRun(V.a, V.b, fs);
         const out = sets.get(V.a)!, inc = sets.get(V.b)!;
         out.side.uTkOn.value = 1; out.side.uTkSide.value = 1;
         inc.side.uTkOn.value = 1; inc.side.uTkSide.value = -1;
         run.uTkP.value = takeoverP(V.e);
-        run.uTkCaseInv.value.copy(poseM[fs]).invert();
-        // and its bump at the ratio of the case's sweep extent in the world (its scale this frame) to the form's
-        const r = run.uTkRange.value;
-        run.uTkRelief.value = TAKEOVER.relief * vp.setFromMatrixColumn(poseM[fs], 0).length() * Math.max(0.2, r.y - r.x) / TAKEOVER.reliefRef;
       } else runKey = '';
       const showTough = V.a === 'tough' || V.b === 'tough';
       for (const d of row) for (let k = 0; k < d.mesh.count; k++) d.mesh.setMatrixAt(k, mTmp.multiplyMatrices(poseM[order[k]], d.part.base));
@@ -402,17 +412,13 @@ export async function createStage(o: StageOptions) {
     const frameMs: number[] = [];
     const instant = () => o.still;
     const renderNow = () => { const t0 = performance.now(); renderer.render(scene, cam); return performance.now() - t0; };
-    // a takeover under way keeps the loop running: it runs on the page's clock, not on the scroll (D4)
-    const takingOver = () => { const t = ctl.snapshot(); return t.phase !== 'idle' && !t.suspended; };
-    const animating = () => (!st.drag && st.s !== st.target) || st.G !== st.Gt || !!st.turn || Math.abs(st.sv - st.svT) > 1e-3 || Math.abs(st.tilt.yaw - st.tiltT.yaw) > 0.01 || Math.abs(st.tilt.pitch - st.tiltT.pitch) > 0.01 || takingOver();
+    // the takeover follows the stage's scroll (D4, 2026-11-03), so the scroll's own lag keeps the loop running through it
+    const animating = () => (!st.drag && st.s !== st.target) || st.G !== st.Gt || !!st.turn || Math.abs(st.sv - st.svT) > 1e-3 || Math.abs(st.tilt.yaw - st.tiltT.yaw) > 0.01 || Math.abs(st.tilt.pitch - st.tiltT.pitch) > 0.01;
     const busy = () => !!st.drag || animating();
     let lastSig = '';
     function frame(now: number) {
       raf = 0;
       if (!running || disposed) return;
-      // the takeover's clock is the page's own, uncapped below a second, so a slow frame never stretches a run (D4); the
-      // lags below take at most a tenth of a second a frame
-      ctl.update(lastT ? Math.min(1000, now - lastT) : 1000 / 60);
       const dt = lastT ? Math.min(0.1, (now - lastT) / 1000) : 1 / 60;
       lastT = now;
       const k = 1 - Math.exp(-CFG.rate * dt), kG = 1 - Math.exp(-CFG.rate * CFG.gRate * dt);
@@ -429,8 +435,8 @@ export async function createStage(o: StageOptions) {
       let turnYaw = 0;
       if (st.turn) { const t = (now - st.turn.t0) / 600; if (t >= 1) st.turn = null; else turnYaw = st.turn.side * CFG.turn * bump(Math.max(0, t)); }
       const floating = st.sv > 5.2 && !instant() && visible;   // the argument screen's bob keeps the loop alive
-      const tk = ctl.snapshot();
-      const sig = [st.s, st.G, st.tilt.yaw + turnYaw, st.tilt.pitch, st.sv, floating ? now : 0, tk.current, tk.incoming, tk.raw, tk.phase].join();
+      // the takeover is a function of st.sv (a hold or a model landing bumps dirty), so nothing of it is in the signature
+      const sig = [st.s, st.G, st.tilt.yaw + turnYaw, st.tilt.pitch, st.sv, floating ? now : 0].join();
       if (sig !== lastSig || dirty) {
         lastSig = sig; dirty = 0;
         update(st.s, st.G, { yaw: st.tilt.yaw + turnYaw, tilt: st.tilt.pitch }, now);
@@ -684,26 +690,25 @@ export async function createStage(o: StageOptions) {
       m.ready = true;
       dirty++; kick();
     };
-    /** The hooks' pin (D10): a run from one type to another held at a raw progress, for frames; null lets the controller go on. */
+    /** The hooks' pin (D10): a sweep from one type to another held at a raw progress, for frames; null lets the scroll decide again. */
     const holdTakeover = (from: CaseType, to: CaseType, raw: number | null): boolean => {
-      if (raw === null) { held = null; ctl.suspend(false); }
+      if (raw === null) held = null;
       else {
         if (from === to || !has(from) || !has(to) || !Number.isFinite(raw)) return false;
         held = { from, to, raw: Math.min(1, Math.max(0, raw)) };
-        ctl.suspend(true);
       }
       runKey = '';
       dirty++; kick();
       return true;
     };
     const takeoverState = (): TakeoverState => {
-      const t = ctl.snapshot();
-      if (held) { const e = easeTakeover(held.raw); return { phase: 'running', from: held.from, to: held.to, raw: held.raw, eased: e, p: takeoverP(e), dir: CASE_TYPES.indexOf(held.to) >= CASE_TYPES.indexOf(held.from) ? 1 : -1, queued: null, held: true }; }
-      return { phase: t.phase, from: t.current, to: t.incoming, raw: t.raw, eased: t.eased, p: t.p, dir: t.dir, queued: t.queued, held: false };
+      if (held) { const e = easeTakeover(held.raw); return { phase: 'running', from: held.from, to: held.to, raw: held.raw, eased: e, p: takeoverP(e), held: true }; }
+      const v = takeoverAt(st.sv, { has, instant: instant() });
+      return v.b ? { phase: 'running', from: v.a, to: v.b, raw: v.raw, eased: v.eased, p: v.p, held: false } : { phase: 'idle', from: v.a, to: v.a, raw: 0, eased: 0, p: TAKEOVER.pFrom, held: false };
     };
     const typeCount = () => typeDraws().filter((d) => d.mesh.visible).length;
     /** the case in front at rest (the run's outgoing one while a run is under way) */
-    const frontType = (): CaseType => (held ? held.from : ctl.snapshot().current);
+    const frontType = (): CaseType => (held ? held.from : takeoverAt(st.sv, { has, instant: instant() }).a);
 
     const api = {
       renderer, canvas, tier: () => tier, probe: () => probeResult,

@@ -1,52 +1,70 @@
-// The takeover's controller (docs/specs/family-page.md 24.1 "requests" and "timing", 24.2 D4, D5, D8 and D10): which
-// case is in front, which is taking it over and how far, on the page's clock and never on the scroll, so a scroll that
-// stops never holds a sweep half done. Pure: no three.js, no DOM; the stage asks it for a target each frame, ticks it
-// with the frame's time and draws its snapshot. The rules are depth.fyi's, measured from its controller and re-written
-// here: a new target while idle runs forward; the target the run came from reverses it at the same rate; any other
-// target is queued and the run finishes within 240 ms at the rate that takes, then the queued one runs; reduced motion
-// snaps. dir is ours (D5): +1 for a run to a later target in the order, -1 to an earlier one, held for the run.
+// The takeover's progress on a family page (docs/specs/family-page.md 24.2 D2, D4 to D6, D8 and D10). Sam, 2026-11-03,
+// on the build of 2026-11-02: "the transition animation comes after the rotation, it should come simultaneously ... not
+// after the rotation". So the sweep rides the second half of the turn (pose.ts: from the edge-on frame at HANDOVERS[i]
+// to the beat's rest TURN_LEN / 2 later), and the band crosses the case as it comes round, the two ending together;
+// scrolling back up plays the same sweep back. Pure: no three.js, no DOM; the stage asks it each frame with its own
+// scroll, which lags the page's at 10 per second, so a fling still shows the crossing. A type whose model has not landed
+// keeps the case before it with no sweep (D2); reduced motion changes the type at the edge-on frame with no sweep (D8).
+// The clock-driven controller of 2026-11-02 (depth.fyi's 1,350 ms run, its reversal at the same rate and its queue that
+// finishes a run within 240 ms) went with Sam's words: those stay in 24.1 as measurements of depth.fyi's picker.
 import { TAKEOVER, easeTakeover, takeoverP } from '../../../config/takeover.ts';
+import { CASE_TYPES, HANDOVERS, TURN_LEN, beatPose, caseTargetAt, type CaseType } from './pose.ts';
 
-export type TakeoverPhase = 'idle' | 'running' | 'reversing' | 'finishing';
-export interface TakeoverSnapshot<T extends string> {
-  /** the case in front at rest; while a run is under way, the outgoing one */
-  readonly current: T;
-  /** the case the run goes to (the current one when idle) */
-  readonly incoming: T;
-  /** the run's raw progress, 0 to 1, linear in time */
+/** What the front slot shows: one case (b null), or the outgoing a and the incoming b at the sweep's progress. */
+export interface TakeoverView {
+  readonly a: CaseType;
+  readonly b: CaseType | null;
+  /** the sweep's raw progress, 0 at the edge-on frame to 1 at the beat's rest, linear in the scroll */
   readonly raw: number;
   /** the in-out cubic of raw */
   readonly eased: number;
-  /** where the boundary sits: -0.12 to 1.12 over the run */
+  /** where the boundary sits: -0.12 to 1.12 over the sweep */
   readonly p: number;
-  readonly phase: TakeoverPhase;
-  /** a third target waiting for the run to finish */
-  readonly queued: T | null;
-  /** +1 toward a later target in the order (right to left), -1 toward an earlier one (mirrored) */
-  readonly dir: 1 | -1;
-  readonly suspended: boolean;
 }
-export interface Takeover<T extends string> {
-  /** asks for a target; true when the request changed anything */
-  request(target: T): boolean;
-  /** advances the run by dtMs of the page's clock; true when the progress or the phase moved */
-  update(dtMs: number): boolean;
-  /** reduced motion: the target at once, no run */
-  snapTo(target: T): boolean;
-  /** holds the run where it is (a test hook's pin); requests still land */
-  suspend(on: boolean): boolean;
-  snapshot(): TakeoverSnapshot<T>;
+export interface TakeoverOptions {
+  /** whether a case type's model is drawn and compiled (the Tough always) */
+  has(t: CaseType): boolean;
+  /** reduced motion: the type changes at the edge-on frame, no sweep */
+  instant?: boolean;
 }
-export interface TakeoverOptions<T extends string> {
-  /** the targets in beat order, for dir */
-  order: readonly T[];
-  durationMs?: number;
-  finishWithinMs?: number;
+
+/** The scroll a hand-over's sweep spans: the turn's second half, from the edge-on frame to the beat's rest. */
+export const SWEEP_SPAN = TURN_LEN / 2;
+
+/** The two case types a hand-over joins: the type before and the type after the edge-on frame at HANDOVERS[i]. */
+export const handoverTypes = (i: number): [CaseType, CaseType] => [CASE_TYPES[i], CASE_TYPES[i + 1]];
+
+/** The type asked for, or the latest type before it whose model has landed (D2: a model that fails keeps the case before it). */
+export function availableType(want: CaseType, has: (t: CaseType) => boolean): CaseType {
+  let i = CASE_TYPES.indexOf(want);
+  while (i > 0 && !has(CASE_TYPES[i])) i--;
+  return CASE_TYPES[i];
+}
+
+const rest = (a: CaseType): TakeoverView => ({ a, b: null, raw: 0, eased: 0, p: TAKEOVER.pFrom });
+
+/**
+ * The view at the stage's scroll sv (in screens). Inside a hand-over's span the outgoing and the incoming case with the
+ * sweep's progress; everywhere else the beat's case alone (D3), the Tough on the carousel.
+ */
+export function takeoverAt(sv: number, opts: TakeoverOptions): TakeoverView {
+  if (!(beatPose(sv).k > 0)) return rest('tough');
+  for (let i = 0; i < HANDOVERS.length; i++) {
+    const h = HANDOVERS[i];
+    if (sv < h || sv >= h + SWEEP_SPAN) continue;
+    const [from, to] = handoverTypes(i);
+    const a = availableType(from, opts.has), b = availableType(to, opts.has);
+    // nothing to sweep into (the model is not here), or reduced motion: the case at once
+    if (a === b || opts.instant) return rest(b);
+    const raw = Math.min(1, Math.max(0, (sv - h) / SWEEP_SPAN)), eased = easeTakeover(raw);
+    return { a, b, raw, eased, p: takeoverP(eased) };
+  }
+  return rest(availableType(caseTargetAt(sv), opts.has));
 }
 
 /**
- * A run's noise offset (24.1 "seed"): FNV-1a over 27027 and the two case types, spread by an xorshift into three values
- * of 0 to 37, so each pair of types has its own boundary and the same pair always the same one.
+ * A pair's noise offset (24.1 "seed"): FNV-1a over 27027 and the two case types, spread by an xorshift into three
+ * values of 0 to 37, so each pair of types has its own boundary and the same pair always the same one.
  */
 export function takeoverSeed(from: string, to: string, seed: number = TAKEOVER.seed, scale: number = TAKEOVER.seedScale): [number, number, number] {
   let h = 0x811c9dc5;
@@ -54,80 +72,4 @@ export function takeoverSeed(from: string, to: string, seed: number = TAKEOVER.s
   const out: number[] = [];
   for (let i = 0; i < 3; i++) { h ^= h << 13; h >>>= 0; h ^= h >>> 17; h ^= h << 5; h >>>= 0; out.push((h / 2 ** 32) * scale); }
   return out as [number, number, number];
-}
-
-/** The sweep's range (24.1 "range"): the least and greatest projection on the axis of every point of the sets (x, y, z triples). */
-export function sweepRange(axis: readonly [number, number, number], ...sets: readonly ArrayLike<number>[]): [number, number] {
-  let lo = Infinity, hi = -Infinity;
-  for (const s of sets) for (let i = 0; i + 2 < s.length; i += 3) { const d = s[i] * axis[0] + s[i + 1] * axis[1] + s[i + 2] * axis[2]; if (d < lo) lo = d; if (d > hi) hi = d; }
-  if (!Number.isFinite(lo) || !Number.isFinite(hi)) return [-0.5, 0.5];
-  if (hi - lo < 1e-5) { const c = (lo + hi) / 2; return [c - 5e-6, c + 5e-6]; }
-  return [lo, hi];
-}
-
-export function createTakeover<T extends string>(initial: T, opts: TakeoverOptions<T>): Takeover<T> {
-  const duration = opts.durationMs ?? TAKEOVER.durationMs, finishWithin = opts.finishWithinMs ?? TAKEOVER.finishWithinMs;
-  const rank = (t: T) => opts.order.indexOf(t);
-  let current = initial, incoming = initial, raw = 0, phase: TakeoverPhase = 'idle', queued: T | null = null, dir: 1 | -1 = 1, suspended = false;
-  // a finishing run's own rate (progress per ms) and whether it finishes a reversal
-  let finishRate = 0, finishBack = false;
-  const backward = () => phase === 'reversing' || (phase === 'finishing' && finishBack);
-  const clearFinish = () => { finishRate = 0; finishBack = false; };
-  const start = (t: T) => { dir = rank(t) >= rank(current) ? 1 : -1; incoming = t; raw = 0; phase = 'running'; queued = null; clearFinish(); };
-  // the end of a run: the case it ran to is in front (promote) or the one it came from stays (settle); a queued target
-  // then runs from there
-  const end = (to: T) => {
-    const q = queued;
-    current = incoming = to; raw = 0; phase = 'idle'; queued = null; clearFinish();
-    if (q !== null && q !== to) start(q);
-  };
-  const beginFinish = (back: boolean) => {
-    const left = Math.max(0, back ? raw : 1 - raw), ms = Math.min(finishWithin, left * duration);
-    finishRate = ms > 2 ** -52 ? left / ms : Infinity;
-    finishBack = back;
-    phase = 'finishing';
-  };
-  return {
-    request(t) {
-      if (phase === 'idle') { if (t === current) return false; start(t); return true; }
-      const back = backward(), heading = back ? current : incoming, origin = back ? incoming : current;
-      if (t === heading) { if (queued === null) return false; queued = null; return true; }
-      if (t === origin) { phase = back ? 'running' : 'reversing'; queued = null; clearFinish(); return true; }
-      if (t === queued) return false;
-      queued = t;
-      if (phase !== 'finishing') beginFinish(back);
-      return true;
-    },
-    update(dtMs) {
-      if (suspended || !Number.isFinite(dtMs) || dtMs <= 0) return false;
-      let left = dtMs, moved = false;
-      // at most four ends in one tick: a run, the queued run it hands to, and spare
-      for (let ends = 0; left > 0 && ends < 4 && phase !== 'idle';) {
-        const rate = phase === 'finishing' ? finishRate : 1 / duration;
-        moved = true;
-        if (backward()) {
-          const need = raw / rate;
-          if (left < need) { raw = Math.max(0, raw - left * rate); left = 0; } else { left -= need; end(current); ends++; }
-        } else {
-          const need = (1 - raw) / rate;
-          if (left < need) { raw = Math.min(1, raw + left * rate); left = 0; } else { left -= need; end(incoming); ends++; }
-        }
-      }
-      return moved;
-    },
-    snapTo(t) {
-      if (phase === 'idle' && current === t && queued === null) return false;
-      current = incoming = t; raw = 0; phase = 'idle'; queued = null; clearFinish();
-      return true;
-    },
-    suspend(on) {
-      if (suspended === on) return false;
-      suspended = on;
-      return true;
-    },
-    snapshot() {
-      const eased = easeTakeover(raw);
-      return { current, incoming, raw, eased, p: takeoverP(eased), phase, queued, dir, suspended };
-    },
-  };
 }

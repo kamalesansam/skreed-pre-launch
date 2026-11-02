@@ -1,24 +1,28 @@
 // The takeover's shader (docs/specs/family-page.md 24.1, 24.2 D4, D7 and D9; E-F6): our own code spliced into three
 // r165's physical material by onBeforeCompile, reproducing what was measured of depth.fyi's material takeover for two
-// models instead of two materials. Every fragment of the front case finds its place on the sweep in the case's own
-// normalised space (height 1), roughened by two layers of value-noise fBm; the outgoing case keeps the side the boundary
-// has not reached and the incoming case the side it has passed, by discard, so nothing is see-through and no pixel
-// shows both; each draws the band on its own side, after the shade, so the shade never tints it. The band's relief is a
-// bump of band x fBm, differentiated in screen space, and the clearcoat normal follows it. One uniform switches all of
-// it off at rest, by a uniform branch, so a frame at rest is the plain material's. The band's clearcoat and iridescence
-// paths are compiled into every front material (a define where the finish has none, its own value 0 per fragment), so
-// no program compiles when a run starts.
-import { Color, Matrix4, Vector2, Vector3, type MeshPhysicalMaterial } from 'three';
+// models instead of two materials. Every fragment of the front case finds its place on the sweep on the screen (D4,
+// since 2026-11-03): its place across the case's box as the stage projects it this frame, 0 at the case's right edge
+// and 1 at its left, roughened by two layers of value-noise fBm sampled on the screen in units of the case's height, so
+// the two cases read the same field at a pixel; the outgoing case keeps the side the boundary has not reached and the
+// incoming case the side it has passed, by discard, so every pixel under both cases shows exactly one of them, nothing
+// is see-through where both stand and no pixel shows both (the field of 2026-11-02, in each case's own space, cut the
+// two surfaces apart and showed the incoming case's inner walls through the outgoing one's near the edge-on angle);
+// each draws the band on its own side, after the shade, so the shade never tints it. The band's relief is a bump of
+// band x fBm in the case's own space, differentiated in screen space, and the clearcoat normal follows it. One uniform
+// switches all of it off at rest, by a uniform branch, so a frame at rest is the plain material's. The band's clearcoat
+// and iridescence paths are compiled into every front material (a define where the finish has none, its own value 0
+// per fragment), so no program compiles when a sweep starts.
+import { Color, Matrix4, Vector3, Vector4, type MeshPhysicalMaterial } from 'three';
 import { TAKEOVER } from '../../../config/takeover.ts';
 
 /** The values of one run, shared by every front material (the two cases of a run draw with the same field). */
 export interface TakeoverRunUniforms {
   /** the boundary's place, -0.12 to 1.12 */
   uTkP: { value: number };
-  /** the sweep axis in the case's space, from the screen's right to its left (or mirrored, D5) */
-  uTkAxis: { value: Vector3 };
-  /** the two models' extent along the axis */
-  uTkRange: { value: Vector2 };
+  /** the box round both cases on the screen this frame, in device pixels as gl_FragCoord reads them: x0, x1, y0, y1 */
+  uTkRect: { value: Vector4 };
+  /** the box's height in device pixels: the unit of the boundary's noise on the screen (the case's height, as the form's) */
+  uTkPx: { value: number };
   uTkSeed: { value: Vector3 };
   /** the relief's bump strength in view units: 0.07 x the case's sweep extent in the world over the form's (TAKEOVER.reliefRef) */
   uTkRelief: { value: number };
@@ -38,7 +42,7 @@ export interface TakeoverSideUniforms { uTkOn: { value: number }; uTkSide: { val
 
 export function createRunUniforms(): TakeoverRunUniforms {
   return {
-    uTkP: { value: TAKEOVER.pFrom }, uTkAxis: { value: new Vector3(-1, 0, 0) }, uTkRange: { value: new Vector2(-0.5, 0.5) },
+    uTkP: { value: TAKEOVER.pFrom }, uTkRect: { value: new Vector4(0, 1, 0, 1) }, uTkPx: { value: 1 },
     uTkSeed: { value: new Vector3() }, uTkRelief: { value: TAKEOVER.relief }, uTkReliefScale: { value: TAKEOVER.detailScale * TAKEOVER.reliefFreq }, uTkCaseInv: { value: new Matrix4() },
     uTkIrid: { value: TAKEOVER.band.iridescence }, uTkLight: { value: TAKEOVER.bandLight }, uTkBand: { value: new Color(TAKEOVER.band.base) },
   };
@@ -57,8 +61,8 @@ varying vec3 vTkPos;
 uniform float uTkOn;
 uniform float uTkSide;
 uniform float uTkP;
-uniform vec3 uTkAxis;
-uniform vec2 uTkRange;
+uniform vec4 uTkRect;
+uniform float uTkPx;
 uniform vec3 uTkSeed;
 uniform float uTkRelief;
 uniform float uTkReliefScale;
@@ -118,9 +122,11 @@ export function takeoverFragField(): string {
 	float tkMix = 0.0;
 	float tkH = 0.0;
 	if ( uTkOn > 0.5 ) {
-		float tkT = clamp( ( dot( vTkPos, uTkAxis ) - uTkRange.x ) / max( uTkRange.y - uTkRange.x, 1e-5 ), 0.0, 1.0 );
-		float tkF = tkT + tkFbm( vTkPos * ${f(T.majorScale)} + uTkSeed ) * ${f(T.majorStrength)}
-			+ tkFbm( vTkPos * ${f(T.detailScale)} + uTkSeed.yzx * 1.618 ) * ${f(T.detailStrength)};
+		// the sweep on the screen: 0 at the case's right edge, 1 at its left, the same for both cases at a pixel
+		float tkT = clamp( ( uTkRect.y - gl_FragCoord.x ) / max( uTkRect.y - uTkRect.x, 1.0 ), 0.0, 1.0 );
+		vec2 tkQ = ( gl_FragCoord.xy - uTkRect.xz ) / max( uTkPx, 1.0 );
+		float tkF = tkT + tkFbm( vec3( tkQ * ${f(T.majorScale)}, 0.0 ) + uTkSeed ) * ${f(T.majorStrength)}
+			+ tkFbm( vec3( tkQ * ${f(T.detailScale)}, 0.0 ) + uTkSeed.yzx * 1.618 ) * ${f(T.detailStrength)};
 		tkD = tkF - uTkP;
 		tkBand = 1.0 - smoothstep( 0.0, ${f(T.edgeWidth)}, abs( tkD ) );
 		tkMix = tkBand * ${f(T.bandMix)};
@@ -129,7 +135,7 @@ export function takeoverFragField(): string {
 	vec2 tkDh = vec2( dFdx( tkH ), dFdy( tkH ) ) * uTkRelief;
 	vec3 tkSx = dFdx( - vViewPosition );
 	vec3 tkSy = dFdy( - vViewPosition );
-	// the outgoing case keeps f >= p, the incoming f < p: one surface per pixel, never a blend
+	// the outgoing case keeps f >= p, the incoming f < p: one case per pixel, never a blend
 	if ( uTkOn > 0.5 && ( uTkSide > 0.0 ? tkD < 0.0 : tkD >= 0.0 ) ) discard;
 `;
 }

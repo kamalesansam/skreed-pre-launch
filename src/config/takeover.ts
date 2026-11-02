@@ -2,17 +2,18 @@
 // they should have a transition from one 3d model to another ... make the exact same transition"). depth.fyi's material
 // takeover, measured from its built module and from Sam's recording of it (24.1), and re-created for two models: the
 // incoming case takes the outgoing one over in a sweep across the screen, the boundary roughened by two layers of noise
-// and lined with a narrow icy band. Plain data, read by the controller (three/takeover.ts), the shader
-// (three/takeover-material.ts) and the stage; the unit tests import it under Node. Nothing of depth.fyi ships: every
-// value below is a measurement, written into our own code.
+// and lined with a narrow icy band. Since 2026-11-03 (Sam: "the transition animation comes after the rotation, it should
+// come simultaneously ... not after the rotation") the sweep rides the second half of the turn instead of a clock
+// (three/takeover.ts) and its field is read on the screen instead of in each case's own space (three/takeover-material.ts),
+// so depth.fyi's 1,350 ms run, its 240 ms finish and its mirrored axis are measurements in 24.1 and no longer values
+// here. Plain data, read by the mapping, the shader and the stage; the unit tests import it under Node. Nothing of
+// depth.fyi ships: every value below is a measurement, written into our own code.
 
 export const TAKEOVER = Object.freeze({
-  /** one run on the page's clock: the raw progress runs linear over 1,350 ms (measured: 1,350) */
-  durationMs: 1350,
   /** p = from + (to - from) x eased: the boundary starts and ends past the case, so the noise never shows it at rest (measured: -0.12 to 1.12) */
   pFrom: -0.12,
   pTo: 1.12,
-  /** the boundary's large wander: fBm of value noise at 2.4 per unit of the case's height, times 0.14 of the sweep (measured: 2.4 x 0.14) */
+  /** the boundary's large wander: fBm of value noise at 2.4 per unit of the case's height on the screen, times 0.14 of the sweep (measured: 2.4 x 0.14) */
   majorScale: 2.4,
   majorStrength: 0.14,
   /** the boundary's fine edge: the same fBm at 8 per unit, times 0.025 (measured: 8 x 0.025) */
@@ -63,16 +64,9 @@ export const TAKEOVER = Object.freeze({
   reliefRef: 0.8,
   /** the clearcoat normal follows the bumped normal by band x 0.65 (measured: 0.65) */
   coatFollow: 0.65,
-  /** each run's noise offset: a hash of 27027 and the two case types, scaled to 0 to 37 per axis (measured: 27027, x 37) */
+  /** each pair's noise offset: a hash of 27027 and the two case types, scaled to 0 to 37 per axis (measured: 27027, x 37) */
   seed: 27027,
   seedScale: 37,
-  /** a third target while a run is under way: the run finishes within 240 ms, then the queued one runs (measured: 240) */
-  finishWithinMs: 240,
-  /**
-   * D5: a run to an earlier case type (scrolling up) sweeps left to right, mirrored, as the recording's second change
-   * runs; to a later one right to left, as depth.fyi's code does for every change.
-   */
-  mirrorUp: true,
   /**
    * D7: the band's own share of the environment light, times this at the band's centre. The beats are lit darker than
    * depth.fyi's studio (the zoom spot and the studio at 0.2), so the band may need more of it to read as the recording's
