@@ -625,11 +625,11 @@ Constants: `src/config/hero.ts` (`SCROLL_MAP`, `S2T`, `CAMX`): `PULL` and `WIPE`
 
 ### 12.9 Round 5: half the travel, not the speed (Sam, 2026-11-03)
 
-Sam, 2026-11-03: "when i said half the scroll for hero scroll, i didnt mean speed it up, i meant just cut down the travelling of the 3d world itself into half, the scroll speed remains the same." Round 4 had run the camera's whole road and the whole wipes over half the scroll, twice as fast per screen. The plan, the build and the acceptance criteria are `docs/specs/section-2.md` section 15; the blocks leaving together (12.8) stand.
+Sam, 2026-11-03: "when i said half the scroll for hero scroll, i didnt mean speed it up, i meant just cut down the travelling of the 3d world itself into half, the scroll speed remains the same." Round 4 had run the camera's whole road and the whole wipes over half the scroll, twice as fast per screen. The plan, the build and the acceptance criteria are `docs/specs/section-2.md` section 15; the blocks leaving together (12.8) stand. The reading (the road's first half, the pull-back ending mid-weave with the logo nearer) is approved on the pull-end frames (Sam, 2026-11-03: "this is exactly what i meant").
 
 | from | to | what |
 |---|---|---|
-| 0 | 2.5 | the pull-back along the first half of the level weaving road (`CAM_TRAVEL` 0.5), the smoothstep ease, at the prototype's rate of a fifth of the road per screen; it ends at z 34 of the road's 24 to 44, mid-weave (x about +3.4) |
+| 0 | 2.5 | the pull-back along the first half of the level weaving road (`CAM_TRAVEL` 0.5), the smoothstep ease, at the prototype's rate of a fifth of the road per screen; it ends at z 34 of the road's 24 to 44, mid-weave (x +4.26, camX(0.5)) |
 | 2.5 | 3.5 | the first wipe, hero to section 2 (`WIPE` 1, the prototype's screen again); the camera drifts on at the prototype's drift rate (`CAM_DRIFT` 0.242 of a road unit over the 2.3 screens to `LAND`); the hero copy holds still; the logotype's tone turns light past tp 0.5 |
 | 3.0 | 4.8 | every block leaves the logo at once at mid-wipe (`CAS0`) and lands 1.8 screens later (`FLY`, `LAND`), each on its own curve; no stagger |
 | 4.8 | 5.5 | every gem landed, the labels on; the rest |
