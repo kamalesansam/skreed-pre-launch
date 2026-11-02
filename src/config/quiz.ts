@@ -42,7 +42,7 @@ export const QUIZ_COPY = {
   /** a phone held sideways has no room for the offer beside the result: these two swap them in the same screen */
   toGift: 'Get an exclusive launch discount',
   toResult: 'Back to your shade',
-  email: 'Email',
+  email: 'Your email address',   // the field's accessible name, the placeholder's own words since 2026-11-03 (its only visible text, so the name contains them, WCAG 2.5.3)
   /** the field's placeholder, as the reference shows it; "Email" stays its label for assistive technology */
   emailPlaceholder: 'Your email address',
   consent: 'I’m happy to hear from Skreed by email.',

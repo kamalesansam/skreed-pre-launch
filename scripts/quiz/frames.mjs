@@ -36,7 +36,9 @@ const LICENSED = `${OUT}/licensed`;
 /** where a frame that shows the result goes: the git-ignored folder where the page draws Sam's swatch */
 const paintDir = async (page) => ((await page.evaluate(() => !!document.querySelector('#find .qz-rub'))) ? LICENSED : OUT);
 mkdirSync(LICENSED, { recursive: true });
-const GL_ARGS = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
+// SKREED_GL=gpu runs the browser on the machine's GPU, as tests/harness/browser.ts does (on Sam's Mac SwiftShader ticks the
+// page's animation clock about twice a second, 2026-11-02)
+const GL_ARGS = process.env.SKREED_GL === 'gpu' ? ['--ignore-gpu-blocklist', '--enable-gpu'] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
 const SETUPS = [
   { name: '390x844', viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 },
   { name: '1280x800', viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 },

@@ -606,9 +606,12 @@ function watch(page: Page, stop: string, capMs = 10_000): Promise<Watched> {
       const props = [...new Set(e.getKeyframes().flatMap((f) => Object.keys(f)))].filter((k) => !/^(offset|computedOffset|easing|composite)$/.test(k)).sort().join(',');
       return `${(e.target as Element).getAttribute('class')}|${props}|${e.getTiming().duration}`;   // the class attribute: our own stroke is an SVG element
     });
-    // anything moved by a transform: nothing, the name's static narrowing aside (scaleX(0.8) as Sam's design draws it,
-    // E-S3-result), which stands on every name, shown or hidden, at exactly that in every frame
+    // anything moved by a transform: nothing, the shown name's static narrowing aside (scaleX(0.8) as Sam's design draws
+    // it, E-S3-result), read as the matrix in every frame; an element with no box (a hidden result's name, the ground
+    // before a result, the band in the result's turn of the screen) reports its transform as none and cannot move, so it
+    // is left out
     const moved = () => [...root.querySelectorAll<Element>('.qz-stage, .qz-intro, .qz-deck, .qz-cards, .qz-card, .qz-opt, .qz-results, .qz-result, .qz-ground, .qz-r-head, .qz-shade, .qz-smear, .qz-rtext, .qz-mini, .qz-gift, .qz-gift-in, .qz-offer')]
+      .filter((e) => e.getClientRects().length > 0)
       .filter((e) => { const cs = getComputedStyle(e); return cs.transform !== (e.matches('.qz-shade') ? narrow : 'none') || cs.translate !== 'none' || cs.rotate !== 'none' || cs.scale !== 'none'; }).map((e) => e.getAttribute('class') ?? '');
     const underlined = () => [...root.querySelectorAll<HTMLElement>('.qz-card:not([hidden]) .qz-opt')]
       .filter((o) => { const cs = getComputedStyle(o); return cs.textDecorationLine.includes('underline') && cs.textDecorationThickness === '2px'; }).map((o) => o.dataset.persona ?? '');
@@ -686,7 +689,7 @@ function expectMotion(at: string, w: Watched, p: number, m: { dir: 'in' | 'out';
   else expect(snaps.filter((s) => s.rolled > 0).map(id), `${at}: no glyph rolls`).toEqual([]);
 }
 
-test('AC5 and AC6: ten answers for The Quiet Curator with Math.random at 0.01 give Porcelain in full; the answer taken is marked at the press (underlined at 2 px) and stays marked and at full opacity while the rest of its question wipes out, holds 120 ms, then wipes out itself, and the next question decodes in; the result and the gift decode in staggered within 0.6 s, glyph by glyph with the roll drawn over each glyph's own; the ground, the paint and the chips fade in on opacity; the announcement, the focus and the events queue', async ({ page, baseURL }) => {
+test('AC5 and AC6: ten answers for The Quiet Curator with Math.random at 0.01 give Porcelain in full; the answer taken is marked at the press (underlined at 2 px) and stays marked and at full opacity while the rest of its question wipes out, holds 120 ms, then wipes out itself, and the next question decodes in; the result and the gift decode in staggered within 0.6 s, glyph by glyph with the roll drawn over each glyph\'s own; the ground, the paint and the chips fade in on opacity; the announcement, the focus and the events queue', async ({ page, baseURL }) => {
   const r = drawn(CURATOR, 0.01);
   // the result as literals, so the derivation every other test leans on is pinned here once: the catalog's name and
   // family line, the link with the three-digit number (AC10 samples Porcelain as ?shade=010), and Sam's profile and
@@ -736,8 +739,10 @@ test('AC5 and AC6: ten answers for The Quiet Curator with Math.random at 0.01 gi
   const held = w.phases[1].on - w.phases[0].off;
   expect(held, 'the answer holds 120 ms after the rest has gone').toBeGreaterThanOrEqual(119);
   expect(held, 'and not much longer').toBeLessThan(120 + 400);
-  const hold = frames.findIndex((f) => f.pressed === 'curator' && answerRow(f)?.min === 1 && rest(f).length === 8 && rest(f).every((x) => x.max === 0));
-  expect(hold, 'a frame of the hold: the answer taken at full opacity with the count, the question and the six other answers at opacity 0').toBeGreaterThanOrEqual(0);
+  // the rest of card 1: the count, the question, the six other answers and Skip quiz (every question's footer since the
+  // quiz gate of 2026-10-26; question 1 has no Back), nine lines
+  const hold = frames.findIndex((f) => f.pressed === 'curator' && answerRow(f)?.min === 1 && rest(f).length === 9 && rest(f).every((x) => x.max === 0));
+  expect(hold, 'a frame of the hold: the answer taken at full opacity with the count, the question, the six other answers and Skip quiz at opacity 0').toBeGreaterThanOrEqual(0);
   expect(rest(frames[hold]).map((x) => x.k).slice(0, 2), 'the count and the question are among them').toEqual(['.qz-count', '.qz-q']);
   expect(frames.slice(hold, lastOne + 1).every((f) => rest(f).every((x) => x.max === 0)), 'the answer goes alone: nothing else of card 1 comes back').toBe(true);
   expect(firstTwo, 'card 2 comes once card 1 has gone, never beside it').toBeGreaterThan(lastOne);
@@ -1034,8 +1039,12 @@ test('AC5 the keyboard: from the focused card Down and Up move among the answers
   await expect(next).toBeHidden();
   expect(await next.evaluate((c) => (c as HTMLElement).inert)).toBe(true);
   expect(await next.locator('.qz-opt').first().evaluate((b) => { (b as HTMLElement).focus(); return document.activeElement === b; }), 'not even a script can focus it').toBe(false);
-  // Shift+Tab comes back through Skip quiz and Back to the last answer, and Space commits it
-  await page.keyboard.press('Shift+Tab'); await expect(skip1).toBeFocused();
+  // the way back in: Shift+Tab from Skip quiz reaches Back, then the last answer, and Space commits it. Skip quiz is
+  // focused by script first: where the Tab after it lands is the browser's own business (nothing focusable follows the
+  // quiz while section 4 is locked, so new headless Chromium wraps to the logotype and the headless shell leaves the
+  // page), and Shift+Tab from there wraps round to Skip quiz on one platform and leaves the page on another (a Mac,
+  // 2026-11-02), so the row never leans on it
+  await skip1.focus(); await expect(skip1).toBeFocused();
   await page.keyboard.press('Shift+Tab'); await expect(back1).toBeFocused();
   await page.keyboard.press('Shift+Tab'); await expect(opts1.nth(6)).toBeFocused();
   await expect(opts1.nth(6)).toHaveAttribute('data-persona', last.persona);
@@ -2376,8 +2385,9 @@ test('AC4 at 360 x 780 the done line with a 60-character address breaks inside t
 /** the shown result as it stands: #find's box against the 100svh probe and the viewport, --qz-rs, the name's size
  *  against the one fitted to it and its width as drawn (scaleX(0.8): fitResult() fits the drawn name to its column)
  *  against its column's, the offer's band (when it is drawn), whether anything scrolls sideways, and the paint: its box,
- *  its width over height (--qz-paint-ar: deck.ts writes the swatch's image's own on each .qz-rub, our own stroke's is its
- *  200 x 600), the image's own ratio from its width and height (Sam's swatch) and the result's grid tracks (on a laptop
+ *  its width over height (--qz-paint-ar: deck.ts writes the swatch's image's own on each .qz-rub; our own stroke takes
+ *  the swatch's box, its 200 x 600 drawing centred in it), the image's own ratio from its width and height (Sam's swatch)
+ *  and the result's grid tracks (on a laptop
  *  the reference's five columns, the paint's the third) */
 const oneScreen = (page: Page) => page.evaluate(() => {
   const find = document.getElementById('find')!, box = find.getBoundingClientRect(), res = find.querySelector<HTMLElement>('.qz-result:not([hidden])')!;
@@ -2443,10 +2453,11 @@ for (const [w, h, swaps] of SCREENS) {
       expect(Math.abs(m.size - m.fit), `${at}: the name at its fitted ${m.fit} px`).toBeLessThan(0.05);
       expect(m.nameW, `${at}: the name as drawn (at 80% of its width) inside its column (${m.headW} px)`).toBeLessThanOrEqual(m.headW + 1);
       expect(m.wide, `${at}: nothing scrolls sideways`).toBe(false);
-      // the paint at its own proportions: the swatch's image's, which deck.ts writes on it, or our own stroke's 200 x 600
+      // the paint at its own proportions: the swatch's image's, which deck.ts writes on it, or the same box for our own
+      // stroke (quiz.css svg.qz-smear), so a build without the swatch fits where one with it does
       const p = m.paint;
       if (p.swatch) expect(p.own, `${at}: Sam's swatch at its image's own width over height, written by deck.ts`).toBe((p.image ?? 0).toFixed(5));
-      else expect(p.ar, `${at}: our own stroke's 200 x 600`).toBeCloseTo(1 / 3, 3);
+      else expect(p.ar, `${at}: our own stroke in the swatch's box, 0.41026`).toBeCloseTo(0.41026, 4);
       expect(Math.abs(p.height - p.width / p.ar), `${at}: the paint ${p.width.toFixed(1)} x ${p.height.toFixed(1)} px, at its proportions`).toBeLessThanOrEqual(1);
       if (w >= 900 && h >= 600) {
         // a laptop: the reference's five columns (34, 5, 13, 8 and 40), the paint in the third, as wide as the column up to

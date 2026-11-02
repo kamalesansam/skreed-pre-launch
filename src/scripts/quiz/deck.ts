@@ -236,7 +236,7 @@ export function mountQuiz(root: HTMLElement): void {
     for (const m of shown.querySelectorAll<HTMLElement>('.qz-mini')) m.hidden = m.dataset.shade === shade;
     delete root.dataset.gift;
     results.hidden = false; if (gift) gift.hidden = false; setState('result');
-    unlock('result');   // section 4 opens under the result and the gift (quiz-gate.md D2); nothing moves
+    unlock('result');   // section 4 opens under the result and the gift (quiz-gate.md D2); the unlock moves nothing (the result's own scroll to the section's top, below, is quiz.md D47's)
     track('quiz_complete', { persona: p.id, shade, others: others.join(',') });
     fitResult();
     restoreGift();

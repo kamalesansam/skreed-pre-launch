@@ -22,7 +22,7 @@
 .quiz .qz-link, .quiz .qz-opt, .quiz .qz-card, .quiz .qz-shade, .quiz .qz-done-text, .quiz .qz-check { position: relative; }
 .quiz :is(.qz-link, .qz-opt):focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
 .quiz :is(.qz-card, .qz-shade, .qz-done-text, .qz-offer):focus { outline: none; }   /* the question, the shade's name and the done line take focus only from script (tabindex -1), so their words are announced (and Up and Down reach a question's answers); they are no controls, so no box is drawn round them */
-.quiz .qz-input:focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }   /* the field is a Pearl Whisper box since Sam's reference of 2026-11-02 (E-S3-result): it shows focus as the section's ring (an input is focus-visible on every focus, a click included) */
+.quiz .qz-input:focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; position: relative; z-index: 1; }   /* the field is a Pearl Whisper box since Sam's reference of 2026-11-02 (E-S3-result): it shows focus as the section's ring (an input is focus-visible on every focus, a click included); lifted over Send, which shares its row and painted over the ring's right side (review iteration 4) */
 @supports not selector(:has(*)) {
   .quiz .qz-check input:focus-visible + .qz-tick { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }   /* the box itself is unseen, so its own outline would be too */
 }
@@ -82,12 +82,13 @@ html:not(.js) .qz-skip { display: none; }   /* and nothing is locked there, so t
    (config/quiz-tones.ts) and set on the section by deck.ts; --qz-rs, stepped down by deck.ts until the section fits the
    screen (Sam: "Shrink to fit"), scales the type and the gaps, never a line under 12 px; deck.ts sizes the name to its
    column (--qz-name-fs). */
-.quiz { --qz-f-name: "Anton", Impact, "Arial Narrow", sans-serif; --qz-f-text: "Poppins", "Poppins Fallback", Arial, sans-serif; --qz-f-label: "Work Sans", Arial, sans-serif; --qz-fs-rt: clamp(15px, min(1.5vw, 2.7vh), 30px); --qz-fs-label: clamp(16px, min(1.85vw, 3.3vh), 37px); --qz-fs-offer: clamp(15px, min(1.8vw, 3.2vh), 36px); }
+.quiz { --s0: 4px;   /* the step below --s1: the chips' gap, Sam's reference's measure (8 px at its 2000 px), recorded in DESIGN.md's Spacing (2026-11-03) */
+  --qz-f-name: "Anton", Impact, "Arial Narrow", sans-serif; --qz-f-text: "Poppins", "Poppins Fallback", Arial, sans-serif; --qz-f-label: "Work Sans", Arial, sans-serif; --qz-fs-rt: clamp(15px, min(1.5vw, 2.7vh), 30px); --qz-fs-label: clamp(16px, min(1.85vw, 3.3vh), 37px); --qz-fs-offer: clamp(15px, min(1.8vw, 3.2vh), 36px); }
 .qz-ground { position: absolute; inset: 0; z-index: -1; display: none; background: var(--qz-deep, var(--night)); pointer-events: none; }
 .quiz[data-state="result"] .qz-ground { display: block; bottom: calc(100svh - 100lvh); }   /* one screen is fitted to 100svh (a phone browser's bars shown); with the bars gone the ground runs on under the section to the screen's foot, so no fog shows there */
 /* the fixed logotype and Back to top turn Urban Slate over the light fog (the hero's ride, glitch.ts setTone); while the
    result's deep ground lies under them they stay Pearl Whisper (deck.ts marks the page) */
-html[data-qz-ground] .site-logo[data-tone="light"], html[data-qz-ground] .to-top[data-tone="light"] { color: var(--pearl-whisper); }
+html[data-qz-ground] .site-logo[data-tone="light"], html[data-qz-ground] .to-top[data-tone="light"], html[data-qz-ground] .snav[data-tone="light"] { color: var(--pearl-whisper); }   /* .snav is the section index of 2026-11-02 (site-nav.ts copies the logotype's tone): nothing on this branch until the default is merged in, then Home, Families, Quiz and Products stay Pearl Whisper over the ground too */
 .qz-vh { position: absolute; top: 0; left: 0; width: 0; height: 100svh; visibility: hidden; pointer-events: none; }   /* one screen with a phone browser's bars shown: deck.ts fits the result to it */
 .quiz[data-state="result"] { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 100svh; }
 .qz-results { display: grid; }
@@ -105,7 +106,8 @@ html[data-qz-ground] .site-logo[data-tone="light"], html[data-qz-ground] .to-top
 .qz-fam { font-variant-numeric: tabular-nums; }
 /* the paint: Sam's swatch (rub.webp), its outline filled with the drawn shade and its relief set over that fill with
    hard-light, so each of the 240 shades is the same paint; deck.ts points the mask at the image */
-.qz-smear { --qz-paint-ar: 0.3333; grid-area: smear; display: block; width: calc(clamp(56px, 18vw, 120px) * var(--qz-rs, 1)); height: auto; }   /* --qz-paint-ar: width over height, our stroke's 200 x 600 */
+.qz-smear { --qz-paint-ar: 0.41026; grid-area: smear; display: block; width: calc(clamp(56px, 18vw, 120px) * var(--qz-rs, 1)); height: auto; }   /* --qz-paint-ar: width over height, the swatch's 256 x 624 for both paints (deck.ts writes the image's own on .qz-rub) */
+svg.qz-smear { aspect-ratio: var(--qz-paint-ar); }   /* our own stroke takes the swatch's box, its 200 x 600 drawing centred in it (the SVG's own ratio is ignored), so a build without the swatch fits the screen wherever one with it does: at its own 1 to 3 the stroke stood 47 px taller than the swatch at 683 x 657 and pushed the longest result past one screen (2026-11-02) */
 .qz-rub { --qz-paint-ar: 0.41026; position: relative; isolation: isolate; aspect-ratio: var(--qz-paint-ar); }   /* the swatch's 256 x 624; deck.ts writes the image's own */
 .qz-rub-col { position: absolute; inset: 0; background: var(--qz-shade); -webkit-mask: var(--qz-rub) center / 100% 100% no-repeat; mask: var(--qz-rub) center / 100% 100% no-repeat; }
 .qz-rub-img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; mix-blend-mode: hard-light; }
@@ -113,14 +115,14 @@ html[data-qz-ground] .site-logo[data-tone="light"], html[data-qz-ground] .to-top
 .qz-sm-body { fill: var(--qz-shade); }
 .qz-sm-dark { fill: var(--qz-sd, var(--qz-shade)); }
 .qz-sm-light { fill: var(--qz-sl, var(--qz-shade)); }
-.qz-sm-gloss { fill: var(--pearl-whisper); fill-opacity: 0.6; }   /* a gloss result's highlight; a matte one has none */
-.quiz[data-sm-rim] .qz-sm-body { stroke: var(--pearl-whisper); stroke-opacity: 0.5; stroke-width: 1.5px; vector-effect: non-scaling-stroke; }   /* the darkest shades (chipRim) would sink into their own ground: the stroke takes the chips' hairline */
+.qz-sm-gloss { fill: var(--pearl-whisper); }   /* a gloss result's highlight, plain Pearl Whisper (no alpha: Pearl at alpha is the hero's, E-A2; review iteration 4); a matte one has none */
+.quiz[data-sm-rim] .qz-sm-body { stroke: var(--pearl-whisper); stroke-width: 1.5px; vector-effect: non-scaling-stroke; }   /* the darkest shades (chipRim) would sink into their own ground: the stroke takes the chips' hairline */
 .qz-rtext { grid-area: text; display: grid; gap: calc(var(--s2) * var(--qz-rs, 1)); justify-items: start; min-width: 0; }   /* one gap carries the rhythm; no per-line margins (rule 15) */
 .qz-persona { font-size: max(12px, calc(var(--qz-fs-label) * 0.72 * var(--qz-rs, 1))); letter-spacing: -0.02em; }
 /* the words: Poppins 400, Sam's sentence case */
 .qz-text, .qz-palette { max-width: 62ch; font: 400 max(12px, calc(var(--qz-fs-rt) * var(--qz-rs, 1))) / 1.35 var(--qz-f-text); text-transform: none; }
 .qz-r-more { display: grid; gap: calc(var(--s3) * var(--qz-rs, 1)); justify-items: start; padding-top: calc(var(--s2) * var(--qz-rs, 1)); }   /* the chips and the links: under the words, or their own column on a phone held sideways */
-.qz-also { display: flex; flex-wrap: wrap; gap: calc(4px * var(--qz-rs, 1)); margin: 0; padding: 0; list-style: none; }
+.qz-also { display: flex; flex-wrap: wrap; gap: calc(var(--s0) * var(--qz-rs, 1)); margin: 0; padding: 0; list-style: none; }
 /* a chip: the shade's own colour (deck.ts paints it), rounded as the reference's, its name read upward in Poppins italic in
    whichever ink reads better on it (chipInk: --night or Pearl Whisper); a chip grows to its name, and the row to its tallest */
 .qz-mini { --qz-ink: var(--night); display: flex; align-items: flex-end; justify-content: center; width: calc(clamp(40px, 12vw, 64px) * var(--qz-rs, 1)); min-height: calc(clamp(88px, 24vw, 140px) * var(--qz-rs, 1)); padding: calc(var(--s2) * var(--qz-rs, 1)) 0; border-radius: calc(var(--s1) * var(--qz-rs, 1)); color: var(--qz-ink); font: italic 400 max(12px, calc(var(--qz-fs-rt) * 0.9 * var(--qz-rs, 1))) / 1 var(--qz-f-text); text-transform: none; }
@@ -162,7 +164,7 @@ html[data-qz-ground] .site-logo[data-tone="light"], html[data-qz-ground] .to-top
 .qz-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; width: min(100%, 640px); }
 /* the field: a Pearl Whisper box with Urban Slate words in Work Sans Light, square; the address keeps the case it is typed in */
 .qz-input { width: 100%; min-height: 48px; padding: 0 var(--s3); border: 0; border-radius: 0; background: var(--pearl-whisper); color: var(--urban-slate); font: 300 max(16px, calc(var(--qz-fs-offer) * var(--qz-rs, 1))) / 1.2 var(--qz-f-label); text-transform: none; letter-spacing: 0; caret-color: var(--urban-slate); }   /* 16 px at the least: iOS Safari zooms the page on focusing a smaller field (DESIGN.md 8) */
-.qz-input::placeholder { color: var(--urban-slate); opacity: 0.75; }
+.qz-input::placeholder { color: var(--urban-slate); opacity: 1; }   /* the words' own colour with no tint: a grey at alpha is no colour of the palette (review iteration 4, 2026-11-03) */
 .qz-input[aria-invalid="true"] { border-bottom: 3px solid var(--urban-slate); }
 /* Send: Urban Slate with its words in Pearl Whisper, Work Sans Light in capitals, darker under a mouse (rule 14: a colour
    change on the standard ease) */
@@ -170,6 +172,7 @@ html[data-qz-ground] .site-logo[data-tone="light"], html[data-qz-ground] .to-top
 @media (prefers-reduced-motion: no-preference) { .qz-send { transition: background-color var(--dur-press) var(--ease-standard); } }
 @media (hover: hover) { .qz-send:hover:not([aria-disabled="true"]) { background: var(--night); } }
 .qz-send[aria-disabled="true"] { cursor: default; }
+@media (max-width: 399px) { .qz-input { padding: 0 var(--s2); } .qz-send { padding: 0 var(--s3); } }   /* under 400 px the placeholder needs the room: "Your email address" is 142.4 px at 16 px, and a 170 px field less 2 x 16 px cut it short at 360 x 780 (review iteration 4) */
 .qz-fine { max-width: 72ch; font: 400 12px / 1.4 var(--qz-f-text); text-transform: none; }   /* 12 px, CHECKLIST A3's least */
 /* the consent tick is text too: the box itself stays in the tree for the keyboard and assistive technology, unseen, and
    the row shows [ ] or [X] in the same type */
@@ -250,7 +253,6 @@ html[data-qz-ground] .site-logo[data-tone="light"], html[data-qz-ground] .to-top
 @media (min-width: 900px) and (min-height: 600px) {
   .qz-results { max-width: none; width: 100%; }
   .qz-result { grid-template-columns: minmax(0, 34fr) minmax(0, 5fr) minmax(0, 13fr) minmax(0, 8fr) minmax(0, 40fr); grid-template-areas: "head . smear . text"; column-gap: 0; align-items: start; }
-  .qz-r-head { padding-top: calc(var(--s1) * var(--qz-rs, 1)); }
   /* the paint fills its column up to the reference's height, 55.5% of the screen (624 of its 1125 px), times the fit: on
      a screen wider than 16:9 (1366 x 657) the column alone would draw it two thirds of the screen tall and push the
      offer out of the screen */
