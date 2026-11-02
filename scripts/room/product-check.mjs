@@ -17,7 +17,7 @@
 import { writeFileSync } from 'node:fs';
 import sharp from 'sharp';
 import { chromium } from '@playwright/test';
-import { ROOM_SCENES, productById } from '../../src/config/room.ts';
+import { ROOM_SCENES, WORLD_START, productById } from '../../src/config/room.ts';
 
 const args = process.argv.slice(2);
 const base = args.find((a) => /^https?:/.test(a)) ?? 'http://127.0.0.1:4322/';
@@ -92,8 +92,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       await page.evaluate((qq) => window.__skreedRoom?.snap(qq), q);
       await sleep(settle);
     };
-    await go(1, 1200); await go(4, 300); await go(9.5, 1500);
-    await page.waitForFunction(() => window.__s4?.state()?.worldReady, null, { timeout: 180_000 });
+    // scene 1's q (the arrival, section-4-no-hall.md 2; the hall's station until 2026-11-02), then the scenes' phases settled: scene 1 drawable, products.bin in or failed
+    await go(WORLD_START, 1200);
+    await page.waitForFunction(() => window.__s4?.state()?.settled, null, { timeout: 180_000 });
     await page.evaluate(() => window.__s4.scene(0));
     await page.waitForFunction(() => window.__s4.state().state === 'world' && window.__s4.state().products === 'in', null, { timeout: 120_000 });
     await page.evaluate(() => { for (const el of [document.getElementById('rmStage'), document.querySelector('.site-logo'), document.getElementById('siteNav')]) if (el) el.style.visibility = 'hidden'; });
