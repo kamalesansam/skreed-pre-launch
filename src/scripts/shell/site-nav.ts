@@ -4,8 +4,9 @@
 // (the hero's own jump when the island runs, its followers snapped and section 4 reset; a plain instant scroll on the
 // poster tier), the veil lifted; no scroll through the sections between. Home is the jump Back to top made here.
 // Products is always listed (2026-11-02: "its okay add products as well no problem"): pressed while the quiz gate holds
-// section 4, it opens it as Skip quiz does (gate.ts unlock); on the 3D path it waits under the veil for the hall, at
-// most 1.5 s, as Skip quiz's ride does, so the landing shows the hall drawn. Reduced motion: the cut with no veil. A
+// section 4, it opens it as Skip quiz does (gate.ts unlock); on the 3D path it waits under the veil for the scenes, at
+// most 1.5 s, as Skip quiz's ride does, so the landing shows scene 1 drawn (the hall until 2026-11-02). Reduced motion:
+// the cut with no veil. A
 // keyboard press moves focus into the section it opened. Where the browser has no popover (the drawer's CSS falls back
 // to the words in a row), nothing here touches the popover API. About, the page the index links to (data-page, no
 // data-sec; navbar.md D7), is left to the browser: no veil and no jump, only a plain press tracked as the sections' are
@@ -19,8 +20,8 @@ const nav = document.getElementById('siteNav');
 const sheet = document.getElementById('site-sections');
 const logo = document.getElementById('siteLogo');
 const html = document.documentElement;
-/** on the 3D path a press on Products waits for the hall at most this long (gate.ts HALL_WAIT_MS) */
-const HALL_WAIT_MS = 1500;
+/** on the 3D path a press on Products waits for the scenes at most this long (gate.ts SCENES_WAIT_MS) */
+const SCENES_WAIT_MS = 1500;
 /** the popover API: without it `:popover-open` is not a selector, and matches() would throw on it */
 const POPOVER = 'hidePopover' in HTMLElement.prototype;
 const open = () => POPOVER && !!sheet?.matches(':popover-open');
@@ -101,7 +102,7 @@ if (nav) {
    * Section 4 opened by Products while the quiz gate holds it, as gate.ts's unlock() opens it for Skip quiz: hidden and
    * data-locked go, data-open says "nav", the visit's flag is written (its key from config/quiz.ts, through the bar's
    * data-gate-key, so the quiz's config stays in its own chunk), room_unlock is tracked and the hero hears
-   * skreed:quiz-unlock (it loads the hall). True when this call opened it. Keep in step with gate.ts unlock().
+   * skreed:quiz-unlock (it loads the scenes). True when this call opened it. Keep in step with gate.ts unlock().
    */
   const unlock = (): boolean => {
     if (!room?.hasAttribute('data-locked')) return false;
@@ -114,7 +115,7 @@ if (nav) {
   };
   const frame = () => new Promise<void>((r) => { requestAnimationFrame(() => r()); });
   const wait = (ms: number) => new Promise<void>((r) => { setTimeout(r, ms); });
-  /** Skip quiz's ride over (data-ride goes when it lands or is ended; its hall wait included, at most 2.7 s) */
+  /** Skip quiz's ride over (data-ride goes when it lands or is ended; its wait for the scenes included, at most 2.7 s) */
   const rideOver = () => new Promise<void>((r) => { const tick = () => (room?.hasAttribute('data-ride') ? requestAnimationFrame(tick) : r()); tick(); });
 
   /** the section at once: section 1 by the hero's own jump (Back to top's), the rest by the island's jump to y, or a plain instant scroll */
@@ -130,15 +131,15 @@ if (nav) {
    * A keyboard press: focus into the section, each candidate tried until one takes focus. The logotype; the first family
    * link; in the quiz the live question, read out first as deck.ts reads it when it puts a question up (the card's name and
    * its question through #qzLive), else the result's shade name (deck.ts's own target for the result, at its top), else
-   * the first control on screen (Begin on the intro); the hall's pad, or the prompt where the hall is not drawn, or the
-   * first scene's name once the stills' scenes are in.
+   * the first control on screen (Begin on the intro); section 4's pad on the 3D path (the arrival at scene 1 moves that
+   * focus on to scene 1's name, walk.ts), or the first scene's name on the poster tier.
    */
   const focusIn = (id: SectionId) => {
     let list: (HTMLElement | null)[];
     if (id === 'top') list = [logo];
     else if (id === 'families') list = [document.querySelector<HTMLElement>('#families a')];
     else if (id === 'quiz') list = [document.querySelector<HTMLElement>('#find .qz-card.is-top'), ...document.querySelectorAll<HTMLElement>('#find .qz-shade'), ...document.querySelectorAll<HTMLElement>('#find :is(a[href], button:not([disabled]))')];
-    else { const m = map(); list = [document.getElementById(m.island && !m.roomStill ? 'rmPad' : 'rmEnter'), document.querySelector<HTMLElement>('#rmScenes .rm-scene-name')]; }
+    else { const m = map(); list = [m.island && !m.roomStill ? document.getElementById('rmPad') : null, document.querySelector<HTMLElement>('#rmScenes .rm-scene-name')]; }
     for (const el of list) {
       if (!el || !focusable(el)) continue;
       if (el.classList.contains('qz-card')) {
@@ -162,14 +163,14 @@ if (nav) {
       if (room?.hasAttribute('data-ride')) await rideOver();
       track('nav', { to: id });
       void veiled(async () => {
-        // Products: section 4 opened if the gate holds it; on the 3D path the hall loads from the unlock (or from this
-        // press where it has not started) and the page waits for it under the veil, so the landing shows the hall drawn
-        // and its reveal is not played again after the lift; then a frame for the shown section's layout
+        // Products: section 4 opened if the gate holds it; on the 3D path the scenes load from the unlock (or from this
+        // press where they have not started) and the page waits for them under the veil, so the landing shows scene 1
+        // drawn and its reveal is not played again after the lift; then a frame for the shown section's layout
         if (id === 'room') {
-          const opened = unlock(), hall = window.__skreedHall;
-          if (island() && hall && !hall.ready) {
+          const opened = unlock(), scenes = window.__skreedScenes;
+          if (island() && scenes && !scenes.ready) {
             a.setAttribute('aria-busy', 'true');
-            await Promise.race([hall.load(), wait(HALL_WAIT_MS)]);
+            await Promise.race([scenes.load(), wait(SCENES_WAIT_MS)]);
             a.removeAttribute('aria-busy');
           }
           if (opened) await frame();

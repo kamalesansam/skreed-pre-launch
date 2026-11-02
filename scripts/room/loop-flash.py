@@ -3,7 +3,7 @@
 of the lands' clip-flash.py.
 
 AC5, as the spec has it: over every loop as drawn, every step, five steps back to back at Tune's shortest stepMs, both
-seams, the way back and the wrap, at 390 x 844 and 1280 x 800, "no 341 x 256 CSS px region has more than 25 percent of
+seams and the wrap, at 390 x 844 and 1280 x 800, "no 341 x 256 CSS px region has more than 25 percent of
 its area flash more than three times in any one second, a flash being a pair of opposing changes of at least 10 percent
 of the maximum relative luminance where the darker state is below 0.80, the same for saturated red".
 
@@ -12,9 +12,9 @@ Two kinds of input:
   carousel draws it at rest (cover-fitted to the viewport of its class at the planes' 1.01 overscan, the light-up whole,
   the bottom shade in the frame: --shade dark,solid,height as carousel.ts SHADE has them), its first second appended
   after its last frame so the wrap of the loop is checked too;
-- a step, a burst of steps, a seam, the way back or the wrap: a folder of PNG frames captured by scripts/room/step-frames.mjs
+- a step, a burst of steps, a seam or the wrap: a folder of PNG frames captured by scripts/room/step-frames.mjs
   (the hooks build drawn one 1/24 s tick at a time, so the sequence runs at 24 frames a second whatever the capture's own
-  pace), read as they are.
+  pace), read as they are (the way back's frames went with the hall on 2026-11-02).
 On each sequence:
 - a pixel makes a transition where its relative luminance has moved at least 0.1 from its running extreme and the
   darker of the two is below 0.80 (a flash is a pair of opposing transitions); the saturated red test is the same on
@@ -29,7 +29,7 @@ second, the same two for red, and the verdict; --json writes the rows with their
 
 usage: python3 -I scripts/room/loop-flash.py [--loops <dir>] [--steps <dir>] [--shade 0.85,0,0.24] [--json <file>] [W x H ...]
   the loops are <id>-<wide|portrait>.mp4; the steps are folders of frame-NNN.png named step-<W>-<from>-<to>, burst-<W>-<ms>,
-  seam-<W>-exit, seam-<W>-wrap or seam-<W>-back
+  seam-<W>-exit or seam-<W>-wrap
 """
 import io, json, re, subprocess, sys
 from pathlib import Path

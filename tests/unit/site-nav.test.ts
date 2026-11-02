@@ -22,7 +22,7 @@ test('the 3D path: each section rests where the hero, the glue and Skip quiz put
   assert.equal(restY('top', island), 0);
   assert.equal(restY('families', island), Math.round(S2T.LAND * vh));
   assert.equal(restY('quiz', island), island.quiz);
-  assert.equal(restY('room', island), island.room + island.stage);   // q 1, the hall fully in
+  assert.equal(restY('room', island), island.room + island.stage);   // q 1, scene 1 fully in
   assert.equal(restY('room', island), rideTarget({ top: island.room, one: island.stage, poster: false, max: island.max }), 'Skip quiz\'s own landing');
   assert.equal(restY('room', { ...island, roomStill: true }), island.room);   // section 4 on its stills rests at its top
 });
@@ -93,7 +93,8 @@ test('Products is always listed and opens the quiz gate as Skip quiz does', () =
   assert.match(js, /room\.removeAttribute\('hidden'\); room\.removeAttribute\('data-locked'\); room\.dataset\.open = 'nav';/);
   assert.match(js, /track\('room_unlock', \{ by: 'nav' \}\)/);
   assert.match(js, /dispatchEvent\(new CustomEvent\('skreed:quiz-unlock'/);
-  assert.match(js, /HALL_WAIT_MS = 1500/);
+  assert.match(js, /SCENES_WAIT_MS = 1500/);
+  assert.match(js, /window\.__skreedScenes/, 'Products waits on the scenes, as Skip quiz\'s ride does');
   // the landing inside section 4 snaps its followers only once the section has a reading (none while the gate hides it)
   assert.match(read('src/scripts/hero/section4/director.ts'), /reset\(y\) \{\n\s+resetLap\(false\);\n\s+if \(y === undefined\) return;\n\s+current\(\);\n(?:\s+\/\/[^\n]*\n)*\s+if \(!measured\) return;\n\s+const qq = \(y - top\) \/ screenPx\(\);/);
   assert.doesNotMatch(js, /^import[^\n]*config\/quiz/m, 'the quiz\'s config stays out of the index\'s chunk');

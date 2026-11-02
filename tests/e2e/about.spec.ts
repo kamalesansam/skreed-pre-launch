@@ -162,11 +162,9 @@ test('AC6 visible at rest; the wordmark\'s lift and press, and none under reduce
   expect(await logo.evaluate((e) => { const c = getComputedStyle(e); return [c.transitionProperty, c.transitionDuration, c.transitionTimingFunction]; })).toEqual(['transform', '0.15s', 'cubic-bezier(0.2, 0, 0, 1)']);
   expect(await look()).toEqual({ transform: 'none', opacity: '1', color: SLATE });
   await logo.hover();
-  await page.waitForTimeout(400);
-  expect(await look()).toEqual({ transform: 'matrix(1, 0, 0, 1, 0, -1)', opacity: '1', color: SLATE });
+  await expect.poll(look, { timeout: 5000 }).toEqual({ transform: 'matrix(1, 0, 0, 1, 0, -1)', opacity: '1', color: SLATE });   // the lift, once its 150 ms transition has run (polled: the machine is shared)
   await page.mouse.down();
-  await page.waitForTimeout(400);
-  expect(await look()).toEqual({ transform: 'matrix(0.98, 0, 0, 0.98, 0, 0)', opacity: '1', color: SLATE });
+  await expect.poll(look, { timeout: 5000 }).toEqual({ transform: 'matrix(0.98, 0, 0, 0.98, 0, 0)', opacity: '1', color: SLATE });
   await page.mouse.move(LAPTOP.width - 20, LAPTOP.height - 20);   // release away from the link, so no click navigates
   await page.mouse.up();
   await ctx.close();

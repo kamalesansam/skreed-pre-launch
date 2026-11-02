@@ -2,7 +2,8 @@
 // at the top right on the logotype's row at every breakpoint, clear of it, 44 px hits, no horizontal scroll; Menu and
 // its light drawer from the right under 768 px; each section in place by a press on the poster tier, with aria-current
 // following and a second press during a jump honoured; Products always listed, opening the quiz gate as Skip quiz does;
-// on the 3D path a keyboard press on Products leaves focus on the hall's pad; plain fragment links without JavaScript.
+// on the 3D path a keyboard press on Products leaves focus in section 4 (its pad, which the arrival at scene 1 moves on
+// to scene 1's name); plain fragment links without JavaScript.
 // About, the page link (navbar.md D7, AC11), is last in the bar and the drawer and leaves for /about/ with no veil, the
 // drawer closed as the page goes (the Back row launches Chromium with the back-forward cache allowed; the runner's has it off).
 // The 3D path's rest positions are nav-map.ts's, checked in tests/unit/site-nav.test.ts.
@@ -218,15 +219,15 @@ test('the 3D path, gate locked: a jump to the quiz leaves section 4\'s followers
   await expect(page.locator('#toTopVeil')).toBeHidden({ timeout: 20_000 });
   expect(await page.evaluate(() => document.getElementById('room')!.hasAttribute('data-locked'))).toBe(true);
   await page.locator('#qzSkip').click();
-  // through the ride and after it: q climbs from 0 to the hall's 1 and never past it (a landing measured against the
-  // locked section's missing box put it thousands of screens deep, which drew the hall at once and walked it by itself)
+  // through the ride and after it: q climbs from 0 to scene 1's q 1 and never past it (a landing measured against the
+  // locked section's missing box put it thousands of screens deep, which drew the scenes at once and ran through them)
   let most = 0;
   for (let i = 0; i < 40; i++) { const q = await roomQ(page); if (q !== null) most = Math.max(most, q); await page.waitForTimeout(100); }
   expect(most).toBeLessThan(1.05);
   await expect.poll(() => roomQ(page), { timeout: 20_000 }).toBeGreaterThan(0.95);
 });
 
-test('the 3D path, gate locked: a keyboard press on Products opens it, lands on the hall fully in, and leaves focus on the pad', async ({ page, baseURL }) => {
+test('the 3D path, gate locked: a keyboard press on Products opens it, lands on scene 1 fully in, and leaves focus in the section, on the pad or on scene 1 by name', async ({ page, baseURL }) => {
   test.setTimeout(900_000);
   await boot3d(page, baseURL, '');
   await page.locator('#siteNav .snav-list a[data-sec="room"]').focus();
@@ -236,11 +237,11 @@ test('the 3D path, gate locked: a keyboard press on Products opens it, lands on 
   expect(await page.evaluate(() => sessionStorage.getItem('skreed:quiz-done'))).toBe('1');
   const q = await roomQ(page);
   expect(Math.abs((q ?? -1) - 1)).toBeLessThan(0.02);
-  await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? ''), { timeout: 20_000 }).toBe('rmPad');
+  await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? ''), { timeout: 20_000 }).toMatch(/^(rmPad|rmName-cove)$/);
 });
 
-test('the 3D path: a keyboard press on Products leaves focus on the hall\'s pad', async ({ page, baseURL }) => {
-  // the 3D path on SwiftShader (?tier=hero3d), booted as room.spec.ts's open3d does: the intro skipped by its hook, the hall in
+test('the 3D path: a keyboard press on Products leaves focus in section 4, on the pad or on scene 1 by name', async ({ page, baseURL }) => {
+  // the 3D path on SwiftShader (?tier=hero3d), booted as room.spec.ts's open3d does: the intro skipped by its hook, the scenes in
   test.setTimeout(900_000);
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(new URL('/?tier=hero3d&room=open', baseURL).href);
@@ -250,15 +251,15 @@ test('the 3D path: a keyboard press on Products leaves focus on the hall\'s pad'
   await page.waitForFunction(() => window.__s4?.ready, null, { timeout: 300_000, polling: 500 });
   await page.locator('#siteNav .snav-list a[data-sec="room"]').focus();
   await page.keyboard.press('Enter');
-  // the landing is the hall fully in: section 4's own follower is snapped to q 1 under the veil, so the third wipe does
+  // the landing is scene 1 fully in: section 4's own follower is snapped to q 1 under the veil, so the third wipe does
   // not play again once the veil has lifted
   await expect(page.locator('#toTopVeil')).toBeVisible();
   await expect(page.locator('#toTopVeil')).toBeHidden({ timeout: 20_000 });
   const q = await page.evaluate(() => (window.__s4?.state() as { q?: number } | null)?.q ?? -1);
   expect(Math.abs(q - 1)).toBeLessThan(0.02);
-  await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? ''), { timeout: 20_000 }).toBe('rmPad');
-  await page.waitForTimeout(1500);   // the hall's next frames: focus stays
-  expect(await page.evaluate(() => document.activeElement?.id)).toBe('rmPad');
+  await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? ''), { timeout: 20_000 }).toMatch(/^(rmPad|rmName-cove)$/);
+  await page.waitForTimeout(1500);   // the scenes' next frames: focus stays in the section
+  expect(await page.evaluate(() => document.activeElement?.id ?? '')).toMatch(/^(rmPad|rmName-cove)$/);
 });
 
 test('the bar has no fill, box or shadow, and takes the logotype\'s tone', async ({ page, baseURL }) => {

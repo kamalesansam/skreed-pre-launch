@@ -15,7 +15,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { BufferAttribute, BufferGeometry, Color, DoubleSide, Group, Mesh, MeshPhysicalMaterial, Scene, Texture, type Object3D, type WebGLRenderer } from 'three';
-import { LIGHT, LINES, LOOP_ASPECT, PLACE, STEP, anglesAt, boxOverlap, cloudCover, coverFit, easeStep, fovAt, frameSource, insetPx, keyLight, lightGain, lightTarget, lightUp, linesBox, loopShouldPlay, loopShouldReset, planeCoverage, poseWeight, productFit, productPlacement, productScale, productScreenBox, productYaw, proximity, ringPlace, smoothstep, toView, type LoopClass } from '../../src/scripts/hero/section4/carousel-math.ts';
+import { LIGHT, LINES, LOOP_ASPECT, PLACE, STEP, anglesAt, boxOverlap, cloudCover, coverFit, easeStep, fovAt, insetPx, keyLight, lightGain, lightTarget, lightUp, linesBox, loopShouldPlay, loopShouldReset, planeCoverage, poseWeight, productFit, productPlacement, productScale, productScreenBox, productYaw, proximity, ringPlace, smoothstep, toView, type LoopClass } from '../../src/scripts/hero/section4/carousel-math.ts';
 import { VIDEO, allowed, create as createPool, wholeBuffered, type VideoElement, type VideoHost, type VideoPool } from '../../src/scripts/hero/section4/video.ts';
 import { CLASS_FILL, CLOUD, EXHIBIT, FINISH, LIGHTS, PARTS, SHADE, createCarousel, partRole, type CarouselTune, type SceneDef } from '../../src/scripts/hero/section4/carousel.ts';
 
@@ -669,16 +669,11 @@ test('the three modules import three, RoomEnvironment and products-bin.ts alone,
   assert.doesNotMatch(readFileSync(new URL('carousel-math.ts', dir), 'utf8'), /^import /m, 'carousel-math.ts imports nothing');
 });
 
-test('frameSource (X-15): a seam keeps the frame it began over, so the exit\'s cover-in from scene 5 and the wrap\'s hold, cover-out and lock carry the carousel and a seam over the hall carries the hall; the entry and the way back are their own; the director draws by it', () => {
-  assert.equal(frameSource('hall', 'hall'), 'hall');
-  assert.equal(frameSource('world', 'world'), 'scenes');
-  assert.equal(frameSource('seam', 'world'), 'scenes', 'the exit\'s cover-in from scene 5; the wrap once it has landed');
-  assert.equal(frameSource('seam', 'hall'), 'hall', 'the exit from the hall; the wrap before it lands (the hero under the cloud)');
-  assert.equal(frameSource('entering', 'hall'), 'entering');
-  assert.equal(frameSource('back', 'world'), 'back');
+test("one frame source (X-15, section-4-no-hall.md 5): the carousel's frame in every state, under a seam's cloud too; the third wipe waits for scene 1 in the approach only, so a wrap that lands first shows dawn whole", () => {
   const director = readFileSync(new URL('../../src/scripts/hero/section4/director.ts', import.meta.url), 'utf8');
-  assert.match(director, /const source = frameSource\(state, under\), drawHall = source === 'hall'/, 'the director picks its branch by it');
-  assert.doesNotMatch(director, /the hall again after the reset/, 'the branch that showed the hall\'s stale frame under a seam over the scenes is gone');
-  assert.match(director, /const wipeIn = source === 'scenes' \? 1 :/, 'the third wipe never plays over the scenes (a wrap before the hall is in)');
-  assert.match(director, /seamDraws\.add\(source\)/, 'hooks builds record the frame sources seen during a cover-in (tests/e2e/room.spec.ts reads __s4.state().seamDraws)');
+  assert.match(director, /const showable = state !== 'approach' \|\| first;/, 'scene 1 gates the approach alone');
+  assert.match(director, /revealAt = qRaw > 0\.02 && !reduced && !seam && scene\(\) === 0 \? f\.t : -1;/, 'the late reveal plays only for scene 1, never over a wrap\'s landing');
+  assert.match(director, /if \(state === 'approach' && inRoom && qRaw >= at && drawable0\(\) && !lay\.layout\?\.intro\) \{/, 'the arrival waits for scene 1 to be drawable, so the scenes never open on a black frame');
+  assert.match(director, /const want = on \|\| !!seam;/, "the carousel draws while the section is on screen or a seam's cloud needs it");
+  assert.doesNotMatch(director, /frameSource|drawHall|seamDraws/, 'no other frame to choose');
 });

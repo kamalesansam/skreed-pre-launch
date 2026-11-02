@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import { Box3, Vector3, type Mesh } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -127,8 +127,8 @@ test('the file is its payload and head alone, at the manifest\'s size, under the
   // are 269,466 B before the head, 106,060 B over the figure, and gzip (195,521 B) is over it too. Reaching 160 KB
   // means fewer triangles (about 12,300 of the 20,203 through meshopt simplification, which breaks the parity with the
   // GLBs pinned above) or leaving the case out (the three accessories are about 150.5 KiB with the head, but the
-  // carousel would then draw the case through GLTFLoader, 13.5 KB gzip the director's chunk must not carry, see
-  // hall-bin.test.ts). Either is the lead's call and changes the format, so this test holds the ceiling and reports
+  // carousel would then draw the case through GLTFLoader, 13.5 KB gzip the director's chunk must not carry, as the
+  // hall's own test held until the hall left). Either is the lead's call and changes the format, so this test holds the ceiling and reports
   // the figure; the budget line for the bin is the wiring branch's.
   t.diagnostic(`products.bin ${bin.length} B stored (${(bin.length / KB).toFixed(1)} KiB), ${gz} B gzip; held to the ${CEILING_KB} KB ceiling (${ceiling} B); the brief's ${LINE_KB} KB figure (${line} B) is ${bin.length > line ? `over by ${bin.length - line} B` : 'met'}`);
   assert.ok(bin.length <= ceiling, `${bin.length} B: the bin has grown past the ${CEILING_KB} KB ceiling`);
@@ -154,4 +154,11 @@ test('products-bin.ts imports three alone, no glTF loader, no model file, and gz
   assert.match(src, /setTimeout\(\(\) => ac\.abort\(\), 20_000\)/, 'the 20 s timeout');
   const gz = gzipSync(src, { level: 9 }).length;
   assert.ok(gz < 2 * KB, `${gz} B gzip`);
+});
+
+test("no section 4 module imports a glTF loader or a .glb (AC9): the director's chunk reads products.bin by views; the hall's own test held this until the hall left on 2026-11-02", () => {
+  const dir = new URL('../../src/scripts/hero/section4/', import.meta.url);
+  const files = readdirSync(dir).filter((n) => n.endsWith('.ts'));
+  assert.ok(files.includes('director.ts') && files.includes('carousel.ts') && files.includes('products-bin.ts'));
+  for (const f of files) assert.doesNotMatch(readFileSync(new URL(f, dir), 'utf8'), /from '[^']*loaders\/GLTFLoader|\.glb\?url'/, f);
 });
