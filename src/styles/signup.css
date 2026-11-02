@@ -1,0 +1,271 @@
+/* Section 5, the sign-up, as Sam's picture of 2026-11-02 fitted to one screen (his choice of 2026-11-02: the picture's
+   placement, fonts, background, jars, icons and copy, with tighter spacing and a smaller headline and jars). Measured
+   from the picture (1019 x 1543 px): every size below is the picture's in its px times --u, the picture's px in CSS px,
+   except the text, which keeps a floor (body lines 15 px on a laptop and 13 px on a phone, the worth labels 13 and 11).
+   The ground is flat (--su-ground, held equal to SIGNUP_GROUND by tests/unit/signup.test.ts), with the picture's soft
+   falloff behind the jar row alone. The column is one screen: a grid whose gap tracks are fr shares of the picture's own
+   gaps, so they take what the screen leaves and shrink first; nothing waits for JavaScript to fit. Phone first: one
+   column with 16 px insets, the jars 0.18 of it; from 720 px the picture's frame, 1019 --u wide, centred, --u the
+   lesser of the width's and the height's. Nothing moves at rest; the icon of a hovered follow column scales to 1.06. */
+.signup {
+  /* the picture's colours (D3, D4) */
+  --su-ground: #F2EAE1;
+  --su-ink: #000000;
+  --su-sub: #5A544D; --su-sub-b: #3F3935;
+  --su-every: #27211F;
+  --su-worth: #49443F;
+  --su-grey: #77706A;
+  --su-ph: #AFA9A5;
+  --su-typed: #27211F;
+  --su-foot: #AEA8A3;
+  --su-rule: #5C5650;
+  --su-field: #A49B99;
+  --su-fall-0: #EFE8DF; --su-fall-1: #EEE6DE; --su-fall-2: #EDE6DA; --su-fall-3: #ECE4D9; --su-fall-4: #E7E0D5;
+  /* the picture's two faces (fonts.css): Inter for the headline, the sub-line, the worth labels, the heading and the grey
+     lines; Jost for the label over the jars, the field, the button and the footer */
+  --su-inter: "Inter", Arial, sans-serif;
+  --su-jost: "Jost", Arial, sans-serif;
+  position: relative; z-index: 3; overflow-x: clip;   /* above the hero's riders, below the logotype at 4 */
+  background: var(--su-ground);
+  color: var(--su-ink); font-synthesis: none; font-optical-sizing: auto;
+}
+/* the island draws the same ground under the section on the 3D path (D10) and says so: the page leaves it to the canvas */
+.signup[data-ground="island"] { background: transparent; }
+/* and while its cut runs (the fourth wipe, signup.ts with cut.ts): the canvas draws the ground behind the ragged band, so
+   the section shows no box of its own, its lines masked in just behind the band (Sam, 2026-11-03: "i could see that box") */
+.signup[data-cut] { background: transparent; }
+.signup, .signup *, .signup *::before, .signup *::after { box-sizing: border-box; }
+:where(.signup) :where(p, h2, h3) { margin: 0; }
+:where(.signup) :where(h2, h3) { font: inherit; }
+/* focus (DESIGN.md 4): the Ember Luxe outline with the Urban Slate ring inside it, on keyboard focus only */
+.signup :focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }
+.signup :is(.su-follow, .su-send, .su-notyou):focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); border-radius: inherit; pointer-events: none; }
+.signup .su-done:focus { outline: none; }   /* the done line takes focus from script alone (tabindex -1); it is no control */
+
+/* ---- the column, phone first: 16 px insets, --u from the jar (its outer diameter 0.18 of the column, 151.1 picture px) */
+.su-body {
+  --side: 16px;
+  --top: calc(var(--inset) + 56px + env(safe-area-inset-top, 0px));   /* under the fixed logotype's band, as before */
+  --bot: calc(var(--s3) + env(safe-area-inset-bottom, 0px));
+  --col: calc(100vw - 2 * var(--side));
+  --u: calc(var(--col) * 0.18 / 151.1);
+  --frame: var(--col);
+  --g0: 6px;                                              /* the least a flexible gap gives up to */
+  /* the jar (C2's frame, the numbers from jars.json through Signup.astro's style block): the outer diameter, the frame
+     image, the jar's box the row is laid out by */
+  --D: calc(151.1 * var(--u));
+  --img-w: calc(var(--D) / var(--jx, 0.5));
+  --img-h: calc(var(--img-w) * var(--jfa, 1.2));
+  --jar-h: calc(var(--img-h) * (var(--jy1, 0.87) - var(--jy0, 0.06)));
+  --icon-h: calc(46.5 * var(--u));
+  --pill-h: 46px; --pill-w: 100%;
+  --rule-w: 56px; --rule-gap: 12px;
+  /* type */
+  --fs-sub: clamp(13px, 3.6vw, 15px);
+  --fs-every: max(15px, calc(31.4 * var(--u)));
+  --fs-worth: max(11px, calc(26.9 * var(--u)));
+  --fs-got: max(18px, calc(var(--col) * 0.06));
+  --fs-grey: clamp(13px, 3.5vw, 15px);
+  --fs-input: 16px;                                       /* iOS Safari zooms the page on focusing a smaller field */
+  --fs-btn: clamp(13px, 3.5vw, 15px);
+  --fs-foot: clamp(13px, 3.5vw, 15px);
+  /* the fixed gaps inside the groups (the picture's, between line boxes) */
+  --gA: max(8px, calc(20 * var(--u)));     /* headline to sub-line */
+  --gD: max(6px, calc(33.3 * var(--u)));   /* the jar's base to its icon */
+  --gE: max(4px, calc(30 * var(--u)));     /* the icon to its worth label */
+  --gG: max(6px, calc(14 * var(--u)));     /* the heading to the grey lines */
+  position: relative; display: grid; width: 100%; min-height: 100svh;
+  padding: var(--top) var(--side) var(--bot);
+  grid-template-columns: min(var(--frame), 100%); justify-content: center;
+  /* the picture's rhythm: the groups in auto rows, the gaps between them fr shares of its own gaps (above the headline
+     the rest of its 125 px over the clearance, under the footer its 58) */
+  grid-template-areas: "." "top" "." "every" "." "row" "." "got" "." "form" "." "keep" ".";
+  grid-template-rows: minmax(0, 25fr) auto minmax(var(--g0), 92fr) auto minmax(var(--g0), 93fr) auto minmax(var(--g0), 94fr) auto minmax(var(--g0), 64fr) auto minmax(var(--g0), 67fr) auto minmax(0, 42fr);
+}
+/* the form off (PUBLIC_LEADS off, production): no heading, no grey lines, no form; the footer stays */
+.su-body.su-noform {
+  grid-template-areas: "." "top" "." "every" "." "row" "." "keep" ".";
+  grid-template-rows: minmax(0, 25fr) auto minmax(var(--g0), 92fr) auto minmax(var(--g0), 93fr) auto minmax(var(--g0), 160fr) auto minmax(0, 42fr);
+}
+
+/* the headline and the sub-line, left-aligned (the sub-line in from the headline's edge by the picture's 26 px, 0.0255 of its width, kept in proportion to the column on a phone and to the frame on a laptop: AC5) */
+.su-top { grid-area: top; display: grid; row-gap: var(--gA); justify-items: start; container-type: inline-size; font-size: var(--fs-sub); }
+.su-h { font: 300 calc(100cqw / 7.25) / 0.82 var(--su-inter); letter-spacing: -0.021em; color: var(--su-ink); }
+.su-h > span { display: block; white-space: nowrap; }
+.su-sub { padding-left: calc(0.0255 * var(--frame)); font: 400 var(--fs-sub) / 1.44 var(--su-inter); letter-spacing: -0.01em; color: var(--su-sub); text-wrap: pretty; }
+.su-sub strong { font-weight: 700; letter-spacing: 0.01em; color: var(--su-sub-b); }
+/* the picture's breaks (after "below", after "send") once both lines fit beside each other's width; else the line wraps */
+.su-br { display: none; }
+@container (min-width: 38em) { .su-sub .su-br { display: inline; } .su-sub { width: max-content; max-width: calc(100vw - 2 * var(--side)); } }
+
+/* the label over the jars */
+.su-every { grid-area: every; justify-self: center; text-align: center; font: 400 var(--fs-every) / 1 var(--su-jost); letter-spacing: -0.046em; color: var(--su-every); white-space: nowrap; }
+
+/* the jar row: four columns on the jars' axes, each the jar's box, its icon and its worth label; the frames are wider
+   than the jars and overlap their neighbours (transparent) */
+.su-row { grid-area: row; position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); justify-content: center; }
+/* the picture's photographic falloff behind the jars: from under the label (the gap's track) to just below the jars'
+   bases, edge to edge, darker to the right, soft at both ends, never behind a line of text (a grid item over the gap's
+   and the row's tracks, its foot lifted off the icons and the worth labels) */
+.su-body::before {
+  content: ""; grid-area: 5 / 1 / 7 / 2; justify-self: center; width: 100vw; pointer-events: none;
+  margin-bottom: calc(var(--gD) + var(--icon-h) + var(--gE) + 1.92 * var(--fs-worth) - 20 * var(--u));
+  background: linear-gradient(90deg, var(--su-fall-0), var(--su-fall-1) 30%, var(--su-fall-2) 55%, var(--su-fall-3) 75%, var(--su-fall-4));
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 40%, #000 72%, transparent);
+  mask-image: linear-gradient(180deg, transparent, #000 40%, #000 72%, transparent);
+}
+.su-col { position: relative; display: grid; justify-items: center; align-content: start; grid-template-rows: var(--jar-h) var(--gD) var(--icon-h) var(--gE) auto; color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+.su-jar { grid-row: 1; position: relative; display: block; width: var(--D); height: var(--jar-h); }
+.su-pic { position: absolute; display: block; width: var(--img-w); height: var(--img-h); left: calc(50% - var(--img-w) * var(--jc, 0.5)); top: calc(-1 * var(--img-h) * var(--jy0, 0.06)); pointer-events: none; }
+.su-pic[hidden] { display: none; }
+.su-pic img { display: block; width: 100%; height: 100%; }
+.su-pic[data-layer="next"] { z-index: 1; }
+.su-icon { grid-row: 3; display: block; height: var(--icon-h); transition: transform var(--dur-press) var(--ease-standard); }
+.su-icon svg { display: block; width: auto; height: 100%; }
+.su-worth { grid-row: 5; display: block; text-align: center; font: 300 var(--fs-worth) / 0.96 var(--su-inter); letter-spacing: 0.004em; color: var(--su-worth); white-space: nowrap; }
+.su-worth > span { display: block; }
+@media (hover: hover) { .su-follow:hover .su-icon { transform: scale(1.06); } }
+
+/* the form's heading between its two hairlines (dark at the heading's end, fading to the ground), and the grey lines */
+.su-got { grid-area: got; display: grid; row-gap: var(--gG); justify-items: center; container-type: inline-size; font-size: var(--fs-grey); }
+.su-got-h { display: grid; grid-template-columns: minmax(0, var(--rule-w)) auto minmax(0, var(--rule-w)); justify-content: center; align-items: center; column-gap: var(--rule-gap); width: 100%; }
+.su-got-h h3 { font: 300 var(--fs-got) / 1 var(--su-inter); letter-spacing: -0.003em; color: var(--su-ink); white-space: nowrap; }
+.su-rule { display: block; height: 1px; background: linear-gradient(270deg, var(--su-rule), transparent); }
+.su-rule:last-child { background: linear-gradient(90deg, var(--su-rule), transparent); }
+.su-grey { text-align: center; font: 400 var(--fs-grey) / 1.15 var(--su-inter); letter-spacing: -0.035em; color: var(--su-grey); text-wrap: balance; }
+@container (min-width: 25em) { .su-grey .su-br { display: inline; } }
+
+/* the form (PUBLIC_LEADS on): the field a full pill, the black pill button over its right end, flush top and bottom,
+   45.6% of the joined width; one line under it for the states, its height kept so nothing moves */
+.su-form { grid-area: form; display: grid; justify-items: center; row-gap: max(4px, calc(8 * var(--u))); }
+.su-slotf { display: grid; width: var(--pill-w); max-width: 100%; }
+.su-slotf > * { grid-area: 1 / 1; }
+.su-pill { display: grid; }
+.su-pill > :is(input, button) { grid-area: 1 / 1; }
+.su-input {
+  width: 100%; height: var(--pill-h); margin: 0; padding: 0 calc(45.6% + 12px) 0 calc(var(--pill-h) * 0.517);
+  border: 1.4px solid var(--su-field); border-radius: calc(var(--pill-h) / 2); background: transparent;
+  font: 400 var(--fs-input) / 1 var(--su-jost); letter-spacing: -0.019em; color: var(--su-typed); caret-color: var(--su-typed);
+  appearance: none; -webkit-appearance: none;
+}
+.su-input::placeholder { color: var(--su-ph); opacity: 1; }
+.su-input[aria-invalid="true"] { border-color: var(--su-rule); }
+.su-input:focus-visible { border-color: var(--urban-slate); }
+.su-input:-webkit-autofill { -webkit-text-fill-color: var(--su-typed); transition: background-color 0s 86400s, color 0s 86400s; }
+.su-input:autofill { -webkit-text-fill-color: var(--su-typed); transition: background-color 0s 86400s, color 0s 86400s; }
+.su-send {
+  position: relative; justify-self: end; width: 45.6%; height: var(--pill-h); margin: 0; padding: 0 12px;
+  border: 0; border-radius: calc(var(--pill-h) / 2); background: var(--su-ink); color: #FFFFFF;
+  font: 400 var(--fs-btn) / 1 var(--su-jost); letter-spacing: -0.011em; white-space: nowrap; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; appearance: none;
+  transition: background-color var(--dur-press) var(--ease-standard), transform var(--dur-press) var(--ease-standard);
+}
+@media (hover: hover) { .su-send:hover:not([aria-disabled="true"]) { background: var(--su-sub-b); } }
+.su-send:active:not([aria-disabled="true"]) { transform: scale(0.98); }
+.su-send[aria-disabled="true"] { cursor: default; }
+.su-done {
+  height: var(--pill-h); padding: 0 calc(var(--pill-h) * 0.517); border: 1.4px solid var(--su-field); border-radius: calc(var(--pill-h) / 2);
+  font: 400 var(--fs-grey) / calc(var(--pill-h) - 2.8px) var(--su-inter); letter-spacing: -0.01em; color: var(--su-sub);
+  text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.su-pill[hidden], .su-done[hidden], .su-notyou[hidden] { display: none; }
+.su-msgrow { display: grid; justify-items: center; min-height: calc(var(--fs-grey) * 1.3); }
+.su-msgrow > * { grid-area: 1 / 1; }
+.su-msg { font: 400 var(--fs-grey) / 1.3 var(--su-inter); letter-spacing: -0.01em; color: var(--su-sub); text-align: center; }
+.su-notyou { position: relative; margin: 0; padding: 0; border: 0; background: none; font: 400 var(--fs-grey) / 1.3 var(--su-inter); letter-spacing: -0.01em; color: var(--su-sub); text-decoration-line: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; cursor: pointer; -webkit-tap-highlight-color: transparent; appearance: none; }
+.su-notyou::after { content: ""; position: absolute; inset: -12px -8px; }   /* a 44 px tall hit box without moving a line */
+@media (hover: hover) { .su-notyou:hover { text-decoration-thickness: 2px; } }
+
+/* the footer */
+.su-keep { grid-area: keep; justify-self: center; text-align: center; font: 400 var(--fs-foot) / 1.2 var(--su-jost); letter-spacing: -0.006em; color: var(--su-foot); }
+
+/* ---- from 720 px: the picture's frame, 1019 --u wide and centred, --u the lesser of the width's and the height's (the
+   height's from the screen under the clearance, less what the floored text and the least gaps take) */
+@media (min-width: 720px) {
+  .su-body {
+    --side: var(--inset);
+    --g0: 6px;
+    --uw: calc((100vw - 2 * var(--inset) - 16px) / 1019);
+    --uh: calc((100svh - var(--top) - var(--bot) - 222px) / 830);
+    --u: max(0.3px, min(var(--uw), var(--uh), 1px));
+    --frame: calc(1019 * var(--u));
+    --pill-h: max(44px, calc(60.4 * var(--u)));
+    --pill-w: max(380px, calc(689.9 * var(--u)));
+    --rule-w: calc(175 * var(--u)); --rule-gap: calc(36 * var(--u));
+    --fs-sub: max(15px, calc(21.2 * var(--u)));
+    --fs-worth: max(13px, calc(26.9 * var(--u)));
+    --fs-got: max(22px, calc(48.3 * var(--u)));
+    --fs-grey: max(15px, calc(21.4 * var(--u)));
+    --fs-input: max(16px, calc(20.1 * var(--u)));
+    --fs-btn: max(15px, calc(19.3 * var(--u)));
+    --fs-foot: max(15px, calc(20.9 * var(--u)));
+  }
+  /* the form off (production): the heading, the grey lines, the pill and its line are not there to fit, so the rest is larger */
+  .su-body.su-noform { --uh: calc((100svh - var(--top) - var(--bot) - 167px) / 699); }
+  .su-top { padding-left: calc(57 * var(--u)); }
+  .su-sub { min-width: 30em; }   /* on a short laptop the frame is narrower than the floored text: three lines at most, not four */
+  .su-h { font-size: calc(107.9 * var(--u)); }
+  .su-row { grid-template-columns: repeat(4, calc(244.2 * var(--u))); }
+}
+
+/* ---- landscape screens from 900 px wide (Sam, 2026-11-02, of the laptop: "everything is compressed to the center.
+   Make sure it's relayouted to fit properly across the entire screen, not just in the center like a mobile screen.
+   There's a lot of free space."): two columns across the whole width between the insets. The headline and the sub-line
+   on the left, centred on the band beside them; the label and the jar row on the right (56 percent of the frame, the
+   axes 220 picture px apart, the picture's falloff behind that band alone); then the form's block and the footer centred
+   under both, in the picture's order. --u comes from the jar column's width and from the height, never over 1.15, so
+   the jars grow with the screen instead of shrinking to the height of one column. Phones and portrait tablets keep the
+   single column above. */
+@media (min-width: 900px) and (min-aspect-ratio: 1/1) {
+  .su-body {
+    --frame: calc(100vw - 2 * var(--inset));
+    --text-w: calc(0.4 * var(--frame));
+    --ujx: calc(0.55 * var(--frame) / 880);
+    --ujy: calc((100svh - var(--top) - var(--bot) - 24px) / 820);
+    /* under about 640 px of height the text's floors (15 px lines, the 44 px pill, 6 px gaps) stop shrinking with --u and
+       the body outgrew the screen (2026-11-03: 8 px over at 1366 x 600, 27 at 1100 x 520), so a second height bound
+       takes over there, from the measured slope (the body 629 px per unit of --u, plus 138 px of floors, and 14 px spare:
+       the slope steepens under 540 px, where 1280 x 500 still runs 9 px over) */
+    --ujy2: calc((100svh - var(--top) - var(--bot) - 152px) / 629);
+    --u: max(0.3px, min(var(--ujx), var(--ujy), var(--ujy2), 1.15px));
+    grid-template-columns: minmax(0, 40fr) minmax(0, 56fr);
+    column-gap: 4%;
+    justify-content: stretch;
+    grid-template-areas: ". ." "top every" "top row" ". ." "got got" ". ." "form form" ". ." "keep keep" ". .";
+    grid-template-rows: minmax(0, 25fr) auto auto minmax(var(--g0), 123fr) auto minmax(var(--g0), 69fr) auto minmax(var(--g0), 71fr) auto minmax(0, 42fr);
+  }
+  .su-body.su-noform {
+    --ujy: calc((100svh - var(--top) - var(--bot) - 12px) / 590);
+    --ujy2: var(--ujy);   /* no pill and no grey lines: the floors left (the footer, the labels) fit inside the 12 px */
+    grid-template-areas: ". ." "top every" "top row" ". ." "keep keep" ". .";
+    grid-template-rows: minmax(0, 25fr) auto auto minmax(var(--g0), 160fr) auto minmax(0, 42fr);
+  }
+  /* the falloff behind the jar band alone: the label's row and the jar row of the right column, from that column's left
+     edge, where it rises out of the ground with no edge to see, to the screen's right edge, as the picture's reaches its own */
+  .su-body::before {
+    grid-area: 2 / 2 / 4 / 3; justify-self: stretch; width: auto; margin-left: 0; margin-right: calc(-1 * var(--inset));
+    background: linear-gradient(90deg, var(--su-ground), var(--su-fall-0) 12%, var(--su-fall-1) 36%, var(--su-fall-2) 58%, var(--su-fall-3) 78%, var(--su-fall-4));
+  }
+  .su-top { grid-area: top; align-self: center; padding-left: 0; }
+  .su-h { font-size: min(calc(107.9 * var(--u)), calc(100cqw / 7.25)); }   /* the picture's size, or the text column's width for its first line (7.12 em in Inter 300, so the single column's divisor; 6.95 ran it 2.4 percent over, 2026-11-03) */
+  /* the sub-line wraps at its column: the 38em rule above would set it max-content from about 2400 px wide, 40.9 em of
+     text in a column that is not 41 em until about 2570 px, so the picture's breaks show only from 41 em here (2026-11-03) */
+  .su-sub { min-width: 0; width: auto; max-width: 100%; padding-left: calc(0.0255 * var(--text-w)); }
+  .su-sub .su-br { display: none; }
+  @container (min-width: 41em) { .su-sub .su-br { display: inline; } .su-sub { width: max-content; } }
+  .su-every { grid-area: every; align-self: end; margin-bottom: calc(40 * var(--u)); }
+  .su-row { grid-area: row; grid-template-columns: repeat(4, calc(220 * var(--u))); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .su-icon, .su-send { transition: none; }
+  .su-follow:hover .su-icon, .su-send:active { transform: none; }
+}
+
+/* nothing follows the body and nothing loops from it (2026-11-03): the page ends at the section's rest on every tier;
+   without JavaScript the text stands and the links work */
+
+/* the quiz gate (docs/specs/quiz-gate.md D1, D9): with JavaScript the section is rendered hidden and data-locked with
+   section 4 until the quiz's result or Skip quiz opens both (the inline step after the markup, gate.ts); without
+   JavaScript nothing is locked, as for the room */
+html:not(.js) .signup[data-locked] { display: block; }

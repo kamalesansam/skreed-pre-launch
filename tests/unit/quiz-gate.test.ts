@@ -113,7 +113,7 @@ test("(d) hero.ts: docTop NaN for an element with no box, canWrap carrying the l
   assert.match(hero, /\.filter\(\(x\) => Number\.isFinite\(x\.start\) && Number\.isFinite\(x\.end\)\)/, 'the span filter drops it');
   assert.match(hero, /const roomLocked = \(\) => !!roomEl\?\.hasAttribute\('data-locked'\);/);
   assert.match(hero, /canWrap: \(\) => loop\.state\.introDone && !ctx\.room\?\.lock\(\) && !roomLocked\(\),/, 'no wrap from the top while locked');
-  assert.match(hero, /const onUnlock = \(\) => \{ pageScroll\?\.notify\(\); void loadScenes\(\); \};\n\s*addEventListener\('skreed:quiz-unlock', onUnlock\);\n\s*life\.onKill\(\(\) => removeEventListener\('skreed:quiz-unlock', onUnlock\)\);/, "the unlock's listener");
+  assert.match(hero, /const onUnlock = \(\) => \{ signup\?\.invalidate\(\); pageScroll\?\.notify\(\); void loadScenes\(\); \};\n\s*addEventListener\('skreed:quiz-unlock', onUnlock\);\n\s*life\.onKill\(\(\) => removeEventListener\('skreed:quiz-unlock', onUnlock\)\);/, "the unlock's listener");
   assert.match(hero, /window\.__skreedScenes = \{ get ready\(\) \{ return !!ctx\.room\?\.settled\(\); \}, load: \(\) => loadScenes\(\)\.then\(untilScenes\) \};/, "the scenes' hook the ride waits on (__s4.ready's source), its load settling only once the scenes have");
   // the director's load() starts its phases and returns, so the hook's wait is its own: a frame at a time until scene 1 and
   // products.bin have settled, or the director is gone (the review of iteration 1, item 1); run here on fakes with a

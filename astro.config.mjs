@@ -1,4 +1,5 @@
 import { defineConfig } from 'astro/config';
+import { glslStrip, GLSL_MODULES } from './scripts/build/glsl-strip.mjs';
 
 // Section 4 ships one build: the five scene loops and their stills are in every mode (docs/specs/section-4-flux.md 5,
 // "Build modes"); the travel pick, its alias to a stub and its environment variable went with the lands (X-11).
@@ -8,6 +9,9 @@ export default defineConfig({
   build: { inlineStylesheets: 'always' },
   vite: {
     build: { assetsInlineLimit: 0 },
+    // the shader strip (scripts/build/glsl-strip.mjs): the comments and the indentation out of the site's own GLSL in
+    // every build and the dev server alike, about 4 KB gzip across the enforced total (section-5-sand.md 7, 2026-10-29)
+    plugins: [glslStrip({ files: GLSL_MODULES })],
     // every three.js entry the islands import, pre-bundled up front: Vite otherwise discovers them one lazy chunk at a
     // time, re-optimises, and answers open tabs with "504 Outdated Optimize Dep" until a reload (seen 2026-10-16).
     // RoomEnvironment is here for section 4's carousel.ts, which lights its products under a PMREM of it;

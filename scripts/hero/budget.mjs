@@ -15,7 +15,10 @@
 // line Sam has still to rule on prints "over, pending Sam" past his figure and stops the build only past the spec's hard
 // figure. What it cannot read from a dist (pixel sizes, the loops' tracks, GPU memory) is printed as such. The mode
 // (build, test, staging: which npm script made the dist) comes from --mode, else from the environment
-// (scripts/room/guards.mjs); npm run build and build:staging pass it.
+// (scripts/room/guards.mjs); npm run build and build:staging pass it. Section 5 (rebuilt to Sam's picture on 2026-11-02)
+// has its page script (by the event it alone dispatches, skreed:signup-filled), its two type faces (Inter and Jost in
+// dist/fonts) and its jar pictures (the sixty-four names of C2: sixteen states at 1x and 2x, AVIF and WebP); the island
+// holds a flat ground under it and ships nothing of its own for the section.
 //   node scripts/hero/budget.mjs [dist] [--mode build|test|staging]
 import { readFileSync, statSync, existsSync, readdirSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
@@ -49,7 +52,9 @@ for (const r of jsRefs(html).stat) walk(r, 'critical js');
 const heroChunk = [...new Set(rows.filter((r) => r.group === 'critical js').flatMap((r) => { const { stat, dyn } = jsRefs(readFileSync(join(dist, r.name), 'utf8')); return [...stat, ...dyn]; }).filter(isHero))];
 // the island chunk and its own static imports (the bundler may split what the island shares with the section chunks it
 // loads, three among it, into a chunk of its own that the island imports: it loads with the island, so it is the island's)
-const walkIsland = (p) => { if (seen.has(p)) return; seen.add(p); const f = join(dist, p); if (!existsSync(f)) return; add('island js', p, f); for (const r of jsRefs(readFileSync(f, 'utf8')).stat) walkIsland(r); };
+// (the island's static graph may carry a component's hoisted script with it, as config/room.ts carries Room.astro's and
+// Signup.astro's since 2026-10-26: their import()s of the walk and the sign-up scripts are the page's, so they are noted too)
+const walkIsland = (p) => { if (seen.has(p)) return; seen.add(p); const f = join(dist, p); if (!existsSync(f)) return; add('island js', p, f); const refs = jsRefs(readFileSync(f, 'utf8')); for (const r of refs.dyn) dynamic.add(r); for (const r of refs.stat) walkIsland(r); };
 for (const h of heroChunk) walkIsland(h);
 // the lazy quiz chunk (quiz.md 6): reached only through an import() from the page's module scripts, never statically and never
 // the island; the deck chunk by name, or any such chunk that imports config/quiz. Its own static imports not already counted follow it.
@@ -65,15 +70,28 @@ const isScroll = (p) => /skreed:scroll/.test(readFileSync(join(dist, p), 'utf8')
 const usable = (p) => !seen.has(p) && !isHero(p) && existsSync(join(dist, p));
 const islandDyn = new Set(heroChunk.flatMap((h) => jsRefs(readFileSync(join(dist, h), 'utf8')).dyn));
 const scrollRoots = [...islandDyn].filter((p) => usable(p) && isScroll(p) && !isRoom(p));
-const roomRoots = [...new Set([...islandDyn, ...dynamic])].filter((p) => usable(p) && isRoom(p));
+// (section 5's page script listens for 'skreed:room-state', so its chunk matches isRoom by that string alone; it is section
+// 5's, by the event it alone dispatches, 'skreed:signup-filled', C4)
+const SIGNUP_DOM_MARK = /skreed:signup-filled/;
+const isSignupDom = (p) => SIGNUP_DOM_MARK.test(readFileSync(join(dist, p), 'utf8'));
+const roomRoots = [...new Set([...islandDyn, ...dynamic])].filter((p) => usable(p) && isRoom(p) && !isSignupDom(p));
 const pageRoots = roomRoots.filter((p) => dynamic.has(p) && !islandDyn.has(p));
 const astroFiles = existsSync(join(dist, '_astro')) ? readdirSync(join(dist, '_astro')) : [];
 const graph = new Map(), scrollGraph = new Map();
 const grow = (roots, into, skip = new Set()) => { for (const q = [...roots]; q.length;) { const p = q.shift(); if (into.has(p) || skip.has(p) || !usable(p)) continue; const refs = jsRefs(readFileSync(join(dist, p), 'utf8')); into.set(p, refs); q.push(...refs.stat, ...refs.dyn); } };
 grow(scrollRoots, scrollGraph);
 grow(roomRoots, graph, new Set(scrollGraph.keys()));
+// section 5's page script (section-5.md 5 and 6, as rebuilt on 2026-11-02): the page's import() of
+// scripts/signup/signup.ts, named by its event (skreed:signup-filled), with what it alone imports; counted on its own line
+// and in the total, never in section 4's script. The island has no section 5 chunk since that day: its jar went, and the
+// flat ground it holds under the section (section5/ground.ts) is part of the island chunk
+const signupDomGraph = new Map();
+grow([...dynamic].filter((p) => usable(p) && isSignupDom(p)), signupDomGraph, new Set([...scrollGraph.keys(), ...graph.keys()]));
 for (const p of scrollGraph.keys()) add('scroll js (lazy)', p, join(dist, p));
 for (const p of graph.keys()) add('room js (lazy)', p, join(dist, p));
+for (const p of signupDomGraph.keys()) add('signup dom js (lazy)', p, join(dist, p));
+// the page script bundled into another chunk instead (no lazy chunk of its own): named on its line, counted where it is
+const signupDomElsewhere = signupDomGraph.size ? [] : astroFiles.filter((n) => n.endsWith('.js') && SIGNUP_DOM_MARK.test(readFileSync(join(dist, '_astro', n), 'utf8'))).map((n) => '/_astro/' + n);
 
 // section 4's files. By name in dist/_astro: the scene loops and stills (the ten stems of section 3) and products.bin;
 // an asset of the lands or of the hall is a stray. A picture is found by its name in any image format (IMG), so one in a
@@ -82,6 +100,10 @@ for (const p of graph.keys()) add('room js (lazy)', p, join(dist, p));
 const H = '[A-Za-z0-9_-]+', IMG = 'avif|webp|jpe?g|png|gif';
 const SCENE = new RegExp(`^(${SCENE_IDS.join('|')})-(${CLASSES.join('|')})\\.${H}\\.(${IMG})$`);
 const PRODUCTS = new RegExp(`^products\\.${H}\\.bin$`);
+// section 5's jar pictures (C2: src/assets/signup/jars/, rendered by scripts/signup/jars/): sixteen states by the
+// follows' order (0, or the platforms' letters f, y, i in press order, bottom layer first) at 1x and 2x, AVIF and WebP
+const JAR_IMG = new RegExp(`^jar-(0|[fyi]{1,3})-(1x|2x)\\.${H}\\.(${IMG})$`);
+const JAR_STATES = ['0', 'f', 'y', 'i', 'fy', 'fi', 'yf', 'yi', 'if', 'iy', 'fyi', 'fiy', 'yfi', 'yif', 'ify', 'iyf'];
 /** the formats a picture may ship in (AC8), and a name's extension as the format key (jpg and jpeg alike) */
 const SHIPS = new Set(['avif', 'webp']);
 const fmtOf = (ext) => ext.toLowerCase().replace(/^jpg$/, 'jpeg');
@@ -94,6 +116,7 @@ for (const n of astroFiles) {
   if ((m = LOOP_NAME.exec(n))) addFile('room loop', p, { id: m[1], cls: m[2] });
   else if ((m = SCENE.exec(n))) addFile('room scene', p, { id: m[1], cls: m[2], fmt: fmtOf(m[3]) });
   else if (PRODUCTS.test(n)) addFile('room data', p, { products: true });
+  else if ((m = JAR_IMG.exec(n))) addFile('signup jar', p, { id: m[1], size: m[2], fmt: fmtOf(m[3]) });
   else if (isLandAsset(n) || isHallAsset(n)) addFile('room stray', p, { stray: true });
 }
 // a video anywhere else in dist, or a stray asset: counted so the guard's hit shows here too
@@ -155,7 +178,35 @@ const lines = [], faults = [];
 const line = (name, bytes, limitKB, { enforced = true, note = '', pendingKB = 0 } = {}) => lines.push({ name, bytes, limit: limitKB * KB, pending: pendingKB * KB, enforced, note });
 line("section 4's script (director, carousel, video, walk, lazy; gzip)", roomScript, 38, { pendingKB: 30, note: "Sam's 30 KB line, pending him (spec 11, item 1); the build stops above the spec's 38 KB" });
 line('scroll.ts (its own chunk, marker skreed:scroll; gzip)', scrollScript, 4, { note: 'counted in total JS, not critical JS' });
-line('total JS with section 4 and scroll.ts (gzip)', totalJs + roomScript + scrollScript, 250, { enforced: !tune, note: tune ? "production's line; this staging build carries Tune" : 'production' });
+// section 5's lines (section-5.md 6, as rebuilt to Sam's picture on 2026-11-02)
+const signupDomScript = gzOf(signupDomGraph);
+// 7 KB since 2026-11-03 (section-5-picture.md 9, 16.6 and 18): the sixteen states' picture URLs and tops ride this chunk
+// (scripts/signup/jar-srcs.ts), not the first view's markup, and the loop's trigger at the page's end came on 2026-11-03;
+// 6.4 KB measured on 2026-11-03 against the 6.5 KB line set from the measure of 2026-11-02 (6 KB was the old page's)
+line("section 5's page script (scripts/signup/signup.ts, marker skreed:signup-filled; gzip)", signupDomScript, 7, { note: signupDomScript ? 'lazy, within a screen; the states\' URLs ride it' : signupDomElsewhere.length ? `bundled into ${signupDomElsewhere.join(', ')}, counted there` : 'not in this build' });
+line('total JS with sections 4 and 5 and scroll.ts (gzip)', totalJs + roomScript + scrollScript + signupDomScript, 250, { enforced: !tune, note: tune ? "production's line; this staging build carries Tune" : 'production' });
+// the section's two type faces (D3: Inter and Jost, variable, latin, the Google Fonts files shipped unchanged), as stored
+// (woff2 is compressed already); fetched only once the section's lines render, so never in the first view
+const S5_FONTS = ['inter-opsz-wght-latin.woff2', 'jost-wght-latin.woff2'];
+const s5Fonts = S5_FONTS.filter((n) => existsSync(join(dist, 'fonts', n)));
+for (const n of s5Fonts) add('signup font', `/fonts/${n}`, join(dist, 'fonts', n));
+line("section 5's fonts, Inter and Jost together (woff2, stored)", s5Fonts.reduce((a, n) => a + raw(join(dist, 'fonts', n)), 0), 100, { note: s5Fonts.length === S5_FONTS.length ? S5_FONTS.join(' + ') : `${s5Fonts.length} of ${S5_FONTS.length} in this build${s5Fonts.length ? `: ${s5Fonts.join(', ')}` : ''}` });
+// the jar pictures (C2): each at 2x under its line (AVIF 45 KB, WebP 60 KB), the 1x printed beside them, and every one
+// of the sixty-four names in the build
+const JAR_PIC = { avif: 45, webp: 60 };
+const jarPics = room.filter((x) => x.group === 'signup jar' && SHIPS.has(x.fmt));
+for (const f of jarPics.filter((x) => x.size === '2x')) line(`jar ${f.id} at 2x, ${FMT[f.fmt]}`, f.stored, JAR_PIC[f.fmt], { note: f.name });
+for (const fmt of ['avif', 'webp']) { const one = jarPics.filter((x) => x.size === '1x' && x.fmt === fmt); if (one.length) line(`the jar pictures at 1x, ${FMT[fmt]} (the largest of ${one.length})`, Math.max(...one.map((x) => x.stored)), JAR_PIC[fmt], { enforced: false, note: 'no line of their own: read against the 2x line' }); }
+// the names are read in the source folder: the build emits byte-identical files once (Rollup's asset dedupe), and the
+// page's URLs for such states then share the one file, so dist may carry fewer than sixty-four. A page with no
+// section#signup (the unit tests' small dists) needs none
+const JAR_SRC = join(ROOT, 'src/assets/signup/jars'), jarSrc = new Set(existsSync(JAR_SRC) ? readdirSync(JAR_SRC) : []);
+const jarNames = JAR_STATES.flatMap((id) => ['1x', '2x'].flatMap((size) => ['avif', 'webp'].map((fmt) => `jar-${id}-${size}.${fmt}`)));
+const jarMissing = jarNames.filter((n) => !jarSrc.has(n));
+const hasSignup = /<section\b[^>]*\bid="signup"/.test(html);
+if (hasSignup && jarMissing.length) faults.push(`section 5's jar pictures: ${jarMissing.length} of ${jarNames.length} C2 names missing from src/assets/signup/jars (${jarMissing.slice(0, 8).join(', ')}${jarMissing.length > 8 ? ', ...' : ''})`);
+if (hasSignup && !jarMissing.length && !jarPics.length) faults.push("section 5's jar pictures: none in the build (the page imports src/assets/signup/jars)");
+if (jarPics.length) line("section 5's jar pictures in dist, every size and format (stored)", jarPics.reduce((a, x) => a + x.stored, 0), jarNames.length * JAR_PIC.webp, { enforced: false, note: `${jarPics.length} file(s) for the ${jarNames.length} names, all ${jarNames.length - jarMissing.length} in the source folder; byte-identical renders are emitted once` });
 line('section 4 on the poster tier: its script (gzip)', posterScript, 8.5);
 // each loop, each still, products.bin
 const PIC = { wide: { avif: 110, webp: 176 }, portrait: { avif: 80, webp: 128 } };
@@ -180,7 +231,7 @@ for (const fmt of ['avif', 'webp']) for (const cls of CLASSES) line(`the poster 
 // hash. Each <img> in the page that names a scene still (its own src or srcset, or a <source> of its <picture>) carries
 // width and height.
 const stemOf = (name) => basename(name).replace(new RegExp(`\\.${H}\\.(?:${IMG})$`, 'i'), '');
-const pics = room.filter((f) => f.group === 'room scene');
+const pics = room.filter((f) => ['room scene', 'signup jar'].includes(f.group));
 const byStem = new Map();
 for (const f of pics) {
   // a picture in any other format is refused, and kept out of the lines and the twin check (AC8: AVIF with WebP only)
@@ -211,8 +262,18 @@ if (at >= 0) { const re = /<\/?section\b[^>]*>/g; re.lastIndex = at; let d = 0; 
 const cssPath = join(ROOT, 'src/styles/room.css');
 const css = existsSync(cssPath) ? readFileSync(cssPath, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').replace(/\s*([{};,>])\s*/g, '$1').replace(/;}/g, '}') : '';
 line("the first view: section 4's markup and room.css (gzip)", gzipSync(markup + css, { level: 9 }).length, 4, { note: `markup ${markup.length} B, room.css about ${css.length} B` });
+// section 5's first view: its markup and signup.css, the same way
+const at5 = html.search(/<section\b[^>]*\bid="signup"/);
+let markup5 = '';
+if (at5 >= 0) { const re = /<\/?section\b[^>]*>/g; re.lastIndex = at5; let d = 0; for (let m; (m = re.exec(html));) { d += m[0][1] === '/' ? -1 : 1; if (!d) { markup5 = html.slice(at5, re.lastIndex); break; } } }
+const css5Path = join(ROOT, 'src/styles/signup.css');
+const css5 = existsSync(css5Path) ? readFileSync(css5Path, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').replace(/\s*([{};,>])\s*/g, '$1').replace(/;}/g, '}') : '';
+// 5.5 KB since 2026-11-03 (section-5-picture.md 9, 16.6 and 18): the picture's page carries the four inline marks, the joined
+// field and button, the pictures' sources and jar 4's two layers; 5.0 KB measured on 2026-11-03 (45 B under the 5 KB line set
+// from the measure of 2026-11-02; 4 KB was the old page's)
+line("the first view: section 5's markup and signup.css (gzip)", gzipSync(markup5 + css5, { level: 9 }).length, 5.5, { note: `markup ${markup5.length} B, signup.css about ${css5.length} B` });
 
-console.log(`\nsection 4 (section-4-flux.md 6; the ${BUILD}; scripts at gzip, everything else as stored; KB = 1024 B)`);
+console.log(`\nsections 4 and 5 (section-4-flux.md 6, section-5.md 6; the ${BUILD}; scripts at gzip, everything else as stored; KB = 1024 B)`);
 const PENDING = 'over, pending Sam';
 for (const l of lines) {
   const over = l.bytes > l.limit, waits = !over && l.pending > 0 && l.bytes > l.pending;

@@ -1797,7 +1797,7 @@ test('AC8 the gift form: blur with a value validates and an empty submit shows b
   const email = page.locator('#qzEmail'), consent = page.locator('#qzConsent'), send = page.locator('#qzSend'), done = page.locator('.qz-done-text'), errEmail = page.locator('#qzErrEmail');
   await expect(page.locator('#qzGift')).toBeVisible();
   await settled(page);
-  await expect(page.getByRole('textbox', { name: Q.email, exact: true })).toHaveId('qzEmail');
+  await expect(page.locator('#find').getByRole('textbox', { name: Q.email, exact: true })).toHaveId('qzEmail');
   await expect(send).toHaveAccessibleName(Q.send);
   // a value is validated on blur, never per keystroke, and a valid one clears the line again
   await email.fill('nope'); await expect(errEmail).toHaveText(''); await email.blur();

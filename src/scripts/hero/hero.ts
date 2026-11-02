@@ -40,6 +40,8 @@ import { createIglooIntro } from './intro/igloo.ts';
 import type { RideEls } from './scroll/ride.ts';
 import type { RoomDirector } from './section4/director.ts';
 import type { PageScroll } from './section4/scroll.ts';
+import { createSignupGround } from './section5/ground.ts';
+import { ROOM_SCREENS, WIPE4_START } from '../../config/room-map.ts';
 import type { HeroContext, HeroUniforms, SkyState } from './types.ts';
 
 export interface StartOptions {
@@ -169,12 +171,20 @@ export async function startHero(o: StartOptions): Promise<void> {
   const mask = createLogoMask();
   life.onKill(() => mask.dispose());
 
+  // section 5's ground (section5/ground.ts; Sam's picture of 2026-11-02): the flat SIGNUP_GROUND the fourth wipe cuts onto
+  // and the island holds under section#signup, and the section's layout read from the DOM for the exit seam and the wrap
+  const signupEl = document.getElementById('signup');
+  const signup = signupEl ? createSignupGround(signupEl) : null;
+  // the mark goes with the island (the poster path, a teardown), and the page is told the island is gone, so a cut's mask
+  // or a seam's cover never outlives the frames that set them
+  if (signup) life.onKill(() => { signup.dispose(); window.__skreedSignupFrame?.({ on: false, cover: 0, wipe: 0, pour: null }); });
+
   const skyState: SkyState = { dome, cls: data.cls, onAspect() {}, onFrame2() {} };   // stage 2: world/skyClass.ts
   const ctx: HeroContext = {
     renderer, dpr, life, bridge, sceneA, camA, U, FOG, blocks, frame, pieces, logo, moon, rig,
     groundAt: ground.groundAt, stoneTopAt: stones.stoneTopAt, groundMesh: ground.mesh, stonesMesh: stones.mesh, sky: skyState,
     composerA, fogGround, section2, composite, mask, scrollTex: scrollTex.tex, intro, params: P, reduced, touch, ghost: touch && !reduced, els,
-    room: null,
+    room: null, signup,
   };
   // the intro's geometry, textures and wire layers (cage, outline, numbers: warm-up groups c5 to c7, before the labels' links)
   await intro.install(ctx); life.check();
@@ -253,6 +263,11 @@ export async function startHero(o: StartOptions): Promise<void> {
       onState: () => pageScroll?.notify(),
       // the section's layout read again (the intro ending, the document growing, a resize): its range moved, so the capture set is re-evaluated too; the glue spans below are measured fresh at every decision
       onLayout: () => pageScroll?.notify(),
+      // section 5 (section-5.md 5; C6): the exit seam's trigger and the wrap's landing from the section's layout in the DOM
+      // (.su-body's end and the section's top), and its readiness for the wrap's cover-out (the page's data-ready, C3)
+      exitY: () => signup ? signup.exitY() : NaN,
+      restY: () => signup ? signup.restY() : NaN,
+      signupReady: () => !signup || signup.ready(),
     });
     ctx.room = room; life.onKill(() => room.dispose());
     room.resize(renderer.domElement.width, renderer.domElement.height);
@@ -268,7 +283,8 @@ export async function startHero(o: StartOptions): Promise<void> {
   // and lets it wait for them (at most 1.5 s).
   const roomEl = document.getElementById('room');
   const roomLocked = () => !!roomEl?.hasAttribute('data-locked');
-  const onUnlock = () => { pageScroll?.notify(); void loadScenes(); };
+  // (section 5 opens with section 4: its layout is read afresh)
+  const onUnlock = () => { signup?.invalidate(); pageScroll?.notify(); void loadScenes(); };
   addEventListener('skreed:quiz-unlock', onUnlock);
   life.onKill(() => removeEventListener('skreed:quiz-unlock', onUnlock));
   // the director's load() starts its phases and returns, and it always has by the time the quiz's ride asks (the stage
@@ -293,9 +309,11 @@ export async function startHero(o: StartOptions): Promise<void> {
     if (life.dead) return;
     pageScroll = m.createPageScroll({
       reduced, hooks: HOOKS, svh, settleMs: () => tune?.room?.params.snapMs,
+      // the four spans (section-4-flux.md 5 "Glue spans"; section-5.md 2 "The elastic glue"): the first wipe, the quiz seam,
+      // section 4's seam, and the fourth wipe (the room's top plus 12.8 and 13.8 of its screens, which are the probe's 100svh)
       spans: () => {
         const vh = innerHeight, one = svh(), quiz = docTop('find'), top = docTop('room');
-        return [{ start: S2T.PULL * vh, end: S2T.W1END * vh }, { start: Math.min(S2T.W2 * vh, quiz - vh), end: quiz }, { start: top - one, end: top + one }].filter((x) => Number.isFinite(x.start) && Number.isFinite(x.end));
+        return [{ start: S2T.PULL * vh, end: S2T.W1END * vh }, { start: Math.min(S2T.W2 * vh, quiz - vh), end: quiz }, { start: top - one, end: top + one }, { start: top + WIPE4_START * one, end: top + (WIPE4_START + ROOM_SCREENS.out) * one }].filter((x) => Number.isFinite(x.start) && Number.isFinite(x.end));
       },
       room: {
         inRange: () => !!ctx.room?.inRange(), edge: (d) => !!ctx.room?.edge(d), step: (d) => !!ctx.room?.stepScene(d),
@@ -321,6 +339,16 @@ export async function startHero(o: StartOptions): Promise<void> {
       shade: (dark, height, solid) => extra()?.shade(dark, height, solid),
       get ready() { return !!ctx.room?.settled(); },
     };
+    // section 5's ground (section5/ground.ts): this frame's mode, the mark, the section's layout, the exit's trigger and
+    // the rest, the page's readiness, the composite's draws and holds; and the bytes it writes at canvas points (device
+    // px from the bottom left) on its next draw, read back before the frame is shown
+    if (signup && signupEl) {
+      window.__skreedGround = {
+        state: () => ({ mode: signup.stats.mode, draws: signup.stats.draws, held: signup.stats.held, mark: signupEl.dataset.ground ?? null, ready: signup.ready(), inView: signup.inView(), layout: signup.layout(), exitY: signup.exitY(), restY: signup.restY() }),
+        sample: (pts) => new Promise<number[][]>((res) => { signup.probe = { pts, done: res }; }),
+      };
+      life.onKill(() => { window.__skreedGround = undefined; });
+    }
   }
   bridge.onIntroDone(() => { loop.introDone(); afterIntro(); });
   if (initiallyIntroDone) afterIntro();
@@ -339,12 +367,12 @@ export async function startHero(o: StartOptions): Promise<void> {
     addEventListener('skreed:tune-ghost', onGhost);
     life.onKill(() => removeEventListener('skreed:tune-ghost', onGhost));
   }
-  // The loop runs while the track or section 3 (section#find, the quiz over the fog ground, quiz.md 5) is in view; once
-  // both have left the viewport it stops and the canvas hides (architecture 7.5, amended for section 3). It restarts
-  // when either returns.
+  // The loop runs while the track, section 3 (section#find, the quiz over the fog ground, quiz.md 5), section 4 or section 5
+  // (section#signup over its flat ground, held: section5/ground.ts) is in view; once all have left the viewport it stops and
+  // the canvas hides (architecture 7.5, amended for sections 3 to 5). It restarts when any returns.
   let compiled = false, inView = true;
   const trackEl = document.getElementById('track');
-  const watched = [trackEl, document.getElementById('find'), document.getElementById('room')].filter((el): el is HTMLElement => !!el);
+  const watched = [trackEl, document.getElementById('find'), document.getElementById('room'), signupEl].filter((el): el is HTMLElement => !!el);
   if (watched.length && 'IntersectionObserver' in window) {
     const seen = new Map<Element, boolean>();
     const io = new IntersectionObserver((entries) => {

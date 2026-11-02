@@ -24,8 +24,8 @@ if (!framesDir) { console.error('render-stills: --frames <dir> is required (the 
 const GPU = process.platform === 'darwin' ? ['--use-angle=metal', '--ignore-gpu-blocklist', '--enable-gpu'] : ['--ignore-gpu-blocklist', '--enable-gpu'];
 const GL = process.env.SKREED_GL === 'swiftshader' ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] : GPU;
 const SETUPS = { phone: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }, laptop: { viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1.5 } };
-// the beats at the defaults (config/room.ts ROOM_PARAMS): the step 770 ms; the scenes at q 1 to 3 at a step of 0.5, the hold to 3.8
-const STEP_MS = 770, SCENES = 5, LOOP_START = 3.8;
+// the beats at the defaults (config/room.ts ROOM_PARAMS): the step 770 ms; the scenes at q 1 to 3 at a step of 0.5, the hold to 3.8, the fourth wipe to 4.8 (no exit seam since 2026-11-03)
+const STEP_MS = 770, SCENES = 5, WIPE4_START = 3.8;
 
 /** the installed Chrome when Playwright finds it, else its own Chromium */
 async function launch(args) {
@@ -94,15 +94,10 @@ for (const setup of Object.keys(SETUPS)) {
   await scene(page, 1);
   await page.evaluate(() => window.__s4.step(1)); await page.waitForTimeout(STEP_MS / 3); await shot(page, f('step-2-3-mid'));
   await page.waitForTimeout(STEP_MS);
-  // the hold past scene 5, then the exit seam: the cover a tenth of a second in, and the first frame after the jump
+  // the hold past scene 5, then the fourth wipe onto section 5 at its half (no exit seam since 2026-11-03)
   await scene(page, SCENES - 1);
   await go(page, 3.5, 1200); await shot(page, f('hold'));
-  await page.evaluate((q) => { const room = document.getElementById('room'), top = room.getBoundingClientRect().top + scrollY; scrollTo({ top: top + q * innerHeight, behavior: 'instant' }); window.__skreedSnap?.((top + q * innerHeight) / innerHeight); }, LOOP_START + 0.05);
-  await page.waitForTimeout(100); await shot(page, f('exit-cover-in'));
-  await page.waitForFunction(() => scrollY < 2, null, { timeout: 20_000, polling: 50 }).catch(() => console.warn('  no jump within 20 s'));
-  await page.waitForTimeout(120); await shot(page, f('exit-after-jump'));
-  await page.waitForTimeout(1200);
-  console.log(`[${setup}] after the exit: ${JSON.stringify(await page.evaluate(() => ({ scrollY, sb: window.__skreedState?.().sb, s4: window.__s4?.state()?.state, scene: window.__s4?.state()?.scene })))}`);
+  await go(page, WIPE4_START + 0.5, 600); await shot(page, f('wipe4-half'));
   // the wrap from the top: full cover over the hero, then scene 5 at rest with the wrap's line
   await page.evaluate(() => window.__s4.wrap());
   await page.waitForFunction(() => { const s = window.__s4.state(); return s.seam && (s.seam.phase === 'hold' || s.seam.phase === 'out'); }, null, { timeout: 10_000 }).catch(() => console.warn('  the wrap did not reach full cover'));

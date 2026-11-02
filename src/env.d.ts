@@ -55,6 +55,9 @@ interface Window {
   __skreedRoom?: import('./config/room.ts').RoomIsland;
   /** the quiz gate (quiz-gate.md D4, amended; section-4-no-hall.md 5): whether the scenes are in (scene 1 drawable or failed, products.bin settled), and their load, installed by the island; the quiz's ride waits on it, at most 1.5 s */
   __skreedScenes?: { readonly ready: boolean; load(): Promise<unknown> };
+  /** section 5 (section-5.md 5): the island's side of the bridge, installed with its jar chunk, and the frame it hands the DOM script each step */
+  __skreedSignup?: import('./config/signup.ts').SignupIsland;
+  __skreedSignupFrame?: (f: import('./config/signup.ts').SignupFrame) => void;
   /** hooks builds: section 4's state, a scene at rest, one step, the wrap, the glue on or off, the lights and the shade (section-4-flux.md 5, "Build modes") */
   __s4?: { state(): unknown; scene(i: number): boolean; step(dir: 1 | -1): boolean; wrap(): void; glue(on: boolean): void; lights(o: Partial<import('./scripts/hero/section4/carousel.ts').LightSetting>): import('./scripts/hero/section4/carousel.ts').LightSetting | null; shade(dark: number, height?: number, solid?: number): void; readonly ready: boolean };
   // test hooks (test and staging builds only; hero-architecture.md 10)

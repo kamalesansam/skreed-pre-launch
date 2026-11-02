@@ -1,0 +1,84 @@
+{
+  "frame": {
+    "w": 400,
+    "h": 480
+  },
+  "jar": {
+    "x0": 0.25,
+    "x1": 0.75,
+    "y0": 0.0437,
+    "y1": 0.9125
+  },
+  "states": {
+    "0": {
+      "top": 1,
+      "seam": 1
+    },
+    "f": {
+      "top": 0.5729,
+      "seam": 0.7063
+    },
+    "y": {
+      "top": 0.5958,
+      "seam": 0.7063
+    },
+    "i": {
+      "top": 0.4167,
+      "seam": 0.5208
+    },
+    "fy": {
+      "top": 0.4229,
+      "seam": 0.5208
+    },
+    "yf": {
+      "top": 0.4229,
+      "seam": 0.5208
+    },
+    "fi": {
+      "top": 0.1938,
+      "seam": 0.3333
+    },
+    "yi": {
+      "top": 0.2458,
+      "seam": 0.3333
+    },
+    "if": {
+      "top": 0.2437,
+      "seam": 0.3333
+    },
+    "iy": {
+      "top": 0.2479,
+      "seam": 0.3333
+    },
+    "fyi": {
+      "top": 0.0396,
+      "seam": 0.0396
+    },
+    "yfi": {
+      "top": 0.0396,
+      "seam": 0.0396
+    },
+    "fiy": {
+      "top": 0.0396,
+      "seam": 0.0396
+    },
+    "yif": {
+      "top": 0.0396,
+      "seam": 0.0396
+    },
+    "ify": {
+      "top": 0.0396,
+      "seam": 0.0396
+    },
+    "iyf": {
+      "top": 0.0396,
+      "seam": 0.0396
+    }
+  },
+  "notes": {
+    "top": "the first row (from the top) where the state differs from the empty jar: its fill's topmost grain, or for 0 the lowest row the first press changes (the foot's tint and its reflection)",
+    "seam": "below this row every state built on this one is pixel-identical to it in the PNG masters; a reveal of the next state that starts here never jumps (the next state's band between seam and top covers this state's top surface, as grains landing on it would)",
+    "axisFloor": 0.87,
+    "order": "f Facebook (a quarter of blue), y YouTube (a quarter of red), i Instagram (a half of one mixed lot of pink and purple), bottom layer first"
+  }
+}

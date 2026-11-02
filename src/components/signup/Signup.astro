@@ -1,0 +1,142 @@
+---
+// Section 5, the sign-up, as Sam's picture of 2026-11-02, fitted to one screen (his choice: "Fit one screen", the
+// picture's placement, fonts, background, jars, icons and copy with tighter spacing and a smaller headline and jars). In
+// the hero's after-track slot after section 4, on a flat ground (SIGNUP_GROUND; the island draws the same ground under it
+// on the 3D path and says so with data-ground="island"): the headline and the sub-line left-aligned, then centred the
+// label, the four jars (three showcase jars that are links to the platforms, and the visitor's, which fills a layer per
+// follow), the icons and the worth labels, the form's heading between two hairlines, its grey lines, the joined field and
+// button (rendered only with PUBLIC_LEADS on) and the footer; then one empty screen for the exit seam's trigger. The jars
+// are builder C's renders (src/assets/signup/jars/), the icons our own inline drawings. The markup is complete without
+// JavaScript (the links work); scripts/signup/signup.ts, loaded once the section is within a screen, counts the follows,
+// fills the visitor's jar, drives the form. No style attributes (the CSP has no
+// style-src-attr): the jars' frame numbers ride an inline style block, which scripts/csp.mjs hashes.
+import { SIGNUP_COPY as C, SIGNUP_FOLLOWS, followAria } from '../../config/signup.ts';
+import { JARS, SIZES, STATE_SRCS } from '../../scripts/signup/jar-srcs.ts';
+import { QUIZ_GATE } from '../../config/quiz.ts';
+import gate from '../../inline/signup-gate.inline.js?raw';
+import { inlineScript } from '../shell/inlineScript.ts';
+import '../../styles/signup.css';
+// The quiz gate (docs/specs/quiz-gate.md D1, D2; section-5.md 12): the section is rendered hidden and data-locked with
+// section 4, which it follows in the page, so a locked page still ends at the quiz; its inline step right after the markup
+// opens it for a visit that has opened the room (the flag in sessionStorage, or the ?room=open override of hooks builds,
+// which the room's step has already written), and gate.ts's unlock opens it with the room. Without JavaScript nothing is
+// locked (signup.css). scripts/csp.mjs hashes the emitted step after the build.
+const gateCode = inlineScript('signup-gate.js', { KEY: QUIZ_GATE.key }, gate);
+
+// the form needs its Worker (quiz.md D7, the gift's rule): on in dev, test and staging builds, off in production until
+// PUBLIC_LEADS is set to on (folded at build time)
+const LEADS = import.meta.env.PUBLIC_LEADS === 'on' || (import.meta.env.PUBLIC_LEADS !== 'off'
+  && (import.meta.env.DEV || import.meta.env.PUBLIC_STAGING === '1' || import.meta.env.PUBLIC_HERO_HOOKS === '1'));
+
+// the jars (C2): sixteen states at 1x and 2x in AVIF and WebP, and jars.json with the frame, the jar's box and each
+// state's surface, read by name in scripts/signup/jar-srcs.ts and shared with the page script, so the table of the
+// sixteen states' URLs rides that lazy chunk and not the first view's markup. A state renders only when all four of its
+// files are in, so a build with some names missing still builds
+const M = JARS;
+// the frame in CSS (the row is laid out by the jar's box, the frames overflow it): the box's width and top and bottom as
+// fractions of the frame, and the frame's aspect
+const r4 = (v: number) => Math.round(v * 10000) / 10000;
+const frameCss = `#signup{--jx:${r4(M.jar.x1 - M.jar.x0)};--jc:${r4((M.jar.x0 + M.jar.x1) / 2)};--jy0:${r4(M.jar.y0)};--jy1:${r4(M.jar.y1)};--jfa:${r4(M.frame.h / M.frame.w)}}`;
+const W1 = Math.round(M.frame.w / 2), H1 = Math.round(M.frame.h / 2);
+const showcase = SIGNUP_FOLLOWS.map((j) => ({ ...j, aria: followAria(j), pic: STATE_SRCS[j.letter] ?? null }));
+const yours = STATE_SRCS['0'] ?? null;
+---
+<style is:inline set:html={frameCss}></style>
+<section class="signup" id="signup" aria-label={C.aria} data-state="rest" hidden data-locked>
+  <div class={LEADS ? 'su-body' : 'su-body su-noform'} id="suBody">
+    <div class="su-top">
+      <h2 class="su-h"><span>{C.h1}</span> <span>{C.h2}</span></h2>
+      <p class="su-sub">{C.subLead}<strong>{C.subBold}</strong>{C.subMid}<br class="su-br">{C.subTail}</p>
+    </div>
+    <p class="su-every">{C.jars}</p>
+    <div class="su-row" id="suRow">
+      {showcase.map((j) => (
+        <a class="su-col su-follow" href={j.url} target="_blank" rel="noopener" data-id={j.id} aria-label={j.aria}>
+          <span class="su-jar">
+            {j.pic && (
+              <picture class="su-pic">
+                <source type="image/avif" srcset={j.pic.a} sizes={SIZES} />
+                <source type="image/webp" srcset={j.pic.w} sizes={SIZES} />
+                <img src={j.pic.s} alt="" width={W1} height={H1} loading="lazy" decoding="async" />
+              </picture>
+            )}
+          </span>
+          <span class="su-icon" aria-hidden="true">
+            {j.id === 'facebook' && (
+              <svg viewBox="0 0 48 48" width="48" height="48" focusable="false"><defs><clipPath id="suFbDisc"><circle cx="24" cy="24" r="24" /></clipPath></defs><circle cx="24" cy="24" r="24" fill="#0866FF" /><path clip-path="url(#suFbDisc)" fill="#FFFFFF" d="M20.1 48V29.2h-4.6v-6.9h4.6v-5.4c0-6 3.4-9.5 8.9-9.5 1.6 0 2.9.1 3.6.3v6h-2.6c-1.6 0-2.4.8-2.4 2.6v6h5.1l-1 6.9h-4.1V48z" /></svg>
+            )}
+            {j.id === 'youtube' && (
+              <svg class="su-yt" viewBox="0 0 65 47" width="65" height="47" focusable="false"><rect width="65" height="47" rx="12.5" fill="#FF0000" /><path fill="#FFFFFF" d="M26.8 13.5v20l17-10z" /></svg>
+            )}
+            {j.id === 'instagram' && (
+              <svg viewBox="0 0 46 46" width="46" height="46" focusable="false"><defs><radialGradient id="suIgA" cx="0.22" cy="1.04" r="1.3" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#F9CF7C" /><stop offset="0.12" stop-color="#F9CF7C" /><stop offset="0.3" stop-color="#F58947" /><stop offset="0.5" stop-color="#E62B58" /><stop offset="0.68" stop-color="#C53098" /><stop offset="0.86" stop-color="#9649B6" /><stop offset="1" stop-color="#5F5ECB" /></radialGradient><radialGradient id="suIgB" cx="0.02" cy="0.02" r="0.55" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#5F5ECB" /><stop offset="1" stop-color="#5F5ECB" stop-opacity="0" /></radialGradient></defs><rect width="46" height="46" rx="12" fill="url(#suIgA)" /><rect width="46" height="46" rx="12" fill="url(#suIgB)" /><rect x="6" y="6" width="34" height="34" rx="10" fill="none" stroke="#FFFFFF" stroke-width="3.5" /><circle cx="23" cy="23" r="8.4" fill="none" stroke="#FFFFFF" stroke-width="3.5" /><circle cx="32.2" cy="13.8" r="2.3" fill="#FFFFFF" /></svg>
+            )}
+          </span>
+          <span class="su-worth">{j.label}</span>
+        </a>
+      ))}
+      <div class="su-col su-yours" role="group" aria-label={C.yoursAria}>
+        <span class="su-jar" id="suYours" role="img" aria-label={C.jarEmpty} data-state="0">
+          {yours && (
+            <picture class="su-pic" data-layer="cur">
+              <source type="image/avif" srcset={yours.a} sizes={SIZES} />
+              <source type="image/webp" srcset={yours.w} sizes={SIZES} />
+              <img src={yours.s} alt="" width={W1} height={H1} loading="lazy" decoding="async" />
+            </picture>
+          )}
+          {yours && (
+            <picture class="su-pic" data-layer="next" hidden>
+              <source type="image/avif" sizes={SIZES} />
+              <source type="image/webp" sizes={SIZES} />
+              <img alt="" width={W1} height={H1} decoding="async" />
+            </picture>
+          )}
+        </span>
+        <span class="su-icon" aria-hidden="true">
+          <svg viewBox="0 0 46 46" width="46" height="46" focusable="false"><path fill="#FA841A" fill-rule="evenodd" d="M0 23a23 23 0 1 0 46 0a23 23 0 1 0-46 0zM23 9.25l3.7 10.1 10.76.4-8.47 6.65 2.94 10.35L23 30.75l-8.93 6 2.94-10.35-8.47-6.65 10.76-.4z" /></svg>
+        </span>
+        <span class="su-worth"><span>{C.starLead}</span> <span>{C.starWorth}</span></span>
+      </div>
+    </div>
+    {LEADS && (
+      <div class="su-got">
+        <div class="su-got-h"><span class="su-rule" aria-hidden="true"></span><h3>{C.got}</h3><span class="su-rule" aria-hidden="true"></span></div>
+        <p class="su-grey">{C.gotLead}<br class="su-br">{C.gotTail}</p>
+      </div>
+    )}
+    {LEADS && (
+      <form class="su-form" id="suForm" novalidate method="post" action="/api/signup">
+        <div class="su-slotf">
+          <div class="su-pill" id="suPill">
+            <label class="sr-only" for="suEmail">{C.email}</label>
+            <input class="su-input" id="suEmail" name="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" required placeholder={C.email} aria-describedby="suMsg">
+            <button type="submit" class="su-send" id="suSend">{C.send}</button>
+          </div>
+          <p class="su-done" id="suDone" tabindex="-1" hidden></p>
+        </div>
+        <div class="su-msgrow">
+          <p class="su-msg" id="suMsg" role="status"></p>
+          <button type="button" class="su-notyou" id="suNotYou" hidden>{C.notYou}</button>
+          <noscript><p class="su-msg">{C.noscript}</p></noscript>
+        </div>
+      </form>
+    )}
+    <p class="su-keep">{C.keep}</p>
+    <p class="sr-only" id="suLive" aria-live="polite"></p>
+  </div>
+</section>
+<script is:inline set:html={gateCode}></script>
+<script>
+  // the section's script comes once the section is within a screen, or at once on a focus or a press inside it
+  const root = document.getElementById('signup');
+  if (root) {
+    let p: Promise<unknown> | null = null;
+    const start = () => (p ??= import('../../scripts/signup/signup.ts').then((m) => m.mountSignup(root)));
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); void start(); } }, { rootMargin: '100% 0px' });
+      io.observe(root);
+    } else void start();
+    root.addEventListener('focusin', () => { void start(); }, { once: true });
+    root.addEventListener('pointerdown', () => { void start(); }, { once: true });
+  }
+</script>

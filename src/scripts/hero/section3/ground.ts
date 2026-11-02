@@ -22,13 +22,15 @@ export interface GroundScene {
   dispose(): void;
 }
 
-const ENCODE_FROM = 'gl_FragColor = vec4(dec(srgb), 0.0);';
+// the encode line as the source writes it and as the shader strip ships it (scripts/build/glsl-strip.mjs takes the
+// space after the comma out in every build and on the dev server), so the search tolerates both spellings
+const ENCODE_FROM = /gl_FragColor = vec4\(dec\(srgb\),\s*0\.0\);/;
 const ENCODE_TO = 'gl_FragColor = vec4(srgb, 1.0);';
 
 export function createFogGround(renderer: WebGLRenderer, reduced: boolean): GroundScene {
   const bg = createBackground();
   const src = bg.material.fragmentShader;
-  if (!src.includes(ENCODE_FROM)) throw new Error('section3/ground: the background shader no longer ends with the expected encode line');
+  if (!ENCODE_FROM.test(src)) throw new Error('section3/ground: the background shader no longer ends with the expected encode line');
   const material = new ShaderMaterial({ uniforms: bg.uniforms, vertexShader: bg.material.vertexShader, fragmentShader: src.replace(ENCODE_FROM, ENCODE_TO), depthTest: false, depthWrite: false });
   const scene = fsScene(material);
   let rt: WebGLRenderTarget | null = null, frameNo = 0, W = 1, H = 1;
