@@ -5,7 +5,8 @@
 // "recognised" and the three award names are the brief's own words. The page sets these in Inter (exception
 // E-About-font, src/styles/about.css); this file holds words only. tests/unit/about.test.ts holds every string.
 export const ABOUT_COPY = {
-  h1: 'About Skreed',
+  /** the owner's words of 2026-11-03 ("change this text to A message from our founder itself"), in place of the paste's bold "About Skreed", which stays the page's title */
+  h1: 'A message from our founder',
   p1: 'Skreed started with a simple idea: colour is personal.',
   p2: 'We’ve always believed that the things we carry every day should feel a little more like us. That’s why we went looking beyond the usual handful of colours and built a world of our own: a spectrum of over 240 shades across an ecosystem of premium tech accessories, each designed to feel every bit as unique as the person using them.',
   p3: 'And while colour is at the heart of what we do, thoughtful design is what brings it all together. Backed by a team recognised with multiple CES Innovation Awards, Red Dot Design Awards, and New York Design Awards, Skreed brings a premium, considered approach to personal tech.',
@@ -21,7 +22,7 @@ export const ABOUT_COPY = {
   description: 'Skreed started with a simple idea: colour is personal. And now we’re bringing it all to India. Launching November 15.',
 } as const;
 
-/** the title's lines, one a line in the tall uppercase title of the owner's reference (E-About-look); joined by a space they are h1 */
-export const ABOUT_H1_LINES = ['About', 'Skreed'] as const;
+/** the title's three lines, as the owner's reference breaks its own title (E-About-look); joined by spaces they are h1 */
+export const ABOUT_H1_LINES = ['A message', 'from our', 'founder'] as const;
 /** the words of the first paragraph ringed in Ember Luxe, as the reference circles them (E-About-look) */
 export const ABOUT_RING = 'colour is personal.';

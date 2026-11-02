@@ -15,7 +15,7 @@ import { SITE_COPY } from '../scripts/family/site-copy.ts';
 
 const path = '/about/';
 const url = new URL(path, SITE_URL).href;
-// the owner's reference of 2026-11-03 (E-About-look): the title a word a line, the brand line ringed; the words themselves stay section 3's
+// the owner's reference of 2026-11-03 (E-About-look): the title in three lines, the brand line ringed; the words themselves stay section 3's
 if (ABOUT_H1_LINES.join(' ') !== c.h1) throw new Error('the title lines do not make the title');
 const ringAt = c.p1.indexOf(ABOUT_RING);
 if (ringAt < 0) throw new Error('the ringed words are not in the first paragraph');

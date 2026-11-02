@@ -21,7 +21,7 @@ const FONT = 'inter-400-700-latin.woff2';
 
 // section 3 of the spec, as rendered
 const EXPECTED = {
-  h1: 'About Skreed',
+  h1: 'A message from our founder',
   p1: 'Skreed started with a simple idea: colour is personal.',
   p2: `We${R}ve always believed that the things we carry every day should feel a little more like us. That${R}s why we went looking beyond the usual handful of colours and built a world of our own: a spectrum of over 240 shades across an ecosystem of premium tech accessories, each designed to feel every bit as unique as the person using them.`,
   p3: 'And while colour is at the heart of what we do, thoughtful design is what brings it all together. Backed by a team recognised with multiple CES Innovation Awards, Red Dot Design Awards, and New York Design Awards, Skreed brings a premium, considered approach to personal tech.',

@@ -86,7 +86,7 @@ test.describe('AC2 Inter from the one self-hosted file, no other face, nothing i
       expect(Math.abs(h1.lh - 0.95 * h1.size)).toBeLessThanOrEqual(0.1);
       expect(Math.abs(sign.lh - 1.2 * sign.size)).toBeLessThanOrEqual(0.1);
       expect(Math.abs(parseFloat(h1.ls) + 0.02 * h1.size)).toBeLessThanOrEqual(0.01);   // tightened caps
-      expect(await page.locator('main h1').evaluate((e) => getComputedStyle(e).textTransform)).toBe('uppercase');   // the DOM keeps "About Skreed"
+      expect(await page.locator('main h1').evaluate((e) => getComputedStyle(e).textTransform)).toBe('uppercase');   // the DOM keeps the sentence case
       expect(await page.evaluate(() => [...document.querySelectorAll('header, header *, main, main *')].map((e) => getComputedStyle(e).fontStyle).filter((s) => s !== 'normal'))).toEqual([]);
       await ctx.close();
     });
@@ -121,7 +121,7 @@ test.describe('AC5 360 to 1280 px: no horizontal scroll, the gutters, the column
       expect(w - col.x - col.width, 'the right gutter').toBeGreaterThanOrEqual(i - 0.5);
       for (const b of text) expect(Math.abs(b.x - col.x), `${b.sel} flush left`).toBeLessThanOrEqual(0.5);
       const h1 = await page.locator('main h1').evaluate((e) => e.getBoundingClientRect().height / parseFloat(getComputedStyle(e).lineHeight));
-      expect(Math.abs(h1 - 2), 'the h1 is two lines, a word each').toBeLessThanOrEqual(0.1);
+      expect(Math.abs(h1 - 3), 'the h1 is three lines, as the reference breaks it').toBeLessThanOrEqual(0.1);
       // the quotation mark: at the top right, clear of the title's text, never past the right gutter
       const quote = (await page.locator('.ab-quote').boundingBox())!, h1Box = (await page.locator('main h1').boundingBox())!;
       expect(w - (quote.x + quote.width), 'the quotation mark inside the right gutter').toBeGreaterThanOrEqual(i - 1);
@@ -202,7 +202,7 @@ test('AC7 the landmarks and the tree, the focus ring, the hit box, the contrast'
       - link "Skreed, home":
         - /url: /
     - main:
-      - heading "About Skreed" [level=1]
+      - heading "A message from our founder" [level=1]
       - paragraph: ${q(C.p1)}
       - paragraph: ${q(C.p2)}
       - paragraph: ${q(C.p3)}

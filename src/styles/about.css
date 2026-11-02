@@ -1,6 +1,6 @@
 /* The About page, /about/ (docs/specs/about.md section 2): the brief's copy on plain Pearl Whisper, set in skreed.com's
    face, Inter, self-hosted (exception E-About-font), text only (exception E-About-38), in the look of the owner's
-   reference of 2026-11-03 (exception E-About-look): a tall uppercase title a word a line, a large grey closing quotation
+   reference of 2026-11-03 (exception E-About-look): a tall uppercase title in three lines, a large grey closing quotation
    mark at the top right, the letter larger and in a warm catalog brown, the brand line ringed in Ember Luxe by a drawn
    stroke. Imported by src/pages/about.astro alone and inlined into that page by the build, so no other page carries
    these rules or fetches the file. The wordmark at the top left is the way home: static, with the site's press idiom in
@@ -71,7 +71,7 @@ body { font-family: var(--font-about); font-weight: 400; }
 .ab-text { display: flex; flex-direction: column; gap: var(--s4); }
 .ab-close { display: flex; flex-direction: column; gap: var(--s1); }
 .ab h1, .ab p { margin: 0; }
-/* the title: the reference's tall caps, a word a line (the spans), Urban Slate */
+/* the title: the reference's tall caps in three lines (the spans), Urban Slate */
 .ab h1 { font-weight: 700; font-size: var(--ab-fs-title); line-height: var(--ab-lh-title); letter-spacing: var(--ab-ls-title); text-transform: uppercase; color: var(--urban-slate); }
 .ab h1 span { display: block; width: fit-content; }
 /* the closing quotation mark at the top right, the reference's ornament: Inter's own glyph, light grey, decorative only

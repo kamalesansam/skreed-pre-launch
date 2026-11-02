@@ -311,7 +311,7 @@ test('About (AC11): last in the bar, a plain link to /about/, never current, no 
   await page.evaluate(() => removeEventListener('click', (window as unknown as { __hold: (e: Event) => void }).__hold, true));
   await about.click();
   await expect(page).toHaveURL(/\/about\/$/);
-  await expect(page.locator('main h1')).toHaveText('About Skreed');
+  await expect(page.locator('main h1')).toHaveText('A message from our founder');
   await expect(page.locator('#siteNav')).toHaveCount(0);   // the About page carries no index: its wordmark is the way home
   await page.locator('a.site-logo').click();
   await expect(page).toHaveURL(/\/$/);
@@ -326,7 +326,7 @@ test('the phone: the drawer\'s About row leaves for /about/', async ({ page, bas
   await expect(row).toHaveAttribute('href', '/about/');
   await row.click();
   await expect(page).toHaveURL(/\/about\/$/);
-  await expect(page.locator('main h1')).toHaveText('About Skreed');
+  await expect(page.locator('main h1')).toHaveText('A message from our founder');
 });
 
 test('the phone: Back from About restores the landing page from the back-forward cache without the drawer (navbar.md D7)', async ({ baseURL }) => {
@@ -344,7 +344,7 @@ test('the phone: Back from About restores the landing page from the back-forward
     await expect.poll(async () => sheet.evaluate((e) => e.matches(':popover-open'))).toBe(true);
     await page.locator('#site-sections a[data-page="about"]').click();
     await expect(page).toHaveURL(/\/about\/$/);
-    await expect(page.locator('main h1')).toHaveText('About Skreed');
+    await expect(page.locator('main h1')).toHaveText('A message from our founder');
     await page.goBack({ waitUntil: 'commit' });   // a restore from the cache fires pageshow, never load, so the row waits for the commit and polls
     await expect(page).toHaveURL(/\/\?tier=poster$/);
     const shown = () => page.evaluate(() => (window as unknown as { __shown?: boolean[] }).__shown ?? []);
