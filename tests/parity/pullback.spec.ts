@@ -1,14 +1,22 @@
-// AC2.1 pull-back (round 3: against the v11.4 prototype, whose scroll map the port carries): in normal motion with no
-// pointer and the intro skipped, scroll to 0, 1.25, 2.5, 3.75 and 5 screens (the level weaving pull-back), then 5.5 and 6
-// (the wipe, where the camera keeps backing away along the curve), wait until the scroll follower has settled on the
-// target, and compare __skreedState().cam with the prototype's at the hook's 4-decimal precision. The camera's position
-// depends only on the scroll (no pointer, so no parallax), so a small viewport is used for speed: 360 x 400, where every
-// target is a whole pixel. Past 5 screens the follower waits for section 2's build on both pages (the hold at PULL).
+// AC2.1 pull-back (round 3: against the v11.4 prototype; re-paired on 2026-11-02, when the port's scroll map became the
+// prototype's halved, section-2.md 14): in normal motion with no pointer and the intro skipped, the prototype is driven to
+// 0, 1.25, 2.5, 3.75 and 5 screens (its level weaving pull-back) and the port to half of each, where s = ease(b / PULL) is
+// the same on both pages; then inside the wipe to equal curve parameter (v = 1 + (b - PULL) / (LAND - PULL): the prototype
+// at 5.475 and 5.95, the port at 2.6025 and 2.705, v 1.05 and 1.1, where the camera keeps backing away along the curve).
+// Each page waits until its scroll follower has settled on its own target, and __skreedState().cam must agree at the
+// hook's 4-decimal precision. The camera's position depends only on the scroll (no pointer, so no parallax), so a small
+// viewport is used for speed: 360 x 400, where every target is a whole pixel (1041 and 1082 px for the port's wipe
+// targets, 2190 and 2380 for the prototype's). Past the pull-back the follower waits for section 2's build on both pages
+// (the hold at PULL).
 import { test, expect, type Browser, type Page } from '@playwright/test';
 import { launch } from '../harness/browser.ts';
 import { servePrototype, PROTO11_URL } from '../harness/prototype.ts';
+import { S2T } from '../../src/config/hero.ts';
 
-const TARGETS = [0, 1.25, 2.5, 3.75, 5, 5.5, 6];
+/** the pinned v11.4 prototype's map (template.html: PULL 5, S2T.LAND 14.5) */
+const PROTO = { PULL: 5, LAND: 14.5 };
+/** [prototype position, port position], in screens */
+const TARGETS: [number, number][] = [[0, 0], [1.25, 0.625], [2.5, 1.25], [3.75, 1.875], [5, 2.5], [5.475, 2.6025], [5.95, 2.705]];
 let gl: Browser;
 test.beforeAll(async () => { gl = await launch(); });
 test.afterAll(async () => { await gl?.close(); });
@@ -29,16 +37,22 @@ async function camAt(page: Page, screens: number): Promise<number[]> {
   return page.evaluate(() => window.__skreedState!().cam);
 }
 
-test('AC2.1 the pull-back camera equals the v11.4 prototype at 0, 1.25, 2.5, 3.75, 5, 5.5 and 6 screens', async ({ baseURL }, info) => {
+test('AC2.1 the pull-back camera equals the v11.4 prototype at equal ease over the pull-back (the port at half the prototype\'s scroll) and at equal curve parameter inside the wipe', async ({ baseURL }, info) => {
   test.setTimeout(3_000_000);
+  // the pairs really are the same point of the map: the same s over the pull-back, the same v inside the wipe
+  for (const [sa, sb] of TARGETS) {
+    if (sa <= PROTO.PULL) expect(sb).toBeCloseTo(sa * S2T.PULL / PROTO.PULL, 9);
+    else expect((sb - S2T.PULL) / (S2T.LAND - S2T.PULL)).toBeCloseTo((sa - PROTO.PULL) / (PROTO.LAND - PROTO.PULL), 9);
+    expect(Number.isInteger(sa * 400) && Number.isInteger(sb * 400), `whole pixels at 400 px tall: ${sa}, ${sb}`).toBe(true);
+  }
   const [a, b] = await Promise.all([open(PROTO11_URL, true), open(new URL('/?tier=hero3d&intro=0', baseURL).href, false)]);
   const rows: string[] = [];
-  for (const s of TARGETS) {
-    const [ca, cb] = await Promise.all([camAt(a, s), camAt(b, s)]);
-    rows.push(`${s}: proto ${JSON.stringify(ca)} port ${JSON.stringify(cb)}`);
-    expect(cb, `cam at ${s} screens`).toEqual(ca);
+  for (const [sa, sb] of TARGETS) {
+    const [ca, cb] = await Promise.all([camAt(a, sa), camAt(b, sb)]);
+    rows.push(`${sa}/${sb}: proto ${JSON.stringify(ca)} port ${JSON.stringify(cb)}`);
+    expect(cb, `cam at the prototype's ${sa} and the port's ${sb} screens`).toEqual(ca);
   }
-  console.log('[AC2.1 v11.4] ' + rows.join(' | '));
+  console.log('[AC2.1 v11.4, the map of 2026-11-02] ' + rows.join(' | '));
   info.annotations.push({ type: 'cam', description: rows.join(' | ') });
   expect(rows.length).toBe(7);
   // the level pull-back (Sam, 2026-10-10: never flying up): y stays within the 0.75 rise, z backs away

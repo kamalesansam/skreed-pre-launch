@@ -1,8 +1,9 @@
 // Section 2: the ten gems (Gem C, Sam 2026-10-10; prototype v11.4 template.html "Section 2: the ten gems", built from the
 // approved gem page prototypes/section-2; docs/specs/section-2.md). Its own scene and camera render into its own targets;
-// the hero's composite wipes to it and keeps the logo over it (loop.ts, F14). The blocks leave the logo one at a time:
-// block j lifts off at CAS0 + j GAP screens and lands FLY screens later on a long bowed curve with a slow lift and a long
-// settle (ease 0.42, 0, 0.12, 1); the logo itself never flies up, it recedes with the hero camera's curve.
+// the hero's composite wipes to it and keeps the logo over it (loop.ts, F14). The ten blocks leave the logo together (Sam,
+// 2026-11-02; section-2.md 14): every block lifts off at CAS0, mid-wipe, and lands FLY screens later, each on its own long
+// bowed curve with a slow lift and a long settle (ease 0.42, 0, 0.12, 1); the logo itself never flies up, it recedes with
+// the hero camera's curve. (Until 2026-11-02 block j left at CAS0 + j GAP; that schedule is gone with the stagger.)
 // The ten links are the family pages' contract (docs/specs/family-page.md 2.2, src/scripts/family/rock-links.ts): nav#families
 // (FamilyLinks.astro, mounted by index.astro) holds one real link per family in catalog order; this island places each
 // link's box over its gem (placeLinkBoxes), the canvas click rule opens the page (installRockNav), and a link's focus
@@ -188,14 +189,14 @@ export function createGems(o: GemsOptions): Section2Scene {
   }
 
   // ---- the flights and the hand-over
-  const CAS0 = S2T.CAS0, GAP = S2T.GAP, FLY = S2T.FLY;
+  const CAS0 = S2T.CAS0, FLY = S2T.FLY;
   const bez = (x1: number, y1: number, x2: number, y2: number) => (x: number) => {          // cubic-bezier easing, solved for t by Newton steps
     if (x <= 0) return 0; if (x >= 1) return 1;
     let t = x; for (let i = 0; i < 8; i++) { const a = 3 * x1 * t * (1 - t) ** 2 + 3 * x2 * t * t * (1 - t) + t ** 3 - x;
       const d = 3 * x1 * (1 - t) ** 2 + 6 * (x2 - x1) * t * (1 - t) + 3 * (1 - x2) * t * t; if (Math.abs(d) < 1e-6) break; t = Math.min(1, Math.max(0, t - a / d)); }
     return 3 * y1 * t * (1 - t) ** 2 + 3 * y2 * t * t * (1 - t) + t ** 3; };
   const flightEase = bez(0.42, 0, 0.12, 1);
-  const Lof = (S: number, j: number) => Math.max(0, Math.min(1, (S - (CAS0 + j * GAP)) / FLY));
+  const Lof = (S: number) => Math.max(0, Math.min(1, (S - CAS0) / FLY));   // one flight progress for the ten (no stagger since 2026-11-02)
   let S = 0;
   // the flying copy of each hero block: the same triangles as the hero's block (taken from the logo geometry), matte black,
   // its family's shade rising in its edges as it nears the change
@@ -336,7 +337,7 @@ export function createGems(o: GemsOptions): Section2Scene {
     const now = nowMs();
     live = tp1 > 0 && tp2 < 1 ? 1 : 0; w2 = tp2;
     if (!ready) return;
-    for (const st of stones) st.L = Lof(S, st.j);
+    const L = Lof(S); for (const st of stones) st.L = L;
     updateParallax(dt); poseAll(t);
     const show = tp1 > 0.5 && tp2 < 0.25;
     for (const st of stones) { const landed = st.L >= (REDUCE ? 0.6 : 0.92);
@@ -377,7 +378,7 @@ export function createGems(o: GemsOptions): Section2Scene {
     get live() { return live; },
     build, resize, update, render,
     // a hero block is hidden once its flying copy has taken over (or, under reduced motion, once its gem is at its slot)
-    hidden: (i, Sv) => { if (!ready) return false; const j = blockOf.indexOf(i); if (j < 0) return false; const L = Lof(Sv, j); return REDUCE ? L >= 0.5 : L > 0; },
+    hidden: (i, Sv) => { if (!ready || blockOf.indexOf(i) < 0) return false; const L = Lof(Sv); return REDUCE ? L >= 0.5 : L > 0; },
     logoLeft: () => !ready || stones.some((st) => (REDUCE ? st.L < 0.5 : st.L <= 0)),
     snapTo: null,
     hooks: o.hooks ? () => ({ ready, failed, live, S, L: stones.map((s) => +s.L.toFixed(3)), active, labels: stones.map((s) => (s.labs ? !s.labs.title.hidden : null)) }) : undefined,
