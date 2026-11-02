@@ -54,9 +54,10 @@
 // transform. From the review of the same day: pictures held on the network by page.route (an answer hovered and left, or
 // left for a loaded one, before its picture arrives shows nothing when it does, the pointer at rest on question 3 too; a
 // tap on an answer still loading holds it 0.9 s at most and the picture never comes on the question gone); a press that
-// turns into a scroll (pointercancel) and a tap dropped by the guard leave no picture; at 360 x 780 and 844 x 390 the
+// turns into a scroll (pointercancel) and a tap dropped by the guard leave no picture; at 360 x 780 and 390 x 664 the
 // frame has no room (data-none), nothing is asked for and a tap is taken with no hold; at 800 x 1280 the frame is 40% of
-// the height; a picture left on as the question changes is cleared at once; an answer taken with the mouse or the
+// the height; on a phone held sideways (844 x 390, since 2026-10-29) the question and its footer stand at the left and
+// the answers at the right, the frame the left column's row under the question, and a tap holds as at 390 x 844; a picture left on as the question changes is cleared at once; an answer taken with the mouse or the
 // keyboard keeps its picture while the pointer or focus leaves it during the hold; focus that is not the keyboard's shows
 // none; the shade's name and the done line draw no focus box.
 import { test, expect, type Locator, type Page } from '@playwright/test';
@@ -1969,7 +1970,7 @@ test('AC4 at 360 x 780 the done line with a 60-character address breaks inside t
 /** a picture file as the build names it: /_astro/q<question index>-<personality>-<width>.<hash>.<avif or webp> */
 const PIC_URL = /\/_astro\/(q\d+-[a-z]+)-(\d+)\.[\w-]+\.(avif|webp)$/;
 /** the sizes attribute of every picture: the second column on a laptop, the width between the gutters on a phone */
-const PIC_SIZES = '(min-width: 900px) and (min-height: 600px) min(30vw, 440px), calc(100vw - 32px)';
+const PIC_SIZES = '(min-width: 900px) and (min-height: 600px) min(30vw, 440px), (min-width: 640px) and (max-height: 599px) calc((100vw - 92px) * 0.4), calc(100vw - 32px)';
 
 /** every picture of card i loaded (each <img> complete, with its size), so a show starts at once: picture.ts first awaits
  *  a picture still loading */
@@ -2616,7 +2617,7 @@ test('Pictures, a tap on an answer whose picture is still loading (held by page.
   expect(now, 'question 1, gone, with no picture on').toEqual(allOff(0));
 });
 
-for (const [w, h] of [[360, 780], [844, 390]] as const) {
+for (const [w, h] of [[360, 780], [390, 664]] as const) {
   test(`Pictures with no room for the frame, a touch screen at ${w} x ${h}: question 1's frame has data-none and is not drawn, no picture is asked for, and a tap on its answer is taken with no hold, the answer wiping out as soon after the tap as one on question 2 (no pictures) does`, async ({ browser, baseURL }) => {
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true });
     const page = await ctx.newPage();
@@ -2663,6 +2664,151 @@ for (const [w, h] of [[360, 780], [844, 390]] as const) {
     expect(one - two, `question 1 (${one} ms) held no longer than question 2 (${two} ms): no picture to wait for`).toBeLessThan(100);
   });
 }
+
+test('Pictures on a phone held sideways (844 x 390, since 2026-10-29): the count, the question and the footer stand at the left under the logotype\'s band and the seven answers at the right; the frame is the left column\'s row between the question and the footer, 96 px or taller; a tap on an answer shows its picture there and holds the answer until it has settled, as at 390 x 844', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 844, height: 390 }, hasTouch: true });
+  const page = await ctx.newPage();
+  const p = QUIZ_QUESTIONS[0].answers[2].persona;
+  await openQuiz(page, baseURL);
+  await page.locator('#qzBegin').tap();
+  await expect(page.locator('#find')).toHaveAttribute('data-state', 'quiz');
+  await onTop(page, 0);
+  await settled(page);
+  await picsLoaded(page, 0);
+  await quiet(page);
+  const place = await page.evaluate(() => {
+    const c = document.querySelector('.qz-card.is-top')!, f = c.querySelector<HTMLElement>('.qz-pics')!, r = (e: Element) => e.getBoundingClientRect();
+    const inset = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--inset')) || 0;
+    return { side: matchMedia('(min-width: 640px) and (max-height: 599px)').matches, wide: matchMedia('(min-width: 900px) and (min-height: 600px)').matches, frame: [r(f).left, r(f).top, r(f).right, r(f).bottom], none: f.hasAttribute('data-none'), h: getComputedStyle(f).getPropertyValue('--qz-pic-h'),
+      count: r(c.querySelector('.qz-count')!), q: r(c.querySelector('.qz-q')!), opts: r(c.querySelector('.qz-opts')!), foot: r(c.querySelector('.qz-foot')!), card: r(c), scrollY, inset, vw: innerWidth };
+  });
+  expect([place.side, place.wide], 'the sideways layout, not the laptop one').toEqual([true, false]);
+  expect(place.none, 'room for the picture under the question').toBe(false);
+  expect(place.h, 'no height set by deck.ts: the grid row gives it').toBe('');
+  expect(place.count.top + place.scrollY, 'the count under the logotype\'s band (the stage pads 56 px over its inset)').toBeGreaterThanOrEqual(place.inset + 56 - 0.5);
+  expect(place.opts.left, 'the answers at the right of the question').toBeGreaterThan(place.q.right + 31);
+  expect(place.opts.top, 'the answers level with the count').toBeCloseTo(place.count.top, 0);
+  expect(place.foot.top, 'the footer under the frame').toBeGreaterThanOrEqual(place.frame[3] + 16 - 0.5);
+  const [left, top, right, bottom] = place.frame;
+  expect(bottom - top, '96 px high or more').toBeGreaterThanOrEqual(96);
+  expect(top, 'under the question').toBeGreaterThanOrEqual(place.q.bottom + 16 - 0.5);
+  expect([left, right], 'the left column, from the card\'s left edge to short of the answers').toEqual([expect.closeTo(place.card.left, 0), expect.closeTo(place.q.right, 0)]);
+  expect(right, 'short of the answers').toBeLessThan(place.opts.left);
+  await recordPics(page);
+  const box = (await page.locator(`.qz-card.is-top .qz-opt[data-persona="${p}"]`).boundingBox())!;
+  await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+  await onTop(page, 1);
+  await settled(page);
+  const log = await picLog(page);
+  expect((await events(page)).filter(([n]) => n === 'quiz_answer'), 'the tap took the answer').toEqual([['quiz_answer', { q: 1, persona: p }]]);
+  await ctx.close();
+  const down = picEvent(log, 'pointerdown:touch', p);
+  const steps = between(log, 0, p, down, Infinity), at = steps.findIndex(settledPic), outAt = steps.findIndex((s, n) => n > at && !settledPic(s));
+  expect(at, 'the picture settles').toBeGreaterThan(0);
+  expect(outAt, 'then goes').toBeGreaterThan(at);
+  expectPicIn('the tap: the picture decodes in', steps.slice(0, outAt), down);
+  expectPicOut('then it wipes out with the answer', steps.slice(outAt), steps[outAt - 1].t, { slack: 40 });
+  for (const s of steps.filter((s) => s.o.some((o) => o > 0))) expect(s.box, 'under the question, where the frame stood').toEqual(place.frame.map((v) => Math.round(v * 10) / 10));
+  const settledAt = steps[at].t, wiped = log.opts.find((o) => o.card === 0 && o.k === p && o.min < 1);
+  expect(wiped, 'the answer wipes out').toBeTruthy();
+  expect(wiped!.t, 'not before the picture has settled').toBeGreaterThanOrEqual(settledAt);
+  expect(wiped!.t - down, 'held past the 0.32 s a click holds it').toBeGreaterThan(750 - 1);
+  expect(wiped!.t - down, 'and at most 0.9 s past the 0.32 s').toBeLessThan(200 + 120 + 900 + 100);
+});
+
+for (const [w, h] of [[390, 844], [412, 915]] as const) {
+  test(`Pictures after "Not quite? Try again" at ${w} x ${h} (a touch screen): question 1's frame is drawn again with the room it had at the first Begin (the measure reads the stage while the page is still down in the result), and a finger's press on its answer decodes the picture in and holds, as at the first pass`, async ({ browser, baseURL }) => {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true });
+    const page = await ctx.newPage();
+    const p = QUIZ_QUESTIONS[0].answers[2].persona;
+    await pin(page, 0.01);
+    await openQuiz(page, baseURL);
+    await page.locator('#qzBegin').tap();
+    await expect(page.locator('#find')).toHaveAttribute('data-state', 'quiz');
+    await onTop(page, 0);
+    await settled(page);
+    const frame = () => page.evaluate(() => { const f = document.querySelector<HTMLElement>('.qz-card[data-i="0"] .qz-pics')!, r = f.getBoundingClientRect(); return { none: f.hasAttribute('data-none'), h: getComputedStyle(f).getPropertyValue('--qz-pic-h'), top: r.top, height: r.height }; });
+    const first = await frame();
+    expect(first.none, 'room for the picture at the first Begin').toBe(false);
+    await answer(page, CURATOR);
+    await expect(page.locator('#find')).toHaveAttribute('data-state', 'result');
+    await settled(page);
+    // the visitor has scrolled down to the link: the section's top is well above the viewport when retry measures
+    const retry = page.locator('.qz-result:not([hidden]) .qz-retry');
+    await page.evaluate(() => { const top = document.getElementById('find')!.getBoundingClientRect().top + scrollY; scrollTo({ top: top + 400, behavior: 'instant' }); });
+    await quiet(page);
+    await expect(retry, 'the link in view, the section\'s top 400 px above the viewport').toBeInViewport();
+    expect(await page.evaluate(() => document.getElementById('find')!.getBoundingClientRect().top), 'the section scrolled up past the viewport\'s top').toBeLessThan(-200);
+    await retry.tap();
+    await onTop(page, 0);
+    await settled(page);
+    await page.waitForFunction(() => Math.abs(document.getElementById('find')!.getBoundingClientRect().top) < 1, null, { timeout: 5_000 });
+    await quiet(page);
+    const again = await frame();
+    expect(again.none, 'the frame is drawn after retry').toBe(false);
+    expect(again.h, 'with the room it had at the first Begin').toBe(first.h);
+    expect(again.top, 'under the logotype\'s band').toBeGreaterThanOrEqual(56 + 16 - 0.5);
+    expect(again.height, '96 px high or more').toBeGreaterThanOrEqual(96);
+    await picsLoaded(page, 0);
+    await recordPics(page);
+    const box = (await page.locator(`.qz-card.is-top .qz-opt[data-persona="${p}"]`).boundingBox())!;
+    await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+    await onTop(page, 1);
+    await settled(page);
+    const log = await picLog(page);
+    await ctx.close();
+    const down = picEvent(log, 'pointerdown:touch', p);
+    const steps = between(log, 0, p, down, Infinity), at = steps.findIndex(settledPic);
+    expect(at, 'the picture settles after the tap').toBeGreaterThan(0);
+    expectPicIn('the tap after retry: the picture decodes in', steps.slice(0, at + 1), down);
+    const wiped = log.opts.find((o) => o.card === 0 && o.k === p && o.min < 1);
+    expect(wiped, 'the answer wipes out').toBeTruthy();
+    expect(wiped!.t, 'not before the picture has settled').toBeGreaterThanOrEqual(steps[at].t);
+    expect(wiped!.t - down, 'held past the 0.32 s a click holds it').toBeGreaterThan(750 - 1);
+  });
+}
+
+test('Pictures with the stage lower than the viewport\'s top at 390 x 844 (section 4 open for the visit, the page scrolled so the quiz\'s top sits 180 px down, as a phone browser whose bars have hidden leaves it): the frame is measured from the viewport\'s band, 72 px from its top, and stands above the section\'s top, at most 40% of the screen; a finger\'s press draws the picture there', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  await ctx.addInitScript((key) => { sessionStorage.setItem(key, '1'); }, QUIZ_GATE.key);   // the visit's flag: section 4 opens at parse, so the page goes on below the quiz
+  const page = await ctx.newPage();
+  const p = QUIZ_QUESTIONS[0].answers[2].persona;
+  await pin(page, 0.01);
+  await openQuiz(page, baseURL);
+  await expect(page.locator('#room')).not.toHaveAttribute('data-locked', '');
+  await page.locator('#qzBegin').tap();
+  await expect(page.locator('#find')).toHaveAttribute('data-state', 'quiz');
+  await onTop(page, 0);
+  await settled(page);
+  // the stage lowered under the band, then the resize a phone's browser fires as its bars go: fitPics measures again
+  await page.evaluate(() => { const top = document.getElementById('find')!.getBoundingClientRect().top + scrollY; scrollTo({ top: top - 180, behavior: 'instant' }); });
+  await quiet(page);
+  expect(Math.round(await page.evaluate(() => document.getElementById('find')!.getBoundingClientRect().top)), 'the quiz\'s top 180 px down the viewport').toBe(180);
+  await page.evaluate(() => dispatchEvent(new Event('resize')));
+  await quiet(page);
+  const m = await page.evaluate(() => {
+    const f = document.querySelector<HTMLElement>('.qz-card[data-i="0"] .qz-pics')!, c = document.querySelector<HTMLElement>('.qz-card[data-i="0"]')!, r = f.getBoundingClientRect();
+    return { none: f.hasAttribute('data-none'), top: r.top, bottom: r.bottom, height: r.height, cardTop: c.getBoundingClientRect().top, stageTop: document.querySelector('.qz-stage')!.getBoundingClientRect().top, count: c.querySelector('.qz-count')!.getBoundingClientRect().top, vh: innerHeight };
+  });
+  expect(m.none, 'the frame is drawn').toBe(false);
+  expect(m.stageTop, 'the stage lower than the viewport\'s top').toBeGreaterThan(100);
+  expect(m.top, 'the frame starts 72 px under the viewport\'s top, not the stage\'s').toBeCloseTo(56 + 16, 0);
+  expect(m.top, 'so it stands above the section\'s top').toBeLessThan(m.stageTop);
+  expect(m.bottom, 'and ends 24 px over the question').toBeCloseTo(m.count - 24, 0);
+  expect(m.height, 'at most 40% of the screen').toBeLessThanOrEqual(Math.floor(0.4 * m.vh) + 0.5);
+  await picsLoaded(page, 0);
+  await recordPics(page);
+  const box = (await page.locator(`.qz-card.is-top .qz-opt[data-persona="${p}"]`).boundingBox())!;
+  await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+  await onTop(page, 1);
+  await settled(page);
+  const log = await picLog(page);
+  await ctx.close();
+  const down = picEvent(log, 'pointerdown:touch', p);
+  const steps = between(log, 0, p, down, Infinity), at = steps.findIndex(settledPic);
+  expect(at, 'the picture settles in the frame above the section\'s top').toBeGreaterThan(0);
+  for (const s of steps.filter((s) => s.o.some((o) => o > 0))) expect(s.box[1], 'drawn from the band').toBeCloseTo(m.top, 0);
+});
 
 test('Pictures on a tall portrait screen under 900 px wide (800 x 1280): the room above question 1 is more than 40% of the screen\'s height, and the frame takes 40% of it (512 px), above the question, under the logotype\'s band, as wide as the question\'s column', async ({ browser, baseURL }) => {
   const ctx = await browser.newContext({ viewport: { width: 800, height: 1280 }, hasTouch: true });

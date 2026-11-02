@@ -47,18 +47,27 @@ export function mountQuiz(root: HTMLElement): void {
   for (const card of cards) { const frame = card.querySelector<HTMLElement>('.qz-pics'); if (frame) pics.set(card, createPictures(frame, reduced)); }
   const stage = root.querySelector<HTMLElement>('.qz-stage');
   const wide = matchMedia('(min-width: 900px) and (min-height: 600px)');
-  /** a phone has no room beside the question: the frame takes the open space above the deck, under the logotype's band */
+  /** a phone held sideways (quiz.css): the frame is a row of the card's left column, under the question, as tall as the answers' column leaves it */
+  const side = matchMedia('(min-width: 640px) and (max-height: 599px)');
+  /** the logotype's band, 56 px, and 16 px more before a picture */
+  const BAND = 56 + 16, MIN_FRAME = 96;
+  /** where the band ends, in the viewport: 72 px under the viewport's top while the section's top is at it or below it (a phone browser whose bars have hidden leaves the stage lower than the viewport's top, and the frame may then stand above the section's top), and 72 px under the stage's top while the stage is above it (a measure taken with the page scrolled into the result, as retry's is before its scroll back, reads the same room the pinned section gives) */
+  const bandEnd = () => Math.min(0, stage?.getBoundingClientRect().top ?? 0) + BAND;
+  /** a phone held upright has no room beside the question: the frame takes the open space above the deck, under the band, at most 40% of the screen; none under 96 px */
   function fitPics() {
     for (const [card, ctl] of pics) {
       const frame = card.querySelector<HTMLElement>('.qz-pics')!;
-      if (wide.matches || !stage) { frame.style.removeProperty('--qz-pic-h'); frame.removeAttribute('data-none'); ctl.layout(); continue; }
-      const top = stage.getBoundingClientRect().top + 56 + 16, free = Math.min(card.getBoundingClientRect().top - 24 - top, innerHeight * 0.4);
-      frame.toggleAttribute('data-none', free < 96);
-      frame.style.setProperty('--qz-pic-h', `${Math.max(0, Math.floor(free))}px`);
+      frame.style.removeProperty('--qz-pic-h'); frame.removeAttribute('data-none');
+      if (side.matches) { if (!card.hidden) frame.toggleAttribute('data-none', frame.getBoundingClientRect().height < MIN_FRAME); }
+      else if (!wide.matches) {
+        const free = Math.min(card.getBoundingClientRect().top - 24 - bandEnd(), innerHeight * 0.4);
+        frame.toggleAttribute('data-none', free < MIN_FRAME);
+        frame.style.setProperty('--qz-pic-h', `${Math.max(0, Math.floor(free))}px`);
+      }
       ctl.layout();
     }
   }
-  addEventListener('resize', fitPics); wide.addEventListener('change', fitPics);
+  addEventListener('resize', fitPics); wide.addEventListener('change', fitPics); side.addEventListener('change', fitPics);
 
   // the swatches take their shade from the catalog token through the CSSOM (the CSP allows no style attributes)
   for (const el of root.querySelectorAll<HTMLElement>('.qz-big, .qz-mini-sw')) el.style.background = `var(--shade-${el.dataset.shade})`;
