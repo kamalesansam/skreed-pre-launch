@@ -58,10 +58,11 @@ test('no boxes outside the result: no panel, no fill, no shadow, the controls ar
   const css = read('src/styles/quiz.css').replace(/\/\*[\s\S]*?\*\//g, '');
   // fills: none, but the result's ground, the offer's band (and its run to the screen's foot), the paint's colour layer
   // (the swatch's outline filled with the drawn shade), the field and Send (the chips are painted through the CSSOM), and
-  // the reveal's hairline and the line that fills it (quiz.md D50): lines, not boxes
+  // the reveal's hairline and the line that fills it (quiz.md D50): lines, not boxes; and the band's fill fading with the
+  // ground as the result scrolls away (D53)
   for (const m of css.matchAll(/([^{}]+)\{[^{}]*?\bbackground(?:-color)?:\s*([^;}]+)/g)) {
     if (/^(none|transparent)$/.test(m[2].trim())) continue;
-    assert.match(m[1].trim(), /^(\.qz-ground|\.qz-gift|\.qz-gift::after|\.qz-rub-col|\.qz-input|\.qz-send|\.qz-send:hover:not\(\[aria-disabled="true"\]\)|\.qz-bar|\.qz-bar-fill)$/, `a fill in quiz.css: ${m[1].trim()} ${m[2]}`);
+    assert.match(m[1].trim(), /^(\.qz-ground|\.qz-gift|\.qz-gift::after|\.qz-rub-col|\.qz-input|\.qz-send|\.qz-send:hover:not\(\[aria-disabled="true"\]\)|\.qz-bar|\.qz-bar-fill|\.quiz\[data-fade\] \.qz-gift)$/, `a fill in quiz.css: ${m[1].trim()} ${m[2]}`);
   }
   // shadows: the shade name's one hard offset (the reference's darker copy behind the letters) and nothing else
   // (the decode's roll in a proportional face draws the rolled glyph over the face's own: the name's layer goes with it)

@@ -89,7 +89,7 @@
 // ground lies under the logotype's band.
 import { test, expect, type Locator, type Page } from '@playwright/test';
 import { S2T } from '../../src/config/hero.ts';
-import { QUIZ_COPY as Q, QUIZ_GATE, QUIZ_PERSONAS, QUIZ_QUESTIONS, luminance, pickShade, scoreQuiz, shadeHref, type Persona, type PersonaId } from '../../src/config/quiz.ts';
+import { QUIZ_COPY as Q, QUIZ_GATE, QUIZ_PERSONAS, QUIZ_QUESTIONS, QUIZ_REVEAL_MS, luminance, pickShade, scoreQuiz, shadeHref, type Persona, type PersonaId } from '../../src/config/quiz.ts';
 import { chipInk, chipRim, resultTones, type ResultTones } from '../../src/config/quiz-tones.ts';
 import { ROOM_COPY } from '../../src/config/room.ts';
 import { SHADES } from '../../src/config/shades.gen.ts';
@@ -206,9 +206,9 @@ function drawn(answers: PersonaId[], v: number): Drawn {
  *  shade, 0.5 its middle one (the fourth of six or seven) */
 const pin = (page: Page, v: number): Promise<void> => page.addInitScript((v) => { Math.random = () => v; }, v);
 
-/** every Element.animate call made on something inside #find (deck.ts animates the result's ground, its paint and its
- *  chips only, on opacity), logged from before the page's scripts run: what it animates (its class attribute: our own
- *  stroke is an SVG element, whose className is no string) and for how long */
+/** every Element.animate call made on something inside #find (deck.ts animates the reveal's line, the result's ground,
+ *  its paint and its chips only), logged from before the page's scripts run: what it animates (its class attribute) and
+ *  for how long */
 const logAnimate = (page: Page): Promise<void> => page.addInitScript(() => {
   const log: string[] = [];
   (window as unknown as { __qzAnimate: string[] }).__qzAnimate = log;
@@ -364,7 +364,7 @@ const literal = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** the one shown result is r's (AC6, E-S3-result): personality and finish; the drawn shade's chip (hidden among the chips)
  *  carries its tones as config/quiz-tones.ts gives them, and #find takes them as custom properties (--qz-shade its
- *  catalog token, --qz-deep, --qz-band, --qz-mid, --qz-sd and --qz-sl the chip's data attributes), so the ground is drawn in
+ *  catalog token, --qz-deep, --qz-band and --qz-mid the chip's data attributes), so the ground is drawn in
  *  the deep tone, the offer's band in the band tone and the name's one hard offset (0.065 em right, 0.052 em down) in the
  *  mid tone, the name narrowed by its static scaleX(0.8); the paint, aria-hidden and one kind on every result: a relief
  *  image, Sam's swatch where the build has it or our own (a fill of the drawn shade masked by the image deck.ts points
@@ -383,9 +383,9 @@ async function expectResult(page: Page, r: Drawn): Promise<void> {
   await expect(shown).toHaveAttribute('data-finish', r.p.finish);
   const pick = shown.locator(`.qz-mini[data-shade="${r.shade}"]`);
   await expect(pick, 'the drawn shade is not among the chips').toHaveAttribute('hidden', '');
-  const tones = await pick.evaluate((m) => ['deep', 'band', 'mid', 'sd', 'sl'].map((k) => (m as HTMLElement).dataset[k] ?? ''));
-  expect(tones, 'the drawn chip\'s tones, as config/quiz-tones.ts gives them').toEqual([r.tones.deep, r.tones.band, r.tones.mid, r.tones.dark, r.tones.light]);
-  expect(await page.locator('#find').evaluate((f) => ['--qz-shade', '--qz-deep', '--qz-band', '--qz-mid', '--qz-sd', '--qz-sl'].map((k) => (f as HTMLElement).style.getPropertyValue(k))), '#find carries the drawn chip\'s tones').toEqual([`var(--shade-${r.shade})`, ...tones]);
+  const tones = await pick.evaluate((m) => ['deep', 'band', 'mid'].map((k) => (m as HTMLElement).dataset[k] ?? ''));
+  expect(tones, 'the drawn chip\'s tones, as config/quiz-tones.ts gives them').toEqual([r.tones.deep, r.tones.band, r.tones.mid]);
+  expect(await page.locator('#find').evaluate((f) => ['--qz-shade', '--qz-deep', '--qz-band', '--qz-mid'].map((k) => (f as HTMLElement).style.getPropertyValue(k))), '#find carries the drawn chip\'s tones').toEqual([`var(--shade-${r.shade})`, ...tones]);
   const look = await page.evaluate(() => {
     const find = document.getElementById('find')!, res = find.querySelector('.qz-result:not([hidden])')!, ground = getComputedStyle(find.querySelector(':scope > .qz-ground')!);
     const gift = document.getElementById('qzGift'), name = getComputedStyle(res.querySelector('.qz-shade')!), paint = res.querySelector<HTMLElement>('.qz-smear')!;
@@ -510,8 +510,8 @@ function watch(page: Page, stop: string, capMs = 10_000): Promise<Watched> {
       };
       return () => { proto[name] = f; };
     });
-    const partOf = (s: Element) => { const c = s.closest<HTMLElement>('.qz-card'); return c ? `card${c.dataset.i}` : s.closest('.qz-result') ? 'result' : s.closest('#qzGift') ? 'gift' : s.closest('#qzIntro') ? 'intro' : 'other'; };
-    const scopeOf = (s: Element, p: string) => (p.startsWith('card') ? s.closest('.qz-card') : p === 'result' ? s.closest('.qz-result') : p === 'gift' ? document.getElementById('qzGift') : p === 'intro' ? document.getElementById('qzIntro') : null) as HTMLElement | null;
+    const partOf = (s: Element) => { const c = s.closest<HTMLElement>('.qz-card'); return c ? `card${c.dataset.i}` : s.closest('.qz-result') ? 'result' : s.closest('#qzGift') ? 'gift' : s.closest('#qzIntro') ? 'intro' : s.closest('#qzReveal') ? 'reveal' : 'other'; };
+    const scopeOf = (s: Element, p: string) => (p.startsWith('card') ? s.closest('.qz-card') : p === 'result' ? s.closest('.qz-result') : p === 'gift' ? document.getElementById('qzGift') : p === 'intro' ? document.getElementById('qzIntro') : p === 'reveal' ? document.getElementById('qzReveal') : null) as HTMLElement | null;
     // what each glyph of a row ends on (decode.ts split()): in the labels' mono one upper-cased character per glyph, its
     // text swapped while it rolls; in a proportional face (data-dc="prop": the result and the offer since 2026-11-02) its
     // own character in its own case, kept while the rolled one is drawn over it from data-r (the style sheet sets the
@@ -578,8 +578,9 @@ function watch(page: Page, stop: string, capMs = 10_000): Promise<Watched> {
     mo.observe(root, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['style', 'data-r', 'aria-pressed'], attributeOldValue: true });
     const parts = () => {
       const p: Record<string, Row[]> = {};
-      const intro = document.getElementById('qzIntro')!, results = document.getElementById('qzResults')!, gift = document.getElementById('qzGift');
+      const intro = document.getElementById('qzIntro')!, results = document.getElementById('qzResults')!, gift = document.getElementById('qzGift'), reveal = document.getElementById('qzReveal');
       if (!intro.hidden) p.intro = items(intro).map(rowOf);
+      if (reveal && !reveal.hidden) p.reveal = items(reveal).map(rowOf);
       for (const c of root.querySelectorAll<HTMLElement>('.qz-card:not([hidden])')) p[`card${c.dataset.i}`] = items(c).map(rowOf);
       const shown = results.querySelector<HTMLElement>('.qz-result:not([hidden])');
       if (!results.hidden && shown) p.result = items(shown).map(rowOf);
@@ -589,7 +590,7 @@ function watch(page: Page, stop: string, capMs = 10_000): Promise<Watched> {
     const anims = () => document.getAnimations().filter((a) => { const t = (a.effect as KeyframeEffect | null)?.target; return t instanceof Element && root.contains(t); }).map((a) => {
       const e = a.effect as KeyframeEffect;
       const props = [...new Set(e.getKeyframes().flatMap((f) => Object.keys(f)))].filter((k) => !/^(offset|computedOffset|easing|composite)$/.test(k)).sort().join(',');
-      return `${(e.target as Element).getAttribute('class')}|${props}|${e.getTiming().duration}`;   // the class attribute: our own stroke is an SVG element
+      return `${(e.target as Element).getAttribute('class')}|${props}|${e.getTiming().duration}`;   // the class attribute, as the animate log names it
     });
     // anything moved by a transform: nothing, the shown name's static narrowing aside (scaleX(0.8) as Sam's design draws
     // it, E-S3-result), read as the matrix in every frame; an element with no box (a hidden result's name, the ground
@@ -614,6 +615,30 @@ function watch(page: Page, stop: string, capMs = 10_000): Promise<Watched> {
     tick();
   }), { stop, capMs, narrow: NARROW });
 }
+/** the reveal between the last answer and the result (quiz.md D50, AC15): its four lines come one after another, the
+ *  step apart (QUIZ_REVEAL_MS), and all four are wiped out before the result's first line is drawn, the reveal's length
+ *  and its wipe after the first; returns the decode phase in which the result's lines come in (the reveal's lines each
+ *  decode in a phase of their own, so the result's is found by what it draws, not by its count) */
+function expectReveal(at: string, w: Watched): number {
+  const drawnRows = (p: string, i?: number) => w.snaps.filter((s) => s.part === p && (i === undefined || s.i === i) && s.max > 0);
+  const n = Q.reveal.length, first = Array.from({ length: n }, (_, k) => drawnRows('reveal', k)[0]?.t ?? NaN);
+  expect(first.map(Number.isFinite), `${at}: each of its ${n} lines drawn`).toEqual(first.map(() => true));
+  for (let k = 1; k < n; k++) {
+    const gap = first[k] - first[k - 1];
+    expect(gap, `${at}: line ${k + 1} about ${QUIZ_REVEAL_MS.step} ms after line ${k}`).toBeGreaterThan(QUIZ_REVEAL_MS.step - 100);
+    expect(gap, `${at}: line ${k + 1} about ${QUIZ_REVEAL_MS.step} ms after line ${k}`).toBeLessThan(QUIZ_REVEAL_MS.step + 300);
+  }
+  for (let k = 0; k < n; k++) expect(w.snaps.filter((s) => s.part === 'reveal' && s.i === k).at(-1)?.max, `${at}: line ${k + 1} wiped out`).toBe(0);
+  const lastReveal = Math.max(...drawnRows('reveal').map((s) => s.t)), firstResult = Math.min(...drawnRows('result').map((s) => s.t));
+  expect(firstResult, `${at}: the result comes once the reveal has gone`).toBeGreaterThan(lastReveal);
+  const length = QUIZ_REVEAL_MS.total + QUIZ_REVEAL_MS.hold;
+  expect(firstResult - first[0], `${at}: the result's first line over ${length} ms after the reveal's first`).toBeGreaterThan(length);
+  expect(firstResult - first[0], `${at}: and not much later`).toBeLessThan(length + 1500);
+  const rp = w.phases.findIndex((_, i) => w.snaps.some((s) => s.phase === i && s.part === 'result' && s.max > 0));
+  expect(rp, `${at}: the result decodes in`).toBeGreaterThan(-1);
+  return rp;
+}
+
 /** the rows of a part in a frame, or undefined when the part is not on screen */
 const part = (f: Frame, p: string): Row[] | undefined => f.parts[p];
 const full = (rows: Row[] | undefined) => !!rows && rows.length > 0 && rows.every((r) => r.n > 0 && r.min === 1 && r.rolled === 0);
@@ -630,7 +655,7 @@ const full = (rows: Row[] | undefined) => !!rows && rows.length > 0 && rows.ever
  *  own character, which stays, so no line changes width. `base`: the key index of the first element of the list the phase
  *  decodes in (the watch numbers the gift's lines after the result's; on a phone held sideways the offer decodes in on
  *  its own, its first line at 0 s) */
-function expectMotion(at: string, w: Watched, p: number, m: { dir: 'in' | 'out'; keys: string[]; reduced?: boolean; base?: number }): void {
+function expectMotion(at: string, w: Watched, p: number, m: { dir: 'in' | 'out'; keys: string[]; reduced?: boolean; base?: number; after?: number }): void {
   const ph = w.phases[p];
   expect(ph, `${at}: decode phase ${p + 1} ran`).toBeTruthy();
   expect(ph.off, `${at}: and ended`).toBeLessThan(Infinity);
@@ -639,7 +664,7 @@ function expectMotion(at: string, w: Watched, p: number, m: { dir: 'in' | 'out';
   const n = m.keys.length, step = m.dir === 'in' && n > 1 ? Math.min(50, 600 / (n - 1)) : 0;
   const dur = m.reduced || m.dir === 'out' ? 200 : 400, roll = m.dir === 'in' && !m.reduced ? 750 : 0;
   for (const k of m.keys) {
-    const mine = snaps.filter((s) => id(s) === k), last = mine[mine.length - 1], start = (Number(k.split(':')[1]) - (m.base ?? 0)) * (m.dir === 'in' ? step : 0);
+    const mine = snaps.filter((s) => id(s) === k), last = mine[mine.length - 1], start = (m.after ?? 0) + (Number(k.split(':')[1]) - (m.base ?? 0)) * (m.dir === 'in' ? step : 0);
     const name = `${at}: ${k} (${last.k})`;
     if (m.dir === 'in') {
       // decode.ts draws glyph i of a row of n at clamp(11u - 10x), x = i / (n - 1) and u the time over the wipe: a row is in
@@ -658,7 +683,7 @@ function expectMotion(at: string, w: Watched, p: number, m: { dir: 'in' | 'out';
       expect(mine.filter((s) => s.max > 0 && since(s) > dur + 5).map(since), `${name}: still visible after ${dur} ms`).toEqual([]);
     }
   }
-  const end = m.dir === 'out' ? dur : (n - 1) * step + (roll || dur);
+  const end = m.dir === 'out' ? dur : (m.after ?? 0) + (n - 1) * step + (roll || dur);
   expect(ph.off - ph.on, `${at}: over at ${end.toFixed(1)} ms, not before`).toBeGreaterThan(end - 1);
   const moving = snaps.filter((s) => s.max > 0 && s.min < 1);
   expect(moving.length, `${at}: a step of the decoder seen part-way`).toBeGreaterThan(0);
@@ -743,20 +768,23 @@ test('AC5 and AC6: ten answers for The Quiet Curator with Math.random at 0.01 gi
   await page.locator('.qz-card.is-top .qz-opt[data-persona="curator"]').click();
   const e = await finish;
   expect(e.timedOut, 'the result settled within the window').toBe(false);
-  expect(e.phases.length, 'card 10 out (the rest, then the answer), the result in').toBe(3);
+  // card 10 out (the rest, then the answer), the reveal's four lines in one after another and out together (D50), then
+  // the result: its lines start once the ground has half risen (D51), 350 ms into their phase
+  const rp = expectReveal('the reveal', e);
   const lines = resultLines(r);
   expect(lines + GIFT_LINES, 'more lines than fit 0.05 s apart in 0.6 s').toBeGreaterThan(13);
-  expectMotion('the result and the gift decode in', e, 2, { dir: 'in', keys: [...keys('result', lines), ...keys('gift', GIFT_LINES, lines)] });
+  expectMotion('the result and the gift decode in', e, rp, { dir: 'in', keys: [...keys('result', lines), ...keys('gift', GIFT_LINES, lines)], after: 350 });
+  expect(rp, 'nothing between the reveal\'s wipe and the result').toBe(e.phases.length - 1);
   await expect(page.locator('#find')).toHaveAttribute('data-state', 'result');
   await expectResult(page, r);
   await expect(page.locator('#qzLive')).toHaveText(`${Q.eyebrow} Porcelain. The Quiet Curator.`);
   await expect(page.locator('.qz-result:not([hidden]) .qz-shade')).toBeFocused();
   await expect(page.locator('#qzDeck')).toBeHidden();
   await expect(page.locator('#qzGift')).toBeVisible();
-  // the ground, the paint (Sam's swatch or our own stroke, whichever the build has) and the six chips fade in on opacity
-  // over 400 ms; nothing else in the section is animated through the Web Animations API (the decode sets each glyph's
-  // opacity itself)
-  expect(await animateLog(page)).toEqual(['qz-ground|opacity|400', `${await paintClass(page)}|opacity|400`, ...r.others.map(() => 'qz-mini|opacity|400')]);
+  // through the Web Animations API, and nothing else (the decode sets each glyph's opacity itself): the reveal's line
+  // filling over 3.5 s by a transform (D50), the ground rising over 0.7 s by a transform (D51), the paint and the six
+  // chips fading in over 400 ms
+  expect(await animateLog(page)).toEqual(['qz-bar-fill|transform|3500', 'qz-ground|transform|700', `${await paintClass(page)}|opacity|400`, ...r.others.map(() => 'qz-mini|opacity|400')]);
   const form = page.locator('#qzForm');
   for (const [k, v] of [['shade', r.shade], ['family', 'frosty-white'], ['finish', 'matte'], ['persona', 'curator']]) await expect(form, k).toHaveAttribute(`data-${k}`, v);
   expect(await events(page)).toEqual([['quiz_start', {}], ...answered(CURATOR), UNLOCKED, ['quiz_complete', { persona: 'curator', shade: 'frosty-white-10', others: r.others.join(',') }]]);
@@ -1287,7 +1315,8 @@ const SHADE_RGB: Record<string, string> = Object.fromEntries([...new Set(QUIZ_PE
  *  100svh) in its band tone (--qz-band; clear before), the colour layer of Sam's swatch (.qz-rub-col, where the build has
  *  it) in the drawn shade (--qz-shade; clear before), the email field in Pearl Whisper with no border (a 3 px Urban Slate
  *  line under it while aria-invalid), Send in Urban Slate (--night under the pointer), and each chip in its own shade
- *  with the 1 px Pearl Whisper hairline where data-rim asks for it; a chip's name has no fill of its own. The strips of
+ *  with the 1 px Pearl Whisper hairline where data-rim asks for it; a chip's name has no fill of its own; and the
+ *  reveal's 1 px hairline (.qz-bar) in Urban Slate with its 3 px line (.qz-bar-fill) in Pearl Whisper (D50). The strips of
  *  an answer picture carry the photograph (picture.ts draws the <img>'s chosen source through the CSSOM) with no fill and no
  *  border. Focus is dropped first: the focus ring's ::before is a box on :focus-visible only */
 const boxed = (page: Page): Promise<string[]> => page.evaluate(({ CLEAR, URBAN_SLATE, PEARL, NIGHT, SHADE_RGB }) => {
@@ -1312,6 +1341,9 @@ const boxed = (page: Page): Promise<string[]> => page.evaluate(({ CLEAR, URBAN_S
     if (!p && e.id === 'qzEmail') return e.getAttribute('aria-invalid') === 'true' ? fillOf(PEARL, '0px 0px 3px 0px', `solid ${URBAN_SLATE}`) : fillOf(PEARL);
     if (!p && e.id === 'qzSend') return fillOf(e.matches(':hover') && e.getAttribute('aria-disabled') !== 'true' ? NIGHT : URBAN_SLATE);
     if (!p && e.matches('.qz-mini')) return e.hasAttribute('data-rim') ? fillOf(SHADE_RGB[e.dataset.shade ?? ''], '1px 1px 1px 1px', `solid ${PEARL}`) : fillOf(SHADE_RGB[e.dataset.shade ?? '']);
+    // the reveal's hairline in Urban Slate and the line that fills it in Pearl Whisper (D50): lines, not boxes
+    if (!p && e.matches('.qz-bar')) return fillOf(URBAN_SLATE);
+    if (!p && e.matches('.qz-bar-fill')) return fillOf(PEARL);
     const fill = cs.backgroundColor !== CLEAR || cs.backgroundImage !== 'none';
     return fill || !none ? `${what}: ${cs.backgroundColor} ${cs.backgroundImage} ${border}` : '';
   })).filter(Boolean);
@@ -1372,7 +1404,7 @@ const offType = async (page: Page, sizes: Sizes): Promise<string[]> => {
       rs: parseFloat(getComputedStyle(document.getElementById('find')!).getPropertyValue('--qz-rs')) || 1,
       lines: [...els].filter((e) => !e.closest('.sr-only, .dc > span, #qzEmail, noscript')).map((e) => {
         const cs = getComputedStyle(e), name = e.closest<HTMLElement>('.qz-shade'), chip = e.closest<HTMLElement>('.qz-mini');
-        const role = name ? 'name' : e.closest('.qz-h, .qz-q') ? 'step' : e.closest('.qz-eyebrow') ? 'eyebrow' : e.closest('.qz-persona') ? 'persona' : e.closest('.qz-text, .qz-palette') ? 'words' : chip ? 'chip'
+        const role = name ? 'name' : e.closest('.qz-h, .qz-q, .qz-rv-line') ? 'step' : e.closest('.qz-eyebrow') ? 'eyebrow' : e.closest('.qz-persona') ? 'persona' : e.closest('.qz-text, .qz-palette') ? 'words' : chip ? 'chip'
           : e.closest('.qz-result') ? 'result' : e.closest('.qz-offer') ? 'offer' : e.closest('.qz-fine') ? 'fine' : e.closest('#qzSend') ? 'send' : e.closest('#qzGift') ? 'band' : 'label';
         return {
           what: `${e.tagName.toLowerCase()}${e.id ? `#${e.id}` : ''}${[...e.classList].map((c) => `.${c}`).join('')}`, role, bold: !!e.closest('.qz-offer strong'), ink: chip?.dataset.ink ?? '',
@@ -1484,7 +1516,7 @@ const chipList = (page: Page) => page.evaluate(() => ({
   }),
 }));
 
-test('AC7 and E-S3-result the chips and the ground: every chip of every result (hidden ones too) is painted in its own shade, the nine darkest (chipRim: under 1.5:1 against the lightest ground) with a 1 px Pearl Whisper hairline and the rest no border, its name on the chip itself with no fill of its own, in --night or Pearl Whisper, whichever reads better on the shade (chipInk, data-ink: 4.4:1 or better, Fuchsia and Teal the two under AA\'s 4.5), alike on the poster tier and the 3D tier and under every result; the drawn shade\'s tones colour the ground, the band, the name\'s offset layer and the paint (Wine for The Main Character, gloss and one of the nine: #find[data-sm-rim], and where the build draws our own stroke its Pearl highlight and outline; Thyme for The Calm Strategist, matte, with neither), Pearl Whisper reading 13.6:1 or better on the ground and 11.6:1 on the band', async ({ page, baseURL }) => {
+test('AC7 and E-S3-result the chips and the ground: every chip of every result (hidden ones too) is painted in its own shade, the nine darkest (chipRim: under 1.5:1 against the lightest ground) with a 1 px Pearl Whisper hairline and the rest no border, its name on the chip itself with no fill of its own, in --night or Pearl Whisper, whichever reads better on the shade (chipInk, data-ink: 4.4:1 or better, Fuchsia and Teal the two under AA\'s 4.5), alike on the poster tier and the 3D tier and under every result; the drawn shade\'s tones colour the ground, the band, the name\'s offset layer and the paint (Wine for The Main Character, gloss and one of the nine, Thyme for The Calm Strategist, matte; a relief image in every build since 2026-11-03, with no mark on #find for the dark ones), Pearl Whisper reading 13.6:1 or better on the ground and 11.6:1 on the band', async ({ page, baseURL }) => {
   expect(RIM.map((id) => byId.get(id)!.name), 'the nine dark shades').toEqual(['Chestnut', 'Sapphire', 'Prussian', 'Navy', 'Midnight', 'Pine', 'Burgundy', 'Wine', 'Fig']);
   const each = (at: string, list: Awaited<ReturnType<typeof chipList>>['list']) => {
     for (const c of list) {
@@ -1516,12 +1548,10 @@ test('AC7 and E-S3-result the chips and the ground: every chip of every result (
   expect(contrast(PEARL, wine.ground), 'Pearl Whisper on Wine\'s ground').toBeGreaterThanOrEqual(13.6);
   expect(contrast(PEARL, wine.band), 'and on its band').toBeGreaterThanOrEqual(11.6);
   each('Wine\'s result, every chip of every result', (await chipList(page)).list);
-  // the paint shows the finish and the dark shades' rim: our own stroke by its Pearl highlight and its outline
-  // (#find[data-sm-rim]); Sam's swatch carries its own highlights and rim (expectResult reads which the build has)
-  const ownStroke = async () => (await paintClass(page)) === 'qz-smear';
-  await expect(page.locator('#find'), 'one of the nine: #find[data-sm-rim], which outlines our own stroke').toHaveAttribute('data-sm-rim', '');
-  if (await ownStroke()) await expect(page.locator('.qz-result:not([hidden]) .qz-sm-gloss'), 'a gloss result\'s highlight').toHaveCount(1);
-  // and toggled: Thyme on Navy's article, its own tones, no highlight and no outline
+  // the paint is a relief image in every build since 2026-11-03 (D52): its own highlights and rim, the same on every
+  // shade, so #find carries no mark for the dark ones (the stroke's data-sm-rim went with it)
+  await expect(page.locator('#find'), 'no stroke outline to ask for').not.toHaveAttribute('data-sm-rim');
+  // and toggled: Thyme on Navy's article, its own tones
   await page.locator('.qz-result:not([hidden]) .qz-retry').click();
   await answer(page, STRATEGIST);
   await expectResult(page, drawn(STRATEGIST, 0.5));
@@ -1530,8 +1560,6 @@ test('AC7 and E-S3-result the chips and the ground: every chip of every result (
   expect(contrast(PEARL, thyme.ground), 'Pearl Whisper on Thyme\'s ground').toBeGreaterThanOrEqual(13.6);
   expect(contrast(PEARL, thyme.band), 'and on its band').toBeGreaterThanOrEqual(11.6);
   each('Thyme\'s result', (await chipList(page)).list);
-  await expect(page.locator('#find')).not.toHaveAttribute('data-sm-rim');
-  if (await ownStroke()) await expect(page.locator('.qz-result:not([hidden]) .qz-sm-gloss'), 'a matte result has none').toHaveCount(0);
   // the 3D tier: the same chips (the fog never lies under them), read before the deck has painted any
   await page.goto(new URL('/?tier=hero3d', baseURL).href);
   const fog = await chipList(page);
@@ -1875,10 +1903,11 @@ test('AC9 reduced motion: no transform anywhere (the name\'s static narrowing as
   expectMotion('the commit: then the answer taken', b, 1, { dir: 'out', reduced: true, keys: [`card0:${ans}`] });
   expect(b.phases[1].on - b.phases[0].off, 'no 120 ms hold under reduced motion').toBeLessThan(20);
   expectMotion('the commit: card 2 fades in', b, 2, { dir: 'in', reduced: true, keys: keys('card1', 11) });
-  expect(c.phases.length, 'card 10 out (the rest, then the answer), the result in').toBe(3);
   expect(c.phases[1].on - c.phases[0].off, 'no hold on the last card either').toBeLessThan(20);
-  expectMotion('the result and the gift fade in', c, 2, { dir: 'in', reduced: true, keys: [...keys('result', lines), ...keys('gift', GIFT_LINES, lines)] });
-  expect(await animateLog(page), 'the ground, the paint and the chips fade in over 200 ms').toEqual(['qz-ground|opacity|200', `${await paintClass(page)}|opacity|200`, ...r.others.map(() => 'qz-mini|opacity|200')]);
+  // the reveal on the same clock, its lines fading in, then the result fading in at once (no wait for a ground's rise)
+  const rp = expectReveal('the reveal under reduced motion', c);
+  expectMotion('the result and the gift fade in', c, rp, { dir: 'in', reduced: true, keys: [...keys('result', lines), ...keys('gift', GIFT_LINES, lines)] });
+  expect(await animateLog(page), 'the reveal\'s line brightening in four steps by opacity, and the ground, the paint and the chips fading in over 200 ms').toEqual(['qz-bar-fill|opacity|3500', 'qz-ground|opacity|200', `${await paintClass(page)}|opacity|200`, ...r.others.map(() => 'qz-mini|opacity|200')]);
   await expect(page.locator('.qz-card[data-i="0"]')).toBeHidden();
   await ctx.close();
 });
@@ -2015,7 +2044,7 @@ test('AC8 Try again while a send is in flight, for a 500, a 200 and a 409 each a
     expect(e.timedOut, at).toBe(false);
     const first = e.frames.find((f) => !!part(f, 'gift'));
     expect(part(first!, 'gift')!.map((x) => `${x.k}:${x.max}`), `${at}: the gift comes with every line hidden, Send included`).toEqual(GIFT_KEYS.map((x) => `${x}:0`));
-    expectMotion(`${at}: the result and the gift decode in, Send with them`, e, 2, { dir: 'in', keys: gone });
+    expectMotion(`${at}: the result and the gift decode in, Send with them`, e, expectReveal(`${at}: the reveal`, e), { dir: 'in', keys: gone, after: 350 });
     await expectResult(page, r);
     expect(await atRest(send), `${at}: Send my code in its own words again, settled into one text node`).toEqual(settledLine(Q.send, true));
     await expect(send).toHaveAttribute('aria-disabled', 'false');
@@ -2370,8 +2399,8 @@ test('AC4 at 360 x 780 the done line with a 60-character address breaks inside t
 /** the shown result as it stands: #find's box against the 100svh probe and the viewport, --qz-rs, the name's size
  *  against the one fitted to it and its width as drawn (scaleX(0.8): fitResult() fits the drawn name to its column)
  *  against its column's, the offer's band (when it is drawn), whether anything scrolls sideways, and the paint: its box,
- *  its width over height (--qz-paint-ar: deck.ts writes the swatch's image's own on each .qz-rub; our own stroke takes
- *  the swatch's box, its 200 x 600 drawing centred in it), the image's own ratio from its width and height (Sam's swatch)
+ *  its width over height (--qz-paint-ar: deck.ts writes the relief's image's own on each .qz-rub; Sam's swatch and our own
+ *  relief are both 256 x 624), the image's own ratio from its width and height
  *  and the result's grid tracks (on a laptop
  *  the reference's five columns, the paint's the third) */
 const oneScreen = (page: Page) => page.evaluate(() => {
@@ -2438,11 +2467,11 @@ for (const [w, h, swaps] of SCREENS) {
       expect(Math.abs(m.size - m.fit), `${at}: the name at its fitted ${m.fit} px`).toBeLessThan(0.05);
       expect(m.nameW, `${at}: the name as drawn (at 80% of its width) inside its column (${m.headW} px)`).toBeLessThanOrEqual(m.headW + 1);
       expect(m.wide, `${at}: nothing scrolls sideways`).toBe(false);
-      // the paint at its own proportions: the swatch's image's, which deck.ts writes on it, or the same box for our own
-      // stroke (quiz.css svg.qz-smear), so a build without the swatch fits where one with it does
+      // the paint at its own proportions: its image's, which deck.ts writes on it (Sam's swatch and our own relief are both
+      // 256 x 624, so a build without the swatch fits where one with it does)
       const p = m.paint;
-      if (p.swatch) expect(p.own, `${at}: Sam's swatch at its image's own width over height, written by deck.ts`).toBe((p.image ?? 0).toFixed(5));
-      else expect(p.ar, `${at}: our own stroke in the swatch's box, 0.41026`).toBeCloseTo(0.41026, 4);
+      if (p.swatch) expect(p.own, `${at}: the relief at its image's own width over height, written by deck.ts`).toBe((p.image ?? 0).toFixed(5));
+      else throw new Error(`${at}: the paint has no image (the SVG stroke is gone since 2026-11-03)`);
       expect(Math.abs(p.height - p.width / p.ar), `${at}: the paint ${p.width.toFixed(1)} x ${p.height.toFixed(1)} px, at its proportions`).toBeLessThanOrEqual(1);
       if (w >= 900 && h >= 600) {
         // a laptop: the reference's five columns (34, 5, 13, 8 and 40), the paint in the third, as wide as the column up to
@@ -2554,43 +2583,56 @@ test('E-S3-result on a phone held sideways (844 x 390): data-swap on #find, the 
   await ctx.close();
 });
 
-test('E-S3-result the logotype\'s band over the ground: html carries data-qz-ground while the result is shown and #find covers the band\'s line (64 px), so the logotype and Back to top, turned Urban Slate over the light fog, stay Pearl Whisper over the deep ground; scrolled on until #find ends above the line, or back until it starts below it, the mark goes and the tone with it; at the result\'s top it comes back, and Try again takes it off', async ({ page, baseURL }) => {
+test('E-S3-result the ground leaves with the scroll (D53; Sam, 2026-11-03: "after getting the results, the transition is not coming, only that box"): fixed to the screen while the result shows, full at the result\'s rest, fading as #find moves off the screen\'s top in either direction, gone by half a screen, so no edge of a box slides past; html carries data-qz-ground while the ground is half there or more, so the logotype, turned Urban Slate over the light fog, stays Pearl Whisper over the deep ground and turns back as it goes; Try again takes it off (the landing page has drawn no Back to top since the section index of 2026-11-02, so the logotype alone is read)', async ({ page, baseURL }) => {
   await pin(page, 0.01);
   await openQuiz(page, baseURL);
-  const html = page.locator('html'), logo = page.locator('#siteLogo'), toTop = page.locator('#toTop'), find = page.locator('#find');
+  const html = page.locator('html'), logo = page.locator('#siteLogo'), find = page.locator('#find');
   await expect(html, 'not on the intro').not.toHaveAttribute('data-qz-ground');
   await begin(page);
   await expect(html, 'nor on a question').not.toHaveAttribute('data-qz-ground');
   await answer(page, CURATOR);
   await expect(find).toHaveAttribute('data-state', 'result');
-  await expect(html, 'the result at the top, under the band').toHaveAttribute('data-qz-ground', '');
-  // the tone the hero's ride gives the logotype over the light fog (glitch.ts setTone; to-top.ts copies it to Back to top)
+  await expect(html, 'the result at its rest, the ground under the band').toHaveAttribute('data-qz-ground', '');
+  // the tone the hero's ride gives the logotype over the light fog (glitch.ts setTone)
   await logo.evaluate((l) => { (l as HTMLElement).dataset.tone = 'light'; });
-  await expect(toTop).toHaveAttribute('data-tone', 'light');
   await expect(logo, 'Pearl Whisper over the ground').toHaveCSS('color', PEARL);
-  await expect(toTop).toHaveCSS('color', PEARL);
+  const vh = await page.evaluate(() => innerHeight);
   const scrollFind = (dy: number) => page.evaluate((dy) => { const f = document.getElementById('find')!; scrollTo({ top: f.getBoundingClientRect().top + scrollY + dy, behavior: 'instant' }); }, dy);
-  const rect = () => find.evaluate((f) => { const b = f.getBoundingClientRect(); return { top: b.top, bottom: b.bottom }; });
-  // on past the result into section 4 (open under it): #find ends above the line
-  await scrollFind((await rect()).bottom - 64 + 40);
-  expect((await rect()).bottom, '#find ends above the band\'s line').toBeLessThan(64);
-  await expect(html, 'the ground no longer under the band').not.toHaveAttribute('data-qz-ground');
+  const ground = () => page.evaluate(() => {
+    const g = document.querySelector<HTMLElement>('#find > .qz-ground')!, b = g.getBoundingClientRect();
+    return { position: getComputedStyle(g).position, top: Math.round(b.top), height: Math.round(b.height), opacity: Number(getComputedStyle(g).opacity), find: document.getElementById('find')!.getBoundingClientRect().top };
+  });
+  // fixed to the screen, full at the rest
+  expect(await ground(), 'the ground covers the screen, full').toMatchObject({ position: 'fixed', top: 0, height: vh, opacity: 1 });
+  // a fifth of a screen down: still there, dissolving (1 - 0.2 / 0.5), and still the greater part under the band
+  await scrollFind(Math.round(vh * 0.2));
+  await expect.poll(async () => (await ground()).opacity, { message: 'part-way: 0.6' }).toBeCloseTo(0.6, 1);
+  await expect(html).toHaveAttribute('data-qz-ground', '');
+  expect((await ground()).top, 'it stays where it is: no edge moves with the section').toBe(0);
+  // two fifths down: under half there (0.2), the mark gone and the logotype back to its tone over the fog
+  await scrollFind(Math.round(vh * 0.4));
+  await expect.poll(async () => (await ground()).opacity).toBeCloseTo(0.2, 1);
+  await expect(html, 'the ground under half there').not.toHaveAttribute('data-qz-ground');
   await expect(logo, 'the logotype back to its tone over the fog').toHaveCSS('color', URBAN_SLATE);
-  await expect(toTop).toHaveCSS('color', URBAN_SLATE);
-  // the result's top at the viewport's top again
+  // on past the result into section 4 (open under it): gone
+  await scrollFind(Math.round(vh * 1.2));
+  await expect.poll(async () => (await ground()).opacity).toBe(0);
+  // the result's rest again: full, the mark back
   await scrollFind(0);
+  await expect.poll(async () => (await ground()).opacity).toBe(1);
   await expect(html).toHaveAttribute('data-qz-ground', '');
   await expect(logo).toHaveCSS('color', PEARL);
-  // back up the page: #find starts below the line
-  await scrollFind(-120);
-  expect((await rect()).top, '#find starts below the band\'s line').toBeGreaterThan(64);
+  // back up the page by three tenths of a screen: under half there (0.4), the fog over the band again
+  await scrollFind(-Math.round(vh * 0.3));
+  await expect.poll(async () => (await ground()).opacity).toBeCloseTo(0.4, 1);
   await expect(html, 'the fog over the band again').not.toHaveAttribute('data-qz-ground');
-  // Try again: the deck on the fog, never the mark
+  // Try again: the deck on the fog, never the mark, and the ground's own opacity handed back
   await scrollFind(0);
   await expect(html).toHaveAttribute('data-qz-ground', '');
   await page.locator('.qz-result:not([hidden]) .qz-retry').click();
   await expect(find).toHaveAttribute('data-state', 'quiz');
   await expect(html, 'not once the result has gone').not.toHaveAttribute('data-qz-ground');
+  await expect.poll(() => page.evaluate(() => { const f = document.getElementById('find')!; return `${f.hasAttribute('data-fade')}|${f.style.getPropertyValue('--qz-fade')}`; }), { message: 'no fade left on #find' }).toBe('false|');
   await logo.evaluate((l) => { delete (l as HTMLElement).dataset.tone; });
 });
 

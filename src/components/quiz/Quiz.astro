@@ -124,7 +124,7 @@ const shade = (id: string) => {
               <div class="qz-r-more">
               <ul class="qz-also">
                 {p.shades.map((id) => { const s = shade(id); return (
-                  <li class="qz-mini" data-shade={s.id} data-family={s.family} data-name={s.name} data-fam={s.fam} data-href={s.href} data-ink={s.ink} data-rim={s.rim ? '' : undefined} data-deep={s.tones.deep} data-band={s.tones.band} data-mid={s.tones.mid} data-sd={s.tones.dark} data-sl={s.tones.light} hidden={id === first.id}>
+                  <li class="qz-mini" data-shade={s.id} data-family={s.family} data-name={s.name} data-fam={s.fam} data-href={s.href} data-ink={s.ink} data-rim={s.rim ? '' : undefined} data-deep={s.tones.deep} data-band={s.tones.band} data-mid={s.tones.mid} hidden={id === first.id}>
                     <span class="qz-mini-name" data-dc="prop">{s.name}</span>
                   </li>
                 ); })}

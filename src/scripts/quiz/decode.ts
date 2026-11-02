@@ -32,8 +32,9 @@ export interface Decoder {
   show(el: HTMLElement, delay?: number): Promise<void>;
   /** the wipe out; resolves when every glyph is gone */
   hide(el: HTMLElement, delay?: number): Promise<void>;
-  /** the decode in for a list, one after another at `step` seconds (the step shrinks so the last starts within 0.6 s) */
-  showAll(els: readonly HTMLElement[], step?: number): Promise<void>;
+  /** the decode in for a list, one after another at `step` seconds (the step shrinks so the last starts within 0.6 s), the
+   *  first after `after` seconds (busy from the call: the result's lines wait for its ground's rise, quiz.md D51) */
+  showAll(els: readonly HTMLElement[], step?: number, after?: number): Promise<void>;
   hideAll(els: readonly HTMLElement[]): Promise<void>;
   /** new text, shown at once with no animation (a button's sending state) */
   set(el: HTMLElement, text: string): void;
@@ -126,7 +127,7 @@ export function createDecoder(reduced: () => boolean, onBusy: (busy: boolean) =>
     prepare(el, text, visible) { prepare(el, text, visible); },
     show: (el, delay = 0) => start(prepare(el), true, delay),
     hide: (el, delay = 0) => start(prepare(el), false, delay),
-    showAll(els, step = 0.05) { const s = els.length > 1 ? Math.min(step, 0.6 / (els.length - 1)) : 0; return Promise.all(els.map((el, i) => start(prepare(el), true, i * s))).then(() => {}); },
+    showAll(els, step = 0.05, after = 0) { const s = els.length > 1 ? Math.min(step, 0.6 / (els.length - 1)) : 0; return Promise.all(els.map((el, i) => start(prepare(el), true, after + i * s))).then(() => {}); },
     hideAll(els) { return Promise.all(els.map((el) => start(prepare(el), false, 0))).then(() => {}); },
     set(el, text) { const r = prepare(el, text); active.delete(r); if (r.whole) split(r, 1); r.on = true; r.settled = true; r.hidden = false; for (const g of r.glyphs) { put(g, 1); glyph(r, g, g.ch); } join(r); done(r); },
     conceal(el) { const r = prepare(el); active.delete(r); if (r.whole) split(r, 0); r.on = false; r.settled = true; r.hidden = true; for (const g of r.glyphs) { put(g, 0); glyph(r, g, g.ch); } done(r); },

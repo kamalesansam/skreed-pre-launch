@@ -78,6 +78,7 @@ html:not(.js) .qz-skip { display: none; }   /* and nothing is locked there, so t
 .qz-rv-line { font-size: var(--qz-fs-q); line-height: 1.25; }
 .qz-bar { position: relative; height: 1px; margin-top: var(--s2); background: var(--urban-slate); }
 .qz-bar-fill { position: absolute; left: 0; top: -1px; width: 100%; height: 3px; background: var(--pearl-whisper); transform: scaleX(0); transform-origin: left center; }
+@media (prefers-reduced-motion: reduce) { .qz-bar-fill { transform: none; opacity: 0; } }   /* no transform under reduced motion (AC9): the full line brightens a quarter at a time instead (deck.ts) */
 
 /* the result (Sam, 2026-11-02, with his reference: "for the results page, first of all it should fit inside one screen,
    after the results, there should be no scrolling, ad make it look something like this for the results ... dynamic to all
@@ -94,7 +95,7 @@ html:not(.js) .qz-skip { display: none; }   /* and nothing is locked there, so t
 .quiz { --s0: 4px;   /* the step below --s1: the chips' gap, Sam's reference's measure (8 px at its 2000 px), recorded in DESIGN.md's Spacing (2026-11-03) */
   --qz-f-name: "Anton", Impact, "Arial Narrow", sans-serif; --qz-f-text: "Poppins", "Poppins Fallback", Arial, sans-serif; --qz-f-label: "Work Sans", Arial, sans-serif; --qz-fs-rt: clamp(15px, min(1.5vw, 2.7vh), 30px); --qz-fs-label: clamp(16px, min(1.85vw, 3.3vh), 37px); --qz-fs-offer: clamp(15px, min(1.8vw, 3.2vh), 36px); }
 .qz-ground { position: absolute; inset: 0; z-index: -1; display: none; background: var(--qz-deep, var(--night)); pointer-events: none; }
-.quiz[data-state="result"] .qz-ground { display: block; bottom: calc(100svh - 100lvh); }   /* one screen is fitted to 100svh (a phone browser's bars shown); with the bars gone the ground runs on under the section to the screen's foot, so no fog shows there */
+.quiz[data-state="result"] .qz-ground { display: block; position: fixed; }   /* fixed to the screen in the result state, under the section's text (the section is a stacking context, z-index 3) and over the fog: it covers the screen with a phone browser's bars shown or gone, and leaves with the scroll, its opacity set by deck.ts (D53), rather than sliding off as a box */   /* one screen is fitted to 100svh (a phone browser's bars shown); with the bars gone the ground runs on under the section to the screen's foot, so no fog shows there */
 /* the fixed logotype and Back to top turn Urban Slate over the light fog (the hero's ride, glitch.ts setTone); while the
    result's deep ground lies under them they stay Pearl Whisper (deck.ts marks the page) */
 html[data-qz-ground] .site-logo[data-tone="light"], html[data-qz-ground] .to-top[data-tone="light"], html[data-qz-ground] .snav[data-tone="light"] { color: var(--pearl-whisper); }   /* .snav is the section index of 2026-11-02 (site-nav.ts copies the logotype's tone): nothing on this branch until the default is merged in, then Home, Families, Quiz and Products stay Pearl Whisper over the ground too */
@@ -156,6 +157,10 @@ svg.qz-smear { aspect-ratio: var(--qz-paint-ar); }   /* our own stroke takes the
 .qz-gift { position: relative; padding: calc(var(--s4) * var(--qz-rs, 1)) calc(var(--inset) + env(safe-area-inset-right, 0px)) calc(var(--s3) * var(--qz-rs, 1) + env(safe-area-inset-bottom, 0px)) calc(var(--inset) + env(safe-area-inset-left, 0px)); background: var(--qz-band, transparent); font: 300 max(12px, calc(var(--qz-fs-label) * 0.5 * var(--qz-rs, 1))) / 1.35 var(--qz-f-label); letter-spacing: 0; }
 .qz-gift::after { content: ""; position: absolute; top: 100%; left: 0; right: 0; height: calc(100lvh - 100svh); background: inherit; pointer-events: none; }   /* the band's colour runs on to the screen's foot with a phone browser's bars gone, as the ground does */
 .qz-gift[hidden] { display: none; }
+/* the result leaves with the scroll (D53): while it fades (deck.ts sets [data-fade] and --qz-fade, 1 to 0 over half a
+   screen) the ground and the band's fill go together, so neither slides off as a box with a hard edge */
+.quiz[data-fade] .qz-ground { opacity: var(--qz-fade); }
+.quiz[data-fade] .qz-gift { background: color-mix(in srgb, var(--qz-band, transparent) calc(var(--qz-fade) * 100%), transparent); }   /* its ::after inherits it */
 .qz-gift-in { display: grid; gap: calc(var(--s3) * var(--qz-rs, 1)); justify-items: center; max-width: 960px; margin: 0 auto; text-align: center; }
 .qz-offer { max-width: 66ch; font: 400 max(13px, calc(var(--qz-fs-offer) * var(--qz-rs, 1))) / 1.3 var(--qz-f-text); text-transform: none; text-wrap: balance; }
 .qz-offer strong { font-weight: 700; }
