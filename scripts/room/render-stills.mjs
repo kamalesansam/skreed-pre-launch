@@ -141,7 +141,7 @@ if (framesDir) {
   // the hall's still, from the start station, without the section's DOM or the logotype
   const out = 'src/assets/room/stills';
   mkdirSync(out, { recursive: true });
-  const hide = (page) => page.evaluate(() => { for (const el of document.querySelectorAll('#rmStage > *, .site-logo, .scrollcue, .cuetext, #tune, astro-dev-toolbar')) el.style.visibility = 'hidden'; });
+  const hide = (page) => page.evaluate(() => { for (const el of document.querySelectorAll('#rmStage > *, .site-logo, #siteNav, .scrollcue, .cuetext, #tune, astro-dev-toolbar')) el.style.visibility = 'hidden'; });
   for (const [setup, cls] of [['phone', 'portrait'], ['laptop', 'wide']]) {
     const { ctx, page } = await open(setup);
     await go(page, 1, 1500); await hide(page);

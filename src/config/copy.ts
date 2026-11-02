@@ -29,6 +29,13 @@ export const COPY = {
   logo: { aria: 'Skreed, home' },
   /** the back-to-top control on every page (Sam, 2026-10-19): back to the landing page's section 1, without a reload */
   toTop: { label: 'Back to top' },
+  /** the section index at the top of the landing page (docs/specs/navbar.md 3): its name, the phone's Menu and panel, the four sections in page order (2026-11-02: "instead of countdown name it as home, instead of universe, name it as products") */
+  nav: {
+    aria: 'Sections',
+    menu: 'Menu',
+    close: 'Close',
+    items: { top: 'Home', families: 'Families', quiz: 'Quiz', room: 'Products' },
+  },
   page: {
     h1: 'Skreed. Tech essentials that go beyond basic.',
     title: 'Skreed. Tech essentials that go beyond basic.',

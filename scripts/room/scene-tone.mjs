@@ -1,16 +1,17 @@
 // The logotype's tone over each scene (docs/specs/section-4-flux.md 5 "The island modules": the plan's toneDark; the
-// hero's own rule, hero.md AC: the logotype and the Back to top control turn Urban Slate where the frame under them
+// hero's own rule, hero.md AC: the logotype and the section index, which copies its tone, turn Urban Slate where the frame under them
 // is light, at 3:1 or better; the build record's D5). Each scene's still as the carousel draws it at rest (the loop's
 // first frame, cover-fitted to the view at the planes' 1.01 overscan, the light-up whole, the bottom shade in the
 // frame as the plane shader draws it, solid to SHADE.solid of the height and clear by SHADE.height) at 390 x 844 (the portrait still) and 1280 x 800 (the wide still), measured under the logotype's box and the
 // control's box (read off the served page: the logotype at the gutter, 96 x 23.2 px, 136 x 32.9 from 1024 px wide;
-// the control's 44 px row top right): the median luminance under each box, and Pearl Whisper's and Urban Slate's
+// the control is the section index at the top right since 2026-11-02, its 44 px row: Menu at 390, the four words at 1280): the median luminance under each box, and Pearl Whisper's and Urban Slate's
 // contrast against it. The pick per scene is the colour that measures 3:1 or better under every box at both
 // viewports, Pearl where the frame is dark, Urban Slate where it is light; where neither does under every box, the
 // colour with the higher worst ratio, flagged. The picks go into ROOM_SCENES (config/room.ts, toneDark) by hand and
 // tests/unit/room.test.ts holds them to this script's table. No server is needed:
 //   node scripts/room/scene-tone.mjs [--json <file>]
 import { writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { ROOM_SCENES } from '../../src/config/room.ts';
 import { SHADE } from '../../src/scripts/hero/section4/carousel.ts';
@@ -24,8 +25,8 @@ const PEARL = lum(0xf7, 0xf6, 0xf3), SLATE = lum(0x38, 0x3f, 0x43);
 const ratio = (a, b) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
 /** the two boxes per viewport, CSS px, as the served page lays them out (2026-10-23) */
 const VIEWS = [
-  { w: 390, h: 844, cls: 'portrait', boxes: { logotype: { x: 16, y: 16, w: 96, h: 23.2 }, control: { x: 260, y: 5.6, w: 126, h: 44 } } },
-  { w: 1280, h: 800, cls: 'wide', boxes: { logotype: { x: 44.8, y: 44.8, w: 136, h: 32.9 }, control: { x: 1121.2, y: 39.3, w: 126, h: 44 } } },
+  { w: 390, h: 844, cls: 'portrait', boxes: { logotype: { x: 16, y: 16, w: 96, h: 23.2 }, control: { x: 323.2, y: 5.6, w: 62.8, h: 44 } } },
+  { w: 1280, h: 800, cls: 'wide', boxes: { logotype: { x: 44.8, y: 44.8, w: 136, h: 32.9 }, control: { x: 892.5, y: 39.3, w: 354.7, h: 44 } } },
 ];
 
 /** the still as drawn at rest: cover-fitted to the view with the overscan, the bottom shade applied (the light-up is whole) */
@@ -53,7 +54,7 @@ const rows = [], picks = {};
 for (const sc of ROOM_SCENES) {
   const readings = [];
   for (const v of VIEWS) {
-    const frame = await drawn(new URL(`../../src/assets/room/flux/${sc.id}-${v.cls}.webp`, import.meta.url).pathname, v.w, v.h);
+    const frame = await drawn(fileURLToPath(new URL(`../../src/assets/room/flux/${sc.id}-${v.cls}.webp`, import.meta.url)), v.w, v.h);   // a file path on every platform (a URL's pathname reads /C:/... on Windows)
     for (const [name, box] of Object.entries(v.boxes)) {
       const L = medianLum(frame, box);
       readings.push({ view: `${v.w}x${v.h}`, box: name, luminance: +L.toFixed(4), pearl: +ratio(PEARL, L).toFixed(2), slate: +ratio(SLATE, L).toFixed(2) });

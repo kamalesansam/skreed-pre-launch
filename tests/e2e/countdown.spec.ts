@@ -168,6 +168,8 @@ test('AC4.6 at zero: the link two-tone focus ring over the poster', async ({ bro
   await page.goto(new URL('/?tier=poster', baseURL).href);
   await page.evaluate(async () => { await document.fonts.ready; await (document.getElementById('posterImg') as HTMLImageElement).decode(); });
   await page.keyboard.press('Tab');   // the logotype
+  // then the section index (docs/specs/navbar.md: in the tab order right after the logotype), Menu alone at 390 px
+  await page.keyboard.press('Tab');   // Menu
   await page.keyboard.press('Tab');   // the skreed.com link
   expect(await page.evaluate(() => document.activeElement?.matches('#cdEyebrow a:focus-visible'))).toBe(true);
   const b = (await page.locator('#cdEyebrow a').boundingBox())!;

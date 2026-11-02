@@ -20,7 +20,7 @@ const NOW = new Date('2026-10-09T09:00:00+05:30');
 // hide them and compare the eyebrow, the labels and the logotype; the idle twitch (E-CD-glitch) is switched off first.
 // 2026-11-02: the eyebrow and the unit labels are IBM Plex Mono in capitals (E-chrome-font), not the prototype's Open Sans,
 // and the countdown lifts 22 px more for the cue's words up to 1100 px, so both are hidden too: the logotype is compared.
-const HIDE = '#stage,.hero-poster,#intro,.tune,.labels,.fallback,#wallCopy,.cue,.scrollcue,.cuetext,#s2labels,#s2links,#families,#count,#cdEyebrow{display:none!important}';
+const HIDE = '#stage,.hero-poster,#intro,.tune,.labels,.fallback,#wallCopy,.cue,.scrollcue,.cuetext,#s2labels,#s2links,#families,#siteNav,#count,#cdEyebrow{display:none!important}';
 const VIEWPORTS = [
   { name: '390', viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 },
   { name: '1280', viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1.5 },

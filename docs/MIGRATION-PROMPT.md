@@ -1,5 +1,7 @@
 # The prompt for a new account
 
+**Superseded on 2026-11-02:** the current prompts, a master prompt and one per paused session, are in `docs/handoff/2026-11-02/PROMPTS.md`. The block below is the 2026-10-23 move and is kept for the record.
+
 Paste the block below as the first message of a fresh Claude Code session on the new account, in an empty folder. Before pasting: sign the new machine in to GitHub (`gh auth login`), Cloudflare (`npx wrangler login`) and the Higgsfield CLI if the pipeline will be used, and install node 24.
 
 ```text

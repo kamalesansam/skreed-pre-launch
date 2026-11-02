@@ -130,7 +130,7 @@ export interface RoomScene {
    */
   readonly basePitch: number;
   /**
-   * The logotype and the Back to top control turn Urban Slate over this scene (true) or stay Pearl Whisper (false): the
+   * The logotype (and the section index, which copies its tone) turn Urban Slate over this scene (true) or stay Pearl Whisper (false): the
    * frame under their boxes measured on the scene's stills by scripts/room/scene-tone.mjs (the hero's 3:1 rule), the
    * readings in docs/specs/evidence/section-4-flux-build.md; every scene's top is dark, so all five stay Pearl.
    */

@@ -202,9 +202,15 @@ export async function startHero(o: StartOptions): Promise<void> {
   life.onKill(() => { loop.stop(); labels.clear(); labels.dispose(); });
   // never a scroll of the poster page (a soft poster's one-screen track, boot.ts onSoftPoster): only the visitor moves that; the followers are set all the same, for the recovery
   section2.snapTo = (screens) => { if (!document.documentElement.classList.contains('poster')) scrollTo({ top: Math.round(screens * innerHeight), behavior: 'instant' }); loop.snap(screens); };
-  // section 1 in place (the back-to-top control, scripts/shell/to-top.ts): the loop's own jump, without the fourth wipe
+  // section 1 in place (the section index's Home, scripts/shell/site-nav.ts, and a family page's Back to top restoring the
+  // landing page, scripts/shell/to-top.ts): the loop's own jump, without the fourth wipe
   window.__skreedTop = () => { scrollTo({ top: 0, behavior: 'instant' }); loop.snap(0); ctx.room?.reset(); };
   life.onKill(() => { window.__skreedTop = undefined; });
+  // a section in place (the section index, scripts/shell/site-nav.ts): the page at y at once, the followers snapped to it
+  // and section 4 reset for its next lap, as the jump above does for scroll 0; a landing inside section 4 (Products, its
+  // q 1) snaps the section's own followers there too, so the hall is fully in under the veil
+  window.__skreedJump = (y) => { scrollTo({ top: y, behavior: 'instant' }); loop.snap(innerHeight > 0 ? scrollY / innerHeight : 0); ctx.room?.reset(scrollY); };
+  life.onKill(() => { window.__skreedJump = undefined; });
   // the return path (family-page.md 2.2 and 13, step 3; built with round 4, section 22; the loader in full since round 5,
   // section 23): Back from a family page, or /#families, the landing is section 2 at rest with the gems live, never the
   // quiz the fragment's own scroll aimed at (nav#families stands in flow after the track). The page and both followers
