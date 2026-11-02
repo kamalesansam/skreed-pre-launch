@@ -29,7 +29,7 @@
   --ab-fs-title: clamp(2.75rem, 1.545rem + 4.944vw, 5.5rem);    /* 44 to 88 px, the tall uppercase title */
   --ab-fs-text: clamp(1.125rem, 1.015rem + 0.449vw, 1.375rem);  /* 18 to 22 px, the letter */
   --ab-fs-sign: clamp(1.25rem, 1.140rem + 0.449vw, 1.5rem);     /* 20 to 24 px, the sign-off */
-  --ab-fs-quote: clamp(7rem, 30vw, 22rem);                       /* 112 to 352 px: the closing quotation mark's em, the glyph pair about a fifth of the width */
+  --ab-fs-quote: clamp(8.5rem, 36vw, 22rem);                     /* 136 to 352 px: the closing quotation mark's em, its glyph pair about a sixth of a phone's width */
   --ab-lh-title: 0.95;                                           /* the reference's tight lines */
   --ab-lh-text: 1.6;
   --ab-lh-sign: 1.2;
@@ -41,6 +41,8 @@
   --ab-mark-h: 23.25px;                                          /* the wordmark's height at 96 px (1209.46 x 292.9) */
 }
 @media (min-width: 1024px) { :root { --ab-mark-h: 32.94px; } }
+/* the narrowest phones (under 360 px): the title a step down and the mark smaller, so "A message" stays clear of the mark */
+@media (max-width: 359.98px) { :root { --ab-fs-title: 2.5rem; --ab-fs-quote: 6rem; } }
 
 html, body { margin: 0; background: var(--pearl-whisper); color: var(--urban-slate); }
 body { font-family: var(--font-about); font-weight: 400; }

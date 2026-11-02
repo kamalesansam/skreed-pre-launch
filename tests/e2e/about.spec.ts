@@ -53,9 +53,11 @@ test.describe('AC2 Inter from the one self-hosted file, no other face, nothing i
       // the faces: Inter loaded, every face of the site's own set left unloaded
       const faces = await page.evaluate(() => [...document.fonts].map((f) => ({ family: f.family.replace(/^"|"$/g, ''), weight: f.weight, style: f.style, status: f.status })));
       expect(faces.filter((f) => f.family === 'Inter')).toEqual([{ family: 'Inter', weight: '400 700', style: 'normal', status: 'loaded' }]);
+      // the site's own faces (the brand's, the quiz's, the result's) all unloaded: Inter is the one face the page loads
       const brand = faces.filter((f) => ['Poppins', 'Open Sans', 'Source Serif 4', 'IBM Plex Mono'].includes(f.family));
-      expect(brand.length).toBe(6);
+      expect(brand.length).toBeGreaterThanOrEqual(6);
       for (const f of brand) expect(f.status, `${f.family} ${f.weight}`).toBe('unloaded');
+      expect(faces.filter((f) => f.status !== 'unloaded').map((f) => f.family)).toEqual(['Inter']);
       // the face actually drawn, run by run: the DevTools protocol's platform fonts for each element's own text
       const cdp = await ctx.newCDPSession(page);
       await cdp.send('DOM.enable'); await cdp.send('CSS.enable');
