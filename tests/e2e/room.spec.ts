@@ -67,8 +67,9 @@ function holdAtCover(page: Page, kind: 'exit' | 'wrap'): Promise<S4 | null> {
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
-    // the exit runs from section 5's end since 2026-10-26 (section-5.md 2): the raw scroll across its exitY
-    if (k === 'exit') { const y = (window.__s4!.state() as { exitY: number }).exitY; scrollTo({ top: y + 6, behavior: 'instant' }); }
+    // the exit runs from section 5's end since 2026-10-26 (section-5.md 2), on a gesture down at its armed rest since
+    // 2026-11-03 (nothing follows the body): a wheel notch down
+    if (k === 'exit') dispatchEvent(new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true }));
     else window.__s4!.wrap();
   }), { k: kind }) as Promise<S4 | null>;
 }
@@ -521,7 +522,7 @@ test('section 4 at 390 x 844 under reduced motion (still3d): no loop elements, t
   // exit-guard.ts; a jump past it straight from scene 5 is held there instead)
   await page.evaluate(() => { const y = (window.__s4!.state() as { restY: number }).restY; scrollTo({ top: y, behavior: 'instant' }); });
   await expect.poll(async () => (await s4(page)).exitArmed, { timeout: 5_000 }).toBe(true);
-  await page.evaluate(() => { const y = (window.__s4!.state() as { exitY: number }).exitY; scrollTo({ top: y + 6, behavior: 'instant' }); });
+  await page.evaluate(() => { dispatchEvent(new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true })); });   // a notch down at the armed rest (2026-11-03)
   await page.waitForFunction(() => scrollY < 2, null, { timeout: 5_000, polling: 50 });
   expect(await events(page)).toContain('room_loop');
   await expect.poll(async () => (await s4(page)).state, { timeout: 5_000 }).toBe('hall');

@@ -221,8 +221,9 @@
     --ujy: calc((100svh - var(--top) - var(--bot) - 24px) / 820);
     /* under about 640 px of height the text's floors (15 px lines, the 44 px pill, 6 px gaps) stop shrinking with --u and
        the body outgrew the screen (2026-11-03: 8 px over at 1366 x 600, 27 at 1100 x 520), so a second height bound
-       takes over there, from the measured slope (the body 629 px per unit of --u, plus 138 px of floors, and 7 px spare) */
-    --ujy2: calc((100svh - var(--top) - var(--bot) - 146px) / 629);
+       takes over there, from the measured slope (the body 629 px per unit of --u, plus 138 px of floors, and 14 px spare:
+       the slope steepens under 540 px, where 1280 x 500 still runs 9 px over) */
+    --ujy2: calc((100svh - var(--top) - var(--bot) - 152px) / 629);
     --u: max(0.3px, min(var(--ujx), var(--ujy), var(--ujy2), 1.15px));
     grid-template-columns: minmax(0, 40fr) minmax(0, 56fr);
     column-gap: 4%;
@@ -258,13 +259,12 @@
   .su-follow:hover .su-icon, .su-send:active { transform: none; }
 }
 
-/* under the body: one empty screen, the room for the exit seam's trigger (the 3D path) and the poster tier's loop end */
-.su-loopend { height: 100svh; }
+/* nothing follows the body (2026-11-03): the page ends at the section's rest, and the loop to the top runs on a gesture there */
 .su-fade { position: fixed; inset: 0; z-index: 5; background: var(--night); pointer-events: none; }
 .su-fade[hidden] { display: none; }
 
-/* without JavaScript: the text stands, the links work, the loop end and the fade are gone */
-html:not(.js) .su-loopend, html:not(.js) .su-fade { display: none; }
+/* without JavaScript: the text stands, the links work, the fade is gone */
+html:not(.js) .su-fade { display: none; }
 
 /* the quiz gate (docs/specs/quiz-gate.md D1, D9): with JavaScript the section is rendered hidden and data-locked with
    section 4 until the quiz's result or Skip quiz opens both (the inline step after the markup, gate.ts); without

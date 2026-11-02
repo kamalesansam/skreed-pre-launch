@@ -175,7 +175,7 @@ test('the jars (C2): read by name with import.meta.glob, each state only with al
 
 test('the script (C3, C4, C5): the fill by clip-path, the visibility gate, the events, data-ready, the hooks behind the constant, nothing of the island\'s jar', () => {
   assert.match(dom, /nxt\.animate\(\[\{ clipPath: `inset\(\$\{span\.from\}% 0 0 0\)` \}, \{ clipPath: `inset\(\$\{span\.to\}% 0 0 0\)` \}\], \{ duration: ms, easing: 'ease-out', fill: 'forwards' \}\)/);
-  assert.match(dom, /const under = cur\.animate\(\[\{ clipPath: `inset\(0 0 \$\{100 - span\.from\}% 0\)` \}, \{ clipPath: `inset\(0 0 \$\{100 - span\.to\}% 0\)` \}\], \{ duration: ms, easing: 'ease-out', fill: 'forwards' \}\);/, 'the old layer clipped to the complement on the same clock, so no pixel composites twice');
+  assert.match(dom, /const under = cur\.animate\(\[\{ clipPath: `inset\(0 0 calc\(\$\{100 - span\.from\}% - 1px\) 0\)` \}, \{ clipPath: `inset\(0 0 calc\(\$\{100 - span\.to\}% - 1px\) 0\)` \}\], \{ duration: ms, easing: 'ease-out', fill: 'forwards' \}\);/, 'the old layer clipped to the complement on the same clock, 1 px past the edge, so no pixel composites twice and no hairline of ground shows');
   assert.match(dom, /under\.cancel\(\);\n\s+if \(end === 'cancelled'\) return;/, 'both clips gone at the reveal\'s end, on a reset too');
   assert.match(dom, /const tops = \{ states: STATE_TOPS \};/, 'the reveal reads the renders\' tops and seams as jars.json gives them');
   assert.match(dom, /reducedMQ\.matches \|\| !span \? 0 : fillMs\(id\)/, 'at once under reduced motion');
@@ -192,7 +192,11 @@ test('the script (C3, C4, C5): the fill by clip-path, the visibility gate, the e
   assert.match(dom, /if \(window\.__skreedLogo\?\.setTone\) window\.__skreedLogo\.setTone\(on\);/, 'the logotype turns Urban Slate over the cream ground on the poster tier, through the logotype\'s own setTone');
   assert.match(dom, /setTone\(r\.top < mid && r\.bottom > mid\)/, 'while the section\'s ground is under the logotype\'s middle');
   assert.match(dom, /if \(on === \(logo\.dataset\.tone === 'light'\)\) return;/, 'the tone read from the logotype, never from a stale flag');
-  assert.match(css, /\.su-loopend \{ height: 100svh; \}/);
+  assert.doesNotMatch(astro, /suLoopEnd|su-loopend/, 'nothing follows the body since 2026-11-03: the page ends at the section\'s rest');
+  assert.doesNotMatch(css, /su-loopend/);
+  assert.match(dom, /scrollY >= H\.scrollHeight - innerHeight - 1\) run\(\);/, 'the poster tier\'s loop end runs on a gesture down at the page\'s end');
+  assert.match(dom, /REST_MS = 300/, 'after the same 300 ms rest the exit guard asks for');
+  assert.match(dom, /addEventListener\('wheel', \(e\) => \{ gesture\(e\.deltaY > 0 && !e\.ctrlKey\); \}, \{ passive: true \}\);/, 'a wheel notch down, never Ctrl+wheel, heard passively');
   assert.match(css, /\.su-fade \{ position: fixed; inset: 0; z-index: 5; background: var\(--night\); pointer-events: none; \}/);
   assert.match(astro, /<div class=\{LEADS \? 'su-body' : 'su-body su-noform'\} id="suBody">/, '.su-body the one-screen block');
   assert.match(css, /\.su-body \{[^}]*min-height: 100svh;/);

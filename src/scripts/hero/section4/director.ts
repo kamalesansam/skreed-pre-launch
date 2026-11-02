@@ -442,8 +442,19 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   // ---- the exit's guard (exit-guard.ts): the last wheel, touch or key input and the fingers down, heard passively, so
   // the exit seam runs only once the page has rested at section 5's rest, and the page past it before then is held
   const guard = createExitGuard();
-  let inputAt = -Infinity, fingers = 0;
-  const onInput = (e: Event) => { inputAt = performance.now(); if ('touches' in e) fingers = (e as TouchEvent).touches.length; };
+  let inputAt = -Infinity, fingers = 0, down = false, touchY = NaN;
+  // a gesture down (the exit's trigger at the page's end since 2026-11-03, exit-guard.ts): a wheel notch down (never
+  // Ctrl+wheel, the browser's zoom), one finger moved up 12 px or more, or a key of a step down without Shift
+  const DOWN_KEYS = new Set(['ArrowDown', 'PageDown', 'End', ' ']);
+  const onInput = (e: Event) => {
+    inputAt = performance.now();
+    if ('touches' in e) {
+      const t = (e as TouchEvent).touches; fingers = t.length;
+      if (e.type === 'touchstart') touchY = t.length === 1 ? t[0].clientY : NaN;
+      else if (e.type === 'touchmove' && t.length === 1 && touchY - t[0].clientY >= 12) down = true;
+    } else if (e.type === 'wheel') { const w = e as WheelEvent; if (w.deltaY > 0 && !w.ctrlKey) down = true; }
+    else if (e.type === 'keydown') { const k = e as KeyboardEvent; if (DOWN_KEYS.has(k.key) && !k.shiftKey && !k.ctrlKey && !k.metaKey && !k.altKey) down = true; }
+  };
   const onLeave = () => { fingers = 0; };
   for (const n of GUARD_INPUTS) addEventListener(n, onInput, { passive: true });
   addEventListener('blur', onLeave);
@@ -491,13 +502,13 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       if (poster()) return { on: false, tex: null, wipeIn: 0, wipeOut: 0, groundNeeded: false, cover: 0, cloud: null, toneDark: false };
       // phase 2 during the walk, past the third wipe (spec 5, "Loading")
       if (hall.ready && inRoom && q > ROOM_SCREENS.wipe && state === 'hall') void loadScenes();
-      // the exit seam (section-5.md 2) behind its guard (exit-guard.ts): the page's raw scroll crossing section 5's
-      // rest downward, in world or hall (the section itself has scrolled away by then; a visitor who never pressed
+      // the exit seam (section-5.md 2) behind its guard (exit-guard.ts): a gesture down at section 5's rest, the page's
+      // end since 2026-11-03 (or the page's raw scroll crossing the rest downward where there is room), in world or hall (the section itself has scrolled away by then; a visitor who never pressed
       // reaches it over the hall all the same), runs it once the page has rested there; the page past the rest before
       // that rest is held at it, as the exit's cover-in holds it, with no cloud (a crossing, never an arrival: the wrap
       // lands on the rest)
       const y = scrollY, restY = o.restY();
-      const act = exitGuard(guard, { y, prevY, exitY: o.exitY(), restY, vh: innerHeight, now: performance.now(), inputAt, touching: fingers > 0, refuse: refuses(document.activeElement, window.visualViewport, H.clientHeight), live: state === 'hall' || state === 'world' });
+      const act = exitGuard(guard, { y, prevY, exitY: o.exitY(), restY, vh: innerHeight, now: performance.now(), inputAt, touching: fingers > 0, refuse: refuses(document.activeElement, window.visualViewport, H.clientHeight), live: state === 'hall' || state === 'world', down, maxY: H.scrollHeight - innerHeight }); down = false;
       prevRaw = qRaw; prevY = y;
       if (act === 'exit') startExit(f.t);
       else if (act === 'hold') holdAt(Math.round(restY));

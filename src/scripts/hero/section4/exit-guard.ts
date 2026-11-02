@@ -12,6 +12,10 @@
 // exit as before. Where the page's seams refuse (a text field focused, the on-screen keyboard up, the page zoomed) the
 // guard neither holds nor exits, and disarms: the browser's own scroll that lifts a field above the keyboard, or a
 // zoomed pan, is never fought and never runs the loop, and the exit after it waits for a rest and a fresh gesture.
+// Since 2026-11-03 nothing follows the body (the empty screen that gave the crossing its room is gone; Sam: "remove the
+// free space, and have the snap scroll effet which every other section has"), so the exit runs on a gesture down at the
+// armed rest while the page has no room to scroll (the frame's down and maxY); the crossing rule stays for a page with
+// room below the rest.
 // The trigger is the rest, which is exitY whenever the body fills the screen or more (a landscape phone's body runs past
 // the screen, and its rest is its end) and the section's top if the body ever falls short of the screen.
 
@@ -42,6 +46,10 @@ export interface ExitFrame {
   readonly refuse: boolean;
   /** the director's state is hall or world (no seam, no entry, no way back) */
   readonly live: boolean;
+  /** a gesture down this frame (a wheel notch down, a finger moved up 12 px or more, a key of a step down): the exit's trigger at the page's end */
+  readonly down?: boolean;
+  /** the page's greatest scroll position (its height less the viewport's); the rest is the page's end when nothing follows section 5 */
+  readonly maxY?: number;
 }
 
 /** 'exit': start the exit seam. 'hold': the page snapped to the rest this frame. null: nothing. */
@@ -64,6 +72,8 @@ export function exitGuard(g: ExitGuard, f: ExitFrame): ExitAct {
     g.movedAt = f.now;
     return 'hold';
   }
+  // the page's end: a gesture down at the armed rest, with no room to scroll past it, runs the exit (2026-11-03)
+  if (g.armed && f.down && Math.abs(f.y - f.restY) <= near && f.y >= (f.maxY ?? Infinity) - near) { g.armed = false; return 'exit'; }
   if (!g.armed && Math.abs(f.y - f.restY) <= near && !f.touching && f.now - f.inputAt >= restMs && f.now - g.movedAt >= restMs) g.armed = true;
   return null;
 }

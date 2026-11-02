@@ -183,9 +183,10 @@ line("section 4's script (director, carousel, video, assets, walk, lazy; gzip)",
 line('scroll.ts (its own chunk, marker skreed:scroll; gzip)', scrollScript, 4, { note: 'counted in total JS, not critical JS' });
 // section 5's lines (section-5.md 6, as rebuilt to Sam's picture on 2026-11-02)
 const signupDomScript = gzOf(signupDomGraph);
-// 6.5 KB since the measure of 2026-11-02 (section-5-picture.md 9 and 16.6): the sixteen states' picture URLs and tops ride
-// this chunk (scripts/signup/jar-srcs.ts), not the first view's markup; 6.2 KB measured against the 6 KB line of the old page
-line("section 5's page script (scripts/signup/signup.ts, marker skreed:signup-filled; gzip)", signupDomScript, 6.5, { note: signupDomScript ? 'lazy, within a screen; the states\' URLs ride it' : signupDomElsewhere.length ? `bundled into ${signupDomElsewhere.join(', ')}, counted there` : 'not in this build' });
+// 7 KB since 2026-11-03 (section-5-picture.md 9, 16.6 and 18): the sixteen states' picture URLs and tops ride this chunk
+// (scripts/signup/jar-srcs.ts), not the first view's markup, and the loop's trigger at the page's end came on 2026-11-03;
+// 6.4 KB measured on 2026-11-03 against the 6.5 KB line set from the measure of 2026-11-02 (6 KB was the old page's)
+line("section 5's page script (scripts/signup/signup.ts, marker skreed:signup-filled; gzip)", signupDomScript, 7, { note: signupDomScript ? 'lazy, within a screen; the states\' URLs ride it' : signupDomElsewhere.length ? `bundled into ${signupDomElsewhere.join(', ')}, counted there` : 'not in this build' });
 line('total JS with sections 4 and 5 and scroll.ts (gzip)', totalJs + roomScript + scrollScript + signupDomScript, 250, { enforced: !tune, note: tune ? "production's line; this staging build carries Tune" : 'production' });
 // the section's two type faces (D3: Inter and Jost, variable, latin, the Google Fonts files shipped unchanged), as stored
 // (woff2 is compressed already); fetched only once the section's lines render, so never in the first view
@@ -270,9 +271,10 @@ let markup5 = '';
 if (at5 >= 0) { const re = /<\/?section\b[^>]*>/g; re.lastIndex = at5; let d = 0; for (let m; (m = re.exec(html));) { d += m[0][1] === '/' ? -1 : 1; if (!d) { markup5 = html.slice(at5, re.lastIndex); break; } } }
 const css5Path = join(ROOT, 'src/styles/signup.css');
 const css5 = existsSync(css5Path) ? readFileSync(css5Path, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').replace(/\s*([{};,>])\s*/g, '$1').replace(/;}/g, '}') : '';
-// 5 KB since the measure of 2026-11-02 (section-5-picture.md 9 and 16.6): the picture's page carries the four inline marks, the
-// joined field and button, the pictures' sources and jar 4's two layers; 4.6 KB measured against the 4 KB line of the old page
-line("the first view: section 5's markup and signup.css (gzip)", gzipSync(markup5 + css5, { level: 9 }).length, 5, { note: `markup ${markup5.length} B, signup.css about ${css5.length} B` });
+// 5.5 KB since 2026-11-03 (section-5-picture.md 9, 16.6 and 18): the picture's page carries the four inline marks, the joined
+// field and button, the pictures' sources and jar 4's two layers; 5.0 KB measured on 2026-11-03 (45 B under the 5 KB line set
+// from the measure of 2026-11-02; 4 KB was the old page's)
+line("the first view: section 5's markup and signup.css (gzip)", gzipSync(markup5 + css5, { level: 9 }).length, 5.5, { note: `markup ${markup5.length} B, signup.css about ${css5.length} B` });
 
 console.log(`\nsections 4 and 5 (section-4-flux.md 6, section-5.md 6; the ${BUILD}; scripts at gzip, everything else as stored; KB = 1024 B)`);
 const PENDING = 'over, pending Sam';

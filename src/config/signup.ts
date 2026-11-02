@@ -158,7 +158,7 @@ export interface JarsManifest {
   states: Record<string, { top: number; seam?: number }>;
 }
 /** C2's frame when the renders are not in yet: 400 x 480 at 2x, the outer diameter half the width, the rim's top at 0.06, the base at 0.87 */
-export const JARS_DEFAULT: JarsManifest = Object.freeze({ frame: { w: 400, h: 480 }, jar: { x0: 0.25, x1: 0.75, y0: 0.06, y1: 0.87 }, states: {} });
+export const JARS_DEFAULT: JarsManifest = /* @__PURE__ */ Object.freeze({ frame: { w: 400, h: 480 }, jar: { x0: 0.25, x1: 0.75, y0: 0.06, y1: 0.87 }, states: {} });
 /**
  * The reveal from one state to the next (D6): the incoming image's clip-path inset from the top, in percent of the frame's
  * height, from the current state's seam (its surface top where the manifest gives no seam) to the new state's top; null

@@ -17,7 +17,7 @@ import { createResize } from '../../src/scripts/hero/stage/resize.ts';
 const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const FRAME = 1000 / 60;
 
-interface PageOpts { exitY?: number; vh?: number; touching?: boolean; refuse?: boolean; live?: boolean }
+interface PageOpts { exitY?: number; vh?: number; touching?: boolean; refuse?: boolean; live?: boolean; maxY?: number }
 /**
  * A page at 60 frames a second under the guard, acting on its verdicts as director.ts does: the hold snaps the page to
  * the rest (rounded) and leaves prevY there; the exit starts a seam, so the frames after it are not live. moves() is
@@ -30,11 +30,11 @@ class Page {
   readonly acts: ExitAct[] = [];
   rest: number; y: number; o: PageOpts;
   constructor(rest: number, y: number, o: PageOpts = {}) { this.rest = rest; this.y = y; this.o = o; }
-  frame(dy = 0, input = false): ExitAct {
+  frame(dy = 0, input = false, down = false): ExitAct {
     this.t += FRAME;
-    if (input) this.inputAt = this.t;
+    if (input || down) this.inputAt = this.t;
     this.y += dy;
-    const act = exitGuard(this.g, { y: this.y, prevY: this.prevY, exitY: this.o.exitY ?? this.rest, restY: this.rest, vh: this.o.vh ?? 844, now: this.t, inputAt: this.inputAt, touching: !!this.o.touching, refuse: !!this.o.refuse, live: this.o.live ?? true });
+    const act = exitGuard(this.g, { y: this.y, prevY: this.prevY, exitY: this.o.exitY ?? this.rest, restY: this.rest, vh: this.o.vh ?? 844, now: this.t, inputAt: this.inputAt, touching: !!this.o.touching, refuse: !!this.o.refuse, live: this.o.live ?? true, down, maxY: this.o.maxY });
     this.prevY = this.y;
     if (act === 'hold') { this.holds++; this.y = this.prevY = Math.round(this.rest); }
     if (act === 'exit') { this.exits++; this.o.live = false; }
@@ -208,6 +208,26 @@ test('not live (a seam, the entry, the way back) and no reading: nothing, and di
   assert.deepEqual([...new Set(half.acts)], [null]);
 });
 
+test('the page\'s end (2026-11-03): with no room past the rest, a gesture down at the armed rest runs the exit; before the rest, with room below it, or above it, nothing', () => {
+  const p = new Page(1000, 1000, { maxY: 1000 });
+  p.frame(0, true);
+  assert.equal(p.frame(0, false, true), null, 'a notch right after arriving: not yet rested, nothing (and no hold: the page cannot move)');
+  p.idle(320);
+  assert.equal(p.g.armed, true, 'armed by the rest');
+  assert.equal(p.frame(0, false, true), 'exit', 'a gesture down at the armed rest runs the exit');
+  assert.equal(p.g.armed, false);
+  const room = new Page(1000, 1000, { maxY: 1400 });
+  room.idle(320);
+  assert.equal(room.frame(0, false, true), null, 'room below the rest: the gesture is the page\'s own scroll, and the crossing rule decides');
+  assert.equal(room.g.armed, true);
+  const above = new Page(1000, 900, { maxY: 1000 });
+  above.idle(320);
+  assert.equal(above.frame(0, false, true), null, 'above the rest: never armed, nothing');
+  const idle = new Page(1000, 1000, { maxY: 1000 });
+  idle.idle(320);
+  assert.equal(idle.frame(0, false, false), null, 'armed with no gesture: nothing');
+});
+
 test('a landscape phone: the body runs past the screen, exitY and the rest at its end; the body read through without a hold, a fling past its end held, the rest there arms it', () => {
   // 844 x 390: the section's top at T, the body 890 px tall, so its end meets the viewport's bottom at T + 500
   const T = 20_000, rest = T + 500, vh = 390;
@@ -273,11 +293,14 @@ test('director.ts: the guard heard on passive inputs, run each frame in world or
   assert.match(director, /const GUARD_INPUTS = \['wheel', 'touchstart', 'touchmove', 'touchend', 'touchcancel', 'keydown'\] as const;/);
   assert.match(director, /for \(const n of GUARD_INPUTS\) addEventListener\(n, onInput, \{ passive: true \}\);/, 'heard passively, never prevented');
   assert.match(director, /for \(const n of GUARD_INPUTS\) removeEventListener\(n, onInput\); removeEventListener\('blur', onLeave\);/, 'and let go on dispose');
-  assert.match(director, /const onInput = \(e: Event\) => \{ inputAt = performance\.now\(\); if \('touches' in e\) fingers = \(e as TouchEvent\)\.touches\.length; \};/);
-  assert.match(director, /const act = exitGuard\(guard, \{ y, prevY, exitY: o\.exitY\(\), restY, vh: innerHeight, now: performance\.now\(\), inputAt, touching: fingers > 0, refuse: refuses\(document\.activeElement, window\.visualViewport, H\.clientHeight\), live: state === 'hall' \|\| state === 'world' \}\);/);
+  assert.match(director, /const onInput = \(e: Event\) => \{\n\s+inputAt = performance\.now\(\);\n\s+if \('touches' in e\) \{\n\s+const t = \(e as TouchEvent\)\.touches; fingers = t\.length;/);
+  assert.match(director, /const act = exitGuard\(guard, \{ y, prevY, exitY: o\.exitY\(\), restY, vh: innerHeight, now: performance\.now\(\), inputAt, touching: fingers > 0, refuse: refuses\(document\.activeElement, window\.visualViewport, H\.clientHeight\), live: state === 'hall' \|\| state === 'world', down, maxY: H\.scrollHeight - innerHeight \}\); down = false;/);
   assert.match(director, /prevRaw = qRaw; prevY = y;\n\s*if \(act === 'exit'\) startExit\(f\.t\);\n\s*else if \(act === 'hold'\) holdAt\(Math\.round\(restY\)\);\n\s*\/\/ a seam first/, 'before the seam\'s frame, the hold at the rounded rest');
   assert.match(director, /function holdAt\(y: number\) \{\n\s*if \(Math\.abs\(scrollY - y\) > 0\.5\) scrollTo\(\{ top: y, behavior: 'instant' \}\);\n\s*const qq = \(y - top\) \/ screenPx\(\); follow\.snap\(qq\); q = qAll = qRaw = prevRaw = qq; prevY = y;\n\s*\}/, 'one hold for both');
   assert.match(director, /if \(s\.kind === 'exit'\) holdAt\(s\.holdY\);/, 'the exit\'s cover-in holds through it');
+  assert.match(director, /live: state === 'hall' \|\| state === 'world', down, maxY: H\.scrollHeight - innerHeight \}\); down = false;/, 'the gesture down and the page\'s end handed to the guard each frame, the gesture consumed (2026-11-03)');
+  assert.match(director, /else if \(e\.type === 'wheel'\) \{ const w = e as WheelEvent; if \(w\.deltaY > 0 && !w\.ctrlKey\) down = true; \}/, 'a wheel notch down, never Ctrl+wheel');
+  assert.match(director, /const DOWN_KEYS = new Set\(\['ArrowDown', 'PageDown', 'End', ' '\]\);/, 'the keys of a step down');
   assert.doesNotMatch(director, /const crossed = /, 'the bare crossing is gone');
   assert.match(director, /exitArmed: guard\.armed/, 'the hooks report the arming');
 });

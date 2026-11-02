@@ -24,7 +24,11 @@ declare global {
   }
 }
 
-const SLOW_MS = 8000, HARD_MS = 20000, FADE_MS = 300, READY_MS = 4000;
+const SLOW_MS = 8000, HARD_MS = 20000, FADE_MS = 300, READY_MS = 4000, REST_MS = 300;
+/** the keys of a step down (the loop's trigger at the page's end, with a wheel notch down or a swipe up), as the exit guard reads them on the 3D path */
+const DOWN_KEYS = new Set(['ArrowDown', 'PageDown', 'End', ' ']);
+/** the input types a press or a pick sets (no typing, so no on-screen keyboard); every other type refuses the loop, as the seams refuse (exit-guard.ts) */
+const PICKS = new Set(['checkbox', 'radio', 'button', 'submit', 'reset', 'image', 'file', 'range', 'color', 'hidden']);
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 /** the states' renders from jar-srcs.ts (the table Signup.astro lays the showcase jars out from): the sizes and, per state, the AVIF and WebP srcsets and the fallback */
 interface JarData { sizes: string; states: Record<string, Srcs> }
@@ -50,7 +54,7 @@ const idsOf = (state: string): string[] => (state === '0' ? [] : [...state].map(
 
 export function mountSignup(root: HTMLElement): void {
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T | null;
-  const live = $('suLive'), loopEnd = $('suLoopEnd'), fade = $('suFade'), jar = $('suYours');
+  const live = $('suLive'), fade = $('suFade'), jar = $('suYours');
   if (!live) return;
   const H = document.documentElement;
   const isPoster = () => !H.classList.contains('hero3d') || H.classList.contains('poster');
@@ -125,7 +129,8 @@ export function mountSignup(root: HTMLElement): void {
       // darker, and pop back when the old layer is hidden; 2026-11-03): the incoming layer shows the rows below the rising
       // edge, the old one the rows above it, each clip the other's complement on the same clock
       anim = nxt.animate([{ clipPath: `inset(${span.from}% 0 0 0)` }, { clipPath: `inset(${span.to}% 0 0 0)` }], { duration: ms, easing: 'ease-out', fill: 'forwards' });
-      const under = cur.animate([{ clipPath: `inset(0 0 ${100 - span.from}% 0)` }, { clipPath: `inset(0 0 ${100 - span.to}% 0)` }], { duration: ms, easing: 'ease-out', fill: 'forwards' });
+      // (the old layer's clip reaches 1 px past the edge, so the two clips' soft edges never let the ground through as a hairline)
+      const under = cur.animate([{ clipPath: `inset(0 0 calc(${100 - span.from}% - 1px) 0)` }, { clipPath: `inset(0 0 calc(${100 - span.to}% - 1px) 0)` }], { duration: ms, easing: 'ease-out', fill: 'forwards' });
       // the reveal's end: the animation's own word, or its duration and a frame more where the browser's animation clock
       // does not run (a throttled tab, a software-rendered page), so the layer stands as the new state either way
       const end = await Promise.race([anim.finished.then(() => 'finished', () => 'cancelled'), sleep(ms + 100).then(() => 'timer')]);
@@ -223,16 +228,35 @@ export function mountSignup(root: HTMLElement): void {
   if ('IntersectionObserver' in window) {
     let viewed = false;
     new IntersectionObserver((es) => { if (!viewed && es.some((x) => x.isIntersecting)) { viewed = true; track('signup_view'); } }, { rootMargin: '0px 0px -50% 0px' }).observe(root);
-    if (loopEnd && fade) {
-      let fading = false;
-      new IntersectionObserver((es) => {
-        if (!isPoster() || fading || !es.some((x) => x.isIntersecting)) return;
-        fading = true; fade.hidden = false;
-        const a = fade.animate([{ opacity: 0 }, { opacity: 1 }], { duration: reducedMQ.matches ? 0 : FADE_MS, fill: 'forwards' });
-        a.finished.then(() => { scrollTo({ top: 0, behavior: 'instant' }); track('room_loop'); return fade.animate([{ opacity: 1 }, { opacity: 0 }], { duration: reducedMQ.matches ? 0 : FADE_MS, fill: 'forwards' }).finished; })
-          .catch(() => {}).finally(() => { fade.hidden = true; fading = false; });
-      }, { threshold: 0.95 }).observe(loopEnd);
-    }
+  }
+  // the poster tier's loop end (the 300 ms fade through --night to the top): nothing follows the body since 2026-11-03
+  // (Sam: "remove the free space"), so it runs on a gesture down at the page's end, once the page has rested there
+  // 300 ms with no scroll and no input, as the exit guard arms on the 3D path: a wheel notch down (never Ctrl+wheel), one
+  // finger moved up 12 px or more after a quiet page, or a key of a step down; never with a typing control focused, the
+  // keyboard up or the page zoomed (the seams' refusals)
+  if (fade) {
+    let fading = false, quietAt = 0, touchY = NaN, restOk = false;
+    const refuse = () => {
+      const a = document.activeElement as HTMLElement | null, vv = window.visualViewport;
+      if (vv && (vv.scale > 1.01 || vv.height < H.clientHeight - 1)) return true;
+      return !!a && (a.isContentEditable || a instanceof HTMLTextAreaElement || a instanceof HTMLSelectElement || (a instanceof HTMLInputElement && !PICKS.has(a.type)));
+    };
+    const run = () => {
+      fading = true; fade.hidden = false;
+      const a = fade.animate([{ opacity: 0 }, { opacity: 1 }], { duration: reducedMQ.matches ? 0 : FADE_MS, fill: 'forwards' });
+      a.finished.then(() => { scrollTo({ top: 0, behavior: 'instant' }); track('room_loop'); return fade.animate([{ opacity: 1 }, { opacity: 0 }], { duration: reducedMQ.matches ? 0 : FADE_MS, fill: 'forwards' }).finished; })
+        .catch(() => {}).finally(() => { fade.hidden = true; fading = false; });
+    };
+    const quiet = () => { quietAt = performance.now(); };
+    const gesture = (go: boolean, rested = performance.now() - quietAt >= REST_MS) => {
+      if (go && rested && !fading && isPoster() && !refuse() && scrollY >= H.scrollHeight - innerHeight - 1) run();
+      quiet();
+    };
+    addEventListener('scroll', quiet, { passive: true });
+    addEventListener('wheel', (e) => { gesture(e.deltaY > 0 && !e.ctrlKey); }, { passive: true });
+    addEventListener('keydown', (e) => { gesture(DOWN_KEYS.has(e.key) && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey); });
+    addEventListener('touchstart', (e) => { restOk = performance.now() - quietAt >= REST_MS; touchY = e.touches.length === 1 ? e.touches[0].clientY : NaN; }, { passive: true });
+    addEventListener('touchmove', (e) => { gesture(e.touches.length === 1 && touchY - e.touches[0].clientY >= 12, restOk); restOk = false; }, { passive: true });
   }
 
   // ---- the form (PUBLIC_LEADS on; the quiz's gift form, quiz.md 5): the field and the button joined, one line under them
