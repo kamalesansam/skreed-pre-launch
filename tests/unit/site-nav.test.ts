@@ -181,3 +181,10 @@ test('the About page carries the index with no script: About current, the sectio
   assert.match(css, /\.snav-strip \{ position: absolute; inset: 0 75% 0 0;[^}]*background: transparent;/);
   assert.match(css, /html:not\(\.js\) \.snav:not\(\.snav-page\) \{ top:/, 'the no-script row is the landing page\'s alone; the About page keeps its drawer');
 });
+
+test('an arrival with #room (the About page\'s Products) makes the press Products makes, once the loader has lifted (navbar.md D7)', () => {
+  const js = read('src/scripts/shell/site-nav.ts');
+  assert.match(js, /if \(location\.hash === '#room'\) \{\n\s+const products = links\.find\(\(a\) => a\.dataset\.sec === 'room'\);/);
+  assert.match(js, /const arrive = \(\) => \{ if \(!html\.classList\.contains\('loading'\)\) products\?\.click\(\); else if \(performance\.now\(\) < until\) requestAnimationFrame\(arrive\); \};/);
+  assert.ok(js.indexOf("location.hash === '#room'") > js.lastIndexOf('for (const a of links) {'), 'after the press handlers, so the click finds its handler');
+});

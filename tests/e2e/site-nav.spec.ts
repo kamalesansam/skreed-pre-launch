@@ -322,6 +322,20 @@ test('About (AC11): last in the bar, a plain link to /about/, never current, no 
   await expect(page).toHaveURL(/\/$/);
 });
 
+test('an arrival with #room (the About page\'s Products; navbar.md D7): the gate opened as a press on Products opens it, the page at section 4, Products current', async ({ page, baseURL }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(new URL('/?tier=poster#room', baseURL).href);
+  await expect.poll(() => page.evaluate(() => document.getElementById('room')!.hasAttribute('data-locked'))).toBe(false);
+  expect(await page.locator('#room').getAttribute('data-open')).toBe('nav');
+  expect(await page.evaluate(() => sessionStorage.getItem('skreed:quiz-done'))).toBe('1');
+  await veilDown(page);
+  await expect.poll(async () => page.evaluate(() => scrollY)).toBe(Math.round(await docTop(page, 'room')));
+  await expect(page.locator('#siteNav .snav-list a[data-sec="room"]')).toHaveAttribute('aria-current', 'location');
+  const ev = await events(page);
+  expect(ev.filter(([n]) => n === 'nav')).toEqual([['nav', { to: 'room' }]]);
+  expect(ev.filter(([n]) => n === 'room_unlock')).toEqual([['room_unlock', { by: 'nav' }]]);
+});
+
 test('the phone: the drawer\'s About row leaves for /about/', async ({ page, baseURL }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(new URL('/?tier=poster', baseURL).href);

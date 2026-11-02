@@ -109,7 +109,7 @@ body { font-family: var(--font-about); font-weight: 400; }
 @media (min-width: 1024px) {
   :root {
     --ab-fs-title: clamp(2.75rem, 1.545rem + 4.944vw, 6.5rem);   /* 88 px at 1280, up to 104 px on a wide screen, held by the column below */
-    --ab-fs-text: clamp(1.125rem, min(1.6vw, 2.3vh), 1.5rem);    /* 18 to 24 px: 18.4 px at 1280 x 800, 22.8 at 1728 x 990, 24 px from 1500 px wide and 1044 px tall */
+    --ab-fs-text: clamp(1rem, min(1.6vw, 2.3vh), 1.5rem);        /* 16 to 24 px: 18.4 px at 1280 x 800, 16 on a 1280 laptop's 690 px window, 22.8 at 1728 x 990, 24 from 1500 x 1044 */
     --ab-fs-quote: clamp(9rem, 12.5vw, 16rem);                   /* 144 to 256 px: 160 px at 1280, 216 at 1728 */
     --ab-gap: clamp(48px, 5vw, 96px);                            /* the column gap: 64 px at 1280, 86 at 1728 */
   }

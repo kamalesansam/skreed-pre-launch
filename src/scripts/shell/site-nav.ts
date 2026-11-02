@@ -185,4 +185,18 @@ if (nav) {
       });
     });
   }
+
+  // An arrival from the About page's index (2026-11-03; docs/specs/navbar.md D7): its words are plain links to /#top,
+  // /#families, /#find and /#room, and the browser lands the first three itself (#families by the return path,
+  // rock-links.ts). It cannot scroll to #room while the quiz gate holds section 4 (hidden), so an arrival with #room makes
+  // the press Products makes here, once the loader has lifted (html.loading gone: at the lift on the 3D path, on its poster
+  // state, never set on the poster tier; a fragment skips the intro, igloo.ts): the gate opened as Skip quiz opens it, the
+  // scenes awaited under the veil, the page at scene 1. Checked once a frame, for a minute at most (the loader falls to its
+  // poster state long before that).
+  if (location.hash === '#room') {
+    const products = links.find((a) => a.dataset.sec === 'room');
+    const until = performance.now() + 60_000;
+    const arrive = () => { if (!html.classList.contains('loading')) products?.click(); else if (performance.now() < until) requestAnimationFrame(arrive); };
+    arrive();
+  }
 }

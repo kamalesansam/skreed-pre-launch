@@ -110,7 +110,7 @@ test.describe('AC2 Inter from the one self-hosted file for the page, Work Sans f
         });
         expect(Math.abs(h1.size - want), `the title sized to its column: ${h1.size} against ${want}`).toBeLessThanOrEqual(0.5);
         expect(h1.size).toBeGreaterThanOrEqual(76);   // 77.1 px at 1280 x 800
-        for (const c of [...letter, launch]) expect(Math.abs(c.size - Math.max(18, Math.min(24, Math.min(0.016 * vp.width, 0.023 * vp.height))))).toBeLessThanOrEqual(0.1);   // 18.4 px at 1280 x 800
+        for (const c of [...letter, launch]) expect(Math.abs(c.size - Math.max(16, Math.min(24, Math.min(0.016 * vp.width, 0.023 * vp.height))))).toBeLessThanOrEqual(0.1);   // 18.4 px at 1280 x 800
         expect(Math.abs(sign.size - 24)).toBeLessThanOrEqual(0.1);
       }
       for (const c of [...letter, launch]) expect(Math.abs(c.lh - 1.6 * c.size)).toBeLessThanOrEqual(0.1);
@@ -350,7 +350,7 @@ test('AC8 zero JavaScript: no script fetched, one data block, no handlers; the s
   expect(await page.locator('noscript').count()).toBe(0);
   // the first view's bytes as transferred: the document and every resource it fetched (the two fonts since round 2)
   const transferred = await page.evaluate(() => [...performance.getEntriesByType('navigation'), ...performance.getEntriesByType('resource')].reduce((a, e) => a + (e as PerformanceResourceTiming).transferSize, 0));
-  expect(transferred).toBeGreaterThan(0); expect(transferred).toBeLessThanOrEqual(110_000);
+  expect(transferred).toBeGreaterThan(0); expect(transferred).toBeLessThanOrEqual(80_000);   // 61,286 bytes on 2026-11-03: the page, Inter and Work Sans
   const sel = ['a.site-logo', 'main', 'main h1', ...Array.from({ length: 7 }, (_, i) => `main p >> nth=${i}`), '#siteNav .snav-menu'];
   const read = async (p: Page) => Promise.all(sel.map(async (s) => (await p.locator(s).boundingBox())!));
   const withJs = await read(page);
@@ -362,8 +362,8 @@ test('AC8 zero JavaScript: no script fetched, one data block, no handlers; the s
   for (const [i, b] of noJs.entries()) for (const k of ['x', 'y', 'width', 'height'] as const) expect(Math.abs(b[k] - withJs[i][k]), `${sel[i]} ${k}`).toBeLessThanOrEqual(0.5);
   await off.close();
   const html = readFileSync(resolve(DIST, 'about/index.html'));
-  expect(html.length, 'dist/about/index.html raw').toBeLessThanOrEqual(40_000);
-  expect(gzipSync(html, { level: 9 }).length, 'gzip').toBeLessThanOrEqual(12_000);
+  expect(html.length, 'dist/about/index.html raw').toBeLessThanOrEqual(36_000);   // 33,905 on 2026-11-03, the index's markup and rules inlined since round 2 (30,000 before)
+  expect(gzipSync(html, { level: 9 }).length, 'gzip').toBeLessThanOrEqual(10_000);   // 9,748
 });
 
 test('AC9 the head, the JSON-LD, the sitemap, the redirect, caching and the CSP', async ({ browser, baseURL, request }) => {
