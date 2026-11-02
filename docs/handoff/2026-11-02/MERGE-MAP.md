@@ -2,7 +2,7 @@
 
 Sam, 2026-11-02: "make sure each and every session that is running here is talking to each other. So while after finishing everything, while merging everything into one single branch, in the default branch or the origin branch, none of them should have any conflict and everything should merge without any conflict."
 
-This file is the shared contract between the sessions in flight. The measurements below were taken on 2026-11-02 by the hub session with `scripts/git/merge-map.py` on snapshots of every worktree (each branch's tip plus its uncommitted work) against the default branch `origin/claude/youthful-planck-objwf5` at `7e256a4`, and were unchanged an hour later. The reservation commit of section 7 landed as `9e6c907` on 2026-11-03, so the default moved once since; its effect is measured in section 2. Re-measure before trusting the rest: the tips move.
+This file is the shared contract between the sessions in flight. The measurements below were taken on 2026-11-02 by the hub session with `scripts/git/merge-map.py` on snapshots of every worktree (each branch's tip plus its uncommitted work) against the default branch `origin/claude/youthful-planck-objwf5` at `7e256a4`, and were unchanged an hour later. Since then the default has moved three times, each a landing by section 4's recipe: the reservation of section 7 as `9e6c907`, this map as `21f1480`, the hero as `ec7d5a3` (all 2026-11-03); the first's effect is measured in section 2, and after the third the remaining branches conflict with the default in: section 5 `tests/unit/page-scroll.test.ts`; the family pages and the cue `CLAUDE.md`; About nothing; the quiz its five files plus `tests/e2e/quiz.spec.ts`; the hall eleven files, among them `layout.ts` and the section 4 specs the hero also changed. Re-measure before trusting the rest: the tips move.
 
 ## 1. The branches in flight
 
@@ -14,8 +14,8 @@ This file is the shared contract between the sessions in flight. The measurement
 | 4 | Family pages round 6, the case models | `claude/case-3d-model-transitions-a08c64` | `agitated-ellis-54d854` | contains the default; clean |
 | 5 | The scroll cue's words | `claude/scroll-affordance-text-8e0a5f` | `festive-colden-092906` | contains the default; clean |
 | 6 | The About page | `claude/skreed-about-page-477c0e` | `peaceful-kalam-531877` | contains the default; clean |
-| 7 | The hero's halved scroll and the blocks' alignment | `claude/hero-scroll-half` | `hero-scroll-half` | at the default's tip, 23 files uncommitted; clean |
-| 8 | This map and its script | `claude/merge-map-tooling` | `merge-map` | at the default's tip; clean |
+| 7 | The hero's halved scroll and the blocks' alignment | `claude/hero-scroll-half` | `hero-scroll-half` | landed as `ec7d5a3` on 2026-11-03 (36 files) |
+| 8 | This map and its script | `claude/merge-map-tooling` | `merge-map` | landed as `21f1480` on 2026-11-03 |
 
 Parked: `claude/deployment-setup-92703f` (`5f0ba38`, the deploy workflow) conflicts with the default in `package.json`; it stays unmerged until Sam sets up Cloudflare, and whoever lands it resolves that file then.
 
@@ -54,11 +54,11 @@ One landing at a time, each with Sam's word, on the default branch (`main` once 
 
 1. **The hall removal (2)** first: the hero's scroll work and section 5 both build on the scroll map it changes, and `main` is cut right after it.
 2. **The family pages (4), the cue (5), About (6) and this map (8)**, in the order they become ready (reviewed, approved, clean). None of them touches the scroll map.
-3. **The hero (7)** after the hall: the hall-less section 4 changes the track the hero's numbers describe.
+3. ~~**The hero (7)** after the hall~~: landed first, as `ec7d5a3` on 2026-11-03, on Sam's direct word ("push and commit to main") with the review loop's verdict not yet in; verified by the hub as the recipe's merge of `21f1480` and `ef5a88d`. The hall's rebase therefore meets the halved scroll map (`TRACK_SVH` 675, the second wipe at 5.25 screens) and re-derives its own numbers on it.
 4. **Section 5 (3)** after the hall, once Sam has approved it on localhost and its entry seam is re-fixed onto the hall-less page.
 5. **The quiz result (1)** once its Canva swatch question is settled and it has taken the default in; it touches no scroll map, so it may go before 3 or 4 if it is ready first.
 
-The dependencies never bend: 3 and 7 never before 2.
+The dependency that remains: 3 never before 2.
 
 ## 4. The protocol
 
