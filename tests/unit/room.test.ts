@@ -45,7 +45,7 @@ test('the scroll map (section-4-flux.md 5; section-5.md 5): the scenes at a step
   assert.doesNotMatch(css, /rm-loopend|rm-fade/, 'the loop end and the fade left room.css');
   assert.doesNotMatch(astro, /rm-loopend|rm-fade/, 'and Room.astro');
   const director = read('src/scripts/hero/section4/director.ts');
-  assert.match(director, /const crossed = Number\.isFinite\(exitY\) && Number\.isFinite\(prevY\) && prevY <= exitY \+ 1 && y > exitY \+ 1;/, 'the exit fires on the page scroll crossing section 5\'s exitY, never on arriving there (the wrap lands on it)');
+  assert.match(director, /const act = exitGuard\(guard, \{ y, prevY, exitY: o\.exitY\(\), restY, /, 'the exit fires on the page scroll crossing section 5\'s rest once the page has rested there, never on arriving (the wrap lands on it): exit-guard.ts, tests/unit/exit-guard.test.ts');
   assert.match(director, /const wipeOut = clamp01\(\(qAll - WIPE4_START\) \/ ROOM_SCREENS\.out\);/, 'the fourth wipe from WIPE4_START over one screen');
   assert.match(director, /if \(o\.signupReady\(\) \|\| e >= SEAM\.holdS\)/, 'the wrap holds for the jars');
 });

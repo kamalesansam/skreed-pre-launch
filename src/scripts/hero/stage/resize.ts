@@ -1,6 +1,7 @@
 // Resize (prototype v11.4 template.html resize(); hero-architecture.md 5.6). The width is the root's clientWidth (the
 // fixed canvas's width, without a classic scrollbar). During the shot a small viewport change moves only the camera (the
-// intro director decides); otherwise the renderer, the composers, the cameras, the mask, section 3's ground and section 2 follow.
+// intro director decides); otherwise the renderer, the composers, the cameras, the mask, section 3's ground, section 2,
+// section 4 and section 5's jar follow.
 import type { HeroContext } from '../types.ts';
 
 export function createResize(ctx: HeroContext & { lastW?: number }): () => void {
@@ -17,6 +18,7 @@ export function createResize(ctx: HeroContext & { lastW?: number }): () => void 
     cameras();
     ctx.fogGround.resize(ctx.renderer.domElement.width, ctx.renderer.domElement.height);   // device pixels, as section 2's targets
     ctx.room?.resize(ctx.renderer.domElement.width, ctx.renderer.domElement.height);   // section 4: the hall, the bubble, the world, and the section's cached layout
+    ctx.signup?.resize(ctx.renderer.domElement.width, ctx.renderer.domElement.height);   // section 5: the jar's two targets, its view size and the slot read afresh
     ctx.mask.resize(w, h, ctx.dpr);
     ctx.section2?.resize(w, h);
     ctx.sky.onAspect(asp);

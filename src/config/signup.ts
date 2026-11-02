@@ -1,16 +1,16 @@
-// Section 5, the sign-up (docs/specs/section-5.md 3 and 5; docs/specs/section-5-sand.md 3): every string by id, the
-// three follows with their platforms, addresses, worth and families, the lead endpoint and the storage keys. Plain
-// data, read by Signup.astro at build and by the DOM script (scripts/signup/signup.ts) and the island's jar chunk
-// (hero/section5/jars.ts) at runtime; the unit tests import it under Node. No import of the shade table here: the
-// sand's hexes are joined at build (config/signup-colours.ts) and ride the follow links' markup, so neither client
-// chunk carries it.
+// Section 5, the sign-up (docs/specs/section-5.md 3 and 5; docs/specs/section-5-liquid.md 3): every string by id, the
+// three follows with their platforms, addresses, worth, families and the shades their liquid wears, the lead endpoint
+// and the storage keys. Plain data, read by Signup.astro at build and by the DOM script (scripts/signup/signup.ts) and
+// the island's jar chunk (hero/section5/jars.ts) at runtime; the unit tests import it under Node. No import of the
+// shade table here: the liquid's hexes are joined at build (config/signup-colours.ts) and ride the follow links'
+// markup, so neither client chunk carries it.
 
 /**
- * The copy (section-5.md 3, section-5-sand.md 3), in sentence case: the decode prints it in capitals, as the quiz and
+ * The copy (section-5.md 3, section-5-liquid.md 3), in sentence case: the decode prints it in capitals, as the quiz and
  * section 4 do, and the accessible names keep the sentence case through the decode's visually hidden copy. The patterns
  * take fill(). No discount, percent, price or verification word anywhere: Sam's picture's "save up to 20% off", "5% OFF",
  * "SAVE MY DISCOUNTS" and "keep your savings" stand in section 11 of the spec, pending him (the brand rule, CLAUDE.md
- * rule 37, the quiz's precedent); "verifies" in his brief of 2026-10-29 is the honour system (section-5-sand.md 12).
+ * rule 37, the quiz's precedent); "verifies" in his brief of 2026-10-29 is the honour system (section-5-liquid.md 12).
  */
 export const SIGNUP_COPY = Object.freeze({
   aria: 'Section 5: the sign-up',
@@ -33,7 +33,7 @@ export const SIGNUP_COPY = Object.freeze({
   wrapLive: 'Round to the sign-up.',
   /** the jar's description (the slot's aria-label on both tiers), from the follows in press order (the spec's `still` and `stillEmpty`; `still` is the form's "Still trying..." already, so these carry their own ids) */
   jarEmpty: 'An empty glass jar.',
-  jarLayers: 'A glass jar {level} of sand, from the bottom: {layers}.',
+  jarLayers: 'A glass jar {level} of colour, from the bottom: {layers}.',
   levelQuarter: 'a quarter full',
   levelHalf: 'half full',
   levelThree: 'three quarters full',
@@ -76,24 +76,29 @@ export interface SignupJar {
   readonly url: string;
   /** the share of the jar one follow pours in (Sam's ladder: a quarter, a quarter, a half), in quarters */
   readonly worth: number;
-  /** the families whose 24 shades the sand wears (SHADES by family id), in catalog order */
+  /** the families of its liquid (SHADES by family id), in pouring order: one per band from the bottom */
   readonly families: readonly string[];
   /** the families' site names in the singular, as the jar's description reads them (pinned to the ids by the unit test) */
   readonly familyNames: string;
+  /** the liquid's shades, catalog ids one per quarter of worth in pouring order (each of one of the families; the hexes joined at build, config/signup-colours.ts) */
+  readonly shades: readonly string[];
 }
 
 /**
- * The follows (section-5.md 3, "The jars"; section-5-sand.md 3), in Sam's picture's order. The addresses are the
+ * The follows (section-5.md 3, "The jars"; section-5-liquid.md 3), in Sam's picture's order. The addresses are the
  * store's own, read from the
  * footer of https://www.skreed.com/ on 2026-10-26 (facebook.com/skreedofficial, www.youtube.com/@skreedofficial,
  * instagram.com/skreedofficial; Instagram was on record before, docs/00-IDEATION.md and
- * docs/research/04-signup-virality-social.md 5). The families are read from his picture's pellets: blue, red, pink and
- * violet, to the nearest family each. The one jar is yours and wears what is poured into it, a layer per follow.
+ * docs/research/04-signup-virality-social.md 5). The families and the shades are read from his picture's pellets: a
+ * bright azure, a classic red, and violet under pink for Instagram (so its violet quarter pours first and "from the
+ * bottom" stays literally true), to the nearest catalog shade each (section-5-liquid.md 3, argued from the transmitted
+ * colours; Cobalt and Classic Violet are the alternatives one id away). The one jar is yours and wears what is poured
+ * into it, a band per quarter of worth in press order.
  */
 export const SIGNUP_JARS: readonly SignupJar[] = Object.freeze([
-  { id: 'facebook', platform: 'Facebook', verb: 'follow', url: 'https://facebook.com/skreedofficial', worth: 1, families: ['blissful-blue'], familyNames: 'Blissful Blue' },
-  { id: 'youtube', platform: 'YouTube', verb: 'subscribe', url: 'https://www.youtube.com/@skreedofficial', worth: 1, families: ['roaring-red'], familyNames: 'Roaring Red' },
-  { id: 'instagram', platform: 'Instagram', verb: 'follow', url: 'https://www.instagram.com/skreedofficial/', worth: 2, families: ['playful-pink', 'vivid-violet'], familyNames: 'Playful Pink and Vivid Violet' },
+  { id: 'facebook', platform: 'Facebook', verb: 'follow', url: 'https://facebook.com/skreedofficial', worth: 1, families: ['blissful-blue'], familyNames: 'Blissful Blue', shades: ['blissful-blue-10'] },
+  { id: 'youtube', platform: 'YouTube', verb: 'subscribe', url: 'https://www.youtube.com/@skreedofficial', worth: 1, families: ['roaring-red'], familyNames: 'Roaring Red', shades: ['roaring-red-06'] },
+  { id: 'instagram', platform: 'Instagram', verb: 'follow', url: 'https://www.instagram.com/skreedofficial/', worth: 2, families: ['vivid-violet', 'playful-pink'], familyNames: 'Vivid Violet and Playful Pink', shades: ['vivid-violet-07', 'playful-pink-20'] },
 ]);
 /** the platforms with an address: the follows rendered (a row with no address is left out, section-5.md 3) */
 export const SIGNUP_FOLLOWS: readonly SignupJar[] = SIGNUP_JARS.filter((j) => j.url !== '' && j.worth > 0);
@@ -160,11 +165,11 @@ export interface SignupStill { width: number; height: number; data: Uint8Array }
 
 /** The island's side of the bridge (window.__skreedSignup): what the DOM script can ask of the jar. */
 export interface SignupIsland {
-  /** a follow pressed now: the stream pours the platform's worth into the jar (section-5-sand.md 4) */
+  /** a follow pressed now: the stream pours the platform's worth into the jar (section-5-liquid.md 4) */
   pour(id: string): void;
-  /** the follows as they stand (a mount with saved follows): the jar set at once, layered in press order */
+  /** the follows as they stand (a mount with saved follows): the jar set at once, banded in press order */
   follows(ids: readonly string[]): void;
-  /** hooks builds only (folded out of the production chunk): the jar at the layers of an order over --night, the stream's clock, the tilt */
+  /** hooks builds only (folded out of the production chunk): the jar at the bands of an order over --night, the stream's clock, the tilt */
   still?(order: readonly string[], level?: number): Promise<SignupStill | null>;
   scrub?(t: number | null): void;
   tilt?(deg: number): void;

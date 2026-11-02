@@ -1,8 +1,8 @@
-// Section 5's DOM side (docs/specs/section-5.md 2, 4 and 5; docs/specs/section-5-sand.md 2, 3 and 6): the text split
+// Section 5's DOM side (docs/specs/section-5.md 2, 4 and 5; docs/specs/section-5-liquid.md 2, 3 and 6): the text split
 // into glyphs as it stands (visible at rest, rule 12) by section 3's decode; the follows (a press on a follow word lets
 // the link open its page in a new tab and, in the same press, counts the platform as collected: the honour system of
-// docs/00-IDEATION.md decision 11; the island pours its colours, the row's state and the count line decode to their
-// new words, the slot's description reads the jar's layers in press order, the live region says it once; remembered
+// docs/00-IDEATION.md decision 11; the island pours its liquid, the row's state and the count line decode to their
+// new words, the slot's description reads the jar's bands in press order, the live region says it once; remembered
 // for the visit in sessionStorage); data-pouring from the frame the island hands over, with the body going under a
 // seam's cloud with the cover; the poster tier's still swapped by the state's key with no transition; the email form
 // as the quiz's gift form (validation on blur and submit, sending, the error line, the offline queue sent on `online`,

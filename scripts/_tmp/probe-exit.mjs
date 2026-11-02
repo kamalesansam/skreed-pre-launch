@@ -1,0 +1,42 @@
+// probe: the exit seam at a width, captured as a sequence (is there a frame of --night alone?)
+import { chromium } from '@playwright/test';
+import sharp from 'sharp';
+const base = process.argv[2] ?? 'http://127.0.0.1:4321/';
+const W = Number(process.argv[3] ?? 1280), H = W > 800 ? 800 : 844, DPR = W > 800 ? 1.5 : 2;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const browser = await chromium.launch({ channel: 'chrome', args: ['--ignore-gpu-blocklist', '--enable-gpu'] });
+const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: DPR, ...(W < 800 ? { isMobile: true, hasTouch: true } : {}) });
+const page = await ctx.newPage();
+page.on('console', (m) => { if (m.type() === 'error') console.log('console error:', m.text().slice(0, 200)); });
+await page.goto(new URL('/?tier=hero3d&glue=0&room=open', base).href, { waitUntil: 'load' });
+await page.waitForFunction(() => window.__heroStarted && !document.documentElement.classList.contains('loading'), null, { timeout: 300_000 });
+await page.evaluate(() => window.__skreedIntro?.skip?.());
+await page.waitForFunction(() => !document.documentElement.classList.contains('intro'), null, { timeout: 30_000 }).catch(() => {});
+await page.evaluate(() => window.__s5?.load());
+await page.waitForFunction(() => !!window.__s5?.ready, null, { timeout: 90_000 });
+await page.waitForFunction(() => { const s = window.__s4?.state(); return !!s && !!s.layout && !s.layout.intro; }, null, { timeout: 60_000 }).catch(() => {});
+await page.evaluate(() => document.querySelector('astro-dev-toolbar')?.style.setProperty('display', 'none', 'important'));
+const goQ = async (q, settle) => { await page.evaluate((qq) => { const room = document.getElementById('room'), top = room.getBoundingClientRect().top + scrollY, y = top + qq * innerHeight; scrollTo({ top: y, behavior: 'instant' }); window.__skreedSnap?.(y / innerHeight); window.__skreedRoom?.snap(qq); }, q); await sleep(settle); };
+const goY = async (y, settle) => { await page.evaluate((yy) => { scrollTo({ top: yy, behavior: 'instant' }); window.__skreedSnap?.(yy / innerHeight); }, y); await sleep(settle); };
+await goQ(9.5, 600);
+await page.evaluate(() => window.__s4.enter());
+await page.waitForFunction(() => window.__s4.state().state === 'world', null, { timeout: 60_000 }).catch(() => console.log('entry did not land'));
+await page.evaluate(() => window.__s4.scene(4)); await sleep(1200);
+await goQ(13.3, 1500);
+const top = await page.evaluate(() => document.getElementById('signup').getBoundingClientRect().top + scrollY);
+await goY(top, 1500);
+const exitY = await page.evaluate(() => window.__s4.state().exitY);
+await goY(exitY, 1500);
+console.log('at the form, exitY', exitY);
+const t0 = Date.now();
+await page.evaluate((yy) => { scrollTo({ top: yy, behavior: 'instant' }); window.__skreedSnap?.(yy / innerHeight); }, exitY + 6);
+for (let i = 0; i < 22; i++) {
+  const t = Date.now() - t0;
+  const st = await page.evaluate(() => { const s = window.__s4.state(); return `${s.state} ${s.seam ? s.seam.kind + '/' + s.seam.phase : '-'} y${Math.round(scrollY)} sig:${document.getElementById('signup')?.dataset.state}`; });
+  const buf = await page.screenshot({ type: 'png', scale: 'css' });
+  const { data, info } = await sharp(buf).raw().toBuffer({ resolveWithObject: true });
+  let s = 0; for (let k = 0; k < data.length; k += info.channels) s += data[k] + data[k + 1] + data[k + 2];
+  console.log(`${String(t).padStart(5)} ms  ${st}  mean ${(s / (3 * info.width * info.height)).toFixed(1)}`);
+  if (i === 0) await sharp(buf).toFile(process.argv[4] ?? 'exit-0.png');
+}
+await browser.close();

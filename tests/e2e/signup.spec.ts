@@ -1,12 +1,13 @@
-// Section 5, the sign-up (docs/specs/section-5-sand.md 8): AC2 the jar's placement (its projected box inside its slot at
-// 0.9 of the slot's height, at rest and after a scroll), AC3 nothing moving at rest (two stills 1.5 s apart byte-equal,
-// the level and the stream unchanged), AC4 the pour's schedule (the Instagram press on the empty jar held by the
-// stream's clock at its lead, a quarter, a half, past its total; data-pouring and the poured event), AC5 a second
-// press on the same word pours nothing, AC6 the extension (YouTube pressed while Facebook's stream emits: one stream,
-// the switch at the old window's end, the level continuous) and the queue (pressed after the window has closed: its
-// own stream after the first's total), AC7 the reload within the visit, a new session and a throwing sessionStorage,
-// AC8 the layers' order in the jar's description, AC9 the poster tier (the still of the state swapped on a press, one
-// request each, a saved follow's still first) and the still3d tier (everything set at once); and, as built, the
+// Section 5, the sign-up (docs/specs/section-5-liquid.md 8): AC2 the jar's placement (its projected box inside its slot
+// at 0.9 of the slot's height, at rest and after a scroll), AC3 nothing moving at rest (two stills 1.5 s apart
+// byte-equal, the level, the ripple and the stream unchanged), AC4 the pour's schedule (the Instagram press on the empty
+// jar held by the stream's clock at 0.15 s, its lead, a quarter, a half, past its landing and its total, with its
+// quarter switch and its two colours; data-pouring and the poured event), AC5 a second press on the same word pours
+// nothing, AC6 the extension (YouTube pressed while Facebook's stream emits: one stream, the switch at the old
+// emission's end, the level continuous) and the queue (pressed after the emission has ended: its own stream after the
+// first's total), AC7 the reload within the visit, a new session and a throwing sessionStorage, AC8 the bands' order
+// in the jar's description and the hooks, AC9 the poster tier (the still of the state swapped on a press, one request
+// each, a saved follow's still first) and the still3d tier (everything set at once); and, as built, the
 // follow words (https links to a new tab with noopener), the live region and the form's states against a stub. The 3D
 // path runs on SwiftShader here (?tier=hero3d), the glue off (?glue=0) and section 4 open (?room=open), as room.spec
 // does; the exit seam and the wrap onto section 5 are room.spec's cases. The test build (PUBLIC_HERO_HOOKS 1) renders
@@ -14,8 +15,8 @@
 import { test, expect, type Page } from '@playwright/test';
 
 type Box = { x: number; y: number; w: number; h: number };
-type Pour = { id: string; ids: string[]; t: number; phase: string; lead: number; pour: number; emit: number; total: number; switches: number[]; owners: number[]; grains: number; dust: number };
-type S5 = { ready: boolean; failed: boolean; order: string[]; level: number; target: number; pour: Pour | null; queue: string[]; layers: { id: string; from: number; to: number }[]; mound: { cone: number; dome: number }; bands: number[]; owners: number[]; slot: Box | null; placed: { px: number; box: Box; tilt: number } | null };
+type Pour = { id: string; ids: string[]; t: number; phase: string; lead: number; pour: number; emit: number; landEnd: number; total: number; switches: number[]; colours: string[] };
+type S5 = { ready: boolean; failed: boolean; order: string[]; level: number; target: number; pour: Pour | null; queue: string[]; layers: { id: string; from: number; to: number; hexes: string[] }[]; surface: { ripple: number; dimple: number; span: { top: number; head: number } | null }; tops: number[]; colours: string[]; slot: Box | null; placed: { px: number; box: Box; tilt: number } | null };
 type Poured = { id: string; level: number };
 const s5 = (page: Page): Promise<S5 | null> => page.evaluate(() => (window.__s5?.state() ?? null) as S5 | null);
 const events = (page: Page): Promise<string[]> => page.evaluate(() => ((window as unknown as { __skreedEvents?: { name: string }[] }).__skreedEvents ?? []).map((e) => e.name));
@@ -58,7 +59,7 @@ async function settled(page: Page, timeout = 12_000): Promise<void> {
 }
 const inside = (b: Box, s: Box) => b.x >= s.x - 1 && b.y >= s.y - 1 && b.x + b.w <= s.x + s.w + 1 && b.y + b.h <= s.y + s.h + 1;
 
-test('section 5 at 390 x 844: the follow words, the placement, nothing at rest, the pour by its clock, the second press, the extension, the layers, the visit\'s memory (AC2 to AC8)', async ({ browser, baseURL }) => {
+test('section 5 at 390 x 844: the follow words, the placement, nothing at rest, the pour by its clock, the second press, the extension, the bands, the visit\'s memory (AC2 to AC8)', async ({ browser, baseURL }) => {
   test.setTimeout(900_000);
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
@@ -95,48 +96,58 @@ test('section 5 at 390 x 844: the follow words, the placement, nothing at rest, 
   await page.evaluate(() => { scrollTo({ top: scrollY - 120, behavior: 'instant' }); window.__skreedSnap?.(scrollY / innerHeight); });
   await page.waitForTimeout(400);
   await expect(page.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('aria-label', 'An empty glass jar.');
-  // AC3: nothing moves at rest: two stills 1.5 s apart byte-equal, the level and the stream unchanged
+  // AC3: nothing moves at rest: two stills 1.5 s apart byte-equal, the level, the ripple and the stream unchanged
   expect(s0.level).toBe(0); expect(s0.pour).toBeNull(); expect(s0.queue).toEqual([]);
+  expect(s0.surface.ripple).toBe(0); expect(s0.surface.dimple).toBe(0); expect(s0.surface.span).toBeNull();
   const h1 = await stillHash(page, ['instagram']);
   await page.waitForTimeout(1500);
   const h2 = await stillHash(page, ['instagram']);
   expect(h1).not.toBeNull(); expect(h2).toBe(h1);
-  expect((await s5(page))!.level).toBe(0); expect((await s5(page))!.pour).toBeNull();
-  // AC4: the Instagram press: the stream within 100 ms, its schedule, the level by its clock, settled past its total
+  expect((await s5(page))!.level).toBe(0); expect((await s5(page))!.pour).toBeNull(); expect((await s5(page))!.surface.ripple).toBe(0);
+  // AC4: the Instagram press: the stream within 100 ms, its schedule with the quarter switch, the head at 0.15 s, the level by its clock, the ripple while it lands, settled past its total
   await press(page, 'instagram');
   await page.waitForTimeout(100);
   const p0 = (await s5(page))!;
   expect(p0.pour?.id).toBe('instagram');
   await expect(page.locator('#signup')).toHaveAttribute('data-pouring', 'instagram');
-  expect(Math.abs(p0.pour!.lead - 0.512)).toBeLessThan(0.005);
+  expect(Math.abs(p0.pour!.lead - 0.5127)).toBeLessThan(0.005);
   expect(p0.pour!.pour).toBeCloseTo(1.8, 6);
-  expect(Math.abs(p0.pour!.total - 2.912)).toBeLessThan(0.005);
-  expect(p0.pour!.switches).toEqual([]); expect(p0.pour!.owners).toEqual([2]);
-  expect(p0.pour!.grains).toBeGreaterThan(3000); expect(p0.pour!.dust).toBeGreaterThan(600);
+  expect(Math.abs(p0.pour!.emit - 1.9067)).toBeLessThan(0.005);
+  expect(Math.abs(p0.pour!.total - 2.9127)).toBeLessThan(0.005);
+  expect(p0.pour!.switches.length).toBe(1); expect(Math.abs(p0.pour!.switches[0] - 0.9507)).toBeLessThan(0.005);
+  expect(p0.pour!.colours).toEqual(['#8554d1', '#fe0094']);
+  await scrub(page, 0.15);
+  const ph = (await s5(page))!;
+  expect(ph.pour!.phase).toBe('lead'); expect(ph.level).toBe(0);
+  expect(ph.surface.span!.top).toBeCloseTo(0.62, 6); expect(Math.abs(ph.surface.span!.head - 0.4775)).toBeLessThan(0.005);
   await scrub(page, 0.2);
   const pa = (await s5(page))!;
-  expect(pa.pour!.phase).toBe('lead'); expect(pa.level).toBe(0); expect(pa.pour!.t).toBe(0.2);
+  expect(pa.pour!.phase).toBe('lead'); expect(pa.level).toBe(0); expect(pa.pour!.t).toBe(0.2); expect(pa.surface.ripple).toBe(0);
   await scrub(page, p0.pour!.lead + 0.9);
-  expect(Math.abs((await s5(page))!.level - 0.25)).toBeLessThan(0.02);
-  expect((await s5(page))!.mound.cone).toBeGreaterThan(0.05);
+  const pq = (await s5(page))!;
+  expect(Math.abs(pq.level - 0.25)).toBeLessThan(0.02);
+  expect(pq.surface.ripple).toBeGreaterThan(0.9); expect(pq.surface.dimple).toBeGreaterThan(0.9);
+  expect(pq.pour!.phase).toBe('pour'); expect(pq.surface.span).not.toBeNull(); expect(pq.surface.span!.top).toBeCloseTo(0.62, 6);
   await scrub(page, p0.pour!.lead + 1.8);
   expect((await s5(page))!.level).toBe(0.5);
+  await scrub(page, p0.pour!.landEnd + 0.05);
+  const pl = (await s5(page))!;
+  expect(pl.surface.span).toBeNull(); expect(pl.pour!.phase).toBe('tail');
   await scrub(page, p0.pour!.total + 0.05);
   const pe = (await s5(page))!;
-  expect(pe.level).toBe(0.5); expect(pe.pour).toBeNull();
+  expect(pe.level).toBe(0.5); expect(pe.pour).toBeNull(); expect(pe.surface.ripple).toBe(0); expect(pe.surface.dimple).toBe(0); expect(pe.surface.span).toBeNull();
   await scrub(page, null);
   await page.waitForTimeout(400);
   await expect(page.locator('#signup')).not.toHaveAttribute('data-pouring');
   expect(await poured(page)).toEqual([{ id: 'instagram', level: 0.5 }]);
-  expect(Math.abs((await s5(page))!.mound.dome - 0.012)).toBeLessThan(1e-6);
-  // the state lines and the live region as built; the jar's description reads the layer
+  // the state lines and the live region as built; the jar's description reads the bands
   await expect(page.locator('li.su-follow-row[data-id="instagram"]')).toHaveAttribute('data-collected', '1');
   await expect(page.locator('.su-jar')).toHaveAttribute('data-n', '1');
   await expect(page.locator('.su-jar')).toHaveAttribute('data-level', '0.500');
   await expect(page.locator('#suLive')).toHaveText('Instagram collected. Your jar: 1 of 3.');
   await expect.poll(() => said(page, 'li.su-follow-row[data-id="instagram"] .su-state'), { timeout: 5_000 }).toBe('Collected');
   await expect.poll(() => said(page, '.su-count'), { timeout: 5_000 }).toBe('1 of 3 collected');
-  await expect(page.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('aria-label', 'A glass jar half full of sand, from the bottom: Playful Pink and Vivid Violet.');
+  await expect(page.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('aria-label', 'A glass jar half full of colour, from the bottom: Vivid Violet and Playful Pink.');
   expect(await events(page)).toContain('follow_click');
   // AC5: a second press on the same word opens the page and pours nothing
   await press(page, 'instagram');
@@ -146,36 +157,37 @@ test('section 5 at 390 x 844: the follow words, the placement, nothing at rest, 
   await expect(page.locator('a.su-follow[data-id="instagram"]')).toHaveAttribute('href', 'https://www.instagram.com/skreedofficial/');
   await expect(page.locator('#suLive')).toHaveText('Instagram collected. Your jar: 1 of 3.');
   expect((await poured(page)).length).toBe(1);
-  // AC6: the extension: Facebook pressed on the half-full jar, YouTube pressed while its stream emits (at 0.3 s of its clock)
+  // AC6: the extension: Facebook pressed on the half-full jar, YouTube pressed while its stream emits (at 0.3 s of its clock, inside Facebook's 0.4060 s lead)
   await press(page, 'facebook');
   await page.waitForTimeout(60);
   await scrub(page, 0.3);
   const f0 = (await s5(page))!;
   expect(f0.pour!.ids).toEqual(['facebook']);
   expect(f0.pour!.t).toBe(0.3); expect(0.3).toBeLessThan(f0.pour!.emit);
-  await expect(page.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('aria-label', 'A glass jar three quarters full of sand, from the bottom: Playful Pink and Vivid Violet, then Blissful Blue.');
+  await expect(page.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('aria-label', 'A glass jar three quarters full of colour, from the bottom: Vivid Violet and Playful Pink, then Blissful Blue.');
   await press(page, 'youtube');
   await page.waitForTimeout(160);
   const f1 = (await s5(page))!;
   expect(f1.pour!.ids).toEqual(['facebook', 'youtube']);
-  expect(f1.pour!.switches.length).toBe(1); expect(Math.abs(f1.pour!.switches[0] - f0.pour!.emit)).toBeLessThan(1e-6);
-  expect(f1.pour!.owners).toEqual([0, 1]);
+  expect(f1.pour!.switches.length).toBe(1); expect(Math.abs(f1.pour!.switches[0] - f0.pour!.emit)).toBeLessThan(1e-6); expect(Math.abs(f1.pour!.switches[0] - 0.9633)).toBeLessThan(0.005);
+  expect(f1.pour!.colours).toEqual(['#007dd3', '#ef1123']);
   expect(f1.queue).toEqual([]);
   expect(Math.abs(f1.level - f0.level)).toBeLessThan(0.005);
-  // the level is rebased at the press, or at the lead when the press comes before the first grain lands (0.3 s is inside Facebook's 0.405 s lead here)
-  expect(f1.pour!.lead).toBeCloseTo(Math.max(0.3, f0.pour!.lead), 6);
+  // the level is rebased at the press, or at the lead when the press comes before the head lands (0.3 s is inside Facebook's 0.4060 s lead here)
+  expect(f1.pour!.lead).toBeCloseTo(Math.max(0.3, f0.pour!.lead), 6); expect(Math.abs(f1.pour!.lead - 0.406)).toBeLessThan(0.005);
   expect(Math.abs(f1.pour!.total - (f1.pour!.lead + (1 - 0.5) * 3.6 + 0.6))).toBeLessThan(1e-6);
-  expect(Math.abs(f1.pour!.total - (0.3 + (1 - f0.level) * 3.6 + 0.6))).toBeLessThan(0.15);
+  expect(Math.abs(f1.pour!.total - 2.806)).toBeLessThan(0.005);
   await settled(page);
   const f2 = (await s5(page))!;
   expect(f2.level).toBe(1); expect(f2.pour).toBeNull();
-  expect(f2.layers).toEqual([{ id: 'instagram', from: 0, to: 0.5 }, { id: 'facebook', from: 0.5, to: 0.75 }, { id: 'youtube', from: 0.75, to: 1 }]);
-  expect(f2.bands).toEqual([0.5, 0.75, 1, 1]); expect(f2.owners).toEqual([2, 0, 1, 1]);
+  expect(f2.layers).toEqual([{ id: 'instagram', from: 0, to: 0.5, hexes: ['#8554d1', '#fe0094'] }, { id: 'facebook', from: 0.5, to: 0.75, hexes: ['#007dd3'] }, { id: 'youtube', from: 0.75, to: 1, hexes: ['#ef1123'] }]);
+  expect(f2.tops).toEqual([0.25, 0.5, 0.75, 1]); expect(f2.colours).toEqual(['#8554d1', '#fe0094', '#007dd3', '#ef1123']);
+  expect(f2.surface.ripple).toBe(0); expect(f2.surface.dimple).toBe(0); expect(f2.surface.span).toBeNull();
   expect(await events(page)).toContain('jar_full');
   expect(await poured(page)).toEqual([{ id: 'instagram', level: 0.5 }, { id: 'youtube', level: 1 }]);
   await expect(page.locator('#suLive')).toHaveText('YouTube collected. Your jar is full.');
   await expect.poll(() => said(page, '.su-count'), { timeout: 5_000 }).toBe('Full');
-  await expect(page.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('aria-label', 'A glass jar full of sand, from the bottom: Playful Pink and Vivid Violet, then Blissful Blue, then Roaring Red.');
+  await expect(page.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('aria-label', 'A glass jar full of colour, from the bottom: Vivid Violet and Playful Pink, then Blissful Blue, then Roaring Red.');
   expect((await s5(page))!.order).toEqual(['instagram', 'facebook', 'youtube']);
   // AC7: remembered for the visit: the follows stand after a reload, in order, with no stream and no poured event
   await page.reload();
@@ -198,7 +210,7 @@ test('section 5 at 390 x 844: the follow words, the placement, nothing at rest, 
   await fresh.close();
 });
 
-test('section 5 at 390 x 844: the queue (YouTube pressed after Facebook\'s window has closed), and the follows with sessionStorage throwing (AC6, AC7)', async ({ browser, baseURL }) => {
+test('section 5 at 390 x 844: the queue (YouTube pressed after Facebook\'s emission has ended), and the follows with sessionStorage throwing (AC6, AC7)', async ({ browser, baseURL }) => {
   test.setTimeout(600_000);
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
@@ -221,8 +233,8 @@ test('section 5 at 390 x 844: the queue (YouTube pressed after Facebook\'s windo
   // the second stream begins at the first's total with its own lead, from three quarters
   await page.waitForFunction(() => (window.__s5?.state() as S5 | null)?.pour?.id === 'youtube', null, { timeout: 8_000, polling: 50 });
   const y = (await s5(page))!;
-  expect(y.queue).toEqual([]); expect(y.pour!.switches).toEqual([]); expect(y.pour!.owners).toEqual([1]);
-  expect(Math.abs(y.pour!.lead - 0.341)).toBeLessThan(0.01);
+  expect(y.queue).toEqual([]); expect(y.pour!.switches).toEqual([]); expect(y.pour!.colours).toEqual(['#ef1123']);
+  expect(Math.abs(y.pour!.lead - 0.3427)).toBeLessThan(0.005);
   await expect(page.locator('#signup')).toHaveAttribute('data-pouring', 'youtube');
   await page.waitForFunction(() => { const s = window.__s5?.state() as S5 | null; return !!s && s.level === 1 && s.pour === null; }, null, { timeout: 8_000, polling: 100 });
   expect(await poured(page)).toEqual([{ id: 'instagram', level: 0.5 }, { id: 'facebook', level: 0.75 }, { id: 'youtube', level: 1 }]);
@@ -277,7 +289,7 @@ test('section 5 at 390 x 844 on the poster tier: the text on night, the still of
   await page.evaluate(() => { const a = document.querySelector<HTMLAnchorElement>('a.su-follow[data-id="facebook"]')!; a.addEventListener('click', (e) => e.preventDefault(), { once: true }); a.click(); });
   await expect(page.locator('.su-jar')).toHaveAttribute('data-n', '1');
   await expect.poll(() => said(page, '.su-count'), { timeout: 5_000 }).toBe('1 of 3 collected');
-  await expect(page.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('aria-label', 'A glass jar a quarter full of sand, from the bottom: Blissful Blue.');
+  await expect(page.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('aria-label', 'A glass jar a quarter full of colour, from the bottom: Blissful Blue.');
   await expect(root).not.toHaveAttribute('data-pouring');
   if (pics) {
     await expect(page.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('data-still', 'f');
@@ -348,7 +360,7 @@ test('section 5 at 390 x 844 on the poster tier: the text on night, the still of
     await expect(p2.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('data-still', 'i');
     await expect.poll(() => p2.locator('#signup picture.su-still img').evaluate((img: HTMLImageElement) => (img.complete ? img.currentSrc : '')), { timeout: 10_000 }).toMatch(/jar-i-(1x|2x)\./);
     expect(got.length).toBe(1); expect(got[0]).toMatch(/jar-i-/);
-    await expect(p2.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('aria-label', 'A glass jar half full of sand, from the bottom: Playful Pink and Vivid Violet.');
+    await expect(p2.locator('.su-slot[data-slot="yours"]')).toHaveAttribute('aria-label', 'A glass jar half full of colour, from the bottom: Vivid Violet and Playful Pink.');
     await saved.close();
   }
 });
@@ -368,7 +380,8 @@ test('section 5 at 390 x 844 under reduced motion (still3d): the jar drawn, the 
     await page.waitForTimeout(80);
     const after = (await s5(page))!;
     expect(after.level).toBe(0.5); expect(after.pour).toBeNull(); expect(after.queue).toEqual([]);
-    expect(after.mound.cone).toBe(0); expect(Math.abs(after.mound.dome - 0.012)).toBeLessThan(1e-6);
+    expect(after.surface.ripple).toBe(0); expect(after.surface.dimple).toBe(0); expect(after.surface.span).toBeNull();
+    expect(after.tops).toEqual([0.25, 0.5, 1, 1]); expect(after.colours).toEqual(['#8554d1', '#fe0094', '#fe0094', '#fe0094']);
     expect(await poured(page)).toEqual([{ id: 'instagram', level: 0.5 }]);
     await page.waitForTimeout(400);
     expect(pouring).toBe(false);

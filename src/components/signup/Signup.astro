@@ -1,16 +1,18 @@
 ---
-// Section 5, the sign-up (docs/specs/section-5.md 2, 3 and 5 "The DOM"; docs/specs/section-5-sand.md 2 and 6), in the
-// hero's after-track slot after section 4: plain text on section 2's fog (E-S5-bg; Sam, 2026-10-26: "the same
-// backround as section 2"), the headline, the sub-line, the one jar (a slot of air the island draws the jar of sand
-// into, named for assistive technology, with the count line under it and the three follow words beside it, each with
-// its state), the email form (the quiz's gift form, rendered only with PUBLIC_LEADS on), the closing line and the jar
-// model's credit, then one empty screen for the exit seam's trigger. The markup is complete without JavaScript (the
+// Section 5, the sign-up (docs/specs/section-5.md 2, 3 and 5 "The DOM"; docs/specs/section-5-liquid.md 2 and 6), in
+// the hero's after-track slot after section 4: plain text on section 2's fog (E-S5-bg; Sam, 2026-10-26: "the same
+// backround as section 2"), in four blocks that signup.css composes into one screen (Sam, 2026-11-02): the head (the
+// headline and the sub-line); the jar block (its label, the three follow words each with its state, the count line,
+// then the one jar: a slot of air the island draws the jar of liquid into, named for assistive technology); the save
+// block ("Got your colours?", its line and the email form, the quiz's gift form, rendered only with PUBLIC_LEADS on);
+// the foot (the closing line and the jar model's credit). The reading order is the order on screen at every width.
+// Then one empty screen for the exit seam's trigger. The markup is complete without JavaScript (the
 // links work, the no-JS line points at Instagram); scripts/signup/signup.ts, loaded once the section is within a
 // screen, decodes the text, counts the follows, drives the form and the poster tier's loop end. No style attributes
 // (the CSP has no style-src-attr). On the poster tier the slot shows a still of the jar from our own build
 // (scripts/signup/render-stills.mjs): the empty jar's picture rides the markup, the DOM script swaps the state's.
 import { FOLLOW_COUNT, SIGNUP_COPY as C, SIGNUP_CREDIT, SIGNUP_FOLLOWS, followWord } from '../../config/signup.ts';
-import { beadColours } from '../../config/signup-colours.ts';
+import { liquidColours } from '../../config/signup-colours.ts';
 import { QUIZ_GATE } from '../../config/quiz.ts';
 import gate from '../../inline/signup-gate.inline.js?raw';
 import { inlineScript } from '../shell/inlineScript.ts';
@@ -23,7 +25,8 @@ import '../../styles/signup.css';
 const gateCode = inlineScript('signup-gate.js', { KEY: QUIZ_GATE.key }, gate);
 
 // the form needs its Worker (quiz.md D7, the gift's rule): on in dev, test and staging builds, off in production until
-// PUBLIC_LEADS is set to on (folded at build time)
+// PUBLIC_LEADS is set to on (folded at build time); the section carries data-leads with it, the marker signup.css's
+// short phone with the form reads
 const LEADS = import.meta.env.PUBLIC_LEADS === 'on' || (import.meta.env.PUBLIC_LEADS !== 'off'
   && (import.meta.env.DEV || import.meta.env.PUBLIC_STAGING === '1' || import.meta.env.PUBLIC_HERO_HOOKS === '1'));
 // the poster tier's stills, sixteen states by the follows' order (absent files render no picture: a build without them
@@ -35,58 +38,66 @@ const file = (key: string) => {
   return a2 && a1 && w2 && w1 ? { avif: `${a1} 160w, ${a2} 320w`, webp: `${w1} 160w, ${w2} 320w`, src: w1 } : null;
 };
 const still = file('0');
-// each follow link carries its sand's hexes (the family's 24 catalog shades, or Instagram's 48, joined at build), which the island's jar chunk reads into its palette
-const follows = SIGNUP_FOLLOWS.map((j) => ({ ...j, word: followWord(j), colours: beadColours(j.families).join(',') }));
+// each follow link carries its liquid's hexes (one catalog shade per quarter of worth, two for Instagram, joined at build), which the island's jar chunk reads into its colour uniforms
+const follows = SIGNUP_FOLLOWS.map((j) => ({ ...j, word: followWord(j), colours: liquidColours(j.shades).join(',') }));
 const instagram = SIGNUP_FOLLOWS.find((j) => j.id === 'instagram')?.url ?? '';
 ---
-<section class="signup" id="signup" aria-label={C.aria} data-state="rest" data-follows={FOLLOW_COUNT} hidden data-locked>
+<section class="signup" id="signup" aria-label={C.aria} data-state="rest" data-follows={FOLLOW_COUNT} data-leads={LEADS ? '' : undefined} hidden data-locked>
   <div class="su-body" id="suBody">
-    <h2 class="su-h" data-dc>{C.h}</h2>
-    <p class="su-sub" data-dc>{C.sub}</p>
-    <p class="su-jars-h" data-dc>{C.jars}</p>
+    <div class="su-head">
+      <h2 class="su-h" data-dc>{C.h}</h2>
+      <p class="su-sub" data-dc>{C.sub}</p>
+    </div>
     <div class="su-jar" data-n="0" data-level="0.000">
+      <div class="su-collect">
+        <p class="su-jars-h" data-dc>{C.jars}</p>
+        <ol class="su-follows" aria-label={C.followsAria}>
+          {follows.map((j) => (
+            <li class="su-follow-row" data-id={j.id}>
+              <a class="su-link su-follow" href={j.url} target="_blank" rel="noopener" data-id={j.id} data-colours={j.colours} aria-label={`${j.word}. ${C.newTab}.`} data-dc>{j.word}</a>
+              <p class="su-state" data-dc>{C.notYet}</p>
+            </li>
+          ))}
+        </ol>
+        <p class="su-count" data-dc>{C.yoursEmpty}</p>
+      </div>
       <div class="su-slot" data-slot="yours" role="img" aria-label={C.jarAria}>
         {still && (
           <picture class="su-still" data-lazy>
-            <source data-srcset={still.avif} type="image/avif" sizes="(min-width: 720px) 240px, 56vw" />
-            <source data-srcset={still.webp} type="image/webp" sizes="(min-width: 720px) 240px, 56vw" />
+            <source data-srcset={still.avif} type="image/avif" sizes="(min-width: 1180px) 22vw, (min-width: 720px) 320px, calc(100vw - 238px)" />
+            <source data-srcset={still.webp} type="image/webp" sizes="(min-width: 1180px) 22vw, (min-width: 720px) 320px, calc(100vw - 238px)" />
             <img data-src={still.src} alt="" width="160" height="200" loading="lazy" decoding="async" />
           </picture>
         )}
       </div>
-      <p class="su-count" data-dc>{C.yoursEmpty}</p>
-      <ol class="su-follows" aria-label={C.followsAria}>
-        {follows.map((j) => (
-          <li class="su-follow-row" data-id={j.id}>
-            <a class="su-link su-follow" href={j.url} target="_blank" rel="noopener" data-id={j.id} data-colours={j.colours} aria-label={`${j.word}. ${C.newTab}.`} data-dc>{j.word}</a>
-            <p class="su-state" data-dc>{C.notYet}</p>
-          </li>
-        ))}
-      </ol>
     </div>
-    <h3 class="su-got" data-dc>{C.got}</h3>
-    <p class="su-got-sub" data-dc>{C.gotSub}</p>
-    {LEADS && (
-      <form class="su-form" id="suForm" novalidate>
-        <div class="su-fields">
-          <label class="su-label" for="suEmail" data-dc>{C.email}</label>
-          <input class="su-input" id="suEmail" name="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" required aria-describedby="suErrEmail">
-          <p class="su-err" id="suErrEmail"></p>
-          <label class="su-check"><input type="checkbox" id="suConsent" name="consent" required aria-describedby="suErrConsent"><span class="su-tick" aria-hidden="true"></span><span data-dc>{C.consent}</span></label>
-          <p class="su-err" id="suErrConsent"></p>
-          <button type="submit" class="su-link" id="suSend" data-dc>{C.send}</button>
-          <p class="su-msg" id="suMsg" role="status"></p>
-          <p class="su-fine" data-dc>{C.fine}</p>
-        </div>
-        <div class="su-done" id="suDone" hidden>
-          <p class="su-done-text" tabindex="-1"></p>
-          <button type="button" class="su-link su-notyou">{C.notYou}</button>
-        </div>
-      </form>
-    )}
-    <p class="su-keep" data-dc>{C.keep}</p>
-    {/* the credit's words each decode on their own; the spaces and the punctuation between them are plain text, since the decode trims a line's ends */}
-    <p class="su-credit"><span data-dc>{C.creditLead}</span>{' '}<a href={SIGNUP_CREDIT.source} rel="noopener" data-dc>{SIGNUP_CREDIT.author}</a>{C.creditJoin}<a href={SIGNUP_CREDIT.licenceUrl} rel="noopener" data-dc>{SIGNUP_CREDIT.licence}</a>{C.creditEnd}</p>
+    <div class="su-save">
+      <h3 class="su-got" data-dc>{C.got}</h3>
+      <p class="su-got-sub" data-dc>{C.gotSub}</p>
+      {LEADS && (
+        <form class="su-form" id="suForm" novalidate>
+          <div class="su-fields">
+            <label class="su-label" for="suEmail" data-dc>{C.email}</label>
+            <input class="su-input" id="suEmail" name="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" required aria-describedby="suErrEmail">
+            <p class="su-err" id="suErrEmail"></p>
+            <label class="su-check"><input type="checkbox" id="suConsent" name="consent" required aria-describedby="suErrConsent"><span class="su-tick" aria-hidden="true"></span><span data-dc>{C.consent}</span></label>
+            <p class="su-err" id="suErrConsent"></p>
+            <button type="submit" class="su-link" id="suSend" data-dc>{C.send}</button>
+            <p class="su-msg" id="suMsg" role="status"></p>
+            <p class="su-fine" data-dc>{C.fine}</p>
+          </div>
+          <div class="su-done" id="suDone" hidden>
+            <p class="su-done-text" tabindex="-1"></p>
+            <button type="button" class="su-link su-notyou">{C.notYou}</button>
+          </div>
+        </form>
+      )}
+    </div>
+    <div class="su-foot">
+      <p class="su-keep" data-dc>{C.keep}</p>
+      {/* the credit's words each decode on their own; the spaces and the punctuation between them are plain text, since the decode trims a line's ends */}
+      <p class="su-credit"><span data-dc>{C.creditLead}</span>{' '}<a href={SIGNUP_CREDIT.source} rel="noopener" data-dc>{SIGNUP_CREDIT.author}</a>{C.creditJoin}<a href={SIGNUP_CREDIT.licenceUrl} rel="noopener" data-dc>{SIGNUP_CREDIT.licence}</a>{C.creditEnd}</p>
+    </div>
     <p class="sr-only" id="suLive" aria-live="polite"></p>
     <noscript>
       <p class="su-noscript">{C.noscriptLead}<a href={instagram} rel="noopener">{C.noscriptLink}</a>{C.noscriptEnd}</p>

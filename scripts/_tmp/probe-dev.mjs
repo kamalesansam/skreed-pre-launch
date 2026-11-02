@@ -1,0 +1,20 @@
+// probe: does the hero start on the given server, and does the console carry shader errors or ANGLE warnings?
+import { chromium } from '@playwright/test';
+const base = process.argv[2] ?? 'http://127.0.0.1:4321/';
+const browser = await chromium.launch({ channel: 'chrome', args: ['--ignore-gpu-blocklist', '--enable-gpu'] });
+const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+const page = await ctx.newPage();
+const msgs = [];
+page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') msgs.push(`${m.type()}: ${m.text().slice(0, 300)}`); });
+page.on('pageerror', (e) => msgs.push(`pageerror: ${e.message.slice(0, 300)}`));
+await page.goto(new URL('/?tier=hero3d&glue=0&room=open', base).href, { waitUntil: 'load' });
+const started = await page.waitForFunction(() => window.__heroStarted && !document.documentElement.classList.contains('loading'), null, { timeout: 180_000 }).then(() => true).catch(() => false);
+console.log('hero started:', started, 'tier class:', await page.evaluate(() => document.documentElement.className));
+await page.evaluate(() => window.__skreedIntro?.skip?.());
+await page.evaluate(() => window.__s5?.load());
+const ready = await page.waitForFunction(() => !!window.__s5?.ready, null, { timeout: 60_000 }).then(() => true).catch(() => false);
+console.log('s5 ready:', ready);
+await new Promise((r) => setTimeout(r, 1500));
+console.log(`console messages (${msgs.length}):`);
+for (const m of msgs) console.log(' ', m);
+await browser.close();

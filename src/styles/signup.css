@@ -1,11 +1,14 @@
-/* Section 5, the sign-up (docs/specs/section-5.md 2 and 5; docs/specs/section-5-sand.md 2). Plain text on section 2's
+/* Section 5, the sign-up (docs/specs/section-5.md 2 and 5; docs/specs/section-5-liquid.md 2). Plain text on section 2's
    fog, as the quiz and section 4 (E-S5-bg, E-S5-font pending): IBM Plex Mono Medium in capitals, Pearl Whisper, no
    letter-spacing, at the quiz's sizes; no panels, no fills, no borders round anything but the email field's line, no
    shadows; the controls are words, underlined as links are. The jar is drawn by the hero island where the slot is (the
    slot itself is an empty box of air on the 3D path; the poster tier puts a still of the state in it).
    scripts/signup/signup.ts decodes the text and drives the states; without JavaScript the same text stands, still.
-   Phone first: one column (the jar, the count line under it, the three follow rows); from 720 px the follows stand
-   left of the jar, the count line under the jar. Nothing here animates; hover is the links' underline alone. */
+   The whole section on one screen at its rest (Sam, 2026-11-02), four blocks: the head, the jar block, the save block,
+   the foot. Phones: one column, the follows and the count line beside the slot (a short phone with the form closes up
+   further). From 720 px (a tablet): the follows left of the jar, the save block and the foot under them. From 1180 px
+   (a laptop): the head across the top, the follows and the jar beside the save block, the foot as one row. Nothing
+   here animates; hover is the links' underline alone. */
 .signup {
   --su-font: "IBM Plex Mono", ui-monospace, monospace;
   /* the quiz's sizes, held equal by tests/unit/signup.test.ts: body 15 to 22 px, the headings 24 to 52 px */
@@ -32,28 +35,46 @@
   .signup .su-check:has(input:focus-visible)::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
 }
 
-/* the body: one column, at most 720 px wide, from under the fixed logotype's band to the safe area */
-.su-body { position: relative; display: grid; gap: var(--s4); justify-items: start; width: 100%; max-width: calc(720px + 2 * var(--inset)); min-height: 100svh; margin: 0 auto; padding: calc(var(--inset) + 56px + env(safe-area-inset-top, 0px)) var(--inset) calc(var(--inset) + env(safe-area-inset-bottom, 0px)); }
-.su-h, .su-got { font-size: var(--su-fs-q); line-height: 1.25; text-wrap: balance; max-width: calc(26ch + 1px); }   /* + 1 px: the glyph spans' advances round up a little */
-.su-sub, .su-got-sub { max-width: calc(60ch + 1px); }
-.su-got { margin-top: var(--s3); }
-.su-keep { margin-top: var(--s3); }
+/* the body: the whole section on one screen (Sam, 2026-11-02: "all the content of this section should fit inside the
+   screen ... for both phone and laptop ratio"). One grid, its content centred in the small viewport under the fixed
+   logotype's band; never a fixed height (a screen under the design's floor grows the body and the page scrolls, nothing is
+   clipped). The body is at least the dynamic viewport tall, so at the section's rest its bottom is the viewport's bottom
+   (the exit seam's exitY is the section's top) whether Safari's bars are shown or collapsed, and the difference between
+   the dynamic and the small viewport goes into the bottom padding, so the bars never move the content. Sizes:
+   --su-fs-h the headings, the quiz's heading size held to one line of the headline (24 glyphs of 0.6 em) on a phone;
+   --su-fs-s the credit and the message line, the body size held to one line of 40 glyphs ("That doesn’t look like an
+   email address." and the credit), never under 13 px; --su-gap the gap between the four blocks; --su-slot-h the slot's
+   height from 720 px (its width is four fifths of it). */
+.su-body {
+  --su-gap: var(--s3);
+  --su-fs-h: min(var(--su-fs-q), calc((100vw - 2 * var(--inset)) / 14.6));
+  --su-fs-s: max(13px, min(var(--su-fs), calc((100vw - 2 * var(--inset)) / 24.6)));
+  position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; gap: var(--su-gap);
+  width: 100%; max-width: calc(560px + 2 * var(--inset)); margin: 0 auto;
+  min-height: 100vh; min-height: 100dvh;
+  padding: calc(var(--inset) + 44px + env(safe-area-inset-top, 0px)) var(--inset) calc(var(--inset) + env(safe-area-inset-bottom, 0px));   /* 44 px: on a phone Back to top's 44 px row, centred on the logotype's, ends at the inset plus 34 px */
+  padding-bottom: calc(var(--inset) + env(safe-area-inset-bottom, 0px) + 100dvh - 100svh);
+}
+.su-head { display: grid; gap: var(--s1); justify-items: start; }
+.su-h, .su-got { font-size: var(--su-fs-h); line-height: 1.25; text-wrap: balance; max-width: calc(26ch + 1px); }   /* + 1 px: the glyph spans' advances round up a little */
+.su-sub, .su-got-sub { max-width: calc(60ch + 1px); text-wrap: balance; }
 
-/* the jar block: the slot of air (the island draws the jar where it is), the count line under it, the three follow rows;
-   one column with a 12 px gap, left-aligned as the quiz's pictures are on a phone */
-.su-jar { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s2); width: 100%; justify-items: start; }
-.su-slot { position: relative; width: clamp(176px, 56vw, 240px); aspect-ratio: 4 / 5; }
+/* the jar block on a phone: "Every follow fills the jar" across, then the three follows and the count line in a column
+   of 21 glyphs (the longest line, "Nothing collected yet") beside the slot, which takes the rest of the width at 4 : 5
+   (152 x 190 at 390, 122 x 152.5 at 360); a row is one 44 px hit row, the word at its top and its state under it inside
+   the same row (the state lets a press through to the word); the count line sits level with the slot's foot */
+.su-jar { display: grid; grid-template-columns: calc(21ch + 1px) minmax(0, 1fr); grid-template-areas: "jh jh" "follows slot" "count slot"; column-gap: var(--s3); row-gap: var(--s1); width: 100%; }
+.su-collect { display: contents; }
+.su-jars-h { grid-area: jh; }
+.su-follows { grid-area: follows; list-style: none; padding: 0; display: grid; gap: var(--s1); align-self: start; }
+.su-count { grid-area: count; align-self: end; }
+.su-slot { grid-area: slot; position: relative; width: 100%; aspect-ratio: 4 / 5; align-self: start; }
 .su-still { display: none; }
 .su-count, .su-state { font-variant-numeric: tabular-nums; }
-.su-follows { list-style: none; padding: 0; display: grid; width: 100%; }
-.su-follow-row { display: flex; justify-content: space-between; align-items: center; gap: var(--s2); min-height: 44px; }
-/* from 720 px: the quiz's laptop arrangement, the words left and the picture right; the follows centred against the jar, the count under the jar */
-@media (min-width: 720px) {
-  .su-jar { grid-template-columns: minmax(0, 1fr) 240px; column-gap: var(--s4); grid-template-areas: "follows slot" "follows count"; }
-  .su-slot { grid-area: slot; width: 240px; }
-  .su-count { grid-area: count; }
-  .su-follows { grid-area: follows; align-self: center; }
-}
+.su-follow-row { display: grid; min-height: 44px; }
+.su-follow-row > * { grid-area: 1 / 1; }
+.su-follow-row > .su-follow { align-items: flex-start; justify-content: flex-start; justify-self: start; }
+.su-follow-row > .su-state { align-self: end; pointer-events: none; }
 
 /* the controls are words (the quiz's link): underlined, at least 44 px each way to tap; hover thickens the line at once */
 .su-link { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; padding: 0; background: none; border: 0; border-radius: 0; color: inherit; font: inherit; text-transform: inherit; letter-spacing: inherit; text-align: inherit; text-decoration-line: underline; text-decoration-thickness: 1px; text-underline-offset: 0.4em; cursor: pointer; -webkit-tap-highlight-color: transparent; appearance: none; }   /* longhands: Safari before 26.2 drops a shorthand with a thickness in it */
@@ -64,10 +85,29 @@
 .signup .su-credit a .dc { white-space: nowrap; }   /* the licence name stays whole ("CC BY 4.0"): the decoder's row sets normal (line 16), so the rule is on the row */
 @media (hover: hover) { :is(.su-credit, .su-noscript) a:hover { text-decoration-thickness: 2px; } }
 
-/* the form (PUBLIC_LEADS on): the quiz's gift form, the same lines */
-.su-form, .su-fields, .su-done { display: grid; gap: var(--s2); justify-items: start; width: 100%; max-width: 560px; }
+/* the save block: the heading, its line, the form (PUBLIC_LEADS on). The form is one cell: the fields and the done line
+   stand in it together, the hidden one kept by visibility (the quiz's cards), so a send never changes the section's
+   height; the field and "Save my colours" share one row (Sam's picture), the send word's underline on the field's line;
+   the three message lines share one reserved line, the first that has words showing (an email error before a consent
+   error before the send's) */
+.su-save { display: grid; gap: var(--s2); justify-items: start; }
+.su-form { display: grid; width: 100%; }
+.su-form[hidden] { display: none; }
+.su-form > .su-fields, .su-form > .su-done { grid-area: 1 / 1; align-self: start; }
+.su-form > .su-fields[hidden], .su-form > .su-done[hidden] { display: grid; visibility: hidden; }
+.su-fields { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "label label" "input send" "check check" "msg msg" "fine fine"; column-gap: var(--s3); align-items: center; justify-items: start; width: 100%; }
+.su-label { grid-area: label; }
+.su-fields > .su-input { grid-area: input; }
+.su-fields > #suSend { grid-area: send; align-self: end; align-items: flex-end; }
+.su-fields > .su-check { grid-area: check; align-items: baseline; align-content: center; }   /* the tick on the first line when the words wrap */
+.su-fields > .su-err, .su-fields > .su-msg { grid-area: msg; min-height: 1.45em; font-size: var(--su-fs-s); }
+.su-fields > .su-fine { grid-area: fine; }
+@supports selector(:has(*)) {
+  .su-fields > #suErrEmail:has(.dc > *) ~ :is(#suErrConsent, .su-msg), .su-fields > #suErrConsent:has(.dc > *) ~ .su-msg { visibility: hidden; }
+}
+@supports not selector(:has(*)) { .su-fields > #suErrConsent, .su-fields > .su-msg { grid-area: auto; grid-column: 1 / -1; } }   /* without :has() each message keeps a line of its own, after the fine print */
+.su-done { display: grid; gap: var(--s1); justify-items: start; width: 100%; }
 .su-done-text { max-width: 100%; overflow-wrap: anywhere; }
-.su-fields[hidden], .su-done[hidden], .su-form[hidden] { display: none; }
 .su-input { width: 100%; min-height: 44px; padding: 0; border: 0; border-bottom: 1px solid var(--pearl-whisper); border-radius: 0; background: transparent; color: var(--pearl-whisper); font: inherit; font-size: 16px; text-transform: none; letter-spacing: 0; caret-color: var(--pearl-whisper); }   /* 16 px: iOS Safari zooms the page on focusing a smaller field */
 .su-input[aria-invalid="true"] { border-bottom-width: 2px; }
 .su-check { display: grid; grid-template-columns: auto 1fr; gap: var(--s2); align-items: center; min-height: 44px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
@@ -77,8 +117,72 @@
 .su-check input:checked + .su-tick::before { content: "[X]"; }
 .su-input:-webkit-autofill { -webkit-text-fill-color: var(--pearl-whisper); caret-color: var(--pearl-whisper); transition: background-color 0s 86400s, color 0s 86400s; }
 .su-input:autofill { -webkit-text-fill-color: var(--pearl-whisper); caret-color: var(--pearl-whisper); transition: background-color 0s 86400s, color 0s 86400s; }
-.su-err { min-height: 1.45em; }   /* one line always reserved under a field: a message never moves the controls below it */
-.su-msg { min-height: 1.45em; }
+
+/* the foot: the closing line and the credit, two lines */
+.su-foot { display: grid; justify-items: start; }
+.su-credit { font-size: var(--su-fs-s); }
+
+/* a short phone (360 x 780 with the form): the four blocks and the save block's lines a step closer */
+@media (max-width: 719px) and (max-height: 799px) {
+  .su-body { --su-gap: var(--s2); }
+  .su-save { gap: var(--s1); }
+}
+/* a shorter phone with the form (data-leads: PUBLIC_LEADS on), under 780 px tall: 390 x 664 and 375 x 667 (Safari with
+   its bars shown, an iPhone SE), 360 x 740, 430 x 739 (a Pro Max in Safari); the composition above needs about 787 px
+   at 390 with the form, so from 701 to 779 px it would rest with the headline under the logotype or above the screen.
+   Here it closes up, by the stack design's measures: the email label, the field and "Save my colours" on one row; the
+   follows' rows touching, each still 44 px, its state flush under its word; the slot as tall as the follows and the
+   count line beside it, at the column's right edge (127 x 159 at 13 px); the band 34 px (Back to top's row ends at the
+   inset plus 34 px) and the bottom padding a step down; the type by the height: --su-fs-l every line (13 px at 667,
+   15 px from 769 px, never under 13), the headings in proportion (21.3 px at 667, never under 20), the credit and the
+   message line no larger than the lines. Without the form (production) nothing here applies. */
+@media (max-width: 719px) and (max-height: 779px) {
+  .signup[data-leads] .su-body {
+    --su-fs-l: clamp(13px, 1.95svh, var(--su-fs));
+    --su-fs-h: clamp(20px, 3.2svh, min(var(--su-fs-q), calc((100vw - 2 * var(--inset)) / 14.6)));
+    --su-fs-s: max(13px, min(var(--su-fs-l), calc((100vw - 2 * var(--inset)) / 24.6)));
+    font-size: var(--su-fs-l);
+    padding-top: calc(var(--inset) + 34px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(var(--s1) + env(safe-area-inset-bottom, 0px) + 100dvh - 100svh);
+  }
+  .signup[data-leads] .su-follows { gap: 0; }
+  .signup[data-leads] .su-follow-row > .su-state { align-self: start; margin-top: 1.45em; }
+  .signup[data-leads] .su-slot { width: min(100%, calc((3 * 44px + var(--s1) + 1.45em) * 0.8)); justify-self: end; }
+  .signup[data-leads] .su-fields { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "label input send" "check check check" "msg msg msg" "fine fine fine"; }
+  .signup[data-leads] .su-label { align-self: end; }
+}
+
+/* from 720 px (a tablet): the follows stand left of the slot, centred against it, each row the word and its state on one
+   line (the state's box nine glyphs wide, so "Collected" never widens the column and the slot never moves on a press);
+   the save block and the foot under it */
+@media (min-width: 720px) {
+  .su-body { --su-gap: var(--s4); --su-slot-h: clamp(240px, 36svh, 400px); max-width: calc(760px + 2 * var(--inset)); padding-top: calc(var(--inset) + 56px + env(safe-area-inset-top, 0px)); }
+  .su-jar { grid-template-columns: max-content calc(var(--su-slot-h) * 0.8); grid-template-areas: "collect slot"; column-gap: var(--s5); align-items: center; justify-content: start; }
+  .su-collect { grid-area: collect; display: grid; gap: var(--s2); justify-items: start; }
+  .su-jars-h, .su-follows, .su-count { grid-area: auto; align-self: auto; }
+  .su-follows { width: 100%; gap: 0; }
+  .su-slot { width: calc(var(--su-slot-h) * 0.8); }
+  .su-follow-row { display: flex; justify-content: space-between; align-items: center; gap: var(--s3); }
+  .su-follow-row > * { grid-area: auto; }
+  .su-follow-row > .su-follow { align-items: center; }
+  .su-follow-row > .su-state { align-self: auto; pointer-events: auto; min-width: calc(9ch + 1px); }
+  .su-form { max-width: 34em; }
+}
+/* from 1180 px (a laptop): the headline and its line across the top; under them the follows and the jar (one group, the
+   follows filling it) and the save block at the right; the closing line and the credit as one row at the foot. The head
+   and the foot span both columns with inline-size containment, so their long lines never widen the jar's column. The
+   slot follows the height: 48 per cent of the small viewport, at most 27.5 per cent of the width (the save column keeps
+   its 32 em or what is left) */
+@media (min-width: 1180px) {
+  .su-body { --su-slot-h: clamp(240px, min(48svh, 27.5vw), 520px); max-width: calc(1440px + 2 * var(--inset)); grid-template-columns: max-content minmax(0, 32em); grid-template-areas: "head head" "jar save" "foot foot"; justify-content: space-between; align-items: center; column-gap: var(--s5); }
+  .su-head, .su-foot { contain: inline-size; }
+  .su-head { grid-area: head; }
+  .su-sub { max-width: calc(64ch + 1px); }
+  .su-jar { grid-area: jar; width: auto; }
+  .su-save { grid-area: save; }
+  .su-form { max-width: none; }
+  .su-foot { grid-area: foot; grid-template-columns: auto auto; justify-content: space-between; align-items: baseline; column-gap: var(--s4); }
+}
 
 /* under the body: one empty screen, the room for the exit seam's trigger (the 3D path) and the poster tier's loop end */
 .su-loopend { height: 100svh; }

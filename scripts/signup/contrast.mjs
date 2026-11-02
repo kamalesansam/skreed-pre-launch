@@ -33,6 +33,8 @@ for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
   await page.waitForFunction(() => !document.documentElement.classList.contains('intro'), null, { timeout: 30_000 }).catch(() => {});
   await page.evaluate(() => window.__s5?.load());
   await page.waitForFunction(() => !!window.__s5?.ready, null, { timeout: 120_000 });
+  // Astro's dev toolbar (the dev server only; a build has none) sits at the bottom centre, over the fog: out of the frames
+  await page.evaluate(() => document.querySelector('astro-dev-toolbar')?.style.setProperty('display', 'none', 'important'));
   for (const where of ['top', 'end']) {
     // the jump from the hall moves the room's layout under section 5 (its top read in the hall state is lower than at
     // rest in the world), so the place is read again once the page has settled and the scroll corrected

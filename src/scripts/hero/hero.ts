@@ -348,7 +348,7 @@ export async function startHero(o: StartOptions): Promise<void> {
       skip: () => window.__skreedRoom?.skip(),
       get ready() { return !!ctx.room?.hall.ready; },
     };
-    // section 5's hooks (section-5-sand.md 5, "Hooks"): its state, a follow poured, the follows set, the jar's still by
+    // section 5's hooks (section-5-liquid.md 6, "Hooks"): its state, a follow poured, the follows set, the jar's still by
     // the follows' order, the stream's clock, the tilt, the chunk's load; the chunk carries them in hooks builds alone
     window.__s5 = {
       state: () => ctx.signup?.hooks?.() ?? null,

@@ -23,7 +23,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
 type Ev = { name: string; props: Record<string, string | number> };
-type S4 = { state: string; under: string; draws: string; seamDraws: string[]; scene: number; step: number; busy: boolean; lock: boolean; inRange: boolean; q: number; qRaw: number; arrive: number; worldReady: boolean; products: string; video: boolean; loops: { i: number; state: string; in: boolean; refused: boolean; playing: boolean }[]; seam: { kind: string; phase: string } | null; memory: number; layout: { top: number; height: number; intro: boolean } | null; wipeOut: number; exitY: number; restY: number };
+type S4 = { state: string; under: string; draws: string; seamDraws: string[]; scene: number; step: number; busy: boolean; lock: boolean; inRange: boolean; q: number; qRaw: number; arrive: number; worldReady: boolean; products: string; video: boolean; loops: { i: number; state: string; in: boolean; refused: boolean; playing: boolean }[]; seam: { kind: string; phase: string } | null; memory: number; layout: { top: number; height: number; intro: boolean } | null; wipeOut: number; exitY: number; restY: number; exitArmed: boolean };
 const events = (page: Page): Promise<string[]> => page.evaluate(() => ((window as unknown as { __skreedEvents?: Ev[] }).__skreedEvents ?? []).map((e) => e.name));
 const s4 = (page: Page): Promise<S4> => page.evaluate(() => window.__s4!.state() as S4);
 const N = 5;
@@ -241,6 +241,8 @@ test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scene
   await expect(page.locator('#signup .su-jar')).toHaveCount(1);
   await expect(page.locator('#signup li.su-follow-row')).toHaveCount(3);
   expect((await s4(page)).state).toBe('world');
+  // the page has rested at section 5's rest, so the exit is armed (exit-guard.ts)
+  await expect.poll(async () => (await s4(page)).exitArmed, { timeout: 5_000 }).toBe(true);
   // the seam held at full cover, the clock frozen on the first frame after the jump: the logotype and the Back to top
   // control read Urban Slate over the Pearl Whisper cloud (the regression the checker found in D5's first fix), the page at 0
   const exitCover = await holdAtCover(page, 'exit');
@@ -514,7 +516,10 @@ test('section 4 at 390 x 844 under reduced motion (still3d): no loop elements, t
   // the exit seam is a cut: the jump to the top at once, then its 400 ms lock, then the hall
   await page.evaluate(() => window.__s4!.scene(4));
   await expect.poll(async () => (await s4(page)).scene, { timeout: 10_000 }).toBe(4);
-  // (from section 5's end, section-5.md 2: the raw scroll across its exitY)
+  // (from section 5's end, section-5.md 2: the raw scroll across its exitY, once the page has rested at its rest,
+  // exit-guard.ts; a jump past it straight from scene 5 is held there instead)
+  await page.evaluate(() => { const y = (window.__s4!.state() as { restY: number }).restY; scrollTo({ top: y, behavior: 'instant' }); });
+  await expect.poll(async () => (await s4(page)).exitArmed, { timeout: 5_000 }).toBe(true);
   await page.evaluate(() => { const y = (window.__s4!.state() as { exitY: number }).exitY; scrollTo({ top: y + 6, behavior: 'instant' }); });
   await page.waitForFunction(() => scrollY < 2, null, { timeout: 5_000, polling: 50 });
   expect(await events(page)).toContain('room_loop');

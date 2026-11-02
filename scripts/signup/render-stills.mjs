@@ -1,6 +1,6 @@
-// Section 5's poster tier stills (docs/specs/section-5-sand.md 2 "poster path", 3 "The stills"): the one jar in each
-// of the sixteen states the follows can reach (every order of the three follows, the layers in press order at that
-// order's level, the resting dome, the tilt), rendered from our own build by the island's jar chunk over --night (the
+// Section 5's poster tier stills (docs/specs/section-5-liquid.md 2 "poster path", 3 "The stills"): the one jar in each
+// of the sixteen states the follows can reach (every order of the three follows, the liquid's bands in press order at
+// that order's level, the surface still, the view from above), rendered from our own build by the island's jar chunk over --night (the
 // hooks' __s5.still(order), a hooks build: the dev server, or a test or staging build), 320 x 400 and 160 x 200, AVIF
 // with a WebP twin each, into src/assets/signup/stills/jar-<key>-<2x|1x>.<avif|webp> (the key: 0 when empty, else the
 // platforms' first letters in press order). The browser is the installed Chrome when present (channel 'chrome'), else
@@ -21,7 +21,7 @@ const ORDERS = [[]];
 const grow = (prefix) => { for (const id of IDS) if (!prefix.includes(id)) { const next = [...prefix, id]; ORDERS.push(next); grow(next); } };
 grow([]);
 const keyOf = (order) => (order.length ? order.map((id) => id[0]).join('') : '0');
-/** the stills' caps (section-5-sand.md 7), bytes; a WebP over its cap steps down to quality 78 */
+/** the stills' caps (section-5-liquid.md 7), bytes; a WebP over its cap steps down to quality 78 */
 const CAPS = { '2x': { avif: 24 * 1024, webp: 40 * 1024 }, '1x': { avif: 10 * 1024, webp: 16 * 1024 } };
 
 async function launch(args) {
