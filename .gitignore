@@ -32,3 +32,4 @@ graphify-out/
 .claude-flow/
 .claude/proven-config.json
 .claude/.proven-config-version
+__pycache__/
