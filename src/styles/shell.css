@@ -11,16 +11,16 @@ body{color:var(--pearl-whisper);font-family:var(--font-ui);margin:0;font-synthes
 @media (max-aspect-ratio:9/10){.s2lab{font-size:12px}}
 #stage.over-gem{cursor:pointer}
 .copy{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:flex-end;gap:var(--s2);padding:0 calc(var(--inset) + env(safe-area-inset-right,0px)) calc(var(--inset) + env(safe-area-inset-bottom,0px)) calc(var(--inset) + env(safe-area-inset-left,0px));pointer-events:none;will-change:transform,clip-path}   /* side safe areas added for landscape phones (web interface guidelines); 0 elsewhere */
-/* hero: plain and simple, a countdown to launch. Open Sans with tabular figures for every live numeral (type system), never Poppins. */
-.copy .eyebrow{font-family:var(--font-ui);font-size:.875rem;font-weight:600;color:var(--pearl-whisper);margin:0;max-width:30ch}   /* Pearl Whisper at 600: the small text sits on pale snow and must hold AA */
+/* hero: plain and simple, a countdown to launch. The numerals are the dot digits (E-CD-font); the eyebrow and the unit labels are the later sections' face, IBM Plex Mono Medium in capitals (E-chrome-font, 2026-11-02), as the sign-up and the quiz are. Never Poppins. */
+.copy .eyebrow{font-family:var(--font-mono);font-size:.875rem;font-weight:500;text-transform:uppercase;letter-spacing:0;color:var(--pearl-whisper);margin:0;max-width:30ch}   /* Pearl Whisper: the small text sits on pale snow and must hold AA */
 .count{display:flex;gap:clamp(var(--s3),4vw,44px);font-family:var(--font-ui);font-variant-numeric:tabular-nums;color:var(--pearl-whisper)}
 .count[hidden]{display:none}   /* at zero the numerals go (D26) */
 .count>div{display:flex;flex-direction:column;gap:var(--s1)}
 .count .n{display:block;height:clamp(2.5rem,10.5vw,4rem);width:auto;overflow:visible;color:var(--pearl-whisper)}   /* the dot digits (E-CD-font): two always, 17.5 by 13 dots a pair, so nothing jumps when a value drops below 10; overflow for the glitch's kicks */
-.count .l{font-weight:600;font-size:.875rem;color:var(--pearl-whisper)}
+.count .l{font-family:var(--font-mono);font-weight:500;font-size:.875rem;text-transform:uppercase;letter-spacing:0;color:var(--pearl-whisper)}
 .count:not([data-ready]) .n{visibility:hidden}   /* no false value before the first tick */
 @media (prefers-reduced-motion:reduce){.count .sec{display:none}.count .gl-tiles{display:none!important}.count .n{opacity:1!important}}   /* a digit changing every second is motion too; no glitch */
-@media (max-width:1100px){.copy{padding-bottom:calc(var(--inset) + 84px + env(safe-area-inset-bottom,0px))}}   /* below 1100 px the countdown reaches the middle, so it lifts by the cue's height plus 11 px and the cue sits under it */
+@media (max-width:1100px){.copy{padding-bottom:calc(var(--inset) + 106px + env(safe-area-inset-bottom,0px))}}   /* up to 1100 px the countdown reaches the middle, so it lifts by the cue's height (73 px), its words over it (--s1 and their 14 px line) and 11 px, and the cue and its words sit under it */
 /* the scroll cue, ciao's side icon re-created (measured, docs/specs/hero.md 12.3): three chevrons of five dots drawn top down, held, wiped top down, 2.5 s a cycle;
    17.5 x 73 px. One, at the bottom centre on --inset (Sam, 2026-10-20: "put only one in the middle", the two side ones clashed with the countdown): from
    1100 px on the row the countdown sits on, right of its numerals; below that under the lifted countdown. Hidden while the loader and the intro run and once
@@ -29,6 +29,21 @@ body{color:var(--pearl-whisper);font-family:var(--font-ui);margin:0;font-synthes
 .scrollcue svg{display:block;width:100%;height:auto}
 .scrollcue.is-off,html.loading .scrollcue,html.uh3 .scrollcue{opacity:0;visibility:hidden}
 .intro.po~.scrollcue{opacity:1!important;visibility:visible!important}
+/* the cue's words (docs/specs/scroll-cue.md, E-cue-text; the brief of 2026-11-02, and the same day of their place and face:
+   "place it in the bottom corner maybe, for desktop, figure it out to place it properly for phone ratio as well"): "Scroll
+   to see more" in the later sections' face, IBM Plex Mono Medium in capitals (E-chrome-font). Above 1100 px in the bottom
+   right corner on --inset, under Back to top's edge, at the top and in the pin alike, the countdown holding the bottom left.
+   Up to 1100 px centred over the chevrons at the top, a --s1 above their column, so the words and the arrows read as one
+   cue (the countdown lifts to make room); in the pin, alone, in the bottom left corner on --inset, level with the countdown
+   and the logotype and clear of the last gem at the column's foot (data-at="pin", set while they are hidden and dropped at
+   the top, so the place never changes while they show). At the top they show and hide with the chevrons, as their next
+   sibling; in the pin the island shows them once the page has rested (is-on, scroll/ride.ts), Urban Slate over the fog as
+   the logotype. A show fades in at once, a hide fades out and then hides. They do not copy the chevrons' forced rule over
+   the loader's poster state: the words follow is-off */
+.cuetext{position:fixed;z-index:2;right:calc(var(--inset) + env(safe-area-inset-right,0px));bottom:calc(var(--inset) + env(safe-area-inset-bottom,0px));margin:0;font:500 var(--fs-label)/1 var(--font-mono);text-transform:uppercase;letter-spacing:0;white-space:nowrap;color:var(--pearl-whisper);pointer-events:none;transition:opacity .5s cubic-bezier(.333,0,.667,1),visibility 0s}
+@media (max-width:1100px){.cuetext{right:auto;left:50%;bottom:calc(var(--inset) + 73px + var(--s1) + env(safe-area-inset-bottom,0px));transform:translateX(-50%)}.scrollcue.is-off~.cuetext[data-at="pin"]{left:calc(var(--inset) + env(safe-area-inset-left,0px));bottom:calc(var(--inset) + env(safe-area-inset-bottom,0px));transform:none}}
+.cuetext[data-tone="light"]{color:var(--urban-slate)}
+.scrollcue.is-off~.cuetext:not(.is-on),html.loading .cuetext,html.uh3 .cuetext{opacity:0;visibility:hidden;transition:opacity .5s cubic-bezier(.333,0,.667,1),visibility 0s .5s}
 .chev{transform-box:fill-box;transform-origin:50% 50%;opacity:0;animation-duration:2.5s;animation-timing-function:linear;animation-iteration-count:infinite;animation-fill-mode:both}   /* longhands: the build's minifier folds a nameless shorthand to none */.chev-top{animation-name:cue-top}.chev-mid{animation-name:cue-mid}.chev-bottom{animation-name:cue-bottom}
 @keyframes cue-top{0%{opacity:0;transform:translateY(100px) scale(0);animation-timing-function:cubic-bezier(.333,1,.667,1)}24%{opacity:1;transform:none;animation-timing-function:linear}52%{opacity:1;transform:none;animation-timing-function:cubic-bezier(.333,0,.667,0)}68%{opacity:0;transform:none;animation-timing-function:linear}100%{opacity:0;transform:none}}
 @keyframes cue-mid{0%{opacity:0;transform:scale(0);animation-timing-function:linear}8%{opacity:0;transform:scale(0);animation-timing-function:cubic-bezier(.333,1,.667,1)}32%{opacity:1;transform:none;animation-timing-function:linear}62%{opacity:1;transform:none;animation-timing-function:cubic-bezier(.333,0,.667,0)}78%{opacity:0;transform:none;animation-timing-function:linear}100%{opacity:0;transform:none}}
@@ -90,7 +105,7 @@ html.poster .intro.po{background:transparent;pointer-events:none}
 html.poster .intro.po .ld-w{display:none}
 
 /* no JavaScript: one line instead of empty numeral boxes; no cue */
-html:not(.js) #cdEyebrow,html:not(.js) #count,html:not(.js) .scrollcue{display:none}
+html:not(.js) #cdEyebrow,html:not(.js) #count,html:not(.js) .scrollcue,html:not(.js) .cuetext{display:none}
 
 /* the skreed.com link at zero (D12) */
 .copy .eyebrow a{pointer-events:auto;color:inherit;text-decoration:underline;position:relative}

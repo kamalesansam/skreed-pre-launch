@@ -66,7 +66,7 @@ ol { padding: 0; list-style: none; }
 @media (min-width: 1024px) { .site-logo svg { width: 136px; } }
 @media (prefers-reduced-motion: reduce) { .site-logo .logo-tiles { display: none !important; } .site-logo svg { opacity: 1 !important; } }
 .allfam { position: fixed; top: calc(var(--inset) + var(--sat) + var(--mark-h) / 2 - var(--hit) / 2); right: calc(var(--inset) + env(safe-area-inset-right, 0px) - var(--s2)); z-index: 6;
-  min-height: var(--hit); padding: 0 var(--s2); display: inline-flex; align-items: center; font-size: var(--fs-label); font-weight: 600; line-height: 1; white-space: nowrap; color: var(--pearl-whisper); }
+  min-height: var(--hit); padding: 0 var(--s2); display: inline-flex; align-items: center; font-family: var(--font-mono); font-size: var(--fs-label); font-weight: 500; line-height: 1; text-transform: uppercase; letter-spacing: 0; white-space: nowrap; color: var(--pearl-whisper); }   /* the later sections' face in capitals (E-chrome-font, 2026-11-02) */
 /* the argument screen's way out (section 22, E-F5; its place on phones, section 23): "Back to main page", a link to
    /#families set as "All families" is, level with the beat nav (z-index 4), under the corners and Back to top (6).
    Declared after .allfam so its position: fixed wins over .ring2's position: relative. Phone first: on the phone layout
@@ -79,7 +79,7 @@ ol { padding: 0; list-style: none; }
    transition can start from; the fade in and out is a Web Animations API animation in page.ts (--dur-fade and --dur-out,
    tokens.css) */
 .fam-back { position: fixed; z-index: 4; left: calc(var(--inset) + env(safe-area-inset-left, 0px) - var(--s2)); bottom: calc(var(--to-top-bottom) + var(--sab));
-  min-height: var(--hit); padding: 0 var(--s2); display: inline-flex; align-items: center; font-size: var(--fs-label); font-weight: 600; line-height: 1; white-space: nowrap; color: var(--pearl-whisper); text-decoration: none; }
+  min-height: var(--hit); padding: 0 var(--s2); display: inline-flex; align-items: center; font-family: var(--font-mono); font-size: var(--fs-label); font-weight: 500; line-height: 1; text-transform: uppercase; letter-spacing: 0; white-space: nowrap; color: var(--pearl-whisper); text-decoration: none; }
 
 /* the first screen: the family's name under the wordmark (D9), the stage behind, the HUD rows over it */
 .fp { display: block; }
@@ -99,7 +99,18 @@ html.beats-on .fade, html.arg-on .fade { opacity: 0; }
 .scrollcue.is-left { left: calc(4% + 3.5px + env(safe-area-inset-left, 0px)); transform: translateX(-50%); }
 .scrollcue.is-right { right: calc(4% + 3.5px + env(safe-area-inset-right, 0px)); transform: translateX(50%); }
 .scrollcue svg { display: block; width: 100%; height: auto; }
-html.loading .scrollcue, html[data-scrolled] .scrollcue, html:not(.js) .scrollcue { opacity: 0; visibility: hidden; }
+html.loading .scrollcue, html[data-scrolled] .scrollcue, html:not(.js) .scrollcue, html:not(.m3d) .scrollcue { opacity: 0; visibility: hidden; }   /* swatch grid mode is one screen: nothing below (hero.md D27) */
+/* the cue's words (section 24, docs/specs/scroll-cue.md, E-cue-text): "Scroll to see more", set as "All families" is (IBM Plex Mono Medium in capitals, E-chrome-font). The
+   first screen's stand between the two columns on their bottom line (laptops: under the controls row), shown with them and
+   again once the page has rested (data-still, page.ts), and only where they clear the front case (html.cue-tight, page.ts
+   and cue.ts, hides them on a short phone screen); the story's stand at the bottom right, just above Back to top's row on
+   phones, where the per-shade wash is darkest (D6), shown only at rest from the zoom to Armor, never on the argument
+   screen, the page's end. A show fades in at once, a hide fades out and then hides (the .below pattern) */
+.cuetext { position: fixed; z-index: 2; font-family: var(--font-mono); font-size: var(--fs-label); font-weight: 500; line-height: 1; text-transform: uppercase; letter-spacing: 0; white-space: nowrap; color: var(--pearl-whisper); pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 0.5s cubic-bezier(0.333, 0, 0.667, 1), visibility 0s 0.5s; }
+.cuetext.is-land { left: 50%; bottom: calc(204px + var(--sab)); transform: translateX(-50%); }
+.cuetext.is-story { right: calc(var(--inset) + env(safe-area-inset-right, 0px)); bottom: calc(var(--to-top-bottom) + var(--hit) + var(--s0) + var(--sab)); white-space: normal; max-width: 9ch; text-align: right; line-height: 1.2; }   /* a --s0 above Back to top's hit row; on phones in two lines, "SCROLL TO" over "SEE MORE", so the block keeps to the corner where the wash is darkest (D6: one line of Plex capitals reaches its light centre, 45 of 240 shades under 4.5:1 at 360 x 780; two lines, none) */
+html.m3d:not(.loading):not(.hud-off):not([data-scrolled]) .cuetext.is-land, html.m3d:not(.loading):not(.hud-off)[data-still] .cuetext.is-land, html.m3d:not(.loading).hud-off[data-still]:not(.arg-on) .cuetext.is-story { opacity: 1; visibility: visible; transition-delay: 0s; }   /* the delay only, so reduced motion's transition: none holds both ways */
+html.cue-tight .cuetext.is-land { display: none; }
 /* each chevron names its whole animation: a nameless shorthand is minified to none by the build's CSS pass */
 .chev { transform-box: fill-box; transform-origin: 50% 50%; opacity: 0; }
 .chev-top { animation: cue-top 2.5s linear infinite both; } .chev-mid { animation: cue-mid 2.5s linear infinite both; } .chev-bottom { animation: cue-bottom 2.5s linear infinite both; }
@@ -268,6 +279,8 @@ html:not(.m3d) .intro { display: none; }
   .fp-ctl { left: auto; right: calc(var(--inset) + env(safe-area-inset-right, 0px)); width: 190px; transform: none; }
   .bar { left: calc(var(--inset) + env(safe-area-inset-left, 0px)); right: auto; bottom: auto; top: var(--ctl-top); min-height: var(--hit); padding: 0; border: 0; background: none; }
   .scrollcue { bottom: 172.75px; }
+  .cuetext.is-land { bottom: calc(var(--s3) + var(--sab)); }   /* under the controls row, ciao's place for its own line */
+  .cuetext.is-story { bottom: calc(var(--inset) + var(--sab)); white-space: nowrap; max-width: none; line-height: 1; }   /* one line: the corner is dark (D6) */
   .grid-slot { inset: calc(var(--chrome-top) + 92px) 0 calc(100% - var(--scrub-top) + var(--s4)) 0; }
   .grid-slot .sgrid { --c: 80px; grid-template-columns: repeat(6, 112px); column-gap: var(--s4); row-gap: var(--s3); }
   .gsw .cap { display: block; max-width: 112px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -279,12 +292,12 @@ html:not(.m3d) .intro { display: none; }
   .sw-in { padding: 0 var(--s3) var(--s3); }
 }
 /* landscape phones and short screens: the grid keeps 44 px circles and the page scrolls to them */
-@media (max-height: 499px) { .grid-slot { position: static; display: none; min-height: calc(4 * var(--hit) + 3 * var(--s1) + var(--s5)); padding: calc(var(--chrome-top) + 72px) 0 calc(192px + var(--sab)); } html:not(.m3d) .grid-slot { display: grid; } }
+@media (max-height: 499px) { .grid-slot { position: static; display: none; min-height: calc(4 * var(--hit) + 3 * var(--s1) + var(--s5)); padding: calc(var(--chrome-top) + 72px) 0 calc(192px + var(--sab)); } html:not(.m3d) .grid-slot { display: grid; } .cuetext.is-land { display: none; } }   /* no room between the case and the scrubber: the first screen keeps the columns alone */
 
 @view-transition { navigation: auto; }
 @media (prefers-reduced-motion: reduce) {
   @view-transition { navigation: none; }
-  .press, .gsw .dot, .scrub .mark, .finish button, .beat-txt > * > span, .below, .beatnav, #tint, .fade, .arg, .scrollcue { transition: none; }
+  .press, .gsw .dot, .scrub .mark, .finish button, .beat-txt > * > span, .below, .beatnav, #tint, .fade, .arg, .scrollcue, .cuetext { transition: none; }
   .st3d canvas { transition: none; }
   .chev { animation: none; opacity: 1; transform: none; }
 }

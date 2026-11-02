@@ -1,6 +1,7 @@
 /* Back to top (src/components/shell/BackToTop.astro; DESIGN.md "Back to top"). Sam, 2026-10-20, of the Pearl square it
    was: "fix that and make it look a part of the site". Now plain text as "All families" is on a family page (the label
-   size, Open Sans 600, a 44 px tall hit row, no box), followed by the scroll cue's five-dot chevron (ScrollCue.astro) at
+   size, a 44 px tall hit row, no box; since 2026-11-02 in the later sections' face, IBM Plex Mono Medium in capitals,
+   E-chrome-font), followed by the scroll cue's five-dot chevron (ScrollCue.astro) at
    the cue's own size, turned to point up and static (rule 45). Its colour is the logotype's: Pearl Whisper, and Urban
    Slate where the logotype turns Urban Slate over the light fog (to-top.ts copies its data-tone). The hit row is set out
    past --inset by its padding, so the chevron's right edge sits on --inset, as the logotype's left edge does. States
@@ -10,7 +11,7 @@
    right end on phones; on the wide layout (the family page's own query) under "All families", clear of the Matte and
    Gloss switch at the bottom right. The veil is the --night layer the jump happens under (z-index 5, under the loader). */
 :root { --to-top-bottom: 14px; }   /* Back to top's bottom offset on a family page (DESIGN.md component dimensions); on the phone layout "Back to main page" shares that row at the left (family.css .fam-back, family-page.md 23) */
-.to-top { position: fixed; z-index: 4; display: inline-flex; align-items: center; gap: var(--s1); min-height: 44px; padding: 0 var(--s2); font-family: var(--font-ui); font-size: var(--fs-label); font-weight: 600; line-height: 1; white-space: nowrap; text-decoration: none; color: var(--pearl-whisper); -webkit-tap-highlight-color: transparent; transition: transform var(--dur-press) var(--ease-standard); }
+.to-top { position: fixed; z-index: 4; display: inline-flex; align-items: center; gap: var(--s1); min-height: 44px; padding: 0 var(--s2); font-family: var(--font-mono); font-size: var(--fs-label); font-weight: 500; line-height: 1; text-transform: uppercase; letter-spacing: 0; white-space: nowrap; text-decoration: none; color: var(--pearl-whisper); -webkit-tap-highlight-color: transparent; transition: transform var(--dur-press) var(--ease-standard); }
 .to-top[data-tone="light"] { color: var(--urban-slate); }
 .to-top[hidden] { display: none; }
 .to-top svg { display: block; flex: none; width: 17.5px; height: auto; overflow: visible; }

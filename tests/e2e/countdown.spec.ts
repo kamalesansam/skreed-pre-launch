@@ -86,7 +86,7 @@ test('AC4.3 without JavaScript: one line with a <time>, no eyebrow, numerals or 
   const ctx = await browser.newContext({ javaScriptEnabled: false });
   const page = await ctx.newPage();
   await page.goto(baseURL!);
-  for (const sel of ['#cdEyebrow', '#count', '#cue']) expect(await page.locator(sel).evaluate((e) => getComputedStyle(e).display), sel).toBe('none');
+  for (const sel of ['#cdEyebrow', '#count', '#cue', '#cueText']) expect(await page.locator(sel).evaluate((e) => getComputedStyle(e).display), sel).toBe('none');
   const line = page.locator('#heroCopy p.eyebrow:not(#cdEyebrow)');
   await expect(line).toBeVisible();
   await expect(line).toHaveText('Launching 15 November 2026');
@@ -140,14 +140,15 @@ for (const vp of [{ name: '390', viewport: { width: 390, height: 844 }, deviceSc
     await pauseClockAt(page, '2026-10-09T09:00:00+05:30');
     await page.goto(new URL('/?tier=poster', baseURL).href);
     await page.evaluate(async () => { await document.fonts.ready; await (document.getElementById('posterImg') as HTMLImageElement).decode(); });
-    const sel: Record<string, string> = { eyebrow: '#cdEyebrow', label: '#count .l', numeral: '#count .n' };   // the cue has no text since round 3 (ciao's dots)
+    // the cue's chevrons carry no text (round 3, ciao's dots); their words, beside them, do (docs/specs/scroll-cue.md AC6)
+    const sel: Record<string, string> = { eyebrow: '#cdEyebrow', label: '#count .l', numeral: '#count .n', words: '#cueText' };
     const boxes: { kind: string; box: Box }[] = [];
     for (const [kind, s] of Object.entries(sel)) {
       for (const r of await page.locator(s).evaluateAll((els) => els.map((e) => { const b = e.getBoundingClientRect(); return [b.x, b.y, b.width, b.height]; }))) {
         boxes.push({ kind, box: r.map((v) => v * vp.deviceScaleFactor) as Box });
       }
     }
-    await page.addStyleTag({ content: '.copy,.scrollcue,.site-logo{visibility:hidden!important}' });
+    await page.addStyleTag({ content: '.copy,.scrollcue,.cuetext,.site-logo{visibility:hidden!important}' });
     const png = info.outputPath(`behind-${vp.name}.png`);
     await page.screenshot({ path: png });
     const stats = boxStats(png, boxes.map((b) => b.box));
