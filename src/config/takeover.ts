@@ -31,7 +31,7 @@ export const TAKEOVER = Object.freeze({
   /** the band: weight 1 - smoothstep(0, 0.03, |f - p|) either side of the boundary (measured: 0.03) */
   edgeWidth: 0.03,
   /** the band's share of the surface at its centre (measured: 0.82) */
-  bandMix: 0,
+  bandMix: 0.82,
   /** the band's surface, toward which the case's own is mixed by the band's share (measured, all of them) */
   band: Object.freeze({
     // the base colour (measured: #D5F6F3), which the stage turns into the albedo that reads it through the shades' own
@@ -49,7 +49,7 @@ export const TAKEOVER = Object.freeze({
     // a run, and the sheen at 0.12 of the base colour
   }),
   /** the band's relief: a height of band x fBm at 8 x 1.37 per unit, differentiated in screen space into a bump of 0.07 (measured: 0.07 at 8 x 1.37) */
-  relief: 0,
+  relief: 0.07,
   reliefFreq: 1.37,
   /**
    * The world size of depth.fyi's form along its sweep while its material picker shows: its responsive scale (0.58 at
