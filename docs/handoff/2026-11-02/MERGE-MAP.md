@@ -2,20 +2,20 @@
 
 Sam, 2026-11-02: "make sure each and every session that is running here is talking to each other. So while after finishing everything, while merging everything into one single branch, in the default branch or the origin branch, none of them should have any conflict and everything should merge without any conflict."
 
-This file is the shared contract between the sessions in flight. The measurements below were taken on 2026-11-02 by the hub session with `scripts/git/merge-map.py` on snapshots of every worktree (each branch's tip plus its uncommitted work) against the default branch `origin/claude/youthful-planck-objwf5` at `7e256a4`, and were unchanged an hour later. The reservation commit of section 7 landed as `9e6c907` on 2026-11-03, so the default moved once since; its effect is measured in section 2. Re-measure before trusting the rest: the tips move.
+This file is the shared contract between the sessions in flight. The measurements below were taken on 2026-11-02 by the hub session with `scripts/git/merge-map.py` on snapshots of every worktree (each branch's tip plus its uncommitted work) against the default branch `origin/claude/youthful-planck-objwf5` at `7e256a4`, and were unchanged an hour later. Since then the default has moved four times, each a landing by section 4's recipe: the reservation of section 7 as `9e6c907`, this map as `21f1480`, the hero as `ec7d5a3`, the cue as `b2d629e`, the hero's follow-up (its review log and re-taken frames, no file shared with anyone) as `95efdc5`, the quiz result as `3959d89`, the hall as `3dabb60`, About as `2244582` and its follow-up as `d8eff41`, the hero's round 5 (`claude/hero-travel-half`, the track 750svh) as `bb104ab` and its review log as `ebb7e66` (all 2026-11-03); the first's effect is measured in section 2, and after the third the remaining branches conflict with the default in: section 5 `tests/unit/page-scroll.test.ts`; the family pages and the cue `CLAUDE.md`; About nothing; the quiz its five files plus `tests/e2e/quiz.spec.ts`; the hall eleven files, among them `layout.ts` and the section 4 specs the hero also changed. Re-measure before trusting the rest: the tips move.
 
 ## 1. The branches in flight
 
 | # | Piece | Branch | Worktree (`.claude/worktrees/`) | Against the default on 2026-11-02 |
 |---|---|---|---|---|
-| 1 | The quiz result redesign | `claude/quiz-result-redesign` | `quiz-result` | 12 behind, 1 ahead; conflicts in `CLAUDE.md`, `DESIGN.md`, `docs/specs/quiz.md`, `src/components/quiz/Quiz.astro`, `src/styles/quiz.css` |
-| 2 | Section 4 without the hall | `claude/remove-grey-room-section-4-471c96` | `eloquent-driscoll-695753` | 9 behind, 2 ahead; conflicts in `CLAUDE.md`, `DESIGN.md`, `docs/CHECKLIST.md`, `scripts/room/contrast.mjs`, `scripts/room/render-stills.mjs`, `src/env.d.ts`, `src/scripts/hero/section4/director.ts`, `tests/e2e/room.spec.ts` |
+| 1 | The quiz result redesign | `claude/quiz-result-redesign` | `quiz-result` | landed as `3959d89` on 2026-11-03 (52 files) |
+| 2 | Section 4 without the hall | `claude/remove-grey-room-section-4-471c96` | `eloquent-driscoll-695753` | landed as `3dabb60` on 2026-11-03 (83 files; the removal is `aa1ef2c`, the way back `git revert aa1ef2c`; Sam's "Land it only": `main` not cut, the archive not moved) |
 | 3 | Section 5, the four-jar sign-up | `claude/section-5-signup-glass-jar-9d74d2` | `affectionate-faraday-24a066` | 29 behind, 5 ahead; conflicts in `CLAUDE.md`, `DESIGN.md`, `docs/CHECKLIST.md`, `docs/HANDOFF.md`, `tests/e2e/room.spec.ts` |
 | 4 | Family pages round 6, the case models | `claude/case-3d-model-transitions-a08c64` | `agitated-ellis-54d854` | contains the default; clean |
-| 5 | The scroll cue's words | `claude/scroll-affordance-text-8e0a5f` | `festive-colden-092906` | contains the default; clean |
-| 6 | The About page | `claude/skreed-about-page-477c0e` | `peaceful-kalam-531877` | contains the default; clean |
-| 7 | The hero's halved scroll and the blocks' alignment | `claude/hero-scroll-half` | `hero-scroll-half` | at the default's tip, 23 files uncommitted; clean |
-| 8 | This map and its script | `claude/merge-map-tooling` | `merge-map` | at the default's tip; clean |
+| 5 | The scroll cue's words | `claude/scroll-affordance-text-8e0a5f` | `festive-colden-092906` | landed as `b2d629e` on 2026-11-03 (65 files) |
+| 6 | The About page | `claude/skreed-about-page-477c0e` | `peaceful-kalam-531877` | landed as `2244582` on 2026-11-03 (31 files) |
+| 7 | The hero's halved scroll and the blocks' alignment | `claude/hero-scroll-half` | `hero-scroll-half` | landed as `ec7d5a3` on 2026-11-03 (36 files) |
+| 8 | This map and its script | `claude/merge-map-tooling` | `merge-map` | landed as `21f1480` on 2026-11-03 |
 
 Parked: `claude/deployment-setup-92703f` (`5f0ba38`, the deploy workflow) conflicts with the default in `package.json`; it stays unmerged until Sam sets up Cloudflare, and whoever lands it resolves that file then.
 
@@ -52,13 +52,13 @@ A git fact, tested on 2026-11-02: two edits to adjacent lines conflict; one unch
 
 One landing at a time, each with Sam's word, on the default branch (`main` once the hall session has made it; see section 5).
 
-1. **The hall removal (2)** first: the hero's scroll work and section 5 both build on the scroll map it changes, and `main` is cut right after it.
-2. **The family pages (4), the cue (5), About (6) and this map (8)**, in the order they become ready (reviewed, approved, clean). None of them touches the scroll map.
-3. **The hero (7)** after the hall: the hall-less section 4 changes the track the hero's numbers describe.
+1. **The hall removal (2)** first: the hero's scroll work and section 5 both build on the scroll map it changes, and `main` is cut right after it. Landed as `3dabb60` (after the hero, the cue and the quiz, each on Sam's word); the two rows of `tests/e2e/room.spec.ts` the default had failed since the hero's landing pass on the default's own build again (the hub's run of 2026-11-03), and `main` waits on Sam's word.
+2. **The family pages (4), the cue (5), About (6) and this map (8)**, in the order they become ready (reviewed, approved, clean). None of them touches the scroll map. The map landed as `21f1480` and the cue as `b2d629e`; About is ready and waits on Sam's word; the family pages wait on his call about a seam.
+3. ~~**The hero (7)** after the hall~~: landed first, as `ec7d5a3` on 2026-11-03, on Sam's direct word ("push and commit to main") with the review loop's verdict not yet in; verified by the hub as the recipe's merge of `21f1480` and `ef5a88d`. The hall's rebase therefore meets the halved scroll map (`TRACK_SVH` 675, the second wipe at 5.25 screens) and re-derives its own numbers on it.
 4. **Section 5 (3)** after the hall, once Sam has approved it on localhost and its entry seam is re-fixed onto the hall-less page.
-5. **The quiz result (1)** once its Canva swatch question is settled and it has taken the default in; it touches no scroll map, so it may go before 3 or 4 if it is ready first.
+5. **The quiz result (1)** once it has taken the default in; it touches no scroll map, so it may go before 3 or 4 if it is ready first. Ready since 2026-11-03 at `bfab729` (clean against `95efdc5`); the Canva swatch stays Sam's open answer and does not hold the landing, since production draws the branch's own stroke.
 
-The dependencies never bend: 3 and 7 never before 2.
+The dependency that remains: 3 never before 2.
 
 ## 4. The protocol
 
@@ -86,7 +86,7 @@ The push refuses to move a default that moved in the meantime (non fast-forward)
 
 **After every landing** (every other session, at its next turn, before any further edit): commit what is in hand (a WIP commit is fine), `git fetch origin`, `git merge origin/claude/youthful-planck-objwf5` into its own branch (a merge, never a rebase, because every branch is pushed; the one exception is below), resolve, run the unit tests and the build, commit, push.
 
-**The hall's exception (2026-11-03).** Sam's words to the hall session were a rebase onto the current default with the removal kept as one commit, so that one revert brings the hall back; a merge commit would carry the navbar's move to the scenes and leave a lone revert of the removal with a navbar that no longer waits for the hall. So `claude/remove-grey-room-section-4-471c96` alone rebases, once its review's fixes are in: the removal stays one commit and the tooling commit separate; the branch is pushed with `--force-with-lease`, never plain `--force`; nobody takes its tip in before the hall session announces the rebased tip and the new removal SHA to the hub, section 5 and the hero and writes that SHA into the memory file in place of `65642df`; and the landing is the recipe above unchanged, then `main`.
+**The hall's exception (2026-11-03).** Sam's words to the hall session were a rebase onto the current default with the removal kept as one commit, so that one revert brings the hall back; a merge commit would carry the navbar's move to the scenes and leave a lone revert of the removal with a navbar that no longer waits for the hall. So `claude/remove-grey-room-section-4-471c96` alone rebases, once its review's fixes are in: the removal stays one commit and the tooling commit separate; the branch is pushed with `--force-with-lease`, never plain `--force`; nobody takes its tip in before the hall session announces the rebased tip and the new removal SHA to the hub, section 5 and the hero and writes that SHA into the memory file in place of `65642df`; and the landing is the recipe above unchanged, then `main`. Done on 2026-11-03: the branch is `ea5fa33` on `95efdc5`, the removal is `46ecca1` (one commit, 80 files; the way back is `git revert 46ecca1`), merge-tree against the default clean, 83 files; the navbar is adapted to the scenes, which adds `docs/specs/navbar.md` and `tests/e2e/site-nav.spec.ts` to About's merge-in after the hall lands.
 
 **The shared docs** (`CLAUDE.md`, `DESIGN.md`, `docs/CHECKLIST.md`, `docs/HANDOFF.md`, `docs/00-IDEATION.md`): each session edits only its own lines (section 2 names them), adds new lines inside its own section rather than at the end of a shared list, and never reflows, renumbers or rewords another session's lines. A line another session owns is asked for by message, never edited. When a merge-in conflicts in one of these lists the rule is fixed: keep both sides' lines, the landed session's first, yours after, and drop nothing.
 
