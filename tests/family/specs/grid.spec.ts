@@ -110,7 +110,7 @@ test.describe('6. HUD, type and colour rules', () => {
       expect(m.under12).toEqual([]);
       expect(m.italic).toBe(0);
       expect(m.digitsInHeadings).toBe(0);
-      expect(m.faces.sort()).toEqual(['Open Sans', 'Poppins']);
+      expect(m.faces.sort()).toEqual(['IBM Plex Mono', 'Open Sans', 'Poppins']);   // Plex Mono: All families and Back to top (E-chrome-font)
       await ctx.close();
     });
   }

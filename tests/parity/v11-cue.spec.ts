@@ -14,7 +14,7 @@ import { compare } from '../harness/compare.ts';
 import { sameBackground } from '../harness/settle.ts';
 
 // The cue's show and hide logic is e2e's (AC5.2); here the cue is forced shown, so only the drawing is compared.
-const HIDE = '#stage,.hero-poster,#intro,.tune,.labels,.fallback,#wallCopy,.site-logo,.copy,#s2labels,#s2links,#families,#siteNav,#main{display:none!important}'
+const HIDE = '#stage,.hero-poster,#intro,.tune,.labels,.fallback,#wallCopy,.site-logo,.copy,.cuetext,#s2labels,#s2links,#families,#siteNav,#main{display:none!important}'
   + '.scrollcue{opacity:1!important;visibility:visible!important;transition:none!important}';
 /** the prototype's left cue at the port's place (shell.css: centred, its bottom on --inset, which both pages define alike) */
 const PROTO_AT_PORT = '#cue2{display:none!important}#cue{left:50%!important;right:auto!important;bottom:var(--inset)!important;transform:translateX(-50%)!important}';

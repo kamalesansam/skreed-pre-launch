@@ -16,3 +16,7 @@ export const CANVAS_FADE_MS = 200;                           // poster to canvas
 export const BACK_DELAY_MS = 2500;                           // the argument screen on, then the control
 export const BACK_IN_MS = 400;                               // its fade in (--dur-fade)
 export const BACK_OUT_MS = 200;                              // its fade out (--dur-out)
+// the cue's words (docs/specs/family-page.md 25, docs/specs/scroll-cue.md): the rest before they come back, the landing's CUE.stillMs
+// (src/config/cue.ts), written here so swatch grid mode's module pulls in no chunk it shares with the hero's island
+// (tests/unit/scroll-cue.test.ts keeps the two equal)
+export const CUE_STILL_MS = 1500;
