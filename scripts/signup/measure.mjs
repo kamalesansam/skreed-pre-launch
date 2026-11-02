@@ -5,7 +5,7 @@
 // default). The form's "off" cases take the production markup's shape in the same page: the heading and the form nodes
 // removed and .su-body given su-noform, as Signup.astro renders it with PUBLIC_LEADS off. Writes measure.json and
 // measure.md to the output folder.
-//   node scripts/signup/measure.mjs [base=http://127.0.0.1:4321/] [--out <dir>] [--skip-3d]
+//   node scripts/signup/measure.mjs [base=http://127.0.0.1:4321/] [--out <dir>] [--skip-3d] [--only fit,contrast,fill,record,ground] [--cases 1024x768,1440x900]
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium } from '@playwright/test';
@@ -21,7 +21,8 @@ const want = (part) => !ONLY || ONLY.includes(part);
 mkdirSync(out, { recursive: true });
 const GL = ['--ignore-gpu-blocklist', '--enable-gpu'];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const CASES = [[1280, 800], [1366, 657], [1536, 730], [1920, 970], [768, 1024], [412, 915], [390, 844], [360, 780], [390, 664], [375, 667]];
+// --cases WxH,WxH measures those sizes instead of the spec's ten (the form on and off at each)
+const CASES = args.includes('--cases') ? args[args.indexOf('--cases') + 1].split(',').map((c) => c.split('x').map(Number)) : [[1280, 800], [1366, 657], [1536, 730], [1920, 970], [768, 1024], [412, 915], [390, 844], [360, 780], [390, 664], [375, 667]];
 const FORM_OFF_ONLY = new Set(['390x664', '375x667']);
 const FACES = ['300 16px Inter', '400 16px Inter', '700 16px Inter', '400 16px Jost'];
 const R = { cases: [], contrast: {}, fill: {}, ready: {}, ground: {}, asBuilt: {} };
