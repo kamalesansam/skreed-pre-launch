@@ -121,6 +121,7 @@ test('the type scale: quiz.css sets the three sizes as clamp() tokens once, with
   assert.ok(css.includes(`@media ${side} {`), 'quiz.css, the sideways block');
   assert.ok(read('src/scripts/quiz/deck.ts').includes(`matchMedia('${side}')`), 'deck.ts, the sideways query');
   assert.ok(read('src/components/quiz/Quiz.astro').includes(`const PIC_SIZES = '${wide} min(30vw, 440px), ${side} min(calc((100vw - 92px) * 0.4), 368px), calc(100vw - 32px)';`), 'Quiz.astro');   // capped at 368 px: the columns stop at 960 px (2026-11-02)
+  assert.ok(read('tests/e2e/quiz.spec.ts').includes(`const PIC_SIZES = '${wide} min(30vw, 440px), ${side} min(calc((100vw - 92px) * 0.4), 368px), calc(100vw - 32px)';`), 'the e2e suite\'s copy, which "Pictures only where a question is visual" compares the markup against');
   assert.match(tokens, /\.qz-card \{ grid-template-columns: minmax\(0, 2fr\) minmax\(0, 3fr\); column-gap: clamp\(32px, 4vw, 64px\); \}/, 'the left column is two fifths of the card less the gap');
   // the picture's column on a laptop is the width the sizes attribute names
   assert.match(tokens, /--qz-pic-w: clamp\(260px, 30vw, 440px\)/);
@@ -130,10 +131,12 @@ test('the frame\'s room and the side safe areas (the review of 2026-11-02): the 
   const deck = read('src/scripts/quiz/deck.ts');
   // the page's length can change with no resize (section 4 opening by Skip quiz): the mouse and pen's pointerenter,
   // keyboard focus and a finger's pointerdown each fit the frame again, then show
-  assert.equal(deck.split('fitPic(card, ctl); void ctl.show(key);').length - 1, 3, 'the three show paths fit, then show');
-  assert.match(deck, /opt\.addEventListener\('pointerenter', \(e\) => \{ if \(e\.pointerType !== 'touch' && live\(\)\) \{ fitPic\(card, ctl\); void ctl\.show\(key\); \} \}\);/);
-  assert.match(deck, /opt\.addEventListener\('focus', \(\) => \{ if \(live\(\) && opt\.matches\(':focus-visible'\)\) \{ fitPic\(card, ctl\); void ctl\.show\(key\); \} \}\);/);
-  assert.match(deck, /opt\.addEventListener\('pointerdown', \(e\) => \{ if \(e\.pointerType === 'touch' && live\(\)\) \{ touchPic = opt; fitPic\(card, ctl\); void ctl\.show\(key\); \} \}\);/);
+  assert.equal(deck.split('fitPic(card, ctl, false); void ctl.show(key);').length - 1, 3, 'the three show paths fit, then show');
+  assert.match(deck, /opt\.addEventListener\('pointerenter', \(e\) => \{ if \(e\.pointerType !== 'touch' && live\(\)\) \{ fitPic\(card, ctl, false\); void ctl\.show\(key\); \} \}\);/);
+  assert.match(deck, /opt\.addEventListener\('focus', \(\) => \{ if \(live\(\) && opt\.matches\(':focus-visible'\)\) \{ fitPic\(card, ctl, false\); void ctl\.show\(key\); \} \}\);/);
+  assert.match(deck, /opt\.addEventListener\('pointerdown', \(e\) => \{ if \(e\.pointerType === 'touch' && live\(\)\) \{ touchPic = opt; fitPic\(card, ctl, false\); void ctl\.show\(key\); \} \}\);/);
+  // the show paths lay the pictures out again only when the frame changed (each Tab or pointer move would otherwise rewrite every strip)
+  assert.match(deck, /if \(always \|\| state\(\) !== was\) ctl\.layout\(\);/);
   assert.match(deck, /function fitPics\(\) \{ for \(const \[card, ctl\] of pics\) fitPic\(card, ctl\); \}/, 'showCard and resize fit every card the same way');
   // the island (hero3d, not fallen to the poster) draws the fog above the section; elsewhere the family links stand there
   assert.match(deck, /const island = \(\) => \{ const c = document\.documentElement\.classList; return c\.contains\('hero3d'\) && !c\.contains\('poster'\); \};/);

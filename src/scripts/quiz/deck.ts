@@ -61,8 +61,9 @@ export function mountQuiz(root: HTMLElement): void {
     return island() ? end : Math.max(end, top);
   };
   /** one card's frame. A phone held upright has no room beside the question: the frame takes the open space above the deck, under the band, at most 40% of the screen; none under 96 px. A phone held sideways: the grid row the answers leave it, none under 96 px. The page's length can change with no resize (section 4 opening by Skip quiz), so each show path below fits its card's frame again just before the picture comes (2026-11-02) */
-  function fitPic(card: HTMLDivElement, ctl: Pictures) {
+  function fitPic(card: HTMLDivElement, ctl: Pictures, always = true) {
     const frame = card.querySelector<HTMLElement>('.qz-pics')!;
+    const state = () => `${frame.style.getPropertyValue('--qz-pic-h')} ${frame.hasAttribute('data-none')}`, was = state();
     frame.style.removeProperty('--qz-pic-h'); frame.removeAttribute('data-none');
     if (side.matches) { if (!card.hidden) frame.toggleAttribute('data-none', frame.getBoundingClientRect().height < MIN_FRAME); }
     else if (!wide.matches) {
@@ -70,7 +71,7 @@ export function mountQuiz(root: HTMLElement): void {
       frame.toggleAttribute('data-none', free < MIN_FRAME);
       frame.style.setProperty('--qz-pic-h', `${Math.max(0, Math.floor(free))}px`);
     }
-    ctl.layout();
+    if (always || state() !== was) ctl.layout();   // a show path lays the pictures out again only when the frame changed: layout() rewrites every built picture's strips (their image, size and slice), too much for each Tab or pointer move
   }
   function fitPics() { for (const [card, ctl] of pics) fitPic(card, ctl); }
   addEventListener('resize', fitPics); wide.addEventListener('change', fitPics); side.addEventListener('change', fitPics);
@@ -211,11 +212,11 @@ export function mountQuiz(root: HTMLElement): void {
       const key = opt.dataset.persona ?? '';
       if (!ctl.has(key)) continue;
       const live = () => card.classList.contains('is-top') && !busy;
-      opt.addEventListener('pointerenter', (e) => { if (e.pointerType !== 'touch' && live()) { fitPic(card, ctl); void ctl.show(key); } });
+      opt.addEventListener('pointerenter', (e) => { if (e.pointerType !== 'touch' && live()) { fitPic(card, ctl, false); void ctl.show(key); } });
       opt.addEventListener('pointerleave', (e) => { if (e.pointerType !== 'touch' && opt.getAttribute('aria-pressed') !== 'true') void ctl.hide(key); });
-      opt.addEventListener('focus', () => { if (live() && opt.matches(':focus-visible')) { fitPic(card, ctl); void ctl.show(key); } });
+      opt.addEventListener('focus', () => { if (live() && opt.matches(':focus-visible')) { fitPic(card, ctl, false); void ctl.show(key); } });
       opt.addEventListener('blur', () => { if (opt.getAttribute('aria-pressed') !== 'true') void ctl.hide(key); });
-      opt.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' && live()) { touchPic = opt; fitPic(card, ctl); void ctl.show(key); } });
+      opt.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' && live()) { touchPic = opt; fitPic(card, ctl, false); void ctl.show(key); } });
       // a press that turns into a scroll (or a long press) ends with no click: its picture goes
       opt.addEventListener('pointercancel', (e) => { if (e.pointerType === 'touch' && touchPic === opt) { touchPic = null; void ctl.hide(key); } });
     }

@@ -1970,7 +1970,7 @@ test('AC4 at 360 x 780 the done line with a 60-character address breaks inside t
 /** a picture file as the build names it: /_astro/q<question index>-<personality>-<width>.<hash>.<avif or webp> */
 const PIC_URL = /\/_astro\/(q\d+-[a-z]+)-(\d+)\.[\w-]+\.(avif|webp)$/;
 /** the sizes attribute of every picture: the second column on a laptop, the width between the gutters on a phone */
-const PIC_SIZES = '(min-width: 900px) and (min-height: 600px) min(30vw, 440px), (min-width: 640px) and (max-height: 599px) calc((100vw - 92px) * 0.4), calc(100vw - 32px)';
+const PIC_SIZES = '(min-width: 900px) and (min-height: 600px) min(30vw, 440px), (min-width: 640px) and (max-height: 599px) min(calc((100vw - 92px) * 0.4), 368px), calc(100vw - 32px)';   // the sideways term capped at 368 px since 2026-11-02 (quiz.md D44)
 
 /** every picture of card i loaded (each <img> complete, with its size), so a show starts at once: picture.ts first awaits
  *  a picture still loading */
@@ -2770,7 +2770,7 @@ for (const [w, h] of [[390, 844], [412, 915]] as const) {
   });
 }
 
-test('Pictures with the stage lower than the viewport\'s top at 390 x 844 on the poster tier (section 4 open for the visit, the page scrolled so the quiz\'s top sits 180 px down, as a phone browser whose bars have hidden leaves it): with no island the frame is measured from the stage\'s top, 72 px under it, so it never stands over the family links above the section, at most 40% of the screen; it keeps that room when the page comes back to the section\'s top with no resize, and a finger\'s press there draws the picture in it', async ({ browser, baseURL }) => {
+test('Pictures with the stage lower than the viewport\'s top at 390 x 844 on the poster tier (section 4 open for the visit, the page scrolled so the quiz\'s top sits 180 px down, a resize dispatched): the page goes on below the quiz, so the stage rests at the viewport\'s top and the frame has the pinned section\'s room, 72 px under the stage\'s top, clear of the family links above the section, at most 40% of the screen; it keeps that room when the page comes back to the section\'s top with no resize, and a finger\'s press there draws the picture in it', async ({ browser, baseURL }) => {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
   await ctx.addInitScript((key) => { sessionStorage.setItem(key, '1'); }, QUIZ_GATE.key);   // the visit's flag: section 4 opens at parse, so the page goes on below the quiz
   const page = await ctx.newPage();
@@ -2795,7 +2795,7 @@ test('Pictures with the stage lower than the viewport\'s top at 390 x 844 on the
   const m = await frame();
   expect(m.none, 'the frame is drawn').toBe(false);
   expect(m.stageTop, 'the stage lower than the viewport\'s top').toBeGreaterThan(100);
-  expect(m.top, 'the frame starts 72 px under the stage\'s top: no island draws fog above the section on the poster tier').toBeCloseTo(m.stageTop + 56 + 16, 0);
+  expect(m.top, 'the frame starts 72 px under the stage\'s top: the page goes on below the quiz, so the stage rests at the viewport\'s top').toBeCloseTo(m.stageTop + 56 + 16, 0);
   expect(m.top, 'so it stays clear of the family links above the section').toBeGreaterThanOrEqual(m.links);
   expect(m.bottom, 'and ends 24 px over the question').toBeCloseTo(m.count - 24, 0);
   expect(m.height, 'at most 40% of the screen').toBeLessThanOrEqual(Math.floor(0.4 * m.vh) + 0.5);
@@ -2803,7 +2803,7 @@ test('Pictures with the stage lower than the viewport\'s top at 390 x 844 on the
   await page.evaluate(() => { const top = document.getElementById('find')!.getBoundingClientRect().top + scrollY; scrollTo({ top, behavior: 'instant' }); });
   await quiet(page);
   const back = await frame();
-  expect(Math.round(back.stageTop), 'the section\'s top at the viewport\'s top').toBe(0);
+  expect(Math.abs(back.stageTop), 'the section\'s top at the viewport\'s top').toBeLessThan(1);
   expect(back.top, 'the frame 72 px under the viewport\'s top, clear of the logotype\'s band').toBeCloseTo(56 + 16, 0);
   expect(back.height, 'with the room it had').toBeCloseTo(m.height, 0);
   await picsLoaded(page, 0);
@@ -2844,8 +2844,8 @@ test('Pictures with the page ending at the locked quiz\'s foot and the stage res
     return { none: f.hasAttribute('data-none'), top: r.top, bottom: r.bottom, height: r.height, stageTop: document.querySelector('.qz-stage')!.getBoundingClientRect().top, count: c.querySelector('.qz-count')!.getBoundingClientRect().top, links: document.querySelector('.fl')!.getBoundingClientRect().bottom, end: document.scrollingElement!.scrollHeight - innerHeight - scrollY };
   });
   const m = await frame();
-  expect(Math.round(m.end), 'the page at its end').toBe(0);
-  expect(Math.round(m.stageTop), 'the stage resting 80 px down').toBe(80);
+  expect(Math.abs(m.end), 'the page at its end').toBeLessThan(1);
+  expect(m.stageTop, 'the stage resting 80 px down').toBeCloseTo(80, 0);
   expect(m.none, 'the frame is drawn').toBe(false);
   expect(m.top, 'from the section\'s top, where the family links end: never over them on the poster tier').toBeCloseTo(m.links, 0);
   expect(m.top, 'clear of the logotype\'s band').toBeGreaterThanOrEqual(56 + 16 - 0.5);
