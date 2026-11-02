@@ -1,0 +1,2 @@
+# the renders and the pile are intermediates (run.sh rebuilds them); the shipped files are in src/assets/signup/jars
+work/

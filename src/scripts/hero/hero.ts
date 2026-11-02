@@ -40,7 +40,7 @@ import { createIglooIntro } from './intro/igloo.ts';
 import type { RideEls } from './scroll/ride.ts';
 import type { RoomDirector } from './section4/director.ts';
 import type { PageScroll } from './section4/scroll.ts';
-import type { JarsScene } from './section5/jars.ts';
+import { createSignupGround } from './section5/ground.ts';
 import { ROOM_SCREENS, WIPE4_START } from '../../config/room-map.ts';
 import type { HeroContext, HeroUniforms, SkyState } from './types.ts';
 
@@ -170,12 +170,18 @@ export async function startHero(o: StartOptions): Promise<void> {
   const mask = createLogoMask();
   life.onKill(() => mask.dispose());
 
+  // section 5's ground (section5/ground.ts; Sam's picture of 2026-11-02): the flat SIGNUP_GROUND the fourth wipe cuts onto
+  // and the island holds under section#signup, and the section's layout read from the DOM for the exit seam and the wrap
+  const signupEl = document.getElementById('signup');
+  const signup = signupEl ? createSignupGround(signupEl) : null;
+  if (signup) life.onKill(() => signup.dispose());   // the mark goes with the island (the poster path, a teardown)
+
   const skyState: SkyState = { dome, cls: data.cls, onAspect() {}, onFrame2() {} };   // stage 2: world/skyClass.ts
   const ctx: HeroContext = {
     renderer, dpr, life, bridge, sceneA, camA, U, FOG, blocks, frame, pieces, logo, moon, rig,
     groundAt: ground.groundAt, stoneTopAt: stones.stoneTopAt, groundMesh: ground.mesh, stonesMesh: stones.mesh, sky: skyState,
     composerA, fogGround, section2, composite, mask, scrollTex: scrollTex.tex, intro, params: P, reduced, touch, ghost: touch && !reduced, els,
-    room: null, signup: null,
+    room: null, signup,
   };
   // the intro's geometry, textures and wire layers (cage, outline, numbers: warm-up groups c5 to c7, before the labels' links)
   await intro.install(ctx); life.check();
@@ -244,44 +250,17 @@ export async function startHero(o: StartOptions): Promise<void> {
       onState: () => pageScroll?.notify(),
       // the section's layout read again (the intro ending, the document growing, a resize): its range moved, so the capture set is re-evaluated too; the glue spans below are measured fresh at every decision
       onLayout: () => pageScroll?.notify(),
-      // section 5 (section-5.md 5): the exit seam's trigger and the wrap's landing from its jar chunk, or from the DOM while the chunk is not in
-      exitY: () => { const v = ctx.signup ? ctx.signup.exitY() : NaN; return Number.isFinite(v) ? v : signupDom().exit; },
-      restY: () => { const v = ctx.signup ? ctx.signup.restY() : NaN; return Number.isFinite(v) ? v : signupDom().rest; },
-      signupReady: () => !signupEl || !ctx.signup || ctx.signup.ready || ctx.signup.failed,
+      // section 5 (section-5.md 5; C6): the exit seam's trigger and the wrap's landing from the section's layout in the DOM
+      // (.su-body's end and the section's top), and its readiness for the wrap's cover-out (the page's data-ready, C3)
+      exitY: () => signup ? signup.exitY() : NaN,
+      restY: () => signup ? signup.restY() : NaN,
+      signupReady: () => !signup || signup.ready(),
     });
     ctx.room = room; life.onKill(() => room.dispose());
     room.resize(renderer.domElement.width, renderer.domElement.height);
     return room;
   }).catch((e: unknown) => { console.warn('section 4: the section chunk did not load; the stills stand in', e); document.getElementById('room')?.setAttribute('data-tier', 'poster'); return null; }));
   const loadHall = () => loadDirector().then((room) => room?.load().then(() => { if (room.hall.failed) document.getElementById('room')?.setAttribute('data-tier', 'poster'); }));
-  // section 5 (docs/specs/section-5.md 5, "Loading"): its jar chunk comes at idle once section 4's cloud has warmed, when
-  // the section is within two screens, or with a wrap; it draws the jar over the fog and caches the section's
-  // layout. Until it is in (and for good if it fails: the section stands as text over the fog), the director reads the
-  // exit's trigger and the wrap's landing from the DOM, at most twice a second
-  const signupEl = document.getElementById('signup');
-  let signupImport: Promise<JarsScene | null> | null = null;
-  const loadSignup = () => (signupImport ??= (signupEl ? import('./section5/jars.ts').then((m) => {
-    if (life.dead) return null;
-    const jars = m.createJars({ renderer, root: signupEl, reduced, dpr, fog: () => fogGround.out, onLayout: () => pageScroll?.notify() });
-    ctx.signup = jars; life.onKill(() => jars.dispose());
-    jars.resize(renderer.domElement.width, renderer.domElement.height);
-    void jars.load();
-    return jars;
-  }).catch((e: unknown) => { console.warn('section 5: the jar chunk did not load; the section stands as text', e); signupEl.setAttribute('data-tier', 'poster'); return null; }) : Promise.resolve(null)));
-  let signupFb = { at: -1e9, exit: NaN, rest: NaN };
-  const signupDom = () => {
-    const now = performance.now();
-    if (now - signupFb.at < 500) return signupFb;
-    const b = signupEl?.querySelector('.su-body');
-    if (signupEl && b && signupEl.getClientRects().length) { const r = b.getBoundingClientRect(), s = signupEl.getBoundingClientRect(), exit = r.bottom + scrollY - innerHeight; signupFb = { at: now, exit, rest: Math.max(s.top + scrollY, exit) }; }
-    else signupFb = { at: now, exit: NaN, rest: NaN };
-    return signupFb;
-  };
-  if (signupEl && 'IntersectionObserver' in window) {
-    const near = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { near.disconnect(); void loadSignup(); } }, { rootMargin: '200% 0px' });
-    near.observe(signupEl);
-    life.onKill(() => near.disconnect());
-  }
   // the quiz gate (docs/specs/quiz-gate.md D1, D2, D5): section#room is hidden and data-locked until the quiz's result or
   // Skip quiz opens it (scripts/quiz/gate.ts). While locked there is no wrap from the top (canWrap, below) and no glue
   // span at its seam (docTop reads NaN for an element with no box, below); the hall and the director chunk still load as
@@ -290,7 +269,8 @@ export async function startHero(o: StartOptions): Promise<void> {
   // hall is in, and lets it wait for it (at most 1.5 s).
   const roomEl = document.getElementById('room');
   const roomLocked = () => !!roomEl?.hasAttribute('data-locked');
-  const onUnlock = () => { pageScroll?.notify(); void loadHall(); };
+  // (section 5 opens with section 4: its layout is read afresh)
+  const onUnlock = () => { signup?.invalidate(); pageScroll?.notify(); void loadHall(); };
   addEventListener('skreed:quiz-unlock', onUnlock);
   life.onKill(() => removeEventListener('skreed:quiz-unlock', onUnlock));
   // the hall's own load() returns at once when its load has started (hall.ts), and it always has by the time the quiz's
@@ -323,7 +303,7 @@ export async function startHero(o: StartOptions): Promise<void> {
       },
       room: {
         inRange: () => !!ctx.room?.inRange(), edge: (d) => ctx.room?.edge(d) ?? null, step: (d) => !!ctx.room?.stepScene(d),
-        back: () => { ctx.room?.back(); }, wrap: () => { void loadSignup(); void loadDirector().then((r) => r?.wrap()); },
+        back: () => { ctx.room?.back(); }, wrap: () => { void loadDirector().then((r) => r?.wrap()); },
         canWrap: () => loop.state.introDone && !ctx.room?.lock() && !roomLocked(), lock: () => !!ctx.room?.lock(), busy: () => !!ctx.room?.busy(),
       },
     });
@@ -331,7 +311,7 @@ export async function startHero(o: StartOptions): Promise<void> {
   }).catch((e: unknown) => { console.warn('section 4: the page scroll chunk did not load', e); }));
   const idle = (fn: () => void) => { if ('requestIdleCallback' in window) requestIdleCallback(fn, { timeout: 2000 }); else setTimeout(fn, 2000); };
   let introOver = false;
-  const afterIntro = () => { if (introOver) return; introOver = true; void startScroll(); idle(() => { if (!life.dead) void loadDirector().then((r) => r?.warmCloud()).then(() => { if (!life.dead) void loadSignup(); }); }); };
+  const afterIntro = () => { if (introOver) return; introOver = true; void startScroll(); idle(() => { if (!life.dead) void loadDirector().then((r) => r?.warmCloud()); }); };
   if (HOOKS) {
     const extra = () => ctx.room as unknown as import('./section4/director.ts').RoomHooks | null;
     window.__s4 = {
@@ -341,25 +321,23 @@ export async function startHero(o: StartOptions): Promise<void> {
       scene: (i) => extra()?.scene(i) ?? false,
       step: (dir) => ctx.room?.stepScene(dir) ?? false,
       back: () => ctx.room?.back() ?? false,
-      wrap: () => { void loadSignup(); void loadDirector().then((r) => r?.wrap()); },
+      wrap: () => { void loadDirector().then((r) => r?.wrap()); },
       glue: (on) => pageScroll?.glue(on),
       lights: (o) => extra()?.lights(o) ?? null,
       shade: (dark, height, solid) => extra()?.shade(dark, height, solid),
       skip: () => window.__skreedRoom?.skip(),
       get ready() { return !!ctx.room?.hall.ready; },
     };
-    // section 5's hooks (section-5-sand.md 5, "Hooks"): its state, a follow poured, the follows set, the jar's still by
-    // the follows' order, the stream's clock, the tilt, the chunk's load; the chunk carries them in hooks builds alone
-    window.__s5 = {
-      state: () => ctx.signup?.hooks?.() ?? null,
-      pour: (id) => ctx.signup?.pour(id),
-      follows: (ids) => ctx.signup?.follows(ids),
-      still: (order, level) => ctx.signup?.still?.(order, level) ?? Promise.resolve(null),
-      scrub: (t) => ctx.signup?.scrub?.(t),
-      tilt: (deg) => ctx.signup?.tilt?.(deg),
-      load: () => loadSignup().then(() => {}),
-      get ready() { return !!ctx.signup?.ready; },
-    };
+    // section 5's ground (section5/ground.ts): this frame's mode, the mark, the section's layout, the exit's trigger and
+    // the rest, the page's readiness, the composite's draws and holds; and the bytes it writes at canvas points (device
+    // px from the bottom left) on its next draw, read back before the frame is shown
+    if (signup && signupEl) {
+      window.__skreedGround = {
+        state: () => ({ mode: signup.stats.mode, draws: signup.stats.draws, held: signup.stats.held, mark: signupEl.dataset.ground ?? null, ready: signup.ready(), inView: signup.inView(), layout: signup.layout(), exitY: signup.exitY(), restY: signup.restY() }),
+        sample: (pts) => new Promise<number[][]>((res) => { signup.probe = { pts, done: res }; }),
+      };
+      life.onKill(() => { window.__skreedGround = undefined; });
+    }
   }
   bridge.onIntroDone(() => { loop.introDone(); afterIntro(); });
   if (initiallyIntroDone) afterIntro();
@@ -379,7 +357,7 @@ export async function startHero(o: StartOptions): Promise<void> {
     life.onKill(() => removeEventListener('skreed:tune-ghost', onGhost));
   }
   // The loop runs while the track, section 3 (section#find, the quiz over the fog ground, quiz.md 5), section 4 or section 5
-  // (section#signup, the jars over the same fog, section-5.md 5) is in view; once all have left the viewport it stops and
+  // (section#signup over its flat ground, held: section5/ground.ts) is in view; once all have left the viewport it stops and
   // the canvas hides (architecture 7.5, amended for sections 3 to 5). It restarts when any returns.
   let compiled = false, inView = true;
   const trackEl = document.getElementById('track');

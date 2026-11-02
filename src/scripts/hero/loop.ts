@@ -9,6 +9,7 @@ import { createScrollFollower, mapScroll, PULL } from './scroll/scrollMap.ts';
 import { rideCopy } from './scroll/ride.ts';
 import { ghostTarget, type Pointer } from './interaction/pointer.ts';
 import type { Labels } from './interaction/labels.ts';
+import { groundMode, holds, underGround } from './section5/ground.ts';
 import type { HeroContext } from './types.ts';
 
 export interface LoopState {
@@ -39,6 +40,10 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
   const C = composite.C;
   const uMask = (U as Record<string, { value: unknown }>).uMask as { value: number } | undefined;
   const _cc = new Color();
+  // section 5's ground held (section5/ground.ts): the canvas size it was last drawn at, flat and uncovered, or null; and
+  // the last frame handed to the page (NaN at first, so the first is always sent)
+  let flatAt: string | null = null;
+  const sent = { on: null as boolean | null, cover: NaN, wipe: NaN };
 
   function step() {
     if (import.meta.env.PUBLIC_HERO_HOOKS === '1') window.__skreedFrame = (window.__skreedFrame ?? 0) + 1;
@@ -91,19 +96,19 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
     // into their own targets, and the plan for the composite: the third wipe from the fog, the section's frame, a seam's cover
     const plan = room ? room.step({ t, dt, ratio, pointer, touch: ctx.touch, mouseRate: P.mouse, fog: fogGround.out }) : null;
     const roomOn = !!plan && plan.on && !!plan.tex, cover = plan?.cover ?? 0, wipeOut = plan?.wipeOut ?? 0;
-    // section 5 (section-5.md 2, 4; E-S5-bg, section5/jars.ts): the jars over the fog in their own frame, drawn while the
-    // section is in view or it is the fourth wipe's far side; the fog ground renders first, as its floor
-    const S5 = ctx.signup, s5want = !!S5 && (wipeOut > 0 || S5.inView());
+    // section 5 (section5/ground.ts; Sam's picture of 2026-11-02): the flat SIGNUP_GROUND, the fourth wipe's far side
+    // while section 4 is on screen and the whole frame once the section is in view with section 4 off it; drawn, then
+    // held (the composite skips its draw while the canvas already shows the ground with no cloud over it)
+    const G = ctx.signup, s5in = !!G && G.inView(), s5 = G ? groundMode({ inView: s5in, roomOn, wipeOut }) : 'off';
 
     // F14: hero, then section 2 (its own targets), then section 3's ground (the fog alone); the composite wipes hero to
     // section 2, then section 2 to the ground, which stays the whole frame under section 3 (quiz.md 5)
     if (!iv.hold) {
-      const s2on = !!S2 && S2.ready && tp > 0 && tp2 < 1, keep = s2on && tp2 <= 0 && S2!.logoLeft(), groundOn = ((tp2 > 0 || (tp > 0 && !(S2 && S2.ready))) && !(roomOn && !plan!.groundNeeded)) || s5want;
+      const s2on = !!S2 && S2.ready && tp > 0 && tp2 < 1, keep = s2on && tp2 <= 0 && S2!.logoLeft(), groundOn = (tp2 > 0 || (tp > 0 && !(S2 && S2.ready))) && !(roomOn && !plan!.groundNeeded) && s5 !== 'whole';
       ctx.moon.visible = tp < 1;   // once the first wipe has covered the scene only the logo is seen: the ground and sky are skipped
       if (tp < 1 || keep) composerA.c.render(dt);
       if (s2on) S2!.render();
       if (groundOn) fogGround.render();
-      const p5 = S5 ? S5.step({ t, dt, wipe: wipeOut, cover }) : null, s5on = !!p5 && p5.on && !!p5.tex;
       if (keep && uMask) { const pc = renderer.getClearColor(_cc), pa = renderer.getClearAlpha(); renderer.setClearColor(0x000000, 1); uMask.value = 1;
         renderer.setRenderTarget(mask.rt); renderer.render(logo as unknown as Scene, camA); uMask.value = 0; renderer.setClearColor(pc, pa); }
       const groundTex = fogGround.out;
@@ -115,18 +120,36 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
         if (plan!.wipeIn < 1) { C.tA.value = groundTex; C.tB.value = rt; C.uProgress.value = plan!.wipeIn; C.uParA.value = 0; }
         else { C.tA.value = rt; C.tB.value = rt; C.uProgress.value = 0; }
       }
-      // the fourth wipe (section-5.md 2, E-S5-bg): section 4's frame (the scenes, or the hall) holds still under the cut as
-      // the hero does in the first wipe, and section 5's frame slides in (the fog alone until the jars are in); past the
-      // cut, and once the section has scrolled away, section 5's frame is the whole frame
-      if (roomOn && wipeOut > 0) { C.tA.value = plan!.tex; C.tB.value = s5on ? p5!.tex : groundTex; C.uProgress.value = wipeOut; C.uParA.value = 0; }
-      else if (s5on && !roomOn) { C.tA.value = p5!.tex; C.tB.value = p5!.tex; C.uProgress.value = 0; C.uParA.value = 0; }
+      // the fourth wipe (section-5.md 2): section 4's frame (the scenes, or the hall) holds still under the cut as the hero
+      // does in the first wipe, and section 5's flat ground slides in; once section 4 has scrolled away with the section
+      // in view, the ground is the whole frame (a texel copied as it is: the cut's taps all read the one colour)
+      if (roomOn && wipeOut > 0) { C.tA.value = plan!.tex; C.tB.value = G ? G.tex : groundTex; C.uProgress.value = wipeOut; C.uParA.value = 0; }
+      else if (s5 === 'whole') { C.tA.value = G!.tex; C.tB.value = G!.tex; C.uProgress.value = 0; C.uParA.value = 0; }
       // a seam of section 4: its cloud over whatever the frame is (the section's frame, or the hero at rest after the jump)
       C.uCover.value = cover; C.tCloud.value = cover > 0 ? plan!.cloud : null;
       C.tH.value = composerA.c.readBuffer.texture; C.tM.value = mask.rt.texture; C.tS.value = s2on ? S2!.out : mask.black; C.uKeep.value = keep ? 1 : 0;
-      C.uNoiseOff.value.set(Math.random(), Math.random());
-      renderer.setRenderTarget(null); renderer.render(composite.scene, composite.camera);
-      intro.afterRender(now, ctx, tex.ok);                                       // F15
+      // the ground held: the canvas keeps the frame it shows (nothing else draws to it), so no draw at rest under section 5
+      const size = `${renderer.domElement.width}x${renderer.domElement.height}`;
+      const probe = import.meta.env.PUBLIC_HERO_HOOKS === '1' ? G?.probe ?? null : null;
+      if (G && !probe && holds({ mode: s5, cover, drawnAt: flatAt, size })) G.stats.held++;
+      else {
+        C.uNoiseOff.value.set(Math.random(), Math.random());
+        renderer.setRenderTarget(null); renderer.render(composite.scene, composite.camera);
+        flatAt = s5 === 'whole' && cover <= 0 ? size : null;
+        if (G && s5 !== 'off') G.stats.draws++;
+        // hooks builds: the bytes the composite wrote at the probe's points, read before the frame is shown
+        if (import.meta.env.PUBLIC_HERO_HOOKS === '1' && G && probe) {
+          const gl = renderer.getContext(), px = probe.pts.map(([x, y]) => { const b = new Uint8Array(4); gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, b); return [...b]; });
+          G.probe = null; probe.done(px);
+        }
+        intro.afterRender(now, ctx, tex.ok);                                     // F15
+      }
     }
+    // the mark (C3): the page leaves its own ground to the canvas while the island's ground is under the section
+    if (G) { G.stats.mode = s5; G.mark(underGround(s5, s5in, wipeOut)); }
+    // the page's side, when it listens (scripts/signup/signup.ts): the ground under it, a seam's cloud and the cut, on a change
+    const sf = window.__skreedSignupFrame, on5 = s5 !== 'off';
+    if (sf && (on5 !== sent.on || cover !== sent.cover || wipeOut !== sent.wipe)) { sent.on = on5; sent.cover = cover; sent.wipe = wipeOut; sf({ on: on5, cover, wipe: wipeOut, pour: null }); }
     rideCopy(els, tp, innerWidth / innerHeight, !!S2 && S2.ready);               // F16
     // the logotype over the section (after the ride's own write, so this one stands): Pearl on the hall, the front scene's
     // tone over the scenes, Urban Slate under a seam's cloud, after the exit's jump too, when the section is off and the
@@ -141,8 +164,9 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
   return {
     state: st,
     get running() { return running; },
-    start() { if (running) return; running = true; raf = requestAnimationFrame(frame); },
-    stop() { running = false; cancelAnimationFrame(raf); },
+    // a restarted loop draws its first frame whatever it holds (the canvas was hidden meanwhile); a stopped one draws no ground, so the mark goes
+    start() { if (running) return; running = true; flatAt = null; raf = requestAnimationFrame(frame); },
+    stop() { running = false; cancelAnimationFrame(raf); ctx.signup?.mark(false); },
     introDone() { if (st.introDone) return; st.introDone = true; intro.start(st.t); },
     snap(v) { scroll.snap(v); },
     stepNow() { step(); },

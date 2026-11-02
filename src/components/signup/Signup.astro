@@ -1,16 +1,16 @@
 ---
-// Section 5, the sign-up (docs/specs/section-5.md 2, 3 and 5 "The DOM"; docs/specs/section-5-sand.md 2 and 6), in the
-// hero's after-track slot after section 4: plain text on section 2's fog (E-S5-bg; Sam, 2026-10-26: "the same
-// backround as section 2"), the headline, the sub-line, the one jar (a slot of air the island draws the jar of sand
-// into, named for assistive technology, with the count line under it and the three follow words beside it, each with
-// its state), the email form (the quiz's gift form, rendered only with PUBLIC_LEADS on), the closing line and the jar
-// model's credit, then one empty screen for the exit seam's trigger. The markup is complete without JavaScript (the
-// links work, the no-JS line points at Instagram); scripts/signup/signup.ts, loaded once the section is within a
-// screen, decodes the text, counts the follows, drives the form and the poster tier's loop end. No style attributes
-// (the CSP has no style-src-attr). On the poster tier the slot shows a still of the jar from our own build
-// (scripts/signup/render-stills.mjs): the empty jar's picture rides the markup, the DOM script swaps the state's.
-import { FOLLOW_COUNT, SIGNUP_COPY as C, SIGNUP_CREDIT, SIGNUP_FOLLOWS, followWord } from '../../config/signup.ts';
-import { beadColours } from '../../config/signup-colours.ts';
+// Section 5, the sign-up, as Sam's picture of 2026-11-02, fitted to one screen (his choice: "Fit one screen", the
+// picture's placement, fonts, background, jars, icons and copy with tighter spacing and a smaller headline and jars). In
+// the hero's after-track slot after section 4, on a flat ground (SIGNUP_GROUND; the island draws the same ground under it
+// on the 3D path and says so with data-ground="island"): the headline and the sub-line left-aligned, then centred the
+// label, the four jars (three showcase jars that are links to the platforms, and the visitor's, which fills a layer per
+// follow), the icons and the worth labels, the form's heading between two hairlines, its grey lines, the joined field and
+// button (rendered only with PUBLIC_LEADS on) and the footer; then one empty screen for the exit seam's trigger. The jars
+// are builder C's renders (src/assets/signup/jars/), the icons our own inline drawings. The markup is complete without
+// JavaScript (the links work); scripts/signup/signup.ts, loaded once the section is within a screen, counts the follows,
+// fills the visitor's jar, drives the form and the poster tier's loop end. No style attributes (the CSP has no
+// style-src-attr): the jars' frame numbers ride an inline style block, which scripts/csp.mjs hashes.
+import { SIGNUP_COPY as C, SIGNUP_FOLLOWS, SIGNUP_STATES, JARS_DEFAULT, followAria, type JarsManifest } from '../../config/signup.ts';
 import { QUIZ_GATE } from '../../config/quiz.ts';
 import gate from '../../inline/signup-gate.inline.js?raw';
 import { inlineScript } from '../shell/inlineScript.ts';
@@ -26,71 +26,115 @@ const gateCode = inlineScript('signup-gate.js', { KEY: QUIZ_GATE.key }, gate);
 // PUBLIC_LEADS is set to on (folded at build time)
 const LEADS = import.meta.env.PUBLIC_LEADS === 'on' || (import.meta.env.PUBLIC_LEADS !== 'off'
   && (import.meta.env.DEV || import.meta.env.PUBLIC_STAGING === '1' || import.meta.env.PUBLIC_HERO_HOOKS === '1'));
-// the poster tier's stills, sixteen states by the follows' order (absent files render no picture: a build without them
-// shows the words alone); the markup carries the empty jar's alone, the DOM script resolves the others from its own map
-const files = import.meta.glob<string>('../../assets/signup/stills/*.{avif,webp}', { eager: true, query: '?url', import: 'default' });
-const file = (key: string) => {
-  const f = (k: string) => files[`../../assets/signup/stills/jar-${key}-${k}`];
-  const a2 = f('2x.avif'), a1 = f('1x.avif'), w2 = f('2x.webp'), w1 = f('1x.webp');
-  return a2 && a1 && w2 && w1 ? { avif: `${a1} 160w, ${a2} 320w`, webp: `${w1} 160w, ${w2} 320w`, src: w1 } : null;
+
+// the jars (C2): sixteen states at 1x and 2x in AVIF and WebP, and jars.json with the frame, the jar's box and each
+// state's surface. A state renders only when all four of its files are in, so a build with some names missing still builds
+const files = import.meta.glob<string>('../../assets/signup/jars/*.{avif,webp}', { eager: true, query: '?url', import: 'default' });
+const manifests = import.meta.glob<JarsManifest>('../../assets/signup/jars/jars.json', { eager: true, import: 'default' });
+const found = Object.values(manifests)[0];
+const M: JarsManifest = found && found.jar && found.frame ? { frame: found.frame, jar: found.jar, states: found.states ?? {} } : JARS_DEFAULT;
+type Srcs = { a: string; w: string; s: string; t: number | null };
+const srcs = (state: string): Srcs | null => {
+  const f = (k: string) => files[`../../assets/signup/jars/jar-${state}-${k}`];
+  const a1 = f('1x.avif'), a2 = f('2x.avif'), w1 = f('1x.webp'), w2 = f('2x.webp');
+  const top = M.states[state]?.top;
+  return a1 && a2 && w1 && w2 ? { a: `${a1} 200w, ${a2} 400w`, w: `${w1} 200w, ${w2} 400w`, s: w1, t: typeof top === 'number' ? top : null } : null;
 };
-const still = file('0');
-// each follow link carries its sand's hexes (the family's 24 catalog shades, or Instagram's 48, joined at build), which the island's jar chunk reads into its palette
-const follows = SIGNUP_FOLLOWS.map((j) => ({ ...j, word: followWord(j), colours: beadColours(j.families).join(',') }));
-const instagram = SIGNUP_FOLLOWS.find((j) => j.id === 'instagram')?.url ?? '';
+const STATE_SRCS: Record<string, Srcs> = Object.fromEntries(SIGNUP_STATES.map((s) => [s, srcs(s)]).filter((e): e is [string, Srcs] => !!e[1]));
+// the frame in CSS (the row is laid out by the jar's box, the frames overflow it): the box's width and top and bottom as
+// fractions of the frame, and the frame's aspect
+const r4 = (v: number) => Math.round(v * 10000) / 10000;
+const frameCss = `#signup{--jx:${r4(M.jar.x1 - M.jar.x0)};--jc:${r4((M.jar.x0 + M.jar.x1) / 2)};--jy0:${r4(M.jar.y0)};--jy1:${r4(M.jar.y1)};--jfa:${r4(M.frame.h / M.frame.w)}}`;
+// the images' sizes: the frame is twice the jar's diameter (0.36 of the column on a phone, at most 240 px wide on a laptop)
+const SIZES = '(min-width: 720px) 240px, 36vw';
+const W1 = Math.round(M.frame.w / 2), H1 = Math.round(M.frame.h / 2);
+const showcase = SIGNUP_FOLLOWS.map((j) => ({ ...j, aria: followAria(j), pic: STATE_SRCS[j.letter] ?? null }));
+const yours = STATE_SRCS['0'] ?? null;
+// the visitor's jar's states for the script: the URLs and each surface's top
+const jarData = JSON.stringify({ sizes: SIZES, states: STATE_SRCS });
 ---
-<section class="signup" id="signup" aria-label={C.aria} data-state="rest" data-follows={FOLLOW_COUNT} hidden data-locked>
-  <div class="su-body" id="suBody">
-    <h2 class="su-h" data-dc>{C.h}</h2>
-    <p class="su-sub" data-dc>{C.sub}</p>
-    <p class="su-jars-h" data-dc>{C.jars}</p>
-    <div class="su-jar" data-n="0" data-level="0.000">
-      <div class="su-slot" data-slot="yours" role="img" aria-label={C.jarAria}>
-        {still && (
-          <picture class="su-still" data-lazy>
-            <source data-srcset={still.avif} type="image/avif" sizes="(min-width: 720px) 240px, 56vw" />
-            <source data-srcset={still.webp} type="image/webp" sizes="(min-width: 720px) 240px, 56vw" />
-            <img data-src={still.src} alt="" width="160" height="200" loading="lazy" decoding="async" />
-          </picture>
-        )}
-      </div>
-      <p class="su-count" data-dc>{C.yoursEmpty}</p>
-      <ol class="su-follows" aria-label={C.followsAria}>
-        {follows.map((j) => (
-          <li class="su-follow-row" data-id={j.id}>
-            <a class="su-link su-follow" href={j.url} target="_blank" rel="noopener" data-id={j.id} data-colours={j.colours} aria-label={`${j.word}. ${C.newTab}.`} data-dc>{j.word}</a>
-            <p class="su-state" data-dc>{C.notYet}</p>
-          </li>
-        ))}
-      </ol>
+<style is:inline set:html={frameCss}></style>
+<section class="signup" id="signup" aria-label={C.aria} data-state="rest" hidden data-locked>
+  <div class={LEADS ? 'su-body' : 'su-body su-noform'} id="suBody">
+    <div class="su-top">
+      <h2 class="su-h"><span>{C.h1}</span> <span>{C.h2}</span></h2>
+      <p class="su-sub">{C.subLead}<strong>{C.subBold}</strong>{C.subMid}<br class="su-br">{C.subTail}</p>
     </div>
-    <h3 class="su-got" data-dc>{C.got}</h3>
-    <p class="su-got-sub" data-dc>{C.gotSub}</p>
+    <p class="su-every">{C.jars}</p>
+    <div class="su-row" id="suRow">
+      {showcase.map((j) => (
+        <a class="su-col su-follow" href={j.url} target="_blank" rel="noopener" data-id={j.id} aria-label={j.aria}>
+          <span class="su-jar">
+            {j.pic && (
+              <picture class="su-pic">
+                <source type="image/avif" srcset={j.pic.a} sizes={SIZES} />
+                <source type="image/webp" srcset={j.pic.w} sizes={SIZES} />
+                <img src={j.pic.s} alt="" width={W1} height={H1} loading="lazy" decoding="async" />
+              </picture>
+            )}
+          </span>
+          <span class="su-icon" aria-hidden="true">
+            {j.id === 'facebook' && (
+              <svg viewBox="0 0 48 48" width="48" height="48" focusable="false"><defs><clipPath id="suFbDisc"><circle cx="24" cy="24" r="24" /></clipPath></defs><circle cx="24" cy="24" r="24" fill="#0866FF" /><path clip-path="url(#suFbDisc)" fill="#FFFFFF" d="M20.1 48V29.2h-4.6v-6.9h4.6v-5.4c0-6 3.4-9.5 8.9-9.5 1.6 0 2.9.1 3.6.3v6h-2.6c-1.6 0-2.4.8-2.4 2.6v6h5.1l-1 6.9h-4.1V48z" /></svg>
+            )}
+            {j.id === 'youtube' && (
+              <svg class="su-yt" viewBox="0 0 65 47" width="65" height="47" focusable="false"><rect width="65" height="47" rx="12.5" fill="#FF0000" /><path fill="#FFFFFF" d="M26.8 13.5v20l17-10z" /></svg>
+            )}
+            {j.id === 'instagram' && (
+              <svg viewBox="0 0 46 46" width="46" height="46" focusable="false"><defs><radialGradient id="suIgA" cx="0.22" cy="1.04" r="1.3" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#F9CF7C" /><stop offset="0.12" stop-color="#F9CF7C" /><stop offset="0.3" stop-color="#F58947" /><stop offset="0.5" stop-color="#E62B58" /><stop offset="0.68" stop-color="#C53098" /><stop offset="0.86" stop-color="#9649B6" /><stop offset="1" stop-color="#5F5ECB" /></radialGradient><radialGradient id="suIgB" cx="0.02" cy="0.02" r="0.55" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#5F5ECB" /><stop offset="1" stop-color="#5F5ECB" stop-opacity="0" /></radialGradient></defs><rect width="46" height="46" rx="12" fill="url(#suIgA)" /><rect width="46" height="46" rx="12" fill="url(#suIgB)" /><rect x="6" y="6" width="34" height="34" rx="10" fill="none" stroke="#FFFFFF" stroke-width="3.5" /><circle cx="23" cy="23" r="8.4" fill="none" stroke="#FFFFFF" stroke-width="3.5" /><circle cx="32.2" cy="13.8" r="2.3" fill="#FFFFFF" /></svg>
+            )}
+          </span>
+          <span class="su-worth">{j.label}</span>
+        </a>
+      ))}
+      <div class="su-col su-yours" role="group" aria-label={C.yoursAria}>
+        <span class="su-jar" id="suYours" role="img" aria-label={C.jarEmpty} data-state="0" data-jars={jarData}>
+          {yours && (
+            <picture class="su-pic" data-layer="cur">
+              <source type="image/avif" srcset={yours.a} sizes={SIZES} />
+              <source type="image/webp" srcset={yours.w} sizes={SIZES} />
+              <img src={yours.s} alt="" width={W1} height={H1} loading="lazy" decoding="async" />
+            </picture>
+          )}
+          {yours && (
+            <picture class="su-pic" data-layer="next" hidden>
+              <source type="image/avif" sizes={SIZES} />
+              <source type="image/webp" sizes={SIZES} />
+              <img alt="" width={W1} height={H1} decoding="async" />
+            </picture>
+          )}
+        </span>
+        <span class="su-icon" aria-hidden="true">
+          <svg viewBox="0 0 46 46" width="46" height="46" focusable="false"><path fill="#FA841A" fill-rule="evenodd" d="M0 23a23 23 0 1 0 46 0a23 23 0 1 0-46 0zM23 9.25l3.7 10.1 10.76.4-8.47 6.65 2.94 10.35L23 30.75l-8.93 6 2.94-10.35-8.47-6.65 10.76-.4z" /></svg>
+        </span>
+        <span class="su-worth"><span>{C.starLead}</span> <span>{C.starWorth}</span></span>
+      </div>
+    </div>
     {LEADS && (
-      <form class="su-form" id="suForm" novalidate>
-        <div class="su-fields">
-          <label class="su-label" for="suEmail" data-dc>{C.email}</label>
-          <input class="su-input" id="suEmail" name="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" required aria-describedby="suErrEmail">
-          <p class="su-err" id="suErrEmail"></p>
-          <label class="su-check"><input type="checkbox" id="suConsent" name="consent" required aria-describedby="suErrConsent"><span class="su-tick" aria-hidden="true"></span><span data-dc>{C.consent}</span></label>
-          <p class="su-err" id="suErrConsent"></p>
-          <button type="submit" class="su-link" id="suSend" data-dc>{C.send}</button>
-          <p class="su-msg" id="suMsg" role="status"></p>
-          <p class="su-fine" data-dc>{C.fine}</p>
+      <div class="su-got">
+        <div class="su-got-h"><span class="su-rule" aria-hidden="true"></span><h3>{C.got}</h3><span class="su-rule" aria-hidden="true"></span></div>
+        <p class="su-grey">{C.gotLead}<br class="su-br">{C.gotTail}</p>
+      </div>
+    )}
+    {LEADS && (
+      <form class="su-form" id="suForm" novalidate method="post" action="/api/signup">
+        <div class="su-slotf">
+          <div class="su-pill" id="suPill">
+            <label class="sr-only" for="suEmail">{C.email}</label>
+            <input class="su-input" id="suEmail" name="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" required placeholder={C.email} aria-describedby="suMsg">
+            <button type="submit" class="su-send" id="suSend">{C.send}</button>
+          </div>
+          <p class="su-done" id="suDone" tabindex="-1" hidden></p>
         </div>
-        <div class="su-done" id="suDone" hidden>
-          <p class="su-done-text" tabindex="-1"></p>
-          <button type="button" class="su-link su-notyou">{C.notYou}</button>
+        <div class="su-msgrow">
+          <p class="su-msg" id="suMsg" role="status"></p>
+          <button type="button" class="su-notyou" id="suNotYou" hidden>{C.notYou}</button>
+          <noscript><p class="su-msg">{C.noscript}</p></noscript>
         </div>
       </form>
     )}
-    <p class="su-keep" data-dc>{C.keep}</p>
-    {/* the credit's words each decode on their own; the spaces and the punctuation between them are plain text, since the decode trims a line's ends */}
-    <p class="su-credit"><span data-dc>{C.creditLead}</span>{' '}<a href={SIGNUP_CREDIT.source} rel="noopener" data-dc>{SIGNUP_CREDIT.author}</a>{C.creditJoin}<a href={SIGNUP_CREDIT.licenceUrl} rel="noopener" data-dc>{SIGNUP_CREDIT.licence}</a>{C.creditEnd}</p>
+    <p class="su-keep">{C.keep}</p>
     <p class="sr-only" id="suLive" aria-live="polite"></p>
-    <noscript>
-      <p class="su-noscript">{C.noscriptLead}<a href={instagram} rel="noopener">{C.noscriptLink}</a>{C.noscriptEnd}</p>
-    </noscript>
   </div>
   <div class="su-loopend" id="suLoopEnd" aria-hidden="true"></div>
   <div class="su-fade" id="suFade" aria-hidden="true" hidden></div>

@@ -16,14 +16,15 @@
 //   (the scenes, or the hall for a visitor who never pressed) onto section 5's, the first wipe's cut; this director
 //   reports its progress (wipeOut) and the frame holds still under it.
 // - The exit seam, since 2026-10-26 from section 5's end (section-5.md 2 "The exit seam"): when the page's raw scroll
-//   crosses section 5's exitY downward (the wiring hands it in) in world or hall, the cloud covers the frame in 280 ms
-//   with the scroll held there (X-15), under full cover the page jumps to scroll 0 and the section resets, the cloud
-//   thins over the hero in 360 ms, gestures are swallowed for 400 ms more. The reverse seam (the wrap, from scroll 0):
-//   cover in over the hero, the page set to section 5's rest (restY) with the hero's followers snapped and the carousel
-//   at scene 5 under it (so the scroll back up runs the cut onto dawn), full cover held until the jars are in, cover out
-//   over section 5, the lock; the state is seam throughout and becomes world when the lock ends, and the visitor's
-//   next gesture unlocks the loop elements again. Under reduced motion both are cuts. Every state change is reported
-//   to the wiring (onState), which re-evaluates the page scroll's capture set.
+//   crosses section 5's rest downward (the wiring hands in its exitY and rest) in world or hall, once the page has
+//   rested there (exit-guard.ts, since 2026-11-02: before that rest the page is held at it, with no cloud), the cloud
+//   covers the frame in 280 ms with the scroll held there (X-15), under full cover the page jumps to scroll 0 and the
+//   section resets, the cloud thins over the hero in 360 ms, gestures are swallowed for 400 ms more. The reverse seam
+//   (the wrap, from scroll 0): cover in over the hero, the page set to section 5's rest (restY) with the hero's
+//   followers snapped and the carousel at scene 5 under it (so the scroll back up runs the cut onto dawn), full cover
+//   held until section 5 is ready (its data-ready), cover out over section 5, the lock; the state is seam throughout and becomes world when
+//   the lock ends, and the visitor's next gesture unlocks the loop elements again. Under reduced motion both are cuts.
+//   Every state change is reported to the wiring (onState), which re-evaluates the page scroll's capture set.
 // - Loading runs in phases, one compile, upload or decode a frame: the cloud's pass at idle (warmCloud, phase 0); the
 //   hall with this chunk (load); past the third wipe the carousel's programs, products.bin, scene 1's still and loop;
 //   the five elements unlocked in the press task; on arrival the other loops one at a time, 2 to 5, each still before
@@ -44,6 +45,7 @@ import { STEP, cloudCover, frameSource } from './carousel-math.ts';
 import { allowed, create as createPool, type VideoPool } from './video.ts';
 import { fetchProductsBin } from './products-bin.ts';
 import { watchLayout } from './layout.ts';
+import { createExitGuard, exitGuard, refuses } from './exit-guard.ts';
 
 export interface RoomStepIn { t: number; dt: number; ratio: number; pointer: { active: boolean; ndc: { x: number; y: number } }; touch: boolean; mouseRate: number;
   /** section 3's fog ground, the third wipe's near side (the 'fade' hand-off mixes from it) */
@@ -113,7 +115,7 @@ export interface DirectorOptions {
   exitY(): number;
   /** where the wrap lands, document px (section 5's rest; NaN before a reading, when the wrap lands on scene 5's own position) */
   restY(): number;
-  /** the jars are in, or have failed (the wrap's full cover waits on it, at most 1.5 s) */
+  /** section 5 is ready: the page has decoded its jar pictures and fonts, data-ready="1" (the wrap's full cover waits on it, at most 1.5 s) */
   signupReady(): boolean;
 }
 
@@ -144,6 +146,8 @@ const TIMEOUT_MS = 20_000;
 const HOOKS = import.meta.env.PUBLIC_HERO_HOOKS === '1';
 /** the visitor's next gesture after a wrap unlocks the loop elements again (spec 5, "Video policy"; AC7) */
 const UNLOCK_EVENTS = ['pointerup', 'touchend', 'keydown'] as const;
+/** the inputs the exit's guard hears (exit-guard.ts): its rest is a spell with none of them */
+const GUARD_INPUTS = ['wheel', 'touchstart', 'touchmove', 'touchend', 'touchcancel', 'keydown'] as const;
 
 /** a poster still as a texture in display values, fetched with the site's 20 s timeout, decoded off the main thread, sampling as a picture does (the bitmap upside down, flipY off); null where the build has none */
 async function decodeStill(url: string, signal?: AbortSignal): Promise<Texture | null> {
@@ -195,7 +199,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   const params = (): RoomParams => liveRoomParams();
   const screenPx = () => height / ROOM_HEIGHT;
 
-  // the per-frame values (prevY: the page's raw scroll last frame, for the exit's crossing of section 5's exitY)
+  // the per-frame values (prevY: where the last frame left the page's raw scroll, for the exit's guard at section 5's rest)
   let q = 0, qAll = 0, qRaw = 0, prevRaw = 0, prevY = NaN, lastRaw = 0, inRoom = false, jumped = false, revealAt = -1, wasReady = false, snapped = true, lastNear = 0, lastT = 0, lastWipeOut = 0;
   let pendingEnter = false, hover = -1, holdSway = false, x: number = HALL.start;
   // the entry clock (seconds since the press), a held seek, and the hall frozen after its glide
@@ -348,9 +352,14 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       return;
     }
     current();
-    seam = { kind: 'exit', phase: 'in', t0: t, holdY: Math.round(o.exitY()) };
+    seam = { kind: 'exit', phase: 'in', t0: t, holdY: Math.round(o.restY()) };
     setState('seam'); say('seam');
     carousel.seam('in', 0);
+  }
+  /** the page's raw scroll held at y by an instant scroll, the section's followers where that is in its own screens (the exit's cover-in, the guard's hold) */
+  function holdAt(y: number) {
+    if (Math.abs(scrollY - y) > 0.5) scrollTo({ top: y, behavior: 'instant' });
+    const qq = (y - top) / screenPx(); follow.snap(qq); q = qAll = qRaw = prevRaw = qq; prevY = y;
   }
   /**
    * The wrap lands under full cover: the page at scene 5's position with the hero's followers snapped, the carousel at
@@ -391,10 +400,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       case 'in': {
         const k = clamp01(e / SEAM.inS);
         carousel.seam('in', k);
-        if (s.kind === 'exit') {   // the scroll held at section 5's exitY by snapping each frame, the section's followers where that is in its own screens
-          if (Math.abs(scrollY - s.holdY) > 0.5) scrollTo({ top: s.holdY, behavior: 'instant' });
-          const qq = (s.holdY - top) / screenPx(); follow.snap(qq); q = qAll = qRaw = prevRaw = qq; prevY = s.holdY;
-        }
+        if (s.kind === 'exit') holdAt(s.holdY);   // the scroll held at section 5's rest by snapping each frame
         if (k >= 1) {
           if (s.kind === 'exit') { scrollTo({ top: 0, behavior: 'instant' }); o.snapHero(0); say('loop'); resetLap(true); s.phase = 'out'; }
           else { landWrap(); s.phase = 'hold'; }
@@ -402,7 +408,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
         }
         return cloudCover('in', k);
       }
-      case 'hold':   // full cover until section 5's jars are in (or have failed), at most 1.5 s more
+      case 'hold':   // full cover until section 5 is ready (its data-ready), at most 1.5 s more
         carousel.seam('in', 1);
         if (o.signupReady() || e >= SEAM.holdS) { s.phase = 'out'; s.t0 = t; say('wrap'); }
         return 1;
@@ -428,6 +434,15 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   const onUp = () => { pressed = false; };
   addEventListener('pointerdown', onDown, { passive: true }); addEventListener('pointermove', onMove, { passive: true });
   addEventListener('pointerup', onUp, { passive: true }); addEventListener('pointercancel', onUp, { passive: true }); addEventListener('blur', onUp);
+
+  // ---- the exit's guard (exit-guard.ts): the last wheel, touch or key input and the fingers down, heard passively, so
+  // the exit seam runs only once the page has rested at section 5's rest, and the page past it before then is held
+  const guard = createExitGuard();
+  let inputAt = -Infinity, fingers = 0;
+  const onInput = (e: Event) => { inputAt = performance.now(); if ('touches' in e) fingers = (e as TouchEvent).touches.length; };
+  const onLeave = () => { fingers = 0; };
+  for (const n of GUARD_INPUTS) addEventListener(n, onInput, { passive: true });
+  addEventListener('blur', onLeave);
 
   const island: RoomIsland = {
     snap,
@@ -472,13 +487,16 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       if (poster()) return { on: false, tex: null, wipeIn: 0, wipeOut: 0, groundNeeded: false, cover: 0, cloud: null, toneDark: false };
       // phase 2 during the walk, past the third wipe (spec 5, "Loading")
       if (hall.ready && inRoom && q > ROOM_SCREENS.wipe && state === 'hall') void loadScenes();
-      // the exit seam (section-5.md 2): the page's raw scroll crossing section 5's exitY downward, in world or hall (the
-      // section itself has scrolled away by then; a visitor who never pressed reaches it over the hall all the same)
-      // (a crossing, not an arrival: the wrap lands and the glue may stop exactly at exitY, which is section 5's rest)
-      const exitY = o.exitY(), y = scrollY;
-      const crossed = Number.isFinite(exitY) && Number.isFinite(prevY) && prevY <= exitY + 1 && y > exitY + 1;
+      // the exit seam (section-5.md 2) behind its guard (exit-guard.ts): the page's raw scroll crossing section 5's
+      // rest downward, in world or hall (the section itself has scrolled away by then; a visitor who never pressed
+      // reaches it over the hall all the same), runs it once the page has rested there; the page past the rest before
+      // that rest is held at it, as the exit's cover-in holds it, with no cloud (a crossing, never an arrival: the wrap
+      // lands on the rest)
+      const y = scrollY, restY = o.restY();
+      const act = exitGuard(guard, { y, prevY, exitY: o.exitY(), restY, vh: innerHeight, now: performance.now(), inputAt, touching: fingers > 0, refuse: refuses(document.activeElement, window.visualViewport, H.clientHeight), live: state === 'hall' || state === 'world' });
       prevRaw = qRaw; prevY = y;
-      if (crossed && (state === 'hall' || state === 'world')) startExit(f.t);
+      if (act === 'exit') startExit(f.t);
+      else if (act === 'hold') holdAt(Math.round(restY));
       // a seam first: its phase sets the carousel's cloud for this frame's draw, and may change the state (the exit's jump, the wrap's landing)
       const cover = seam ? seamFrame(f.t, seam) : 0;
       // what the frame carries: the hall, the entry, the way back or the scenes (a seam keeps the frame it began over, X-15)
@@ -589,8 +607,10 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
           sayScene(to);
         }
         const live = state === 'world';
-        carousel.look(live ? lookX : 0, live ? lookY : 0, live && aimed);
-        carousel.scissor(null); carousel.update(f.t, f.dt, curW, curH); tex = carousel.out; toneDark = sceneTone();
+        // drawn while the section is on screen or a seam runs over it; off screen at rest (the page down at section 5,
+        // which holds its own flat ground) the carousel's last frame is kept and nothing is drawn
+        if (inRoom || seam) { carousel.look(live ? lookX : 0, live ? lookY : 0, live && aimed); carousel.scissor(null); carousel.update(f.t, f.dt, curW, curH); }
+        tex = carousel.out; toneDark = sceneTone();
         on = inRoom && qRaw > 0;   // not the hall's q: a wrap may land before the hall is in
       }
       // a seam over the hall's frame, or over the hero after the exit's jump: the carousel steps for the cloud alone
@@ -679,7 +699,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
         entry: +entryT.toFixed(3), arrive: reduced ? BUBBLE.dissolveMs / 1000 : BUBBLE.start + P.bubbleMs / 1000, worldReady: worldReady(),
         products: productsState, loops: loopState.map((s, i) => ({ i, state: s, in: !!video && video.in(i), refused: !!video && video.refused(i), playing: !!video && video.playing(i) })),
         stills: stillDone.map((d, i) => ({ i, settled: d, loading: !!stillJob[i] })), cls, video: !!video, cloudReady, memory: carousel.memory(),
-        sceneQ: Array.from({ length: N }, (_, i) => sceneQ(i)), wipe4Start: WIPE4_START, wipeOut: +lastWipeOut.toFixed(3), exitY: o.exitY(), restY: o.restY(), hall: hall.hooks(),
+        sceneQ: Array.from({ length: N }, (_, i) => sceneQ(i)), wipe4Start: WIPE4_START, wipeOut: +lastWipeOut.toFixed(3), exitY: o.exitY(), restY: o.restY(), exitArmed: guard.armed, hall: hall.hooks(),
         layout: lay.layout ? { ...lay.layout } : null, product: carousel.place(),
       };
     },
@@ -688,6 +708,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       unlockOff?.();
       lay.dispose();
       removeEventListener('pointerdown', onDown); removeEventListener('pointermove', onMove); removeEventListener('pointerup', onUp); removeEventListener('pointercancel', onUp); removeEventListener('blur', onUp);
+      for (const n of GUARD_INPUTS) removeEventListener(n, onInput); removeEventListener('blur', onLeave);
       video?.dispose(); carousel.dispose();
       hall.dispose(); trans.dispose(); mix?.dispose();
       if (window.__skreedRoom === island) window.__skreedRoom = undefined;

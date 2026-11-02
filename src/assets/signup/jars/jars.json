@@ -1,0 +1,64 @@
+{
+  "provisional": true,
+  "frame": {
+    "w": 400,
+    "h": 480
+  },
+  "jar": {
+    "x0": 0.2525,
+    "x1": 0.7525,
+    "y0": 0.0333,
+    "y1": 0.9042
+  },
+  "states": {
+    "0": {
+      "top": 0.97
+    },
+    "f": {
+      "top": 0.6104
+    },
+    "y": {
+      "top": 0.6104
+    },
+    "i": {
+      "top": 0.4365
+    },
+    "fy": {
+      "top": 0.4365
+    },
+    "fi": {
+      "top": 0.256
+    },
+    "yf": {
+      "top": 0.4365
+    },
+    "yi": {
+      "top": 0.256
+    },
+    "if": {
+      "top": 0.256
+    },
+    "iy": {
+      "top": 0.256
+    },
+    "fyi": {
+      "top": 0.0817
+    },
+    "fiy": {
+      "top": 0.0817
+    },
+    "yfi": {
+      "top": 0.0817
+    },
+    "yif": {
+      "top": 0.0817
+    },
+    "ify": {
+      "top": 0.0817
+    },
+    "iyf": {
+      "top": 0.0817
+    }
+  },
+  "note": "Provisional (16:25): the render test scaled into the frame; states without a test render reuse the nearest image. The final renders replace every file in one go."
+}

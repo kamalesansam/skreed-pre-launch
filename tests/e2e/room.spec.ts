@@ -23,7 +23,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
 type Ev = { name: string; props: Record<string, string | number> };
-type S4 = { state: string; under: string; draws: string; seamDraws: string[]; scene: number; step: number; busy: boolean; lock: boolean; inRange: boolean; q: number; qRaw: number; arrive: number; worldReady: boolean; products: string; video: boolean; loops: { i: number; state: string; in: boolean; refused: boolean; playing: boolean }[]; seam: { kind: string; phase: string } | null; memory: number; layout: { top: number; height: number; intro: boolean } | null; wipeOut: number; exitY: number; restY: number };
+type S4 = { state: string; under: string; draws: string; seamDraws: string[]; scene: number; step: number; busy: boolean; lock: boolean; inRange: boolean; q: number; qRaw: number; arrive: number; worldReady: boolean; products: string; video: boolean; loops: { i: number; state: string; in: boolean; refused: boolean; playing: boolean }[]; seam: { kind: string; phase: string } | null; memory: number; layout: { top: number; height: number; intro: boolean } | null; wipeOut: number; exitY: number; restY: number; exitArmed: boolean };
 const events = (page: Page): Promise<string[]> => page.evaluate(() => ((window as unknown as { __skreedEvents?: Ev[] }).__skreedEvents ?? []).map((e) => e.name));
 const s4 = (page: Page): Promise<S4> => page.evaluate(() => window.__s4!.state() as S4);
 const N = 5;
@@ -220,7 +220,7 @@ test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scene
   await expect(page.locator('#rmName-' + (await page.locator('.rm-scene[data-i="3"]').getAttribute('data-id')))).toBeFocused({ timeout: 10_000 });
 
   // the hold past scene 5, then the fourth wipe onto section 5 (section-5.md 2): the cut from scene 5 over the room's q 12.8 to
-  // 13.8, the logotype Urban Slate from its half, and section 5 at rest over the fog with its four jars; the exit seam runs
+  // 13.8, the logotype Urban Slate from its half, and section 5 at rest over the island's flat ground; the exit seam runs
   // from section 5's end now, when the raw scroll crosses its exitY: the jump to the top with the hero at rest, room_loop
   await page.evaluate(() => window.__s4!.scene(4));
   await expect.poll(async () => (await s4(page)).scene, { timeout: 10_000 }).toBe(4);
@@ -231,16 +231,19 @@ test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scene
   await goQ(page, 13.6); await page.waitForTimeout(1500);
   expect((await s4(page)).wipeOut).toBeGreaterThan(0.6);
   await expect(page.locator('.site-logo')).toHaveAttribute('data-tone', 'light', { timeout: 10_000 });
-  await page.evaluate(() => window.__s5?.load());
-  await page.waitForFunction(() => !!window.__s5?.ready || !!(window.__s5?.state() as { failed?: boolean } | null)?.failed, null, { timeout: 180_000, polling: 500 });
   const rest0 = await restY(page);
   expect(Number.isFinite(rest0)).toBe(true);
   await page.evaluate((y) => { scrollTo({ top: y, behavior: 'instant' }); window.__skreedSnap?.(y / innerHeight); }, rest0);
   await page.waitForTimeout(800);
   expect(await noHScroll(page)).toBe(true);
-  await expect(page.locator('#signup .su-jar')).toHaveCount(1);
-  await expect(page.locator('#signup li.su-follow-row')).toHaveCount(3);
+  // section 5 at rest over the island's flat ground (section5/ground.ts): the section marked, the ground the whole frame,
+  // and the three follow links (D6)
+  await expect(page.locator('#signup')).toHaveAttribute('data-ground', 'island');
+  await expect.poll(() => page.evaluate(() => (window.__skreedGround!.state() as { mode: string }).mode)).toBe('whole');
+  for (const href of ['https://www.facebook.com/skreedofficial', 'https://www.youtube.com/@skreedofficial', 'https://www.instagram.com/skreedofficial']) await expect(page.locator(`#signup a[href^="${href}"]`)).toHaveCount(1);
   expect((await s4(page)).state).toBe('world');
+  // the page has rested at section 5's rest, so the exit is armed (exit-guard.ts)
+  await expect.poll(async () => (await s4(page)).exitArmed, { timeout: 5_000 }).toBe(true);
   // the seam held at full cover, the clock frozen on the first frame after the jump: the logotype and the Back to top
   // control read Urban Slate over the Pearl Whisper cloud (the regression the checker found in D5's first fix), the page at 0
   const exitCover = await holdAtCover(page, 'exit');
@@ -273,7 +276,7 @@ test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scene
   await release(page);
   await expect.poll(async () => (await s4(page)).state, { timeout: 30_000 }).toBe('world');
   expect((await s4(page)).scene).toBe(N - 1);
-  await expect(page.locator('.site-logo')).toHaveAttribute('data-tone', 'light', { timeout: 10_000 });   // section 5's fog under the logotype once the cloud has gone
+  await expect(page.locator('.site-logo')).toHaveAttribute('data-tone', 'light', { timeout: 10_000 });   // section 5's ground under the logotype once the cloud has gone
   expect(await page.evaluate(() => { const e = document.getElementById('rmEnter')!; return e.hidden && e.inert; })).toBe(true);
   // the landing is section 5's rest (section-5.md 2): the body's end at the viewport's bottom, the scenes at scene 5 under it
   await expect.poll(async () => Math.abs(await page.evaluate(() => scrollY) - await restY(page)), { timeout: 10_000 }).toBeLessThan(2);
@@ -514,7 +517,10 @@ test('section 4 at 390 x 844 under reduced motion (still3d): no loop elements, t
   // the exit seam is a cut: the jump to the top at once, then its 400 ms lock, then the hall
   await page.evaluate(() => window.__s4!.scene(4));
   await expect.poll(async () => (await s4(page)).scene, { timeout: 10_000 }).toBe(4);
-  // (from section 5's end, section-5.md 2: the raw scroll across its exitY)
+  // (from section 5's end, section-5.md 2: the raw scroll across its exitY, once the page has rested at its rest,
+  // exit-guard.ts; a jump past it straight from scene 5 is held there instead)
+  await page.evaluate(() => { const y = (window.__s4!.state() as { restY: number }).restY; scrollTo({ top: y, behavior: 'instant' }); });
+  await expect.poll(async () => (await s4(page)).exitArmed, { timeout: 5_000 }).toBe(true);
   await page.evaluate(() => { const y = (window.__s4!.state() as { exitY: number }).exitY; scrollTo({ top: y + 6, behavior: 'instant' }); });
   await page.waitForFunction(() => scrollY < 2, null, { timeout: 5_000, polling: 50 });
   expect(await events(page)).toContain('room_loop');

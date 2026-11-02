@@ -113,7 +113,7 @@ test("(d) hero.ts: docTop NaN for an element with no box, canWrap carrying the l
   assert.match(hero, /\.filter\(\(x\) => Number\.isFinite\(x\.start\) && Number\.isFinite\(x\.end\)\)/, 'the span filter drops it');
   assert.match(hero, /const roomLocked = \(\) => !!roomEl\?\.hasAttribute\('data-locked'\);/);
   assert.match(hero, /canWrap: \(\) => loop\.state\.introDone && !ctx\.room\?\.lock\(\) && !roomLocked\(\),/, 'no wrap from the top while locked');
-  assert.match(hero, /const onUnlock = \(\) => \{ pageScroll\?\.notify\(\); void loadHall\(\); \};\n\s*addEventListener\('skreed:quiz-unlock', onUnlock\);\n\s*life\.onKill\(\(\) => removeEventListener\('skreed:quiz-unlock', onUnlock\)\);/, "the unlock's listener");
+  assert.match(hero, /const onUnlock = \(\) => \{ signup\?\.invalidate\(\); pageScroll\?\.notify\(\); void loadHall\(\); \};\n\s*addEventListener\('skreed:quiz-unlock', onUnlock\);\n\s*life\.onKill\(\(\) => removeEventListener\('skreed:quiz-unlock', onUnlock\)\);/, "the unlock's listener");
   assert.match(hero, /window\.__skreedHall = \{ get ready\(\) \{ return !!ctx\.room\?\.hall\.ready; \}, load: \(\) => loadHall\(\)\.then\(untilHall\) \};/, "the hall hook the ride waits on (__s4.ready's source), its load settling only once the hall has");
   // the hall's own load() returns at once when its load has started (and it always has by the time the ride asks), so the
   // hook's wait is its own: a frame at a time until the hall is in or has failed, or the director is gone (the review of
@@ -142,7 +142,7 @@ test("(d) hero.ts: docTop NaN for an element with no box, canWrap carrying the l
   assert.deepEqual(await run({ ready: false, failed: false }), { before: false, after: false }, 'a hall still loading holds the promise');
   // amendment 1 (the spec's Built paragraph): the hall and the director chunk load as they always did, so the hall is ready for a press
   assert.match(hero, /if \(e\.isIntersecting && e\.target !== trackEl\) void loadHall\(\);/, 'the stage observer loads the hall, lock or no lock');
-  assert.match(hero, /const afterIntro = \(\) => \{ if \(introOver\) return; introOver = true; void startScroll\(\); idle\(\(\) => \{ if \(!life\.dead\) void loadDirector\(\)\.then\(\(r\) => r\?\.warmCloud\(\)\)\.then\(\(\) => \{ if \(!life\.dead\) void loadSignup\(\); \}\); \}\); \};/, "afterIntro's idle import, lock or no lock (section 5's chunk follows the cloud, section-5.md 5)");
+  assert.match(hero, /const afterIntro = \(\) => \{ if \(introOver\) return; introOver = true; void startScroll\(\); idle\(\(\) => \{ if \(!life\.dead\) void loadDirector\(\)\.then\(\(r\) => r\?\.warmCloud\(\)\); \}\); \};/, "afterIntro's idle import, lock or no lock (the director and the cloud; section 5 has no chunk of its own since 2026-11-02, its flat ground is the island's)");
   assert.doesNotMatch(hero, /roomLocked\(\)\) (?:void )?loadHall|roomLocked\(\)\) return;\s*idle/, 'no lock check on the loading');
   // the director's layout read: null while locked, the rect otherwise
   const readSrc = director.match(/read: (\(\) => \{ if \(!root \|\| root\.hasAttribute\('data-locked'\)\) return null; .*? \}),/)?.[1];
