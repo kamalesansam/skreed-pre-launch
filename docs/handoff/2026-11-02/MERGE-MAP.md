@@ -2,7 +2,7 @@
 
 Sam, 2026-11-02: "make sure each and every session that is running here is talking to each other. So while after finishing everything, while merging everything into one single branch, in the default branch or the origin branch, none of them should have any conflict and everything should merge without any conflict."
 
-This file is the shared contract between the sessions in flight. The measurements below were taken on 2026-11-02 by the hub session with `scripts/git/merge-map.py` on snapshots of every worktree (each branch's tip plus its uncommitted work) against the default branch `origin/claude/youthful-planck-objwf5` at `7e256a4`, and were unchanged an hour later. Since then the default has moved three times, each a landing by section 4's recipe: the reservation of section 7 as `9e6c907`, this map as `21f1480`, the hero as `ec7d5a3` (all 2026-11-03); the first's effect is measured in section 2, and after the third the remaining branches conflict with the default in: section 5 `tests/unit/page-scroll.test.ts`; the family pages and the cue `CLAUDE.md`; About nothing; the quiz its five files plus `tests/e2e/quiz.spec.ts`; the hall eleven files, among them `layout.ts` and the section 4 specs the hero also changed. Re-measure before trusting the rest: the tips move.
+This file is the shared contract between the sessions in flight. The measurements below were taken on 2026-11-02 by the hub session with `scripts/git/merge-map.py` on snapshots of every worktree (each branch's tip plus its uncommitted work) against the default branch `origin/claude/youthful-planck-objwf5` at `7e256a4`, and were unchanged an hour later. Since then the default has moved four times, each a landing by section 4's recipe: the reservation of section 7 as `9e6c907`, this map as `21f1480`, the hero as `ec7d5a3`, the cue as `b2d629e` (all 2026-11-03); the first's effect is measured in section 2, and after the third the remaining branches conflict with the default in: section 5 `tests/unit/page-scroll.test.ts`; the family pages and the cue `CLAUDE.md`; About nothing; the quiz its five files plus `tests/e2e/quiz.spec.ts`; the hall eleven files, among them `layout.ts` and the section 4 specs the hero also changed. Re-measure before trusting the rest: the tips move.
 
 ## 1. The branches in flight
 
@@ -12,7 +12,7 @@ This file is the shared contract between the sessions in flight. The measurement
 | 2 | Section 4 without the hall | `claude/remove-grey-room-section-4-471c96` | `eloquent-driscoll-695753` | 9 behind, 2 ahead; conflicts in `CLAUDE.md`, `DESIGN.md`, `docs/CHECKLIST.md`, `scripts/room/contrast.mjs`, `scripts/room/render-stills.mjs`, `src/env.d.ts`, `src/scripts/hero/section4/director.ts`, `tests/e2e/room.spec.ts` |
 | 3 | Section 5, the four-jar sign-up | `claude/section-5-signup-glass-jar-9d74d2` | `affectionate-faraday-24a066` | 29 behind, 5 ahead; conflicts in `CLAUDE.md`, `DESIGN.md`, `docs/CHECKLIST.md`, `docs/HANDOFF.md`, `tests/e2e/room.spec.ts` |
 | 4 | Family pages round 6, the case models | `claude/case-3d-model-transitions-a08c64` | `agitated-ellis-54d854` | contains the default; clean |
-| 5 | The scroll cue's words | `claude/scroll-affordance-text-8e0a5f` | `festive-colden-092906` | contains the default; clean |
+| 5 | The scroll cue's words | `claude/scroll-affordance-text-8e0a5f` | `festive-colden-092906` | landed as `b2d629e` on 2026-11-03 (65 files) |
 | 6 | The About page | `claude/skreed-about-page-477c0e` | `peaceful-kalam-531877` | contains the default; clean |
 | 7 | The hero's halved scroll and the blocks' alignment | `claude/hero-scroll-half` | `hero-scroll-half` | landed as `ec7d5a3` on 2026-11-03 (36 files) |
 | 8 | This map and its script | `claude/merge-map-tooling` | `merge-map` | landed as `21f1480` on 2026-11-03 |
@@ -53,7 +53,7 @@ A git fact, tested on 2026-11-02: two edits to adjacent lines conflict; one unch
 One landing at a time, each with Sam's word, on the default branch (`main` once the hall session has made it; see section 5).
 
 1. **The hall removal (2)** first: the hero's scroll work and section 5 both build on the scroll map it changes, and `main` is cut right after it.
-2. **The family pages (4), the cue (5), About (6) and this map (8)**, in the order they become ready (reviewed, approved, clean). None of them touches the scroll map.
+2. **The family pages (4), the cue (5), About (6) and this map (8)**, in the order they become ready (reviewed, approved, clean). None of them touches the scroll map. The map landed as `21f1480` and the cue as `b2d629e`; About is ready and waits on Sam's word; the family pages wait on his call about a seam.
 3. ~~**The hero (7)** after the hall~~: landed first, as `ec7d5a3` on 2026-11-03, on Sam's direct word ("push and commit to main") with the review loop's verdict not yet in; verified by the hub as the recipe's merge of `21f1480` and `ef5a88d`. The hall's rebase therefore meets the halved scroll map (`TRACK_SVH` 675, the second wipe at 5.25 screens) and re-derives its own numbers on it.
 4. **Section 5 (3)** after the hall, once Sam has approved it on localhost and its entry seam is re-fixed onto the hall-less page.
 5. **The quiz result (1)** once its Canva swatch question is settled and it has taken the default in; it touches no scroll map, so it may go before 3 or 4 if it is ready first.
