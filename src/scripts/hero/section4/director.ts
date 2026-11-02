@@ -346,20 +346,8 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
     say('jump');
   }
 
-  // ---- the seams (section-4-flux.md 4: the exit at LOOP_START, the wrap from scroll 0; cuts under reduced motion)
-  function startExit(t: number) {
-    clearStep(); seamDraws.clear();
-    if (reduced) {
-      scrollTo({ top: 0, behavior: 'instant' }); o.snapHero(0);
-      say('loop'); resetLap(true);
-      seam = { kind: 'exit', phase: 'lock', t0: t, holdY: 0 }; setState('seam'); say('seam');
-      return;
-    }
-    current();
-    seam = { kind: 'exit', phase: 'in', t0: t, holdY: Math.round(o.restY()) };
-    setState('seam'); say('seam');
-    carousel.seam('in', 0);
-  }
+  // ---- the seams (section-4-flux.md 4: the wrap from scroll 0; cuts under reduced motion; the exit from section 5's end
+  // ran here until 2026-11-03, when Sam removed the loop: "i dont want the sign up page to scroll back to section 1")
   /** the page's raw scroll held at y by an instant scroll, the section's followers where that is in its own screens (the exit's cover-in, the guard's hold) */
   function holdAt(y: number) {
     if (Math.abs(scrollY - y) > 0.5) scrollTo({ top: y, behavior: 'instant' });
@@ -442,19 +430,8 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   // ---- the exit's guard (exit-guard.ts): the last wheel, touch or key input and the fingers down, heard passively, so
   // the exit seam runs only once the page has rested at section 5's rest, and the page past it before then is held
   const guard = createExitGuard();
-  let inputAt = -Infinity, fingers = 0, down = false, touchY = NaN;
-  // a gesture down (the exit's trigger at the page's end since 2026-11-03, exit-guard.ts): a wheel notch down (never
-  // Ctrl+wheel, the browser's zoom), one finger moved up 12 px or more, or a key of a step down without Shift
-  const DOWN_KEYS = new Set(['ArrowDown', 'PageDown', 'End', ' ']);
-  const onInput = (e: Event) => {
-    inputAt = performance.now();
-    if ('touches' in e) {
-      const t = (e as TouchEvent).touches; fingers = t.length;
-      if (e.type === 'touchstart') touchY = t.length === 1 ? t[0].clientY : NaN;
-      else if (e.type === 'touchmove' && t.length === 1 && touchY - t[0].clientY >= 12) down = true;
-    } else if (e.type === 'wheel') { const w = e as WheelEvent; if (w.deltaY > 0 && !w.ctrlKey) down = true; }
-    else if (e.type === 'keydown') { const k = e as KeyboardEvent; if (DOWN_KEYS.has(k.key) && !k.shiftKey && !k.ctrlKey && !k.metaKey && !k.altKey) down = true; }
-  };
+  let inputAt = -Infinity, fingers = 0;
+  const onInput = (e: Event) => { inputAt = performance.now(); if ('touches' in e) fingers = (e as TouchEvent).touches.length; };
   const onLeave = () => { fingers = 0; };
   for (const n of GUARD_INPUTS) addEventListener(n, onInput, { passive: true });
   addEventListener('blur', onLeave);
@@ -502,16 +479,13 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       if (poster()) return { on: false, tex: null, wipeIn: 0, wipeOut: 0, groundNeeded: false, cover: 0, cloud: null, toneDark: false };
       // phase 2 during the walk, past the third wipe (spec 5, "Loading")
       if (hall.ready && inRoom && q > ROOM_SCREENS.wipe && state === 'hall') void loadScenes();
-      // the exit seam (section-5.md 2) behind its guard (exit-guard.ts): a gesture down at section 5's rest, the page's
-      // end since 2026-11-03 (or the page's raw scroll crossing the rest downward where there is room), in world or hall (the section itself has scrolled away by then; a visitor who never pressed
-      // reaches it over the hall all the same), runs it once the page has rested there; the page past the rest before
-      // that rest is held at it, as the exit's cover-in holds it, with no cloud (a crossing, never an arrival: the wrap
-      // lands on the rest)
+      // the exit seam's guard (exit-guard.ts) still arms at section 5's rest (the hooks' exitArmed) and holds the page past
+      // it, in world or hall; the exit seam itself no longer runs (2026-11-03): nothing follows the section, so the page ends there
       const y = scrollY, restY = o.restY();
-      const act = exitGuard(guard, { y, prevY, exitY: o.exitY(), restY, vh: innerHeight, now: performance.now(), inputAt, touching: fingers > 0, refuse: refuses(document.activeElement, window.visualViewport, H.clientHeight), live: state === 'hall' || state === 'world', down, maxY: H.scrollHeight - innerHeight }); down = false;
+      const act = exitGuard(guard, { y, prevY, exitY: o.exitY(), restY, vh: innerHeight, now: performance.now(), inputAt, touching: fingers > 0, refuse: refuses(document.activeElement, window.visualViewport, H.clientHeight), live: state === 'hall' || state === 'world' });
       prevRaw = qRaw; prevY = y;
-      if (act === 'exit') startExit(f.t);
-      else if (act === 'hold') holdAt(Math.round(restY));
+      // 'exit' is not acted on: no loop from section 5's end (Sam, 2026-11-03, "remove the loop, i dont want the sign up page to scroll back to section 1"); the page ends there
+      if (act === 'hold') holdAt(Math.round(restY));
       // a seam first: its phase sets the carousel's cloud for this frame's draw, and may change the state (the exit's jump, the wrap's landing)
       const cover = seam ? seamFrame(f.t, seam) : 0;
       // what the frame carries: the hall, the entry, the way back or the scenes (a seam keeps the frame it began over, X-15)

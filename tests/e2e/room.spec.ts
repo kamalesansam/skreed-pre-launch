@@ -76,7 +76,7 @@ function holdAtCover(page: Page, kind: 'exit' | 'wrap'): Promise<S4 | null> {
 const release = (page: Page) => page.evaluate(() => { window.__skreedFreeze = false; });
 const URBAN_SLATE_CSS = 'rgb(56, 63, 67)';
 
-test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scenes by five steps, the hold, the exit seam, the wrap and the way back', async ({ browser, baseURL }) => {
+test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scenes by five steps, the hold, no exit from section 5 (2026-11-03), the wrap and the way back', async ({ browser, baseURL }) => {
   test.setTimeout(1_500_000);
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
@@ -243,25 +243,17 @@ test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scene
   await expect.poll(() => page.evaluate(() => (window.__skreedGround!.state() as { mode: string }).mode)).toBe('whole');
   for (const href of ['https://www.facebook.com/skreedofficial', 'https://www.youtube.com/@skreedofficial', 'https://www.instagram.com/skreedofficial']) await expect(page.locator(`#signup a[href^="${href}"]`)).toHaveCount(1);
   expect((await s4(page)).state).toBe('world');
-  // the page has rested at section 5's rest, so the exit is armed (exit-guard.ts)
+  // no exit seam from section 5's end since 2026-11-03 (Sam: "remove the loop"): the guard still arms at the rest, and a
+  // notch down there runs nothing; the page stays at the section, the logotype Urban Slate over its cream ground
   await expect.poll(async () => (await s4(page)).exitArmed, { timeout: 5_000 }).toBe(true);
-  // the seam held at full cover, the clock frozen on the first frame after the jump: the logotype and the section index
-  // control read Urban Slate over the Pearl Whisper cloud (the regression the checker found in D5's first fix), the page at 0
-  const exitCover = await holdAtCover(page, 'exit');
-  expect(exitCover?.seam).toEqual({ kind: 'exit', phase: 'out' });
-  expect(await page.evaluate(() => scrollY)).toBeLessThan(2);
+  await page.evaluate(() => { dispatchEvent(new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true })); });
+  await page.waitForTimeout(800);
+  expect((await s4(page)).seam).toBeNull();
+  expect(Math.abs(await page.evaluate(() => scrollY) - await restY(page))).toBeLessThan(2);
+  expect(await events(page)).not.toContain('room_loop');
   await expect(page.locator('.site-logo')).toHaveAttribute('data-tone', 'light');
   await expect(page.locator('.site-logo')).toHaveCSS('color', URBAN_SLATE_CSS);
   await expect(page.locator('#siteNav')).toHaveAttribute('data-tone', 'light');   // the section index follows the logotype, as Back to top did before Home took its place
-  await release(page);
-  await page.waitForFunction(() => scrollY < 2, null, { timeout: 120_000, polling: 250 });
-  await expect.poll(() => page.evaluate(() => window.__skreedState!().sb), { timeout: 20_000 }).toBeLessThan(0.01);
-  expect(await events(page)).toContain('room_loop');
-  await expect.poll(async () => (await s4(page)).state, { timeout: 10_000 }).toBe('hall');
-  // the seam held the section's frame under the forming cloud: every cover-in frame drew the carousel, never the hall (X-15)
-  expect((await s4(page)).seamDraws).toEqual(['scenes']);
-  // the new lap: the prompt is back in the Tab order for the next walk
-  expect(await page.evaluate(() => { const e = document.getElementById('rmEnter')!; return e.hidden || e.inert; })).toBe(false);
 
   // the wrap from the top: the reverse seam onto scene 5 with the followers snapped (the state seam until its lock ends,
   // the carousel drawn under the cloud from the landing), room_wrap and the wrap's own line, the prompt out of the Tab order
@@ -492,7 +484,7 @@ test('section 4 at 390 x 844: Ctrl+wheel in range is the browser\'s zoom and nev
   await ctx.close();
 });
 
-test('section 4 at 390 x 844 under reduced motion (still3d): no loop elements, the dissolve entry, a step as a cut, an instant exit seam and an instant wrap (AC11)', async ({ browser, baseURL }) => {
+test('section 4 at 390 x 844 under reduced motion (still3d): no loop elements, the dissolve entry, a step as a cut, no exit from section 5 and an instant wrap (AC11)', async ({ browser, baseURL }) => {
   test.setTimeout(900_000);
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, reducedMotion: 'reduce' });
   const page = await ctx.newPage();
@@ -515,17 +507,15 @@ test('section 4 at 390 x 844 under reduced motion (still3d): no loop elements, t
   await expect.poll(async () => (await s4(page)).scene, { timeout: 2_000 }).toBe(1);
   await expect.poll(async () => (await s4(page)).busy, { timeout: 2_000 }).toBe(false);
   await expect.poll(() => pageQ(page), { timeout: 5_000 }).toBeCloseTo(10.5, 1);
-  // the exit seam is a cut: the jump to the top at once, then its 400 ms lock, then the hall
+  // no exit seam from section 5's end (2026-11-03): at the armed rest a notch down runs nothing, under reduced motion too
   await page.evaluate(() => window.__s4!.scene(4));
   await expect.poll(async () => (await s4(page)).scene, { timeout: 10_000 }).toBe(4);
-  // (from section 5's end, section-5.md 2: the raw scroll across its exitY, once the page has rested at its rest,
-  // exit-guard.ts; a jump past it straight from scene 5 is held there instead)
   await page.evaluate(() => { const y = (window.__s4!.state() as { restY: number }).restY; scrollTo({ top: y, behavior: 'instant' }); });
   await expect.poll(async () => (await s4(page)).exitArmed, { timeout: 5_000 }).toBe(true);
-  await page.evaluate(() => { dispatchEvent(new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true })); });   // a notch down at the armed rest (2026-11-03)
-  await page.waitForFunction(() => scrollY < 2, null, { timeout: 5_000, polling: 50 });
-  expect(await events(page)).toContain('room_loop');
-  await expect.poll(async () => (await s4(page)).state, { timeout: 5_000 }).toBe('hall');
+  await page.evaluate(() => { dispatchEvent(new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true })); });
+  await page.waitForTimeout(600);
+  expect(await events(page)).not.toContain('room_loop');
+  expect((await s4(page)).state).toBe('world');
   // the wrap is a cut too: world at scene 5 once its lock ends, the page at section 5's rest
   await page.evaluate(() => window.__s4!.wrap());
   await expect.poll(async () => (await s4(page)).state, { timeout: 5_000 }).toBe('world');

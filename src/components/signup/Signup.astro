@@ -8,7 +8,7 @@
 // button (rendered only with PUBLIC_LEADS on) and the footer; then one empty screen for the exit seam's trigger. The jars
 // are builder C's renders (src/assets/signup/jars/), the icons our own inline drawings. The markup is complete without
 // JavaScript (the links work); scripts/signup/signup.ts, loaded once the section is within a screen, counts the follows,
-// fills the visitor's jar, drives the form and the poster tier's loop end. No style attributes (the CSP has no
+// fills the visitor's jar, drives the form. No style attributes (the CSP has no
 // style-src-attr): the jars' frame numbers ride an inline style block, which scripts/csp.mjs hashes.
 import { SIGNUP_COPY as C, SIGNUP_FOLLOWS, followAria } from '../../config/signup.ts';
 import { JARS, SIZES, STATE_SRCS } from '../../scripts/signup/jar-srcs.ts';
@@ -124,7 +124,6 @@ const yours = STATE_SRCS['0'] ?? null;
     <p class="su-keep">{C.keep}</p>
     <p class="sr-only" id="suLive" aria-live="polite"></p>
   </div>
-  <div class="su-fade" id="suFade" aria-hidden="true" hidden></div>
 </section>
 <script is:inline set:html={gateCode}></script>
 <script>

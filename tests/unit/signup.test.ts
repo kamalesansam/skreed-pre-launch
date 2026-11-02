@@ -192,12 +192,9 @@ test('the script (C3, C4, C5): the fill by clip-path, the visibility gate, the e
   assert.match(dom, /if \(window\.__skreedLogo\?\.setTone\) window\.__skreedLogo\.setTone\(on\);/, 'the logotype turns Urban Slate over the cream ground on the poster tier, through the logotype\'s own setTone');
   assert.match(dom, /setTone\(r\.top < mid && r\.bottom > mid\)/, 'while the section\'s ground is under the logotype\'s middle');
   assert.match(dom, /if \(on === \(logo\.dataset\.tone === 'light'\)\) return;/, 'the tone read from the logotype, never from a stale flag');
-  assert.doesNotMatch(astro, /suLoopEnd|su-loopend/, 'nothing follows the body since 2026-11-03: the page ends at the section\'s rest');
-  assert.doesNotMatch(css, /su-loopend/);
-  assert.match(dom, /scrollY >= H\.scrollHeight - innerHeight - 1\) run\(\);/, 'the poster tier\'s loop end runs on a gesture down at the page\'s end');
-  assert.match(dom, /REST_MS = 300/, 'after the same 300 ms rest the exit guard asks for');
-  assert.match(dom, /addEventListener\('wheel', \(e\) => \{ gesture\(e\.deltaY > 0 && !e\.ctrlKey\); \}, \{ passive: true \}\);/, 'a wheel notch down, never Ctrl+wheel, heard passively');
-  assert.match(css, /\.su-fade \{ position: fixed; inset: 0; z-index: 5; background: var\(--night\); pointer-events: none; \}/);
+  assert.doesNotMatch(astro, /suLoopEnd|su-loopend|suFade|su-fade/, 'nothing follows the body and nothing loops from it (2026-11-03): no empty screen, no fade');
+  assert.doesNotMatch(css, /su-loopend|su-fade/);
+  assert.doesNotMatch(dom, /room_loop|suFade|IntersectionObserver\(\(es\) => \{\n\s+if \(!isPoster\(\) \|\| fading/, 'the script runs no loop from the section\'s end');
   assert.match(astro, /<div class=\{LEADS \? 'su-body' : 'su-body su-noform'\} id="suBody">/, '.su-body the one-screen block');
   assert.match(css, /\.su-body \{[^}]*min-height: 100svh;/);
 });

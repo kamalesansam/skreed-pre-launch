@@ -9,8 +9,8 @@
 // (from the old state's seam, below which the two renders agree, so nothing jumps; 900 ms a quarter, 1400 ms a half,
 // ease-out; presses during a fill queue; at once under reduced motion; on load the remembered state at once). The next states' renders are fetched once the section is near. Also: the email form (the
 // quiz's gift form: validation on blur and submit, sending, the error line, the offline queue sent on `online`, a
-// duplicate read as success, the done line with "Not you?"), data-ready (C3), the events (C4), the hooks (C5), the wrap
-// announcement and the poster tier's loop end (the 300 ms fade through --night to the top). Strings from config/signup.ts.
+// duplicate read as success, the done line with "Not you?"), data-ready (C3), the events (C4), the hooks (C5) and the wrap
+// announcement. No loop from the section's end since 2026-11-03 (Sam: "remove the loop"). Strings from config/signup.ts.
 import { FILL_GATE, FOLLOW_COUNT, SIGNUP_COPY as C, SIGNUP_FOLLOWS, SIGNUP_KEYS, SIGNUP_LEAD_ENDPOINT, addedLine, fill, fillMs, jarById, pressFollow, revealSpan, stateOf, yoursAlt } from '../../config/signup.ts';
 import { SIZES, STATE_SRCS, STATE_TOPS, type Srcs } from './jar-srcs.ts';
 import { reducedMQ } from '../motion.ts';
@@ -24,11 +24,7 @@ declare global {
   }
 }
 
-const SLOW_MS = 8000, HARD_MS = 20000, FADE_MS = 300, READY_MS = 4000, REST_MS = 300;
-/** the keys of a step down (the loop's trigger at the page's end, with a wheel notch down or a swipe up), as the exit guard reads them on the 3D path */
-const DOWN_KEYS = new Set(['ArrowDown', 'PageDown', 'End', ' ']);
-/** the input types a press or a pick sets (no typing, so no on-screen keyboard); every other type refuses the loop, as the seams refuse (exit-guard.ts) */
-const PICKS = new Set(['checkbox', 'radio', 'button', 'submit', 'reset', 'image', 'file', 'range', 'color', 'hidden']);
+const SLOW_MS = 8000, HARD_MS = 20000, READY_MS = 4000;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 /** the states' renders from jar-srcs.ts (the table Signup.astro lays the showcase jars out from): the sizes and, per state, the AVIF and WebP srcsets and the fallback */
 interface JarData { sizes: string; states: Record<string, Srcs> }
@@ -54,7 +50,7 @@ const idsOf = (state: string): string[] => (state === '0' ? [] : [...state].map(
 
 export function mountSignup(root: HTMLElement): void {
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T | null;
-  const live = $('suLive'), fade = $('suFade'), jar = $('suYours');
+  const live = $('suLive'), jar = $('suYours');
   if (!live) return;
   const H = document.documentElement;
   const isPoster = () => !H.classList.contains('hero3d') || H.classList.contains('poster');
@@ -223,41 +219,14 @@ export function mountSignup(root: HTMLElement): void {
     readTone();
   }
 
-  // ---- the wrap's landing, the view, the poster tier's loop end
+  // ---- the wrap's landing, the view
   addEventListener('skreed:room-state', (e) => { if ((e as CustomEvent<string>).detail === 'wrap') announce(C.wrapLive); });
   if ('IntersectionObserver' in window) {
     let viewed = false;
     new IntersectionObserver((es) => { if (!viewed && es.some((x) => x.isIntersecting)) { viewed = true; track('signup_view'); } }, { rootMargin: '0px 0px -50% 0px' }).observe(root);
   }
-  // the poster tier's loop end (the 300 ms fade through --night to the top): nothing follows the body since 2026-11-03
-  // (Sam: "remove the free space"), so it runs on a gesture down at the page's end, once the page has rested there
-  // 300 ms with no scroll and no input, as the exit guard arms on the 3D path: a wheel notch down (never Ctrl+wheel), one
-  // finger moved up 12 px or more after a quiet page, or a key of a step down; never with a typing control focused, the
-  // keyboard up or the page zoomed (the seams' refusals)
-  if (fade) {
-    let fading = false, quietAt = 0, touchY = NaN, restOk = false;
-    const refuse = () => {
-      const a = document.activeElement as HTMLElement | null, vv = window.visualViewport;
-      if (vv && (vv.scale > 1.01 || vv.height < H.clientHeight - 1)) return true;
-      return !!a && (a.isContentEditable || a instanceof HTMLTextAreaElement || a instanceof HTMLSelectElement || (a instanceof HTMLInputElement && !PICKS.has(a.type)));
-    };
-    const run = () => {
-      fading = true; fade.hidden = false;
-      const a = fade.animate([{ opacity: 0 }, { opacity: 1 }], { duration: reducedMQ.matches ? 0 : FADE_MS, fill: 'forwards' });
-      a.finished.then(() => { scrollTo({ top: 0, behavior: 'instant' }); track('room_loop'); return fade.animate([{ opacity: 1 }, { opacity: 0 }], { duration: reducedMQ.matches ? 0 : FADE_MS, fill: 'forwards' }).finished; })
-        .catch(() => {}).finally(() => { fade.hidden = true; fading = false; });
-    };
-    const quiet = () => { quietAt = performance.now(); };
-    const gesture = (go: boolean, rested = performance.now() - quietAt >= REST_MS) => {
-      if (go && rested && !fading && isPoster() && !refuse() && scrollY >= H.scrollHeight - innerHeight - 1) run();
-      quiet();
-    };
-    addEventListener('scroll', quiet, { passive: true });
-    addEventListener('wheel', (e) => { gesture(e.deltaY > 0 && !e.ctrlKey); }, { passive: true });
-    addEventListener('keydown', (e) => { gesture(DOWN_KEYS.has(e.key) && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey); });
-    addEventListener('touchstart', (e) => { restOk = performance.now() - quietAt >= REST_MS; touchY = e.touches.length === 1 ? e.touches[0].clientY : NaN; }, { passive: true });
-    addEventListener('touchmove', (e) => { gesture(e.touches.length === 1 && touchY - e.touches[0].clientY >= 12, restOk); restOk = false; }, { passive: true });
-  }
+  // no loop from the section's end (Sam, 2026-11-03: "remove the loop, i dont want the sign up page to scroll back to section 1"):
+  // the page ends here on every tier; the empty screen and the poster tier's fade that served the loop are gone
 
   // ---- the form (PUBLIC_LEADS on; the quiz's gift form, quiz.md 5): the field and the button joined, one line under them
   const form = $<HTMLFormElement>('suForm');
