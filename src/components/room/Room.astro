@@ -1,15 +1,14 @@
 ---
-// Section 4, the entrance and the five scenes (docs/specs/section-4.md 2 and 5 for the hall, docs/specs/section-4-flux.md
-// 2, 3 and 5 "The DOM" for the rest), in the hero's after-track slot after the quiz. On the 3D path a track of 15.8
-// screens with a sticky stage over the hero's canvas, which draws the hall, the bubble and the carousel; the stage holds
-// only what the section needs over it, all plain text on the scene in section 2's label type (Sam, 2026-10-20): the
-// prompt at the door (the section's first tabbable element, never hidden in the hall), the pad that takes the keys,
-// Skip, the hint and the loading lines, the five scenes as a list (each its poster still, its four lines with the scene
-// hint above scene 1's count, the loading line and its alt),
-// the previous and next words bottom right, the "Pause motion" control (hidden unless E-S4-loops is declined) and the
-// live region. On the poster tier the hall's still, then the scenes in a column; without JavaScript the same from the
-// noscript copies. scripts/room/walk.ts drives it (lazy, when the section nears). No style attributes (the CSP has no
-// style-src-attr): positions are set through the CSSOM.
+// Section 4, the five scenes (docs/specs/section-4-flux.md 2, 3 and 5 "The DOM"; docs/specs/section-4-no-hall.md since
+// 2026-11-02, when the hall's still, the prompt at its door and Skip left with it), in the hero's after-track slot after
+// the quiz. On the 3D path a track of 6.8 screens with a sticky stage over the hero's canvas, which draws the third wipe
+// from the fog straight to scene 1 and the carousel; the stage holds only what the section needs over it, all plain
+// text on the scene in section 2's label type (Sam, 2026-10-20): the pad (the stage's focusable group, the section's
+// first tab stop), the loading line, the five scenes as a list (each its poster still, its four lines with the scene
+// hint above scene 1's count, the loading line and its alt), the previous and next words bottom right, the "Pause
+// motion" control (hidden unless E-S4-loops is declined) and the live region. On the poster tier the scenes in a column
+// from the section's top; without JavaScript the same from the noscript copy. scripts/room/walk.ts drives it (lazy,
+// when the section nears). No style attributes (the CSP has no style-src-attr): positions are set through the CSSOM.
 import { ROOM_COPY as R, ROOM_SCENES, SCENE_COUNT, SCENE_SIZE, fill, productById, shadeLine } from '../../config/room.ts';
 import { QUIZ_GATE } from '../../config/quiz.ts';
 import gate from '../../inline/room-gate.inline.js?raw';
@@ -26,44 +25,14 @@ const N = SCENE_COUNT;
 // hashes the emitted string after the build. Without JavaScript nothing is locked (room.css shows the section).
 const hooks = import.meta.env.PUBLIC_HERO_HOOKS === '1';
 const gateCode = inlineScript('room-gate.js', { KEY: QUIZ_GATE.key }, hooks ? gateHooks : '', gate);
-// the poster tier's still of the hall (scripts/room/render-stills.mjs renders it from our own build); absent files render nothing
-const files = import.meta.glob<string>('../../assets/room/stills/hall-*.{avif,webp}', { eager: true, query: '?url', import: 'default' });
-const still = (name: string) => {
-  const avif = files[`../../assets/room/stills/${name}.avif`], webp = files[`../../assets/room/stills/${name}.webp`];
-  return avif && webp ? { avif, webp } : null;
-};
-const hp = still('hall-portrait'), hw = still('hall-wide'), hall = hp && hw ? { portrait: hp, wide: hw } : null;
 const P = SCENE_SIZE.portrait, Wd = SCENE_SIZE.wide;
 const scenes = ROOM_SCENES.map((s) => ({ ...s, name: productById(s.product).name, line: productById(s.product).line, shadeText: shadeLine(s), count: fill(R.count, { n: s.order, N }) }));
 ---
-<section class="room" id="room" aria-label={R.aria} data-state="hall" hidden data-locked>
+<section class="room" id="room" aria-label={R.aria} data-state="approach" hidden data-locked>
   <div class="rm-track">
     <div class="rm-stage" id="rmStage">
-      {/* the still loads only on the poster tier, when the section nears (walk.ts swaps data-srcset in), so the first view and
-          the 3D path never fetch it; without JavaScript the noscript copy stands in */}
-      {hall && (
-        <picture class="rm-still" data-lazy>
-          <source media="(orientation: portrait)" data-srcset={hall.portrait.avif} type="image/avif" width="720" height="1280" />
-          <source media="(orientation: portrait)" data-srcset={hall.portrait.webp} type="image/webp" width="720" height="1280" />
-          <source data-srcset={hall.wide.avif} type="image/avif" />
-          <img data-src={hall.wide.webp} alt={R.stillHallAlt} width="1280" height="800" decoding="async" />
-        </picture>
-      )}
-      <noscript>
-        {hall && (
-          <picture class="rm-still">
-            <source media="(orientation: portrait)" srcset={hall.portrait.avif} type="image/avif" width="720" height="1280" />
-            <source media="(orientation: portrait)" srcset={hall.portrait.webp} type="image/webp" width="720" height="1280" />
-            <source srcset={hall.wide.avif} type="image/avif" />
-            <img src={hall.wide.webp} alt={R.stillHallAlt} width="1280" height="800" loading="lazy" decoding="async" />
-          </picture>
-        )}
-      </noscript>
-      <button type="button" class="rm-enter rm-link" id="rmEnter" aria-keyshortcuts="E"><span class="rm-key" aria-hidden="true">{R.key}</span><span class="rm-enter-text">{R.enter}</span></button>
-      <div class="rm-pad" id="rmPad" tabindex="0" role="group" aria-label={R.stageAria}></div>
-      <button type="button" class="rm-skip rm-link" id="rmSkip" hidden>{R.skip}</button>
+      <div class="rm-pad" id="rmPad" tabindex="0" role="group" aria-label={R.worldAria}></div>
       <button type="button" class="rm-pause rm-link" id="rmPause" hidden>{R.pause}</button>
-      <p class="rm-line rm-hint" id="rmHint" data-touch={R.hintTouch} data-keys={R.hintKeys} hidden>{R.hintTouch}</p>
       <p class="rm-line rm-loading" id="rmLoading" role="status" hidden>{R.loading}</p>
       <h2 class="sr-only">{R.scenesTitle}</h2>
       <ol class="rm-scenes" id="rmScenes" aria-label={R.scenesAria}>
@@ -95,7 +64,6 @@ const scenes = ROOM_SCENES.map((s) => ({ ...s, name: productById(s.product).name
       </div>
       <p class="sr-only" id="rmLive" aria-live="polite"></p>
       <noscript>
-        <p class="rm-line rm-noscript">{R.noscript}</p>
         <ol class="rm-scenes rm-scenes-static" aria-label={R.scenesAria}>
           {scenes.map((s) => (
             <li class="rm-scene">

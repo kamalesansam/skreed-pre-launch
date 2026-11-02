@@ -142,7 +142,7 @@ test('every shader in src/scripts keeps its tokens and its preprocessor lines, a
     const sf = ts.createSourceFile(id, res.code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
     assert.equal((sf as unknown as { parseDiagnostics: unknown[] }).parseDiagnostics.length, 0, `${id}: parses`);
   }
-  assert.ok(modules >= 12, `the shader modules are found (${modules})`);
+  assert.ok(modules >= 10, `the shader modules are found (${modules})`);   // the hall's shaders left with it (2026-11-02); section 5 ships none
   assert.ok(literals >= 40, `the shaders are found (${literals})`);
   assert.ok(saved > 10000, `the strip is worth its step (${saved} B of source)`);
 });

@@ -4,7 +4,7 @@
 import { test, expect, type BrowserContext, type Request } from '@playwright/test';
 import { statSync, readdirSync } from 'node:fs';
 
-const ISLAND = /three|hero\.|pieces|\.bin|sky\.|ground|boot|hall\.|lightmap|\/models\/|director\.|world\.|garden|travel-|-depth\./;   // section 4: its 3D chunks (the director, the world, the garden, the travel options), the hall's model and lightmap and the lands' depth maps are the island's too (not the walk script, the hall's still or the lands' pictures: the poster tier uses them)
+const ISLAND = /three|hero\.|pieces|\.bin|sky\.|ground|boot|lightmap|\/models\/|director\.|world\.|garden|travel-|-depth\.|\.mp4/;   // section 4: its 3D chunk (the director), products.bin and the scenes' loops are the island's too, as the hall's model and lightmap were until 2026-11-02 (not the walk script or the scenes' stills: the poster tier uses them)
 
 const GATE_CASES: Record<string, (ctx: BrowserContext) => Promise<void>> = {
   'WebGL2RenderingContext deleted': (ctx) => ctx.addInitScript(() => { delete (window as unknown as Record<string, unknown>).WebGL2RenderingContext; }),

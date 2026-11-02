@@ -10,14 +10,15 @@
 // a wheel burst that begins at scroll 0 after 200 ms of silence, runs the reverse seam onto scene 5 (no key does); the
 // first touchmove of such a touch is prevented, so neither the rubber band nor pull-to-refresh gets it. (3) The
 // carousel's gestures while it is in range: a wheel tick through the burst filter, a one-finger swipe decided on its
-// first move, and the keys of section 2, each one whole step through the adapter; a forward gesture at scene 5 is left
-// to the page, a backward one at scene 1 is the way back, and anything during a step, its cooldown, the entry, a seam
-// or the way back is swallowed. Never captured: Ctrl+wheel, more than one finger, or anything while
+// first move, and the keys of section 2, each one whole step through the adapter; a gesture at either edge (on at
+// scene 5, back at scene 1, section-4-no-hall.md 2) is left to the page, and anything during a step, its cooldown or a
+// seam is swallowed. Never captured: Ctrl+wheel, more than one finger, or anything while
 // visualViewport.scale is above 1.01. The burst filter is fed by every wheel event, captured or not, so a burst that
-// carries the page up to 0, or into the carousel's range, is never mistaken for a new one. The non-passive listeners
+// carries the page up to 0, or into the carousel's range, is never mistaken for a new one, and a wheel event against the
+// direction of the input that carried the page in begins a burst of its own (at scene 1 it is the page's). The non-passive listeners
 // exist only while the carousel is in range, the page is at scroll 0, or the room's lock holds; the adapter is the one
 // link to the director, so this module imports nothing else from section4/ (tests/unit/page-scroll.test.ts).
-import { GLUE, burstConsume, burstFeed, createBurst, easeStandard, glueDecision, isScrollKey, keyDir, touchDecision, wheelDecision, type Span, type TouchVerdict } from './scroll-math.ts';
+import { BURST, GLUE, burstConsume, burstFeed, burstReset, createBurst, easeStandard, glueDecision, isScrollKey, keyDir, touchDecision, wheelDecision, type Span, type TouchVerdict } from './scroll-math.ts';
 
 export type { Span } from './scroll-math.ts';
 
@@ -28,20 +29,20 @@ export const SCROLL_MARK = 'skreed:scroll';
 export interface RoomAdapter {
   /** the raw position within 2 px of the scenes' range and the state is world */
   inRange(): boolean;
-  /** what a gesture in that direction meets: scene 5 forward, scene 1 back, or a step */
-  edge(dir: 1 | -1): 'forward' | 'back' | null;
+  /** a gesture in that direction meets an edge the page takes: scene 5 forward, scene 1 back */
+  edge(dir: 1 | -1): boolean;
   /** one whole step; false when refused for a reason other than busy (the next still not resident), and the burst is then not consumed */
   step(dir: 1 | -1): boolean;
-  /** the way back from scene 1 into the hall */
-  back(): void;
   /** the reverse seam from scroll 0 onto scene 5 (and the director's import first if it is not in) */
   wrap(): void;
   /** the intro is over and no seam runs */
   canWrap(): boolean;
-  /** the entry, the way back or a seam (cover-in, cover-out and the 400 ms after it) is running: gestures are swallowed without stepping */
+  /** a seam (cover-in, cover-out and the 400 ms after it) is running: gestures are swallowed without stepping */
   lock(): boolean;
   /** a step runs or its 150 ms cooldown: gestures are swallowed and the wheel's burst consumed */
   busy(): boolean;
+  /** a forward wheel event the page cannot cancel came in the scenes: the director holds the page on its scene while they come */
+  carried(): void;
 }
 
 export interface PageScrollOptions {
@@ -88,10 +89,12 @@ export function createPageScroll(o: PageScrollOptions): PageScroll {
   // the one-finger touch under way while capturing
   let touch: Touch1 | null = null;
   const burst = createBurst();
+  // the burst running as the capture attached in range (a fling from the quiz that carried the page onto scene 1): the page's
+  let inherited = false;
   const now = () => performance.now();
   const zoomed = () => (vv?.scale ?? 1) > 1.01;
   const keyboardUp = () => !!vv && vv.height < innerHeight - 1;
-  /** a step, its cooldown, the entry, a seam or the way back: a gesture is swallowed whole */
+  /** a step, its cooldown or a seam: a gesture is swallowed whole */
   const held = () => room.lock() || room.busy();
 
   // ---- the settle
@@ -144,15 +147,29 @@ export function createPageScroll(o: PageScrollOptions): PageScroll {
   // ---- the capture set: wheel, touch and keys while the carousel is in range, the page is at scroll 0, or the lock holds
   const onWheel = (e: WheelEvent) => {
     if (zoomed()) return;                                       // onWheelAny feeds the burst for this one
+    // a forward event the page cannot cancel, in the scenes short of the last: a gesture the browser latched before the
+    // capture attached (the trackpad's own scroll that carried the page in, its momentum included) scrolls the page
+    // natively whatever is done here, so it never steps, and the director holds the page on the scene's q while it comes
+    if (!e.cancelable && e.deltaY > 0 && !e.ctrlKey && room.inRange() && !room.edge(1)) { burstFeed(burst, e.deltaY, now(), true); burstConsume(burst); room.carried(); return; }
+    // the rest of the input that carried the page onto scene 1, in its own direction: swallowed whole, its clock fed,
+    // however its later pushes compare with its peak (a fling still speeding up as it reached scene 1), until 0.7 s of
+    // silence (BURST.carriedMs); a gesture after that is the visitor's (section-4-no-hall.md AC3)
+    if (inherited) {
+      if (e.deltaY > 0 && !e.ctrlKey && now() - burst.last <= BURST.carriedMs) { burstFeed(burst, e.deltaY, now(), true); burstConsume(burst); e.preventDefault(); return; }
+      // the carried input is over: a wheel event the other way is the visitor's own gesture and begins a burst of its own,
+      // never judged as the carried burst's tail by its peak (at scene 1 it is the page's at once, up into the wipe,
+      // section-4-no-hall.md AC4)
+      inherited = false;
+      if (e.deltaY < 0) burstReset(burst);
+    }
     const inRange = room.inRange();
     const v = wheelDecision(burst, e.deltaY, now(), {
       atTop: !inRange && scrollY <= 0, canWrap: room.canWrap(), locked: room.lock(), busy: room.busy(),
-      edgeForward: inRange && room.edge(1) === 'forward', edgeBack: inRange && room.edge(-1) === 'back', ctrl: e.ctrlKey,
+      edgeForward: inRange && room.edge(1), edgeBack: inRange && room.edge(-1), ctrl: e.ctrlKey,
     });
     if (v.kind === 'page') return;
     e.preventDefault();
     if (v.kind === 'wrap') { burstConsume(burst); room.wrap(); }
-    else if (v.kind === 'back') { burstConsume(burst); room.back(); }
     else if (v.kind === 'step' && room.step(v.dir)) burstConsume(burst);
   };
   const onTouchStart = (e: TouchEvent) => {
@@ -162,8 +179,7 @@ export function createPageScroll(o: PageScrollOptions): PageScroll {
     if (v.kind === 'wrap') { t.done = true; room.wrap(); }
     else if (v.kind === 'step') {
       t.done = true;
-      const edge = room.edge(v.dir);
-      if (edge === 'back') room.back(); else if (edge !== 'forward') room.step(v.dir);
+      if (!room.edge(v.dir)) room.step(v.dir);
     }
   };
   const onTouchMove = (e: TouchEvent) => {
@@ -172,9 +188,9 @@ export function createPageScroll(o: PageScrollOptions): PageScroll {
     if (e.touches.length !== 1 || zoomed()) { touch = null; return; }   // a second finger, or a zoomed viewport: the page's
     const y = e.touches[0].clientY, inRange = room.inRange(), atTop = !inRange && t.scroll <= 0;
     if (!t.decided) {
-      if (held()) { t.decided = t.ours = t.done = true; e.preventDefault(); return; }   // the lock before canWrap: a seam, the way back, the entry, a step or its cooldown swallow the touch whole
+      if (held()) { t.decided = t.ours = t.done = true; e.preventDefault(); return; }   // the lock before canWrap: a seam, a step or its cooldown swallow the touch whole
       if ((atTop && !room.canWrap()) || (!atTop && !inRange)) { touch = null; return; }   // the intro, or nowhere ours: the page's
-      const v = touchDecision(t.y, t.scroll, y, inRange && room.edge(1) === 'forward');
+      const v = touchDecision(t.y, t.scroll, y, inRange && room.edge(1), inRange && room.edge(-1));
       if (v.kind === 'none') return;
       t.decided = true;
       if (v.kind === 'page') return;
@@ -187,20 +203,19 @@ export function createPageScroll(o: PageScrollOptions): PageScroll {
     e.preventDefault();
     if (t.done) return;
     if (held()) { t.done = true; return; }
-    act(t, touchDecision(t.y, t.scroll, y, inRange && room.edge(1) === 'forward'));
+    act(t, touchDecision(t.y, t.scroll, y, inRange && room.edge(1), inRange && room.edge(-1)));
   };
   const onTouchEnd = () => { touch = null; };
   const onKey = (e: KeyboardEvent) => {
     if (zoomed()) return;
     const d = keyDir(e);
     if (d === null) return;
-    if (room.lock()) { e.preventDefault(); return; }           // the keys walk.ts maps to Skip never reach here: they are prevented first, or their target is the button
+    if (room.lock()) { e.preventDefault(); return; }           // a seam: swallowed
     if (!room.inRange()) return;                                // the top: no key wraps the page
     if (room.busy()) { e.preventDefault(); return; }           // a step or its cooldown, before the edges as the reference's he()
-    if (d === 1 && room.edge(1) === 'forward') return;          // scene 5: the page scrolls on
+    if (room.edge(d)) return;                                   // scene 5 on, scene 1 back: the page scrolls on
     e.preventDefault();
     if (e.repeat) return;                                       // one step per keydown
-    if (d === -1 && room.edge(-1) === 'back') { room.back(); return; }
     room.step(d);
   };
   const capture: [string, EventListener, AddEventListenerOptions][] = [
@@ -216,8 +231,15 @@ export function createPageScroll(o: PageScrollOptions): PageScroll {
     const want = room.inRange() || scrollY <= 0 || room.lock();
     if (want === capturing) return;
     capturing = want;
-    if (want) for (const [n, f, opt] of capture) addEventListener(n, f, opt);
-    else { for (const [n, f, opt] of capture) removeEventListener(n, f, opt); touch = null; }
+    if (want) {
+      // a wheel burst still running as the set attaches is the page's (a fling from the quiz that carried the page onto
+      // scene 1, a burst that carried it up to 0): consumed; in range, the input of the last 0.7 s is inherited, so its tail
+      // never steps (onWheel)
+      const quiet = now() - burst.last;
+      if (quiet <= BURST.silenceMs) burstConsume(burst);
+      inherited = room.inRange() && quiet <= BURST.carriedMs;
+      for (const [n, f, opt] of capture) addEventListener(n, f, opt);
+    } else { for (const [n, f, opt] of capture) removeEventListener(n, f, opt); touch = null; inherited = false; }
   };
 
   // ---- always on: the scroll itself, and the inputs that arm the glue, cancel a settle or feed the burst clock

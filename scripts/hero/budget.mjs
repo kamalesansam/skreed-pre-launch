@@ -6,11 +6,12 @@
 // Section 4 (docs/specs/section-4-flux.md 6 and AC8) has its own groups: its lazy chunks (the director's and the walk
 // script's, by their markers), the page scroll chunk (section4/scroll.ts, by its marker skreed:scroll), the ten scene
 // loops ((cove|grove|ember|palace|dawn)-(wide|portrait).<hash>.mp4), the twenty poster stills (the same stems in AVIF and
-// WebP), products.bin, the hall's model, lightmap and stills. Every byte line of its section 6 is a threshold: scripts
-// count at gzip, everything else as stored (the bytes a visitor fetches when the edge does not compress them), gzip
-// printed beside it for reference. AC8's formats are checked too: each picture in AVIF with its WebP twin and in no other
-// format (a scene still, a hall still or a lightmap in JPEG, PNG or GIF is found by its name all the same, and stops the
-// build), each scene's <img> with width and height. Any line broken or check failed exits 1 after the whole report. A
+// WebP) and products.bin (the hall's model, lightmap and stills left on 2026-11-02, docs/specs/section-4-no-hall.md 6;
+// one in a dist is a stray and stops the build). Every byte line of its section 6 is a threshold: scripts count at gzip,
+// everything else as stored (the bytes a visitor fetches when the edge does not compress them), gzip printed beside it
+// for reference. AC8's formats are checked too: each picture in AVIF with its WebP twin and in no other format (a scene
+// still in JPEG, PNG or GIF is found by its name all the same, and stops the build), each scene's <img> with width and
+// height. Any line broken or check failed exits 1 after the whole report. A
 // line Sam has still to rule on prints "over, pending Sam" past his figure and stops the build only past the spec's hard
 // figure. What it cannot read from a dist (pixel sizes, the loops' tracks, GPU memory) is printed as such. The mode
 // (build, test, staging: which npm script made the dist) comes from --mode, else from the environment
@@ -23,7 +24,7 @@ import { readFileSync, statSync, existsSync, readdirSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import { join, basename, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CLASSES, LOOP_NAME, MODE_NAMES, SCENE_IDS, isLandAsset, readMode } from '../room/guards.mjs';
+import { CLASSES, LOOP_NAME, MODE_NAMES, SCENE_IDS, isHallAsset, isLandAsset, readMode } from '../room/guards.mjs';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const args = process.argv.slice(2);
@@ -92,13 +93,13 @@ for (const p of signupDomGraph.keys()) add('signup dom js (lazy)', p, join(dist,
 // the page script bundled into another chunk instead (no lazy chunk of its own): named on its line, counted where it is
 const signupDomElsewhere = signupDomGraph.size ? [] : astroFiles.filter((n) => n.endsWith('.js') && SIGNUP_DOM_MARK.test(readFileSync(join(dist, '_astro', n), 'utf8'))).map((n) => '/_astro/' + n);
 
-// section 4's files. By name in dist/_astro: the scene loops and stills (the ten stems of section 3), products.bin, the
-// hall's model, lightmap and stills. A picture is found by its name in any image format (IMG), so one in a format AC8
-// does not allow is counted and refused rather than missed. The rest of what the section's chunks name stays "room data".
+// section 4's files. By name in dist/_astro: the scene loops and stills (the ten stems of section 3) and products.bin;
+// an asset of the lands or of the hall is a stray. A picture is found by its name in any image format (IMG), so one in a
+// format AC8 does not allow is counted and refused rather than missed. The rest of what the section's chunks name stays
+// "room data".
 const H = '[A-Za-z0-9_-]+', IMG = 'avif|webp|jpe?g|png|gif';
 const SCENE = new RegExp(`^(${SCENE_IDS.join('|')})-(${CLASSES.join('|')})\\.${H}\\.(${IMG})$`);
-const STILL = new RegExp(`^hall-(portrait|wide)\\.${H}\\.(${IMG})$`);
-const HALL_MODEL = new RegExp(`^hall\\.${H}\\.(?:bin|glb)$`), HALL_LIGHT = new RegExp(`^hall-lightmap\\.${H}\\.(${IMG})$`), PRODUCTS = new RegExp(`^products\\.${H}\\.bin$`);
+const PRODUCTS = new RegExp(`^products\\.${H}\\.bin$`);
 // section 5's jar pictures (C2: src/assets/signup/jars/, rendered by scripts/signup/jars/): sixteen states by the
 // follows' order (0, or the platforms' letters f, y, i in press order, bottom layer first) at 1x and 2x, AVIF and WebP
 const JAR_IMG = new RegExp(`^jar-(0|[fyi]{1,3})-(1x|2x)\\.${H}\\.(${IMG})$`);
@@ -114,12 +115,9 @@ for (const n of astroFiles) {
   let m;
   if ((m = LOOP_NAME.exec(n))) addFile('room loop', p, { id: m[1], cls: m[2] });
   else if ((m = SCENE.exec(n))) addFile('room scene', p, { id: m[1], cls: m[2], fmt: fmtOf(m[3]) });
-  else if ((m = STILL.exec(n))) addFile('room still', p, { cls: m[1], fmt: fmtOf(m[2]) });
-  else if (HALL_MODEL.test(n)) addFile('room data', p, { hall: 'model' });
-  else if ((m = HALL_LIGHT.exec(n))) addFile('room data', p, { hall: 'light', fmt: fmtOf(m[1]) });
   else if (PRODUCTS.test(n)) addFile('room data', p, { products: true });
   else if ((m = JAR_IMG.exec(n))) addFile('signup jar', p, { id: m[1], size: m[2], fmt: fmtOf(m[3]) });
-  else if (isLandAsset(n)) addFile('room stray', p, { stray: true });
+  else if (isLandAsset(n) || isHallAsset(n)) addFile('room stray', p, { stray: true });
 }
 // a video anywhere else in dist, or a stray asset: counted so the guard's hit shows here too
 for (const p of files(dist).filter((f) => /\.mp4$/i.test(f) && !LOOP_NAME.test(basename(f)))) addFile('room stray', p, { stray: true });
@@ -132,8 +130,8 @@ for (const p of graph.keys()) {
 const dataSeen = new Set();
 for (const r of rows.filter((r) => r.group === 'critical js' || r.group === 'island js')) { const src = readFileSync(join(dist, r.name), 'utf8'); for (const d of new Set([...src.matchAll(/[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.(?:webp|bin|json)\b/g)].map((m) => m[0]))) if (!dataSeen.has(d) && !/^(wide|portrait)\./.test(d) && existsSync(join(dist, '_astro', d))) { dataSeen.add(d); add('island data', '/_astro/' + d, join(dist, '_astro', d)); } }
 for (const f of [...new Set([...html.matchAll(/href="(\/fonts\/[^"]+)"/g)].map((m) => m[1]))]) add('font', f, join(dist, f));
-// the hero's posters only, wide.<hash> and portrait.<hash> in AVIF and WebP: never a land (land-<id>-portrait.*), a still
-// (hall-portrait.*) or anything else with the word in its name
+// the hero's posters only, wide.<hash> and portrait.<hash> in AVIF and WebP: never a land (land-<id>-portrait.*), a
+// scene's still (cove-portrait.*) or anything else with the word in its name
 for (const p of [...new Set([...html.matchAll(/(\/_astro\/(?:wide|portrait)\.[A-Za-z0-9_-]+\.(?:avif|webp))\b/g)].map((m) => m[1]))]) add('poster', p, join(dist, p));
 const sum = (pred) => rows.filter(pred).reduce((a, r) => a + r.gz, 0);
 const fmt = (n) => (n / 1024).toFixed(1).padStart(7) + ' KB';
@@ -164,10 +162,9 @@ const roomScript = gzOf(graph), scrollScript = gzOf(scrollGraph);
 const posterScript = gzOf(reach(pageRoots, true));
 const storedOf = (pred) => room.filter(pred).reduce((a, f) => a + f.stored, 0);
 const maxOf = (pred) => room.filter(pred).reduce((a, f) => Math.max(a, f.stored), 0);
-const hallModel = storedOf((f) => f.hall === 'model'), hallLight = (fmt) => storedOf((f) => f.hall === 'light' && f.fmt === fmt), productsBin = storedOf((f) => f.products);
+const productsBin = storedOf((f) => f.products);
 const loop = (id, cls) => maxOf((f) => f.group === 'room loop' && f.id === id && f.cls === cls);
 const pic = (id, cls, fmt) => maxOf((f) => f.group === 'room scene' && f.id === id && f.cls === cls && f.fmt === fmt);
-const still = (cls, fmt) => maxOf((f) => f.group === 'room still' && f.cls === cls && f.fmt === fmt);
 // the scenes in the poster column's order (the page names them in ROOM_SCENES' order), scene 1 first; a scene with no
 // file in dist stays in the order at 0 bytes, so a missing loop or still reads as such on its line
 const htmlOrder = [...new Set([...html.matchAll(new RegExp(`\\b(${SCENE_IDS.join('|')})-(?:portrait|wide)\\.`, 'g'))].map((m) => m[1]))];
@@ -179,7 +176,7 @@ const lines = [], faults = [];
 // pendingKB: Sam's figure for a line he has still to rule on; past it the line prints "over, pending Sam", and only past
 // limitKB (the spec's hard figure) does it stop the build
 const line = (name, bytes, limitKB, { enforced = true, note = '', pendingKB = 0 } = {}) => lines.push({ name, bytes, limit: limitKB * KB, pending: pendingKB * KB, enforced, note });
-line("section 4's script (director, carousel, video, assets, walk, lazy; gzip)", roomScript, 38, { pendingKB: 30, note: "Sam's 30 KB line, pending him (spec 11, item 1); the build stops above the spec's 38 KB" });
+line("section 4's script (director, carousel, video, walk, lazy; gzip)", roomScript, 38, { pendingKB: 30, note: "Sam's 30 KB line, pending him (spec 11, item 1); the build stops above the spec's 38 KB" });
 line('scroll.ts (its own chunk, marker skreed:scroll; gzip)', scrollScript, 4, { note: 'counted in total JS, not critical JS' });
 // section 5's lines (section-5.md 6, as rebuilt to Sam's picture on 2026-11-02)
 const signupDomScript = gzOf(signupDomGraph);
@@ -216,25 +213,25 @@ const PIC = { wide: { avif: 110, webp: 176 }, portrait: { avif: 80, webp: 128 } 
 for (const id of scenes) for (const cls of CLASSES) line(`loop ${id}, ${cls} (${cls === 'wide' ? '1328 x 692' : '720 x 1280'}, 5.0 s)`, loop(id, cls), 1200, { note: loop(id, cls) ? '' : 'not in this build' });
 for (const f of room.filter((x) => x.group === 'room scene' && SHIPS.has(x.fmt))) line(`still ${f.id}: ${f.cls}, ${FMT[f.fmt]}`, f.stored, PIC[f.cls][f.fmt], { note: f.name });
 line('products.bin', productsBin, 1000, { note: productsBin ? 'u16 positions, i8 normals, u16 indices; the AirPods Max at full detail since 2026-10-26' : 'not in this build' });
-// to the press (script excluded): products.bin, scene 1's loop and still, hall.bin and its lightmap, per class and format
+// to scene 1 (script excluded; the press's line until the hall left): products.bin, scene 1's loop and still, per class and format
 for (const fmt of ['avif', 'webp']) for (const cls of CLASSES) {
-  line(`to the press, ${cls}, ${fmt === 'avif' ? 'AVIF' : 'WebP-only browsers'} (script excluded)`, productsBin + loop(scene1, cls) + pic(scene1, cls, fmt) + hallModel + hallLight(fmt), 2500, { note: `scene 1 is ${scene1}; products.bin carries the AirPods Max at full detail` });
+  line(`to scene 1, ${cls}, ${fmt === 'avif' ? 'AVIF' : 'WebP-only browsers'} (script excluded)`, productsBin + loop(scene1, cls) + pic(scene1, cls, fmt), 2500, { note: `scene 1 is ${scene1}; products.bin carries the AirPods Max at full detail` });
 }
-// the whole section in dist: the ten loops, the twenty stills, products.bin, the hall (its model, lightmap and stills in both formats)
-line('the whole section in dist', storedOf((f) => f.group === 'room loop' || f.group === 'room scene' || f.group === 'room still' || !!f.hall || !!f.products), 15800, { note: `${room.filter((f) => f.group === 'room loop').length} loop(s), ${room.filter((f) => f.group === 'room scene').length} still(s)` });
-// one visit, per class and format: the class's five loops and five stills, products.bin, the hall
+// the whole section in dist: the ten loops, the twenty stills, products.bin
+line('the whole section in dist', storedOf((f) => f.group === 'room loop' || f.group === 'room scene' || !!f.products), 15800, { note: `${room.filter((f) => f.group === 'room loop').length} loop(s), ${room.filter((f) => f.group === 'room scene').length} still(s)` });
+// one visit, per class and format: the class's five loops and five stills, products.bin
 for (const fmt of ['avif', 'webp']) for (const cls of CLASSES) {
-  const bytes = scenes.reduce((a, id) => a + loop(id, cls) + pic(id, cls, fmt), 0) + productsBin + hallModel + hallLight(fmt);
+  const bytes = scenes.reduce((a, id) => a + loop(id, cls) + pic(id, cls, fmt), 0) + productsBin;
   line(`one visit, ${cls}, ${FMT[fmt]}`, bytes, 8100);
 }
-// the poster tier: the hall's still and the five scene stills, one class, one format
+// the poster tier: the five scene stills, one class, one format
 const POSTER = { avif: { portrait: 420, wide: 570 }, webp: { portrait: 660, wide: 900 } };
-for (const fmt of ['avif', 'webp']) for (const cls of CLASSES) line(`the poster tier, ${cls}, ${FMT[fmt]}: the hall's still and the five scenes`, still(cls, fmt) + scenes.reduce((a, id) => a + pic(id, cls, fmt), 0), POSTER[fmt][cls]);
-// AC8's formats. Each picture of the section ships as AVIF with its WebP twin, by the name before the hash: the scene
-// stills, the hall's stills and its lightmap. Each <img> in the page that names a scene still (its own src or srcset, or a
-// <source> of its <picture>) carries width and height.
+for (const fmt of ['avif', 'webp']) for (const cls of CLASSES) line(`the poster tier, ${cls}, ${FMT[fmt]}: the five scenes`, scenes.reduce((a, id) => a + pic(id, cls, fmt), 0), POSTER[fmt][cls]);
+// AC8's formats. Each picture of the section, a scene still, ships as AVIF with its WebP twin, by the name before the
+// hash. Each <img> in the page that names a scene still (its own src or srcset, or a <source> of its <picture>) carries
+// width and height.
 const stemOf = (name) => basename(name).replace(new RegExp(`\\.${H}\\.(?:${IMG})$`, 'i'), '');
-const pics = room.filter((f) => ['room scene', 'room still', 'signup jar'].includes(f.group) || f.hall === 'light');
+const pics = room.filter((f) => ['room scene', 'signup jar'].includes(f.group));
 const byStem = new Map();
 for (const f of pics) {
   // a picture in any other format is refused, and kept out of the lines and the twin check (AC8: AVIF with WebP only)
@@ -242,7 +239,7 @@ for (const f of pics) {
   byStem.set(stemOf(f.name), new Set([...(byStem.get(stemOf(f.name)) ?? []), f.fmt]));
 }
 for (const [stem, fmts] of byStem) for (const [has, lacks] of [['avif', 'webp'], ['webp', 'avif']]) if (fmts.has(has) && !fmts.has(lacks)) faults.push(`${stem}: ${FMT[has]} without its ${FMT[lacks]} twin (AC8: the pictures are AVIF with WebP)`);
-for (const f of room.filter((x) => x.stray)) faults.push(`${basename(f.name)}: not a file the section ships (the ten loops, their stills, products.bin and the hall)`);
+for (const f of room.filter((x) => x.stray)) faults.push(`${basename(f.name)}: not a file the section ships (the ten loops, their stills and products.bin)`);
 const SCENE_REF = new RegExp(`(?:${SCENE_IDS.join('|')})-(?:portrait|wide)\\.${H}\\.(?:${IMG})`, 'i');
 const sized = (img) => /\swidth=/.test(img) && /\sheight=/.test(img);
 let sceneImgs = 0;
@@ -286,7 +283,7 @@ for (const l of lines) {
 }
 console.log(`  ${(faults.length ? 'FAIL' : 'ok').padEnd(PENDING.length)} formats: ${byStem.size} picture(s) by name, AVIF with WebP; ${sceneImgs} scene <img> in the page, with width and height`);
 for (const f of faults) console.log(`  ${''.padEnd(PENDING.length)} ${f}`);
-console.log("  not measured here: the pixel sizes (the loops 1328 x 692 and 720 x 1280, the stills 1280 x 666 and 720 x 1280, the 1024 px lightmap), the loops' length (5.0 s), frames (120), codec (H.264 High) and missing audio track (tests/unit/room-flux.test.ts reads them), the GPU memory (the review reads __s4.state().memory), the frame cost (the probe), the Higgsfield credits (the ledger), the cloud (generated, 0 B)");
+console.log("  not measured here: the pixel sizes (the loops 1328 x 692 and 720 x 1280, the stills 1280 x 666 and 720 x 1280), the loops' length (5.0 s), frames (120), codec (H.264 High) and missing audio track (tests/unit/room-flux.test.ts reads them), the GPU memory (the review reads __s4.state().memory), the frame cost (the probe), the Higgsfield credits (the ledger), the cloud (generated, 0 B)");
 const broken = lines.filter((l) => l.enforced && l.bytes > l.limit), waiting = lines.filter((l) => l.bytes <= l.limit && l.pending > 0 && l.bytes > l.pending);
 const pendingNote = waiting.length ? `; ${waiting.length} over Sam's figure, pending him: ${waiting.map((l) => `${l.name} at ${fmt(l.bytes).trim()} against his ${fmt(l.pending).trim()}`).join(', ')}` : '';
 if (broken.length || faults.length) {

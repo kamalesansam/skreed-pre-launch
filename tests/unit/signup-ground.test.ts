@@ -204,5 +204,6 @@ test('the wiring: the loop cuts onto the texel and rests on it, renders no fog u
   const hero = read('src/scripts/hero/hero.ts');
   assert.match(hero, /if \(signup\) life\.onKill\(\(\) => signup\.dispose\(\)\);/, 'the mark goes with the island');
   const director = read('src/scripts/hero/section4/director.ts');
-  assert.match(director, /if \(inRoom \|\| seam\) \{ carousel\.look\(live \? lookX : 0, live \? lookY : 0, live && aimed\); carousel\.scissor\(null\); carousel\.update\(f\.t, f\.dt, curW, curH\); \}\n\s*tex = carousel\.out; toneDark = sceneTone\(\);/);
+  assert.match(director, /const want = on \|\| !!seam;\n\s*if \(want !== drawn\) \{ drawn = want; syncMotion\(\); \}/, 'drawn while the section is on screen or a seam runs over it (the hall-less director, 2026-11-03)');
+  assert.match(director, /if \(drawn\) \{\n\s*const live = state === 'world';\n\s*carousel\.look\(live \? lookX : 0, live \? lookY : 0, live && aimed\);\n\s*carousel\.update\(f\.t, f\.dt, curW, curH\); tex = carousel\.out; toneDark = sceneTone\(\);/);
 });

@@ -216,7 +216,7 @@ export async function startHero(o: StartOptions): Promise<void> {
   life.onKill(() => { window.__skreedTop = undefined; });
   // a section in place (the section index, scripts/shell/site-nav.ts): the page at y at once, the followers snapped to it
   // and section 4 reset for its next lap, as the jump above does for scroll 0; a landing inside section 4 (Products, its
-  // q 1) snaps the section's own followers there too, so the hall is fully in under the veil
+  // q 1) snaps the section's own followers there too, so scene 1 is fully in under the veil
   window.__skreedJump = (y) => { scrollTo({ top: y, behavior: 'instant' }); loop.snap(innerHeight > 0 ? scrollY / innerHeight : 0); ctx.room?.reset(scrollY); };
   life.onKill(() => { window.__skreedJump = undefined; });
   // the return path (family-page.md 2.2 and 13, step 3; built with round 4, section 22; the loader in full since round 5,
@@ -248,16 +248,16 @@ export async function startHero(o: StartOptions): Promise<void> {
   addEventListener('pageshow', onShow);
   life.onKill(() => removeEventListener('pageshow', onShow));
   if (HOOKS) installHooks(ctx, loop, { skyClass: () => ctx.sky.cls });
-  // section 4 (docs/specs/section-4.md 5; section-4-flux.md 5, "Loading"): its director chunk comes at idle once the intro
-  // ends (phase 0: the cloud's pass readied, so a wrap from the top has its cover), or when the quiz or the section itself
-  // comes into view (the hall's model and lightmap then, so the walk is ready by the time the third wipe is reached); the
-  // carousel, products.bin and the loops follow during the walk (section4/director.ts)
+  // section 4 (section-4-flux.md 5, "Loading", as section-4-no-hall.md 5 has it): its director chunk comes at idle once
+  // the intro ends (phase 0: the cloud's pass readied, so a wrap from the top has its cover), or when the quiz or the
+  // section itself comes into view (phase 1: the carousel's programs and scene 1's still, so the third wipe finds scene 1
+  // drawn); products.bin and scene 1's loop follow once the section is open, the other loops on arrival (section4/director.ts)
   let roomImport: Promise<RoomDirector | null> | null = null;
   const loadDirector = () => (roomImport ??= import('./section4/director.ts').then((m) => {
     if (life.dead) return null;
     const room = m.createRoomDirector({
-      renderer, avif: data.avif, reduced, touch, dpr, snapHero: (y) => loop.snap(innerHeight > 0 ? y / innerHeight : 0),
-      // a state change with no scroll event (a press at the station, a seam's end): the page scroll re-evaluates its capture set now
+      renderer, avif: data.avif, reduced, dpr, snapHero: (y) => loop.snap(innerHeight > 0 ? y / innerHeight : 0),
+      // a state change with no gesture (an arrival, a seam's end): the page scroll re-evaluates its capture set now
       onState: () => pageScroll?.notify(),
       // the section's layout read again (the intro ending, the document growing, a resize): its range moved, so the capture set is re-evaluated too; the glue spans below are measured fresh at every decision
       onLayout: () => pageScroll?.notify(),
@@ -271,26 +271,27 @@ export async function startHero(o: StartOptions): Promise<void> {
     room.resize(renderer.domElement.width, renderer.domElement.height);
     return room;
   }).catch((e: unknown) => { console.warn('section 4: the section chunk did not load; the stills stand in', e); document.getElementById('room')?.setAttribute('data-tier', 'poster'); return null; }));
-  const loadHall = () => loadDirector().then((room) => room?.load().then(() => { if (room.hall.failed) document.getElementById('room')?.setAttribute('data-tier', 'poster'); }));
+  // the scenes' phases 1 and 2 (the director falls to the poster column itself if scene 1 cannot be drawn)
+  const loadScenes = () => loadDirector().then((room) => room?.load());
   // the quiz gate (docs/specs/quiz-gate.md D1, D2, D5): section#room is hidden and data-locked until the quiz's result or
   // Skip quiz opens it (scripts/quiz/gate.ts). While locked there is no wrap from the top (canWrap, below) and no glue
-  // span at its seam (docTop reads NaN for an element with no box, below); the hall and the director chunk still load as
-  // they always did (the stage observer and afterIntro), so the hall is ready for a press on Skip quiz. The unlock's
-  // event re-evaluates the page scroll and loads the hall if nothing has; __skreedHall tells the quiz's ride whether the
-  // hall is in, and lets it wait for it (at most 1.5 s).
+  // span at its seam (docTop reads NaN for an element with no box, below); the director chunk and phase 1 still load
+  // when the quiz comes into view (the stage observer and afterIntro). The unlock's event re-evaluates the page scroll
+  // and starts phase 2 (products.bin, scene 1's loop); __skreedScenes tells the quiz's ride whether the scenes are in,
+  // and lets it wait for them (at most 1.5 s).
   const roomEl = document.getElementById('room');
   const roomLocked = () => !!roomEl?.hasAttribute('data-locked');
   // (section 5 opens with section 4: its layout is read afresh)
-  const onUnlock = () => { signup?.invalidate(); pageScroll?.notify(); void loadHall(); };
+  const onUnlock = () => { signup?.invalidate(); pageScroll?.notify(); void loadScenes(); };
   addEventListener('skreed:quiz-unlock', onUnlock);
   life.onKill(() => removeEventListener('skreed:quiz-unlock', onUnlock));
-  // the hall's own load() returns at once when its load has started (hall.ts), and it always has by the time the quiz's
-  // ride asks (the stage observer, then the unlock's listener), so the hook waits a frame at a time until the hall is in
-  // or has failed, or the director is gone; the ride races this against its 1.5 s (quiz-gate.md, amendment 2)
-  const hallSettled = () => { const h = ctx.room?.hall; return life.dead || !h || h.ready || h.failed; };
-  const untilHall = () => new Promise<void>((res) => { const tick = () => { if (hallSettled()) res(); else requestAnimationFrame(tick); }; tick(); });
-  window.__skreedHall = { get ready() { return !!ctx.room?.hall.ready; }, load: () => loadHall().then(untilHall) };
-  life.onKill(() => { window.__skreedHall = undefined; });
+  // the director's load() starts its phases and returns, and it always has by the time the quiz's ride asks (the stage
+  // observer, then the unlock's listener), so the hook waits a frame at a time until scene 1 and products.bin have
+  // settled, or the director is gone; the ride races this against its 1.5 s (quiz-gate.md, amendment 2)
+  const scenesSettled = () => life.dead || !ctx.room || ctx.room.settled();
+  const untilScenes = () => new Promise<void>((res) => { const tick = () => { if (scenesSettled()) res(); else requestAnimationFrame(tick); }; tick(); });
+  window.__skreedScenes = { get ready() { return !!ctx.room?.settled(); }, load: () => loadScenes().then(untilScenes) };
+  life.onKill(() => { window.__skreedScenes = undefined; });
   // the page scroll (section4/scroll.ts, its own chunk, marker skreed:scroll): the glue over the three seams, the wrap from
   // the top and the carousel's gestures, from the intro's end; the director is its adapter's other side. One viewport for
   // the spans is a probe's 100svh (the track is in svh, the hero's map in innerHeights)
@@ -313,9 +314,10 @@ export async function startHero(o: StartOptions): Promise<void> {
         return [{ start: S2T.PULL * vh, end: S2T.W1END * vh }, { start: Math.min(S2T.W2 * vh, quiz - vh), end: quiz }, { start: top - one, end: top + one }, { start: top + WIPE4_START * one, end: top + (WIPE4_START + ROOM_SCREENS.out) * one }].filter((x) => Number.isFinite(x.start) && Number.isFinite(x.end));
       },
       room: {
-        inRange: () => !!ctx.room?.inRange(), edge: (d) => ctx.room?.edge(d) ?? null, step: (d) => !!ctx.room?.stepScene(d),
-        back: () => { ctx.room?.back(); }, wrap: () => { void loadDirector().then((r) => r?.wrap()); },
+        inRange: () => !!ctx.room?.inRange(), edge: (d) => !!ctx.room?.edge(d), step: (d) => !!ctx.room?.stepScene(d),
+        wrap: () => { void loadDirector().then((r) => r?.wrap()); },
         canWrap: () => loop.state.introDone && !ctx.room?.lock() && !roomLocked(), lock: () => !!ctx.room?.lock(), busy: () => !!ctx.room?.busy(),
+        carried: () => ctx.room?.carried(),
       },
     });
     life.onKill(() => pageScroll?.dispose());
@@ -327,17 +329,13 @@ export async function startHero(o: StartOptions): Promise<void> {
     const extra = () => ctx.room as unknown as import('./section4/director.ts').RoomHooks | null;
     window.__s4 = {
       state: () => ctx.room?.hooks() ?? null,
-      enter: () => extra()?.enterNow() ?? false,
-      seek: (sec) => extra()?.seek(sec),
       scene: (i) => extra()?.scene(i) ?? false,
       step: (dir) => ctx.room?.stepScene(dir) ?? false,
-      back: () => ctx.room?.back() ?? false,
       wrap: () => { void loadDirector().then((r) => r?.wrap()); },
       glue: (on) => pageScroll?.glue(on),
       lights: (o) => extra()?.lights(o) ?? null,
       shade: (dark, height, solid) => extra()?.shade(dark, height, solid),
-      skip: () => window.__skreedRoom?.skip(),
-      get ready() { return !!ctx.room?.hall.ready; },
+      get ready() { return !!ctx.room?.settled(); },
     };
     // section 5's ground (section5/ground.ts): this frame's mode, the mark, the section's layout, the exit's trigger and
     // the rest, the page's readiness, the composite's draws and holds; and the bytes it writes at canvas points (device
@@ -376,7 +374,7 @@ export async function startHero(o: StartOptions): Promise<void> {
   if (watched.length && 'IntersectionObserver' in window) {
     const seen = new Map<Element, boolean>();
     const io = new IntersectionObserver((entries) => {
-      for (const e of entries) { seen.set(e.target, e.isIntersecting); if (e.isIntersecting && e.target !== trackEl) void loadHall(); }
+      for (const e of entries) { seen.set(e.target, e.isIntersecting); if (e.isIntersecting && e.target !== trackEl) void loadScenes(); }
       inView = [...seen.values()].some(Boolean);
       if (!compiled) return;
       if (inView) { canvas.style.removeProperty('visibility'); loop.start(); } else { loop.stop(); canvas.style.visibility = 'hidden'; }

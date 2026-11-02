@@ -1,7 +1,8 @@
 // Section 4 part three's loop elements (docs/specs/section-4-flux.md 4 "A loop the browser paused", 5 "Video policy" and
 // "Loading", AC7, E-S4-video; the elements, the unlock and the fetch carried over from part two's loop player, which
-// left the repository with part three): at most five <video> elements, made once and kept across laps, muted and inline, unlocked (play then pause) inside the press task and again after a
-// wrap so a browser that wants a gesture before a video may play (iOS in Low Power Mode) has had it on these elements.
+// left the repository with part three): at most five <video> elements, made once and kept across laps, muted and inline, unlocked (play then pause) on the visitor's first gesture once the section opens, and again after
+// a wrap (no press gives one since the hall left, docs/specs/section-4-no-hall.md 5), so a browser that wants a gesture
+// before a video may play (iOS in Low Power Mode) has had it on these elements.
 // A loop streams from its hashed URL into its element (never a blob: the CSP's media-src 'self') and is in once the
 // element has buffered the whole file within half a frame (the 1/48 s slack), not in after 20 s or an error; a browser
 // that stops reading ahead before the end (iOS) is nudged on once by a play and pause. One VideoTexture per element
@@ -95,7 +96,7 @@ interface Slot {
 
 export interface VideoPool {
   readonly n: number;
-  /** play then pause on every element not already playing: inside the press task and after a wrap (the gesture iOS counts); clears the refusals */
+  /** play then pause on every element not already playing: on the visitor's first gesture once the section opens and after a wrap (the gesture iOS counts); clears the refusals */
   unlock(): void;
   /** stream the loop at url into element i; true once wholly buffered, false when it failed, timed out or was stopped */
   fetch(i: number, url: string, signal?: AbortSignal): Promise<boolean>;

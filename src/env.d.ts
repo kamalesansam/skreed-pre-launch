@@ -45,24 +45,21 @@ interface Window {
     /** the fog's shade hues (Tune's "Sections 2 and 3" group; config/fog-hues.ts), read live every frame */
     fog?: { params: import('./config/fog-hues.ts').FogHueParams };
   };
-  /** section 4: the island hands the walk script a frame each step; the walk script hands back the head's turn from the keys and the drag */
+  /** section 4: the island hands the walk script a frame each step */
   __skreedRoomFrame?: (f: import('./config/room.ts').RoomFrame) => void;
-  __skreedRoomLook?: { yaw: number; drag?: number };
   /** the landing page's jump to section 1 in place (scroll 0, the hero's followers snapped, section 4 reset), installed by the island; the section index's Home and a family page's Back to top (restoring the landing page) call it */
   __skreedTop?: () => void;
   /** the landing page's jump to a section in place (the page at y, the hero's followers snapped, section 4 reset, its own followers snapped too for a landing inside it), installed by the island; the section index calls it */
   __skreedJump?: (y: number) => void;
   /** section 4: the island's side of the bridge, installed with the section's director */
   __skreedRoom?: import('./config/room.ts').RoomIsland;
-  /** the quiz gate (quiz-gate.md D4, amended): whether the hall is in, and its load, installed by the island; the quiz's ride waits on it, at most 1.5 s */
-  __skreedHall?: { readonly ready: boolean; load(): Promise<unknown> };
+  /** the quiz gate (quiz-gate.md D4, amended; section-4-no-hall.md 5): whether the scenes are in (scene 1 drawable or failed, products.bin settled), and their load, installed by the island; the quiz's ride waits on it, at most 1.5 s */
+  __skreedScenes?: { readonly ready: boolean; load(): Promise<unknown> };
   /** section 5 (section-5.md 5): the island's side of the bridge, installed with its jar chunk, and the frame it hands the DOM script each step */
   __skreedSignup?: import('./config/signup.ts').SignupIsland;
   __skreedSignupFrame?: (f: import('./config/signup.ts').SignupFrame) => void;
-  /** hooks builds: section 5's state, a follow poured, the follows set at once, the jar's still by the follows' order over --night, the running stream's clock (a number holds it there, null lets the wall clock run on), the tilt in degrees, the chunk's load */
-  __s5?: { state(): unknown; pour(id: string): void; follows(ids: readonly string[]): void; still(order: readonly string[], level?: number): Promise<{ width: number; height: number; data: Uint8Array } | null>; scrub(t: number | null): void; tilt(deg: number): void; load(): Promise<void>; readonly ready: boolean };
-  /** hooks builds: section 4's state, entering without the walk, the entry by its clock (seconds), a scene at rest, one step, the way back, the wrap, the glue on or off (section-4-flux.md 5, "Build modes") */
-  __s4?: { state(): unknown; enter(): boolean; seek(sec: number): void; scene(i: number): boolean; step(dir: 1 | -1): boolean; back(): boolean; wrap(): void; glue(on: boolean): void; lights(o: Partial<import('./scripts/hero/section4/carousel.ts').LightSetting>): import('./scripts/hero/section4/carousel.ts').LightSetting | null; shade(dark: number, height?: number, solid?: number): void; skip(): void; readonly ready: boolean };
+  /** hooks builds: section 4's state, a scene at rest, one step, the wrap, the glue on or off, the lights and the shade (section-4-flux.md 5, "Build modes") */
+  __s4?: { state(): unknown; scene(i: number): boolean; step(dir: 1 | -1): boolean; wrap(): void; glue(on: boolean): void; lights(o: Partial<import('./scripts/hero/section4/carousel.ts').LightSetting>): import('./scripts/hero/section4/carousel.ts').LightSetting | null; shade(dark: number, height?: number, solid?: number): void; readonly ready: boolean };
   // test hooks (test and staging builds only; hero-architecture.md 10)
   __skreedFreeze?: boolean;
   /** hooks builds: while frozen, the next frame advances the clock by this many seconds once, then clears it (the flash check's step capture, one frame at a time) */

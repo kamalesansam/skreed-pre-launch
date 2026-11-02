@@ -12,6 +12,9 @@ export const CHROME_PATH = process.env.CHROME_PATH || chromium.executablePath();
 // family suite's fall-path cases in back.spec.ts expect html.poster and fail), and the pixel parity specs, tuned to
 // SwiftShader's raster, are not for it.
 export const GL_ARGS = process.env.SKREED_GL === 'gpu' ? ['--ignore-gpu-blocklist', '--enable-gpu'] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
+/** on the GPU the specs run in the installed Chrome (channel chrome), as the capture scripts do: on a loaded machine the island's rows that wait on a seam, an arrival or a settle time out on SwiftShader */
+export const GPU = process.env.SKREED_GL === 'gpu';
+export const CHANNEL: 'chrome' | undefined = GPU ? 'chrome' : undefined;
 
 /** The three rendering setups of hero.md section 7. */
 export const SETUPS = {
@@ -24,7 +27,7 @@ export const SETUPS = {
 } satisfies Record<string, BrowserContextOptions>;
 
 export function launch(extraArgs: string[] = []): Promise<Browser> {
-  return chromium.launch({ executablePath: CHROME_PATH, args: [...GL_ARGS, ...extraArgs] });
+  return chromium.launch({ ...(GPU ? { channel: CHANNEL } : { executablePath: CHROME_PATH }), args: [...GL_ARGS, ...extraArgs] });
 }
 
 /** The local wrangler dev port. Workflows on one machine set their own (SKREED_PORT) so no run shares a server. */

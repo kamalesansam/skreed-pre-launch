@@ -94,7 +94,7 @@ import { chipInk, chipRim, resultTones, type ResultTones } from '../../src/confi
 import { ROOM_COPY } from '../../src/config/room.ts';
 import { SHADES } from '../../src/config/shades.gen.ts';
 import { easeStandard } from '../../src/scripts/hero/section4/scroll-math.ts';
-import { HALL_WAIT_MS, RIDE_GUARD_MS, RIDE_MS } from '../../src/scripts/quiz/gate.ts';
+import { RIDE_GUARD_MS, RIDE_MS, SCENES_WAIT_MS } from '../../src/scripts/quiz/gate.ts';
 
 /** the lazy chunk (deck.ts with config/quiz.ts), imported by Quiz.astro's loader within a screen of the section */
 const DECK = /\/deck\.[^/?]*\.js(\?.*)?$/;   // with the loader's retry query (?r=) too
@@ -3657,12 +3657,12 @@ test('Pictures, a tap dropped by the guard at 390 x 844: a touch press on an ans
 // someone takes the quiz, section 4 should be locked ... the moment they click on skip quiz, it should go to section 4
 // automatically, with the transition included"). section#room is rendered hidden and data-locked, so the page ends at
 // the quiz; the result or Skip quiz opens it (room_unlock, the visit's flag in sessionStorage, skreed:quiz-unlock), and
-// a press on Skip quiz rides the page to the hall over 1.2 s on --ease-standard (one instant scrollTo a frame, ended by
+// a press on Skip quiz rides the page to scene 1 (the hall until 2026-11-02, docs/specs/section-4-no-hall.md) over 1.2 s on --ease-standard (one instant scrollTo a frame, ended by
 // any wheel, touch or key from 350 ms after the press or by a scroll it did not write), then moves focus (a keyboard
 // press) or announces where it landed (a pointer press). The poster tier carries all of it but the third wipe and the
 // glue, so most cases run there; the 3D cases run on SwiftShader by the island's hooks (room.spec.ts's pattern), skip
-// the intro, and take the island's long start-up. Built as the spec's Built paragraph records: the hall loads lock or
-// no lock, and a ride on the 3D path waits for it at most 1.5 s. Written against the spec on 2026-10-26 and not yet run
+// the intro, and take the island's long start-up. Built as the spec's Built paragraph records: the scenes load lock or
+// no lock, and a ride on the 3D path waits for them at most 1.5 s. Written against the spec on 2026-10-26 and not yet run
 // (no Playwright browser on the build machine; the build record says so).
 
 type RideSample = { t: number; y: number; ride: boolean };
@@ -3674,8 +3674,8 @@ const opened = (by: string) => ({ hidden: false, locked: false, open: by, ride: 
 const gateEvents = async (page: Page): Promise<Ev[]> => (await events(page)).filter(([n]) => n === 'quiz_skip' || n === 'room_unlock');
 /** the document's end, the quiz's foot, section 4's top and the scroll position, in document px */
 const ends = (page: Page) => page.evaluate(() => ({ doc: document.documentElement.scrollHeight, quiz: document.getElementById('find')!.getBoundingClientRect().bottom + scrollY, room: document.getElementById('room')!.getBoundingClientRect().top + scrollY, y: scrollY }));
-/** section 4's own files: the walk chunk, the director chunk, hall.bin, its lightmap and its stills */
-const ROOM_FILES = /\/_astro\/(walk|director|hall)[.-][^/]*\.(js|bin|avif|webp)(\?|$)/;
+/** section 4's own files: the walk chunk, the director chunk, products.bin, the scenes' stills and loops */
+const ROOM_FILES = /\/_astro\/(walk|director|products|cove|grove|ember|palace|dawn)[.-][^/]*\.(js|bin|avif|webp|mp4)(\?|$)/;
 const scrollAt = (page: Page) => page.evaluate(() => scrollY);
 /** the quiz's top at the viewport's top */
 const toQuiz = (page: Page) => page.evaluate(() => { const top = document.getElementById('find')!.getBoundingClientRect().top + scrollY; scrollTo({ top, behavior: 'instant' }); window.__skreedSnap?.(top / innerHeight); });
@@ -3752,11 +3752,11 @@ test('QG AC1 the lock on the poster tier: section#room hidden and data-locked fr
   await openQuiz(page, baseURL);
   expect(await gateWatched(page), 'parsed hidden and locked, nothing changed, locked at DOMContentLoaded').toEqual({ parsed: { hidden: true, locked: true }, changes: [], atDCL: { hidden: true, locked: true, open: null } });
   expect(await roomState(page)).toEqual(LOCKED);
-  // out of the accessibility tree: no node named as the section or its prompt is
+  // out of the accessibility tree: no node named as the section is
   const cdp = await page.context().newCDPSession(page);
   const { nodes } = await cdp.send('Accessibility.getFullAXTree') as { nodes: { name?: { value: string }; ignored?: boolean }[] };
   expect(nodes.filter((n) => !n.ignored && n.name?.value === ROOM_COPY.aria), 'section 4 absent from the tree').toEqual([]);
-  expect(nodes.filter((n) => !n.ignored && n.name?.value === ROOM_COPY.enter), 'and its prompt').toEqual([]);
+  expect(nodes.filter((n) => !n.ignored && n.name?.value === ROOM_COPY.worldAria), 'nor its pad').toEqual([]);
   // the document ends at the quiz's foot
   const e = await ends(page);
   expect(Math.abs(e.doc - e.quiz), `scrollHeight ${e.doc} against the quiz's foot ${e.quiz}`).toBeLessThanOrEqual(1);
@@ -3766,7 +3766,7 @@ test('QG AC1 the lock on the poster tier: section#room hidden and data-locked fr
   expect(Math.abs(after.y + vh - after.quiz), 'scrolled to its end, the quiz\'s foot is at the viewport\'s foot').toBeLessThanOrEqual(1);
   await toQuiz(page);
   await page.waitForTimeout(5_000);
-  expect(fetched, 'no walk chunk, director chunk, hall.bin, lightmap or still while locked').toEqual([]);
+  expect(fetched, 'no walk chunk, director chunk, products.bin, still or loop while locked').toEqual([]);
   expect(await roomState(page)).toEqual(LOCKED);
 });
 
@@ -3970,7 +3970,7 @@ test('QG AC4 what ends the ride (poster tier, 390 x 844): a wheel at 0.5 s (afte
       expect(yEnd).toBeLessThanOrEqual(yAt + c.own + 60);
       expect(room - yEnd, `${c.name}: short of the target`).toBeGreaterThan(40);
       expect(await page.evaluate(() => document.activeElement?.id || document.activeElement?.tagName || ''), `${c.name}: no focus moved`).toBe(focusedBefore);
-      await expect(page.locator('#rmEnter')).not.toBeFocused();
+      await expect(page.locator('#rmScenes .rm-scene-name').first()).not.toBeFocused();
     } else {
       const s = await rideOver(page);
       expectRide(c.name, s, (await ends(page)).room);
@@ -4009,7 +4009,7 @@ test('QG AC4 under reduced motion the page is at the target in the first frame a
   await ctx.close();
 });
 
-test('QG AC5 the arrival (poster tier): a keyboard press (Enter, and Space) lands with focus on #rmEnter, matching :focus-visible, named "Enter Skreed universe", scrollY unchanged by the focus; a click leaves focus out of section 4 and off Skip quiz and #qzLive takes the section\'s name once', async ({ browser, baseURL }) => {
+test('QG AC5 the arrival (poster tier): a keyboard press (Enter, and Space) lands with focus on scene 1\'s name at the column\'s top, matching :focus-visible, named "Phone case", scrollY unchanged by the focus; a click leaves focus out of section 4 and off Skip quiz and #qzLive takes the section\'s name once', async ({ browser, baseURL }) => {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await ctx.newPage();
   await openQuiz(page, baseURL);
@@ -4024,9 +4024,10 @@ test('QG AC5 the arrival (poster tier): a keyboard press (Enter, and Space) land
     const s = await rideOver(page);
     expectRide(`a ${key} press`, s, (await ends(page)).room);
     const landed = await scrollAt(page);
-    await expect(page.locator('#rmEnter'), `${key}: focus on the prompt (the pad is not drawn on the poster tier)`).toBeFocused();
-    expect(await page.locator('#rmEnter').evaluate((e) => e.matches(':focus-visible')), `${key}: a keyboard focus`).toBe(true);
-    await expect(page.locator('#rmEnter')).toHaveAccessibleName(ROOM_COPY.enter);
+    const name = page.locator('.rm-scene[data-i="0"] .rm-scene-name');
+    await expect(name, `${key}: focus on scene 1's name (the pad is not drawn on the poster tier)`).toBeFocused();
+    expect(await name.evaluate((e) => e.matches(':focus-visible')), `${key}: a keyboard focus`).toBe(true);
+    await expect(name).toHaveAccessibleName('Phone case');
     await page.waitForTimeout(300);
     expect(Math.abs(await scrollAt(page) - landed), `${key}: the focus moved no scroll`).toBeLessThanOrEqual(1);
   }
@@ -4100,7 +4101,7 @@ test('QG AC1 and AC6 on ?tier=hero3d with the glue on and section 4 locked: a wh
 });
 
 for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
-  test(`QG AC4 and AC5 on ?tier=hero3d at ${vp.width} x ${vp.height} with the hall resident (?room=open): a keyboard press rides to section 4's q 1 within 1 px, the third wipe's progress between 0 and 1 during the ride and 1 after, focus on #rmPad with its name, and with the glue on the landing is not settled`, async ({ browser, baseURL }) => {
+  test(`QG AC4 and AC5 on ?tier=hero3d at ${vp.width} x ${vp.height} with the scenes resident (?room=open): a keyboard press rides to section 4's q 1 within 1 px, scene 1, the third wipe's progress between 0 and 1 during the ride and 1 after, focus on #rmPad with its name or on scene 1's name the arrival moved it to, and with the glue on the landing is not settled`, async ({ browser, baseURL }) => {
     test.setTimeout(900_000);
     const ctx = await browser.newContext({ viewport: vp, deviceScaleFactor: 1 });
     const page = await ctx.newPage();
@@ -4124,8 +4125,12 @@ for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
     expectRide('the ride to q 1', s, Math.round(e.room + one));
     expect(progress.some((q) => q > 0.02 && q < 0.98), 'the wipe part way during the ride').toBe(true);
     await expect.poll(async () => (await s4q(page))!.q, { timeout: 5_000 }).toBeGreaterThan(0.98);
-    await expect(page.locator('#rmPad')).toBeFocused();
-    await expect(page.locator('#rmPad')).toHaveAccessibleName(ROOM_COPY.stageAria);
+    // the arrival at scene 1, then focus: on the pad when the arrival came first (the ride's last frames are within 2 px of
+    // scene 1), on scene 1's name when the arrival came after the ride's focus and took it on (walk.ts arrive())
+    await expect.poll(async () => (await s4q(page))!.state, { timeout: 10_000 }).toBe('world');
+    await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? ''), { timeout: 5_000 }).toMatch(/^(rmPad|rmName-cove)$/);
+    if (await page.evaluate(() => document.activeElement?.id === 'rmPad')) await expect(page.locator('#rmPad')).toHaveAccessibleName(ROOM_COPY.worldAria);
+    else await expect(page.locator('#rmName-cove')).toHaveAccessibleName(/^Phone case/);
     expect(await gateEvents(page), 'the section was open: the ride alone').toEqual([['room_unlock', { by: 'visit' }], ['quiz_skip', { q: 0 }]]);
     const landed = await scrollAt(page);
     await page.waitForTimeout(1_200);
@@ -4135,19 +4140,19 @@ for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
   });
 }
 
-test('QG AC4 on ?tier=hero3d at 390 x 844 with a cold hall (hall.bin held back by route): the press unlocks and the ride waits, "Loading..." with aria-busy on the control and no scroll, until the 1.5 s cap, then rides over the fog and lands at q 1 within 1 px with the label back; released, the hall arrives and the wipe plays to q 1', async ({ browser, baseURL }) => {
+test('QG AC4 on ?tier=hero3d at 390 x 844 with cold scenes (scene 1\'s still and loop and products.bin held back by route): the press unlocks and the ride waits, "Loading..." with aria-busy on the control and no scroll, until the 1.5 s cap, then rides over the fog and lands at q 1 within 1 px with the label back, the section still approaching; released, scene 1 arrives and the wipe plays to it', async ({ browser, baseURL }) => {
   test.setTimeout(900_000);
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  // the hall's model held on the network until released: the hall cannot become ready, however fast the machine
+  // scene 1's still and loop and products.bin held on the network until released: the scenes cannot settle, however fast the machine
   let release = (): void => undefined; const held = new Promise<void>((r) => { release = r; });
-  await page.route(/\/_astro\/hall\.[^/?]*\.bin(\?|$)/, async (route) => { await held; await route.continue(); });
+  await page.route(/\/_astro\/(?:cove-(?:wide|portrait)\.[^/?]*\.(?:avif|webp|mp4)|products\.[^/?]*\.bin)(\?|$)/, async (route) => { await held; await route.continue(); });
   await open3dQuiz(page, baseURL, '&glue=0');
   expect(await roomState(page)).toEqual(LOCKED);
   await atQuiz3d(page);
-  expect(await page.evaluate(() => !!window.__s4?.ready), 'the hall is cold').toBe(false);
+  expect(await page.evaluate(() => !!window.__s4?.ready), 'the scenes are cold').toBe(false);
   const yStart = await scrollAt(page);
   await sampleRide(page);
   await pressSkip(page);
@@ -4159,23 +4164,25 @@ test('QG AC4 on ?tier=hero3d at 390 x 844 with a cold hall (hall.bin held back b
   await page.waitForTimeout(1_000);
   expect(await scrollAt(page), 'no scroll a second into the wait').toBe(yStart);
   await expect(page.locator('#qzSkip')).toHaveAttribute('aria-busy', 'true');
-  // the cap: the wait ends at HALL_WAIT_MS, the label comes back and the ride runs over the fog
-  await expect(page.locator('#qzSkip')).not.toHaveAttribute('aria-busy', 'true', { timeout: HALL_WAIT_MS });
+  // the cap: the wait ends at SCENES_WAIT_MS, the label comes back and the ride runs over the fog
+  await expect(page.locator('#qzSkip')).not.toHaveAttribute('aria-busy', 'true', { timeout: SCENES_WAIT_MS });
   await expect(page.locator('#qzSkip')).toHaveAccessibleName(Q.skip);
   const s = await rideOver(page);
   const from = s.samples[0].y, pressIdx = s.samples.findIndex((x) => x.t >= s.pressAt), moveIdx = s.samples.findIndex((x, k) => k > pressIdx && Math.abs(x.y - from) > 0.5);
   expect(moveIdx, 'the page moved').toBeGreaterThan(pressIdx);
-  expect(s.samples[moveIdx].t - s.pressAt, 'and not before the cap, less a frame').toBeGreaterThanOrEqual(HALL_WAIT_MS - 2 * FRAME);
-  expect(s.samples[moveIdx].t - s.pressAt, 'nor long after it').toBeLessThan(HALL_WAIT_MS + 400);
+  expect(s.samples[moveIdx].t - s.pressAt, 'and not before the cap, less a frame').toBeGreaterThanOrEqual(SCENES_WAIT_MS - 2 * FRAME);
+  expect(s.samples[moveIdx].t - s.pressAt, 'nor long after it').toBeLessThan(SCENES_WAIT_MS + 400);
   const e = await ends(page), one = await page.evaluate(() => document.getElementById('rmStage')!.offsetHeight);
   expect(Math.abs(e.y - Math.round(e.room + one)), 'landed at q 1, over the fog').toBeLessThanOrEqual(1);
-  expect(await page.evaluate(() => !!window.__s4?.ready), 'the hall still out at the landing').toBe(false);
+  expect(await page.evaluate(() => !!window.__s4?.ready), 'the scenes still out at the landing').toBe(false);
+  expect((await s4q(page))!.state, 'the section waits in its approach, over the fog, until scene 1 can be drawn').toBe('approach');
   expect(await gateEvents(page)).toEqual([['quiz_skip', { q: 0 }], ['room_unlock', { by: 'skip' }]]);
-  // released: the hall arrives and the third wipe plays on its clock to q 1
+  // released: scene 1 arrives, the third wipe plays on its clock to it, and the section is in the scenes
   release();
   await page.waitForFunction(() => window.__s4?.ready, null, { timeout: 300_000, polling: 500 });
   await expect.poll(async () => (await s4q(page))!.q, { timeout: 5_000 }).toBeGreaterThan(0.98);
-  expect(Math.abs(await scrollAt(page) - Math.round(e.room + one)), 'the page did not move for the hall').toBeLessThanOrEqual(1);
+  await expect.poll(async () => (await s4q(page))!.state, { timeout: 10_000 }).toBe('world');
+  expect(Math.abs(await scrollAt(page) - Math.round(e.room + one)), 'the page did not move for the scenes').toBeLessThanOrEqual(1);
   expect(errors).toEqual([]);
   await ctx.close();
 });

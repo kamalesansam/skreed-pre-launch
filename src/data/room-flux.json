@@ -2034,7 +2034,7 @@
   ]
  },
  "flashSeams": {
-  "//": "AC5 over the rest of its list: both seams, the way back and the wrap (36 frames each at 1/24 s) and five steps back to back at Tune's shortest stepMs (78 frames), captured by scripts/room/step-frames.mjs from the hooks build one tick at a time at both viewports and checked by scripts/room/loop-flash.py on 2026-10-23; a region fails with more than 6 turns in a second (the burst at 1280 x 800 reaches 6 red turns, ember's saturated sky in and out at the short step, the most the rule allows)",
+  "//": "AC5 over the rest of its list: both seams and the wrap (36 frames each at 1/24 s) and five steps back to back at Tune's shortest stepMs (78 frames), captured by scripts/room/step-frames.mjs from the hooks build one tick at a time at both viewports and checked by scripts/room/loop-flash.py on 2026-10-23; a region fails with more than 6 turns in a second (the burst at 1280 x 800 reaches 6 red turns, ember's saturated sky in and out at the short step, the most the rule allows); the way back into the hall and its two records left with the hall on 2026-11-02 (docs/specs/section-4-no-hall.md)",
   "checked": "2026-10-23",
   "sequences": [
    {
@@ -2059,19 +2059,6 @@
     "pixelMost": 4,
     "regionShare": 1,
     "regionTurns": 2,
-    "redShare": 0,
-    "redTurns": 0,
-    "verdict": "pass"
-   },
-   {
-    "kind": "seam",
-    "name": "back",
-    "about": "the way back from scene 1 into the hall",
-    "viewport": "1280x800",
-    "frames": 36,
-    "pixelMost": 5,
-    "regionShare": 0.5158,
-    "regionTurns": 1,
     "redShare": 0,
     "redTurns": 0,
     "verdict": "pass"
@@ -2113,19 +2100,6 @@
     "regionShare": 1,
     "regionTurns": 2,
     "redShare": 0,
-    "redTurns": 0,
-    "verdict": "pass"
-   },
-   {
-    "kind": "seam",
-    "name": "back",
-    "about": "the way back from scene 1 into the hall",
-    "viewport": "390x844",
-    "frames": 36,
-    "pixelMost": 6,
-    "regionShare": 0.3636,
-    "regionTurns": 1,
-    "redShare": 0.0005,
     "redTurns": 0,
     "verdict": "pass"
    },

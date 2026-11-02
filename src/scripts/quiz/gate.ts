@@ -2,11 +2,11 @@
 // takes the quiz, section 4 should be locked ... the moment they click on skip quiz, it should go to section 4
 // automatically, with the transition included"). section#room is rendered hidden and data-locked (Room.astro), so the
 // page ends at the quiz; this module opens it, by the result or by a press on Skip quiz (unlock), and on a press rides
-// the page down through the third wipe to the hall fully in over 1.2 s on --ease-standard, one instant scrollTo a frame
-// in the pattern of the glue's settle (section4/scroll.ts; E-QG-ride), ended by any wheel, touch or key from 350 ms
-// after the press, or by a scroll it did not write. On the 3D path the ride waits for the hall first, at most 1.5 s
-// (the hero's hook, window.__skreedHall), so the wipe it rides through is drawn; the poster tier rides at once, to the
-// section's top. In the quiz's lazy chunk (deck.ts imports it) on every tier, since the poster tier rides too and has
+// the page down through the third wipe to scene 1 fully in (section-4-no-hall.md 2; the hall until 2026-11-02) over
+// 1.2 s on --ease-standard, one instant scrollTo a frame in the pattern of the glue's settle (section4/scroll.ts;
+// E-QG-ride), ended by any wheel, touch or key from 350 ms after the press, or by a scroll it did not write. On the 3D
+// path the ride waits for the scenes first, at most 1.5 s (the hero's hook, window.__skreedScenes), so the wipe it rides
+// through is drawn; the poster tier rides at once, to the section's top. In the quiz's lazy chunk (deck.ts imports it) on every tier, since the poster tier rides too and has
 // no island; the hero hears the unlock through a DOM event (hero.ts). Imports only config/quiz.ts and track.ts, and
 // touches the DOM only inside its functions, so tests/unit/quiz-gate.test.ts imports it under node; the ease is the
 // quiz's own copy of scroll-math.ts's cubicBezier, held equal to easeStandard by that test (importing scroll-math.ts
@@ -24,8 +24,8 @@ export const EASE = [0.2, 0, 0, 1] as const;
 export const RIDE_GUARD_MS = 350;
 /** a scroll this far from the ride's last write is someone else's (the scrollbar, find-in-page, a focus): the ride ends where it is (scroll.ts's own test for its settle) */
 export const RIDE_DRIFT_PX = 1.5;
-/** on the 3D path the ride waits for the hall at most this long (it is loading from the unlock) */
-export const HALL_WAIT_MS = 1500;
+/** on the 3D path the ride waits for the scenes at most this long (scene 1's still and products.bin, loading from the unlock) */
+export const SCENES_WAIT_MS = 1500;
 
 /** A CSS cubic-bezier(x1, y1, x2, y2) as a function of progress 0 to 1 (Newton's method, then bisection): scroll-math.ts's, copied so the deck chunk shares nothing with the glue. */
 export function cubicBezier(x1: number, y1: number, x2: number, y2: number): (x: number) => number {
@@ -53,7 +53,7 @@ export const ease: (x: number) => number = cubicBezier(...EASE);
 
 /** the page's position p of the way through the ride (0 at the press's frame, 1 at the landing), from `from` to `to` */
 export const rideY = (from: number, to: number, p: number): number => (p >= 1 ? to : p <= 0 ? from : from + (to - from) * ease(p));
-/** where the ride lands: section 4's q 1 (its document top plus one 100svh, the hall fully in) on the 3D path, its top on the poster tier; rounded and clamped to the page's scroll range */
+/** where the ride lands: section 4's q 1 (its document top plus one 100svh, scene 1 fully in) on the 3D path, its top on the poster tier; rounded and clamped to the page's scroll range */
 export const rideTarget = (o: { top: number; one: number; poster: boolean; max: number }): number => Math.max(0, Math.min(Math.max(0, o.max), Math.round(o.poster ? o.top : o.top + o.one)));
 
 const room = () => document.getElementById('room');
@@ -68,7 +68,7 @@ const flag = () => { try { sessionStorage.setItem(QUIZ_GATE.key, '1'); } catch {
 
 /**
  * Opens section 4 (D2): nothing when it is not locked; else hidden and data-locked go, data-open says how, the visit's
- * flag is written, room_unlock is tracked and the hero hears skreed:quiz-unlock (it loads the hall and re-evaluates
+ * flag is written, room_unlock is tracked and the hero hears skreed:quiz-unlock (it loads the scenes and re-evaluates
  * the page scroll). Section 5 (section#signup), locked with the room since it follows it in the page (D9), opens in the
  * same call. True when this call opened it.
  */
@@ -87,20 +87,20 @@ export function unlock(by: UnlockBy): boolean {
 export interface RideOptions {
   /** reduced motion at the press: the ride is one instant scrollTo, a frame after the press */
   reduced: boolean;
-  /** the press matched :focus-visible: at the landing focus moves to the hall's pad (the prompt on the poster tier) */
+  /** the press matched :focus-visible: at the landing focus moves to the section's pad (scene 1's name on the poster tier) */
   keyboard: boolean;
-  /** the control's words while the hall is awaited ("Loading..."), and back (null) */
+  /** the control's words while the scenes are awaited ("Loading..."), and back (null) */
   label(text: string | null): void;
   /** one announcement through the quiz's live region (a pointer press): the destination's name */
   announce(text: string): void;
 }
 
 let active = false;
-/** a ride runs, the hall's wait included (a second press does nothing) */
+/** a ride runs, the scenes' wait included (a second press does nothing) */
 export const riding = (): boolean => active;
 
 /**
- * The ride (D4): after the hall's wait on the 3D path and one frame for the shown section's layout, the page scrolls
+ * The ride (D4): after the scenes' wait on the 3D path and one frame for the shown section's layout, the page scrolls
  * from where it is to the target over RIDE_MS on --ease-standard, one instant scrollTo a frame, the target clamped to
  * the page's range again each frame (the track can collapse under a failure); ended at once by a wheel, a touchstart or
  * a keydown that is not a repeat from RIDE_GUARD_MS after the press, or by a scroll more than RIDE_DRIFT_PX from its
@@ -119,12 +119,13 @@ export async function ride(control: HTMLElement, o: RideOptions): Promise<void> 
   const ears: [string, EventListener, AddEventListenerOptions][] = [['wheel', input, { passive: true }], ['touchstart', input, { passive: true }], ['keydown', input, {}], ['scroll', onScroll, { passive: true }]];
   for (const [n, f, opt] of ears) addEventListener(n, f, opt);
   try {
-    // the hall: on the 3D path it loads from the unlock, and the ride waits for it, at most HALL_WAIT_MS, so the third
-    // wipe it rides through is drawn (Sam: "with the transition included"); Begin's loading pattern on the control meanwhile
-    const hall = window.__skreedHall;
-    if (!poster(r) && hall && !hall.ready) {
+    // the scenes: on the 3D path scene 1 and products.bin load from the unlock, and the ride waits for them, at most
+    // SCENES_WAIT_MS, so the third wipe it rides through is drawn (Sam: "with the transition included"); Begin's loading
+    // pattern on the control meanwhile
+    const scenes = window.__skreedScenes;
+    if (!poster(r) && scenes && !scenes.ready) {
       control.setAttribute('aria-disabled', 'true'); control.setAttribute('aria-busy', 'true'); o.label(Q.loading);
-      await Promise.race([hall.load(), wait(HALL_WAIT_MS)]);
+      await Promise.race([scenes.load(), wait(SCENES_WAIT_MS)]);
       control.removeAttribute('aria-disabled'); control.removeAttribute('aria-busy'); o.label(null);
     }
     await frame();   // the shown section's layout settles (the director's and the hero's observers run in it)
@@ -143,9 +144,9 @@ export async function ride(control: HTMLElement, o: RideOptions): Promise<void> 
         if (ended) return;
       }
     }
-    // the arrival: the pad's name is read as it takes focus (the prompt's on the poster tier, where the pad is not drawn); a
-    // pointer press leaves focus out of the section and hears the destination's name once
-    const dest = document.getElementById(isPoster ? 'rmEnter' : 'rmPad');
+    // the arrival: the pad's name is read as it takes focus (scene 1's name on the poster tier, where the pad is not drawn
+    // and the column starts with it); a pointer press leaves focus out of the section and hears the destination's name once
+    const dest = isPoster ? document.querySelector<HTMLElement>('#rmScenes .rm-scene-name') : document.getElementById('rmPad');
     if (o.keyboard) dest?.focus({ preventScroll: true });
     else { control.blur(); o.announce((isPoster ? r : dest)?.getAttribute('aria-label') ?? ''); }
   } finally {

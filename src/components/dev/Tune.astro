@@ -62,31 +62,9 @@
     <label for="f-hueCycle">One patch, in and out (s) <output id="o-f-hueCycle"></output><input id="f-hueCycle" type="range" min="4" max="30" step="0.5"></label>
     <label for="f-hueSize">Patch scale (higher is smaller) <output id="o-f-hueSize"></output><input id="f-hueSize" type="range" min="0.4" max="1.4" step="0.05"></label>
     <label for="f-hueCover">Patch cover <output id="o-f-hueCover"></output><input id="f-hueCover" type="range" min="0" max="1" step="0.01"></label>
-    <h3>Section 4: the entrance (docs/specs/section-4.md)</h3>
-    <label for="r-eye">Eye height (m) <output id="o-r-eye"></output><input id="r-eye" type="range" min="0.6" max="1.8" step="0.01"></label>
-    <label for="r-fov">Field of view (deg) <output id="o-r-fov"></output><input id="r-fov" type="range" min="40" max="100" step="1"></label>
-    <label for="r-lookYaw">Head sway from the pointer (deg) <output id="o-r-lookYaw"></output><input id="r-lookYaw" type="range" min="0" max="25" step="0.5"></label>
-    <label for="r-lookPitch">Head sway, pitch (deg) <output id="o-r-lookPitch"></output><input id="r-lookPitch" type="range" min="0" max="12" step="0.25"></label>
-    <label for="r-keySpeed">Arrow-key walk (m per s) <output id="o-r-keySpeed"></output><input id="r-keySpeed" type="range" min="0.2" max="2" step="0.05"></label>
-    <label for="r-exposure">Light exposure <output id="o-r-exposure"></output><input id="r-exposure" type="range" min="0.2" max="3" step="0.01"></label>
-    <label for="r-albedo">Concrete grey <output id="o-r-albedo"></output><input id="r-albedo" type="range" min="0.1" max="1" step="0.01"></label>
-    <label for="r-seams">Seam darkness <output id="o-r-seams"></output><input id="r-seams" type="range" min="0" max="1" step="0.01"></label>
-    <label for="r-grain">Concrete grain <output id="o-r-grain"></output><input id="r-grain" type="range" min="0" max="0.3" step="0.005"></label>
-    <label for="r-vignette">Vignette, centre boost <output id="o-r-vignette"></output><input id="r-vignette" type="range" min="1" max="3" step="0.05"></label>
-    <label for="r-corners">Vignette, corners <output id="o-r-corners"></output><input id="r-corners" type="range" min="0.3" max="1.2" step="0.01"></label>
-    <label for="r-bleach">Bleach bypass <output id="o-r-bleach"></output><input id="r-bleach" type="range" min="0" max="1" step="0.05"></label>
-    <label for="r-split">Colour split (px) <output id="o-r-split"></output><input id="r-split" type="range" min="0" max="20" step="1"></label>
-    <label for="r-gloss">Floor gloss <output id="o-r-gloss"></output><input id="r-gloss" type="range" min="0" max="2.5" step="0.05"></label>
-    <label for="r-bloom">Bloom on laptops <output id="o-r-bloom"></output><input id="r-bloom" type="range" min="0" max="1.5" step="0.05"></label>
-    <label for="r-noise">Film grain <output id="o-r-noise"></output><input id="r-noise" type="range" min="0" max="0.05" step="0.001"></label>
-    <label for="r-stationDist">Door station, metres from the door <output id="o-r-stationDist"></output><input id="r-stationDist" type="range" min="0.6" max="2.7" step="0.05"></label>
-    <label for="r-door">Door: 0 leaves, 1 slab, 2 none <output id="o-r-door"></output><input id="r-door" type="range" min="0" max="2" step="1"></label>
-    <label for="r-seamGlow">Door seam glow <output id="o-r-seamGlow"></output><input id="r-seamGlow" type="range" min="0" max="3" step="0.05"></label>
-    <label for="r-promptChip">[E] before the prompt (0 off, 1 on) <output id="o-r-promptChip"></output><input id="r-promptChip" type="range" min="0" max="1" step="1"></label>
-    <label for="r-handoff">Hand-off: 0 wipe, 1 cut, 2 fade <output id="o-r-handoff"></output><input id="r-handoff" type="range" min="0" max="2" step="1"></label>
-    <label for="r-mouseLook">Mouse-look drag in the hall (0 off, 1 on) <output id="o-r-mouseLook"></output><input id="r-mouseLook" type="range" min="0" max="1" step="1"></label>
+    <h3>Section 4: the way in (docs/specs/section-4-no-hall.md)</h3>
+    <label for="r-handoff">Hand-off from the fog: 0 wipe, 1 cut, 2 fade <output id="o-r-handoff"></output><input id="r-handoff" type="range" min="0" max="2" step="1"></label>
     <h3>Section 4: the scenes (docs/specs/section-4-flux.md 9 X-13; the ranges are config/room.ts ROOM_RANGES)</h3>
-    <label for="r-bubbleMs">Bubble (ms) <output id="o-r-bubbleMs"></output><input id="r-bubbleMs" type="range" min="1200" max="3200" step="10"></label>
     <label for="r-stepMs">Step (ms) <output id="o-r-stepMs"></output><input id="r-stepMs" type="range" min="400" max="1200" step="10"></label>
     <label for="r-sweepDeg">Arc, wide class (deg) <output id="o-r-sweepDeg"></output><input id="r-sweepDeg" type="range" min="40" max="120" step="1"></label>
     <label for="r-sweepDegPortrait">Arc, portrait stage (deg) <output id="o-r-sweepDegPortrait"></output><input id="r-sweepDegPortrait" type="range" min="12" max="80" step="1"></label>
@@ -97,7 +75,6 @@
     <label for="r-lightBoost">Light-up boost <output id="o-r-lightBoost"></output><input id="r-lightBoost" type="range" min="0" max="0.5" step="0.01"></label>
     <label for="r-keyLightMs">Key light fade (ms) <output id="o-r-keyLightMs"></output><input id="r-keyLightMs" type="range" min="300" max="2000" step="50"></label>
     <label for="r-snapMs">Glue settle (ms) <output id="o-r-snapMs"></output><input id="r-snapMs" type="range" min="200" max="900" step="10"></label>
-    <label for="r-lapReset">Next lap: 0 stay in the scenes, 1 walk again <output id="o-r-lapReset"></output><input id="r-lapReset" type="range" min="0" max="1" step="1"></label>
   </div>
 </details>
 <script>if (new URLSearchParams(location.search).has('tune')) import('../../scripts/dev/tune.ts');</script>

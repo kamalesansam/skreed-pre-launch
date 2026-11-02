@@ -6,15 +6,15 @@
 // and one in each footer after the Back conditional, none in the results or the gift, with quiz.css's footer grid and
 // no-JS rule, and deck.ts's wiring; (c) the ride's maths in gate.ts: RIDE_MS, the ease against scroll-math.ts's
 // easeStandard and tokens.css's --ease-standard, rideY and rideTarget; (d) hero.ts's docTop (NaN for an element with no
-// box), canWrap carrying the lock, the unlock's listener and the hall hook, with the hall's loading kept lock or no lock
-// (the spec's D5 as amended at build: the hall must be ready when Skip quiz is pressed), and director.ts's layout read,
-// begin() and wrap() while locked; (e) gate.ts importing only config/quiz.ts and track.ts, and the copy rules over the
-// new files.
+// box), canWrap carrying the lock, the unlock's listener and the scenes' hook (the hall's until 2026-11-02,
+// docs/specs/section-4-no-hall.md 5), with the section's loading kept lock or no lock (the spec's D5 as amended at build:
+// the section must be ready when Skip quiz is pressed), and director.ts's layout read, begin() and wrap() while locked;
+// (e) gate.ts importing only config/quiz.ts and track.ts, and the copy rules over the new files.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { QUIZ_COPY, QUIZ_GATE } from '../../src/config/quiz.ts';
-import { EASE, HALL_WAIT_MS, RIDE_DRIFT_PX, RIDE_GUARD_MS, RIDE_MS, ease, rideTarget, rideY } from '../../src/scripts/quiz/gate.ts';
+import { EASE, RIDE_DRIFT_PX, RIDE_GUARD_MS, RIDE_MS, SCENES_WAIT_MS, ease, rideTarget, rideY } from '../../src/scripts/quiz/gate.ts';
 import { EASE_STANDARD, easeStandard } from '../../src/scripts/hero/section4/scroll-math.ts';
 import { inlineScript } from '../../src/components/shell/inlineScript.ts';
 
@@ -29,7 +29,7 @@ const code = (text: string) => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\
 
 test('(a) the lock: section#room hidden and data-locked, the inline step right after it from QUIZ_GATE.key, its ?room=open part in hooks builds only, the visit event, and the no-JS rule', () => {
   assert.equal(QUIZ_GATE.key, 'skreed:quiz-done');
-  assert.match(room, /<section class="room" id="room" aria-label=\{R\.aria\} data-state="hall" hidden data-locked>/, 'rendered locked on every tier');
+  assert.match(room, /<section class="room" id="room" aria-label=\{R\.aria\} data-state="approach" hidden data-locked>/, 'rendered locked on every tier');
   assert.match(room, /<\/section>\n<script is:inline set:html=\{gateCode\}><\/script>\n<script>/, 'the inline step right after the closing tag, before the module script');
   assert.match(room, /import gate from '\.\.\/\.\.\/inline\/room-gate\.inline\.js\?raw';\nimport gateHooks from '\.\.\/\.\.\/inline\/room-gate\.hooks\.inline\.js\?raw';/);
   assert.match(room, /const hooks = import\.meta\.env\.PUBLIC_HERO_HOOKS === '1';\nconst gateCode = inlineScript\('room-gate\.js', \{ KEY: QUIZ_GATE\.key \}, hooks \? gateHooks : '', gate\);/, 'assembled as the head Gate is, the key prepended');
@@ -90,18 +90,18 @@ test("(c) the ride's maths: 1200 ms from QUIZ_GATE, the ease equal to easeStanda
   for (let ms = 0; ms <= RIDE_MS; ms += 4) { const y = rideY(0, 1688, ms / RIDE_MS); assert.ok(y >= prev, `${ms} ms: ${y} under ${prev}`); prev = y; }
   const share = (ms: number) => rideY(0, 1, ms / RIDE_MS);
   for (const [ms, want] of [[120, 0.1562], [240, 0.5], [420, 0.7514]] as const) assert.ok(Math.abs(share(ms) - want) < 0.001, `${ms} ms: ${share(ms).toFixed(4)} against ${want}`);
-  // the 3D path lands at q 1 (the top plus one 100svh), the poster tier at the top; rounded, clamped to the scroll range
+  // the 3D path lands at q 1 (the top plus one 100svh: scene 1 fully in), the poster tier at the top; rounded, clamped to the scroll range
   assert.equal(rideTarget({ top: 14531.6, one: 844, poster: false, max: 30000 }), 15376);
   assert.equal(rideTarget({ top: 14531.6, one: 844, poster: true, max: 30000 }), 14532);
   assert.equal(rideTarget({ top: 14531.6, one: 844, poster: false, max: 15000 }), 15000, 'a collapsed track: the page\'s end');
   assert.equal(rideTarget({ top: -5, one: 844, poster: true, max: 100 }), 0);
   assert.equal(rideTarget({ top: 50, one: 10, poster: false, max: -3 }), 0, 'a page with no scroll range');
-  assert.deepEqual([RIDE_GUARD_MS, RIDE_DRIFT_PX, HALL_WAIT_MS], [350, 1.5, 1500]);
+  assert.deepEqual([RIDE_GUARD_MS, RIDE_DRIFT_PX, SCENES_WAIT_MS], [350, 1.5, 1500]);
   assert.match(deck, /const GUARD = 350, GUARD_REDUCED = 150;/, "the ride's guard is the quiz's");
   assert.match(read('src/scripts/hero/section4/scroll.ts'), /Math\.abs\(scrollY - wrote\) <= 1\.5/, "the drift test is scroll.ts's own");
 });
 
-test("(d) hero.ts: docTop NaN for an element with no box, canWrap carrying the lock, the unlock's listener and the hall hook (which waits until the hall is in or has failed), the loading kept lock or no lock; director.ts: the layout read null, begin() off and wrap() false while locked", async () => {
+test("(d) hero.ts: docTop NaN for an element with no box, canWrap carrying the lock, the unlock's listener and the scenes' hook (which waits until the scenes have settled), the loading kept lock or no lock; director.ts: the layout read null, begin() off and wrap() false while locked", async () => {
   const docTopSrc = hero.match(/const docTop = (\(id: string\) => \{ .*? \});/)?.[1];
   assert.ok(docTopSrc, 'docTop found');
   const docTop = new Function('document', 'scrollY', `return ${docTopSrc!.replace('(id: string)', '(id)')};`)({
@@ -113,45 +113,47 @@ test("(d) hero.ts: docTop NaN for an element with no box, canWrap carrying the l
   assert.match(hero, /\.filter\(\(x\) => Number\.isFinite\(x\.start\) && Number\.isFinite\(x\.end\)\)/, 'the span filter drops it');
   assert.match(hero, /const roomLocked = \(\) => !!roomEl\?\.hasAttribute\('data-locked'\);/);
   assert.match(hero, /canWrap: \(\) => loop\.state\.introDone && !ctx\.room\?\.lock\(\) && !roomLocked\(\),/, 'no wrap from the top while locked');
-  assert.match(hero, /const onUnlock = \(\) => \{ signup\?\.invalidate\(\); pageScroll\?\.notify\(\); void loadHall\(\); \};\n\s*addEventListener\('skreed:quiz-unlock', onUnlock\);\n\s*life\.onKill\(\(\) => removeEventListener\('skreed:quiz-unlock', onUnlock\)\);/, "the unlock's listener");
-  assert.match(hero, /window\.__skreedHall = \{ get ready\(\) \{ return !!ctx\.room\?\.hall\.ready; \}, load: \(\) => loadHall\(\)\.then\(untilHall\) \};/, "the hall hook the ride waits on (__s4.ready's source), its load settling only once the hall has");
-  // the hall's own load() returns at once when its load has started (and it always has by the time the ride asks), so the
-  // hook's wait is its own: a frame at a time until the hall is in or has failed, or the director is gone (the review of
-  // iteration 1, item 1); run here on fakes with a hand-driven frame queue
-  assert.match(read('src/scripts/hero/section4/hall.ts'), /async load\(\) \{\n\s*if \(started\) return; started = true;/, "hall.ts's load() returns at once once started");
-  const hookSrc = hero.match(/const hallSettled = \(\) => \{ .*? \};\n\s*const untilHall = \(\) => new Promise<void>\(.*?\);\n/s)?.[0];
-  assert.ok(hookSrc, 'hallSettled and untilHall found');
-  assert.match(hookSrc!, /life\.dead \|\| !h \|\| h\.ready \|\| h\.failed/, 'settled when the hall is in or has failed, the director gone, or the island dead');
+  assert.match(hero, /const onUnlock = \(\) => \{ signup\?\.invalidate\(\); pageScroll\?\.notify\(\); void loadScenes\(\); \};\n\s*addEventListener\('skreed:quiz-unlock', onUnlock\);\n\s*life\.onKill\(\(\) => removeEventListener\('skreed:quiz-unlock', onUnlock\)\);/, "the unlock's listener");
+  assert.match(hero, /window\.__skreedScenes = \{ get ready\(\) \{ return !!ctx\.room\?\.settled\(\); \}, load: \(\) => loadScenes\(\)\.then\(untilScenes\) \};/, "the scenes' hook the ride waits on (__s4.ready's source), its load settling only once the scenes have");
+  // the director's load() starts its phases and returns, so the hook's wait is its own: a frame at a time until scene 1 and
+  // products.bin have settled, or the director is gone (the review of iteration 1, item 1); run here on fakes with a
+  // hand-driven frame queue
+  assert.match(director, /load\(\) \{ const p = warmUp\(\); if \(!locked\(\)\) openScenes\(0\); return p; \},/, "the director's load(): phase 1, and phase 2 once open");
+  const hookSrc = hero.match(/const scenesSettled = \(\) => .*?;\n\s*const untilScenes = \(\) => new Promise<void>\(.*?\);\n/s)?.[0];
+  assert.ok(hookSrc, 'scenesSettled and untilScenes found');
+  assert.match(hookSrc!, /life\.dead \|\| !ctx\.room \|\| ctx\.room\.settled\(\)/, 'settled when the scenes have, the director gone, or the island dead');
   const frames: (() => void)[] = [];
   const flush = async () => { for (const f of frames.splice(0)) f(); await new Promise((r) => setTimeout(r, 0)); };
-  const make = new Function('ctx', 'life', 'requestAnimationFrame', `${hookSrc!.replace(/<void>/g, '')} return untilHall;`) as (ctx: unknown, life: unknown, raf: (cb: () => void) => void) => () => Promise<void>;
-  const run = async (hall: { ready: boolean; failed: boolean } | null, flip?: (h: { ready: boolean; failed: boolean }) => void) => {
-    const ctx = { room: hall ? { hall } : null }, life = { dead: false };
+  const make = new Function('ctx', 'life', 'requestAnimationFrame', `${hookSrc!.replace(/<void>/g, '')} return untilScenes;`) as (ctx: unknown, life: unknown, raf: (cb: () => void) => void) => () => Promise<void>;
+  const run = async (room: { done: boolean } | null, flip?: (r: { done: boolean }) => void) => {
+    const ctx = { room: room ? { settled: () => room.done } : null }, life = { dead: false };
     let settled = false;
     const p = make(ctx, life, (cb) => { frames.push(cb); })().then(() => { settled = true; });
     await flush(); await flush();
     const before = settled;
-    if (flip && hall) { flip(hall); await flush(); }
+    if (flip && room) { flip(room); await flush(); }
     await Promise.race([p, new Promise((r) => setTimeout(r, 50))]);
     return { before, after: settled };
   };
-  assert.deepEqual(await run({ ready: false, failed: false }, (h) => { h.ready = true; }), { before: false, after: true }, 'waits until the hall is in');
-  assert.deepEqual(await run({ ready: false, failed: false }, (h) => { h.failed = true; }), { before: false, after: true }, 'or has failed');
-  assert.deepEqual(await run({ ready: true, failed: false }), { before: true, after: true }, 'a hall already in: at once');
+  assert.deepEqual(await run({ done: false }, (r) => { r.done = true; }), { before: false, after: true }, 'waits until the scenes have settled (in, or failed)');
+  assert.deepEqual(await run({ done: true }), { before: true, after: true }, 'scenes already in: at once');
   assert.deepEqual(await run(null), { before: true, after: true }, 'no director (its import failed): at once');
-  assert.deepEqual(await run({ ready: false, failed: false }), { before: false, after: false }, 'a hall still loading holds the promise');
-  // amendment 1 (the spec's Built paragraph): the hall and the director chunk load as they always did, so the hall is ready for a press
-  assert.match(hero, /if \(e\.isIntersecting && e\.target !== trackEl\) void loadHall\(\);/, 'the stage observer loads the hall, lock or no lock');
-  assert.match(hero, /const afterIntro = \(\) => \{ if \(introOver\) return; introOver = true; void startScroll\(\); idle\(\(\) => \{ if \(!life\.dead\) void loadDirector\(\)\.then\(\(r\) => r\?\.warmCloud\(\)\); \}\); \};/, "afterIntro's idle import, lock or no lock (the director and the cloud; section 5 has no chunk of its own since 2026-11-02, its flat ground is the island's)");
-  assert.doesNotMatch(hero, /roomLocked\(\)\) (?:void )?loadHall|roomLocked\(\)\) return;\s*idle/, 'no lock check on the loading');
+  assert.deepEqual(await run({ done: false }), { before: false, after: false }, 'scenes still loading hold the promise');
+  // what settles: scene 1 drawable or failed, and products.bin in or failed
+  assert.match(director, /const settled = \(\) => \(drawable0\(\) \|\| failed0\(\)\) && \(productsState === 'in' \|\| productsState === 'failed'\);/);
+  // amendment 1 (the spec's Built paragraph): the director chunk and phase 1 load as they always did, so the scenes are ready for a press
+  assert.match(hero, /if \(e\.isIntersecting && e\.target !== trackEl\) void loadScenes\(\);/, 'the stage observer loads the scenes, lock or no lock');
+  assert.match(hero, /const afterIntro = \(\) => \{ if \(introOver\) return; introOver = true; void startScroll\(\); idle\(\(\) => \{ if \(!life\.dead\) void loadDirector\(\)\.then\(\(r\) => r\?\.warmCloud\(\)\); \}\); \};/, "afterIntro's idle import, lock or no lock");
+  assert.doesNotMatch(hero, /roomLocked\(\)\) (?:void )?loadScenes|roomLocked\(\)\) return;\s*idle/, 'no lock check on the loading');
   // the director's layout read: null while locked, the rect otherwise
   const readSrc = director.match(/read: (\(\) => \{ if \(!root \|\| root\.hasAttribute\('data-locked'\)\) return null; .*? \}),/)?.[1];
   assert.ok(readSrc, "the director's layout read found");
   const readOf = (locked: boolean) => (new Function('root', 'scrollY', `return ${readSrc};`)({ hasAttribute: (n: string) => n === 'data-locked' && locked, getBoundingClientRect: () => ({ top: 10, height: 1580 }) }, 5) as () => unknown)();
   assert.equal(readOf(true), null, 'locked: no reading');
   assert.deepEqual(readOf(false), { top: 15, height: 1580 });
-  assert.match(director, /if \(!measured\) \{ inRoom = false; q = qAll = qRaw = prevRaw = 0; return; \}/, 'begin() keeps the section off screen while it has no reading');
-  assert.match(director, /if \(seam \|\| pendingEnter \|\| root\?\.hasAttribute\('data-locked'\)\) return false;/, 'wrap() false while locked');
+  assert.match(director, /if \(!measured\) \{ inRoom = false; q = qRaw = prevRaw = 0; return; \}/, 'begin() keeps the section off screen while it has no reading');
+  assert.match(director, /const locked = \(\) => !!root\?\.hasAttribute\('data-locked'\);/);
+  assert.match(director, /if \(state === 'seam' \|\| seam \|\| locked\(\)\) return false;/, 'wrap() false while locked');
   assert.match(director, /if \(state !== 'world' \|\| !measured\) return false;/, 'inRange() waits for a reading, as built');
 });
 
@@ -169,9 +171,9 @@ test('(e) gate.ts imports only config/quiz.ts and track.ts, touches the DOM insi
   assert.match(gate, /\['wheel', input, \{ passive: true \}\], \['touchstart', input, \{ passive: true \}\], \['keydown', input, \{\}\], \['scroll', onScroll, \{ passive: true \}\]/, 'what ends the ride');
   assert.match(gate, /if \(!\(e as KeyboardEvent\)\.repeat && performance\.now\(\) - pressAt >= RIDE_GUARD_MS\) ended = true;/);
   assert.match(gate, /Math\.abs\(scrollY - wrote\) > RIDE_DRIFT_PX\) ended = true;/);
-  assert.match(gate, /await Promise\.race\(\[hall\.load\(\), wait\(HALL_WAIT_MS\)\]\);/, 'the hall awaited, at most 1.5 s');
+  assert.match(gate, /await Promise\.race\(\[scenes\.load\(\), wait\(SCENES_WAIT_MS\)\]\);/, 'the scenes awaited, at most 1.5 s');
   assert.match(gate, /o\.label\(Q\.loading\);[\s\S]*o\.label\(null\);/, '"Loading..." meanwhile, Begin\'s pattern');
-  assert.match(gate, /document\.getElementById\(isPoster \? 'rmEnter' : 'rmPad'\)/, 'the pad on the 3D path, the prompt on the poster tier');
+  assert.match(gate, /const dest = isPoster \? document\.querySelector<HTMLElement>\('#rmScenes \.rm-scene-name'\) : document\.getElementById\('rmPad'\);/, "the pad on the 3D path, scene 1's name on the poster tier");
   assert.match(gate, /dest\?\.focus\(\{ preventScroll: true \}\);/);
   assert.match(gate, /control\.blur\(\); o\.announce\(\(isPoster \? r : dest\)\?\.getAttribute\('aria-label'\) \?\? ''\);/, "a pointer press: the destination's own name, once");
   assert.doesNotMatch(code(gate), /\.animate\(|transition|transform/, 'nothing animated but the scroll position');

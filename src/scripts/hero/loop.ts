@@ -92,9 +92,9 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
     fogGround.update(hb, t);
     if (ctx.moon.visible) updateFogLogoRect(ctx.FOG, camA, logo.position.y, renderer);   // F13
 
-    // section 4 (docs/specs/section-4.md 5, section-4-flux.md 5, section4/director.ts): the hall, the bubble or the carousel
-    // into their own targets, and the plan for the composite: the third wipe from the fog, the section's frame, a seam's cover
-    const plan = room ? room.step({ t, dt, ratio, pointer, touch: ctx.touch, mouseRate: P.mouse, fog: fogGround.out }) : null;
+    // section 4 (section-4-flux.md 5, section-4-no-hall.md 5, section4/director.ts): the carousel into its own target, and
+    // the plan for the composite: the third wipe from the fog to scene 1, the section's frame, a seam's cover
+    const plan = room ? room.step({ t, dt, fog: fogGround.out }) : null;
     const roomOn = !!plan && plan.on && !!plan.tex, cover = plan?.cover ?? 0, wipeOut = plan?.wipeOut ?? 0;
     // section 5 (section5/ground.ts; Sam's picture of 2026-11-02): the flat SIGNUP_GROUND, the fourth wipe's far side
     // while section 4 is on screen and the whole frame once the section is in view with section 4 off it; drawn, then
@@ -116,7 +116,7 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
       else { C.tA.value = composerA.c.readBuffer.texture; C.tB.value = s2on ? S2!.out : groundTex; C.uProgress.value = tp; C.uParA.value = s2on ? 0 : 1; }
       if (roomOn) {
         const rt = plan!.tex;
-        // the third wipe: the fog holds still under the cut and the hall slides in; past it the section is the whole frame
+        // the third wipe: the fog holds still under the cut and scene 1 slides in; past it the section is the whole frame
         if (plan!.wipeIn < 1) { C.tA.value = groundTex; C.tB.value = rt; C.uProgress.value = plan!.wipeIn; C.uParA.value = 0; }
         else { C.tA.value = rt; C.tB.value = rt; C.uProgress.value = 0; }
       }
@@ -151,9 +151,9 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
     const sf = window.__skreedSignupFrame, on5 = s5 !== 'off';
     if (sf && (on5 !== sent.on || cover !== sent.cover || wipeOut !== sent.wipe)) { sent.on = on5; sent.cover = cover; sent.wipe = wipeOut; sf({ on: on5, cover, wipe: wipeOut, pour: null }); }
     rideCopy(els, tp, innerWidth / innerHeight, !!S2 && S2.ready);               // F16
-    // the logotype over the section (after the ride's own write, so this one stands): Pearl on the hall, the front scene's
-    // tone over the scenes, Urban Slate under a seam's cloud, after the exit's jump too, when the section is off and the
-    // cloud thins over the hero at rest
+    // the logotype over the section (after the ride's own write, so this one stands): the front scene's tone over the
+    // scenes, Urban Slate under a seam's cloud, after the exit's jump too, when the section is off and the cloud thins
+    // over the hero at rest
     if (plan && (cover > 0 || (roomOn && plan.wipeIn >= 0.5))) window.__skreedLogo?.setTone(plan.toneDark);
   }
   function frame() {

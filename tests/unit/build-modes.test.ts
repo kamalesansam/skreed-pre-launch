@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import config from '../../astro.config.mjs';
-import { CLASSES, LOOP_NAME, SCENE_IDS, isLandAsset, readMode } from '../../scripts/room/guards.mjs';
+import { CLASSES, LOOP_NAME, SCENE_IDS, isHallAsset, isLandAsset, readMode } from '../../scripts/room/guards.mjs';
 import * as guards from '../../scripts/room/guards.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
@@ -31,7 +31,7 @@ function fixture(files: Record<string, string | Buffer> = {}, csp?: string, page
   const dist = mkdtempSync(join(tmpdir(), 'skreed-modes-'));
   temps.push(dist);
   mkdirSync(join(dist, '_astro'));
-  writeFileSync(join(dist, 'index.html'), `<!doctype html><html><head><style>p{margin:0}</style></head><body><script>window.x=1</script><section class="room" id="room"><p>Enter Skreed universe</p></section>${page}</body></html>`);
+  writeFileSync(join(dist, 'index.html'), `<!doctype html><html><head><style>p{margin:0}</style></head><body><script>window.x=1</script><section class="room" id="room"><p>Phone case</p></section>${page}</body></html>`);
   writeFileSync(join(dist, '_headers'), ['/*', '  X-Content-Type-Options: nosniff', ...(csp ? [csp] : []), '/_astro/*', '  Cache-Control: public, max-age=31536000, immutable', ''].join('\n'));
   for (const [p, body] of Object.entries(files)) { mkdirSync(dirname(join(dist, p)), { recursive: true }); writeFileSync(join(dist, p), body); }
   return dist;
@@ -106,9 +106,12 @@ test('the mode: the flag first, then the environment, then build; anything else 
   assert.doesNotMatch('cove-wide.mp4', LOOP_NAME); assert.doesNotMatch('clip-case-wallet-wide.Ab3_x9Zq.mp4', LOOP_NAME); assert.doesNotMatch('cove-wide.Ab3_x9Zq.webm', LOOP_NAME);
   for (const n of ['land-case-wide.Ab3_x9Zq.avif', 'park.Ab3_x9Zq.glb', 'park-lightmap.Ab3_x9Zq.avif', 'garden-plate.Ab3_x9Zq.avif', 'clip-case-wallet-wide.Ab3_x9Zq.mp4']) assert.ok(isLandAsset(n), n);
   for (const n of ['cove-wide.Ab3_x9Zq.avif', 'hall.Ab3_x9Zq.bin', 'director.Ab3_x9Zq.js', 'products.Ab3_x9Zq.bin']) assert.ok(!isLandAsset(n), n);
+  // the hall's model, lightmap and stills (section-4-no-hall.md AC1); never a chunk, a scene's file or products.bin
+  for (const n of ['hall.Ab3_x9Zq.bin', 'hall.Ab3_x9Zq.glb', 'hall-lightmap.Ab3_x9Zq.avif', 'hall-portrait.Ab3_x9Zq.webp', 'hall-wide.Ab3_x9Zq.avif']) assert.ok(isHallAsset(n), n);
+  for (const n of ['hall.Ab3_x9Zq.js', 'cove-wide.Ab3_x9Zq.avif', 'director.Ab3_x9Zq.js', 'products.Ab3_x9Zq.bin', 'challenge.Ab3_x9Zq.svg']) assert.ok(!isHallAsset(n), n);
 });
 
-test('the post-build guard: exactly the ten loops in every mode, no other video, no land, park, garden or clip asset, media-src self', () => {
+test('the post-build guard: exactly the ten loops in every mode, no other video, no land, park, garden, clip or hall asset, media-src self', () => {
   const guard = (dist: string, mode: string) => run(['scripts/room/guards.mjs', '--post-build', '--dist', dist, '--mode', mode]);
   const ten = loops();
   const cases: [Record<string, Buffer | string>, string, string, number, RegExp?][] = [
@@ -122,6 +125,8 @@ test('the post-build guard: exactly the ten loops in every mode, no other video,
     [{ ...ten, '_astro/park.Ab3_x9Zq.glb': kb(1) }, CSP_SELF, 'build', 1, /park\.Ab3_x9Zq\.glb: an asset of the lands/],
     [{ ...ten, '_astro/land-case-wide.Ab3_x9Zq.avif': kb(1) }, CSP_SELF, 'test', 1, /land-case-wide/],
     [{ ...ten, '_astro/garden-plate.Ab3_x9Zq.avif': kb(1) }, CSP_SELF, 'build', 1, /garden-plate/],
+    [{ ...ten, '_astro/hall.Ab3_x9Zq.bin': kb(1) }, CSP_SELF, 'build', 1, /hall\.Ab3_x9Zq\.bin: an asset of the hall/],
+    [{ ...ten, '_astro/hall-portrait.Ab3_x9Zq.webp': kb(1) }, CSP_SELF, 'staging', 1, /hall-portrait\.Ab3_x9Zq\.webp: an asset of the hall/],
     [ten, CSP_NONE, 'build', 1, /media-src 'none', every build needs 'self'/],
     [ten, '', 'build', 1, /no Content-Security-Policy line/],
   ];
@@ -172,7 +177,8 @@ test("budget.mjs: section 6's lines exit 1 when broken (a still, a loop, product
   assert.match(ok.stdout, /^ {2}ok +1000\.0 KB of +1000\.0 KB {2}products\.bin/m);
   assert.match(ok.stdout, /the whole section in dist/);
   assert.match(ok.stdout, /one visit, portrait, AVIF/);
-  assert.match(ok.stdout, /to the press, wide, AVIF/);
+  assert.match(ok.stdout, /to scene 1, wide, AVIF/, "the press's line, to scene 1 since the hall left");
+  assert.doesNotMatch(ok.stdout, /to the press|the hall's still/);
   assert.match(ok.stdout, /the poster tier, portrait, WebP/);
   assert.equal(budget(fixture(), '--mode', 'production').status, 1, 'an unknown mode stops the script');
 });
@@ -210,14 +216,14 @@ test("budget.mjs: AC8's formats, each picture AVIF with its WebP twin and each s
     assert.match(r.stdout, /^ {2}FAIL +formats:/m);
   };
   fails({ '_astro/cove-portrait.Ab3_x9Zq.avif': kb(10) }, sized, /cove-portrait: AVIF without its WebP twin/);
-  fails({ '_astro/hall-lightmap.Bc4_y0Zr.webp': kb(4) }, '', /hall-lightmap: WebP without its AVIF twin/);
+  fails({ '_astro/hall-lightmap.Bc4_y0Zr.webp': kb(4) }, '', /hall-lightmap\.Bc4_y0Zr\.webp: not a file the section ships/);
   fails(twin('cove', 'portrait', 10, 16), sized.replace(/ width="720" height="1280"/, ''), /a <picture> of cove-portrait\.Ab3_x9Zq\.avif: its <img> has no width and height/);
   fails(twin('cove', 'portrait', 10, 16), '<noscript><img src="/_astro/cove-portrait.Bc4_y0Zr.webp" width="720" alt=""></noscript>', /an <img> of cove-portrait\.Bc4_y0Zr\.webp has no width and height/);
   // a picture in any other format is found by its name all the same, refused, and its <img> held to width and height
-  const jpg = budget(fixture({ ...twin('cove', 'portrait', 10, 16), '_astro/grove-wide.Cd5_z1Zs.jpg': kb(293), '_astro/hall-portrait.Ef7_b3Zu.jpeg': kb(4) }, undefined, `${sized}<noscript><img src="/_astro/grove-wide.Cd5_z1Zs.jpg" alt=""></noscript>`), '--mode', 'build');
+  const jpg = budget(fixture({ ...twin('cove', 'portrait', 10, 16), '_astro/grove-wide.Cd5_z1Zs.jpg': kb(293), '_astro/dawn-portrait.Ef7_b3Zu.jpeg': kb(4) }, undefined, `${sized}<noscript><img src="/_astro/grove-wide.Cd5_z1Zs.jpg" alt=""></noscript>`), '--mode', 'build');
   assert.equal(jpg.status, 1, jpg.stdout);
   assert.match(jpg.stderr, /grove-wide\.Cd5_z1Zs\.jpg: JPEG is not a format the section ships/);
-  assert.match(jpg.stderr, /hall-portrait\.Ef7_b3Zu\.jpeg: JPEG is not a format/);
+  assert.match(jpg.stderr, /dawn-portrait\.Ef7_b3Zu\.jpeg: JPEG is not a format/);
   assert.match(jpg.stderr, /an <img> of grove-wide\.Cd5_z1Zs\.jpg has no width and height/);
   assert.doesNotMatch(jpg.stdout, /still grove: wide, JPEG/, 'no line is measured for a format that does not ship');
 });

@@ -190,6 +190,6 @@ export const QUIZ_LEAD_ENDPOINT = '/api/quiz-lead';
  * The quiz gate (docs/specs/quiz-gate.md 3 and 5; Sam, 2026-10-26: "it shouldnt scroll past the quiz untill someone
  * takes the quiz, section 4 should be locked"): the visit's flag in sessionStorage, read by Room.astro's inline step at
  * build and written by the quiz's chunk (scripts/quiz/gate.ts), and the ride's length in ms, the press on Skip quiz to
- * the hall fully in.
+ * scene 1 fully in (the hall until 2026-11-02, docs/specs/section-4-no-hall.md).
  */
 export const QUIZ_GATE = { key: 'skreed:quiz-done', rideMs: 1200 } as const;
