@@ -3,9 +3,12 @@
 // the fog and the fog stays under the quiz. It replaces the v9.9 swatch wall (world/wall.ts) as the far side of the
 // last wipe and is the whole frame once the track has ended, for as long as section 3 is in view. One thing differs
 // from section 2's own background pass: it writes sRGB directly (section 2 encodes in its composite; the hero's
-// composite reads tB as sRGB, as it read the wall's OutputPass).
+// composite reads tB as sRGB, as it read the wall's OutputPass). The fog's shade hues (E-fog-hue, section2/hues.ts) come
+// from the clock section 2 shares, so the hued fog is the same on both sides of the cut, and they stay on under the
+// quiz's result (Sam, 2026-10-29: "keep it on"; the day's first build faded them to grey there over 0.6 s).
 import { Color, NoToneMapping, ShaderMaterial, WebGLRenderTarget, type Texture, type WebGLRenderer } from 'three';
 import { createBackground, fsCam, fsScene } from '../section2/background.ts';
+import { hueFrame, writeHues } from '../section2/hues.ts';
 import { S2T } from '../../../config/hero.ts';
 
 export interface GroundScene {
@@ -45,6 +48,7 @@ export function createFogGround(renderer: WebGLRenderer, reduced: boolean): Grou
     update(S, t) {
       U.uScroll.value = 2.15 + 0.3 * (S - S2T.W1END);   // section 2's formula: the fog scrolls on through the wipe
       U.uTime.value = reduced ? 7 : t;
+      writeHues(U, hueFrame(t, reduced), 1);   // at full strength under the quiz's result too (Sam, 2026-10-29: "keep it on")
     },
     render() {
       if (!rt) return;

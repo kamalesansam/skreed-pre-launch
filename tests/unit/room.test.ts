@@ -54,7 +54,7 @@ test('the five scenes (section-4-flux.md 3): the rooms in order, the products, t
   assert.deepEqual(ROOM_SCENES.map((s) => s.id), ['cove', 'grove', 'ember', 'palace', 'dawn']);
   assert.deepEqual(ROOM_SCENES.map((s) => s.i), [0, 1, 2, 3, 4]);
   assert.deepEqual(ROOM_SCENES.map((s) => s.order), [1, 2, 3, 4, 5]);
-  assert.deepEqual(ROOM_SCENES.map((s) => s.product), ['case', 'airpods', 'wallet', 'lenskin', 'case'], 'scene 5 shows the phone case until the lanyard model lands (X-8)');
+  assert.deepEqual(ROOM_SCENES.map((s) => s.product), ['case', 'airpods', 'wallet', 'lenskin', 'airpods-max'], 'scene 5 shows the AirPods Max case since 2026-10-26 (X-8)');
   assert.deepEqual(ROOM_SCENES.map((s) => s.shade), ['vivid-violet-05', 'go-green-09', 'basic-brown-04', 'playful-pink-06', 'vivid-violet-04']);
   assert.deepEqual(ROOM_SCENES.map((s) => s.finish), ['matte', 'gloss', 'matte', 'metallic', 'matte']);
   assert.deepEqual(ROOM_SCENES.map((s) => s.keyLight), ['#ffa6c8', '#a8ffe0', '#ffa171', '#ffc9a3', '#cbb0ff'], "the reference's per-scene tints, mapped by its scene order");
@@ -73,7 +73,8 @@ test('the five scenes (section-4-flux.md 3): the rooms in order, the products, t
     for (const cls of ['wide', 'portrait'] as const) for (const k of ['loop', 'avif', 'webp'] as const) assert.equal(typeof s.files[cls][k], 'string', `${s.id} ${cls} ${k}: a URL string (empty under Node, the build's glob fills it)`);
   }
   // the logotype's tone over each scene (D5): scripts/room/scene-tone.mjs on 2026-10-23 measured Pearl Whisper at 5.0 to 18.6:1
-  // and Urban Slate at 1.05 to 1.98:1 under the logotype's and the control's boxes at both viewports, so every scene keeps Pearl
+  // and Urban Slate at 1.05 to 1.98:1 under the logotype's and the control's boxes at both viewports, so every scene keeps Pearl;
+  // re-measured on 2026-11-02 with the section index's boxes in the control's place: Pearl 5.0 to 18.7:1, the picks unchanged
   assert.deepEqual(ROOM_SCENES.map((s) => s.toneDark), [false, false, false, false, false]);
   const director = read('src/scripts/hero/section4/director.ts');
   assert.match(director, /const sceneTone = \(\) => ROOM_SCENES\[carousel\.front\(\)\]\?\.toneDark \?\? false;/, 'the director takes the front scene\'s tone');
@@ -95,9 +96,9 @@ test('the five scenes (section-4-flux.md 3): the rooms in order, the products, t
   assert.ok(exists('src/assets/room/flux/products.bin'));
 });
 
-test('the products: the four by id in catalog order, with their names and trimmed lines', () => {
-  assert.deepEqual(ROOM_PRODUCTS.map((p) => p.id), ['case', 'wallet', 'lenskin', 'airpods']);
-  assert.deepEqual(ROOM_PRODUCTS.map((p) => p.name), ['Phone case', 'MagSafe wallet', 'Lenskin', 'AirPods case']);
+test('the products: the five by id in catalog order (the AirPods Max case after the AirPods case it belongs with), with their names and trimmed lines', () => {
+  assert.deepEqual(ROOM_PRODUCTS.map((p) => p.id), ['case', 'wallet', 'lenskin', 'airpods', 'airpods-max']);
+  assert.deepEqual(ROOM_PRODUCTS.map((p) => p.name), ['Phone case', 'MagSafe wallet', 'Lenskin', 'AirPods case', 'AirPods Max case']);
   for (const p of ROOM_PRODUCTS) assert.notEqual(p.line, ROOM_CATALOG_LINES[p.id], `${p.id}: the trimmed line differs from the catalog's`);
   for (const p of ROOM_PRODUCTS) assert.ok(!('lineCatalog' in p) && !('shade' in p), `${p.id}: no catalog line, no shade of its own (the scenes carry the shades)`);
   assert.doesNotMatch(ROOM_PRODUCTS.find((p) => p.id === 'lenskin')!.line, /240/, 'the catalog gives the Lenskin no shade count');

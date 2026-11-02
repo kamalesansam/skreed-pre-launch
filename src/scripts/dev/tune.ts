@@ -3,6 +3,7 @@
 // through window.__skreedTune (build step 6) so Sam can tune on staging and hand the numbers back for params.ts.
 import { HERO_PARAMS, heroParams, type HeroParamKey, type HeroParams } from '../../config/params.ts';
 import { ROOM_PARAMS, roomParams, type RoomParamKey, type RoomParams } from '../../config/room.ts';
+import { FOG_HUE_PARAMS, fogHueParams, type FogHueParamKey } from '../../config/fog-hues.ts';
 import { sceneReduced } from '../motion.ts';
 
 type Listener = (p: HeroParams, key: HeroParamKey | null) => void;
@@ -14,10 +15,13 @@ const emit = (key: HeroParamKey | null) => listeners.forEach((fn) => fn(params, 
 const room = roomParams();
 const roomListeners = new Set<RoomListener>();
 const emitRoom = (key: RoomParamKey | null) => roomListeners.forEach((fn) => fn(room, key));
+// the fog's shade hues (config/fog-hues.ts): section2/hues.ts reads the live copy every frame through liveFogHues()
+const fog = fogHueParams();
 (window as unknown as { __skreedTune: unknown }).__skreedTune = {
   params,
   subscribe(fn: Listener) { listeners.add(fn); return () => listeners.delete(fn); },
   room: { params: room, subscribe(fn: RoomListener) { roomListeners.add(fn); return () => roomListeners.delete(fn); } },
+  fog: { params: fog },
 };
 
 const $ = (id: string) => document.getElementById(id);
@@ -42,6 +46,15 @@ for (const k of roomKeys) {
   el.addEventListener('input', () => { room[k] = +el.value; showRoom(k); emitRoom(k); });
 }
 
+const fogKeys = Object.keys(FOG_HUE_PARAMS) as FogHueParamKey[];
+const showFog = (k: FogHueParamKey) => { const el = $('f-' + k), o = $('o-f-' + k); if (el instanceof HTMLInputElement) el.value = String(fog[k]); if (o) o.textContent = Number.isInteger(fog[k]) ? String(fog[k]) : fog[k].toFixed(2); };
+for (const k of fogKeys) {
+  const el = $('f-' + k);
+  if (!(el instanceof HTMLInputElement)) continue;
+  showFog(k);
+  el.addEventListener('input', () => { fog[k] = +el.value; showFog(k); });
+}
+
 function onParam(k: HeroParamKey) {
   if (k === 'logoSplit' || k === 'logoIdle') window.__skreedLogo?.configure({ split: params.logoSplit, idle: params.logoIdle });
 }
@@ -53,6 +66,8 @@ $('tuneReset')?.addEventListener('click', () => {
   Object.assign(room, roomParams());
   for (const k of roomKeys) showRoom(k);
   emitRoom(null);
+  Object.assign(fog, fogHueParams());
+  for (const k of fogKeys) showFog(k);
   press('glitchIdle', !!params.logoIdle, 'Idle twitch');
   press('glitchSplit', params.logoSplit > 0, 'Colour split');
   onParam('logoIdle');

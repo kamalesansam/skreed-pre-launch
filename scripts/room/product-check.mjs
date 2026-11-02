@@ -95,7 +95,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     await page.waitForFunction(() => window.__s4?.state()?.worldReady, null, { timeout: 180_000 });
     await page.evaluate(() => window.__s4.scene(0));
     await page.waitForFunction(() => window.__s4.state().state === 'world' && window.__s4.state().products === 'in', null, { timeout: 120_000 });
-    await page.evaluate(() => { for (const el of [document.getElementById('rmStage'), document.querySelector('.site-logo'), document.getElementById('toTop')]) if (el) el.style.visibility = 'hidden'; });
+    await page.evaluate(() => { for (const el of [document.getElementById('rmStage'), document.querySelector('.site-logo'), document.getElementById('siteNav')]) if (el) el.style.visibility = 'hidden'; });
     for (const one of tries) {
       // the metallic value named applies to the class in force at this viewport
       const forView = (() => { if (VIEW.height <= VIEW.width || one.metalEnv === undefined) return one; const { metalEnv, ...rest } = one; return { ...rest, metalEnvPortrait: metalEnv }; })();

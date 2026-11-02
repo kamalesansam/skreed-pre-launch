@@ -42,12 +42,16 @@ interface Window {
     subscribe(fn: (p: import('./config/params.ts').HeroParams, key: string | null) => void): () => unknown;
     /** section 4's parameters (Tune's "Section 4" group) */
     room?: { params: import('./config/room.ts').RoomParams; subscribe(fn: (p: import('./config/room.ts').RoomParams, key: string | null) => void): () => unknown };
+    /** the fog's shade hues (Tune's "Sections 2 and 3" group; config/fog-hues.ts), read live every frame */
+    fog?: { params: import('./config/fog-hues.ts').FogHueParams };
   };
   /** section 4: the island hands the walk script a frame each step; the walk script hands back the head's turn from the keys and the drag */
   __skreedRoomFrame?: (f: import('./config/room.ts').RoomFrame) => void;
   __skreedRoomLook?: { yaw: number; drag?: number };
-  /** the landing page's jump to section 1 in place (scroll 0, the hero's followers snapped, section 4 reset), installed by the island; the back-to-top control calls it */
+  /** the landing page's jump to section 1 in place (scroll 0, the hero's followers snapped, section 4 reset), installed by the island; the section index's Home and a family page's Back to top (restoring the landing page) call it */
   __skreedTop?: () => void;
+  /** the landing page's jump to a section in place (the page at y, the hero's followers snapped, section 4 reset, its own followers snapped too for a landing inside it), installed by the island; the section index calls it */
+  __skreedJump?: (y: number) => void;
   /** section 4: the island's side of the bridge, installed with the section's director */
   __skreedRoom?: import('./config/room.ts').RoomIsland;
   /** the quiz gate (quiz-gate.md D4, amended): whether the hall is in, and its load, installed by the island; the quiz's ride waits on it, at most 1.5 s */

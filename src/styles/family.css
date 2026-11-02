@@ -67,14 +67,18 @@ ol { padding: 0; list-style: none; }
 @media (prefers-reduced-motion: reduce) { .site-logo .logo-tiles { display: none !important; } .site-logo svg { opacity: 1 !important; } }
 .allfam { position: fixed; top: calc(var(--inset) + var(--sat) + var(--mark-h) / 2 - var(--hit) / 2); right: calc(var(--inset) + env(safe-area-inset-right, 0px) - var(--s2)); z-index: 6;
   min-height: var(--hit); padding: 0 var(--s2); display: inline-flex; align-items: center; font-size: var(--fs-label); font-weight: 600; line-height: 1; white-space: nowrap; color: var(--pearl-whisper); }
-/* the argument screen's way out (section 22, E-F5): "Back to main page", a link to /#families set as "All families" is,
-   centred under the letters at the bottom of the screen, level with the beat nav (z-index 4), under the corners and Back
-   to top (6). Declared after .allfam so its position: fixed wins over .ring2's position: relative; centred by the margins,
-   never a transform, since .press owns the transform. On the phone layout its row stands one --s1 above Back to top's row
-   (D1; --to-top-bottom, to-top.css, is that row's offset); the wide layout puts its bottom one --inset above the safe area. It transitions nothing, since [hidden] is
-   display: none, which no transition can start from; the fade in and out is a Web Animations API animation in page.ts
-   (--dur-fade and --dur-out, tokens.css) */
-.fam-back { position: fixed; z-index: 4; left: 0; right: 0; width: max-content; margin-inline: auto; bottom: calc(var(--to-top-bottom) + var(--hit) + var(--s1) + var(--sab));
+/* the argument screen's way out (section 22, E-F5; its place on phones, section 23): "Back to main page", a link to
+   /#families set as "All families" is, level with the beat nav (z-index 4), under the corners and Back to top (6).
+   Declared after .allfam so its position: fixed wins over .ring2's position: relative. Phone first: on the phone layout
+   it is on Back to top's row with Back to top's offsets (D5), its bottom the same expression (--to-top-bottom plus the
+   bottom safe area, to-top.css) and its left the mirror of Back to top's right (--inset plus the side safe area, less
+   --s2), so its words start at --inset as the wordmark does and Back to top's chevron ends at --inset on the right, the
+   way the wordmark and "All families" share the top; with right left auto the box shrinks to its words. The wide layout
+   (the block below) centres it under the letters by the margins, never a transform, since .press owns the transform,
+   its bottom one --inset above the safe area. It transitions nothing, since [hidden] is display: none, which no
+   transition can start from; the fade in and out is a Web Animations API animation in page.ts (--dur-fade and --dur-out,
+   tokens.css) */
+.fam-back { position: fixed; z-index: 4; left: calc(var(--inset) + env(safe-area-inset-left, 0px) - var(--s2)); bottom: calc(var(--to-top-bottom) + var(--sab));
   min-height: var(--hit); padding: 0 var(--s2); display: inline-flex; align-items: center; font-size: var(--fs-label); font-weight: 600; line-height: 1; white-space: nowrap; color: var(--pearl-whisper); text-decoration: none; }
 
 /* the first screen: the family's name under the wordmark (D9), the stage behind, the HUD rows over it */
@@ -270,7 +274,7 @@ html:not(.m3d) .intro { display: none; }
   .beat-in { align-content: center; padding: 0 var(--inset) 0 max(var(--inset), 10%); }
   .beatnav { right: var(--inset); }
   .beatnav button { width: 44px; height: 44px; font-size: 0.875rem; }
-  .fam-back { bottom: calc(var(--inset) + var(--sab)); }
+  .fam-back { left: 0; right: 0; width: max-content; margin-inline: auto; bottom: calc(var(--inset) + var(--sab)); }
   .sw { inset: calc(var(--chrome-top) + var(--s3)) var(--inset) auto auto; width: 340px; max-height: calc(100svh - 96px); border: 1px solid var(--pearl-whisper); }
   .sw-in { padding: 0 var(--s3) var(--s3); }
 }

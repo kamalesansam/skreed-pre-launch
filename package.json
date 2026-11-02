@@ -22,7 +22,9 @@
     "test:parity": "playwright test --project parity",
     "test:family": "node --test \"tests/family/*.test.ts\" \"tests/case-model/*.test.ts\"",
     "test:family:e2e": "playwright test -c tests/family/playwright.config.ts",
-    "deploy:dry": "wrangler deploy --env=\"\" --dry-run --outdir .wrangler/dry-run"
+    "deploy:dry": "wrangler deploy --env=\"\" --dry-run --outdir .wrangler/dry-run",
+    "graph": "graphify update .",
+    "graph:force": "graphify update . --force"
   },
   "repository": {
     "type": "git",

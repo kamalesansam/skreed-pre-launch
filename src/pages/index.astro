@@ -8,6 +8,7 @@ import Gate from '../components/shell/Gate.astro';
 import WordmarkSprite from '../components/shell/WordmarkSprite.astro';
 import Loader from '../components/shell/Loader.astro';
 import SiteLogo from '../components/shell/SiteLogo.astro';
+import SiteNav from '../components/shell/SiteNav.astro';
 import HeroStage from '../components/hero/HeroStage.astro';
 import HeroPoster from '../components/hero/HeroPoster.astro';
 import HeroPosterPreload from '../components/hero/HeroPosterPreload.astro';
@@ -33,6 +34,7 @@ const Tune = import.meta.env.PUBLIC_TUNE === '1' ? (await import('../components/
     <WordmarkSprite slot="sprite" />
     <Loader slot="loader" />
     <SiteLogo slot="logo" />
+    <SiteNav slot="logo" />
     <Countdown slot="copy" />
     <ScrollCue slot="cue" part="cue" />
     <Section2Layers slot="riders" />

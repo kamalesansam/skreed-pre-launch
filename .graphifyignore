@@ -1,0 +1,30 @@
+# What graphify leaves out of the knowledge graph (docs/research/11-graphify.md).
+# Read after .gitignore; it can only exclude more, never re-include.
+
+# Earlier experiments, not the site: the graph should answer for src, scripts, tests and docs only.
+prototypes/
+tests/fixtures/
+
+# Generated data and media: geometry, picture job files, build artefacts. No symbols to link.
+src/assets/hero/pieces.json
+assets-src/room/flux/raw/
+public/_headers
+*.webmanifest
+
+# Images, video and binaries are read by a vision or transcription pass that this project does not run.
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.avif
+*.gif
+*.svg
+*.ico
+*.mp4
+*.mp3
+*.wav
+*.bin
+*.glb
+*.woff2
+*.pdf
+*.csv

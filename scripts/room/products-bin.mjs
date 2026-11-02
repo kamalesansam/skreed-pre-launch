@@ -1,6 +1,6 @@
-// Section 4's four products as one loader-free binary, src/assets/room/flux/products.bin, for the Flux carousel (the
-// products in front of the video backgrounds): the wallet, the AirPods case and the Lenskin from scripts/room/models/
-// and the phone case from public/models/case.lod1, read here under node through three's GLTFLoader with the vendored
+// Section 4's five products as one loader-free binary, src/assets/room/flux/products.bin, for the Flux carousel (the
+// products in front of the video backgrounds): the wallet, the AirPods case, the Lenskin and the AirPods Max case from
+// scripts/room/models/ and the phone case from public/models/case.lod1, read here under node through three's GLTFLoader with the vendored
 // pure-JS meshopt decoder (the way tests/unit/room-products.test.ts reads them; never in site code) and written as plain
 // typed-array blocks that src/scripts/hero/section4/products-bin.ts reads back with views, so the director's chunk ships
 // without a glTF loader (tests/unit/hall-bin.test.ts enforces that; hall.bin and scripts/room/hall-bin.mjs are the
@@ -37,10 +37,12 @@ const CASE = JSON.parse(readFileSync(new URL('src/data/case-model.json', root), 
 export const PRODUCT_SOURCES = Object.freeze([
   ...['wallet', 'airpods', 'lenskin'].map((name) => ({ name, path: ROOM[name].path })),
   { name: 'case', path: `public${CASE.lod1}` },
+  // Sam's AirPods Max model (2026-10-26), scene 5's product, at full detail (scripts/room/products-full.py), after the case so the first four keep their order
+  { name: 'airpods-max', path: ROOM['airpods-max'].path },
 ]);
 export const BIN_PATH = 'src/assets/room/flux/products.bin', MANIFEST_PATH = 'src/data/room-products-bin.json';
 export const LINE_KB = 160;      // the brief's stored figure, KB = 1024 B: 106,060 B short of these four models under this encoding
-export const CEILING_KB = 270;   // the line the unit test holds the file to: the four models as measured (263.6 KiB) plus room for a re-export
+export const CEILING_KB = 1000;  // the line the unit test holds the file to: the four models of 2026-10-16 (263.6 KiB) plus the AirPods Max at full detail (Sam, 2026-10-26: "just place the actual 3d model"), measured below 800 KiB, with room for the AirPods case and the Lenskin re-exported at full detail when their FBX files are to hand
 const MAGIC = 0x31504853;     // 'SHP1' read as bytes S, H, P, 1
 const pad4 = (n) => (n + 3) & ~3;
 const mm = (v) => Math.round(v * 1e5) / 100 || 0;   // metres to millimetres, two decimals (a -0 would differ from the JSON's 0)

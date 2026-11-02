@@ -146,7 +146,7 @@ export interface Carousel {
 }
 
 /** each product's exhibit factor over life size (section-4.md's, spec 3 "Size and pose") */
-export const EXHIBIT: Readonly<Record<string, number>> = Object.freeze({ case: 1, wallet: 1.55, airpods: 1.75, lenskin: 2.2 });
+export const EXHIBIT: Readonly<Record<string, number>> = Object.freeze({ case: 1, wallet: 1.55, airpods: 1.75, lenskin: 2.2, 'airpods-max': 0.62 });   // the AirPods Max is 174 mm wide, 1.67 times the case; 0.62 draws it 108 by 116 mm, between the AirPods case's and the wallet's exhibit sizes and inside the portrait width rule
 /** the class scale's rule on the wide class (spec 3; carousel-math.ts PLACE carries both classes): the life-size case at most this share of the view's height and of its width at its distance, fov 45, whichever bites first */
 export const CLASS_FILL = PLACE.wide;
 /** the finishes, MeshPhysicalMaterial each (render-products.py's numbers, the family page's calibration; spec 3 "Materials and lights") */
@@ -168,8 +168,15 @@ export const FINISH = Object.freeze({
  * 390 x 844; at 0.6 dE00 4.44 with 2.2 percent).
  */
 export const LIGHTS = Object.freeze({ key: 1.33, keyMix: 0.6, keyFrom: [0.1, 0.8, 0.6] as const, fill: 0.17, fillTint: '#dfe6ea', fillFrom: [-0.6, 0.2, 0.8] as const, env: 0.48, metalEnv: 1.0, metalEnvPortrait: 0.6, blur: 0.04 });
-/** the trim's fixed dark (linear) and its roughness, and the logo's share of the shade (render-products.py) */
-export const PARTS = Object.freeze({ trim: [0.073, 0.077, 0.077] as const, trimRoughness: 0.55, logoTint: 0.8468 });
+/**
+ * The trim's fixed dark (linear) and its roughness, the logo's share of the shade, and the device a case holds (Apple's
+ * light plastic and aluminium, and its dark cloth, cushions and grilles), render-products.py's numbers: render colours,
+ * not palette colours (E-A2b's reading), for the parts products-full.py roles "device" and "device-dark" (E-S4-device).
+ */
+export const PARTS = Object.freeze({ trim: [0.073, 0.077, 0.077] as const, trimRoughness: 0.55, logoTint: 0.8468, device: [0.80, 0.80, 0.79] as const, deviceRoughness: 0.22, deviceDark: [0.02, 0.02, 0.022] as const, deviceDarkRoughness: 0.5 });
+/** a part's role from its name in products.bin, with the one correction: the AirPods case's "trim" is its Skreed S (68 triangles, the same inlay as the phone case's and the wallet's logo parts), which products.py roled trim on 2026-10-16; Sam, 2026-10-26: "even in the case the logo is not visible" */
+export type PartRole = 'body' | 'logo' | 'trim' | 'device' | 'device-dark';
+export const partRole = (product: string, part: string): PartRole => (product === 'airpods' && part === 'trim') || part === 'logo' ? 'logo' : part === 'trim' ? 'trim' : part === 'device' ? 'device' : part === 'device-dark' ? 'device-dark' : 'body';
 /** the frame target's multisample count (WebGL2 MSAA), for the products' edges */
 export const MSAA = 4;
 /**
@@ -248,8 +255,8 @@ const texBytes = (t: Texture | null): number => { const i = t?.image as { width?
  * surfaces), and the open lid shows the camera its inside, the sheet's back face, which a front-side material culled
  * (the lid vanished from the front, 2026-10-26); three flips the normal on a back face, so the inside lights as a surface.
  */
-function partMaterial(color: Color, finish: Finish | 'trim', offset = 0): MeshPhysicalMaterial {
-  const look = finish === 'trim' ? { roughness: PARTS.trimRoughness, metalness: 0 } : FINISH[finish];
+function partMaterial(color: Color, finish: Finish | 'trim' | 'device' | 'device-dark', offset = 0): MeshPhysicalMaterial {
+  const look = finish === 'trim' ? { roughness: PARTS.trimRoughness, metalness: 0 } : finish === 'device' ? { roughness: PARTS.deviceRoughness, metalness: 0 } : finish === 'device-dark' ? { roughness: PARTS.deviceDarkRoughness, metalness: 0 } : FINISH[finish];
   const m = new MeshPhysicalMaterial({ color, envMapIntensity: LIGHTS.env, toneMapped: false, side: DoubleSide, ...look, polygonOffset: offset !== 0, polygonOffsetFactor: offset, polygonOffsetUnits: offset });
   m.onBeforeCompile = (s) => { s.fragmentShader = s.fragmentShader.replace('#include <colorspace_fragment>', 'gl_FragColor = sRGBTransferOETF( gl_FragColor );'); };
   m.customProgramCacheKey = () => 'display';
@@ -321,18 +328,20 @@ export function createCarousel(o: CarouselOptions): Carousel {
       const p = byName.get(s.product);
       if (!p) return null;
       const shade = new Color(s.shade), group = new Group();
-      // the parts as render-products.py roles them: the trim in its fixed dark at roughness 0.55, the logo a share of the body's shade, everything else the body
+      // the parts by role (partRole; render-products.py's roles): the trim in its fixed dark at roughness 0.55, the logo a share of the body's shade, the device the case holds in its fixed light and dark greys, everything else the body in the scene's shade and finish
       const body = partMaterial(shade, s.finish), logo = partMaterial(shade.clone().multiplyScalar(PARTS.logoTint), s.finish, -1), trim = partMaterial(new Color(...PARTS.trim), 'trim', 1);
-      for (const m of [body, logo, trim]) applyEnv(m);
+      const device = partMaterial(new Color(...PARTS.device), 'device'), deviceDark = partMaterial(new Color(...PARTS.deviceDark), 'device-dark');
+      const byRole: Record<PartRole, MeshPhysicalMaterial> = { body, logo, trim, device, 'device-dark': deviceDark };
+      for (const m of Object.values(byRole)) applyEnv(m);
       const parts: Slot['parts'] = [];
       for (const part of p.parts) {
-        const isBody = part.name !== 'trim' && part.name !== 'logo';
-        const mesh = new Mesh(part.geometry, part.name === 'trim' ? trim : part.name === 'logo' ? logo : body);
+        const role = partRole(p.name, part.name), isBody = role === 'body';
+        const mesh = new Mesh(part.geometry, byRole[role]);
         mesh.frustumCulled = false; mesh.visible = isBody || !setting.bodyOnly; group.add(mesh); parts.push({ mesh, body: isBody });
       }
       group.visible = false; holder.add(group);
       const e = EXHIBIT[s.product] ?? 1;
-      return { group, mats: [body, logo, trim], parts, exhibit: e, size: [p.size[0] * e, p.size[1] * e, p.size[2] * e] as const };
+      return { group, mats: Object.values(byRole), parts, exhibit: e, size: [p.size[0] * e, p.size[1] * e, p.size[2] * e] as const };
     });
     measure();
   }
@@ -559,7 +568,7 @@ export function createCarousel(o: CarouselOptions): Carousel {
       for (const s of slots) if (s) s.group.visible = s === sh;
       if (sh) {
         let scale = classScale * sh.exhibit;
-        if (tw && !reduced) scale = productScale(e, classScale * (slots[tw.from]?.exhibit ?? sh.exhibit), classScale * (slots[tw.to]?.exhibit ?? sh.exhibit));
+        if (tw && !reduced) scale = productScale(e, classScale * (slots[tw.from]?.exhibit ?? sh.exhibit), classScale * (slots[tw.to]?.exhibit ?? sh.exhibit), shownIdx === tw.to);
         sh.group.scale.setScalar(scale);
         const k = 1 - Math.pow(0.9, 60 * dt);
         lookX += (lookTX - lookX) * k; lookY += (lookTY - lookY) * k;

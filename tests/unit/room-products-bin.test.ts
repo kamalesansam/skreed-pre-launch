@@ -1,9 +1,9 @@
 // Section 4's products as shipped for the Flux carousel (scripts/room/products-bin.mjs; src/assets/room/flux/products.bin):
-// the committed bin and its manifest are the script's output from the four GLBs byte for byte (so a re-export cannot
+// the committed bin and its manifest are the script's output from the five GLBs byte for byte (so a re-export cannot
 // leave a stale binary), the island's parser reads back every product's parts with the GLBs' own names, triangles,
 // corners and normals (the GLBs decoded here as room-products.test.ts does), each product at the manifests' life size
 // within 1 percent and centred on the origin, unit normals within 1 percent, the file no larger than its payload and
-// under the 270 KB ceiling, a cut or corrupt file refused with the parser's own error, and the parser carries no glTF
+// under the 1,000 KB ceiling, a cut or corrupt file refused with the parser's own error, and the parser carries no glTF
 // loader and gzips under 2 KB.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -44,18 +44,18 @@ async function glbParts(glb: Buffer): Promise<{ parts: GlbPart[]; centre: number
   return { parts, centre: box.getCenter(new Vector3()).toArray(), size: box.getSize(new Vector3()).toArray() };
 }
 
-test('products.bin and its manifest are products-bin.mjs output from the four GLBs, byte for byte', async () => {
+test('products.bin and its manifest are products-bin.mjs output from the five GLBs, byte for byte', async () => {
   const out = await productsBin(sources, BIN_PATH);
   assert.ok(out.bin.equals(bin), `${BIN_PATH} is stale: run node scripts/room/products-bin.mjs`);
   assert.deepEqual(MANIFEST, out.manifest, `${MANIFEST_PATH} is stale: run node scripts/room/products-bin.mjs`);
   assert.equal(createHash('sha256').update(bin).digest('hex'), MANIFEST.bin.sha256);
-  assert.deepEqual(sources.map((s) => s.name), ['wallet', 'airpods', 'lenskin', 'case']);
+  assert.deepEqual(sources.map((s) => s.name), ['wallet', 'airpods', 'lenskin', 'case', 'airpods-max']);
   for (const s of sources) {
     const e = (MANIFEST.products as Record<string, { source: string; sha256: string }>)[s.name];
     assert.equal(e.source, s.path, s.name);
     assert.equal(createHash('sha256').update(s.glb).digest('hex'), e.sha256, `${s.name}: the manifest's source hash`);
   }
-  assert.equal(ROOM.wallet.path, sources[0].path); assert.equal(`public${CASE.lod1}`, sources[3].path);
+  assert.equal(ROOM.wallet.path, sources[0].path); assert.equal(`public${CASE.lod1}`, sources[3].path); assert.equal(ROOM['airpods-max'].path, sources[4].path);
 });
 
 test('parseProductsBin reads every product with the GLBs\' part names, triangles, corners and normals, recentred', async () => {
@@ -111,15 +111,18 @@ test('every normal decodes to unit length within 1 percent', () => {
   assert.ok(lo > 0.99 && hi < 1.01, `normal lengths ${lo} to ${hi}`);
 });
 
-test('the file is its payload and head alone, at the manifest\'s size, under the 270 KB ceiling; the brief\'s 160 KB figure is reported', (t) => {
+test('the file is its payload and head alone, at the manifest\'s size, under the 1,000 KB ceiling; the brief\'s 160 KB figure is reported', (t) => {
   assert.equal(bin.length, MANIFEST.bin.bytes);
   const [, N, P, V, I, L] = new Uint32Array(ab, 0, 6), pad = (n: number) => (n + 3) & ~3;
-  assert.equal(N, 4); assert.equal(P, 11); assert.equal(V, MANIFEST.bin.vertices); assert.equal(I, MANIFEST.bin.triangles * 3);
+  assert.equal(N, 5); assert.equal(P, 15); assert.equal(V, MANIFEST.bin.vertices); assert.equal(I, MANIFEST.bin.triangles * 3);
   assert.equal(bin.length, 24 + N * 36 + P * 16 + pad(L) + pad(V * 6) + pad(V * 3) + pad(I * 2), 'no slack beyond the head, the names and the three blocks');
+  // each part's index starts from 0, so the u16 limit is per product (products-bin.mjs throws past it); the whole stays under it too
   assert.ok(V <= 65535, 'u16 indices');
   const gz = gzipSync(bin, { level: 9 }).length, line = LINE_KB * KB, ceiling = CEILING_KB * KB;
-  // The line held here is CEILING_KB, 270 KB: the four models as measured (263.6 KiB) plus room for a re-export that
-  // moves a few vertices. The brief's 160 KB figure (LINE_KB) cannot hold these models under this encoding: u16
+  // The line held here is CEILING_KB, 1,000 KB since 2026-10-26: the four models of 2026-10-16 (263.6 KiB) plus the
+  // AirPods Max at full detail (32,973 triangles; Sam: "just place the actual 3d model"), with room for the AirPods
+  // case and the Lenskin at full detail once their FBX files are to hand. Before that the ceiling was 270 KB: the four
+  // models as measured plus room for a re-export that moves a few vertices. The brief's 160 KB figure (LINE_KB) cannot hold these models under this encoding: u16
   // positions with i8 normals are 9 B a vertex and u16 indices 6 B a triangle, so 16,472 vertices and 20,203 triangles
   // are 269,466 B before the head, 106,060 B over the figure, and gzip (195,521 B) is over it too. Reaching 160 KB
   // means fewer triangles (about 12,300 of the 20,203 through meshopt simplification, which breaks the parity with the
@@ -128,7 +131,7 @@ test('the file is its payload and head alone, at the manifest\'s size, under the
   // hall-bin.test.ts). Either is the lead's call and changes the format, so this test holds the ceiling and reports
   // the figure; the budget line for the bin is the wiring branch's.
   t.diagnostic(`products.bin ${bin.length} B stored (${(bin.length / KB).toFixed(1)} KiB), ${gz} B gzip; held to the ${CEILING_KB} KB ceiling (${ceiling} B); the brief's ${LINE_KB} KB figure (${line} B) is ${bin.length > line ? `over by ${bin.length - line} B` : 'met'}`);
-  assert.ok(bin.length <= ceiling, `${bin.length} B: the bin has grown past the ${CEILING_KB} KB ceiling (the four models measure 263.6 KiB)`);
+  assert.ok(bin.length <= ceiling, `${bin.length} B: the bin has grown past the ${CEILING_KB} KB ceiling`);
 });
 
 test('a buffer cut short, or a part record past the blocks, throws the parser\'s own error, not a view\'s RangeError', () => {
@@ -139,7 +142,7 @@ test('a buffer cut short, or a part record past the blocks, throws the parser\'s
   assert.throws(() => parseProductsBin(part0), /^Error: products model: part out of range$/);
   const prod0 = ab.slice(0); new Uint32Array(prod0, 24, 9)[8] = P + 1;   // product 0's part count past P
   assert.throws(() => parseProductsBin(prod0), /^Error: products model: part out of range$/);
-  assert.equal(parseProductsBin(ab.slice(0)).length, 4, 'the whole file still parses');
+  assert.equal(parseProductsBin(ab.slice(0)).length, 5, 'the whole file still parses');
 });
 
 test('products-bin.ts imports three alone, no glTF loader, no model file, and gzips under 2 KB', () => {

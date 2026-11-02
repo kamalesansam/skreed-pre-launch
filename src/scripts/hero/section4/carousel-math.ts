@@ -13,8 +13,8 @@ export const STEP = Object.freeze({
   frontAt: 0.75,
   /** the product is swapped edge-on at this eased t */
   swapAt: 0.5,
-  /** the product's scale eases between the two products over this span of eased t */
-  scaleFrom: 0.35, scaleTo: 0.65,
+  /** the product's scale eases between the two products over this span of eased t, each product held within scaleReach of its own size (productScale) */
+  scaleFrom: 0.35, scaleTo: 0.65, scaleReach: 1.3,
   /** further gestures are swallowed this long after a step, ms */
   cooldownMs: 150,
   /** the field of view at rest, at the pinch's bottom, and where the pinch returns (Tune fovStep, fovReturnAt) */
@@ -235,8 +235,20 @@ export const productYaw = (step: number, i: number, baseYaw: number): number => 
  */
 export const poseWeight = (step: number, i: number): number => smoothstep(0.5, 1, 1 - Math.abs(step - i));
 
-/** the product's scale across a step: from the outgoing's to the incoming's over eased t 0.35 to 0.65, around the swap at 0.5 */
-export const productScale = (t: number, from: number, to: number): number => from + (to - from) * smoothstep(STEP.scaleFrom, STEP.scaleTo, t);
+/**
+ * The product's scale across a step, for whichever product is shown (the outgoing until the swap at eased t 0.5, the
+ * incoming after, as the carousel swaps them): the outgoing eases from its own scale toward the incoming's over 0.35
+ * to 0.5, the incoming from the outgoing's toward its own over 0.5 to 0.65, each far end held within STEP.scaleReach
+ * (1.3) of the shown product's own scale, so no product is ever drawn at more than 1.3 times or less than 1 over 1.3 of
+ * its size. Unclamped, the AirPods Max (exhibit 0.62) after the Lenskin (2.2) appeared at 3.5 times its size for two
+ * frames, filling a phone's screen (the review of 2026-10-26); the pair's sizes still meet across the edge-on swap, in
+ * two eases rather than one.
+ */
+export function productScale(t: number, from: number, to: number, incoming: boolean = t >= STEP.swapAt): number {
+  const R = STEP.scaleReach, within = (x: number, own: number) => Math.min(own * R, Math.max(own / R, x));
+  if (!incoming) { const target = within(to, from); return from + (target - from) * smoothstep(STEP.scaleFrom, STEP.swapAt, t); }
+  const start = within(from, to); return start + (to - start) * smoothstep(STEP.swapAt, STEP.scaleTo, t);
+}
 
 /** the key light's colour t seconds after the front switch: a cubic smoothstep from the old tint to the new over ms (1.1 s) */
 export function keyLight(t: number, from: readonly [number, number, number], to: readonly [number, number, number], ms: number = STEP.keyLightMs): [number, number, number] {

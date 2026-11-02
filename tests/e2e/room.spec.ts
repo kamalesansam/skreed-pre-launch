@@ -244,14 +244,14 @@ test('section 4 at 390 x 844: the track, the keyboard, the entry, the five scene
   expect((await s4(page)).state).toBe('world');
   // the page has rested at section 5's rest, so the exit is armed (exit-guard.ts)
   await expect.poll(async () => (await s4(page)).exitArmed, { timeout: 5_000 }).toBe(true);
-  // the seam held at full cover, the clock frozen on the first frame after the jump: the logotype and the Back to top
+  // the seam held at full cover, the clock frozen on the first frame after the jump: the logotype and the section index
   // control read Urban Slate over the Pearl Whisper cloud (the regression the checker found in D5's first fix), the page at 0
   const exitCover = await holdAtCover(page, 'exit');
   expect(exitCover?.seam).toEqual({ kind: 'exit', phase: 'out' });
   expect(await page.evaluate(() => scrollY)).toBeLessThan(2);
   await expect(page.locator('.site-logo')).toHaveAttribute('data-tone', 'light');
   await expect(page.locator('.site-logo')).toHaveCSS('color', URBAN_SLATE_CSS);
-  await expect(page.locator('#toTop')).toHaveAttribute('data-tone', 'light');
+  await expect(page.locator('#siteNav')).toHaveAttribute('data-tone', 'light');   // the section index follows the logotype, as Back to top did before Home took its place
   await release(page);
   await page.waitForFunction(() => scrollY < 2, null, { timeout: 120_000, polling: 250 });
   await expect.poll(() => page.evaluate(() => window.__skreedState!().sb), { timeout: 20_000 }).toBeLessThan(0.01);

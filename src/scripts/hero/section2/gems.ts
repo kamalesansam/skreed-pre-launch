@@ -17,6 +17,7 @@ import type { Block } from '../logo/geometry.ts';
 import type { LogoUniforms } from '../logo/uniforms.ts';
 import { LONG, equirect, gemGeometry, rng, studioFn, type GemGeometry } from './gemGeometry.ts';
 import { createBackground, createPasses, fsMesh } from './background.ts';
+import { hueFrame, writeHues } from './hues.ts';
 import { matC, type GemMaterial } from './gemMaterial.ts';
 import { createFrost, FSCALE, type FrostSlot } from './frost.ts';
 import { createLabels, type Label, type LabelStone } from './labels.ts';
@@ -348,6 +349,7 @@ export function createGems(o: GemsOptions): Section2Scene {
     if (nav) placeLinkBoxes(nav, stones.map((st) => { if (!(linksOn && st.L >= 1)) return null; const b = labels.gemBox(st); return { x: b[0], y: b[1], w: b[2] - b[0], h: b[3] - b[1] }; }));
     updatePlexus(now, t);
     bg.uniforms.uScroll.value = 2.15 + 0.3 * (S - S2T.W1END);
+    writeHues(bg.uniforms, hueFrame(t, REDUCE), 1);   // the fog's shade hues (E-fog-hue), on the clock section 3's ground shares
   }
   let frameNo = 0;
   function renderS2() {
