@@ -27,10 +27,10 @@ test.describe('1. routes, titles and links', () => {
     expect(await nf.text()).toContain('<h1 class="h404">404. This shade does not exist.</h1>');   // the site 404, not an empty body
   });
 
-  test('the sitemap lists the landing and the ten pages; robots.txt names it; the favicon set and the OG and JSON-LD facts ship', async ({ request }) => {
+  test('the sitemap lists the landing, the About page and the ten pages; robots.txt names it; the favicon set and the OG and JSON-LD facts ship', async ({ request }) => {
     const sm = await (await request.get('/sitemap.xml')).text();
     const locs = [...sm.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
-    expect(locs).toEqual(['https://skreed.in/', ...FAMILIES.map((f) => `https://skreed.in/shades/${f}/`)]);
+    expect(locs).toEqual(['https://skreed.in/', 'https://skreed.in/about/', ...FAMILIES.map((f) => `https://skreed.in/shades/${f}/`)]);   // the About page, docs/specs/about.md D16
     expect(await (await request.get('/robots.txt')).text()).toContain('Sitemap: https://skreed.in/sitemap.xml');
     for (const f of ['/favicon.ico', '/icon.svg', '/apple-touch-icon.png', '/icon-192.png', '/icon-512.png', '/manifest.webmanifest']) expect((await request.get(f)).status(), f).toBe(200);
     const html = await (await request.get(url('go-green'))).text();

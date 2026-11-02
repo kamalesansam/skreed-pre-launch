@@ -1,0 +1,75 @@
+---
+// /about/ (docs/specs/about.md): the brief's copy on plain Pearl Whisper in skreed.com's face (exception E-About-font,
+// src/styles/about.css), text only (E-About-38), and the wordmark at the top left as the way home. The page ships no
+// JavaScript: the wordmark is drawn from the sprite here, never through SiteLogo.astro, whose script installs the glitch
+// (E-24 is not extended to this page), and there is no Back to top (D13). The one script element is the JSON-LD data
+// block, which is not executed. The landing page's section index links here (D7; navbar.md AC11); the sitemap lists it.
+import Base from '../layouts/Base.astro';
+import '../styles/about.css';
+import WordmarkSprite from '../components/shell/WordmarkSprite.astro';
+import { ABOUT_COPY as c, ABOUT_H1_LINES, ABOUT_RING } from '../config/about.ts';
+import { COPY } from '../config/copy.ts';
+import { LAUNCH_ISO, SITE_URL } from '../config/site.ts';
+import { PEARL_WHISPER } from '../config/tokens.ts';
+import { SITE_COPY } from '../scripts/family/site-copy.ts';
+
+const path = '/about/';
+const url = new URL(path, SITE_URL).href;
+// the owner's reference of 2026-11-03 (E-About-look): the title in three lines, the brand line ringed; the words themselves stay section 3's
+if (ABOUT_H1_LINES.join(' ') !== c.h1) throw new Error('the title lines do not make the title');
+const ringAt = c.p1.indexOf(ABOUT_RING);
+if (ringAt < 0) throw new Error('the ringed words are not in the first paragraph');
+const p1Before = c.p1.slice(0, ringAt), p1After = c.p1.slice(ringAt + ABOUT_RING.length);
+const o = SITE_COPY.org;
+// the page's place in the site as structured data: the family pages' Organization node, the page and its breadcrumb
+const ld = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@graph': [
+    { '@type': 'Organization', '@id': `${SITE_URL}/#org`, name: o.name, url: `${SITE_URL}/`, email: o.email, logo: `${SITE_URL}/icon-512.png`,
+      address: { '@type': 'PostalAddress', addressLocality: o.locality, addressRegion: o.region, addressCountry: o.country }, sameAs: [o.instagram] },
+    { '@type': 'AboutPage', url, name: c.title, about: { '@id': `${SITE_URL}/#org` } },
+    { '@type': 'BreadcrumbList', itemListElement: [
+      { '@type': 'ListItem', position: 1, name: o.name, item: `${SITE_URL}/` },
+      { '@type': 'ListItem', position: 2, name: c.title, item: url } ] },
+  ],
+}).replace(/</g, '\\u003c');
+---
+<Base title={c.title} description={c.description} path={path} preloadFonts={['/fonts/inter-400-700-latin.woff2']} themeColor={PEARL_WHISPER}>
+  <Fragment slot="head">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content={o.name}>
+    <meta property="og:locale" content="en_IN">
+    <meta property="og:title" content={c.title}>
+    <meta property="og:description" content={c.description}>
+    <meta property="og:url" content={url}>
+    <meta name="twitter:card" content="summary">
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <script type="application/ld+json" is:inline set:html={ld}></script>
+  </Fragment>
+  <WordmarkSprite />
+  <header class="ab-top">
+    <a class="site-logo" href="/" aria-label={COPY.logo.aria}><svg viewBox="0 0 1209.46 292.9" aria-hidden="true" focusable="false"><use href="#skreed-wordmark"/></svg></a>
+  </header>
+  <main class="ab">
+    <span class="ab-quote" aria-hidden="true">”</span>
+    <div class="ab-col">
+      <div class="ab-letter">
+        <h1>{ABOUT_H1_LINES.map((line, i) => <>{i > 0 ? ' ' : ''}<span>{line}</span></>)}</h1>
+        <div class="ab-text">
+          <p>{p1Before}<span class="ab-ring">{ABOUT_RING}<svg viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M118 9C170 7 198 20 196 32 194 47 148 58 98 59 46 60 4 49 5 30 6 11 52 2 104 3 150 4 186 9 192 19" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg></span>{p1After}</p>
+          <p>{c.p2}</p>
+          <p>{c.p3}</p>
+          <p>{c.p4}</p>
+          <p>{c.p5[0]}<em>{c.p5[1]}</em>{c.p5[2]}</p>
+        </div>
+      </div>
+      <div class="ab-close">
+        <p class="ab-sign">{c.sign}</p>
+        <p class="ab-launch">{c.launch[0]}<time datetime={LAUNCH_ISO}>{c.launch[1]}</time>{c.launch[2]}</p>
+      </div>
+    </div>
+  </main>
+</Base>

@@ -15,7 +15,7 @@ import { restY, sectionAt, SECTION_IDS, type PageMap } from '../../src/scripts/s
 const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const vh = 800;
 // the 3D path at 800 px: the track is TRACK_SVH / 100 screens (6.75 since 2026-11-02; 17.2 before), the quiz under it, section 4 two screens below the quiz's top
-const island: PageMap = { island: true, roomStill: false, vh, families: 5400, familiesH: 300, quiz: 5400, room: 7000, stage: 800, max: 40000 };
+const island: PageMap = { island: true, roomStill: false, vh, families: 6000, familiesH: 300, quiz: 6000, room: 7600, stage: 800, max: 40000 };
 const poster: PageMap = { island: false, roomStill: false, vh, families: 800, familiesH: 300, quiz: 1100, room: 2900, stage: 800, max: 6000 };
 
 test('the 3D path: each section rests where the hero, the glue and Skip quiz put it', () => {
@@ -44,7 +44,7 @@ test('rest positions are clamped to the page and never NaN (section 4 locked has
 test('the 3D path: the section on screen changes at the middle of each seam', () => {
   const s = (screens: number) => sectionAt(screens * vh, island);
   assert.equal(s(0), 'top');
-  const seam1 = (S2T.PULL + S2T.W1END) / 2;   // the middle of the first wipe (2.75 screens since 2026-11-02; 5.5 before)
+  const seam1 = (S2T.PULL + S2T.W1END) / 2;   // the middle of the first wipe (3.0 screens since 2026-11-03; 2.75 on 2026-11-02; 5.5 before)
   assert.equal(s(seam1 - 0.01), 'top');
   assert.equal(s(seam1), 'families');
   assert.equal(s(S2T.LAND), 'families');
@@ -74,6 +74,10 @@ test('the fragment links name the landing page\'s ids, in page order, in the bar
   assert.match(read('src/components/quiz/Quiz.astro'), /<section class="quiz" id="find"/);
   assert.match(read('src/components/room/Room.astro'), /<section class="room" id="room"[^>]* hidden data-locked/);
   assert.equal((nav.match(/items\.map/g) ?? []).length, 2);
+  assert.equal((nav.match(/pages\.map/g) ?? []).length, 2, 'About, a page link, after the sections in the bar and in the drawer');
+  assert.match(nav, /const pages = \[\{ id: 'about', href: '\/about\/', label: N\.pages\.about \}\];/);
+  assert.ok(nav.indexOf('items.map') < nav.indexOf('pages.map') && nav.lastIndexOf('items.map') < nav.lastIndexOf('pages.map'), 'About comes last in both lists');
+  assert.doesNotMatch(nav, /data-sec=\{p\.id\}/, 'a page link carries no data-sec, so site-nav.ts never jumps or marks it current');
   assert.equal((nav.match(/<nav\b/g) ?? []).length, 1, 'the drawer sits inside the bar\'s nav, so the index is one landmark');
   assert.ok(nav.indexOf('id="site-sections"') > nav.indexOf('<nav') && nav.indexOf('id="site-sections"') < nav.indexOf('</nav>'));
   const index = read('src/pages/index.astro');
@@ -104,7 +108,7 @@ test('the drawer: a transparent full-screen layer, its 75 percent light panel sl
   assert.match(css, /transform: translateX\(100%\); transition: transform var\(--dur-card\) var\(--ease-standard\)/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{ \.snav-a, \.snav-sheet, \.snav-in, \.snav-rows a span \{ transition: none; \}/);
   assert.match(css, /\.snav-sheet:not\(:popover-open\) \{ pointer-events: none; \}/, 'sliding out, the layer lets taps through at once');
-  // no popover in the browser: the drawer hidden, the four words in a row under the logotype on phones, Menu gone
+  // no popover in the browser: the drawer hidden, the five words (the four sections and About) in a row under the logotype on phones, Menu gone
   const fallback = css.slice(css.indexOf('@supports not selector(:popover-open)'));
   assert.match(fallback, /^@supports not selector\(:popover-open\) \{\n  \.snav-sheet \{ display: none; \}\n  @media \(max-width: 767\.98px\) \{\n[^}]*\}\n    \.snav-list \{ display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0; \}\n    \.snav-menu \{ display: none; \}/);
   assert.doesNotMatch(css, /box-shadow|backdrop-filter|gradient/);
@@ -121,12 +125,27 @@ test('without the popover API the script never touches it, and a tap on the draw
 });
 
 test('the copy: short words, no em dashes, no emojis', () => {
-  const words = [COPY.nav.aria, COPY.nav.menu, COPY.nav.close, ...Object.values(COPY.nav.items)];
+  const words = [COPY.nav.aria, COPY.nav.menu, COPY.nav.close, ...Object.values(COPY.nav.items), ...Object.values(COPY.nav.pages)];
   assert.deepEqual(Object.keys(COPY.nav.items), [...SECTION_IDS]);
   assert.deepEqual(Object.values(COPY.nav.items), ['Home', 'Families', 'Quiz', 'Products']);
+  assert.deepEqual(COPY.nav.pages, { about: 'About' });
   for (const w of words) {
-    assert.doesNotMatch(w, /[—–]/);
+    assert.doesNotMatch(w, /[\u2014\u2013]/);
     assert.doesNotMatch(w, /\p{Extended_Pictographic}/u);
     assert.ok(w.length <= 9, w);
   }
+});
+
+test('About is a plain link: site-nav.ts jumps only the data-sec links, tracks a press on a page link, and the About page carries no index', () => {
+  const js = read('src/scripts/shell/site-nav.ts');
+  assert.match(js, /const links = \[\.\.\.document\.querySelectorAll<HTMLAnchorElement>\('a\[data-sec\]'\)\];/);
+  // a plain press is tracked; a modifier press (a new tab) returns first, as the sections' handler does
+  assert.match(js, /querySelectorAll<HTMLAnchorElement>\('#siteNav a\[data-page\]'\)\) a\.addEventListener\('click', \(e\) => \{ if \(e\.button !== 0 \|\| e\.metaKey \|\| e\.ctrlKey \|\| e\.shiftKey \|\| e\.altKey\) return; track\('nav', \{ to: a\.dataset\.page! \}\); \}\);/);
+  // the drawer goes with the page: closed as the page leaves, so a landing page restored from the back-forward cache
+  // comes back without it, and closed again by a restore that still finds it open (navbar.md D7)
+  assert.match(js, /addEventListener\('pagehide', \(\) => \{ if \(open\(\)\) sheet\.hidePopover\(\); \}\);/);
+  assert.match(js, /addEventListener\('pageshow', \(e\) => \{ if \(e\.persisted && open\(\)\) sheet\.hidePopover\(\); \}\);/);
+  const about = read('src/pages/about.astro');
+  assert.doesNotMatch(about, /SiteNav|site-nav/, 'the About page ships no script: its wordmark is its way home (docs/specs/about.md D6, D13)');
+  assert.match(about, /<a class="site-logo" href="\/" aria-label=\{COPY\.logo\.aria\}>/);
 });

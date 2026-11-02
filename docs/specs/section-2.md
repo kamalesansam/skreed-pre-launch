@@ -147,7 +147,7 @@ Everything lives in the hero's one WebGL island (CLAUDE.md "Always do", E-C3). N
 
 ## 14. Half the scroll, the blocks together (Sam, 2026-11-02)
 
-Status: planned and built 2026-11-02 on the Astro island (the `hero-scroll-half` work), reviewed against this section; review log `docs/specs/section-2.review.md`. Sam's brief, in his words: "remove half of the the scroll from the hero section, that' jsut too much scrolling ... And make sure the other half px render is deleted so that it is more optimized. And also in the second section, each block will not align itself one by one in order. All the blocks from the logo will disperse and align itself in one single go at a time, at the same time. So all the blocks will align at the same time in the same scroll, not one block at a time. So there also scroll is reduced. So the basic point of this is to reduce too much scrolling."
+Status: planned and built 2026-11-02 on the Astro island (the `hero-scroll-half` work), reviewed against this section; review log `docs/specs/section-2.review.md`; landed 2026-11-03 (ec7d5a3, 95efdc5). Its map ran the camera's whole road and the whole wipes over half the scroll, twice as fast per screen, which was not what Sam meant: section 15 (2026-11-03) keeps the rates and halves the travel instead, and its figures supersede this section's; the blocks leaving together stand. Sam's brief, in his words: "remove half of the the scroll from the hero section, that' jsut too much scrolling ... And make sure the other half px render is deleted so that it is more optimized. And also in the second section, each block will not align itself one by one in order. All the blocks from the logo will disperse and align itself in one single go at a time, at the same time. So all the blocks will align at the same time in the same scroll, not one block at a time. So there also scroll is reduced. So the basic point of this is to reduce too much scrolling."
 
 ### 14.1 Goal in one sentence
 The hero and section 2 ask for under half the scrolling they did: the pull-back and both wipes take half their screens, and the ten blocks leave the logo in one go, so the page reaches section 3 after 5.75 screens instead of 16.2. Brand goals 1 and 2 as before; this serves the reader's patience.
@@ -195,3 +195,50 @@ The flight's length (1.8 screens, Sam's "long slow flight" of 2026-10-10), the r
 - The fog treadmill keeps 0.3 per screen (the fog drifts the same amount per finger movement), so the mid-wipe and rest frames no longer share the pinned prototype's fog position at any matching state; the parity frame suite grades the pixel floor at `W1END` only, where the treadmill agrees, and records the other two frames with their ride, labels and tone compared (`tests/parity/v11-frames.spec.ts`).
 - The pinned prototype (`tests/fixtures/hero-v11.4/`) is not edited: it is the approved v11.4 record; the port's map is the prototype's halved, asserted as such by the unit test.
 - The v11 frames capture turns E-fog-hue's patches off on the port (`hueOn` 0 through the live copy `liveFogHues()` reads, set by an init script; Tune is off on a hooks build, so nothing else reads the object): the pinned prototype predates the hues (2026-10-29) and its fog is grey, and with the hues on the wipe's end read 41.4 dB against the prototype's own 99 dB floor (2026-11-03). The hues keep their own grade (`tests/unit/fog-hues.test.ts`, quiz.md 6.1). With the hues off the wipe's end read 43.8 dB with no bias (the mean levels equal to a hundredth, a zero-mean grain of up to 7 levels): the fog's dither is keyed to the frame counter, the port reaches its position in fewer frames than the prototype on the halved map, and the prototype's two runs read 99 dB against each other only because they froze at the same frame count. The spec's floor is now the lower of the prototype's second run captured as frozen and one frame on (43.9 dB at the rest pair), so the grade is "the port within 1 dB of the dither's own floor", which is what the spec's header always meant. At the wipe's middle the hero camera sits at another curve parameter on the halved map (u2 0.12 against the prototype's 0.05), a second reason that frame is recorded and not graded on its pixels; `pullback.spec.ts` grades the camera at equal u2.
+
+## 15. Half the travel, not the speed (Sam, 2026-11-03)
+
+Status: planned and built 2026-11-03 on the `hero-travel-half` branch, after round 4 landed (ec7d5a3, 95efdc5); review log `docs/specs/section-2.review.md`, iteration 3 on. Sam's words: "when i said half the scroll for hero scroll, i didnt mean speed it up, i meant just cut down the travelling of the 3d world itself into half, the scroll speed remains the same". Round 4 (section 14) kept the camera's whole road and the whole wipes over half the scroll, so the world moved twice as fast per screen; this round keeps every rate of the v11.4 prototype and halves the road instead. Its figures supersede section 14's.
+
+### 15.1 Goal in one sentence
+The camera travels half as far through the moon world, at the speed it always had, so the pull-back still takes 2.5 screens; the wipes take their old screen each; the ten blocks still leave together and fly as before; the page reaches section 3 after 6.5 screens (16.2 before round 4).
+
+### 15.2 Wireframe in words (390 x 844 first, 1280 x 800 the same map)
+- **0 to 2.5 screens, the pull-back.** The camera backs away along the first half of its level weaving road (`CAMX`, `camCurve`): the same ease (smoothstep), the same rate per screen as the prototype (a fifth of the road per screen), stopping half-way, at z 34 of the road's 24 to 44, left to 6 units and back across to about +3.4 (the weave's middle). The logo therefore stands nearer and larger at the pull-back's end than in round 4 and in the prototype.
+- **2.5 to 3.5, the first wipe.** igloo's cut over one screen, as the prototype's (half a screen in round 4). The hero copy holds still, the logotype turns light past the half, the cue hides. The camera drifts on along the road at the prototype's drift rate (`CAM_DRIFT`), as it did through the prototype's wipe.
+- **3.0, mid-wipe: lift-off, all ten.** Section 14's flight, unchanged: each on its own bowed curve, 1.8 screens, landing at 4.8.
+- **4.8 to 5.5, the rest.** Ten gems, ten labels, hover, tap and keyboard as before.
+- **5.5 to 6.5, the second wipe** into section 3's fog ground, over one screen; the quiz's top reaches the bottom edge at 6.5 and fills the screen at 7.5 (the track's end, `docs/specs/quiz.md` D8).
+
+### 15.3 Content
+Nothing changes: no copy, the ten gems and their labels as before.
+
+### 15.4 Motion plan
+The constants (`src/config/hero.ts`), in screens: `PULL` 2.5, `WIPE` 1, `CAS0` 3.0, `FLY` 1.8, `W1END` 3.5, `LAND` 4.8, `W2` 5.5, `W2END` 6.5; `TRACK_SVH` 750 (675 in round 4). The road: `PROTO_MAP` holds the prototype's `PULL` 5 and `LAND` 14.5; `CAM_TRAVEL` = `PULL` / 5 = 0.5 is the share of the road the pull-back covers, so v advances a fifth of the road per screen as in the prototype; `CAM_DRIFT` = (`LAND` - `PULL`) / 9.5 = 0.242 is the share the drift after it covers, at the prototype's rate; `camCurve` takes v = `CAM_TRAVEL` x s + `CAM_DRIFT` x u2 (the prototype's own v = s + u2). Rates, per screen of scroll: the camera's z 4 units over the pull-back and 1.68 over the drift, in the prototype and here (round 4 had 8 and 7.8); the weave's lateral rate is the prototype's too. The flight, the fog's treadmill and the composite's wipes are the prototype's.
+
+The alternative not taken: compressing the whole road into half the distance, so the weave completes its shape at half its amplitude and the pull-back ends where the prototype's ended in x (-3). Sam's words ask for the travel halved at the same speed, which is the road's first half; the pull-end frame (`hero-r5-<w>-pull-end.png`) shows the result for his eye, and the other reading is one constant and a scaled `CAMX` away.
+
+### 15.5 Data and states
+As 14.5: no new state. Reduced motion is unchanged (the straight v9.9 pull-back with s = 0 holds the hero pose; the still3d tier draws the gems at their slots).
+
+### 15.6 Budget
+No new bytes beyond three constants: the island chunk within 0.1 KB of round 4's; total JS 243.2 KB gz or under.
+
+### 15.7 Acceptance criteria
+1. **The map (F1, C3).** `S2T` reads PULL 2.5, WIPE 1, CAS0 3.0, FLY 1.8, W1END 3.5, LAND 4.8, W2 5.5, W2END 6.5 and has no GAP; `TRACK_SVH` 750 equals `shell.css` (unit test); the second wipe's end at 6.5 screens, under half of 16.2.
+2. **The rates (F1).** `CAM_TRAVEL` 0.5 = `PULL` / the prototype's 5 and `CAM_DRIFT` = (`LAND` - `PULL`) / the prototype's 9.5, both read from the pinned fixture (unit test); `camCurve(s, u2)` equals the prototype's `camCurve` at v = 0.5 s + 0.242 u2 over the whole grid; the pull-back's end is at z 34, x camX(0.5); the live camera equals the prototype's at the same v (`tests/parity/pullback.spec.ts`: exactly at 0 and at the pull-end, to 3 decimals at five more pairs).
+3. **All ten together (F1, D4).** As 14.7 criterion 2 at the new positions: `__s2().L` all 0 at 3.0 and below, all between 0 and 1 at 3.9, all 1 from 4.8 on.
+4. **Seams and dependents (F1).** The glue spans, the section index's seams, the family return path, the quiz's scripts and tests read the map (unit page-scroll, site-nav, return-path; e2e site-nav, to-top, island and the quiz gate's AC1 and AC6 pass).
+5. **Reduced motion and the frames parity (F1).** `v11-frames.spec.ts` grades the wipe's end at the prototype's 6 and the port's 3.5 within 1 dB of the dither floor at both widths, the labels and the ride equal on every pair.
+6. **Frames (B1, D1).** `hero-r5-<w>-{pull-end,wipe-mid,flight,rest,wipe2-mid,quiz}.png` at 390 x 844 and 1280 x 800 with the loader gone: pull-end the logo whole and nearer than round 4's, wipe-mid the logo with its blocks under the cut, flight the ten in the air, rest the ten gems and labels, wipe2-mid the gems cut away, quiz the intro.
+7. **Budgets (C1, C4).** Every budget line ok; total JS within 0.1 KB of 243.2 KB; Lighthouse on the poster tier 90 or more.
+8. **The record (F2).** CLAUDE.md's Section 2 and Section 3 lines and its Always-do line, hero.md 12.9, quiz.md, DESIGN.md, hero-architecture.md, section-4.md and section-4-flux.md carry the new figures; no em or en dash, no emoji.
+
+### 15.8 Out of scope
+The flight's path and length (Sam's word covers the world's travel, and round 4 did not speed the flight up), the labels, hover, the fog and its hues, sections 3 and 4.
+
+### 15.9 Decisions taken
+- The road's first half, not a compressed road (15.4).
+- The wipes back to the prototype's screen each: a wipe is motion on screen too and "the scroll speed remains the same" covers it; round 4's half-screen wipes ran twice as fast.
+- The drift after the pull-back keeps the prototype's rate for the screens the wipe and the flight have (2.3 screens), so it covers 3.9 units, not half the prototype's 16: the stagger's removal, not this round, took those screens away.
+- The pull-end frame is Sam's to judge: the logo nearer, the camera mid-weave (x about +3.4) where the prototype's sat at x -3 after the whole road.
