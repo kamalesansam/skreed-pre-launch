@@ -94,7 +94,7 @@ The push refuses to move a default that moved in the meantime (non fast-forward)
 
 **Binary frames:** a review frame is owned by the round that names it. Family round 6 writes `family-r6-*.png` and puts `family-r5-*.png` back to the default's; the cue session keeps its own `scroll-cue-*.png` and puts the `family-r5-*.png` it committed back to the default's; whoever lands second re-renders its own frames on the merged build.
 
-**Never:** never merge or push another session's branch; never force-push; never a bare `git stash`; never land without Sam's word; never stop another session's servers; never `git add -A` in the main checkout (it holds untracked review frames and an A3 lifestyle picture that must never be committed).
+**Never:** never merge or push another session's branch; never force-push; never a bare `git stash`; never land without Sam's word; never stop another session's servers, and never bind or kill a port without `lsof -nP -iTCP:<port> -sTCP:LISTEN` first and a look at which worktree owns it (on 2026-11-03 a hall-session script killed the family session's server on 8795, taking it for its own); never `git add -A` in the main checkout (it holds untracked review frames and an A3 lifestyle picture that must never be committed).
 
 ## 5. `main`
 
