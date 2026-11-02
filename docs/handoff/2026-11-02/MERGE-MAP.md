@@ -2,7 +2,7 @@
 
 Sam, 2026-11-02: "make sure each and every session that is running here is talking to each other. So while after finishing everything, while merging everything into one single branch, in the default branch or the origin branch, none of them should have any conflict and everything should merge without any conflict."
 
-This file is the shared contract between the sessions in flight. The measurements below were taken on 2026-11-02 by the hub session with `scripts/git/merge-map.py` on snapshots of every worktree (each branch's tip plus its uncommitted work) against the default branch `origin/claude/youthful-planck-objwf5` at `7e256a4`, and were unchanged an hour later. Re-measure before trusting them: the tips move.
+This file is the shared contract between the sessions in flight. The measurements below were taken on 2026-11-02 by the hub session with `scripts/git/merge-map.py` on snapshots of every worktree (each branch's tip plus its uncommitted work) against the default branch `origin/claude/youthful-planck-objwf5` at `7e256a4`, and were unchanged an hour later. The reservation commit of section 7 landed as `9e6c907` on 2026-11-03, so the default moved once since; its effect is measured in section 2. Re-measure before trusting the rest: the tips move.
 
 ## 1. The branches in flight
 
@@ -44,6 +44,8 @@ Parked: `claude/deployment-setup-92703f` (`5f0ba38`, the deploy workflow) confli
 - `docs/HANDOFF.md` line 18 (the page section by section: hall, section 5); `docs/00-IDEATION.md` line 48 (hall, section 5).
 
 A git fact, tested on 2026-11-02: two edits to adjacent lines conflict; one unchanged line between them is enough to merge clean; two insertions after the same line always conflict. So the shared docs will conflict between branches whatever the discipline; the protocol makes sure those conflicts are resolved inside the branches, one landing at a time, and never reach the default.
+
+**The reservation (landed as `9e6c907`, 2026-11-03, Sam's word "Yes, make it").** `CLAUDE.md` now carries one blank line between the five section bullets (lines 15, 17, 19, 21 and 25), a reserved "Section 5, the sign-up" line at 23 for the section 5 branch to replace, and a reserved "The About page" block at 132 for the About branch to replace; everything from the old line 100 moved down six lines, and eight after 132. Simulated with every branch merged onto it and its bullets re-applied, `CLAUDE.md` conflicts in 6 pairs instead of 21, all same-line edits that no spacing can separate: 2 x 3 (the Section 4 bullet), 4 x 5 (the family pages bullet), 2 x 7, 1 x 2 and 1 x 7 (the Section 3 bullet), 5 x 7 (the Section 2 bullet). Seven pairs are then clean in every file: 4 x 2, 4 x 7, 4 x 1, 2 x 6, 5 x 6, 7 x 6 and 5 x 1. Each branch pays once: its next merge-in conflicts in `CLAUDE.md` beside the inserted blank lines, resolved by keeping its own text on its own line and the blank lines around it (section 5 and About replace their reserved lines).
 
 ## 3. The landing queue
 
@@ -102,5 +104,4 @@ The hub session ("Conflict-free session merging") re-measures the map after ever
 ## 7. Open with Sam
 
 - The main checkout (`/Users/apple/skreed-pre-launch`) carries a stray one-line uncommitted edit to `docs/specs/section-4.md` from the old docs session of 2026-10-23 (the third wipe's hand-off wording), plus untracked review frames and an A3 lifestyle picture at the root. The landing route above never touches that checkout, so nothing blocks; the stray line is still Sam's to keep (a tagged stash or a branch) or drop.
-- Whether to spend one landing on a reservation commit that puts one blank line between the section bullets of `CLAUDE.md` (lines 15 to 19) and adds the section 5 and About bullets as placeholders, so the seven sessions' edits to different bullets merge clean. Without it each session resolves that list once per landing, by the rule above.
 - The hall session planned to rebase onto the default; this protocol asks it to merge instead, so the removal keeps its SHA and the sessions behind it can take its tip in early.
