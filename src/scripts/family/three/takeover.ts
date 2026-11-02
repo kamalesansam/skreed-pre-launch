@@ -30,8 +30,8 @@ export interface TakeoverOptions {
 
 /** The scroll a hand-over's sweep spans: the turn's second half, from the edge-on frame to the beat's rest. */
 export const SWEEP_SPAN = TURN_LEN / 2;
-/** The hair before the span's end where the beat's case stands alone: the page scrolls by whole pixels, so it can rest a fraction of a screen short of the beat (0.001 of a screen is under a pixel at any size). */
-export const SWEEP_END_SLACK = 0.001;
+/** The hair before the span's end where the beat's case stands alone: the page scrolls by whole pixels and can rest a few short of the beat (2 of 2,400 seen at 1280 x 800), so the sweep's last 0.004 of a screen (about 3 px, p past 1.115 and nothing of the band left to see) is the rest. */
+export const SWEEP_END_SLACK = 0.004;
 
 /** The two case types a hand-over joins: the type before and the type after the edge-on frame at HANDOVERS[i]. */
 export const handoverTypes = (i: number): [CaseType, CaseType] => [CASE_TYPES[i], CASE_TYPES[i + 1]];
