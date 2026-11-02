@@ -2583,7 +2583,7 @@ test('E-S3-result on a phone held sideways (844 x 390): data-swap on #find, the 
   await ctx.close();
 });
 
-test('E-S3-result the ground leaves with the scroll (D53; Sam, 2026-11-03: "after getting the results, the transition is not coming, only that box"): fixed to the screen while the result shows, full at the result\'s rest, fading as #find moves off the screen\'s top in either direction, gone by half a screen, so no edge of a box slides past; html carries data-qz-ground while the ground is half there or more, so the logotype, turned Urban Slate over the light fog, stays Pearl Whisper over the deep ground and turns back as it goes; Try again takes it off (the landing page has drawn no Back to top since the section index of 2026-11-02, so the logotype alone is read)', async ({ page, baseURL }) => {
+test('E-S3-result the ground leaves with the scroll (D53; Sam, 2026-11-03: "after getting the results, the transition is not coming, only that box"): fixed to the screen while the result shows, full at the result\'s rest and within 3% of a screen of it, fading as #find moves off the screen\'s top in either direction, gone by half a screen, so no edge of a box slides past; html carries data-qz-ground while the ground is half there or more, so the logotype, turned Urban Slate over the light fog, stays Pearl Whisper over the deep ground and turns back as it goes; Try again takes it off (the landing page has drawn no Back to top since the section index of 2026-11-02, so the logotype alone is read)', async ({ page, baseURL }) => {
   await pin(page, 0.01);
   await openQuiz(page, baseURL);
   const html = page.locator('html'), logo = page.locator('#siteLogo'), find = page.locator('#find');
@@ -2602,16 +2602,21 @@ test('E-S3-result the ground leaves with the scroll (D53; Sam, 2026-11-03: "afte
     const g = document.querySelector<HTMLElement>('#find > .qz-ground')!, b = g.getBoundingClientRect();
     return { position: getComputedStyle(g).position, top: Math.round(b.top), height: Math.round(b.height), opacity: Number(getComputedStyle(g).opacity), find: document.getElementById('find')!.getBoundingClientRect().top };
   });
+  // the fade as deck.ts draws it: full within 3% of a screen of the rest, then linear to 0 at half a screen
+  const faded = (f: number) => Math.max(0, Math.min(1, 1 - Math.max(0, Math.abs(f) - 0.03) / 0.47));
   // fixed to the screen, full at the rest
   expect(await ground(), 'the ground covers the screen, full').toMatchObject({ position: 'fixed', top: 0, height: vh, opacity: 1 });
-  // a fifth of a screen down: still there, dissolving (1 - 0.2 / 0.5), and still the greater part under the band
+  // a stray pixel of scroll starts nothing
+  await scrollFind(3);
+  await expect.poll(async () => (await ground()).opacity, { message: 'held full near the rest' }).toBe(1);
+  // a fifth of a screen down: still there, dissolving, and still the greater part under the band
   await scrollFind(Math.round(vh * 0.2));
-  await expect.poll(async () => (await ground()).opacity, { message: 'part-way: 0.6' }).toBeCloseTo(0.6, 1);
+  await expect.poll(async () => (await ground()).opacity, { message: `part-way: ${faded(0.2).toFixed(2)}` }).toBeCloseTo(faded(0.2), 1);
   await expect(html).toHaveAttribute('data-qz-ground', '');
   expect((await ground()).top, 'it stays where it is: no edge moves with the section').toBe(0);
-  // two fifths down: under half there (0.2), the mark gone and the logotype back to its tone over the fog
+  // two fifths down: under half there, the mark gone and the logotype back to its tone over the fog
   await scrollFind(Math.round(vh * 0.4));
-  await expect.poll(async () => (await ground()).opacity).toBeCloseTo(0.2, 1);
+  await expect.poll(async () => (await ground()).opacity).toBeCloseTo(faded(0.4), 1);
   await expect(html, 'the ground under half there').not.toHaveAttribute('data-qz-ground');
   await expect(logo, 'the logotype back to its tone over the fog').toHaveCSS('color', URBAN_SLATE);
   // on past the result into section 4 (open under it): gone
@@ -2622,9 +2627,9 @@ test('E-S3-result the ground leaves with the scroll (D53; Sam, 2026-11-03: "afte
   await expect.poll(async () => (await ground()).opacity).toBe(1);
   await expect(html).toHaveAttribute('data-qz-ground', '');
   await expect(logo).toHaveCSS('color', PEARL);
-  // back up the page by three tenths of a screen: under half there (0.4), the fog over the band again
+  // back up the page by three tenths of a screen: under half there, the fog over the band again
   await scrollFind(-Math.round(vh * 0.3));
-  await expect.poll(async () => (await ground()).opacity).toBeCloseTo(0.4, 1);
+  await expect.poll(async () => (await ground()).opacity).toBeCloseTo(faded(0.3), 1);
   await expect(html, 'the fog over the band again').not.toHaveAttribute('data-qz-ground');
   // Try again: the deck on the fog, never the mark, and the ground's own opacity handed back
   await scrollFind(0);

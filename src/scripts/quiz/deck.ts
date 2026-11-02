@@ -17,8 +17,9 @@ import { track } from './track.ts';
 const DUR_MARK = 120, DUR_SWATCH = 400;
 /** the result's entrance (quiz.md D51): the ground's rise in ms; the lines start decoding in halfway through it */
 const DUR_GROUND = 700;
-/** the ground leaves with the scroll (quiz.md D53): gone once the section has moved this share of the screen off its rest */
-const GROUND_FADE = 0.5;
+/** the ground leaves with the scroll (quiz.md D53): full within the first share of the screen off its rest (a stray pixel
+ *  of scroll starts nothing), gone once the section has moved the second share */
+const GROUND_HOLD = 0.03, GROUND_FADE = 0.5;
 /** the site's standard ease (tokens.css --ease-standard), for the ground's rise */
 const EASE_STANDARD = 'cubic-bezier(0.2, 0, 0, 1)';
 /** a press on a question this soon after it was put on screen is dropped: its words are still at opacity 0, so it is the
@@ -160,7 +161,8 @@ export function mountQuiz(root: HTMLElement): void {
     // fog and the page's wipes instead of sliding off as a box with a hard edge; the offer's band fades its fill with it
     // (quiz.css, [data-fade] and --qz-fade, written only while it fades so the rest state's colours stay plain)
     const top = root.getBoundingClientRect().top;
-    const o = state === 'result' ? Math.max(0, Math.min(1, 1 - Math.abs(top) / (innerHeight * GROUND_FADE))) : 1;
+    const hold = innerHeight * GROUND_HOLD, span = innerHeight * GROUND_FADE - hold;
+    const o = state === 'result' ? Math.max(0, Math.min(1, 1 - Math.max(0, Math.abs(top) - hold) / span)) : 1;
     root.toggleAttribute('data-fade', o < 1);
     if (o < 1) root.style.setProperty('--qz-fade', o.toFixed(3)); else root.style.removeProperty('--qz-fade');
     // the logotype and the section index stay Pearl Whisper while the ground is the greater part of what lies under them
