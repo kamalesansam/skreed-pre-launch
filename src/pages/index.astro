@@ -24,7 +24,7 @@ import { NIGHT } from '../config/tokens.ts';
 // scripts and styles (Astro bundles the scripts of every imported component, rendered or not).
 const Tune = import.meta.env.PUBLIC_TUNE === '1' ? (await import('../components/dev/Tune.astro')).default : null;
 ---
-<Base title={COPY.page.title} description={COPY.page.description} path="/" preloadFonts={['/fonts/open-sans-400-600-latin.woff2']} themeColor={NIGHT}>
+<Base title={COPY.page.title} description={COPY.page.description} path="/" preloadFonts={['/fonts/open-sans-400-600-latin.woff2', '/fonts/ibm-plex-mono-500-caps.woff2']} themeColor={NIGHT}>
   <Gate slot="head-first" />
   <HeroPosterPreload slot="head" />
   <HeroStage>

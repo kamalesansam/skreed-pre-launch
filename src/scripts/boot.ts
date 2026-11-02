@@ -13,7 +13,7 @@ import { resetRiders, type RideEls } from './hero/scroll/reset.ts';
 const H = document.documentElement;
 const life = createLife();
 const $ = (id: string) => document.getElementById(id);
-const els: RideEls = { heroCopy: $('heroCopy'), cue: $('cue'), labels: $('labels'), siteLogo: $('siteLogo') };
+const els: RideEls = { heroCopy: $('heroCopy'), cue: $('cue'), labels: $('labels'), siteLogo: $('siteLogo'), more: $('cueText') };
 // a return visit's soft poster (stall, offline) has centred nav#families (onSoftPoster): a hard turn after it keeps the visitor's
 // place; a hard fall that never passed there (the Gate's module load-error fail, a lost context, a failed fetch) centres them itself
 let softCentred = false;

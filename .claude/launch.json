@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "astro-dev-mac-hooks",
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": ["-lc", "PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=1 PUBLIC_STAGING=0 PUBLIC_FAMILY_3D=on exec npx astro dev --host 127.0.0.1 --port 4325"],
+      "port": 4325
+    },
+    {
       "name": "astro-dev",
       "runtimeExecutable": "C:/Program Files/Git/usr/bin/bash.exe",
       "runtimeArgs": ["-lc", "PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=1 PUBLIC_STAGING=0 PUBLIC_FAMILY_3D=on exec npx astro dev --host 127.0.0.1 --port 4324"],
