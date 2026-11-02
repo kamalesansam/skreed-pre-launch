@@ -6,7 +6,7 @@ import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import { PHONE, WIDE, watch, cspViolations } from './util.ts';
 import sharp from 'sharp';
 
-type St = { s: number; target: number; G: number; running: boolean; tier: string; detail: string; probe: { tier: string; period: number; median: number } | null };
+type St = { s: number; target: number; G: number; busy: boolean; tier: string; detail: string; probe: { tier: string; period: number; median: number } | null };
 const st = (p: Page) => p.evaluate(() => (window as unknown as { __famStage: { state(): St } }).__famStage.state());
 async function supplierBuild(p: Page): Promise<void> {
   const ok = await p.evaluate(() => { const c = document.getElementById('fam-3d'); return !!c && JSON.parse(c.textContent || '{}').mode === 'on'; });
@@ -14,9 +14,12 @@ async function supplierBuild(p: Page): Promise<void> {
 }
 async function live(p: Page, idle = true): Promise<void> {
   await p.waitForFunction(() => document.querySelector('#st3d canvas.on'), null, { timeout: 180_000 });
-  if (idle) await p.waitForFunction(() => { const s = (window as unknown as { __famStage?: { state(): St } }).__famStage?.state(); return !!s && Math.abs(s.s - s.target) < 0.001 && s.G > 0.999 && !s.running && s.detail !== 'loading'; }, null, { timeout: 180_000, polling: 300 });
+  if (idle) await p.waitForFunction(() => { const s = (window as unknown as { __famStage?: { state(): St } }).__famStage?.state(); return !!s && Math.abs(s.s - s.target) < 0.001 && s.G > 0.999 && !s.busy && s.detail !== 'loading'; }, null, { timeout: 180_000, polling: 300 });
 }
+// the Tough's two files; the case types' own models (magtough, snap, armor) load only past 0.5 screens (family-page.md
+// 24 D2), so a page left on the carousel requests none of them (takeover.spec.ts has their rows)
 const glbs = (urls: string[]) => urls.filter((u) => /\/models\/case\.lod[01]\.[0-9a-f]{8}\.glb$/.test(u)).map((u) => u.match(/lod[01]/)![0]);
+const typeGlbs = (urls: string[]) => urls.filter((u) => /\/models\/(magtough|snap|armor)\.lod[01]\.[0-9a-f]{8}\.glb$/.test(u));
 function track(ctx: BrowserContext): string[] { const urls: string[] = []; ctx.on('request', (r) => urls.push(r.url())); return urls; }
 /** The canvas as RGBA pixels (the hook renders and reads it in one task). */
 async function pixels(p: Page): Promise<{ data: Buffer; width: number; height: number }> {
@@ -39,6 +42,7 @@ test('T16: the 3D path under the site CSP, at 390 and 1280: zero violations, the
     await live(page);
     expect(await cspViolations(page)).toEqual([]);
     expect(glbs(urls).sort()).toEqual(['lod0', 'lod1']);
+    expect(typeGlbs(urls), 'no type model on the carousel').toEqual([]);
     expect((await st(page)).detail).toBe('loaded');
     await ctx.close();
   }

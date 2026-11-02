@@ -6,13 +6,13 @@ import { test, expect, type Page } from '@playwright/test';
 import { PHONE, WIDE, watch, cspViolations, shade } from './util.ts';
 
 type Info = { calls: number; triangles: number; frame: number; programs: number; geometries: number; textures: number; warmPrograms: number };
-type St = { s: number; target: number; G: number; running: boolean };
+type St = { s: number; target: number; G: number; busy: boolean };   // busy: something still moves (round 3 on; running is the loop's own switch)
 const info = (p: Page) => p.evaluate(() => (window as unknown as { __famStage: { info(): Info } }).__famStage.info());
 const st = (p: Page) => p.evaluate(() => (window as unknown as { __famStage: { state(): St } }).__famStage.state());
 const project = (p: Page, slot: number) => p.evaluate((k) => (window as unknown as { __famStage: { project(k: number): { x: number; y: number } } }).__famStage.project(k), slot);
 const pickAt = (p: Page, x: number, y: number) => p.evaluate(([a, b]) => (window as unknown as { __famStage: { pickAt(x: number, y: number): number | null } }).__famStage.pickAt(a, b), [x, y]);
 async function settled(p: Page) {
-  await p.waitForFunction(() => { const s = (window as unknown as { __famStage?: { state(): St } }).__famStage?.state(); return !!s && Math.abs(s.s - s.target) < 0.001 && s.G > 0.999 && !s.running; }, null, { timeout: 90_000, polling: 250 });
+  await p.waitForFunction(() => { const s = (window as unknown as { __famStage?: { state(): St } }).__famStage?.state(); return !!s && Math.abs(s.s - s.target) < 0.001 && s.G > 0.999 && !s.busy; }, null, { timeout: 90_000, polling: 250 });
 }
 async function open(p: Page, slug: string, q = '') {
   await p.goto(`/shades/${slug}/?render=force&tier=high${q}`);
@@ -32,16 +32,18 @@ async function pointOn(p: Page, k: number): Promise<{ x: number; y: number } | n
   return null;
 }
 
-test('T4 renderer counts after the PMREM disposal and the warm-up, at 390 and 1280; idle renders nothing', async ({ browser }) => {
+test('T4 renderer counts after the PMREM disposal, at 390 and 1280; idle renders nothing', async ({ browser }) => {
   for (const opts of [PHONE, WIDE]) {
     const ctx = await browser.newContext(opts);
     const page = await ctx.newPage();
     await open(page, 'blissful-blue');
-    await page.waitForFunction(() => (window as unknown as { __famStage: { info(): Info } }).__famStage.info().warmPrograms > 0, null, { timeout: 60_000 });
     const i = await info(page);
     const supplier = await page.evaluate(() => (window as unknown as { __famStage: { source: string } }).__famStage.source === 'supplier');
+    // round 6 (family-page.md 24 D9): the row and the 24 logos on their plain materials, the front pair and the front
+    // logo on the takeover's (off at rest); the type models load only past 0.5 screens, so none draws here
     expect(i.calls).toBeLessThanOrEqual(6);
-    expect(i.programs).toBe(3);                   // shade matte, shade gloss (warmed), accent; the logo shares the shade programs; no device
+    expect(i.warmPrograms).toBe(6);               // shade matte, shade gloss (warmed) and accent, each plain and with the takeover
+    expect(i.programs).toBe(6);                   // the logos share the shade's programs; no device
     expect(i.geometries).toBe(supplier ? 6 : 4);  // body, accent (and the supplier's logo) at two LODs
     expect(i.textures).toBe(1);                   // the PMREM target only
     expect(i.triangles).toBeLessThanOrEqual(supplier ? 24 * 9811 + 2 * 20348 : 24 * 1800 + 2 * 7520);
@@ -127,7 +129,7 @@ test('a tap on the front case turns it and changes nothing else; dragging moves 
   const c = await project(page, 6);
   await page.touchscreen.tap(c.x, c.y);
   await page.waitForTimeout(150);
-  expect((await st(page)).running).toBe(true);    // the 600 ms turn plays
+  expect((await st(page)).busy).toBe(true);       // the 600 ms turn plays
   await settled(page);
   expect(await shade(page)).toBe(before);
   expect(await page.evaluate(() => scrollY)).toBe(0);

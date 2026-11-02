@@ -1,6 +1,6 @@
 // The family page's geometry, pure (no three.js): ciao's opening carousel (docs/specs/family-page.md 19), the scroll map
-// after it (section 20: the zoom, the four case types, the argument screen; section 21: one case type per frame, the
-// phone pose), the projection the skeleton and the HUD use, and the view fit per layout. Shared by the build (the
+// after it (section 20: the zoom, the four case types, the argument screen; section 21: the phone pose; section 24: the
+// case type each beat asks for), the projection the skeleton and the HUD use, and the view fit per layout. Shared by the build (the
 // skeleton in Poster.astro), the page module (the skeleton at runtime, the scroll map) and the stage (the poses).
 // Every value was measured from ciao's module (research/ciao-landing, ciao-3d-params.json, keyframes-desk.json) and
 // re-created here; nothing of ciao's ships.
@@ -132,16 +132,16 @@ export function scrollClasses(sv: number): { hudOff: boolean; beatsOn: boolean; 
  * 5 to 6 ciao's argument pose (its row 5000 to 6000: camera at z 8, level, FOV 45; the case at the centre, z -0.5,
  * tipped back 20 degrees and rolled -5, facing the camera; the two carousel spots back at 45 of 50), held over 6 to 7
  * with the pointer's influence and a slow bob. Between beats the values ease with ciao's power1.inOut (a smoothstep).
- * The turn (D3): over each feature transition (into Tough 1.7 to 2, then 2.7 to 3, 3.7 to 4 and 4.7 to 5) the case
- * makes a half turn about its vertical axis; at the edge-on frame the model is re-posed a half turn back, so the back
- * that comes round is the next case's. The second model (the Desert stand-in for MagTough, Snap and Armor) takes over
- * at the first hand-over's edge-on frame, 2.85, and the Tough model comes back there on the way up: one case type per
- * frame, always.
+ * The turn (section 21 D3, kept by section 24 D6): over each feature transition (into Tough 1.7 to 2, then 2.7 to 3,
+ * 3.7 to 4 and 4.7 to 5) the case makes a half turn about its vertical axis; at the edge-on frame the model is re-posed a
+ * half turn back, so the back that comes round is the next case's. Section 24 D3: each beat has its own case type, and
+ * the edge-on frames of the three hand-over turns (2.85, 3.85, 4.85) are where the next type is asked for; the stage's
+ * takeover (three/takeover.ts) runs from there on its own clock. The turn into Tough changes no model.
  */
 export const sm = (t: number): number => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
 export const RZ = [0, -0.1745, 0.0873, -0.1745, 0.0873, 0, 0] as const, CY = [0, -0.96, -0.58, 0.02, 0.6, 0, 0] as const;
-export const TURNS = [2, 3, 4, 5] as const, TURN_LEN = 0.3, SWAP = 2.85;
-export interface BeatPose { k: number; rz: number; cy: number; A: number; yaw: number; second: boolean }
+export const TURNS = [2, 3, 4, 5] as const, TURN_LEN = 0.3;
+export interface BeatPose { k: number; rz: number; cy: number; A: number; yaw: number }
 export function beatPose(sv: number): BeatPose {
   const k = sm(sv - 1);
   const j = Math.max(1, Math.min(6, Math.floor(sv))), t = sm(sv - j);
@@ -149,9 +149,25 @@ export function beatPose(sv: number): BeatPose {
   const A = sm(sv - 5);
   let yaw = 0;
   for (const n of TURNS) { const u = sm((sv - (n - TURN_LEN)) / TURN_LEN); if (u > 0 && u < 1) yaw = (u <= 0.5 ? u : u - 1) * Math.PI; }
-  return { k, rz, cy, A, yaw, second: sv >= SWAP };
+  return { k, rz, cy, A, yaw };
 }
-/** Which case type a frame shows (D3): Tough until the first hand-over's edge-on frame, the second model from there. */
-export const caseTypeAt = (sv: number): 'tough' | 'second' => (beatPose(sv).k > 0 && sv >= SWAP ? 'second' : 'tough');
+
+/** The four case types in beat order (section 20: Tough, MagTough, Snap, Armor at beats 1 to 4). */
+export const CASE_TYPES = ['tough', 'magtough', 'snap', 'armor'] as const;
+export type CaseType = (typeof CASE_TYPES)[number];
+/** The screen each type rests at (its beat, where the turn's yaw is 0): the takeover's sweep axis is read from that pose. */
+export const CASE_REST: Readonly<Record<CaseType, number>> = { tough: 2, magtough: 3, snap: 4, armor: 5 };
+/** The hand-overs: the edge-on frames of the turns into beats 2 to 4 (TURNS[i] - TURN_LEN / 2: 2.85, 3.85, 4.85). */
+export const HANDOVERS = TURNS.slice(1).map((n) => n - TURN_LEN / 2) as readonly number[];
+/**
+ * The case type a frame asks for (section 24 D3): Tough below 2.85 and whenever the zoom is at 0 (the carousel),
+ * MagTough from 2.85, Snap from 3.85, Armor from 4.85 through the argument screen.
+ */
+export function caseTargetAt(sv: number): CaseType {
+  if (!(beatPose(sv).k > 0)) return 'tough';
+  let i = 0;
+  while (i < HANDOVERS.length && sv >= HANDOVERS[i]) i++;
+  return CASE_TYPES[i];
+}
 /** The yaw of the turning case is edge-on (an odd multiple of a quarter turn) within tol radians. */
 export const edgeOn = (yaw: number, tol = 0.02): boolean => Math.abs(Math.abs(((yaw % Math.PI) + Math.PI) % Math.PI) - Math.PI / 2) < tol;

@@ -12,7 +12,7 @@ type Loader = { cut(): void; skip(): void; abort(): void; fail(m: string): void;
 const H = document.documentElement;
 const host = document.getElementById('st3d');
 const SLOW_MS = 8000;
-const CFG = JSON.parse(document.getElementById('fam-3d')?.textContent ?? '{}') as { mode?: string; lod1?: string; lod1b?: string };
+const CFG = JSON.parse(document.getElementById('fam-3d')?.textContent ?? '{}') as { mode?: string; lod1?: string };
 const w = window as unknown as { __skreedLoader?: Loader; __skreedOnPoster?: (kind: string) => void };
 
 let attempts = 0, started = false, live = false, slowT = 0, chunkUrl = '';
@@ -48,9 +48,9 @@ async function start(): Promise<void> {
   slowT = window.setTimeout(() => { if (!live) emit('fam:slow', { on: true }); }, SLOW_MS);
   const gl = glCheck(import.meta.env.PUBLIC_HERO_HOOKS === '1' && /[?&]render=force(?:&|$)/.test(location.search));
   if (gl !== 'ok') { clearTimeout(slowT); lift(); emit('fam:grid', { reason: gl, message: '' }); return; }
-  // the models' LOD1 download while the island chunk does (the island finds the same requests in model-fetch)
+  // the Tough's LOD1 downloads while the island chunk does (the island finds the same request in model-fetch); the case
+  // types' own models load on scroll, never with the first view (family-page.md 24 D2)
   if (CFG.lod1) fetchModel(CFG.lod1).catch(() => {});
-  if (CFG.lod1b) fetchModel(CFG.lod1b).catch(() => {});
   let mod: Island;
   try {
     mod = await importIsland();
