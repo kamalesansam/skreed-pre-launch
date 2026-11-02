@@ -76,7 +76,8 @@ test('the composite copies the texel: at rest and once the cut is done a sample 
 test('the modes: the wipe\'s far side while section 4 is on and the cut has begun, the whole frame with section 4 off and the section in view, else off', () => {
   assert.equal(groundMode({ inView: false, roomOn: true, wipeOut: 0 }), 'off', 'scene 5 before the cut');
   assert.equal(groundMode({ inView: false, roomOn: true, wipeOut: 0.4 }), 'wipe', 'the cut under way');
-  assert.equal(groundMode({ inView: true, roomOn: true, wipeOut: 1 }), 'wipe', 'the cut done, the stage scrolling away over the section');
+  assert.equal(groundMode({ inView: true, roomOn: true, wipeOut: 1 }), 'whole', 'the cut done with the section in view: the whole frame, even while a sub-pixel of the stage is still on screen (the halved track\'s fractional rest, 2026-11-03)');
+  assert.equal(groundMode({ inView: true, roomOn: true, wipeOut: 0.999 }), 'wipe', 'the cut not quite done: still the cut');
   assert.equal(groundMode({ inView: true, roomOn: false, wipeOut: 0 }), 'whole', 'section 4 gone: the ground is the frame');
   assert.equal(groundMode({ inView: true, roomOn: false, wipeOut: 1 }), 'whole');
   assert.equal(groundMode({ inView: false, roomOn: false, wipeOut: 0 }), 'off', 'the hero after the exit\'s jump');

@@ -36,7 +36,10 @@ export const inViewOf = (l: SignupLayout, y: number, vh: number): boolean => l.t
  */
 export type GroundMode = 'off' | 'wipe' | 'whole';
 export function groundMode(o: { inView: boolean; roomOn: boolean; wipeOut: number }): GroundMode {
-  if (o.roomOn) return o.wipeOut > 0 ? 'wipe' : 'off';
+  // the cut done (wipeOut 1) is the whole frame even while a sub-pixel of section 4 is still on screen: on the halved
+  // track of 2026-11-03 the rest is fractional (19032.2 at 390 x 844) and the browser scrolls to whole pixels, so 0.2 px
+  // of the room stays on screen at the rest and the ground would hold 'wipe' there, drawing every frame
+  if (o.roomOn && o.wipeOut < 1) return o.wipeOut > 0 ? 'wipe' : 'off';
   return o.inView ? 'whole' : 'off';
 }
 /** the island's ground lies under the section (the mark): the whole frame, or the cut finished, with the section in view */
