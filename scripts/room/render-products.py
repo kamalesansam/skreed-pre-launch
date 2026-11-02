@@ -1,7 +1,7 @@
 # Section 4, part two: the accessories for the four lands (docs/specs/section-4-world.md 3, "How each master is made",
 # step 2; W11 "the real case stays real"). Sam's own models drawn in their shade and finish on a transparent film, posed
 # and lit to match one listing photo, so scripts/room/lands.py can composite them onto it locally: the generator never
-# draws a product. Blender 5.2 headless, Cycles on the Metal GPU, the Standard view as hall.py:
+# draws a product. Blender 5.2 headless, Cycles on the Metal GPU, the Standard view as the hall's bake had it (hall.py, on archive/section-4-grey-room since 2026-11-02):
 #   /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python scripts/room/render-products.py -- <spec.json>
 # lands.py writes the spec (one per land); every number in it is in metres and in the photo's own camera axes (OpenCV's:
 # x right, y down, z forward, the camera at the origin), so a pose solved against the photo goes straight in:
@@ -55,7 +55,7 @@ print('shade', S['shade'], HEX, 'linear', tuple(round(v, 4) for v in LIN))
 bpy.ops.wm.read_factory_settings(use_empty=True)
 sc = bpy.context.scene
 sc.render.engine = 'CYCLES'; sc.cycles.samples = int(S.get('samples', 256))
-# Cycles on the Metal GPU, as hall.py; the CPU only if Metal is refused
+# Cycles on the Metal GPU, as the hall's bake did; the CPU only if Metal is refused
 try:
     prefs = bpy.context.preferences.addons['cycles'].preferences
     prefs.compute_device_type = 'METAL'; prefs.get_devices()

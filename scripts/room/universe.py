@@ -1,6 +1,7 @@
 # Section 4, the Skreed universe (docs/specs/section-4.md 2 "The universe", 6): a round room 11 m across under an emissive
 # ceiling disc, with the arc of six pedestals, built and baked here in Blender 5.2 headless, our own geometry and light:
 #   /Applications/Blender.app/Contents/MacOS/Blender -b --python scripts/room/universe.py -- scripts/room/out [size=2048] [samples=128] [median=0.5]
+# Part two's record (docs/specs/hero-architecture.md 11.4): scripts/room/encode.mjs and the hall left the repository on 2026-11-02 and live on the branch archive/section-4-grey-room.
 # Four pedestals since Sam's list of 2026-10-16 (the phone case, the AirPods case, the MagSafe wallet and the Lenskin).
 # writes out/room.glb (Y up, no materials: the island colours the bays, the floor and the pedestals in its shader by
 # position), out/room-lightmap.png (1024, sRGB, irradiance only: the bake has no albedo, so the shades multiply it at
@@ -13,11 +14,11 @@ argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 OUT = argv[0] if argv else '/tmp/room'
 SIZE = int(argv[1]) if len(argv) > 1 else 2048
 SAMPLES = int(argv[2]) if len(argv) > 2 else 128
-MEDIAN = float(argv[3]) if len(argv) > 3 else 0.5     # the median lit texel lands here (the hall's 0.30 reads as concrete; the room is brighter)
+MEDIAN = float(argv[3]) if len(argv) > 3 else 0.5     # the median lit texel lands here (the hall's 0.30, until 2026-11-02, read as concrete; the room is brighter)
 os.makedirs(OUT, exist_ok=True)
 t0 = time.time()
 
-R, H = 5.5, 3.99                   # the room's radius and the hall's height (config/room.ts UNIVERSE)
+R, H = 5.5, 3.99                   # the room's radius and the hall's height (the hall until 2026-11-02; config/room.ts UNIVERSE)
 DOOR_X, EYE = -5.0, 1.0            # the camera's place in the doorway, looking +x
 ARC_R, ARC_SPAN = 3.2, 60          # the pedestals: 3.2 m from the camera, 60 degrees either side
 HEIGHTS = [0.6, 0.9, 1.0, 0.8]      # the phone case, the wallet, the Lenskin, the AirPods case (config/room.ts PEDESTAL_HEIGHTS)

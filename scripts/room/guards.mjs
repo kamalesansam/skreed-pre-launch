@@ -6,8 +6,9 @@
 //    test:unit.
 // 2. The build (docs/specs/section-4-flux.md 5 "Build modes", AC7, AC8; post-build, run by npm run build and
 //    build:staging after scripts/csp.mjs): every build ships exactly the ten scene loops, named
-//    (cove|grove|ember|palace|dawn)-(wide|portrait).<hash>.mp4; any other .mp4, and any land, park or garden asset,
-//    fails it in every mode, and dist/_headers must carry media-src 'self'.
+//    (cove|grove|ember|palace|dawn)-(wide|portrait).<hash>.mp4; any other .mp4, any land, park or garden asset, and
+//    any asset of the hall (docs/specs/section-4-no-hall.md AC1), fails it in every mode, and dist/_headers must carry
+//    media-src 'self'.
 // Each exits 1 with every hit.
 //   node scripts/room/guards.mjs                                              the references, in public/ and src/
 //   node scripts/room/guards.mjs --post-build [--dist <dir>] [--mode build|test|staging]
@@ -37,6 +38,8 @@ export const CLASSES = Object.freeze(['wide', 'portrait']);
 export const LOOP_NAME = /^(cove|grove|ember|palace|dawn)-(wide|portrait)\.[A-Za-z0-9_-]+\.mp4$/;
 /** an asset of the lands, the park or the garden, gone with part two (X-11) */
 export const isLandAsset = (name) => /^(?:land-|park[.-]|garden-|clip-)/.test(name) && !/\.(?:js|map)$/.test(name);
+/** an asset of the hall (its model, lightmap and stills), gone since 2026-11-02 (section-4-no-hall.md AC1); the archive branch keeps them */
+export const isHallAsset = (name) => /^hall[.-]/.test(name) && !/\.(?:js|map)$/.test(name);
 
 const flag = (argv, name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : undefined; };
 /**
@@ -80,6 +83,7 @@ export function postBuild(dist, { mode }) {
       else loops.add(`${m[1]}-${m[2]}`);
     }
     if (isLandAsset(name)) hits.push(`${at}: an asset of the lands, the park, the garden or the clips, which left with part two (X-11)`);
+    if (isHallAsset(name)) hits.push(`${at}: an asset of the hall, which left on 2026-11-02 (section-4-no-hall.md AC1)`);
   }
   for (const id of SCENE_IDS) for (const cls of CLASSES) if (!loops.has(`${id}-${cls}`)) hits.push(`no loop ${id}-${cls}.<hash>.mp4 in the ${MODE_NAMES[mode]} (every build ships the ten)`);
   const headers = existsSync(join(dist, '_headers')) ? readFileSync(join(dist, '_headers'), 'utf8') : '';

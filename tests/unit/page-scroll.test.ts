@@ -4,14 +4,14 @@
 // element kept in view, the wheel burst filter as the reference has it and the wrap it gates, the touch's first-move
 // decision, the key table, the scrolling keys, the settle's curve against --ease-standard, scroll.ts driven in a fake
 // window (a burst that reaches scroll 0 never wraps, one swipe is one step, a wrap's momentum steps nowhere, the seam's
-// lock swallows at the top, the lock attaches the capture set out of range), and scroll.ts's independence from the
-// director (the adapter is its only link).
+// lock swallows at the top, the lock attaches the capture set out of range, both edges are the page's since the hall
+// left, docs/specs/section-4-no-hall.md 2), and scroll.ts's independence from the director (the adapter is its only link).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { S2T, TRACK_SVH } from '../../src/config/hero.ts';
 import {
-  BURST, EASE_STANDARD, GLUE, TOUCH, burstConsume, burstFeed, createBurst, cubicBezier, easeStandard, glueDecision, isScrollKey, keyDir, keyStep,
+  BURST, EASE_STANDARD, GLUE, TOUCH, burstConsume, burstReset, burstFeed, createBurst, cubicBezier, easeStandard, glueDecision, isScrollKey, keyDir, keyStep,
   touchDecision, wheelDecision, type Span, type WheelContext,
 } from '../../src/scripts/hero/section4/scroll-math.ts';
 import { SCROLL_MARK, createPageScroll } from '../../src/scripts/hero/section4/scroll.ts';
@@ -26,7 +26,7 @@ const threeSpans = (ih: number, svh: number, quizH = svh): Span[] => {
 
 test('the numbers: 2 px dead band, 150 ms still, 300 ms input, 500 ms settle, the burst at 200 ms and half the peak, 12 px step, 16 px wrap', () => {
   assert.deepEqual(GLUE, { dead: 2, stillMs: 150, inputMs: 300, settleMs: 500 });
-  assert.deepEqual(BURST, { silenceMs: 200, keep: 0.5 });
+  assert.deepEqual(BURST, { silenceMs: 200, keep: 0.5, carriedMs: 700 });
   assert.deepEqual(TOUCH, { stepPx: 12, wrapPx: 16 });
   assert.deepEqual(threeSpans(745, 844).map((s) => [s.start, s.end]), [[1862.5, 2235], [3911.25, 5697], [5697, 7385]]);   // the map of 2026-11-02 (section-2.md 14)
 });
@@ -63,7 +63,7 @@ test('the review\'s ping-pong case: the quiz top and section 4\'s top both insid
   assert.equal(glueDecision(quizTop, spans, ih, svh), null, 'and the quiz top is at rest');
   assert.equal(glueDecision(quizTop + 1, spans, ih, svh), null);
   assert.equal(glueDecision(quizTop + 3, spans, ih, svh), quizTop, 'just inside section 4\'s seam: back to its start');
-  assert.equal(glueDecision(quizTop + svh + 1, spans, ih, svh), quizTop + 2 * svh, 'past its middle: the hall fully in');
+  assert.equal(glueDecision(quizTop + svh + 1, spans, ih, svh), quizTop + 2 * svh, 'past its middle: scene 1 fully in');
 });
 
 test('the dead band: within 2 px of either end nothing settles; the midpoint picks the start on a tie', () => {
@@ -128,6 +128,17 @@ test('the burst filter (reference 5): silence resets; the peak grows even while 
 
 const ctx = (over: Partial<WheelContext> = {}): WheelContext => ({ atTop: false, canWrap: true, locked: false, busy: false, edgeForward: false, edgeBack: false, ...over });
 
+test("burstReset: the peak and the consumed flag go and the clock stays, so the next event is judged on its own (the visitor's gesture against the carried input's direction, scroll.ts)", () => {
+  const b = createBurst();
+  burstFeed(b, 120, 1000); burstConsume(b);
+  for (const d of [50, 40, 30]) assert.equal(burstFeed(b, d, 1016).pass, false, `${d} is the consumed burst's tail`);
+  assert.equal(b.peak, 120); assert.equal(b.consumed, true);
+  burstReset(b);
+  assert.deepEqual(b, { last: 1016, peak: 0, consumed: false });
+  assert.deepEqual(burstFeed(b, -30, 1060), { fresh: false, pass: true }, "a gentle event the other way passes at once, inside the old burst's 200 ms, and is not fresh");
+  assert.equal(b.peak, 30);
+});
+
 test('the wheel at scroll 0: only a burst that begins there after silence, moving up, wraps; the lock swallows before canWrap; a burst under way, a harder push in it, a downward burst and the intro do not wrap', () => {
   const b = createBurst();
   assert.deepEqual(wheelDecision(b, -40, 0, ctx({ atTop: true, canWrap: false })), { kind: 'page' }, 'the intro: its own lock');
@@ -171,9 +182,9 @@ test('the wheel in range: one tick one step; a consumed burst is swallowed while
   assert.deepEqual(wheelDecision(b, -100, 1400, ctx()), { kind: 'step', dir: -1 }, 'a new burst after silence');
   assert.deepEqual(wheelDecision(b, 100, 1700, ctx({ edgeForward: true })), { kind: 'page' }, 'scene 5 forward: the page scrolls into the hold');
   assert.deepEqual(wheelDecision(b, -100, 2000, ctx({ edgeForward: true })), { kind: 'step', dir: -1 });
-  assert.deepEqual(wheelDecision(b, -100, 2300, ctx({ edgeBack: true })), { kind: 'back' }, 'scene 1 back: the way back');
+  assert.deepEqual(wheelDecision(b, -100, 2300, ctx({ edgeBack: true })), { kind: 'page' }, 'scene 1 back: the page scrolls up into the wipe (no way back since the hall left)');
   assert.deepEqual(wheelDecision(b, 100, 2600, ctx({ edgeBack: true })), { kind: 'step', dir: 1 });
-  assert.deepEqual(wheelDecision(b, 100, 2900, ctx({ locked: true })), { kind: 'swallow' }, 'a seam, the way back or the entry');
+  assert.deepEqual(wheelDecision(b, 100, 2900, ctx({ locked: true })), { kind: 'swallow' }, 'a seam');
   assert.ok(b.consumed, 'which consumes the burst');
   assert.deepEqual(wheelDecision(b, 100, 3200, ctx({ busy: true, edgeForward: true })), { kind: 'swallow' }, 'busy before the edges: a step running at scene 5 swallows a forward tick');
   assert.deepEqual(wheelDecision(b, 0, 3500, ctx()), { kind: 'page' }, 'no vertical delta');
@@ -196,6 +207,9 @@ test('the touch: decided on the first move, one step at 12 px, the page\'s when 
   assert.deepEqual(touchDecision(400, 5000, 399, true), { kind: 'page' }, 'forward at scene 5: the page\'s from the first move');
   assert.deepEqual(touchDecision(400, 5000, 300, true), { kind: 'page' });
   assert.deepEqual(touchDecision(400, 5000, 412, true), { kind: 'step', dir: -1 }, 'back from scene 5 is ours');
+  assert.deepEqual(touchDecision(400, 5000, 401, false, true), { kind: 'page' }, "back at scene 1: the page's from the first move");
+  assert.deepEqual(touchDecision(400, 5000, 500, false, true), { kind: 'page' });
+  assert.deepEqual(touchDecision(400, 5000, 388, false, true), { kind: 'step', dir: 1 }, 'forward from scene 1 is ours');
   assert.deepEqual(touchDecision(400, 0, 399, false), { kind: 'page' }, 'up from the top: the page scrolls');
   assert.deepEqual(touchDecision(400, 0, 401, false), { kind: 'hold' }, 'down from the top: ours from the first move (prevented)');
   assert.deepEqual(touchDecision(400, 0, 415.9, false), { kind: 'hold' });
@@ -278,7 +292,7 @@ function fakePage(y0: number) {
   g.requestAnimationFrame = (f: () => void) => setTimeout(f, 16);
   g.cancelAnimationFrame = (id: ReturnType<typeof setTimeout>) => clearTimeout(id);
   performance.now = () => clock;
-  const fire = <T extends object>(type: string, props: T): Event & T => { const e = Object.assign(new Event(type, { cancelable: true }), props); target.dispatchEvent(e); return e; };
+  const fire = <T extends object>(type: string, props: T, cancelable = true): Event & T => { const e = Object.assign(new Event(type, { cancelable }), props); target.dispatchEvent(e); return e; };
   const scroll = (v: number) => { g.scrollY = v; target.dispatchEvent(new Event('scroll')); };
   return {
     get now() { return clock; },
@@ -286,9 +300,9 @@ function fakePage(y0: number) {
     get y() { return g.scrollY as number; },
     set y(v: number) { g.scrollY = v; },
     scroll,
-    /** one wheel event; true when it was prevented, else the page has moved */
-    wheel(deltaY: number, ctrlKey = false): boolean {
-      const e = fire('wheel', { deltaY, ctrlKey });
+    /** one wheel event; true when it was prevented, else the page has moved (always, for one the page cannot cancel) */
+    wheel(deltaY: number, ctrlKey = false, cancelable = true): boolean {
+      const e = fire('wheel', { deltaY, ctrlKey }, cancelable);
       if (!e.defaultPrevented) { const v = Math.max(0, (g.scrollY as number) + deltaY); if (v !== g.scrollY) scroll(v); }
       return e.defaultPrevented;
     },
@@ -302,19 +316,19 @@ function fakePage(y0: number) {
   };
 }
 
-/** a director stand-in: the scenes' slots at roomTop plus (10 + 0.5 i) screens, a step busy for 770 + 150 ms, the way back and the wrap under their locks */
+/** a director stand-in: the scenes' slots at roomTop plus (1 + 0.5 i) screens (section-4-no-hall.md 5), a step busy for 770 + 150 ms, the wrap under its lock */
 function fakeRoom(page: ReturnType<typeof fakePage>, roomTop = 20000, screen = 844) {
   const r = {
-    state: 'hall' as 'hall' | 'entering' | 'world' | 'back' | 'seam', scene: 0, intro: false, busyUntil: -Infinity, lockUntil: -Infinity, calls: [] as string[],
-    q: (i: number): number => roomTop + (10 + 0.5 * i) * screen,
-    inRange: (): boolean => r.state === 'world' && page.y >= roomTop + 10 * screen - 2 && page.y <= roomTop + 12 * screen + 2,
-    edge: (dir: 1 | -1): 'forward' | 'back' | null => (dir === 1 && r.scene === 4 ? 'forward' : dir === -1 && r.scene === 0 ? 'back' : null),
+    state: 'approach' as 'approach' | 'world' | 'seam', scene: 0, intro: false, busyUntil: -Infinity, lockUntil: -Infinity, calls: [] as string[], carriedN: 0,
+    q: (i: number): number => roomTop + (1 + 0.5 * i) * screen,
+    inRange: (): boolean => r.state === 'world' && page.y >= roomTop + 1 * screen - 2 && page.y <= roomTop + 3 * screen + 2,
+    edge: (dir: 1 | -1): boolean => (dir === 1 ? r.scene === 4 : r.scene === 0),
     step: (dir: 1 | -1): boolean => { if (r.busy()) return false; r.scene += dir; r.busyUntil = page.now + 770 + 150; r.calls.push(`step ${dir}`); page.y = r.q(r.scene); return true; },
-    back: (): void => { r.calls.push('back'); r.state = 'back'; r.lockUntil = page.now + 1000; },
     wrap: (): void => { r.calls.push('wrap'); r.state = 'world'; r.scene = 4; r.lockUntil = page.now + 280 + 360 + 400; page.y = r.q(4); },
     canWrap: (): boolean => !r.intro && !r.lock(),
     lock: (): boolean => page.now < r.lockUntil,
     busy: (): boolean => page.now < r.busyUntil,
+    carried: (): void => { r.carriedN++; },
   };
   return r;
 }
@@ -362,7 +376,86 @@ test('scroll.ts: one trackpad swipe in range is exactly one step; its tail is sw
   } finally { page.restore(); }
 });
 
-test('scroll.ts: a wrap followed by its momentum gives no step and no way back; a burst after silence steps back (AC6, AC3)', () => {
+test('scroll.ts: a trackpad fling from the quiz that carries the page onto scene 1 never steps with its tail, however sparse (the burst is consumed as the capture attaches, section-4-no-hall.md AC3); a new push after 0.7 s of silence steps', () => {
+  const page = fakePage(0);
+  try {
+    const room = fakeRoom(page);
+    page.scroll(room.q(-0.8));                                                             // q 0.6, the third wipe, the approach
+    const ps = createPageScroll(options(room));
+    assert.equal(ps.state().capturing, false);
+    // the fling: native while the section approaches; the director makes it world once the page reaches scene 1 and the wiring notifies
+    const deltas = [40, 120, 200, 260];
+    for (let d = 260 * 0.92; d >= 2; d *= 0.92) deltas.push(Math.round(d));
+    let steps = 0, swallowed = 0;
+    for (const d of deltas) {
+      const prevented = page.wheel(d);
+      if (room.state === 'approach' && page.y >= room.q(0) - 2) { room.state = 'world'; page.y = room.q(0); ps.notify(); }   // the arrival, held on scene 1
+      else if (prevented) swallowed++;
+      page.tick(16);
+    }
+    steps = room.calls.filter((c) => c.startsWith('step')).length;
+    assert.equal(room.state, 'world');
+    assert.equal(steps, 0, "the fling's own tail never steps, its later and larger pushes included");
+    assert.ok(swallowed > 10, `the tail is swallowed in range (${swallowed})`);
+    assert.equal(page.y, room.q(0), 'the page stays on scene 1');
+    // the same input coming in sparsely (a slow machine coalescing it, a wheel spinning down): still the page's
+    for (const gap of [280, 420, 650, 300]) { page.tick(gap); assert.equal(page.wheel(8), true, `swallowed after ${gap} ms`); }
+    assert.equal(room.calls.filter((c) => c.startsWith('step')).length, 0, 'a sparse tail never steps');
+    page.tick(701);
+    assert.equal(page.wheel(60), true);
+    assert.deepEqual(room.calls, ['step 1'], 'a new push after 0.7 s of silence is one step');
+    ps.dispose();
+  } finally { page.restore(); }
+});
+
+test('scroll.ts: a forward wheel the page cannot cancel (a trackpad gesture latched before the capture attached) never steps in the scenes and asks the director to hold, however late it comes; at scene 5 it is the page\'s (section-4-no-hall.md AC3)', () => {
+  const page = fakePage(0);
+  try {
+    const room = fakeRoom(page);
+    room.state = 'world'; page.y = room.q(0);
+    const ps = createPageScroll(options(room));
+    assert.equal(ps.state().capturing, true);
+    page.tick(1000);
+    for (const gap of [16, 16, 900, 16, 2000]) { page.tick(gap); page.wheel(40, false, false); }
+    assert.deepEqual(room.calls, [], 'never a step, after a long pause too');
+    assert.equal(room.carriedN, 5, 'every one asks for the hold');
+    page.y = room.q(0); page.tick(1000);
+    assert.equal(page.wheel(60), true, 'a cancelable push after silence is the visitor\'s own');
+    assert.deepEqual(room.calls, ['step 1']);
+    room.scene = 4; page.y = room.q(4); room.busyUntil = -Infinity; page.tick(1000);
+    page.wheel(40, false, false);
+    assert.equal(room.carriedN, 5, "at scene 5 forward is the page's: no hold");
+    ps.dispose();
+  } finally { page.restore(); }
+});
+
+test("scroll.ts: a backward wheel at scene 1 right after the fling that carried the page in is the page's, never the fling's tail: it begins a burst of its own and scrolls up into the wipe (section-4-no-hall.md AC4)", () => {
+  const page = fakePage(0);
+  try {
+    const room = fakeRoom(page);
+    page.scroll(room.q(-0.8));                                                             // q 0.6, the approach
+    const ps = createPageScroll(options(room));
+    // the fling, 120 px decaying to 2 px every 16 ms, carries the page in; the director makes it world at scene 1
+    for (let d = 120; d >= 2; d *= 0.94) {
+      page.wheel(Math.round(d));
+      if (room.state === 'approach' && page.y >= room.q(0) - 2) { room.state = 'world'; page.y = room.q(0); ps.notify(); }
+      page.tick(16);
+    }
+    assert.equal(room.state, 'world');
+    assert.equal(ps.state().capturing, true);
+    // 60 ms after the fling's last event, -30 px (a quarter of its peak, under the half the tail rule swallows): the page's
+    // at once, up into the wipe, and nothing stepped
+    page.tick(44);
+    const y0 = page.y;
+    assert.equal(page.wheel(-30), false, "the first backward event is the page's");
+    assert.ok(page.y < y0, 'the page scrolled up');
+    for (let i = 0; i < 5; i++) { page.tick(16); assert.equal(page.wheel(-30), false, `backward event ${i + 2} too`); }
+    assert.deepEqual(room.calls, [], 'nothing stepped');
+    ps.dispose();
+  } finally { page.restore(); }
+});
+
+test('scroll.ts: a wrap followed by its momentum gives no step; a burst after silence steps back (AC6, AC3)', () => {
   const page = fakePage(0);
   try {
     const room = fakeRoom(page);
@@ -375,7 +468,7 @@ test('scroll.ts: a wrap followed by its momentum gives no step and no way back; 
     let prevented = 0, n = 0;
     for (let d = -100 * 0.94; d <= -1; d *= 0.94) { page.tick(20); n++; if (page.wheel(Math.round(d * 10) / 10)) prevented++; }   // about 1.5 s of tail
     assert.equal(prevented, n, 'the tail is swallowed through the seam, its lock and after');
-    assert.deepEqual(room.calls, ['wrap'], 'no step, no way back');
+    assert.deepEqual(room.calls, ['wrap'], 'no step');
     assert.equal(page.y, room.q(4));
     page.tick(201);
     assert.equal(page.wheel(-100), true);
@@ -399,9 +492,9 @@ test('scroll.ts: at scroll 0 while a seam runs (canWrap false, lock true) the wh
     assert.equal(page.touch('touchmove', 380), true, 'and every move of it');
     page.touch('touchend', 380);
     assert.equal(page.key('ArrowDown'), true, 'a key');
-    assert.equal(page.key('Escape'), false, 'not the keys walk.ts maps to Skip');
+    assert.equal(page.key('Escape'), false, 'Escape is no key of a step');
     assert.deepEqual(room.calls, []);
-    page.tick(761); room.state = 'hall'; ps.notify();
+    page.tick(761); room.state = 'approach'; ps.notify();
     page.touch('touchstart', 400);
     assert.equal(page.touch('touchmove', 416), true);
     assert.deepEqual(room.calls, ['wrap'], 'after the lock, a touch from 0 moving 16 px down wraps');
@@ -417,32 +510,35 @@ test('scroll.ts: at scroll 0 while a seam runs (canWrap false, lock true) the wh
   } finally { page.restore(); }
 });
 
-test('scroll.ts: the capture set follows the lock out of range: the entry at q 9.5 and the way back swallow the wheel, the touch and the keys; the hall captures nothing', () => {
+test("scroll.ts: the approach captures nothing; in range the scenes step, and at scene 1 a backward wheel, swipe or key is the page's (section-4-no-hall.md 2); a seam's lock captures out of range", () => {
   const page = fakePage(0);
   try {
     const room = fakeRoom(page);
-    page.scroll(room.q(-1));                                                               // q 9.5, the station
+    page.scroll(room.q(-1));                                                               // q 0.5, the third wipe
     const ps = createPageScroll(options(room));
-    assert.equal(ps.state().capturing, false, 'the hall captures nothing');
+    assert.equal(ps.state().capturing, false, 'the approach captures nothing');
     assert.equal(page.wheel(100), false);
-    page.scroll(room.q(-1));
-    room.state = 'entering'; room.lockUntil = page.now + 2350; ps.notify();
-    assert.equal(ps.state().capturing, true, 'entering: attached by the lock');
-    assert.equal(page.wheel(100), true); assert.equal(page.wheel(-100), true);
-    page.touch('touchstart', 400); assert.equal(page.touch('touchmove', 300), true); page.touch('touchend', 300);
-    assert.equal(page.key('PageDown'), true);
+    room.state = 'world'; room.scene = 0; page.scroll(room.q(0)); ps.notify();
+    assert.equal(ps.state().capturing, true, 'world in range');
+    page.tick(1000);
+    assert.equal(page.wheel(-100), false, "a backward tick at scene 1 is the page's: it scrolls up into the wipe");
+    assert.deepEqual(room.calls, [], 'nothing stepped');
+    page.scroll(room.q(0));
+    page.touch('touchstart', 400); assert.equal(page.touch('touchmove', 420), false, "a swipe down the glass at scene 1 is the page's"); page.touch('touchend', 420);
+    assert.equal(page.key('ArrowUp'), false, 'and ArrowUp');
+    assert.equal(page.key('PageUp'), false, 'and PageUp');
     assert.deepEqual(room.calls, []);
-    page.tick(2350); room.state = 'world'; room.scene = 0; page.scroll(room.q(0)); ps.notify();
-    assert.equal(ps.state().capturing, true, 'then world in range');
-    assert.equal(page.wheel(-100), true);
-    assert.deepEqual(room.calls, ['back'], 'a backward tick at scene 1 is the way back');
-    ps.notify();
-    assert.equal(ps.state().capturing, true, 'the way back: attached by the lock though out of range');
-    page.tick(500);
-    assert.equal(page.wheel(-100), true); assert.equal(page.key('ArrowUp'), true);
-    assert.deepEqual(room.calls, ['back']);
-    page.tick(501); room.state = 'hall'; page.scroll(room.q(-1)); ps.notify();
-    assert.equal(ps.state().capturing, false, 'the hall again');
+    page.tick(1000);
+    assert.equal(page.wheel(100), true, 'a forward tick at scene 1 is one step');
+    assert.deepEqual(room.calls, ['step 1']);
+    // a seam's lock out of range (the exit seam's cover-in holds the page at q 3.8): attached by the lock, everything swallowed
+    page.tick(1000); room.state = 'seam'; room.lockUntil = page.now + 1040; page.scroll(room.q(5.6)); ps.notify();
+    assert.equal(ps.state().capturing, true, 'a seam: attached by the lock though out of range');
+    assert.equal(page.wheel(100), true); assert.equal(page.wheel(-100), true); assert.equal(page.key('ArrowDown'), true);
+    page.touch('touchstart', 400); assert.equal(page.touch('touchmove', 300), true); page.touch('touchend', 300);
+    assert.deepEqual(room.calls, ['step 1'], 'nothing stepped under the seam');
+    page.tick(1041); room.state = 'approach'; page.scroll(room.q(-1)); ps.notify();
+    assert.equal(ps.state().capturing, false, 'the approach again');
     ps.dispose();
   } finally { page.restore(); }
 });
@@ -471,32 +567,25 @@ test('scroll.ts imports nothing else from section4 or config/room: the adapter i
   assert.match(src, /e\.touches\.length (?:===|!==) 1/, 'one finger only');
 });
 
-test('scroll.ts: the lock turning on with no scroll event (a press at the station): nothing attaches by itself and the first tick leaks; with notify(), which the director\'s every state change calls through the wiring, the wheel, the first touchmove and the keys are swallowed through the bubble, and the bubble\'s end re-evaluates the same way', () => {
+test("scroll.ts: the arrival with no scroll event (the quiz's ride lands on scene 1, and the director makes it world on its next frame): nothing attaches by itself and the first tick leaks; with notify(), which the director's every state change calls through the wiring, it is one step", () => {
   const page = fakePage(0);
   try {
     const room = fakeRoom(page);
-    page.scroll(room.q(-1));                                                   // q 9.5, the station
+    page.scroll(room.q(0));                                                    // the ride's last frame: the page on scene 1, still the approach
     const leak = createPageScroll(options(room));
-    assert.equal(leak.state().capturing, false, 'the hall captures nothing');
-    room.state = 'entering'; room.lockUntil = page.now + 2350;                // the press: the page is at the station already, so no scroll event follows
+    assert.equal(leak.state().capturing, false, 'the approach captures nothing');
+    room.state = 'world';                                                     // the arrival: the page is there already, so no scroll event follows
     assert.equal(leak.state().capturing, false, 'nothing re-evaluates by itself');
+    page.tick(1000);
     assert.equal(page.wheel(100), false, 'without notify the first tick leaks to the page');
-    assert.equal(page.y, room.q(-1) + 100, 'and the page moved under the bubble');
+    assert.equal(page.y, room.q(0) + 100, 'and the page moved past scene 1');
     leak.dispose();
     // as wired (hero.ts passes onState, the director calls it from setState): the state change calls notify()
-    room.state = 'hall'; room.lockUntil = -Infinity; page.scroll(room.q(-1)); page.tick(1000);
+    room.state = 'approach'; page.scroll(room.q(0)); page.tick(1000);
     const ps = createPageScroll(options(room));
     assert.equal(ps.state().capturing, false);
-    room.state = 'entering'; room.lockUntil = page.now + 2350; ps.notify();
-    assert.equal(ps.state().capturing, true, 'attached by the lock, with no scroll event');
-    assert.equal(page.wheel(100), true); assert.equal(page.wheel(-100), true);
-    assert.equal(page.y, room.q(-1), 'the page did not move');
-    page.touch('touchstart', 400); assert.equal(page.touch('touchmove', 300), true, 'the first move of a swipe is prevented'); page.touch('touchend', 300);
-    assert.equal(page.key('PageDown'), true); assert.equal(page.key(' '), true);
-    assert.deepEqual(room.calls, [], 'nothing stepped or wrapped');
-    // the bubble's end: the page snapped to scene 1 by scrollTo (no gesture, no run), the state world; the wiring's notify again
-    page.tick(2350); room.state = 'world'; room.scene = 0; page.y = room.q(0); ps.notify();
-    assert.equal(ps.state().capturing, true, 'then world in range');
+    room.state = 'world'; ps.notify();
+    assert.equal(ps.state().capturing, true, 'attached at the arrival, with no scroll event');
     assert.equal(page.wheel(100), true);
     assert.deepEqual(room.calls, ['step 1'], 'a tick in range is one step');
     ps.dispose();
