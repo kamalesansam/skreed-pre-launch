@@ -19,6 +19,6 @@ const rules = new Map<string, string>();
 test('caching: hashed files immutable, fonts and icons revalidated in the background, pages always revalidated', () => {
   for (const p of ['/_astro/*', '/models/*']) assert.equal(rules.get(p), 'public, max-age=31536000, immutable', p);
   for (const p of ['/fonts/*', '/favicon.ico', '/icon.svg', '/apple-touch-icon.png', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']) assert.match(rules.get(p) ?? '', /^public, max-age=\d+, stale-while-revalidate=\d+$/, p);
-  for (const p of ['/', '/shades/*']) assert.match(rules.get(p) ?? '', /max-age=0\b/, p);
+  for (const p of ['/', '/about/', '/shades/*']) assert.match(rules.get(p) ?? '', /max-age=0\b/, p);
   assert.doesNotMatch(headers, /no-store/i, 'no-store keeps a page out of the back-forward cache');
 });

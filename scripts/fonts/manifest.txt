@@ -35,3 +35,19 @@ source  IBMPlexMono-Medium.ttf  sha256 a9b4c49bb299e05b5f6c481e7fb5e78943d279324
 ibm-plex-mono-500-rest.woff2  3176 bytes  sha256 4c3d8d241a670c13a0955863a8cc5b16f0c5b927315e9cfd5c34028a7685553f  glyphs 67 (U+0021-002F, U+003A-0040, U+005B-007E, U+00A0, U+2018-201E less U+201B, U+2026; Plex Mono has no U+201B or U+201F)
         via python3 -I -m fontTools.subset IBMPlexMono-Medium.ttf --unicodes=U+0021-002F,U+003A-0040,U+005B-007E,U+00A0,U+2018-201F,U+2026 --flavor=woff2 --layout-features='' --no-hinting
 metrics (both files): upm 1000, hhea and typo ascent 1025, descent -275, line gap 0, useTypo True, every advance 600 (monospace), so the two unicode-range faces share one line box
+
+== ABOUT PAGE (the brief, 2026-11-02; exception E-About-font; outside the 120,000 byte cap of the three brand faces)
+fontTools 4.66.1; google/fonts 9710da1eacb3be272583c3224dcb70f9da6eadbb
+source  Inter[opsz,wght].ttf    876576 bytes  sha256 29160a80ff49ddcab2c97711247e08b1fab27a484a329ce8b813d820dc559031  google/fonts@9710da1 ofl/inter/Inter[opsz,wght].ttf (git blob 047c92f6e2212473dc436020afed689527076d44)
+licence Inter-OFL.txt             4377 bytes  sha256 5b9321a4298cfeb6b34354164a1c3afc3db114569984c502b9b35d988fd58c57  google/fonts@9710da1 ofl/inter/OFL.txt (git blob 21f6aff961064c2e429f570995e446bcdd555422), copied byte for byte to docs/brand/fonts/inter-OFL.txt
+instance {'wght': (400, 700), 'opsz': 14} (wght 400 to 700 kept, default 400; opsz pinned at 14, the text optical size), then build.py's build_one: WOFF2, LATIN, FEATS, every name record, no hinting, the notdef outline, the source's head.modified
+file                                         bytes      KB     KiB  sha256
+inter-400-700-latin.woff2                    29912    29.9    29.2  91fba6b6ac029a4386bcde748391472d818e78a4a6d306eba56eb45fd4f29d80
+line 50,000 bytes: ok (59.8%); written to public/fonts/ and docs/brand/fonts/, byte-identical
+inter-400-700-latin.woff2: glyphs 409, upm 2048, x-height 0.546, cap 0.728, useTypo True, typo asc/desc/gap 0.969/-0.241/0.000, digit advances [833, 1159, 1215, 1249, 1265, 1267, 1270, 1292, 1323], axes [('wght', 400.0, 400.0, 700.0)], features calt,case,locl,pnum,tnum
+checks: cmap 283 code points, all in LATIN (U+0000, U+0020-007E, U+00A0-00AC, U+00AE-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-200B, U+2010-2027, U+202F-2055, U+2057, U+205F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+FEFF); GSUB calt,case,locl,pnum,tnum; GPOS kern; name IDs 0,1,2,3,4,5,6,7,8,9,11,12,13,14,25,257,306,307,308,309,312,313,320,321; head.macStyle and OS/2.fsSelection italic bits off
+Inter Fallback 400: size-adjust 106.62%; ascent-override 90.86%; descent-override 22.62%; line-gap-override 0.00%
+Inter Fallback 600: size-adjust 101.48%; ascent-override 95.47%; descent-override 23.77%; line-gap-override 0.00%
+Inter Fallback 700: size-adjust 102.44%; ascent-override 94.57%; descent-override 23.55%; line-gap-override 0.00%
+clone  Arial (C:/Windows/Fonts/arial.ttf for 400, C:/Windows/Fonts/arialbd.ttf for 600 and 700), on build.py's SAMPLE: Liberation Sans is not installed here, and it matches Arial's advance widths by design, so the ratios are the same
+via python3 scripts/fonts/build-inter.py (python on Windows), fontTools 4.66.1 and brotli
