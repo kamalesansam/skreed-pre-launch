@@ -1,7 +1,8 @@
 // Round 3 frames against the v11.4 prototype, re-paired on 2026-11-02 (the port's scroll map is the prototype's halved with
-// no stagger, section-2.md 14): the first wipe at the prototype's 5.5 screens and the port's 2.75 (tp 0.5, the hero and
-// section 2 through the composite), at 6.0 and 3.0 (tp 1, section 2 covers), and the gems at rest at 15.0 and 5.0 (every
-// block landed, the labels on). Both pages run under reduced motion (the port on ?tier=still3d, the prototype through the
+// no stagger, section-2.md 14) and again on 2026-11-03 (the pull-back half the road at the prototype's rate, the wipes a
+// screen again, section-2.md 15; the port's positions come from S2T): the first wipe's middle at the prototype's 5.5
+// screens and the port's CAS0 (tp 0.5, the hero and section 2 through the composite), its end at 6.0 and W1END (tp 1,
+// section 2 covers), and the gems at rest at 15.0 and LAND + 0.45 (every block landed, the labels on). Both pages run under reduced motion (the port on ?tier=still3d, the prototype through the
 // media query) with the intro skipped and Math.random pinned to 0.5, scroll to the position, wait for the follower to
 // settle, freeze, and take the canvas alone. At each pair the DOM ride (the hero copy's transform and clip, the logotype's
 // tone, the cue) and the labels are compared too (AC2.3).
@@ -34,7 +35,7 @@ import { S2T } from '../../src/config/hero.ts';
 import { fogHueParams } from '../../src/config/fog-hues.ts';
 
 /** [prototype position, port position], in screens; V11_POSITIONS takes "proto:port" pairs */
-const PAIRS: [number, number][] = (process.env.V11_POSITIONS || '5.5:2.75,6:3,15:5').split(',').map((s) => { const [a, b] = s.split(':').map(Number); return [a, b ?? a]; });
+const PAIRS: [number, number][] = (process.env.V11_POSITIONS || `5.5:${S2T.CAS0},6:${S2T.W1END},15:${S2T.LAND + 0.45}`).split(',').map((s) => { const [a, b] = s.split(':').map(Number); return [a, b ?? a]; });
 const VIEWPORTS = (process.env.V11_VIEWPORTS || '390,1280').split(',');
 const MARGIN_DB = 1;
 /** the pinned prototype's first wipe ends at 6 screens (template.html: PULL 5, WIPE 1) */

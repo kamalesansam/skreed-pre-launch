@@ -17,6 +17,8 @@ import { S2T, TRACK_SVH } from '../../src/config/hero.ts';
 const ARGS = process.argv.slice(2);
 const BASE = ARGS.find((a) => !a.startsWith('--')) || 'http://127.0.0.1:8811/?tier=hero3d';
 const SWIFT = ARGS.includes('--swiftshader');
+/** the round the frames belong to, in their file names (r4 on 2026-11-02; r5 since 2026-11-03, the travel halved at the old rate) */
+const ROUND = process.env.ROUND || 'r5';
 const OUT = fileURLToPath(new URL('../../docs/specs/screenshots', import.meta.url));
 mkdirSync(OUT, { recursive: true });
 const r2 = (k) => +k.toFixed(3);
@@ -51,7 +53,7 @@ for (const s of SETUPS) {
     await page.evaluate((k) => { scrollTo(0, Math.round(k * innerHeight)); if (window.__skreedSnap) window.__skreedSnap(k); }, k);
     await sleep(1400);   // the labels' reveal (0.2 s leader, 0.4 s wipe, 0.75 s roll) and the glue's 0.5 s settle, where it applies
     const st = await page.evaluate(() => ({ sb: window.__skreedState ? window.__skreedState().sb : null, L: window.__s2 ? window.__s2().L : null, labels: window.__s2 ? window.__s2().labels : null, scrollY: scrollY / innerHeight }));
-    const path = `${OUT}/hero-r4-${s.name}-${state}.png`;
+    const path = `${OUT}/hero-${ROUND}-${s.name}-${state}.png`;
     await page.screenshot({ path });
     const L = st.L || [], same = L.length === 10 && L.every((x) => x === L[0]);
     rows.push({ vp: s.name, state, screens: k, sb: st.sb, scrollY: r2(st.scrollY), L0: L[0], allEqual: same, labelsOn: (st.labels || []).filter(Boolean).length, file: path.replace(OUT + '/', '') });

@@ -609,7 +609,7 @@ One column of three five-dot chevrons at the bottom centre, its bottom edge on `
 - Stage 2 encodes per device class (12.6).
 - Lighthouse: one run only, mobile preset, production build under wrangler dev, poster tier (headless Chromium routes itself to the poster on its software GL), on a loaded 4-core machine with the test suites running: performance 69, accessibility 100, best practices 100, SEO 100; FCP 1.1 s, LCP 2.2 s, CLS 0, TBT 2,230 ms. The TBT is not trustworthy under that load and was not re-measured (out of budget); C4 stays open.
 
-### 12.8 Round 4: the scroll halved, the blocks together (Sam, 2026-11-02)
+### 12.8 Round 4: the scroll halved, the blocks together (Sam, 2026-11-02; its figures superseded by 12.9 on 2026-11-03)
 
 Sam, 2026-11-02: "remove half of the the scroll from the hero section, that' jsut too much scrolling ... all the blocks will align at the same time in the same scroll, not one block at a time ... the basic point of this is to reduce too much scrolling." The plan, the build and the acceptance criteria are `docs/specs/section-2.md` section 14; the review log is `docs/specs/section-2.review.md`. The motion plan that replaces 12.2 (screens of scroll; track 675svh):
 
@@ -622,3 +622,17 @@ Sam, 2026-11-02: "remove half of the the scroll from the hero section, that' jsu
 | 5.25 | 5.75 | the second wipe, section 2 into section 3's fog ground (`W2` to `W2END`); the quiz's top reaches the bottom edge at 5.75 and fills the screen at 6.75 |
 
 Constants: `src/config/hero.ts` (`SCROLL_MAP`, `S2T`, `CAMX`): `PULL` and `WIPE` are the v11.4 template's halved and `S2T` has no `GAP`, asserted by `tests/unit/hero-math.test.ts`, which evaluates the template's own frame formula at the port's constants; `CAMX` and the curve are the template's, unchanged. `TRACK_SVH` is (`W2END` + 1) x 100 = 675, equal to the shell CSS by unit test. The parity suite drives the port to half the prototype's position over the pull-back and to equal curve parameter inside the wipe (`tests/parity/pullback.spec.ts`), and grades the pixel floor of the v11 frames at `W1END` only, where the fog's treadmill agrees with the prototype's (`tests/parity/v11-frames.spec.ts`; section-2.md 14.9). What the island loses: the per-block departure schedule; what it keeps: every shader, the warm-up, the curve, the flight, the labels, the float and the hover. The exceptions of section 10 are untouched.
+
+### 12.9 Round 5: half the travel, not the speed (Sam, 2026-11-03)
+
+Sam, 2026-11-03: "when i said half the scroll for hero scroll, i didnt mean speed it up, i meant just cut down the travelling of the 3d world itself into half, the scroll speed remains the same." Round 4 had run the camera's whole road and the whole wipes over half the scroll, twice as fast per screen. The plan, the build and the acceptance criteria are `docs/specs/section-2.md` section 15; the blocks leaving together (12.8) stand.
+
+| from | to | what |
+|---|---|---|
+| 0 | 2.5 | the pull-back along the first half of the level weaving road (`CAM_TRAVEL` 0.5), the smoothstep ease, at the prototype's rate of a fifth of the road per screen; it ends at z 34 of the road's 24 to 44, mid-weave (x about +3.4) |
+| 2.5 | 3.5 | the first wipe, hero to section 2 (`WIPE` 1, the prototype's screen again); the camera drifts on at the prototype's drift rate (`CAM_DRIFT` 0.242 of a road unit over the 2.3 screens to `LAND`); the hero copy holds still; the logotype's tone turns light past tp 0.5 |
+| 3.0 | 4.8 | every block leaves the logo at once at mid-wipe (`CAS0`) and lands 1.8 screens later (`FLY`, `LAND`), each on its own curve; no stagger |
+| 4.8 | 5.5 | every gem landed, the labels on; the rest |
+| 5.5 | 6.5 | the second wipe, section 2 into section 3's fog ground (`W2` to `W2END`); the quiz's top reaches the bottom edge at 6.5 and fills the screen at 7.5 |
+
+Constants: `src/config/hero.ts` (`SCROLL_MAP`, `S2T`, `PROTO_MAP`, `CAM_TRAVEL`, `CAM_DRIFT`, `CAMX`): `PULL` is the v11.4 template's halved, `WIPE` the template's, `S2T` has no `GAP`, `CAM_TRAVEL` = `PULL` / the template's `PULL` and `CAM_DRIFT` = (`LAND` - `PULL`) / the template's (`LAND` - `PULL`), all asserted by `tests/unit/hero-math.test.ts` against the pinned fixture, which also evaluates the template's `camCurve` at v = `CAM_TRAVEL` s + `CAM_DRIFT` u2 against the port's `camCurve(s, u2)` over the whole grid. `TRACK_SVH` is (`W2END` + 1) x 100 = 750, equal to the shell CSS by unit test. The parity suite drives both pages to the same point of the road (`tests/parity/pullback.spec.ts`: exactly at 0 and the pull-end, to 3 decimals at five more pairs) and grades the v11 frames' pixel floor at `W1END` (the port's 3.5) as in round 4.
