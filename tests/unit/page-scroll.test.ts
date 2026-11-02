@@ -32,7 +32,7 @@ test('the numbers: 2 px dead band, 150 ms still, 300 ms input, 500 ms settle, th
   assert.deepEqual(GLUE, { dead: 2, stillMs: 150, inputMs: 300, settleMs: 500 });
   assert.deepEqual(BURST, { silenceMs: 200, keep: 0.5, carriedMs: 700 });
   assert.deepEqual(TOUCH, { stepPx: 12, wrapPx: 16 });
-  assert.deepEqual(threeSpans(745, 844).map((s) => [+s.start.toFixed(2), +s.end.toFixed(2)]), [[1862.5, 2235], [3911.25, 5697], [5697, 7385], [9748.2, 10592.2]]);   // the map of 2026-11-02 (section-2.md 14), the fourth from the room's top (6541) and its screens 3.8 to 4.8 (the hall-less track, 2026-11-03)
+  assert.deepEqual(threeSpans(745, 844).map((s) => [+s.start.toFixed(2), +s.end.toFixed(2)]), [[1862.5, 2607.5], [4097.5, 6330], [6330, 8018], [10381.2, 11225.2]]);   // the map of 2026-11-03 (section-2.md 14, the 750svh track), the fourth from the room's top (7174) and its screens 3.8 to 4.8
   // hero.ts builds the fourth from the room's top and its screens (the probe's 100svh)
   assert.match(readFileSync(new URL('src/scripts/hero/hero.ts', root), 'utf8'), /\{ start: top \+ WIPE4_START \* one, end: top \+ \(WIPE4_START \+ ROOM_SCREENS\.out\) \* one \}/);
 });

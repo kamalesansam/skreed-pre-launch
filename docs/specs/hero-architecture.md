@@ -70,7 +70,7 @@ Every version is exact in `package.json`, with no caret (security checklist row 
 │  │  └─ room.css                 section 4's styles: the track's 680svh in every state and the sticky 100svh stage, the pad, the scenes' lines and hint, the two words ("Previous scene", "Next scene"), the loading line, the "Pause motion" control, the poster tier's column and its fade (DESIGN.md section 4)
 │  ├─ config/
 │  │  ├─ site.ts                  SITE_URL, LAUNCH_ISO '2026-11-15T00:00:00+05:30'
-│  │  ├─ hero.ts                  POSE, MOON_POSE, SCROLL_MAP, S2T, TRACK_SVH 675 (460 in stage 1, 1820 in round 3, 1720 from section 3 to 2026-11-02), PORTRAIT_ASPECT 0.9, DPR caps, GATE (tier rules), SOFTWARE_GL, REDUCED_MOTION_TIER
+│  │  ├─ hero.ts                  POSE, MOON_POSE, SCROLL_MAP, S2T, TRACK_SVH 750 (460 in stage 1, 1820 in round 3, 1720 from section 3 to 2026-11-02, 675 that day), PROTO_MAP, CAM_TRAVEL, CAM_DRIFT, PORTRAIT_ASPECT 0.9, DPR caps, GATE (tier rules), SOFTWARE_GL, REDUCED_MOTION_TIER
 │  │  ├─ copy.ts                  every string of hero.md section 3, by id; the inline scripts receive the ones they need as JSON
 │  │  ├─ params.ts                HERO_PARAMS (66 keys, locked values applied, logoIdle 0), heroParams(reduced)
 │  │  ├─ loader-weights.json      WT, re-measured on fetched assets (section 7.4)
@@ -183,7 +183,7 @@ Slots are left for OG, icons and JSON-LD (site essentials, not this section).
 | 5 | `div#intro` and the loader script | Loader | shown only on `html.hero3d`; the prototype's noscript `<style>` is replaced by CSS on `html:not(.js)`, which saves a CSP hash |
 | 6 | `a#siteLogo.site-logo` and its processed script | SiteLogo | `href="/"`, `aria-label="Skreed, home"`, an empty `<defs>` and a `.logo-tiles` group for the glitch; the script installs the glitch (D25) |
 | 7 | `div#labels` | HeroStage | `aria-hidden` |
-| 8 | `div.track#track` | HeroStage | `TRACK_SVH` (675svh since 2026-11-02; 1720svh from section 3; 460svh in stage 1) on `html.hero3d`, 100svh otherwise |
+| 8 | `div.track#track` | HeroStage | `TRACK_SVH` (750svh since 2026-11-03; 675svh on 2026-11-02; 1720svh from section 3; 460svh in stage 1) on `html.hero3d`, 100svh otherwise |
 | 9 | `section#heroCopy.copy` | Countdown | `p#cdEyebrow.eyebrow`, `#count`, the noscript line; fixed on `html.hero3d`, absolute otherwise |
 | 10 | `div#cue.cue` | ScrollCue | |
 | 11 | `<slot name="riders">` | HeroStage | section 2's DOM copy (template7's `#s2Copy`) |
