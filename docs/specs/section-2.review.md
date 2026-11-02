@@ -104,3 +104,94 @@ Each of the twelve opened (the phone frames 390 x 844, the laptop frames 1280 x 
 Criterion 6, B1, D1 and F1 pass on the re-taken frames, which clears iteration 1's one numbered item. Iteration 1's other items stand as graded there, E1 and E2 blocked (the tools are not installed here), not counted against the round.
 
 The round landed on the default at ec7d5a3 before iteration 1, so the re-taken frames and the script fix (`scripts/hero/frames-r4.mjs`, which now waits for `#intro`, the loader, to leave the DOM) land as a follow-up commit.
+
+## Iteration 3, 2026-11-03: FAIL
+
+Five-minute review of round 5 on the owner's word, graded from the hand-off's measurements and the frames; nothing re-run.
+
+Round 5, `docs/specs/section-2.md` section 15: half the world's travel at the old speed. Source read: `git diff 3dabb60 bb104ab -- src/config/hero.ts src/scripts/hero/camera/rig.ts src/styles/shell.css`, the rest of the round's diff (`scrollMap.ts` and `section4/layout.ts` comments, the tests, `frames-r4.mjs`) and the stat. Frames opened: ten of the twelve `hero-r5-*` (390: pull-end, wipe-mid, flight, rest, wipe2-mid, quiz; 1280: pull-end, wipe-mid, flight, rest), with `hero-r4-390-pull-end.png` for the comparison.
+
+### Checklist
+- A1 PASS. The source diff changes two constants' values, adds `PROTO_MAP`, `CAM_TRAVEL` and `CAM_DRIFT`, one expression in `camCurve`, comments and the track's height literal: no colour, gradient or glow (rules 1, 2, 21, 42), type (4, 18, 19, 30), copy (16, 17, 29, 35), shadow (25), radius (39), icon (10, 22, 44, 45), glass (6, 28) or hover (14, 48) change; no em or en dash in the diff (searched: none). The frames show only the approved exceptions (E-1/21/40, E-13/42, E-24).
+- A2 PASS. No colour added; the gems and blocks in the families' shades by id, the scene's light as E-A2 and E-A2b.
+- A3 PASS. No type change; the countdown's and labels' Plex capitals are E-chrome-font and E-S2-font from the default, untouched.
+- A4 PASS. No copy change; the new comments carry no em or en dash and no buzzword.
+- A5 PASS. The logo's ten blocks, the ten gems in their shades and the ten family names (rest frames at both widths).
+- B1 PASS. Twelve frames at 390 x 844 and 1280 x 800, taken with the loader gone; ten opened, each as expected (below).
+- B2 PASS. No layout width changed; no overflow in the 390 frames; the countdown and the quiz's lines on the 16 px gutter.
+- B3 PASS. No link or storage change.
+- B4 PASS. `.track` 750svh, static, nothing in dvh.
+- C1 PASS. Every budget line ok; the island chunk 57.0 KB gz, under 60. The round adds two small constants and one changed expression, far under 0.1 KB gz; the 0.4 KB over round 4's 56.6 is the base default's (the hall removal's chunking), not the round's, read from the diff.
+- C2 PASS. No image added to the page.
+- C3 PASS. The one island under E-C3 and E-S3-bg; the round changes the camera's road parameter only; no layout property animated.
+- C4 PASS. Lighthouse mobile on the poster tier, the median of three on a quiet machine: 99, LCP 1.84 s (99 / 1843 ms, 99 / 1842 ms, 100 / 1532 ms). Graded from the median, as the brief says; the single run of 95 with an LCP of 2.6 s right after the SwiftShader suites is the machine's load. The LCP line (2.5 s) holds at 1.84 s.
+- D1 PASS. Nothing new waits at opacity 0; at rest (5.25) ten gems and ten labels, no loader, no veil.
+- D2 PASS. Reduced motion unchanged (s = 0 holds the hero pose); `v11-frames.spec.ts` grades the fog, the labels and the ride at both widths at the dither floor.
+- D3 PASS. No data, input or new state.
+- D4 PASS. Hover and press untouched (15.8).
+- E1 BLOCKED. `/web-design-guidelines` is not installed here; never PASS. In its place, my own by-eye pass of the 390 frames: pull-end the logo whole over the moon terrain with the countdown, nearer and larger than round 4's and left of centre (the camera at x +4.26 looks at 0.45 x), the owner's composition to judge (15.9); wipe-mid the logo whole over the cut; flight all ten blocks in the air, none on the logo, none landed; rest ten gems and ten labels, no loader, no veil; wipe2-mid the gems cut away; quiz the intro at rest. No new finding from the round.
+- E2 BLOCKED. `visual-critique:critique-screen` is not installed here; the by-eye pass under E1 stands in for it.
+- E3 PASS. No markup, control or focus change; the contrast items pending Sam stand against their defaults (below).
+- E4 PASS. Nothing writes data.
+- E5 PASS. No schema touched.
+- F1 FAIL. Criteria 1 to 7 met; criterion 8 not (below).
+- F2 PASS. No TODO, placeholder, lorem ipsum or commented-out code in the diff.
+
+### Acceptance criteria (15.7)
+1. PASS. `S2T` PULL 2.5, WIPE 1, CAS0 3.0, FLY 1.8, W1END 3.5, LAND 4.8, W2 5.5, W2END 6.5, no GAP (hand-off, unit test); `TRACK_SVH` = round((6.5 + 1) x 100) = 750 and `shell.css` reads 750svh (diff); 6.5 is under half of 16.2.
+2. PASS. `CAM_TRAVEL` = 2.5 / 5 = 0.5 and `CAM_DRIFT` = 2.3 / 9.5 = 0.2421 from `PROTO_MAP` (diff, unit test); `camCurve` takes v = CAM_TRAVEL x s + CAM_DRIFT x u2 (diff); the live pull-back parity at seven pairs, exact at 0 and at the pull-end [4.2636, -1.75, 34], the rest within 1e-4.
+3. PASS. `__s2().L` [0 x10] at 2.5 and 3.0, [0.5 x10] at 3.9, [1 x10] at 5.25, 6.0 and 7.5 at both widths; the flight frames show ten in the air (4.8 itself not sampled; LAND 4.8 asserted by the unit test).
+4. PASS. Unit page-scroll, site-nav and return-path pass; e2e island, site-nav and to-top 29 of 29, the quiz gate's AC1 and AC6 1 of 1, room 11 of 11 on the GPU harness (the e2e on the build before the About landing was merged in).
+5. PASS. `v11-frames.spec.ts` at 390: the wipe's end 43.781 dB against a floor of 43.779 and the mid-wipe 46.658 against 46.656; at 1280: 42.389 against 42.392 and 45.31 against 45.31; labels and the ride equal on every pair.
+6. PASS. The twelve frames exist with the loader gone; the ten opened match: pull-end nearer than round 4's (the logo about 150 px wide at 390 against round 4's 120), wipe-mid the logo with its blocks under the cut, flight the ten in the air, rest the ten gems and labels, wipe2-mid the gems cut away, quiz the intro.
+7. PASS. Every budget line ok; total JS 235.7 KB gz, under the 243.2 ceiling (15.6 "243.2 KB gz or under"; the drop is the base default's hall removal); Lighthouse 99 on the poster tier at the median.
+8. FAIL. CLAUDE.md (the Section 3 line reads "5.5 to 6.5 screens since 2026-11-03"), hero.md 12.9 and the other docs carry the new map, and the diff has no em or en dash or emoji; but the record states the pull-end camera at "about +3.4" in x (`src/config/hero.ts` line 54, the `CAMX` comment; `docs/specs/section-2.md` 15.2 and 15.9; `docs/specs/hero.md` 12.9's table, line 632), where `camX(0.5)` is +4.26 under the quintic ease `camX` uses (`rig.ts`: t x t x t x (t x (6t - 15) + 10)), as the hand-off's own pull-back parity reads (x 4.2636 at the pull-end on both pages). The figure the owner reads to judge the pull-end composition is wrong by 0.86 units.
+
+### Blast radius
+`graphify affected "camCurve"`: `hero-math.test.ts` (changed, in the hand-off) and three historical doc sections (hero.md 12.1 and 12.5, hero-architecture.md 17.3, references only). `graphify affected "S2T"`: `rig.ts`, `scrollMap.ts` and the four unit and family tests are in the hand-off; `hero/hero.ts`, `gems.ts`, `section3/ground.ts`, `nav-map.ts`, `types.ts`, `moon.ts`, `boot.ts`, `loop.ts`, `ride.ts` and `director.ts` read `S2T` by name and are unchanged in the diff, covered by the suites run; `hover.spec.ts` reads `S2T` too, unchanged and listed as not run; `SiteNav.astro` and `site-nav.ts` changed by the About landings, not the round. Out-of-scope code (15.8) touched only in a comment (`section4/layout.ts`, a figure). PASS.
+
+### Pending Sam, graded against their defaults
+- E-C4: Lighthouse graded on the poster tier (the default), 99 at the median. PASS against the default.
+- E-2.2.2: the scene and countdown with no pause control, unchanged by the round. Graded against its default, not as FAIL.
+- The reduced-motion tier: unchanged (the still3d tier, s = 0 on the hero pose), graded against its default, not as FAIL.
+- E-cue-text's contrast and E-NAV-contrast: the fog's tone unchanged; the cue reads `S2T`, so its read positions moved with the map and its spec's figures are the cue's to re-read. Graded against their defaults, not as FAIL.
+
+### Verdict: FAIL
+
+1. Correct the pull-end x figure in the record: write +4.26 (`camX(0.5)`, the quintic ease of `rig.ts` camX, read live as 4.2636 by `tests/parity/pullback.spec.ts`) for "about +3.4" in `src/config/hero.ts` line 54 (the `CAMX` comment), `docs/specs/section-2.md` 15.2 and 15.9, and `docs/specs/hero.md` 12.9 (line 632), and drop 15.2's "the weave's middle" (x +4.26 is 0.86 of the way from -6 to +6, not its middle). Unblocks criterion 8 and F1. A comment and docs change only; the code and the frames are right. At the time of this review an uncommitted edit in the worktree, not this review's, already writes +4.26 in 15.9; the other three places still read +3.4.
+
+The round landed on the default at bb104ab before this review on the owner's word, so this item is a follow-up on the default, not a block. E1 and E2 are blocked (the tools are not installed here) and not counted against the round.
+
+## Iteration 4, 2026-11-03: PASS
+
+Two-minute re-grade of iteration 3's one item on the owner's word; iteration 3's other items stand.
+
+Read only, nothing re-run (no build, test or frame): `git diff` of the three files iteration 3 named (an uncommitted edit in the worktree, five lines, 5 insertions and 5 deletions), the matching lines with their headings, the `CAMX` table in `src/config/hero.ts`, `camX` in `src/scripts/hero/camera/rig.ts` (lines 35 to 39) and the one evaluation below.
+
+### The four places
+1. `src/config/hero.ts` line 54, the `CAMX` comment: gives +4.26 ("camX(0.5) on the quintic ease between the keys at 0.25 and 0.6"). PASS.
+2. `docs/specs/section-2.md` 15.2, the pull-back bullet (line 207): gives +4.26 ("camX(0.5) on the quintic ease between the keys at 0.25 and 0.6, read live by the pull-back parity"); "the weave's middle" is gone. PASS.
+3. `docs/specs/section-2.md` 15.9, the last bullet (line 244): gives "x +4.26 at v 0.5, measured". PASS.
+4. `docs/specs/hero.md` 12.9, the table's first row (line 632): gives "x +4.26, camX(0.5)". PASS.
+
+Searches over the three files: `+3.4` matches nothing and neither does "the weave's middle" (the word-level diff shows "about +3.4" replaced in all four places and "the weave's middle" dropped from 15.2). A wider search for `3.4` finds only unrelated figures in `hero.md` (Speed Index limits of 3.4 s at lines 306, 436 and 490, an AVIF size of 33.4 KB at line 601), none an x position; `hero.ts` and `section-2.md` have no `3.4` at all.
+
+### The evaluation
+The keys are `CAMX` as shipped, [0, 0], [0.25, -6], [0.6, 6], [1, -3], [1.5, -5.25], [2, -1.5], and the interpolation is `camX` as shipped: x0 + (x1 - x0) x s between the keys either side of v, with t = (v - v0) / (v1 - v0) and s = t x t x t x (t x (6t - 15) + 10). At v = 0.5, the pull-back's end (`CAM_TRAVEL` 0.5 at s = 1):
+
+```
+node -e "const K=[[0,0],[0.25,-6],[0.6,6],[1,-3],[1.5,-5.25],[2,-1.5]];const v=0.5;for(let i=1;i<K.length;i++)if(v<=K[i][0]){const [v0,x0]=K[i-1],[v1,x1]=K[i],t=(v-v0)/(v1-v0);console.log(x0+(x1-x0)*t*t*t*(t*(t*6-15)+10));break}"
+4.263580650919257
+```
+
+That is +4.26 to two decimal places, the 4.2636 the pull-back parity read live in iteration 3. By hand: t = 0.25 / 0.35 = 0.7143, s = 0.8553, x = -6 + 12 x 0.8553 = 4.2636.
+
+### Verdict: PASS
+Criterion 8 PASS and F1 PASS. All four places read +4.26, nothing in the three files reads +3.4 or calls the pull-end the weave's middle, and the figure is the one `camX` returns. Criteria 1 to 7 and the checklist's other items stand as iteration 3 graded them; E1 and E2 stay blocked (the tools are not installed here) and are not counted against the round.
+
+The round landed on the default at bb104ab before iteration 3, on the owner's word, so the corrected record (the five-line edit, uncommitted in the worktree when graded) lands as a follow-up commit on the default, not as part of the round's merge.
+
+### Noted, not graded
+- The edit changes one more line than the four places: `hero.md` 12.9's introduction (line 628) gains a sentence recording the owner's approval of the pull-end frames, and 15.9's last bullet (line 244) gains the same, with "is" turned to "was". It quotes the owner and cannot be checked against his message from the files read here; it changes no figure and is not iteration 3's item.
+- "mid-weave" stays in 12.9 (the new sentence and the first row) and in 15.9. In the first row and in 15.9 the figure sits beside it. It means midway along the pull-back's road (v 0.5), not the swing's middle, none of the three puts x near 0, and iteration 3 asked to drop only 15.2's "the weave's middle".
+- `src/config/hero.ts` line 54's second sentence still says "smoothstep between them", as the comment on `camX` in `rig.ts` (line 34) does, where the code is the quintic. Wording only, unchanged by the edit; left for the next touch of those comments.

@@ -5,8 +5,11 @@
 // (CAMX, 6 units each way), looking half-way between ahead and the logo; a 0.75 rise over the first third. The igloo
 // intro cranes down from its start pose onto that base (crane.w, 0 at the start pose, 1 on the hero's base pose).
 // Under reduced motion the v9.9 straight pull-back stays, with s = 0, so the camera holds the hero pose.
+// Since 2026-11-03 (Sam: "cut down the travelling of the 3d world itself into half, the scroll speed remains the same";
+// section-2.md 15) the pull-back covers half the road (v 0 to CAM_TRAVEL, 0.5) at the prototype's rate per screen, and
+// the drift after it goes on at the prototype's rate for the screens the wipe and the flight have (CAM_DRIFT).
 import { Vector2, Vector3, type Object3D, type PerspectiveCamera } from 'three';
-import { CAMX, S2T } from '../../../config/hero.ts';
+import { CAMX, CAM_DRIFT, CAM_TRAVEL, S2T } from '../../../config/hero.ts';
 import { clamp01, lerpFPS, sineNoise } from '../util/math.ts';
 
 export interface CameraRig {
@@ -35,9 +38,13 @@ export function camX(v: number): number {
   return CAMX[CAMX.length - 1][1];
 }
 
-/** The level curve (prototype camCurve): s 0..1 over the pull-back, u2 0..1 after it (the flights), both in v = s + u2. */
+/**
+ * The level curve (prototype camCurve): s 0..1 over the pull-back, u2 0..1 after it (the wipe and the flights), on the
+ * prototype's road at v = CAM_TRAVEL x s + CAM_DRIFT x u2 (the prototype's own v = s + u2 ran the whole road over its
+ * pull-back and the next unit over its drift; the port's pull-back ends half-way along it, z 34, since 2026-11-03).
+ */
 export function camCurve(s: number, u2: number, tgtY: number, outP: Vector3, outT: Vector3): void {
-  const v = s + u2, x = camX(v), z = 24 + 20 * Math.min(v, 1) + 16 * Math.max(0, v - 1);
+  const v = CAM_TRAVEL * s + CAM_DRIFT * u2, x = camX(v), z = 24 + 20 * Math.min(v, 1) + 16 * Math.max(0, v - 1);
   const k = Math.min(1, v / 0.3), y = -2.5 + 0.75 * k * k * (3 - 2 * k);
   outP.set(x, y, z); outT.set(0.45 * x, tgtY, 0);
 }

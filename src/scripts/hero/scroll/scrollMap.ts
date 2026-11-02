@@ -1,7 +1,8 @@
 // The scroll map in screens (prototype v11.4 template.html, the step() lines after the followers; frame step F6; the
-// lengths halved on 2026-11-02, section-2.md 14): native scrollY / innerHeight through igloo's two followers (0.075, then
-// 0.15), 0 to PULL (2.5) the pull-back, PULL to PULL + WIPE (0.5) the wipe into section 2, W2 to W2 + WIPE the wipe to
-// section 3. Pure functions, unit tested (tests/unit/hero-math.test.ts).
+// pull-back halved on 2026-11-02, section-2.md 14, and covering half the camera's road at the prototype's rate since
+// 2026-11-03, section-2.md 15): native scrollY / innerHeight through igloo's two followers (0.075, then 0.15), 0 to PULL
+// (2.5) the pull-back, PULL to PULL + WIPE (1) the wipe into section 2, W2 to W2 + WIPE the wipe to section 3. Pure
+// functions, unit tested (tests/unit/hero-math.test.ts).
 import { S2T, SCROLL_MAP } from '../../../config/hero.ts';
 import { clamp01, easeInOutCubic, lerpFPS, smoothstep } from '../util/math.ts';
 
