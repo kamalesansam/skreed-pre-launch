@@ -3,6 +3,7 @@
 // its light drawer from the right under 768 px; each section in place by a press on the poster tier, with aria-current
 // following and a second press during a jump honoured; Products always listed, opening the quiz gate as Skip quiz does;
 // on the 3D path a keyboard press on Products leaves focus on the hall's pad; plain fragment links without JavaScript.
+// About, the page link (navbar.md D7, AC11), is last in the bar and the drawer and leaves for /about/ with no veil.
 // The 3D path's rest positions are nav-map.ts's, checked in tests/unit/site-nav.test.ts.
 import { test, expect, type Page } from '@playwright/test';
 
@@ -22,7 +23,7 @@ for (const width of [360, 390, 430, 768, 1024, 1280]) {
       const inset = parseFloat(getComputedStyle(document.getElementById('siteLogo')!).left);
       return { items, logo: box(document.getElementById('siteLogo')!), inset, sw: document.documentElement.scrollWidth, vw: innerWidth };
     });
-    expect(g.items.map((i) => i.t)).toEqual(width < 768 ? ['Menu'] : ['Home', 'Families', 'Quiz', 'Products']);   // Products with the gate still locked
+    expect(g.items.map((i) => i.t)).toEqual(width < 768 ? ['Menu'] : ['Home', 'Families', 'Quiz', 'Products', 'About']);   // Products with the gate still locked; About, the page link, last
     expect(g.sw).toBeLessThanOrEqual(g.vw);
     const last = g.items[g.items.length - 1];
     expect(Math.abs(last.r - (g.vw - g.inset + 12))).toBeLessThan(1);   // the last word's text ends on --inset, its hit padded past it
@@ -48,7 +49,7 @@ test('the phone: Menu opens a light drawer from the right, 75 percent wide; a ro
   expect(Math.abs(box.height - 844)).toBeLessThan(1);   // the screen's full height
   expect(await panel.evaluate((el) => { const s = getComputedStyle(el); return [s.backgroundColor, s.color]; })).toEqual([PEARL, SLATE]);
   expect(await drawer.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgba(0, 0, 0, 0)');   // the layer beside it is clear
-  await expect(drawer.locator('a:visible')).toHaveText(['Home', 'Families', 'Quiz', 'Products']);
+  await expect(drawer.locator('a:visible')).toHaveText(['Home', 'Families', 'Quiz', 'Products', 'About']);
   await drawer.locator('a', { hasText: 'Quiz' }).click();
   await expect(drawer).toBeHidden();
   await expect.poll(async () => page.evaluate(() => scrollY)).toBe(Math.round(await docTop(page, 'find')));
@@ -119,7 +120,7 @@ test('the phone: the drawer closes when the window widens past its Menu', async 
   await expect(page.locator('#site-sections')).toBeVisible();
   await page.setViewportSize({ width: 1024, height: 844 });
   await expect(page.locator('#site-sections')).toBeHidden();
-  await expect(page.locator('#siteNav .snav-list a')).toHaveCount(4);
+  await expect(page.locator('#siteNav .snav-list a')).toHaveCount(5);
 });
 
 test('a browser without the popover API: the words still jump', async ({ page, baseURL }) => {
@@ -270,11 +271,12 @@ test('the bar has no fill, box or shadow, and takes the logotype\'s tone', async
 test.describe('without JavaScript', () => {
   test.use({ javaScriptEnabled: false });
   for (const width of [360, 1280]) {
-    test(`at ${width} px the four words are plain fragment links`, async ({ page, baseURL }) => {
+    test(`at ${width} px the four section words are plain fragment links, and About a plain page link`, async ({ page, baseURL }) => {
       await page.setViewportSize({ width, height: 800 });
       await page.goto(new URL('/', baseURL).href);
       const links = page.locator('#siteNav .snav-list a');
-      await expect(links).toHaveText(['Home', 'Families', 'Quiz', 'Products']);
+      await expect(links).toHaveText(['Home', 'Families', 'Quiz', 'Products', 'About']);
+      await expect(links.last()).toHaveAttribute('href', '/about/');
       await expect(page.locator('#siteNav .snav-menu')).toBeHidden();
       const boxes = await links.evaluateAll((els) => els.map((e) => { const b = e.getBoundingClientRect(); return { x: b.x, y: b.y, r: b.right }; }));
       const logo = await page.locator('#siteLogo').evaluate((e) => e.getBoundingClientRect().bottom);
@@ -283,4 +285,42 @@ test.describe('without JavaScript', () => {
       await expect(page).toHaveURL(/#find$/);
     });
   }
+});
+
+test('About (AC11): last in the bar, a plain link to /about/, never current, no veil; the press is tracked and leaves for the page', async ({ page, baseURL }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(new URL('/?tier=poster', baseURL).href);
+  const about = page.locator('#siteNav .snav-list a[data-page="about"]');
+  await expect(about).toHaveText('About');
+  await expect(about).toHaveAttribute('href', '/about/');
+  expect(await about.getAttribute('data-sec')).toBeNull();
+  expect(await about.getAttribute('aria-current')).toBeNull();
+  expect(await page.locator('#siteNav .snav-list li:last-child a').getAttribute('data-page')).toBe('about');
+  expect(await page.locator('#site-sections .snav-rows li:last-child a').getAttribute('data-page')).toBe('about');
+  // the press, held back from navigating once, so the landing page's own record of it can be read
+  await page.evaluate(() => { const hold = (e: Event) => e.preventDefault(); (window as unknown as { __hold: typeof hold }).__hold = hold; addEventListener('click', hold, true); });
+  await about.click();
+  expect((await events(page)).filter(([n]) => n === 'nav').pop()).toEqual(['nav', { to: 'about' }]);
+  await page.waitForTimeout(300);
+  await veilDown(page);   // no veil for a page link
+  expect(await about.getAttribute('aria-current')).toBeNull();
+  await page.evaluate(() => removeEventListener('click', (window as unknown as { __hold: (e: Event) => void }).__hold, true));
+  await about.click();
+  await expect(page).toHaveURL(/\/about\/$/);
+  await expect(page.locator('main h1')).toHaveText('About Skreed');
+  await expect(page.locator('#siteNav')).toHaveCount(0);   // the About page carries no index: its wordmark is the way home
+  await page.locator('a.site-logo').click();
+  await expect(page).toHaveURL(/\/$/);
+});
+
+test('the phone: the drawer\'s About row leaves for /about/', async ({ page, baseURL }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(new URL('/?tier=poster', baseURL).href);
+  await page.locator('#siteNav .snav-menu').click();
+  const row = page.locator('#site-sections a[data-page="about"]');
+  await expect(row).toBeVisible();
+  await expect(row).toHaveAttribute('href', '/about/');
+  await row.click();
+  await expect(page).toHaveURL(/\/about\/$/);
+  await expect(page.locator('main h1')).toHaveText('About Skreed');
 });

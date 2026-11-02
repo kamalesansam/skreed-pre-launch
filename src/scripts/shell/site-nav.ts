@@ -7,7 +7,8 @@
 // section 4, it opens it as Skip quiz does (gate.ts unlock); on the 3D path it waits under the veil for the hall, at
 // most 1.5 s, as Skip quiz's ride does, so the landing shows the hall drawn. Reduced motion: the cut with no veil. A
 // keyboard press moves focus into the section it opened. Where the browser has no popover (the drawer's CSS falls back
-// to the words in a row), nothing here touches the popover API.
+// to the words in a row), nothing here touches the popover API. About, the page the index links to (data-page, no
+// data-sec; navbar.md D7), is left to the browser: no veil and no jump, only the press tracked as the sections' are.
 import { track } from '../quiz/track.ts';
 import { veiled } from './veil.ts';
 import { restY, sectionAt, type PageMap, type SectionId } from './nav-map.ts';
@@ -26,6 +27,8 @@ const focusVisible = (el: Element) => { try { return el.matches(':focus-visible'
 
 if (nav) {
   const links = [...document.querySelectorAll<HTMLAnchorElement>('a[data-sec]')];
+  // the page links (About): a plain navigation, never jumped or marked current; the press is tracked as the sections' are
+  for (const a of document.querySelectorAll<HTMLAnchorElement>('#siteNav a[data-page]')) a.addEventListener('click', () => { track('nav', { to: a.dataset.page! }); });
   const room = document.getElementById('room');
   /** an element's document top, NaN for one with no box (section#room hidden behind the quiz gate), as hero.ts reads it */
   const docTop = (el: HTMLElement | null) => (el && el.getClientRects().length ? el.getBoundingClientRect().top + scrollY : NaN);

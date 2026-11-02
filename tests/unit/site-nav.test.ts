@@ -73,6 +73,10 @@ test('the fragment links name the landing page\'s ids, in page order, in the bar
   assert.match(read('src/components/quiz/Quiz.astro'), /<section class="quiz" id="find"/);
   assert.match(read('src/components/room/Room.astro'), /<section class="room" id="room"[^>]* hidden data-locked/);
   assert.equal((nav.match(/items\.map/g) ?? []).length, 2);
+  assert.equal((nav.match(/pages\.map/g) ?? []).length, 2, 'About, a page link, after the sections in the bar and in the drawer');
+  assert.match(nav, /const pages = \[\{ id: 'about', href: '\/about\/', label: N\.pages\.about \}\];/);
+  assert.ok(nav.indexOf('items.map') < nav.indexOf('pages.map') && nav.lastIndexOf('items.map') < nav.lastIndexOf('pages.map'), 'About comes last in both lists');
+  assert.doesNotMatch(nav, /data-sec=\{p\.id\}/, 'a page link carries no data-sec, so site-nav.ts never jumps or marks it current');
   assert.equal((nav.match(/<nav\b/g) ?? []).length, 1, 'the drawer sits inside the bar\'s nav, so the index is one landmark');
   assert.ok(nav.indexOf('id="site-sections"') > nav.indexOf('<nav') && nav.indexOf('id="site-sections"') < nav.indexOf('</nav>'));
   const index = read('src/pages/index.astro');
@@ -119,12 +123,22 @@ test('without the popover API the script never touches it, and a tap on the draw
 });
 
 test('the copy: short words, no em dashes, no emojis', () => {
-  const words = [COPY.nav.aria, COPY.nav.menu, COPY.nav.close, ...Object.values(COPY.nav.items)];
+  const words = [COPY.nav.aria, COPY.nav.menu, COPY.nav.close, ...Object.values(COPY.nav.items), ...Object.values(COPY.nav.pages)];
   assert.deepEqual(Object.keys(COPY.nav.items), [...SECTION_IDS]);
   assert.deepEqual(Object.values(COPY.nav.items), ['Home', 'Families', 'Quiz', 'Products']);
+  assert.deepEqual(COPY.nav.pages, { about: 'About' });
   for (const w of words) {
     assert.doesNotMatch(w, /[—–]/);
     assert.doesNotMatch(w, /\p{Extended_Pictographic}/u);
     assert.ok(w.length <= 9, w);
   }
+});
+
+test('About is a plain link: site-nav.ts jumps only the data-sec links, tracks a press on a page link, and the About page carries no index', () => {
+  const js = read('src/scripts/shell/site-nav.ts');
+  assert.match(js, /const links = \[\.\.\.document\.querySelectorAll<HTMLAnchorElement>\('a\[data-sec\]'\)\];/);
+  assert.match(js, /querySelectorAll<HTMLAnchorElement>\('#siteNav a\[data-page\]'\)\) a\.addEventListener\('click', \(\) => \{ track\('nav', \{ to: a\.dataset\.page! \}\); \}\);/);
+  const about = read('src/pages/about.astro');
+  assert.doesNotMatch(about, /SiteNav|site-nav/, 'the About page ships no script: its wordmark is its way home (docs/specs/about.md D6, D13)');
+  assert.match(about, /<a class="site-logo" href="\/" aria-label=\{COPY\.logo\.aria\}>/);
 });
