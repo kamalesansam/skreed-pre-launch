@@ -103,7 +103,9 @@ test('about.css: Inter and its fallbacks only, swap, LATIN, nothing italic, the 
   assert.match(css, /\.ab em \{ font-style: normal; font-weight: 600; \}/);
   assert.match(css, /--font-about: "Inter", "Inter Fallback", Arial, sans-serif;/);
   // the source rules of A1 and A2: tokens only, none of the banned devices
-  assert.doesNotMatch(css, /#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(|color-mix\(|--shade-|--skeleton|--night|gradient|box-shadow|backdrop-filter|\bfilter:|blur\(|border-radius|background-image/i);
+  assert.doesNotMatch(css, /#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(|color-mix\(|--skeleton|--night|gradient|box-shadow|backdrop-filter|\bfilter:|blur\(|border-radius|background-image/i);
+  // one catalog shade on the page, Coffee, the letter's ink (E-About-look, the owner's reference of 2026-11-03), by its token
+  assert.deepEqual(css.match(/--shade-[a-z-]+\d*/g), ['--shade-basic-brown-13']);
   assert.doesNotMatch(read('src/pages/about.astro'), /#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(|color-mix\(|--shade-|<img\b|<picture\b|<canvas\b|<video\b/i);
 });
 

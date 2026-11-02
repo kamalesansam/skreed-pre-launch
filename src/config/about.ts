@@ -20,3 +20,8 @@ export const ABOUT_COPY = {
   /** the meta and og:description: three of the copy's own sentences, in order (proposed, section 14) */
   description: 'Skreed started with a simple idea: colour is personal. And now we’re bringing it all to India. Launching November 15.',
 } as const;
+
+/** the title's lines, one a line in the tall uppercase title of the owner's reference (E-About-look); joined by a space they are h1 */
+export const ABOUT_H1_LINES = ['About', 'Skreed'] as const;
+/** the words of the first paragraph ringed in Ember Luxe, as the reference circles them (E-About-look) */
+export const ABOUT_RING = 'colour is personal.';

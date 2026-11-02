@@ -7,7 +7,7 @@
 import Base from '../layouts/Base.astro';
 import '../styles/about.css';
 import WordmarkSprite from '../components/shell/WordmarkSprite.astro';
-import { ABOUT_COPY as c } from '../config/about.ts';
+import { ABOUT_COPY as c, ABOUT_H1_LINES, ABOUT_RING } from '../config/about.ts';
 import { COPY } from '../config/copy.ts';
 import { LAUNCH_ISO, SITE_URL } from '../config/site.ts';
 import { PEARL_WHISPER } from '../config/tokens.ts';
@@ -15,6 +15,11 @@ import { SITE_COPY } from '../scripts/family/site-copy.ts';
 
 const path = '/about/';
 const url = new URL(path, SITE_URL).href;
+// the owner's reference of 2026-11-03 (E-About-look): the title a word a line, the brand line ringed; the words themselves stay section 3's
+if (ABOUT_H1_LINES.join(' ') !== c.h1) throw new Error('the title lines do not make the title');
+const ringAt = c.p1.indexOf(ABOUT_RING);
+if (ringAt < 0) throw new Error('the ringed words are not in the first paragraph');
+const p1Before = c.p1.slice(0, ringAt), p1After = c.p1.slice(ringAt + ABOUT_RING.length);
 const o = SITE_COPY.org;
 // the page's place in the site as structured data: the family pages' Organization node, the page and its breadcrumb
 const ld = JSON.stringify({
@@ -49,11 +54,12 @@ const ld = JSON.stringify({
     <a class="site-logo" href="/" aria-label={COPY.logo.aria}><svg viewBox="0 0 1209.46 292.9" aria-hidden="true" focusable="false"><use href="#skreed-wordmark"/></svg></a>
   </header>
   <main class="ab">
+    <span class="ab-quote" aria-hidden="true">”</span>
     <div class="ab-col">
       <div class="ab-letter">
-        <h1>{c.h1}</h1>
+        <h1>{ABOUT_H1_LINES.map((line, i) => <>{i > 0 ? ' ' : ''}<span>{line}</span></>)}</h1>
         <div class="ab-text">
-          <p>{c.p1}</p>
+          <p>{p1Before}<span class="ab-ring">{ABOUT_RING}<svg viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M152 7C104 -3 18 4 9 30c-7 22 39 32 97 29 54-3 92-15 86-33-4-12-26-18-54-19" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg></span>{p1After}</p>
           <p>{c.p2}</p>
           <p>{c.p3}</p>
           <p>{c.p4}</p>

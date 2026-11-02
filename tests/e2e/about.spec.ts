@@ -60,7 +60,7 @@ test.describe('AC2 Inter from the one self-hosted file, no other face, nothing i
       const cdp = await ctx.newCDPSession(page);
       await cdp.send('DOM.enable'); await cdp.send('CSS.enable');
       const { root } = await cdp.send('DOM.getDocument', { depth: -1 });
-      for (const sel of ['h1', '.ab-text p', '.ab-text em', '.ab-sign', '.ab-launch', '.ab-launch time']) {
+      for (const sel of ['h1 span', '.ab-text p', '.ab-text em', '.ab-sign', '.ab-launch', '.ab-launch time', '.ab-quote']) {
         const { nodeIds } = await cdp.send('DOM.querySelectorAll', { nodeId: root.nodeId, selector: sel });
         expect(nodeIds.length, sel).toBeGreaterThan(0);
         for (const nodeId of nodeIds) {
@@ -70,7 +70,7 @@ test.describe('AC2 Inter from the one self-hosted file, no other face, nothing i
         }
       }
       // computed: the family, the weights, the sizes and line heights, the title's tracking; nothing italic anywhere
-      const px = vp.width < 1024 ? { h1: 32, text: 16, sign: 20 } : { h1: 44, text: 17, sign: 24 };
+      const px = vp.width < 1024 ? { h1: 44, text: 18, sign: 20 } : { h1: 88, text: 22, sign: 24 };   // E-About-look: the reference's tall title and larger letter
       const cs = await page.evaluate(() => [...document.querySelectorAll('h1, main p, main em, main time')].map((e) => {
         const c = getComputedStyle(e);
         return { tag: e.tagName.toLowerCase(), cls: e.className, family: c.fontFamily, weight: c.fontWeight, size: parseFloat(c.fontSize), lh: parseFloat(c.lineHeight), ls: c.letterSpacing };
@@ -83,9 +83,10 @@ test.describe('AC2 Inter from the one self-hosted file, no other face, nothing i
       expect(Math.abs(h1.size - px.h1)).toBeLessThanOrEqual(0.1);
       expect(Math.abs(sign.size - px.sign)).toBeLessThanOrEqual(0.1);
       for (const c of [...letter, launch]) { expect(Math.abs(c.size - px.text)).toBeLessThanOrEqual(0.1); expect(Math.abs(c.lh - 1.6 * c.size)).toBeLessThanOrEqual(0.1); }
-      expect(Math.abs(h1.lh - 1.05 * h1.size)).toBeLessThanOrEqual(0.1);
+      expect(Math.abs(h1.lh - 0.95 * h1.size)).toBeLessThanOrEqual(0.1);
       expect(Math.abs(sign.lh - 1.2 * sign.size)).toBeLessThanOrEqual(0.1);
-      expect(Math.abs(parseFloat(h1.ls) - 0.005 * h1.size)).toBeLessThanOrEqual(0.01);
+      expect(Math.abs(parseFloat(h1.ls) + 0.02 * h1.size)).toBeLessThanOrEqual(0.01);   // tightened caps
+      expect(await page.locator('main h1').evaluate((e) => getComputedStyle(e).textTransform)).toBe('uppercase');   // the DOM keeps "About Skreed"
       expect(await page.evaluate(() => [...document.querySelectorAll('header, header *, main, main *')].map((e) => getComputedStyle(e).fontStyle).filter((s) => s !== 'normal'))).toEqual([]);
       await ctx.close();
     });
@@ -115,12 +116,18 @@ test.describe('AC5 360 to 1280 px: no horizontal scroll, the gutters, the column
       const all = await boxes(page), logo = all[0], text = all.slice(1), i = inset(w);
       for (const b of all) { expect(b.x, `${b.sel} left`).toBeGreaterThanOrEqual(16); expect(w - (b.x + b.w), `${b.sel} right`).toBeGreaterThanOrEqual(16); }
       const col = (await page.locator('.ab-col').boundingBox())!;
-      expect(col.width).toBeLessThanOrEqual(544 + 0.01);
-      if (w > 586) expect(Math.abs(col.x - (w - col.x - col.width))).toBeLessThanOrEqual(1);
-      else { expect(Math.abs(col.x - i)).toBeLessThanOrEqual(0.5); expect(Math.abs(w - col.x - col.width - i)).toBeLessThanOrEqual(0.5); }
+      expect(col.width).toBeLessThanOrEqual(704 + 0.01);   // the measure, 44rem (E-About-look)
+      expect(Math.abs(col.x - i), 'the column starts at the gutter').toBeLessThanOrEqual(0.5);   // at the left, as the reference sets its text
+      expect(w - col.x - col.width, 'the right gutter').toBeGreaterThanOrEqual(i - 0.5);
       for (const b of text) expect(Math.abs(b.x - col.x), `${b.sel} flush left`).toBeLessThanOrEqual(0.5);
       const h1 = await page.locator('main h1').evaluate((e) => e.getBoundingClientRect().height / parseFloat(getComputedStyle(e).lineHeight));
-      expect(h1, 'the h1 is one line').toBeLessThan(1.5);
+      expect(Math.abs(h1 - 2), 'the h1 is two lines, a word each').toBeLessThanOrEqual(0.1);
+      // the quotation mark: at the top right, clear of the title's text, never past the right gutter
+      const quote = (await page.locator('.ab-quote').boundingBox())!, h1Box = (await page.locator('main h1').boundingBox())!;
+      expect(w - (quote.x + quote.width), 'the quotation mark inside the right gutter').toBeGreaterThanOrEqual(i - 1);
+      const words = await page.locator('main h1 span').evaluateAll((es) => es.map((e) => e.getBoundingClientRect().right));
+      expect(Math.max(...words), 'the title clear of the quotation mark').toBeLessThan(quote.x);
+      expect(quote.y, 'the quotation mark on the title\'s row').toBeLessThan(h1Box.y + h1Box.height);
       expect(Math.abs(logo.w - (w >= 1024 ? 136 : 96))).toBeLessThanOrEqual(0.5);
       expect(Math.abs(logo.x - i)).toBeLessThanOrEqual(0.5); expect(Math.abs(logo.y - i)).toBeLessThanOrEqual(0.5);
       for (const b of text) expect(meets(logo, b), `the wordmark meets ${b.sel}`).toBe(false);
@@ -128,8 +135,8 @@ test.describe('AC5 360 to 1280 px: no horizontal scroll, the gutters, the column
         const [hd, ...ps] = text, sign = ps[5], launch = ps[6], letter = ps.slice(0, 5);
         const near = (got: number, want: number, what: string) => expect(Math.abs(got - want), `${what}: ${got}`).toBeLessThanOrEqual(1);
         near(hd.y - (logo.y + logo.h), 48, 'wordmark foot to h1');
-        near(letter[0].y - (hd.y + hd.h), 24, 'h1 to the first paragraph');
-        for (let k = 1; k < 5; k++) near(letter[k].y - (letter[k - 1].y + letter[k - 1].h), 16, `paragraph ${k} to ${k + 1}`);
+        near(letter[0].y - (hd.y + hd.h), 32, 'h1 to the first paragraph');
+        for (let k = 1; k < 5; k++) near(letter[k].y - (letter[k - 1].y + letter[k - 1].h), 24, `paragraph ${k} to ${k + 1}`);
         near(sign.y - (letter[4].y + letter[4].h), 48, 'the fifth paragraph to the sign-off');
         near(launch.y - (sign.y + sign.h), 8, 'the sign-off to the date line');
         expect(await page.locator('main').evaluate((m) => getComputedStyle(m).paddingBottom)).toBe('48px');
@@ -144,7 +151,9 @@ test('AC6 visible at rest; the wordmark\'s lift and press, and none under reduce
   const ctx = await browser.newContext({ viewport: LAPTOP });
   const page = await ctx.newPage();
   await page.goto(url); await page.evaluate(() => document.fonts.ready);
-  expect(await page.evaluate(() => [...document.querySelectorAll('header, header *, main, main *')].map((e) => getComputedStyle(e)).filter((c) => c.opacity !== '1' || c.visibility !== 'visible').length)).toBe(0);
+  // every element at rest and visible; the quotation mark ornament stands at its fixed tone (Urban Slate at a quarter, E-About-look) and never changes
+  expect(await page.evaluate(() => [...document.querySelectorAll('header, header *, main, main *')].filter((e) => !e.matches('.ab-quote')).map((e) => getComputedStyle(e)).filter((c) => c.opacity !== '1' || c.visibility !== 'visible').length)).toBe(0);
+  expect(await page.locator('.ab-quote').evaluate((e) => { const c = getComputedStyle(e); return [c.opacity, c.visibility, e.getAttribute('aria-hidden'), c.pointerEvents]; })).toEqual(['0.25', 'visible', 'true', 'none']);
   expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
   const logo = page.locator('a.site-logo');
   const look = () => logo.evaluate((e) => { const c = getComputedStyle(e); return { transform: c.transform, opacity: c.opacity, color: c.color }; });
@@ -228,7 +237,11 @@ test('AC7 the landmarks and the tree, the focus ring, the hit box, the contrast'
   const colours = await page.evaluate(() => ({ ground: [getComputedStyle(document.documentElement).backgroundColor, getComputedStyle(document.body).backgroundColor],
     fg: [...document.querySelectorAll('a.site-logo, main h1, main p, main em, main time')].map((e) => [getComputedStyle(e).color, getComputedStyle(e).backgroundColor]) }));
   expect(colours.ground).toEqual([PEARL, PEARL]);
-  for (const [fg, bg] of colours.fg) { expect(fg).toBe(SLATE); expect(bg).toBe('rgba(0, 0, 0, 0)'); expect(contrast(fg, PEARL)).toBeGreaterThanOrEqual(9.9); }
+  // the wordmark and the title in Urban Slate (9.9:1); the letter, its emphasis, the sign-off and the date in Coffee (E-About-look; 5.9:1, over AA's 4.5)
+  const COFFEE = 'rgb(122, 88, 63)';
+  for (const [fg, bg] of colours.fg) { expect([SLATE, COFFEE]).toContain(fg); expect(bg).toBe('rgba(0, 0, 0, 0)'); expect(contrast(fg, PEARL)).toBeGreaterThanOrEqual(fg === SLATE ? 9.9 : 5.8); }
+  expect(colours.fg.slice(0, 2).map(([fg]) => fg)).toEqual([SLATE, SLATE]);
+  expect(colours.fg.slice(2).map(([fg]) => fg).every((fg) => fg === COFFEE)).toBe(true);
 });
 
 test.describe('AC7 reflow, zoom and text spacing', () => {
@@ -254,7 +267,9 @@ test.describe('AC7 reflow, zoom and text spacing', () => {
       expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
       // the letter's elements: 1.4.12 is about text, and the wordmark link holds none (its ::after hit box, inset -11px -8px by
       // design, is scrollable overflow of its own; the box check below keeps the link inside the viewport)
-      const over = await page.evaluate(() => [...document.querySelectorAll('main, main *')].filter((e) => e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 1).filter((e) => e.clientWidth > 0).map((e) => e.tagName));
+      // (the ring's drawn ellipse reaches past its words by design, so it is lifted out while the text's own overflow is read)
+      const over = await page.evaluate(() => { const ring = document.querySelector<SVGElement>('.ab-ring svg')!; ring.style.display = 'none';
+        const o = [...document.querySelectorAll('main, main *')].filter((e) => e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 1).filter((e) => e.clientWidth > 0).map((e) => e.tagName); ring.style.display = ''; return o; });
       expect(over).toEqual([]);
       const all = await boxes(page);
       for (const b of all) expect(b.x + b.w).toBeLessThanOrEqual(vp.width);
