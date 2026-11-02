@@ -13,7 +13,7 @@
 // carousel.ts; metalEnv is the environment's intensity on the metallic finish, which reflects it rather than gathering
 // it, set here for the class in force at the viewport: metalEnvPortrait where the viewport is taller than wide); --try
 // runs several settings in one session; --tint keeps the scene's key tint on (the frames' colours, not AC2's reading). The browser is the installed Chrome (channel chrome) when present, else Playwright's Chromium; WebGL
-// on the Metal GPU, or SKREED_GL=swiftshader for the test harness's flags.
+// on the GPU (Metal on a Mac), or SKREED_GL=swiftshader for the test harness's flags.
 import { writeFileSync } from 'node:fs';
 import sharp from 'sharp';
 import { chromium } from '@playwright/test';
@@ -26,7 +26,8 @@ const jsonOut = opt('--json');
 const setting = { tint: args.includes('--tint'), bodyOnly: true };
 for (const k of ['key', 'env', 'metalEnv', 'fill']) { const v = opt(`--${k}`); if (v !== undefined) setting[k] = Number(v); }
 const tries = opt('--try') ? opt('--try').split(';').map((t) => { const [key, env, metalEnv, fill] = t.split(',').map(Number); return { ...setting, key, env, metalEnv, fill }; }) : [setting];
-const GL = process.env.SKREED_GL === 'swiftshader' ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] : ['--use-angle=metal', '--ignore-gpu-blocklist', '--enable-gpu'];
+const GPU = process.platform === 'darwin' ? ['--use-angle=metal', '--ignore-gpu-blocklist', '--enable-gpu'] : ['--ignore-gpu-blocklist', '--enable-gpu'];
+const GL = process.env.SKREED_GL === 'swiftshader' ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] : GPU;
 /** the viewports (CSS px): the wide class on the laptop, the portrait class on the phone; --views picks others */
 const VIEWS = (opt('--views') ?? '1280x800,390x844').split(',').map((v) => { const [width, height] = v.split('x').map(Number); return { width, height }; });
 const REGION = 0.5;   // the central share of the product's box read, each way

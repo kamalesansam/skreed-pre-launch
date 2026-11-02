@@ -13,7 +13,7 @@
 // 12.8, shot during the cover-in) and the first frame after the jump; the wrap from the top onto scene 5 (__s4.wrap) at
 // full cover and at rest; the way back from scene 1 at its half; and the poster tier's column (?tier=poster: the still
 // with its prompt, then each scene on its screen after the press). SKREED_GL=swiftshader runs WebGL on SwiftShader (the
-// test harness's flags) when the GPU path is not available.
+// test harness's flags) when the GPU path is not available; on a Mac the GPU path is Metal, elsewhere the platform's own.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
@@ -22,7 +22,8 @@ import { chromium } from '@playwright/test';
 const args = process.argv.slice(2);
 const base = args.find((a) => /^https?:/.test(a)) ?? 'http://127.0.0.1:4322/';
 const fi = args.indexOf('--frames'), framesDir = fi >= 0 ? args[fi + 1] : null;
-const GL = process.env.SKREED_GL === 'swiftshader' ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] : ['--use-angle=metal', '--ignore-gpu-blocklist', '--enable-gpu'];
+const GPU = process.platform === 'darwin' ? ['--use-angle=metal', '--ignore-gpu-blocklist', '--enable-gpu'] : ['--ignore-gpu-blocklist', '--enable-gpu'];
+const GL = process.env.SKREED_GL === 'swiftshader' ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] : GPU;
 const SETUPS = { phone: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }, laptop: { viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1.5 } };
 // the entry's beats at the defaults (config/room.ts ROOM_PARAMS, transition.ts BUBBLE): the bubble from 0.35 s for 2 s; the
 // step 770 ms; the scenes at q 10 to 12 at a step of 0.5, the hold to 12.8
@@ -37,12 +38,15 @@ const browser = await launch(GL);
 
 /** the section's layout as the director holds it, read after the intro: a snap before that lands short (D1) */
 const layoutRead = () => { const s = window.__s4?.state(); return !!s && !!s.layout && !s.layout.intro && !document.documentElement.classList.contains('intro'); };
+/** Astro's dev toolbar leaks into captures near the bottom edge (docs: the section 4 frame review's notes) */
+const NO_TOOLBAR = 'astro-dev-toolbar { display: none !important; }';
 
 async function open(setup) {
   const ctx = await browser.newContext(SETUPS[setup]);
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.warn(`[${setup}] page error:`, e.message));
   await page.goto(new URL('/?tier=hero3d&glue=0&room=open', base).href, { waitUntil: 'load' });
+  await page.addStyleTag({ content: NO_TOOLBAR }).catch(() => {});
   await page.waitForFunction(() => window.__heroStarted && !document.documentElement.classList.contains('loading'), null, { timeout: 240_000 });
   await page.evaluate(() => window.__skreedIntro?.skip?.());
   await page.waitForFunction(() => !document.documentElement.classList.contains('intro'), null, { timeout: 30_000 }).catch(() => console.warn(`[${setup}] the intro class did not leave within 30 s`));
@@ -124,6 +128,7 @@ if (framesDir) {
     // the poster tier's column: the still with the prompt over it, then each scene on its own screen after the press
     const pc = await browser.newContext(SETUPS[setup]), pp = await pc.newPage();
     await pp.goto(new URL('/?tier=poster&room=open', base).href, { waitUntil: 'load' });
+    await pp.addStyleTag({ content: NO_TOOLBAR }).catch(() => {});
     // each frame with its element's top at the viewport's top, as a visitor scrolling down reaches it
     await pp.evaluate(() => document.getElementById('room').scrollIntoView({ block: 'start', behavior: 'instant' })); await pp.waitForTimeout(1500);
     await shot(pp, f('poster-hall'));

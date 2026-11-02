@@ -15,7 +15,7 @@
 //   node scripts/room/step-frames.mjs [base=http://127.0.0.1:4322/] --out <dir> [--seq 1-2,2-3,3-4,4-5,5-4,burst-400,exit,wrap,back] [--frames 36]
 // The folders are step-<W>-<from>-<to>, burst-<W>-<ms>, seam-<W>-exit, seam-<W>-wrap and seam-<W>-back. The browser is the
 // installed Chrome (channel chrome) when present, else Playwright's Chromium (no H.264: stills on the planes); WebGL on the
-// Metal GPU, or SKREED_GL=swiftshader for the test harness's flags.
+// GPU (Metal on a Mac), or SKREED_GL=swiftshader for the test harness's flags.
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium } from '@playwright/test';
@@ -28,7 +28,8 @@ const out = opt('--out') ?? 'step-frames';
 const SEQ = (opt('--seq') ?? '1-2,2-3,3-4,4-5,5-4,burst-400,exit,wrap,back').split(',');
 const N = Number(opt('--frames') ?? 36), DT = 1 / 24, FPS = 24;
 const BURST = [1, 1, 1, 1, -1];   // five steps: 1 to 5, then back to 4
-const GL = process.env.SKREED_GL === 'swiftshader' ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] : ['--use-angle=metal', '--ignore-gpu-blocklist', '--enable-gpu'];
+const GPU = process.platform === 'darwin' ? ['--use-angle=metal', '--ignore-gpu-blocklist', '--enable-gpu'] : ['--ignore-gpu-blocklist', '--enable-gpu'];
+const GL = process.env.SKREED_GL === 'swiftshader' ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] : GPU;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 mkdirSync(out, { recursive: true });
 

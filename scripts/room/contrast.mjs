@@ -15,7 +15,7 @@
 // carousel.ts otherwise), for AC12's tuning; --md writes the
 // evidence document (docs/specs/evidence/section-4-flux-contrast.md by default when given without a path). The
 // browser is the installed Chrome (channel chrome) when present, else Playwright's Chromium (no H.264: the planes show
-// the stills); WebGL on the Metal GPU, or SKREED_GL=swiftshader for the test harness's flags.
+// the stills); WebGL on the GPU (Metal on a Mac), or SKREED_GL=swiftshader for the test harness's flags.
 import { writeFileSync } from 'node:fs';
 import sharp from 'sharp';
 import { chromium } from '@playwright/test';
@@ -28,7 +28,8 @@ const jsonOut = opt('--json');
 const mdOut = args.includes('--md') ? (opt('--md') && !opt('--md').startsWith('--') ? opt('--md') : 'docs/specs/evidence/section-4-flux-contrast.md') : null;
 const FRAMES = Number(opt('--frames') ?? 10), GAP_MS = 500;
 const shade = opt('--shade') !== undefined ? { dark: Number(opt('--shade')), height: opt('--shade-height') !== undefined ? Number(opt('--shade-height')) : undefined, solid: opt('--shade-solid') !== undefined ? Number(opt('--shade-solid')) : undefined } : null;
-const GL = process.env.SKREED_GL === 'swiftshader' ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] : ['--use-angle=metal', '--ignore-gpu-blocklist', '--enable-gpu'];
+const GPU = process.platform === 'darwin' ? ['--use-angle=metal', '--ignore-gpu-blocklist', '--enable-gpu'] : ['--ignore-gpu-blocklist', '--enable-gpu'];
+const GL = process.env.SKREED_GL === 'swiftshader' ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] : GPU;
 const lin = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
 const lum = (r, g, b) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
 const PEARL = lum(0xf7, 0xf6, 0xf3);
