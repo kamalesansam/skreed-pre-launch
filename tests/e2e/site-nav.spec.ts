@@ -3,9 +3,11 @@
 // its light drawer from the right under 768 px; each section in place by a press on the poster tier, with aria-current
 // following and a second press during a jump honoured; Products always listed, opening the quiz gate as Skip quiz does;
 // on the 3D path a keyboard press on Products leaves focus on the hall's pad; plain fragment links without JavaScript.
-// About, the page link (navbar.md D7, AC11), is last in the bar and the drawer and leaves for /about/ with no veil.
+// About, the page link (navbar.md D7, AC11), is last in the bar and the drawer and leaves for /about/ with no veil, the
+// drawer closed as the page goes (the Back row launches Chromium with the back-forward cache allowed; the runner's has it off).
 // The 3D path's rest positions are nav-map.ts's, checked in tests/unit/site-nav.test.ts.
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, chromium, type Page } from '@playwright/test';
+import { CHROME_PATH, GL_ARGS } from '../harness/browser.ts';
 
 const PEARL = 'rgb(247, 246, 243)', SLATE = 'rgb(56, 63, 67)';
 const docTop = (page: Page, id: string) => page.evaluate((i) => document.getElementById(i)!.getBoundingClientRect().top + scrollY, id);
@@ -281,6 +283,7 @@ test.describe('without JavaScript', () => {
       const boxes = await links.evaluateAll((els) => els.map((e) => { const b = e.getBoundingClientRect(); return { x: b.x, y: b.y, r: b.right }; }));
       const logo = await page.locator('#siteLogo').evaluate((e) => e.getBoundingClientRect().bottom);
       for (const b of boxes) { expect(b.r).toBeLessThanOrEqual(width); if (width < 768) expect(b.y).toBeGreaterThanOrEqual(logo); }
+      for (const b of boxes) expect(Math.abs(b.y - boxes[0].y)).toBeLessThanOrEqual(1);   // one row: About beside the four section words (AC9, AC11)
       await links.filter({ hasText: 'Quiz' }).click();
       await expect(page).toHaveURL(/#find$/);
     });
@@ -303,6 +306,7 @@ test('About (AC11): last in the bar, a plain link to /about/, never current, no 
   expect((await events(page)).filter(([n]) => n === 'nav').pop()).toEqual(['nav', { to: 'about' }]);
   await page.waitForTimeout(300);
   await veilDown(page);   // no veil for a page link
+  expect(await page.evaluate(() => scrollY)).toBe(0);   // and no jump
   expect(await about.getAttribute('aria-current')).toBeNull();
   await page.evaluate(() => removeEventListener('click', (window as unknown as { __hold: (e: Event) => void }).__hold, true));
   await about.click();
@@ -323,4 +327,26 @@ test('the phone: the drawer\'s About row leaves for /about/', async ({ page, bas
   await row.click();
   await expect(page).toHaveURL(/\/about\/$/);
   await expect(page.locator('main h1')).toHaveText('About Skreed');
+});
+
+test('the phone: Back from About restores the landing page from the back-forward cache without the drawer (navbar.md D7)', async ({ baseURL }) => {
+  // the runner launches Chromium with --disable-back-forward-cache, so this row launches its own with the cache allowed
+  const browser = await chromium.launch({ executablePath: CHROME_PATH, args: GL_ARGS, ignoreDefaultArgs: ['--disable-back-forward-cache'] });
+  try {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    await page.goto(new URL('/?tier=poster', baseURL).href);
+    // a listener set before leaving survives only in a page restored from the cache; a reload starts without it
+    await page.evaluate(() => { addEventListener('pageshow', (e) => { (window as unknown as { __shown: boolean[] }).__shown = [...((window as unknown as { __shown?: boolean[] }).__shown ?? []), e.persisted]; }); });
+    await page.locator('#siteNav .snav-menu').click();
+    const sheet = page.locator('#site-sections');
+    await expect.poll(async () => sheet.evaluate((e) => e.matches(':popover-open'))).toBe(true);
+    await page.locator('#site-sections a[data-page="about"]').click();
+    await expect(page).toHaveURL(/\/about\/$/);
+    await expect(page.locator('main h1')).toHaveText('About Skreed');
+    await page.goBack();
+    await expect(page).toHaveURL(/\/\?tier=poster$/);
+    const back = await page.evaluate(() => ({ persisted: (window as unknown as { __shown?: boolean[] }).__shown?.at(-1), open: document.getElementById('site-sections')!.matches(':popover-open') }));
+    expect(back.persisted).toBe(true);   // the page came back from the cache, as it does on a phone
+    expect(back.open).toBe(false);       // and without the drawer: closed as the page left (pagehide)
+  } finally { await browser.close(); }
 });

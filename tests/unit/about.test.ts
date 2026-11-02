@@ -45,7 +45,7 @@ test('the copy is section 3, character for character', () => {
 
 test('the copy: no straight apostrophe, em or en dash, emoji or buzzword; the brief\'s words kept', () => {
   for (const s of strings()) {
-    assert.doesNotMatch(s, /['—–]/, s);
+    assert.doesNotMatch(s, /['\u2014\u2013]/, s);
     assert.doesNotMatch(s, /\p{Extended_Pictographic}/u, s);
     assert.doesNotMatch(s, /seamless|elevate|unleash|next-level|revolutionary/i, s);
   }
@@ -210,6 +210,9 @@ test('the Inter file: wght 400 to 700 its one axis, the page\'s characters in LA
   assert.equal(tables.get('OS/2')!.readUInt16BE(62) & 1, 0, 'OS/2.fsSelection italic');
   // the build script's own report of the same file agrees on the count
   assert.match(read('scripts/fonts/manifest.txt'), new RegExp(`checks: cmap ${cps.size} code points, all in LATIN`));
+  // the file's own report line, as section 12 records it: the glyph count and the units per em read from the tables here
+  const glyphs = tables.get('maxp')!.readUInt16BE(4), upm = tables.get('head')!.readUInt16BE(18);
+  assert.match(read('scripts/fonts/manifest.txt'), new RegExp(`^${FONT.replace(/\./g, '\\.')}: glyphs ${glyphs}, upm ${upm}, x-height [\\d.]+, cap [\\d.]+, useTypo (True|False), typo asc/desc/gap -?[\\d.]+/-?[\\d.]+/-?[\\d.]+, digit advances \\[[\\d, ]+\\], axes \\[\\('wght', 400\\.0, 400\\.0, 700\\.0\\)\\], features calt,case,locl,pnum,tnum$`, 'm'));
 });
 
 test('the manifest: lines 1 to 37 as at 71678ed, then one ABOUT PAGE section that names this file, its source and its licence', () => {
@@ -241,6 +244,9 @@ test('the manifest: lines 1 to 37 as at 71678ed, then one ABOUT PAGE section tha
   const head = ofl.toString('utf8').split('This Font Software is licensed')[0];
   assert.match(head, /^Copyright 2020 The Inter Project Authors \(https:\/\/github\.com\/rsms\/inter\)/);
   assert.doesNotMatch(head, /Reserved Font Name/i);
+  // the clone and the command, as section 12 records them (the Windows run; the Mac's paths are section 12's note)
+  assert.match(section, /^clone  Arial \(C:\/Windows\/Fonts\/arial\.ttf for 400, C:\/Windows\/Fonts\/arialbd\.ttf for 600 and 700\), on build\.py's SAMPLE:/m);
+  assert.match(section, /^via python3? scripts\/fonts\/build-inter\.py \(python on Windows\), fontTools 4\.66\.1 and brotli$/m);
 });
 
 test('the three Inter Fallback faces in about.css carry the manifest\'s numbers', () => {

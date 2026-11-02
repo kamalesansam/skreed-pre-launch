@@ -7,7 +7,8 @@
    the light fog and a seam's cloud; below AA over the mid-grey fog and the lit hall, pending, spec 10, E-NAV-contrast).
    The bar's box lets the pointer through; only the words take it. Phone first: under 768 px one word, Menu, opening a
    light drawer from the right ("make it come from the side, and just 75 % OF THE SCREEN from the side"); from 768 px the
-   four words in a row, which clear the logotype from there. The section on screen is underlined, and in the drawer also
+   five words (the four sections and About, a plain page link; spec D7) in a row, which clear the logotype from there.
+   The section on screen is underlined, and in the drawer also
    set at 600, as the family switcher sets the current family. States as Back to top's: hover lift 1 px, press scale
    0.98, the two-tone focus ring. Hidden with the logotype while the intro runs. */
 .snav { position: fixed; z-index: 4; top: calc(var(--inset) + env(safe-area-inset-top, 0px) + 11.625px - 22px); right: calc(var(--inset) + env(safe-area-inset-right, 0px) - var(--s2)); display: flex; align-items: center; pointer-events: none; color: var(--pearl-whisper); }   /* centred on the logotype's row: it is 23.25 px tall at --inset (32.94 px from 1024 px) */
@@ -57,7 +58,7 @@ html.uh1 .snav { visibility: hidden; opacity: 0; }
 .snav-rows a[aria-current] span { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 @media (hover: hover) { .snav-rows a:hover span { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; } }
 
-/* no drawer (no JavaScript, or no popover in the browser): under 768 px the four words in a second row under the
+/* no drawer (no JavaScript, or no popover in the browser): under 768 px the five words in a second row under the
    logotype's row, the last ending on --inset; a drawer opened with no script would stay open over the section it jumped to */
 @media (max-width: 767.98px) {
   html:not(.js) .snav { top: calc(var(--inset) + env(safe-area-inset-top, 0px) + 23.25px + var(--s1)); }

@@ -8,7 +8,9 @@
 // most 1.5 s, as Skip quiz's ride does, so the landing shows the hall drawn. Reduced motion: the cut with no veil. A
 // keyboard press moves focus into the section it opened. Where the browser has no popover (the drawer's CSS falls back
 // to the words in a row), nothing here touches the popover API. About, the page the index links to (data-page, no
-// data-sec; navbar.md D7), is left to the browser: no veil and no jump, only the press tracked as the sections' are.
+// data-sec; navbar.md D7), is left to the browser: no veil and no jump, only a plain press tracked as the sections' are
+// (a modifier press opens a new tab, untracked, as theirs is). The drawer is closed as the page leaves (pagehide), so a
+// landing page restored from the back-forward cache comes back without it; a restore that still finds it open closes it.
 import { track } from '../quiz/track.ts';
 import { veiled } from './veil.ts';
 import { restY, sectionAt, type PageMap, type SectionId } from './nav-map.ts';
@@ -27,8 +29,8 @@ const focusVisible = (el: Element) => { try { return el.matches(':focus-visible'
 
 if (nav) {
   const links = [...document.querySelectorAll<HTMLAnchorElement>('a[data-sec]')];
-  // the page links (About): a plain navigation, never jumped or marked current; the press is tracked as the sections' are
-  for (const a of document.querySelectorAll<HTMLAnchorElement>('#siteNav a[data-page]')) a.addEventListener('click', () => { track('nav', { to: a.dataset.page! }); });
+  // the page links (About): a plain navigation, never jumped or marked current; a plain press is tracked as the sections' are
+  for (const a of document.querySelectorAll<HTMLAnchorElement>('#siteNav a[data-page]')) a.addEventListener('click', (e) => { if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return; track('nav', { to: a.dataset.page! }); });
   const room = document.getElementById('room');
   /** an element's document top, NaN for one with no box (section#room hidden behind the quiz gate), as hero.ts reads it */
   const docTop = (el: HTMLElement | null) => (el && el.getClientRects().length ? el.getBoundingClientRect().top + scrollY : NaN);
@@ -88,6 +90,11 @@ if (nav) {
     };
     for (const type of ['wheel', 'touchmove']) sheet.addEventListener(type, hold, { passive: false });
     matchMedia('(min-width: 768px)').addEventListener('change', (e) => { if (e.matches && open()) sheet.hidePopover(); });
+    // a page link (About) leaves with the drawer open, since its press is the browser's own navigation: close it as the
+    // page goes, so the landing page enters the back-forward cache without it and Back does not bring it back open; a
+    // restore that still finds it open (a browser that froze the page before this ran) closes it the same way
+    addEventListener('pagehide', () => { if (open()) sheet.hidePopover(); });
+    addEventListener('pageshow', (e) => { if (e.persisted && open()) sheet.hidePopover(); });
   }
 
   /**
