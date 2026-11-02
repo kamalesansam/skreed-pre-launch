@@ -61,6 +61,7 @@
 // keyboard keeps its picture while the pointer or focus leaves it during the hold; focus that is not the keyboard's shows
 // none; the shade's name and the done line draw no focus box.
 import { test, expect, type Locator, type Page } from '@playwright/test';
+import { S2T } from '../../src/config/hero.ts';
 import { QUIZ_COPY as Q, QUIZ_GATE, QUIZ_PERSONAS, QUIZ_QUESTIONS, needsRing, needsRingNight, pickShade, scoreQuiz, shadeHref, type Persona, type PersonaId } from '../../src/config/quiz.ts';
 import { ROOM_COPY } from '../../src/config/room.ts';
 import { SHADES } from '../../src/config/shades.gen.ts';
@@ -3424,8 +3425,8 @@ test('QG AC1 and AC6 on ?tier=hero3d with the glue on and section 4 locked: a wh
   page.on('pageerror', (e) => errors.push(e.message));
   await open3dQuiz(page, baseURL, '');
   expect(await roomState(page)).toEqual(LOCKED);
-  // a wheel run stopping at 10 screens, outside the first wipe's span and the quiz seam's: nothing settles it
-  await page.evaluate(() => scrollTo({ top: 10 * innerHeight - 300, behavior: 'instant' }));
+  // a wheel run stopping inside section 2 (half way between the first wipe's end and the second wipe), outside the first wipe's span and the quiz seam's: nothing settles it
+  await page.evaluate((k) => scrollTo({ top: k * innerHeight - 300, behavior: 'instant' }), (S2T.W1END + S2T.W2) / 2);
   await page.waitForTimeout(400);
   await page.mouse.move(200, 400);
   await page.mouse.wheel(0, 300);

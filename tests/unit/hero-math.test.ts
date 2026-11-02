@@ -51,29 +51,45 @@ test('Park-Miller seed 11 gives the prototype rnd() sequence', () => {
   for (let i = 0; i < 60; i++) assert.ok(Object.is(q(), p()));
 });
 
-// round 3: the v11.2 scroll map (prototype v11.4, template.html: PULL 5, WIPE 1, S2T; the frame's s, tp, tp2, heroOn)
+// round 3: the v11.2 scroll map (prototype v11.4, template.html: PULL 5, WIPE 1, S2T with a stagger of GAP 0.8), halved on
+// 2026-11-02 (Sam: half the hero's scroll, every block leaving at once; section-2.md 14, hero.md 12.8): the port's PULL and
+// WIPE are half the prototype's, CAS0 is still mid-wipe, FLY is the prototype's, there is no GAP, and the frame's s, tp, tp2
+// and heroOn come from the prototype's own formula evaluated at the port's constants
 const v11 = <T>(names: string[], ret: string, extra = ''): T =>
   new Function(names.map((n) => constSource(n, TEMPLATE11)).join('\n') + '\n' + extra + '\nreturn ' + ret)() as T;
 const S2T_LINE = /S2T\.LAND = [^\n]+/.exec(TEMPLATE11)![0];
 
-test('S2T and CAMX equal the v11.4 prototype', () => {
+test('the scroll map is the v11.4 prototype\'s halved with no stagger (2026-11-02); CAMX equals the prototype', () => {
   const p = v11<{ PULL: number; WIPE: number; S2T: Record<string, number>; CAMX: number[][] }>(['PULL', 'S2T', 'CAMX'], '{ PULL, WIPE, S2T, CAMX }', S2T_LINE);
-  assert.equal(PULL, p.PULL); assert.equal(WIPE, p.WIPE);
-  assert.equal(PULL, 5.0); assert.equal(WIPE, 1.0);
-  assert.deepEqual({ CAS0: S2T.CAS0, GAP: S2T.GAP, FLY: S2T.FLY, W1END: S2T.W1END, LAND: S2T.LAND, W2: S2T.W2 }, p.S2T);
+  assert.equal(p.PULL, 5.0); assert.equal(p.WIPE, 1.0); assert.equal(p.S2T.GAP, 0.8);   // the pinned prototype, unchanged
+  assert.equal(PULL, p.PULL / 2); assert.equal(WIPE, p.WIPE / 2);
+  assert.equal(PULL, 2.5); assert.equal(WIPE, 0.5);
+  assert.equal(S2T.PULL, PULL); assert.equal(S2T.WIPE, WIPE);
+  assert.equal(S2T.CAS0, PULL + WIPE / 2);                     // mid-wipe, as the prototype's PULL + 0.5 was for its one-screen wipe
+  assert.equal(S2T.FLY, p.S2T.FLY);                            // 1.8: the flight is the prototype's
+  assert.ok(!('GAP' in S2T), 'no stagger: S2T has no GAP');
+  assert.equal(S2T.W1END, PULL + WIPE);
+  assert.equal(S2T.LAND, S2T.CAS0 + S2T.FLY);
+  assert.equal(S2T.W2, S2T.LAND + 0.7);
+  assert.equal(S2T.W2END, S2T.W2 + WIPE);
+  assert.deepEqual([S2T.CAS0, +S2T.LAND.toFixed(4), +S2T.W2.toFixed(4), +S2T.W2END.toFixed(4)], [2.75, 4.55, 5.25, 5.75]);
+  assert.ok(S2T.W2END < 16.2 / 2, 'under half the scroll of the v11.4 map (16.2 screens to the second wipe\'s end)');
   assert.deepEqual(CAMX.map((c) => [...c]), p.CAMX);
-  assert.equal(S2T.W2, 15.2);
-  // the track is the scroll map's length (shell.css carries the literal)
+  // the track is the scroll map's length: the second wipe's end plus the screen in which the quiz rises (shell.css carries the literal)
+  assert.equal(TRACK_SVH, 675); assert.equal(TRACK_SVH, Math.round((S2T.W2END + 1) * 100));
   assert.ok(readFileSync(new URL('../../src/styles/shell.css', import.meta.url), 'utf8').includes(`.track{position:relative;height:${TRACK_SVH}svh;`));
 });
 
-test('mapScroll equals the v11.4 prototype frame (normal and reduced): s, tp, tp2, heroOn', () => {
-  const p = v11<(b: number, reduce: boolean) => { s: number; tp: number; tp2: number; heroOn: number }>(['smoothstep', 'clamp01', 'ease', 'PULL', 'S2T'],
-    '(b, reduce) => { const s = reduce ? 0 : ease(clamp01(b / PULL)); const tp = clamp01((b - PULL) / WIPE), tp2 = clamp01((b - S2T.W2) / WIPE); const heroOn = 1 - smoothstep(0, 0.45, s); return { s, tp, tp2, heroOn }; }', S2T_LINE);
-  for (const b of [...grid(-0.5, 18.5, 381), 1.25, 2.5, 3.75, 5.0, 5.5, 6.0, 15.0, 15.2, 15.7, 16.2]) for (const r of [false, true]) {
+test('mapScroll equals the v11.4 prototype frame formula at the port\'s constants (normal and reduced): s, tp, tp2, heroOn', () => {
+  const consts = `const PULL = ${PULL}, WIPE = ${WIPE}; const S2T = { W2: ${S2T.W2} };`;
+  const p = v11<(b: number, reduce: boolean) => { s: number; tp: number; tp2: number; heroOn: number }>(['smoothstep', 'clamp01', 'ease'],
+    '(b, reduce) => { const s = reduce ? 0 : ease(clamp01(b / PULL)); const tp = clamp01((b - PULL) / WIPE), tp2 = clamp01((b - S2T.W2) / WIPE); const heroOn = 1 - smoothstep(0, 0.45, s); return { s, tp, tp2, heroOn }; }', consts);
+  for (const b of [...grid(-0.5, 8.5, 361), 0.625, 1.25, 1.875, 2.5, 2.75, 3.0, 3.65, 4.55, 5.0, 5.25, 5.5, 5.75, 6.75]) for (const r of [false, true]) {
     const a = mapScroll(b, r), e = p(b, r);
     assert.ok(Object.is(a.s, e.s) && Object.is(a.tp, e.tp) && Object.is(a.tp2, e.tp2) && Object.is(a.heroOn, e.heroOn), `b=${b} reduced=${r}`);
   }
+  // the map's beats: the pull-back ends at PULL, the first wipe runs PULL to W1END, the second W2 to W2END
+  assert.deepEqual([mapScroll(S2T.PULL, false).s, mapScroll(S2T.PULL, false).tp, mapScroll(S2T.W1END, false).tp, mapScroll(S2T.W2, false).tp2, mapScroll(S2T.W2END, false).tp2], [1, 0, 1, 0, 1]);
 });
 
 test('camX and camCurve equal the v11.4 prototype at every scroll (the level weaving pull-back)', () => {
