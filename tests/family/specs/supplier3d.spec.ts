@@ -2,11 +2,16 @@
 // the site CSP, the tier probe and LOD0 only after a high verdict, the measured frames of acceptance 3 and 4 (the front
 // case from its own pixels), the poster and skeleton under the canvas, T9 (context loss) and T10 (disposal), and the
 // model and chunk failure states of section 5 with their recovery. SwiftShader runs with ?render=force.
+// Round 6 (family-page.md 24.4 criterion 12, 2026-11-03): seven rows test what round 3 (6af5ad9, section 21) took out and are
+// skipped with that reason: acceptance 3 and 4 read a `slotBox` hook round 3 removed, for the supplier tuning's lineup
+// that ciao's replaced (its fit and its cases in frame are `tests/case-model/pose.test.ts`'s "the fit" and "the
+// skeleton"); the first-paint row and T9 look for the poster round 3 replaced with the loader (context loss is
+// case3d.spec.ts's "context loss" row).
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import { PHONE, WIDE, watch, cspViolations } from './util.ts';
 import sharp from 'sharp';
 
-type St = { s: number; target: number; G: number; running: boolean; tier: string; detail: string; probe: { tier: string; period: number; median: number } | null };
+type St = { s: number; target: number; G: number; busy: boolean; tier: string; detail: string; probe: { P: number; median: number; cpuMedian: number } | null };
 const st = (p: Page) => p.evaluate(() => (window as unknown as { __famStage: { state(): St } }).__famStage.state());
 async function supplierBuild(p: Page): Promise<void> {
   const ok = await p.evaluate(() => { const c = document.getElementById('fam-3d'); return !!c && JSON.parse(c.textContent || '{}').mode === 'on'; });
@@ -14,9 +19,12 @@ async function supplierBuild(p: Page): Promise<void> {
 }
 async function live(p: Page, idle = true): Promise<void> {
   await p.waitForFunction(() => document.querySelector('#st3d canvas.on'), null, { timeout: 180_000 });
-  if (idle) await p.waitForFunction(() => { const s = (window as unknown as { __famStage?: { state(): St } }).__famStage?.state(); return !!s && Math.abs(s.s - s.target) < 0.001 && s.G > 0.999 && !s.running && s.detail !== 'loading'; }, null, { timeout: 180_000, polling: 300 });
+  if (idle) await p.waitForFunction(() => { const s = (window as unknown as { __famStage?: { state(): St } }).__famStage?.state(); return !!s && Math.abs(s.s - s.target) < 0.001 && s.G > 0.999 && !s.busy && s.detail !== 'loading'; }, null, { timeout: 180_000, polling: 300 });
 }
+// the Tough's two files; the case types' own models (magtough, snap, armor) load only past 0.5 screens (family-page.md
+// 24 D2), so a page left on the carousel requests none of them (takeover.spec.ts has their rows)
 const glbs = (urls: string[]) => urls.filter((u) => /\/models\/case\.lod[01]\.[0-9a-f]{8}\.glb$/.test(u)).map((u) => u.match(/lod[01]/)![0]);
+const typeGlbs = (urls: string[]) => urls.filter((u) => /\/models\/(magtough|snap|armor)\.lod[01]\.[0-9a-f]{8}\.glb$/.test(u));
 function track(ctx: BrowserContext): string[] { const urls: string[] = []; ctx.on('request', (r) => urls.push(r.url())); return urls; }
 /** The canvas as RGBA pixels (the hook renders and reads it in one task). */
 async function pixels(p: Page): Promise<{ data: Buffer; width: number; height: number }> {
@@ -39,6 +47,7 @@ test('T16: the 3D path under the site CSP, at 390 and 1280: zero violations, the
     await live(page);
     expect(await cspViolations(page)).toEqual([]);
     expect(glbs(urls).sort()).toEqual(['lod0', 'lod1']);
+    expect(typeGlbs(urls), 'no type model on the carousel').toEqual([]);
     expect((await st(page)).detail).toBe('loaded');
     await ctx.close();
   }
@@ -54,7 +63,7 @@ test('tier probe: the verdict decides LOD0; a low verdict never downloads it, DP
   await live(page);
   const s = await st(page);
   expect(s.probe, 'the probe ran').not.toBeNull();
-  expect(s.probe!.period).toBeGreaterThan(0);
+  expect(s.probe!.P, 'the display period the probe measured').toBeGreaterThan(0);
   expect(['high', 'low']).toContain(s.tier);
   if (s.tier === 'low') {
     expect(glbs(urls)).toEqual(['lod1']);
@@ -69,6 +78,7 @@ type Box = { x0: number; x1: number; y0: number; y1: number } | null;
 const boxes = (p: Page) => p.evaluate(() => Array.from({ length: 24 }, (_, k) => (window as unknown as { __famStage: { slotBox(k: number): Box } }).__famStage.slotBox(k)));
 
 test('acceptance 3, measured on the rendered silhouettes: at 1280 x 800 the front case is 255 to 305 px tall and centred, all 24 in frame at 12, 14 or more always, rows 140 px or taller, no case pixel above y 172 or in the HUD band', async ({ browser }) => {
+  test.skip(true, 'superseded by round 3 (6af5ad9, section 21): the slotBox hook and the supplier lineup left; pose.test.ts holds the fit');
   test.setTimeout(900_000);
   const ctx = await browser.newContext(WIDE);
   const page = await ctx.newPage();
@@ -105,6 +115,7 @@ test('acceptance 3, measured on the rendered silhouettes: at 1280 x 800 the fron
 
 for (const [w, h] of [[390, 844], [430, 932], [375, 667], [360, 780]] as const) {
   test(`acceptance 4, measured on the rendered silhouettes at ${w} x ${h}: front case 245 to 290 px and centred, two full neighbours a side inside the gutters`, async ({ browser }) => {
+    test.skip(true, 'superseded by round 3 (6af5ad9, section 21): the slotBox hook and the supplier lineup left; pose.test.ts holds the fit and the skeleton');
     test.setTimeout(600_000);
     const ctx = await browser.newContext({ ...PHONE, viewport: { width: w, height: h } });
     const page = await ctx.newPage();
@@ -135,6 +146,7 @@ for (const [w, h] of [[390, 844], [430, 932], [375, 667], [360, 780]] as const) 
 }
 
 test('first paint: the skeleton and the poster sit in the stage; the poster hides once the canvas is live', async ({ browser }) => {
+  test.skip(true, 'superseded by round 3 (6af5ad9, section 21): the loader covers the load, no poster');
   test.setTimeout(400_000);
   const ctx = await browser.newContext(WIDE);
   const page = await ctx.newPage();
@@ -152,6 +164,7 @@ test('first paint: the skeleton and the poster sit in the stage; the poster hide
 });
 
 test('T9: a lost context shows the poster at once; after restore the frame returns within 0.5% of its pixels', async ({ browser }) => {
+  test.skip(true, 'superseded by round 3 (6af5ad9, section 21): no poster; case3d.spec.ts\'s context loss row holds the loss and the restore');
   test.setTimeout(500_000);
   const ctx = await browser.newContext(WIDE);
   const page = await ctx.newPage();

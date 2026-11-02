@@ -1,13 +1,14 @@
-// The intake of the case models (case-model-class.md 3, 15 and amendment 1; T16's build half; family-page.md 21 D1): the
-// shipped files of both models pass every contract check and match the manifest; files that need WebAssembly, embed
-// images, carry a device or bake a colour into the body fail; the vendored decoder is the pinned, WebAssembly-free
-// reference decoder.
+// The intake of the case models (case-model-class.md 3, 15 and amendment 1; T16's build half; family-page.md 21 D1 and
+// 24 D1): the shipped files of the Tough (the Cobalt) and of each case type's own model (Sam's MagTough, Snap and Armor
+// files, round 6) pass every contract check and match the manifest; no name in them is the supplier's or Maya's; files
+// that need WebAssembly, embed images, carry a device or bake a colour into the body fail; the vendored decoder is the
+// pinned, WebAssembly-free reference decoder.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { checkLod, checkPair, readGlb } from '../../scripts/case-model/intake.mjs';
+import { CASE_TYPES, checkLod, checkPair, manifestFor, readGlb } from '../../scripts/case-model/intake.mjs';
 
 const root = new URL('../../', import.meta.url);
 const manifest = JSON.parse(readFileSync(new URL('src/data/case-model.json', root), 'utf8'));
@@ -47,7 +48,7 @@ test('the Tough case (Cobalt): both LODs pass every check and match the manifest
 
 test('exactly the manifest files in public/models, nothing stale', () => {
   const glbs = readdirSync(new URL('public/models/', root)).filter((f) => f.endsWith('.glb')).sort();
-  const listed = [manifest.lod0, manifest.lod1, ...(manifest.magtough ? [manifest.magtough.lod0, manifest.magtough.lod1] : [])];
+  const listed = [manifest.lod0, manifest.lod1, ...CASE_TYPES.flatMap((t: string) => (manifest[t] ? [manifest[t].lod0, manifest[t].lod1] : []))];
   // section 4's product models left public/ for scripts/room/models/ (Blender references only), so the folder is the case's alone
   assert.deepEqual(glbs, listed.map((p) => p.slice(8)).sort());
 });
@@ -89,7 +90,72 @@ test('the vendored decoder is meshoptimizer 0.22.0 reference, byte for byte, and
   }
 });
 
-test('no second model: one model is every case type (Sam, 2026-10-16), so the manifest carries no magtough entry and no stand-in path', () => {
-  assert.equal(manifest.magtough, undefined);
-  assert.equal(manifest.source, 'supplier');
+// Round 6 (family-page.md 24 D1): Sam's files as the case types' own models, made by scripts/case-model/intake-fbx.py and
+// pack-case.mjs from his FBX files of 2026-11-02, the roles decided from isolated renders of each material
+const TYPE_PARTS: Record<string, string[]> = { magtough: ['body', 'accent', 'logo'], snap: ['body', 'logo'], armor: ['body', 'accent', 'logo'] };
+const TYPE_FILES: Record<string, string> = { magtough: 'magsafe case.fbx', snap: 'snap 3 (1).fbx', armor: 'Armor 5.fbx' };
+
+test('the case types\' own models: magtough, snap and armor each with its caseType, both LODs passing C1 to C10 and matching the manifest (hashes, bytes, triangles, size)', () => {
+  assert.deepEqual(CASE_TYPES, ['magtough', 'snap', 'armor']);
+  for (const t of CASE_TYPES) {
+    const m = manifest[t];
+    assert.ok(m, `the manifest carries ${t}`);
+    assert.equal(m.caseType, t);
+    assert.equal(m.standsInFor, undefined, `${t} is its own model, never a stand-in`);
+    assert.ok(m.model.startsWith(TYPE_FILES[t]) && m.model.includes('2026-11-02'), m.model);
+    const b0 = file(m.lod0), b1 = file(m.lod1);
+    const r = checkPair(b0, b1);
+    assert.ok(r.ok, `${t}: ${fails(r)}`);
+    assert.equal(sha(b0), m.sha256.lod0);
+    assert.equal(sha(b1), m.sha256.lod1);
+    assert.equal(m.lod0, `/models/${t}.lod0.${m.sha256.lod0.slice(0, 8)}.glb`);
+    assert.equal(m.lod1, `/models/${t}.lod1.${m.sha256.lod1.slice(0, 8)}.glb`);
+    assert.deepEqual(m.bytes, { lod0: b0.length, lod1: b1.length });
+    assert.deepEqual(m.triangles, { lod0: r.lod0.stats.triangles, lod1: r.lod1.stats.triangles });
+    assert.deepEqual(m.sizeMm, r.lod0.stats.mm!.map((v: number) => +v.toFixed(1)));
+    assert.deepEqual(Object.keys(m.parts), TYPE_PARTS[t]);
+    assert.deepEqual(r.lod0.parts.map((p: { name: string }) => p.name), TYPE_PARTS[t]);
+    assert.equal(m.parts.body.followsShade, true);
+    assert.equal(m.parts.logo.tint, 0.8468, 'the logo at the Cobalt\'s tint over the shade');
+    if (m.parts.accent) assert.deepEqual(r.lod0.parts.find((p: { name: string }) => p.name === 'accent')!.baseColor.map((v: number) => +v.toFixed(3)), [0.073, 0.077, 0.077], 'the trim keeps the Cobalt\'s grey');
+    // the beats' half turn shows the sides, so neither LOD is back-only
+    assert.equal(m.lod1BackOnly, false);
+  }
+});
+
+test('no node, mesh or material of a type model is named for the supplier or by Maya: the names are the roles', () => {
+  for (const t of CASE_TYPES) for (const lod of ['lod0', 'lod1'] as const) {
+    const buf = file(manifest[t][lod]);
+    const { json } = readGlb(buf);
+    for (const k of ['nodes', 'meshes', 'materials'] as const) for (const x of json[k]) assert.ok(['shell', 'trim', 'logo', 'ring'].includes(x.name), `${t} ${lod} ${k}: "${x.name}"`);
+    // the whole JSON chunk: no trace of the supplier's mark or of the Maya scene's names
+    const text = buf.subarray(20, 20 + buf.readUInt32LE(12)).toString('utf8');
+    assert.doesNotMatch(text, /zeos|hexagon|lambert|standardSurface|polySurface|pCube|Bumper|OliveMatte|pro__max/i, `${t} ${lod}`);
+  }
+});
+
+test('the type models\' scene extras are the Cobalt\'s: unitMM, axes with the back on +Z, the LOD, the logo tint, the source naming Sam\'s file and the intake, backOnly false', () => {
+  for (const t of CASE_TYPES) for (const lod of ['lod0', 'lod1'] as const) {
+    const { json } = readGlb(file(manifest[t][lod]));
+    const x = json.scenes[json.scene ?? 0].extras;
+    assert.equal(x.lod, lod);
+    assert.equal(x.logoTint, 0.8468);
+    assert.equal(x.backOnly, false);
+    assert.match(x.axes, /back faces \+Z/);
+    assert.ok(x.source.startsWith(TYPE_FILES[t]) && x.source.includes('scripts/case-model/intake-fbx.py'), x.source);
+    assert.ok(Math.abs(x.unitMM - manifest[t].sizeMm[1]) < 0.15, `${t}: unitMM ${x.unitMM} is the height`);
+  }
+});
+
+test('manifestFor: a type\'s entry carries its caseType and its file, never a stand-in list; the Tough keeps its own shape', () => {
+  const r = checkPair(file(manifest.snap.lod0), file(manifest.snap.lod1));
+  const files = { lod0: 'snap.lod0.00000000.glb', lod1: 'snap.lod1.00000000.glb', sha0: '0'.repeat(64), sha1: '1'.repeat(64) };
+  const e = manifestFor(r, files, 'snap');
+  assert.deepEqual(Object.keys(e), ['model', 'lod0', 'lod1', 'sha256', 'sizeMm', 'parts', 'triangles', 'bytes', 'lod1BackOnly', 'caseType']);
+  assert.equal(e.caseType, 'snap');
+  assert.equal(e.lod0, '/models/snap.lod0.00000000.glb');
+  const tough = manifestFor(checkPair(lod0, lod1), { ...files, lod0: 'case.lod0.x.glb', lod1: 'case.lod1.x.glb' });
+  assert.equal(tough.source, 'supplier');
+  assert.equal(tough.caseType, '');
+  assert.equal(manifest.allCaseTypes, undefined, 'the note that one model is every case type (2026-10-16) is gone');
 });
