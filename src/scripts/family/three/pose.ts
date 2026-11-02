@@ -1,6 +1,6 @@
 // The family page's geometry, pure (no three.js): ciao's opening carousel (docs/specs/family-page.md 19), the scroll map
-// after it (section 20: the zoom, the four case types, the argument screen; section 21: one case type per frame, the
-// phone pose), the projection the skeleton and the HUD use, and the view fit per layout. Shared by the build (the
+// after it (section 20: the zoom, the four case types, the argument screen; section 21: the phone pose; section 24: the
+// case type each beat asks for), the projection the skeleton and the HUD use, and the view fit per layout. Shared by the build (the
 // skeleton in Poster.astro), the page module (the skeleton at runtime, the scroll map) and the stage (the poses).
 // Every value was measured from ciao's module (research/ciao-landing, ciao-3d-params.json, keyframes-desk.json) and
 // re-created here; nothing of ciao's ships.
@@ -21,13 +21,17 @@ export const DIMS_DEFAULT: Dims = { w: 0.5322, d: 0.1352 };
  * slotPx: ciao's 175 px of drag per slot. phoneTop and phoneBottom: on phones the scene is lifted so the front case sits
  * between the title and the controls. turn: the 10 degree tap turn; tiltYaw and tiltPitch: the pointer's tilt in degrees.
  * rate: the lag of the line in per second (50% at 63 ms); gRate: the entrance's light, twice as fast. spot: ciao's 50 cd.
+ * wideBack and wideDrift (section 24, Sam, 2026-11-03: "make sure that the entire phone case is fully visible for all 4 case
+ * types, not keep going down the case"): on the wide layout the beats' camera stands back by wideBack as the phone's does
+ * (ciao's beats camera cut the case at the top or the bottom of an 800 px screen) and the beats' vertical drift (CY) is
+ * damped to wideDrift of ciao's, so every beat's case sits whole inside the screen; the argument screen's camera is untouched.
  * envRot: the studio turned -40 degrees about y (section 20). phoneBack and phoneCentre (section 21, D8): on phones the
  * zoomed and argument cameras stand 1.75 times further back and the case is centred at 36% of the screen height, in
  * the band above the text.
  */
 export const CFG = {
   sp: 3.5, cs: 4.884, camZ: 29, fov: 20, rx: -20, ry: -20, rz: 11.25, face: 1, slotPx: 175, phoneTop: 132, phoneBottom: 262,
-  tiltYaw: 5, tiltPitch: 3, turn: 10, rate: 10.94, gRate: 2, spot: 50, envRot: -40, phoneBack: 1.75, phoneCentre: 0.36,
+  tiltYaw: 5, tiltPitch: 3, turn: 10, rate: 10.94, gRate: 2, spot: 50, envRot: -40, phoneBack: 1.75, phoneCentre: 0.36, wideBack: 1.6, wideDrift: 0.4,
 } as const;
 
 export interface Pose { p: number; X: number; Y: number; Z: number; rx: number; ry: number; rz: number; spin: number; sc: number }
@@ -132,16 +136,17 @@ export function scrollClasses(sv: number): { hudOff: boolean; beatsOn: boolean; 
  * 5 to 6 ciao's argument pose (its row 5000 to 6000: camera at z 8, level, FOV 45; the case at the centre, z -0.5,
  * tipped back 20 degrees and rolled -5, facing the camera; the two carousel spots back at 45 of 50), held over 6 to 7
  * with the pointer's influence and a slow bob. Between beats the values ease with ciao's power1.inOut (a smoothstep).
- * The turn (D3): over each feature transition (into Tough 1.7 to 2, then 2.7 to 3, 3.7 to 4 and 4.7 to 5) the case
- * makes a half turn about its vertical axis; at the edge-on frame the model is re-posed a half turn back, so the back
- * that comes round is the next case's. The second model (the Desert stand-in for MagTough, Snap and Armor) takes over
- * at the first hand-over's edge-on frame, 2.85, and the Tough model comes back there on the way up: one case type per
- * frame, always.
+ * The turn (section 21 D3, kept by section 24 D6): over each feature transition (into Tough 1.7 to 2, then 2.7 to 3,
+ * 3.7 to 4 and 4.7 to 5) the case makes a half turn about its vertical axis; at the edge-on frame the model is re-posed a
+ * half turn back, so the back that comes round is the next case's. Section 24 D3: each beat has its own case type, and
+ * the edge-on frames of the three hand-over turns (2.85, 3.85, 4.85) are where the next type is asked for; the sweep
+ * (three/takeover.ts) rides the turn's second half from there, its progress the stage's scroll (D6). The turn into Tough
+ * changes no model.
  */
 export const sm = (t: number): number => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
 export const RZ = [0, -0.1745, 0.0873, -0.1745, 0.0873, 0, 0] as const, CY = [0, -0.96, -0.58, 0.02, 0.6, 0, 0] as const;
-export const TURNS = [2, 3, 4, 5] as const, TURN_LEN = 0.3, SWAP = 2.85;
-export interface BeatPose { k: number; rz: number; cy: number; A: number; yaw: number; second: boolean }
+export const TURNS = [2, 3, 4, 5] as const, TURN_LEN = 0.3;
+export interface BeatPose { k: number; rz: number; cy: number; A: number; yaw: number }
 export function beatPose(sv: number): BeatPose {
   const k = sm(sv - 1);
   const j = Math.max(1, Math.min(6, Math.floor(sv))), t = sm(sv - j);
@@ -149,9 +154,37 @@ export function beatPose(sv: number): BeatPose {
   const A = sm(sv - 5);
   let yaw = 0;
   for (const n of TURNS) { const u = sm((sv - (n - TURN_LEN)) / TURN_LEN); if (u > 0 && u < 1) yaw = (u <= 0.5 ? u : u - 1) * Math.PI; }
-  return { k, rz, cy, A, yaw, second: sv >= SWAP };
+  return { k, rz, cy, A, yaw };
 }
-/** Which case type a frame shows (D3): Tough until the first hand-over's edge-on frame, the second model from there. */
-export const caseTypeAt = (sv: number): 'tough' | 'second' => (beatPose(sv).k > 0 && sv >= SWAP ? 'second' : 'tough');
+
+/**
+ * ciao's profile light rides with the zoomed case (section 24 D13; Sam, 2026-11-03: "it should be the same as tough case
+ * for all other case types"). The light and its target are lifted by how far the case stands above the place ciao's can
+ * held under that light: through the zoom (sv under 2) ciao's own path, so on phones the zoom is lit as before and on the
+ * wide layout the damped drift (wideDrift) is made up; from beat 1 on, beat 1's place (CY[1]), so the case's rise
+ * through beats 2 to 4 no longer carries its top out of the pool. drift is the layout's (1 on phones, CFG.wideDrift wide).
+ */
+export function profileLightOffset(sv: number, drift: number): number {
+  const B = beatPose(sv);
+  return sv < 2 ? B.cy * B.k * (drift - 1) : B.cy * drift - CY[1];
+}
+
+/** The four case types in beat order (section 20: Tough, MagTough, Snap, Armor at beats 1 to 4). */
+export const CASE_TYPES = ['tough', 'magtough', 'snap', 'armor'] as const;
+export type CaseType = (typeof CASE_TYPES)[number];
+/** The screen each type rests at: its beat, where the turn's yaw is 0 and its sweep has ended. */
+export const CASE_REST: Readonly<Record<CaseType, number>> = { tough: 2, magtough: 3, snap: 4, armor: 5 };
+/** The hand-overs: the edge-on frames of the turns into beats 2 to 4 (TURNS[i] - TURN_LEN / 2: 2.85, 3.85, 4.85). */
+export const HANDOVERS = TURNS.slice(1).map((n) => n - TURN_LEN / 2) as readonly number[];
+/**
+ * The case type a frame asks for (section 24 D3): Tough below 2.85 and whenever the zoom is at 0 (the carousel),
+ * MagTough from 2.85, Snap from 3.85, Armor from 4.85 through the argument screen.
+ */
+export function caseTargetAt(sv: number): CaseType {
+  if (!(beatPose(sv).k > 0)) return 'tough';
+  let i = 0;
+  while (i < HANDOVERS.length && sv >= HANDOVERS[i]) i++;
+  return CASE_TYPES[i];
+}
 /** The yaw of the turning case is edge-on (an odd multiple of a quarter turn) within tol radians. */
 export const edgeOn = (yaw: number, tol = 0.02): boolean => Math.abs(Math.abs(((yaw % Math.PI) + Math.PI) % Math.PI) - Math.PI / 2) < tol;

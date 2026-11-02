@@ -1,10 +1,10 @@
-// The family page's geometry in Node (docs/specs/family-page.md 19 to 21): ciao's carousel pose and its fit per layout,
-// the skeleton, the scroll map (no text on the landing screen, the zoom without text, one beat at a time), the beat
-// pose (the half turn at every transition, the hand-over at the edge-on frame) and the one-case-type-per-frame rule.
+// The family page's geometry in Node (docs/specs/family-page.md 19 to 21 and 24): ciao's carousel pose and its fit per
+// layout, the skeleton, the scroll map (no text on the landing screen, the zoom without text, one beat at a time), the
+// beat pose (the half turn at every transition, unchanged by round 6) and the case type each frame asks for (24 D3).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { CFG, DIMS_DEFAULT, SV, SWAP, TURNS, TURN_LEN, activeBeat, beatPose, caseBox, caseTypeAt, edgeOn, poseOf, project, scrollClasses, skeletonPolys, solve, xform } from '../../src/scripts/family/three/pose.ts';
+import { CASE_REST, CASE_TYPES, CFG, DIMS_DEFAULT, HANDOVERS, SV, TURNS, TURN_LEN, activeBeat, beatPose, caseBox, caseTargetAt, edgeOn, poseOf, profileLightOffset, project, scrollClasses, skeletonPolys, solve, xform } from '../../src/scripts/family/three/pose.ts';
 
 const manifest = JSON.parse(readFileSync(new URL('../../src/data/case-model.json', import.meta.url), 'utf8'));
 const [mw, mh, md] = manifest.sizeMm as number[];
@@ -105,16 +105,46 @@ test('D3: every feature transition is one half turn about the vertical axis, edg
     // the yaw runs through a quarter turn and back the other way, so the back that comes round is the other side's
     assert.ok(beatPose(mid - 0.05).yaw > 0 && beatPose(mid + 0.05).yaw < 0, `the turn flips at ${mid}`);
   }
-  assert.ok(edgeOn(beatPose(SWAP).yaw), 'the hand-over frame is edge-on');
-  assert.equal(SWAP, TURNS[1] - TURN_LEN / 2);
+  // the turn as round 3 built it (section 24 D6: unchanged): sampled every 0.01 screen against its own formula
+  for (let sv = 1.5; sv < 5.5; sv += 0.01) {
+    let yaw = 0;
+    for (const n of TURNS) { const t = Math.max(0, Math.min(1, (sv - (n - 0.3)) / 0.3)), u = t * t * (3 - 2 * t); if (u > 0 && u < 1) yaw = (u <= 0.5 ? u : u - 1) * Math.PI; }
+    assert.equal(beatPose(sv).yaw, yaw, `the turn at ${sv.toFixed(2)}`);
+  }
 });
 
-test('one case type per frame: the Tough case up to the first hand-over, the second model from its edge-on frame, the reverse on the way up', () => {
-  for (let sv = 0; sv < 7; sv += 0.01) {
-    const t = caseTypeAt(sv);
-    assert.equal(t, sv >= SWAP ? 'second' : 'tough', `sv ${sv.toFixed(2)}`);
+test('24 D3: the case type each frame asks for, every 0.01 screen: Tough below 2.85 and on the carousel, MagTough from 2.85, Snap from 3.85, Armor from 4.85 through the argument screen', () => {
+  assert.deepEqual([...CASE_TYPES], ['tough', 'magtough', 'snap', 'armor']);
+  assert.deepEqual([...HANDOVERS], [2.85, 3.85, 4.85]);
+  for (let i = 0; i <= 750; i++) {
+    const sv = i / 100;
+    const want = sv >= 4.85 ? 'armor' : sv >= 3.85 ? 'snap' : sv >= 2.85 ? 'magtough' : 'tough';
+    assert.equal(caseTargetAt(sv), want, `sv ${sv.toFixed(2)}`);
   }
-  assert.equal(caseTypeAt(SWAP - 1e-6), 'tough');
-  assert.equal(caseTypeAt(SWAP), 'second');
-  assert.equal(caseTypeAt(6.99), 'second');
+  for (const [h, before, after] of [[2.85, 'tough', 'magtough'], [3.85, 'magtough', 'snap'], [4.85, 'snap', 'armor']] as const) {
+    assert.equal(caseTargetAt(h - 1e-6), before);
+    assert.equal(caseTargetAt(h), after);
+    assert.ok(edgeOn(beatPose(h).yaw), `the hand-over at ${h} is the turn's edge-on frame`);
+  }
+  // the zoom at 0 is the carousel, the Tough's alone; the turn into Tough changes no model
+  for (const sv of [0, 0.5, 1]) { assert.equal(beatPose(sv).k, 0); assert.equal(caseTargetAt(sv), 'tough'); }
+  assert.equal(caseTargetAt(1.85), 'tough');
+  assert.equal(caseTargetAt(6.5), 'armor', 'the argument screen shows the last type');
+  // each type rests at its beat, where the turn's yaw is 0 and its sweep has ended
+  assert.deepEqual(CASE_REST, { tough: 2, magtough: 3, snap: 4, armor: 5 });
+  for (const t of CASE_TYPES) { assert.equal(beatPose(CASE_REST[t]).yaw, 0); assert.equal(beatPose(CASE_REST[t]).k, 1); assert.equal(caseTargetAt(CASE_REST[t]), t); }
+});
+
+test('the profile light rides with the case (section 24 D13): the zoom lit as ciao\'s on phones, the wide layout\'s damped drift made up, and from beat 1 on every type in the pool as the Tough', () => {
+  const caseY = (sv: number, drift: number, poseY: number) => { const B = beatPose(sv); return poseY * (1 - B.k) + B.cy * B.k * drift; };
+  const ciaoY = (sv: number, poseY: number) => caseY(sv, 1, poseY);
+  for (const drift of [1, CFG.wideDrift]) for (const sv of [0, 0.6, 0.99]) assert.ok(Math.abs(profileLightOffset(sv, drift)) < 1e-12, `the carousel at ${sv}: no lift`);
+  for (const sv of [1, 1.25, 1.5, 1.75, 1.99]) assert.ok(Math.abs(profileLightOffset(sv, 1)) < 1e-12, `phones, the zoom at ${sv}: the light where ciao's had it`);
+  for (const drift of [1, CFG.wideDrift]) {
+    for (const sv of [1, 1.3, 1.6, 1.9]) assert.ok(Math.abs((caseY(sv, drift, 0.7) - profileLightOffset(sv, drift)) - ciaoY(sv, 0.7)) < 1e-12, `the zoom at ${sv}, drift ${drift}: the case under the light as ciao's`);
+    for (let sv = 2; sv <= 5.0001; sv += 0.05) assert.ok(Math.abs((caseY(sv, drift, 0.7) - profileLightOffset(sv, drift)) - (-0.96)) < 1e-12, `from beat 1 at ${sv.toFixed(2)}, drift ${drift}: the case under the light as the Tough at beat 1`);
+    assert.ok(Math.abs(profileLightOffset(2 - 1e-9, drift) - profileLightOffset(2, drift)) < 1e-6, 'continuous at beat 1');
+  }
+  assert.ok(Math.abs(profileLightOffset(3, 1) - 0.38) < 1e-12 && Math.abs(profileLightOffset(4, 1) - 0.98) < 1e-12 && Math.abs(profileLightOffset(5, 1) - 1.56) < 1e-12, 'phones: beats 2 to 4 lifted by their rise');
+  assert.ok(Math.abs(profileLightOffset(2, CFG.wideDrift) - 0.96 * (1 - CFG.wideDrift)) < 1e-12, 'wide: beat 1 lifted by what the damped drift left');
 });
