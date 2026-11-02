@@ -85,11 +85,11 @@
   grid-template-rows: minmax(0, 25fr) auto minmax(var(--g0), 92fr) auto minmax(var(--g0), 93fr) auto minmax(var(--g0), 160fr) auto minmax(0, 42fr);
 }
 
-/* the headline and the sub-line, left-aligned (the sub-line in from the headline's edge by the picture's 26 px) */
+/* the headline and the sub-line, left-aligned (the sub-line in from the headline's edge by the picture's 26 px, 0.0255 of its width, kept in proportion to the column on a phone and to the frame on a laptop: AC5) */
 .su-top { grid-area: top; display: grid; row-gap: var(--gA); justify-items: start; container-type: inline-size; font-size: var(--fs-sub); }
 .su-h { font: 300 calc(100cqw / 7.25) / 0.82 var(--su-inter); letter-spacing: -0.021em; color: var(--su-ink); }
 .su-h > span { display: block; white-space: nowrap; }
-.su-sub { padding-left: calc(26 * var(--u)); font: 400 var(--fs-sub) / 1.44 var(--su-inter); letter-spacing: -0.01em; color: var(--su-sub); text-wrap: pretty; }
+.su-sub { padding-left: calc(0.0255 * var(--frame)); font: 400 var(--fs-sub) / 1.44 var(--su-inter); letter-spacing: -0.01em; color: var(--su-sub); text-wrap: pretty; }
 .su-sub strong { font-weight: 700; letter-spacing: 0.01em; color: var(--su-sub-b); }
 /* the picture's breaks (after "below", after "send") once both lines fit beside each other's width; else the line wraps */
 .su-br { display: none; }
@@ -203,6 +203,45 @@
   .su-sub { min-width: 30em; }   /* on a short laptop the frame is narrower than the floored text: three lines at most, not four */
   .su-h { font-size: calc(107.9 * var(--u)); }
   .su-row { grid-template-columns: repeat(4, calc(244.2 * var(--u))); }
+}
+
+/* ---- landscape screens from 900 px wide (Sam, 2026-11-02, of the laptop: "everything is compressed to the center.
+   Make sure it's relayouted to fit properly across the entire screen, not just in the center like a mobile screen.
+   There's a lot of free space."): two columns across the whole width between the insets. The headline and the sub-line
+   on the left, centred on the band beside them; the label and the jar row on the right (56 percent of the frame, the
+   axes 220 picture px apart, the picture's falloff behind that band alone); then the form's block and the footer centred
+   under both, in the picture's order. --u comes from the jar column's width and from the height, never over 1.15, so
+   the jars grow with the screen instead of shrinking to the height of one column. Phones and portrait tablets keep the
+   single column above. */
+@media (min-width: 900px) and (min-aspect-ratio: 1/1) {
+  .su-body {
+    --frame: calc(100vw - 2 * var(--inset));
+    --text-w: calc(0.4 * var(--frame));
+    --ujx: calc(0.55 * var(--frame) / 880);
+    --ujy: calc((100svh - var(--top) - var(--bot) - 24px) / 820);
+    --u: max(0.3px, min(var(--ujx), var(--ujy), 1.15px));
+    grid-template-columns: minmax(0, 40fr) minmax(0, 56fr);
+    column-gap: 4%;
+    justify-content: stretch;
+    grid-template-areas: ". ." "top every" "top row" ". ." "got got" ". ." "form form" ". ." "keep keep" ". .";
+    grid-template-rows: minmax(0, 25fr) auto auto minmax(var(--g0), 123fr) auto minmax(var(--g0), 69fr) auto minmax(var(--g0), 71fr) auto minmax(0, 42fr);
+  }
+  .su-body.su-noform {
+    --ujy: calc((100svh - var(--top) - var(--bot) - 12px) / 590);
+    grid-template-areas: ". ." "top every" "top row" ". ." "keep keep" ". .";
+    grid-template-rows: minmax(0, 25fr) auto auto minmax(var(--g0), 160fr) auto minmax(0, 42fr);
+  }
+  /* the falloff behind the jar band alone: the label's row and the jar row of the right column, from that column's left
+     edge, where it rises out of the ground with no edge to see, to the screen's right edge, as the picture's reaches its own */
+  .su-body::before {
+    grid-area: 2 / 2 / 4 / 3; justify-self: stretch; width: auto; margin-left: 0; margin-right: calc(-1 * var(--inset));
+    background: linear-gradient(90deg, var(--su-ground), var(--su-fall-0) 12%, var(--su-fall-1) 36%, var(--su-fall-2) 58%, var(--su-fall-3) 78%, var(--su-fall-4));
+  }
+  .su-top { grid-area: top; align-self: center; padding-left: 0; }
+  .su-h { font-size: min(calc(107.9 * var(--u)), calc(100cqw / 6.95)); }   /* the picture's size, or the text column's width for its first line */
+  .su-sub { min-width: 0; padding-left: calc(0.0255 * var(--text-w)); }
+  .su-every { grid-area: every; align-self: end; margin-bottom: calc(40 * var(--u)); }
+  .su-row { grid-area: row; grid-template-columns: repeat(4, calc(220 * var(--u))); }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -153,17 +153,21 @@ export interface JarsManifest {
   frame: { w: number; h: number };
   /** the jar's measured box as fractions of the frame (x across, y down) */
   jar: { x0: number; x1: number; y0: number; y1: number };
-  /** each state's topmost point of the fill's surface as a fraction of the frame's height ('0': the inner floor) */
-  states: Record<string, { top: number }>;
+  /** each state's topmost point of the fill's surface as a fraction of the frame's height ('0': the inner floor), and, as the
+   * renders write it, its seam: the row below which every state built on this one is pixel-identical to it, where a reveal starts */
+  states: Record<string, { top: number; seam?: number }>;
 }
 /** C2's frame when the renders are not in yet: 400 x 480 at 2x, the outer diameter half the width, the rim's top at 0.06, the base at 0.87 */
 export const JARS_DEFAULT: JarsManifest = Object.freeze({ frame: { w: 400, h: 480 }, jar: { x0: 0.25, x1: 0.75, y0: 0.06, y1: 0.87 }, states: {} });
 /**
  * The reveal from one state to the next (D6): the incoming image's clip-path inset from the top, in percent of the frame's
- * height, from the current state's surface to the new one's; null when either top is unknown (the fill is then set at once).
+ * height, from the current state's seam (its surface top where the manifest gives no seam) to the new state's top; null
+ * when either is unknown (the fill is then set at once). The band between a state's seam and its top is where the next
+ * layer's grains lie over its surface (jars.json's notes), so a reveal that starts at the seam never jumps: below it the
+ * two images agree, and the new grains come up over the old surface as the clip rises.
  */
 export function revealSpan(m: Pick<JarsManifest, 'states'>, from: string, to: string): { from: number; to: number } | null {
-  const a = m.states[from]?.top, b = m.states[to]?.top;
+  const a = m.states[from]?.seam ?? m.states[from]?.top, b = m.states[to]?.top;
   if (typeof a !== 'number' || typeof b !== 'number' || !Number.isFinite(a) || !Number.isFinite(b)) return null;
   const pct = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 10000) / 100;
   return { from: pct(a), to: pct(b) };

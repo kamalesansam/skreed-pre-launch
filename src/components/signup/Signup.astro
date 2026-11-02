@@ -10,7 +10,8 @@
 // JavaScript (the links work); scripts/signup/signup.ts, loaded once the section is within a screen, counts the follows,
 // fills the visitor's jar, drives the form and the poster tier's loop end. No style attributes (the CSP has no
 // style-src-attr): the jars' frame numbers ride an inline style block, which scripts/csp.mjs hashes.
-import { SIGNUP_COPY as C, SIGNUP_FOLLOWS, SIGNUP_STATES, JARS_DEFAULT, followAria, type JarsManifest } from '../../config/signup.ts';
+import { SIGNUP_COPY as C, SIGNUP_FOLLOWS, followAria } from '../../config/signup.ts';
+import { JARS, SIZES, STATE_SRCS } from '../../scripts/signup/jar-srcs.ts';
 import { QUIZ_GATE } from '../../config/quiz.ts';
 import gate from '../../inline/signup-gate.inline.js?raw';
 import { inlineScript } from '../shell/inlineScript.ts';
@@ -28,30 +29,17 @@ const LEADS = import.meta.env.PUBLIC_LEADS === 'on' || (import.meta.env.PUBLIC_L
   && (import.meta.env.DEV || import.meta.env.PUBLIC_STAGING === '1' || import.meta.env.PUBLIC_HERO_HOOKS === '1'));
 
 // the jars (C2): sixteen states at 1x and 2x in AVIF and WebP, and jars.json with the frame, the jar's box and each
-// state's surface. A state renders only when all four of its files are in, so a build with some names missing still builds
-const files = import.meta.glob<string>('../../assets/signup/jars/*.{avif,webp}', { eager: true, query: '?url', import: 'default' });
-const manifests = import.meta.glob<JarsManifest>('../../assets/signup/jars/jars.json', { eager: true, import: 'default' });
-const found = Object.values(manifests)[0];
-const M: JarsManifest = found && found.jar && found.frame ? { frame: found.frame, jar: found.jar, states: found.states ?? {} } : JARS_DEFAULT;
-type Srcs = { a: string; w: string; s: string; t: number | null };
-const srcs = (state: string): Srcs | null => {
-  const f = (k: string) => files[`../../assets/signup/jars/jar-${state}-${k}`];
-  const a1 = f('1x.avif'), a2 = f('2x.avif'), w1 = f('1x.webp'), w2 = f('2x.webp');
-  const top = M.states[state]?.top;
-  return a1 && a2 && w1 && w2 ? { a: `${a1} 200w, ${a2} 400w`, w: `${w1} 200w, ${w2} 400w`, s: w1, t: typeof top === 'number' ? top : null } : null;
-};
-const STATE_SRCS: Record<string, Srcs> = Object.fromEntries(SIGNUP_STATES.map((s) => [s, srcs(s)]).filter((e): e is [string, Srcs] => !!e[1]));
+// state's surface, read by name in scripts/signup/jar-srcs.ts and shared with the page script, so the table of the
+// sixteen states' URLs rides that lazy chunk and not the first view's markup. A state renders only when all four of its
+// files are in, so a build with some names missing still builds
+const M = JARS;
 // the frame in CSS (the row is laid out by the jar's box, the frames overflow it): the box's width and top and bottom as
 // fractions of the frame, and the frame's aspect
 const r4 = (v: number) => Math.round(v * 10000) / 10000;
 const frameCss = `#signup{--jx:${r4(M.jar.x1 - M.jar.x0)};--jc:${r4((M.jar.x0 + M.jar.x1) / 2)};--jy0:${r4(M.jar.y0)};--jy1:${r4(M.jar.y1)};--jfa:${r4(M.frame.h / M.frame.w)}}`;
-// the images' sizes: the frame is twice the jar's diameter (0.36 of the column on a phone, at most 240 px wide on a laptop)
-const SIZES = '(min-width: 720px) 240px, 36vw';
 const W1 = Math.round(M.frame.w / 2), H1 = Math.round(M.frame.h / 2);
 const showcase = SIGNUP_FOLLOWS.map((j) => ({ ...j, aria: followAria(j), pic: STATE_SRCS[j.letter] ?? null }));
 const yours = STATE_SRCS['0'] ?? null;
-// the visitor's jar's states for the script: the URLs and each surface's top
-const jarData = JSON.stringify({ sizes: SIZES, states: STATE_SRCS });
 ---
 <style is:inline set:html={frameCss}></style>
 <section class="signup" id="signup" aria-label={C.aria} data-state="rest" hidden data-locked>
@@ -88,7 +76,7 @@ const jarData = JSON.stringify({ sizes: SIZES, states: STATE_SRCS });
         </a>
       ))}
       <div class="su-col su-yours" role="group" aria-label={C.yoursAria}>
-        <span class="su-jar" id="suYours" role="img" aria-label={C.jarEmpty} data-state="0" data-jars={jarData}>
+        <span class="su-jar" id="suYours" role="img" aria-label={C.jarEmpty} data-state="0">
           {yours && (
             <picture class="su-pic" data-layer="cur">
               <source type="image/avif" srcset={yours.a} sizes={SIZES} />

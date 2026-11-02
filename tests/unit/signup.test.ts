@@ -96,14 +96,14 @@ test('the state (D6, C2): one name per press order, sixteen in all, a repeat pre
   assert.equal(fill(C.done, { email: 'a@b.co' }), 'Done. Your colours are saved to a@b.co.');
 });
 
-test('the fill (D6): the reveal from the current state\'s surface to the new one\'s, read from jars.json, upward; 900 ms a quarter and 1400 ms a half; the gate 500 ms and 300 ms', () => {
+test('the fill (D6): the reveal from the current state\'s seam (its surface top where there is none) to the new one\'s, read from jars.json, upward; 900 ms a quarter and 1400 ms a half; the gate 500 ms and 300 ms', () => {
   assert.deepEqual({ ...FILL_MS }, { quarter: 900, half: 1400 });
   assert.deepEqual([fillMs('facebook'), fillMs('youtube'), fillMs('instagram')], [900, 900, 1400]);
   assert.deepEqual({ ...FILL_GATE }, { afterPress: 500, afterVisible: 300 });
   // the span by itself
-  const m = { states: { '0': { top: 0.83 }, f: { top: 0.72 }, fy: { top: 0.61 } } };
-  assert.deepEqual(revealSpan(m, '0', 'f'), { from: 83, to: 72 });
-  assert.deepEqual(revealSpan(m, 'f', 'fy'), { from: 72, to: 61 });
+  const m = { states: { '0': { top: 0.83 }, f: { top: 0.72, seam: 0.78 }, fy: { top: 0.61 } } };
+  assert.deepEqual(revealSpan(m, '0', 'f'), { from: 83, to: 72 }, 'no seam: from the surface top');
+  assert.deepEqual(revealSpan(m, 'f', 'fy'), { from: 78, to: 61 }, 'from the seam, below which the two renders agree, so the start never jumps');
   assert.equal(revealSpan(m, 'fy', 'fyi'), null, 'an unknown surface: the fill is set at once');
   // against the renders' manifest, when it is in: every state's reveal from its prefix runs upward, inside the frame
   const j = manifest();
@@ -114,7 +114,7 @@ test('the fill (D6): the reveal from the current state\'s surface to the new one
     if (s === '0' || !j.states[s] || !j.states[s.length === 1 ? '0' : s.slice(0, -1)]) continue;
     const prev = s.length === 1 ? '0' : s.slice(0, -1), span = revealSpan(j, prev, s);
     assert.ok(span, `${prev} to ${s}`);
-    assert.equal(span!.from, Math.round(j.states[prev].top * 10000) / 100);
+    assert.equal(span!.from, Math.round((j.states[prev].seam ?? j.states[prev].top) * 10000) / 100);
     assert.equal(span!.to, Math.round(j.states[s].top * 10000) / 100);
     assert.ok(span!.to <= span!.from, `${prev} to ${s}: the surface rises`);
   }
@@ -158,9 +158,13 @@ test('the type (D3): the two font files exist, unchanged sizes, their @font-face
 });
 
 test('the jars (C2): read by name with import.meta.glob, each state only with all four files, AVIF then WebP, 200w and 400w, lazy and async with explicit sizes; jar 4 two stacked layers', () => {
-  assert.match(astro, /import\.meta\.glob<string>\('\.\.\/\.\.\/assets\/signup\/jars\/\*\.\{avif,webp\}', \{ eager: true, query: '\?url', import: 'default' \}\)/);
-  assert.match(astro, /import\.meta\.glob<JarsManifest>\('\.\.\/\.\.\/assets\/signup\/jars\/jars\.json', \{ eager: true, import: 'default' \}\)/);
-  assert.match(astro, /return a1 && a2 && w1 && w2 \? \{ a: `\$\{a1\} 200w, \$\{a2\} 400w`, w: `\$\{w1\} 200w, \$\{w2\} 400w`/);
+  const srcsMod = read('src/scripts/signup/jar-srcs.ts');
+  assert.match(srcsMod, /import\.meta\.glob<string>\('\.\.\/\.\.\/assets\/signup\/jars\/\*\.\{avif,webp\}', \{ eager: true, query: '\?url', import: 'default' \}\)/);
+  for (const part of ['frame', 'jar', 'states']) assert.match(srcsMod, new RegExp(`import\\.meta\\.glob<JarsManifest\\['${part}'\\]>\\('\\.\\.\\/\\.\\.\\/assets\\/signup\\/jars\\/jars\\.json', \\{ eager: true, import: '${part}' \\}\\)`), `jars.json's ${part} by its named export, so the script's chunk carries the states' tops alone`);
+  assert.match(srcsMod, /return a1 && a2 && w1 && w2 \? \{ a: `\$\{a1\} 200w, \$\{a2\} 400w`, w: `\$\{w1\} 200w, \$\{w2\} 400w`/);
+  assert.match(astro, /import \{ JARS, SIZES, STATE_SRCS \} from '\.\.\/\.\.\/scripts\/signup\/jar-srcs\.ts';/, 'the page lays the jars out from the same table');
+  assert.match(dom, /import \{ SIZES, STATE_SRCS, STATE_TOPS, type Srcs \} from '\.\/jar-srcs\.ts';/, 'the script reads the same table, so the sixteen states\' URLs ride its chunk');
+  assert.doesNotMatch(astro, /data-jars/, 'no table of URLs in the first view\'s markup');
   assert.match(astro, /<source type="image\/avif" srcset=\{j\.pic\.a\} sizes=\{SIZES\} \/>\s+<source type="image\/webp" srcset=\{j\.pic\.w\} sizes=\{SIZES\} \/>\s+<img src=\{j\.pic\.s\} alt="" width=\{W1\} height=\{H1\} loading="lazy" decoding="async" \/>/);
   assert.match(astro, /data-layer="cur"/); assert.match(astro, /data-layer="next" hidden/);
   assert.doesNotMatch(astro.replace(/<style is:inline set:html=\{frameCss\}><\/style>/, ''), /\sstyle=/, 'no style attribute (the CSP)');
@@ -170,6 +174,7 @@ test('the jars (C2): read by name with import.meta.glob, each state only with al
 
 test('the script (C3, C4, C5): the fill by clip-path, the visibility gate, the events, data-ready, the hooks behind the constant, nothing of the island\'s jar', () => {
   assert.match(dom, /nxt\.animate\(\[\{ clipPath: `inset\(\$\{span\.from\}% 0 0 0\)` \}, \{ clipPath: `inset\(\$\{span\.to\}% 0 0 0\)` \}\], \{ duration: ms, easing: 'ease-out', fill: 'forwards' \}\)/);
+  assert.match(dom, /const tops = \{ states: STATE_TOPS \};/, 'the reveal reads the renders\' tops and seams as jars.json gives them');
   assert.match(dom, /reducedMQ\.matches \|\| !span \? 0 : fillMs\(id\)/, 'at once under reduced motion');
   assert.match(dom, /document\.visibilityState !== 'visible'/);
   assert.match(dom, /new CustomEvent\('skreed:signup', \{ detail: \{ id, follows: \[\.\.\.follows\] \} \}\)/);
@@ -181,6 +186,8 @@ test('the script (C3, C4, C5): the fill by clip-path, the visibility gate, the e
   // the island's word on a change (hero/loop.ts): the body under a seam's cloud with the cover, back at rest
   assert.match(dom, /window\.__skreedSignupFrame = \(f\) => \{/);
   assert.match(dom, /addEventListener\('skreed:room-state'/, 'the wrap announcement');
+  assert.match(dom, /if \(window\.__skreedLogo\?\.setTone\) window\.__skreedLogo\.setTone\(on\);/, 'the logotype turns Urban Slate over the cream ground on the poster tier, through the logotype\'s own setTone');
+  assert.match(dom, /setTone\(r\.top < band && r\.bottom > 0\)/, 'while the section sits under the logotype\'s band');
   assert.match(css, /\.su-loopend \{ height: 100svh; \}/);
   assert.match(css, /\.su-fade \{ position: fixed; inset: 0; z-index: 5; background: var\(--night\); pointer-events: none; \}/);
   assert.match(astro, /<div class=\{LEADS \? 'su-body' : 'su-body su-noform'\} id="suBody">/, '.su-body the one-screen block');

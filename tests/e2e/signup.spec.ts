@@ -26,15 +26,15 @@ async function open(page: Page, baseURL: string | undefined, extra = '') {
   await hooks(page);
   await page.waitForFunction(() => document.getElementById('signup')?.dataset.ready === '1', null, { timeout: 10_000 });
 }
-/** every line of the section inside the viewport under the clearance, none overlapping the next, no horizontal scroll */
+/** every line of the section inside the viewport under the clearance, no two boxes overlapping (the laptop lays the
+ * headline beside the jars since 2026-11-02, so the check is pairwise, not down the DOM's order), no horizontal scroll */
 const fit = (page: Page) => page.evaluate(() => {
   const sel = ['.su-h > span', '.su-sub', '.su-every', '.su-jar', '.su-icon', '.su-worth', '.su-got-h h3', '.su-grey', '.su-slotf', '.su-msgrow', '.su-keep'];
-  const boxes = sel.map((s) => [...document.querySelectorAll(s)].map((e) => e.getBoundingClientRect()));
-  const all = boxes.flat(), body = document.getElementById('suBody')!;
+  const all = sel.flatMap((s) => [...document.querySelectorAll(s)].map((e) => e.getBoundingClientRect())), body = document.getElementById('suBody')!;
   let overlap = 0;
-  for (let i = 0; i < boxes.length - 1; i++) {
-    if (!boxes[i].length || !boxes[i + 1].length) continue;
-    overlap = Math.max(overlap, Math.max(...boxes[i].map((b) => b.bottom)) - Math.min(...boxes[i + 1].map((b) => b.top)));
+  for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) {
+    const a = all[i], b = all[j], ox = Math.min(a.right, b.right) - Math.max(a.left, b.left), oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+    if (ox > 0.5 && oy > 0.5) overlap = Math.max(overlap, Math.min(ox, oy));
   }
   return { top: Math.min(...all.map((b) => b.top)), bottom: Math.max(...all.map((b) => b.bottom)), clear: parseFloat(getComputedStyle(body).paddingTop), vh: innerHeight, bodyH: body.getBoundingClientRect().height, overflowX: document.documentElement.scrollWidth > innerWidth, overlap };
 });

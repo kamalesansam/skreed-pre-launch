@@ -6,12 +6,13 @@
 // a platform already pressed opens its page again and adds nothing. The visitor's jar (jar 4) then fills where the
 // visitor can see it: 500 ms after the press if the page is still visible, else 300 ms after it is visible again, the
 // next state's render laid over the current one and revealed upward with clip-path from the old surface to the new
-// (900 ms a quarter, 1400 ms a half, ease-out; presses during a fill queue; at once under reduced motion; on load the
-// remembered state at once). The next states' renders are fetched once the section is near. Also: the email form (the
+// (from the old state's seam, below which the two renders agree, so nothing jumps; 900 ms a quarter, 1400 ms a half,
+// ease-out; presses during a fill queue; at once under reduced motion; on load the remembered state at once). The next states' renders are fetched once the section is near. Also: the email form (the
 // quiz's gift form: validation on blur and submit, sending, the error line, the offline queue sent on `online`, a
 // duplicate read as success, the done line with "Not you?"), data-ready (C3), the events (C4), the hooks (C5), the wrap
 // announcement and the poster tier's loop end (the 300 ms fade through --night to the top). Strings from config/signup.ts.
 import { FILL_GATE, FOLLOW_COUNT, SIGNUP_COPY as C, SIGNUP_FOLLOWS, SIGNUP_KEYS, SIGNUP_LEAD_ENDPOINT, addedLine, fill, fillMs, jarById, pressFollow, revealSpan, stateOf, yoursAlt } from '../../config/signup.ts';
+import { SIZES, STATE_SRCS, STATE_TOPS, type Srcs } from './jar-srcs.ts';
 import { reducedMQ } from '../motion.ts';
 import { track } from '../quiz/track.ts';
 
@@ -25,8 +26,7 @@ declare global {
 
 const SLOW_MS = 8000, HARD_MS = 20000, FADE_MS = 300, READY_MS = 4000;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-/** a state's renders as Signup.astro hands them over: the AVIF and WebP srcsets, the fallback, the surface's top */
-type Srcs = { a: string; w: string; s: string; t: number | null };
+/** the states' renders from jar-srcs.ts (the table Signup.astro lays the showcase jars out from): the sizes and, per state, the AVIF and WebP srcsets and the fallback */
 interface JarData { sizes: string; states: Record<string, Srcs> }
 
 /** the follows pressed this visit, in order, from sessionStorage (try and catch: without storage, none) */
@@ -57,9 +57,8 @@ export function mountSignup(root: HTMLElement): void {
   const announce = (text: string) => { live.textContent = ''; live.textContent = text; };
 
   // ---- the visitor's jar: two stacked renders, the current state and the incoming one
-  let data: JarData = { sizes: '', states: {} };
-  try { data = JSON.parse(jar?.dataset.jars ?? '{}') as JarData; data.states ??= {}; } catch { /* no renders in this build: the jar keeps its markup */ }
-  const tops = { states: Object.fromEntries(Object.entries(data.states).filter(([, s]) => typeof s.t === 'number').map(([k, s]) => [k, { top: s.t as number }])) };
+  const data: JarData = { sizes: SIZES, states: STATE_SRCS };   // a build without the renders has an empty table: the jar keeps its markup
+  const tops = { states: STATE_TOPS };   // each state's surface top and seam from jars.json, the reveal's two ends
   const pics = jar ? [...jar.querySelectorAll<HTMLElement>('picture.su-pic')] : [];
   let cur = pics.find((p) => p.dataset.layer === 'cur') ?? null, nxt = pics.find((p) => p.dataset.layer === 'next') ?? null;
   /** a layer set to a state's renders (the sources and the fallback); its image, or null when the build has none */
@@ -123,7 +122,10 @@ export function mountSignup(root: HTMLElement): void {
     nxt.hidden = false;
     if (ms > 0 && span) {
       anim = nxt.animate([{ clipPath: `inset(${span.from}% 0 0 0)` }, { clipPath: `inset(${span.to}% 0 0 0)` }], { duration: ms, easing: 'ease-out', fill: 'forwards' });
-      try { await anim.finished; } catch { return; }   // cancelled by a reset
+      // the reveal's end: the animation's own word, or its duration and a frame more where the browser's animation clock
+      // does not run (a throttled tab, a software-rendered page), so the layer stands as the new state either way
+      const end = await Promise.race([anim.finished.then(() => 'finished', () => 'cancelled'), sleep(ms + 100).then(() => 'timer')]);
+      if (end === 'cancelled') return;   // a reset
       anim.cancel(); anim = null;
     }
     if (g !== gen) return;
@@ -189,6 +191,26 @@ export function mountSignup(root: HTMLElement): void {
     if (body) body.style.opacity = op < 1 ? op.toFixed(3) : '';
     root.dataset.state = op < 1 ? 'seam' : 'rest';
   };
+
+  // ---- the logotype over the section on the poster tier: Urban Slate while section 5 sits under its band, as the island
+  // sets it on the 3D path from the ground's tone (hero/loop.ts), and Pearl Whisper again once the section has left it (a
+  // scroll back to the scenes, the wrap to the top). The band is the clearance the body keeps under the logotype, its top
+  // padding; one rect read per frame while the page scrolls, on the poster tier alone
+  const logo = document.querySelector<HTMLElement>('a.site-logo');
+  if (logo) {
+    let light = false, pending = false;
+    const setTone = (on: boolean) => {
+      if (on === light) return;
+      light = on;
+      if (window.__skreedLogo?.setTone) window.__skreedLogo.setTone(on);
+      else if (on) logo.dataset.tone = 'light'; else delete logo.dataset.tone;
+    };
+    const readTone = () => { pending = false; if (!isPoster()) return; const r = root.getBoundingClientRect(), band = body ? parseFloat(getComputedStyle(body).paddingTop) || 0 : 0; setTone(r.top < band && r.bottom > 0); };
+    const onMove = () => { if (!pending) { pending = true; requestAnimationFrame(readTone); } };
+    addEventListener('scroll', onMove, { passive: true });
+    addEventListener('resize', onMove, { passive: true });
+    readTone();
+  }
 
   // ---- the wrap's landing, the view, the poster tier's loop end
   addEventListener('skreed:room-state', (e) => { if ((e as CustomEvent<string>).detail === 'wrap') announce(C.wrapLive); });
