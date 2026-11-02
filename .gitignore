@@ -17,6 +17,8 @@ scripts/room/out/
 # not shared as files, and this repository is public, so they stay on the build machine (src/config/quiz-pictures.ts
 # lists each one with its Envato item; the build renders words only where a file is missing)
 src/assets/quiz/pics/
+# the quiz result's paint swatch, taken from Sam's Canva reference (a Canva element): out of the public repository until he confirms the licence (scripts/quiz/prepare-rub.mjs)
+src/assets/quiz/rub/
 # every build written elsewhere with astro build --outDir (dist-s3, dist-s3t and the like): each holds the pictures above
 /dist*/
 # review frames that show those licensed pictures (scripts/quiz/frames.mjs writes them here)

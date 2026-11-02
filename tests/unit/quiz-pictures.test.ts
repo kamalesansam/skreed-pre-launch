@@ -105,13 +105,14 @@ test('the pictures stay out of git: .gitignore names src/assets/quiz/pics/ and e
   assert.deepEqual(licensed(git('ls-files', '-z', '--others', '--exclude-standard')), [], 'a licensed picture git would add (untracked and not ignored)');
 });
 
-test('the type scale: quiz.css sets the three sizes as clamp() tokens once, with no portrait override; the laptop query and the sideways-phone query are each the same in the CSS, deck.ts and the pictures\' sizes', () => {
+test('the type scale: quiz.css sets the two sizes as clamp() tokens once, with no portrait override; the laptop query and the sideways-phone query are each the same in the CSS, deck.ts and the pictures\' sizes', () => {
   const css = read('src/styles/quiz.css');
   const tokens = css.replace(/\/\*[\s\S]*?\*\//g, '');
   assert.match(tokens, /--qz-fs: clamp\(15px, min\(calc\(0\.6rem \+ 0\.95vw\), 2\.6vh\), 22px\);/);
   assert.match(tokens, /--qz-fs-q: clamp\(24px, min\(calc\(1rem \+ 2\.3vw\), 5vh\), 52px\);/);
-  assert.match(tokens, /--qz-fs-big: clamp\(36px, min\(calc\(1rem \+ 4\.6vw\), 10vh\), 88px\);/);
-  for (const t of ['--qz-fs', '--qz-fs-q', '--qz-fs-big']) assert.equal(tokens.split(`${t}:`).length - 1, 1, `${t} set once`);
+  // the shade's name took Sam's design's faces on 2026-11-02 (E-S3-result: Anton, sized by deck.ts), so its step is gone
+  assert.doesNotMatch(read('src/styles/quiz.css') + read('src/scripts/quiz/deck.ts'), /--qz-fs-big/, 'no shade-name step');
+  for (const t of ['--qz-fs', '--qz-fs-q']) assert.equal(tokens.split(`${t}:`).length - 1, 1, `${t} set once`);
   assert.doesNotMatch(tokens, /max-aspect-ratio/, 'no portrait size');
   const wide = '(min-width: 900px) and (min-height: 600px)';
   assert.ok(css.includes(`@media ${wide} {`), 'quiz.css');

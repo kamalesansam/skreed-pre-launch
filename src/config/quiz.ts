@@ -26,18 +26,27 @@ export const QUIZ_COPY = {
   /** the count over each question, in the labels' mono: "01 / 10" (aria-hidden; the card's name says it in words) */
   count: (n: number) => `${String(n).padStart(2, '0')} / ${QUIZ_QUESTION_COUNT}`,
   back: 'Back',
-  eyebrow: 'Your shade',
+  /** the line over the shade's name (Sam's reference of 2026-11-02: "YOUR SHADE IS") */
+  eyebrow: 'Your shade is',
   fam: (family: string, index: number) => `${family}, shade ${index} of 24`,
   finish: (f: 'gloss' | 'matte') => `Best in ${f}.`,
-  also: 'Also compatible with',
-  own: 'Found the perfect shade? Make it yours!',
+  /** over the rest of the group, after the colour profile (Sam's reference of 2026-11-02; "Also compatible with" until then) */
+  also: 'We also recommend:',
   see: 'See it on the case',
   retry: 'Not quite? Try again',
-  gift: 'And here’s a little something extra.',
-  giftSub: 'Leave your email and we’ll send you a surprise gift inspired by your shade right away, plus first dibs on your shade when we launch.',
+  /** the offer along the bottom of the result, Sam's reference of 2026-11-02 word for word, its middle in bold; he chose its
+   *  words over "first dibs on your shade" knowing the brand voice rules out discount language and no code exists yet */
+  offerLead: 'Get an',
+  offerStrong: 'exclusive launch discount',
+  offerTail: 'on any Skreed product in your signature shade or any other shade you love!',
+  /** a phone held sideways has no room for the offer beside the result: these two swap them in the same screen */
+  toGift: 'Get an exclusive launch discount',
+  toResult: 'Back to your shade',
   email: 'Email',
+  /** the field's placeholder, as the reference shows it; "Email" stays its label for assistive technology */
+  emailPlaceholder: 'Your email address',
   consent: 'I’m happy to hear from Skreed by email.',
-  send: 'Send my gift',
+  send: 'Send my code',
   sending: 'Sending...',
   trying: 'Still trying...',
   fine: 'One email about your shade, one when we launch. Unsubscribe any time.',
@@ -46,7 +55,7 @@ export const QUIZ_COPY = {
   errSend: 'That didn’t go through. Try again.',
   dup: 'You’re already on the list. Check your inbox.',
   offline: 'You’re offline. We’ll send it when you’re back.',
-  done: (email: string) => `Done. Your gift is on its way to ${email}.`,
+  done: (email: string) => `Done. Your code is on its way to ${email}.`,
   notYou: 'Not you? Use another email.',
 } as const;
 
@@ -173,17 +182,6 @@ export function luminance(hex: string): number {
   return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
 }
 
-/** A swatch under 1.5:1 against Pearl Whisper gets the 1 px Urban Slate hairline (the family page's --swr rule); in the
- *  quiz it applies on the fog (the 3D tier). */
-export function needsRing(hex: string): boolean {
-  return (luminance('#f7f6f3') + 0.05) / (luminance(hex) + 0.05) < 1.5;
-}
-
-/** On the poster tier (reduced motion, no WebGL, no JavaScript) the quiz stands on --night #050506: a swatch under 3:1
- *  against it (WCAG 1.4.11) gets a 1 px Pearl Whisper hairline there instead (review 2026-10-19). */
-export function needsRingNight(hex: string): boolean {
-  return (luminance(hex) + 0.05) / (luminance('#050506') + 0.05) < 3;
-}
 
 /** The lead endpoint contract (quiz.md 5): the Worker arrives with the lead infrastructure. */
 export const QUIZ_LEAD_ENDPOINT = '/api/quiz-lead';

@@ -3,8 +3,10 @@
 // seven answers, one per personality, scored by scoreQuiz and drawn by pickShade (src/config/quiz.ts), every line
 // decoded in and out as section 2's labels are (src/scripts/quiz/decode.ts). The decode splits each [data-dc] element
 // into a visually hidden copy (Sam's sentence case, where the accessible name comes from) and an aria-hidden row of one
-// span per upper-cased character, so these specs read text through accessible names or the .sr-only child, never an
-// element's textContent (it holds both copies), and wait for the decode with #find:not([data-decoding]). The motion is
+// span per upper-cased character (on the result and its offer, data-dc="prop", one span per character in its own case
+// while it decodes, the rolled glyph drawn over it from data-r, and one text node again once settled), so these specs
+// read text through accessible names or the .sr-only child, never an element's textContent (it holds both copies), and
+// wait for the decode with #find:not([data-decoding]). The motion is
 // timed on the decoder's own clock (watch() and expectMotion()): every step of the decoder is seen, however few frames a
 // slow machine draws, and each wipe, fade, roll, stagger and hold is held to its length from both sides.
 // AC5 and AC6: ten answers for The Quiet Curator give Porcelain in full with Math.random pinned at 0.01 (each group's
@@ -15,10 +17,11 @@
 // "Not quite? Try again" with a second draw from the same group; a press while the chunk is in flight (replayed at mount)
 // and an aborted chunk (a press retries through a fresh URL, "Loading..." until that fails, then the button comes back);
 // the decode itself (the intro at rest, the roll, the left-to-right wipe, the stagger, the settled row) and a hidden page
-// (the text jumps to its end state). AC1, AC7 and AC10: no boxes (no fill, border or shadow), section 2's label type
-// (IBM Plex Mono 500, upper case, Pearl Whisper), the two Plex files split by unicode-range, the email line, the no-JS
-// path; Sam's words reach assistive technology in his case (the lines that are not decoded too) and keep his no-break
-// space. AC8 the gift form against a
+// (the text jumps to its end state). AC1, AC7 and AC10: no boxes (no fill, border or shadow) but the result's own of
+// 2026-11-02, section 2's label type (IBM Plex Mono 500, upper case, Pearl Whisper) but on the result and its offer (set
+// in Sam's design's faces: Anton, Poppins and its italic, Work Sans Light), the two Plex files split by unicode-range and
+// the result's five faces, the email field, the no-JS path; Sam's words reach assistive
+// technology in his case (the lines that are not decoded too) and keep his no-break space. AC8 the gift form against a
 // mocked /api/quiz-lead (page.route): validation on blur and on an empty submit, 500, 200 and "Not you?", 409 and 422,
 // the payload with the personality and the ten answers, the offline queue and its re-send, "Still trying..." at 8 s and
 // the abort at 20 s. AC9 reduced motion (no transform anywhere, 0.2 s fades with no glyph ever rolling, no hold) and AC4 no
@@ -35,10 +38,9 @@
 // a 409 (the request aborted at the press, Send wiping out with the rest, nothing of the abandoned send coming back, the
 // next gift decoding in whole, Send included); Try again clearing the form's lines and freeing Send from a send that never
 // answers; the form's errors announced through #qzLive when focus stays where it is (the email field and the consent
-// box) and focus moved to the field at fault otherwise (a 422, Send); the swatches' hairline on the poster tier's night
-// (Pearl on the ten dark shades) and on the fog (Urban Slate on the pale ones); a 60-character address inside the gutters
-// at 360 px; and the underlines written as longhands in the page's style sheets (Safari before 26.2 drops the shorthand
-// with a thickness, which Chromium computes the same) and computed from them.
+// box) and focus moved to the field at fault otherwise (a 422, Send); a 60-character address inside the gutters at 360 px;
+// and the underlines written as longhands in the page's style sheets (Safari before 26.2 drops the shorthand with a
+// thickness, which Chromium computes the same) and computed from them.
 // The changes of 2026-10-20 (Sam: "the text is soo small, look at the screen size and look at how much area the text is
 // covering, it doesnt make any sense"): the type scales with the screen through three clamp() tokens in quiz.css, so every
 // line is held to typeScale() at each size tested, not to fixed sizes; a question takes focus from script only (tabindex
@@ -60,8 +62,34 @@
 // the answers at the right, the frame the left column's row under the question, and a tap holds as at 390 x 844; a picture left on as the question changes is cleared at once; an answer taken with the mouse or the
 // keyboard keeps its picture while the pointer or focus leaves it during the hold; focus that is not the keyboard's shows
 // none; the shade's name and the done line draw no focus box.
+// The result of 2026-11-02 (E-S3-result; Sam: "it should fit inside one screen, after the results, there should be no
+// scrolling ... do the layout for the phone ratio as well which will look dynamic to all the colors that we got", and
+// later the same day: "use the exact same font from this picture for the results page, as well as the placement of the
+// elements, but have the text animation of the site intact, and the paint rub on the page should look exactly how it
+// looks on the image"): the drawn shade's deep tone fills the section (.qz-ground), and its tones go onto #find as custom
+// properties copied from the drawn chip's data attributes (config/quiz-tones.ts, at build); the name in Anton capitals,
+// drawn at 80% of its width by a static scaleX(0.8), over one hard offset of itself in its mid tone (0.065 em right,
+// 0.052 em down), with no full stop; the labels (the eyebrow, the family line, the finish, the personality, the links),
+// the band's own lines and Send in Work Sans Light capitals; the profile, the colour profile with "We also recommend:",
+// the offer (its middle in Poppins Bold) and the fine print in Poppins; the paint, Sam's swatch recoloured where the build
+// has it (div.qz-smear.qz-rub: a fill of the shade masked by the image, the image over it in hard-light) and our own
+// stroke where it has not (svg.qz-smear: the shade, its edge and its ridge, a Pearl highlight on gloss, a Pearl outline
+// on the nine darkest), every row about it branching on the one the page has; the rest of the group as chips painted in
+// their shades, each name on its chip in Poppins italic, in --night or Pearl Whisper by chipInk (data-ink), and a Pearl
+// hairline on the nine darkest (chipRim, data-rim); every line of the result and the offer decoded glyph by glyph with
+// the site's roll (data-dc="prop": one span per character in its own case, the rolled glyph drawn over the face's own
+// from data-r, the row one text node again once settled); the offer as a band in the band tone with a Pearl Whisper field
+// and an Urban Slate "Send my code"; the result's and the band's type never under 12 px. expectResult() holds every
+// result to that; the fills, the shadow and the type roles are the only ones allowed; the result is one screen (#find no
+// taller than the 100svh probe, --qz-rs between 0.7 and 1, nothing sideways, the paint at its own proportions and on a
+// laptop capped at 55.5% of the screen's height) at eleven sizes for the longest profile (The Quiet Curator) and the
+// shortest (The Spark); where the two do not share one screen, and on a phone held sideways,
+// fitResult() sets data-swap and the band waits off screen until "Get an exclusive launch discount" swaps it in alone,
+// its line focused, and "Back to your shade" swaps back to the name; and the page carries data-qz-ground while the
+// ground lies under the logotype's band.
 import { test, expect, type Locator, type Page } from '@playwright/test';
-import { QUIZ_COPY as Q, QUIZ_GATE, QUIZ_PERSONAS, QUIZ_QUESTIONS, needsRing, needsRingNight, pickShade, scoreQuiz, shadeHref, type Persona, type PersonaId } from '../../src/config/quiz.ts';
+import { QUIZ_COPY as Q, QUIZ_GATE, QUIZ_PERSONAS, QUIZ_QUESTIONS, luminance, pickShade, scoreQuiz, shadeHref, type Persona, type PersonaId } from '../../src/config/quiz.ts';
+import { chipInk, chipRim, resultTones, type ResultTones } from '../../src/config/quiz-tones.ts';
 import { ROOM_COPY } from '../../src/config/room.ts';
 import { SHADES } from '../../src/config/shades.gen.ts';
 import { easeStandard } from '../../src/scripts/hero/section4/scroll-math.ts';
@@ -74,16 +102,31 @@ const REST_FONT = '/fonts/ibm-plex-mono-500-rest.woff2';
 const EMAIL = 'quiz@example.com';
 const PEARL = 'rgb(247, 246, 243)';   // #F7F6F3, Pearl Whisper: every line of the section
 const CLEAR = 'rgba(0, 0, 0, 0)';
-const URBAN_SLATE = 'rgb(56, 63, 67)';   // #383F43: the focus ring inside the outline, the swatches' hairline
+const URBAN_SLATE = 'rgb(56, 63, 67)';   // #383F43: the focus ring inside the outline, Send's fill, the invalid field's line
+const NIGHT = 'rgb(5, 5, 6)';   // #050506, --night: Send under the pointer, the ground before a result has set its tone
 const EMBER = 'rgb(255, 153, 0)';   // #FF9900, Ember Luxe: the keyboard focus outline
+/** a chip's name's ink by its data-ink (chipInk, config/quiz-tones.ts): --night or Pearl Whisper, whichever reads better on
+ *  the chip's shade */
+const INK: Record<string, string> = { night: NIGHT, pearl: PEARL };
+/** the shade's name as drawn (quiz.css .qz-shade): Anton at 80% of its width, a static scaleX(0.8) as Sam's design draws
+ *  it, the one transform in the section's text, which nothing animates */
+const NARROW = 'matrix(0.8, 0, 0, 1, 0, 0)';
 /** deck.ts's guard: a press on an answer or Back this soon after its question was put on screen (showCard) is dropped, as
  *  the second click of a double click; GUARD_REDUCED under reduced motion */
 const GUARD = 350, GUARD_REDUCED = 150;
-/** the ten quiz shades under 3:1 against --night #050506 (needsRingNight), by catalog id: Burgundy, Claret, Wine,
- *  Midnight, Sapphire, Chestnut, Fig, Pine, Navy and Prussian */
-const NIGHT = ['basic-brown-20', 'blissful-blue-15', 'blissful-blue-21', 'blissful-blue-22', 'blissful-blue-24', 'go-green-21', 'roaring-red-15', 'roaring-red-21', 'roaring-red-23', 'vivid-violet-16'];
-/** the gift's decoded lines: its heading, the line under it, the email label, the consent words, Send my gift, the fine print */
-const GIFT_LINES = 6;
+/** the nine quiz shades whose chip carries the Pearl Whisper hairline (chipRim: under 1.5:1 against the lightest ground, a
+ *  neutral at OKLab 0.27), by catalog id: Chestnut, Sapphire, Prussian, Navy, Midnight, Pine, Burgundy, Wine and Fig */
+const RIM = ['basic-brown-20', 'blissful-blue-15', 'blissful-blue-21', 'blissful-blue-22', 'blissful-blue-24', 'go-green-21', 'roaring-red-21', 'roaring-red-23', 'vivid-violet-16'];
+/** the gift's decoded lines (deck.ts items(), in reading order): the offer's three runs (its lead, its bold middle and its
+ *  tail), Send my code, the consent words, the fine print, and Back to your shade (shown on a phone held sideways only,
+ *  decoded with the rest on every screen) */
+const GIFT_LINES = 7;
+/** the same lines as the watch keys them (an element with neither id nor class by its tag: the offer's runs and the
+ *  consent words) */
+const GIFT_KEYS = ['span', 'strong', 'span', '#qzSend', 'span', '.qz-fine', '.qz-toresult'];
+/** whether the result and the offer take the screen in turn (deck.ts fitResult() sets data-swap on #find on a phone held
+ *  sideways, and wherever the two do not share one screen at --qz-rs 0.7) */
+const swapped = (page: Page): Promise<boolean> => page.locator('#find').evaluate((f) => f.hasAttribute('data-swap'));
 /** ten answers for The Quiet Curator */
 const CURATOR: PersonaId[] = Array<PersonaId>(10).fill('curator');
 /** a three-way tie with The Romantic Rebel in the middle twice over: The Warm Optimist, the Rebel and The Dreamer three
@@ -100,17 +143,50 @@ type Ev = [string, Record<string, string | number>];
 const events = (page: Page): Promise<Ev[]> => page.evaluate(() => ((window as unknown as { __skreedEvents?: { name: string; props: Record<string, string | number> }[] }).__skreedEvents ?? []).map((e) => [e.name, e.props] as [string, Record<string, string | number>]));
 /** the quiz_answer events for answers[from] onwards */
 const answered = (answers: PersonaId[], from = 0): Ev[] => answers.slice(from).map((persona, k) => ['quiz_answer', { q: from + k + 1, persona }]);
+/** the quiz gate's unlock by the result (quiz-gate.md D2, since 2026-10-26): tracked as the first result of the visit
+ *  shows, before quiz_complete, and never again in the visit */
+const UNLOCKED: Ev = ['room_unlock', { by: 'result' }];
 
 const byId = new Map(SHADES.map((s) => [s.id, s]));
 const familyName = (f: string) => f.split('-').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
 const rgb = (hex: string) => `rgb(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(', ')})`;
-/** a compatible shade as the result paints it: id, swatch colour and which hairline it carries (data-ring, for the fog;
- *  data-ring-night, for the poster tier's night) */
-const mini = (id: string) => { const s = byId.get(id)!; return `${id}|${rgb(s.hex)}|${needsRing(s.hex)}|${needsRingNight(s.hex)}`; };
+/** WCAG contrast of two colours given as rgb() strings, as computed */
+const contrast = (a: string, b: string): number => {
+  const hex = (c: string) => `#${(c.match(/\d+/g) ?? []).slice(0, 3).map((v) => Number(v).toString(16).padStart(2, '0')).join('')}`;
+  const x = luminance(hex(a)), y = luminance(hex(b));
+  return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+};
+/** a chip as the result paints it (E-S3-result): its shade, its colour (the catalog token), the 1 px Pearl Whisper hairline
+ *  where chipRim asks for it (data-rim) and no border otherwise, and its name on the chip itself, with no fill of its own,
+ *  in --night or Pearl Whisper, whichever reads better on the shade (chipInk, written as data-ink at build: 4.4:1 or
+ *  better on every quiz shade, Fuchsia and Teal the two under AA's 4.5), as Sam's reference sets it */
+const chip = (id: string) => {
+  const s = byId.get(id)!, rim = chipRim(s.hex), ink = chipInk(s.hex);
+  return `${id}|${rgb(s.hex)}|${rim}|${rim ? `1px 1px 1px 1px solid ${PEARL}` : '0px 0px 0px 0px'}|${ink} ${INK[ink]} on ${CLEAR}`;
+};
+/** the same, read from the chips in the page */
+const chipsDrawn = (chips: Locator): Promise<string[]> => chips.evaluateAll((els) => els.map((m) => {
+  const cs = getComputedStyle(m), border = [cs.borderTopWidth, cs.borderRightWidth, cs.borderBottomWidth, cs.borderLeftWidth].join(' '), name = getComputedStyle(m.querySelector('.qz-mini-name')!);
+  return `${(m as HTMLElement).dataset.shade}|${cs.backgroundColor}|${m.hasAttribute('data-rim')}|${border}${cs.borderTopStyle === 'none' ? '' : ` ${cs.borderTopStyle} ${cs.borderTopColor}`}|${(m as HTMLElement).dataset.ink} ${name.color} on ${name.backgroundColor}`;
+}));
+/** the chips as laid out: each name inside its chip (a chip grows to its name), and the chips of one line of the row one
+ *  height (the row stretches them to its tallest); returns what fails */
+const chipsFit = (chips: Locator): Promise<string[]> => chips.evaluateAll((els) => {
+  const out: string[] = [], lines = new Map<number, number[]>();
+  for (const m of els) {
+    const c = m.getBoundingClientRect(), t = m.querySelector('.qz-mini-name')!.getBoundingClientRect(), k = (m as HTMLElement).dataset.shade;
+    if (t.top < c.top - 0.5 || t.bottom > c.bottom + 0.5 || t.left < c.left - 0.5 || t.right > c.right + 0.5) out.push(`${k}: its name ${t.width.toFixed(1)} x ${t.height.toFixed(1)} runs out of the chip ${c.width.toFixed(1)} x ${c.height.toFixed(1)}`);
+    const line = Math.round(c.top);
+    lines.set(line, [...(lines.get(line) ?? []), c.height]);
+  }
+  for (const [top, hs] of lines) if (Math.max(...hs) - Math.min(...hs) > 0.5) out.push(`the chips at ${top} px are ${hs.map((h) => h.toFixed(1)).join(', ')} px tall`);
+  return out;
+});
 
-interface Drawn { p: Persona; shade: string; others: string[]; family: string; name: string; fam: string; href: string; ring: boolean; night: boolean; rgb: string }
+interface Drawn { p: Persona; shade: string; others: string[]; family: string; name: string; fam: string; href: string; rgb: string; tones: ResultTones }
 /** a result's decoded lines in reading order: the eyebrow, the name, the family line, the finish, the personality, the
- *  profile, the colour profile, "Also compatible with", one name per compatible shade, the closing line, the two links */
+ *  profile, the colour profile, "We also recommend:", one name per chip, the two links and "Get an exclusive launch
+ *  discount" (the swap to the offer, shown on a phone held sideways only, decoded with the rest on every screen) */
 const resultLines = (r: Drawn): number => 8 + r.others.length + 3;
 /** the decoder's keys for n elements of a part from `from` on: `${part}:${i}`, i the element's place in the list its part
  *  decodes in (deck.ts items(): the result's lines, then the gift's, in one list) */
@@ -119,18 +195,19 @@ const keys = (part: string, n: number, from = 0): string[] => Array.from({ lengt
 const answerAt = (i: number, persona: PersonaId): number => QUIZ_QUESTIONS[i].answers.findIndex((a) => a.persona === persona) + 2;
 
 /** the result for ten answers with Math.random pinned at v: scoreQuiz's personality, pickShade's draw, and the shade's
- *  name, family line, link and hairline as Quiz.astro resolves them from the catalog at build */
+ *  name, family line, link and tones as Quiz.astro resolves them from the catalog at build */
 function drawn(answers: PersonaId[], v: number): Drawn {
   const p = scoreQuiz(answers), { shade, others } = pickShade(p, () => v), s = byId.get(shade)!;
-  return { p, shade, others, family: s.family, name: s.name, fam: Q.fam(familyName(s.family), s.index), href: shadeHref(s.family, s.n), ring: needsRing(s.hex), night: needsRingNight(s.hex), rgb: rgb(s.hex) };
+  return { p, shade, others, family: s.family, name: s.name, fam: Q.fam(familyName(s.family), s.index), href: shadeHref(s.family, s.n), rgb: rgb(s.hex), tones: resultTones(s.hex) };
 }
 
 /** Math.random pinned before any of the page's scripts run, so the shade draw is known: 0.01 gives each group's first
  *  shade, 0.5 its middle one (the fourth of six or seven) */
 const pin = (page: Page, v: number): Promise<void> => page.addInitScript((v) => { Math.random = () => v; }, v);
 
-/** every Element.animate call made on something inside #find (deck.ts animates the swatches only, on opacity), logged
- *  from before the page's scripts run: what it animates and for how long */
+/** every Element.animate call made on something inside #find (deck.ts animates the result's ground, its paint and its
+ *  chips only, on opacity), logged from before the page's scripts run: what it animates (its class attribute: our own
+ *  stroke is an SVG element, whose className is no string) and for how long */
 const logAnimate = (page: Page): Promise<void> => page.addInitScript(() => {
   const log: string[] = [];
   (window as unknown as { __qzAnimate: string[] }).__qzAnimate = log;
@@ -138,12 +215,20 @@ const logAnimate = (page: Page): Promise<void> => page.addInitScript(() => {
   Element.prototype.animate = function (this: Element, frames: Keyframe[] | PropertyIndexedKeyframes | null, options?: number | KeyframeAnimationOptions) {
     if (this.closest('#find')) {
       const props = [...new Set((Array.isArray(frames) ? frames : frames ? [frames] : []).flatMap((f) => Object.keys(f)))].filter((k) => !/^(offset|easing|composite)$/.test(k)).sort().join(',');
-      log.push(`${this.className}|${props}|${typeof options === 'number' ? options : options?.duration}`);
+      log.push(`${this.getAttribute('class')}|${props}|${typeof options === 'number' ? options : options?.duration}`);
     }
     return animate.call(this, frames, options);
   };
 });
 const animateLog = (page: Page): Promise<string[]> => page.evaluate(() => (window as unknown as { __qzAnimate?: string[] }).__qzAnimate ?? []);
+/** the shown result's paint as animateLog names it, its class attribute: "qz-smear qz-rub" for Sam's swatch (a div) where
+ *  the build has it (src/assets/quiz/rub/, git-ignored), "qz-smear" for our own stroke (an svg, Smear.astro) where it has
+ *  not; either is the paint, and nothing else is */
+async function paintClass(page: Page): Promise<string> {
+  const cls = await page.locator('.qz-result:not([hidden]) .qz-smear').evaluate((e) => `${e.tagName.toLowerCase()}|${e.getAttribute('class')}`);
+  expect(['div|qz-smear qz-rub', 'svg|qz-smear'], 'the paint: Sam\'s swatch or our own stroke').toContain(cls);
+  return cls.split('|')[1];
+}
 
 /** #find's data-decoding attribute, every change from before the page's scripts run: "on" or "off", with the state */
 const logDecoding = (page: Page): Promise<void> => page.addInitScript(() => {
@@ -250,21 +335,46 @@ async function tick(page: Page): Promise<void> {
 }
 
 /** a decoded element's two copies: the visually hidden one (Sam's text) and the glyph row as drawn, with the number of
- *  glyphs still carrying an inline opacity (none once a decode in has settled at full) */
+ *  glyphs still carrying an inline opacity (none once a decode in has settled at full). In the labels' mono the row holds
+ *  the text upper-cased, a glyph per character; a proportional line (data-dc="prop", the result and the offer) holds it
+ *  in Sam's case, the capitals drawn by the style sheet, and once settled it is one text node with no glyphs at all */
 const copies = (el: Locator) => el.evaluate((e) => ({
   sr: e.querySelector(':scope > .sr-only')?.textContent ?? null,
   row: e.querySelector(':scope > .dc')?.textContent ?? null,
   faded: [...e.querySelectorAll<HTMLElement>(':scope > .dc > span')].filter((s) => s.style.opacity !== '').length,
 }));
 
+/** a proportional line (data-dc="prop") as it stands: its visually hidden copy, its row's text, the row's child nodes (one
+ *  text node once its reveal has settled, so the face keeps its kerning; one span per character while it decodes) and the
+ *  case the style sheet draws it in (decode.ts keeps each character's own case in the row) */
+const atRest = (el: Locator) => el.evaluate((e) => {
+  const row = e.querySelector(':scope > .dc');
+  return { dc: (e as HTMLElement).dataset.dc ?? null, sr: e.querySelector(':scope > .sr-only')?.textContent ?? null, row: row?.textContent ?? null, nodes: row ? [...row.childNodes].map((n) => n.nodeName) : [], transform: row ? getComputedStyle(row).textTransform : null };
+});
+/** what atRest() reads off a settled proportional line saying `text`, drawn in capitals or as written */
+const settledLine = (text: string, caps: boolean) => ({ dc: 'prop', sr: text, row: text, nodes: ['#text'], transform: caps ? 'uppercase' : 'none' });
+
 /** the words a decoded line says: its visually hidden copy (the form's lines too: deck.ts sets the errors, the status
  *  line and the done line through the decoder, so each holds Sam's sentence case beside the capitals drawn) */
 const said = (line: Locator): Locator => line.locator(':scope > .sr-only');
 
-/** the one shown result is r's (AC6): personality and finish, the drawn shade large (its colour from the catalog token,
- *  the hairline where it needs one), name, family line, finish, personality, profile, colour profile, the compatible
- *  shades (the rest of the group in its order, painted, the drawn one hidden) and the link; once settled, every line's
- *  glyph row reads its text upper-cased at full opacity */
+/** a regular expression for a string as it stands (the parentheses of rgb() and the like escaped) */
+const literal = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** the one shown result is r's (AC6, E-S3-result): personality and finish; the drawn shade's chip (hidden among the chips)
+ *  carries its tones as config/quiz-tones.ts gives them, and #find takes them as custom properties (--qz-shade its
+ *  catalog token, --qz-deep, --qz-band, --qz-mid, --qz-sd and --qz-sl the chip's data attributes), so the ground is drawn in
+ *  the deep tone, the offer's band in the band tone and the name's one hard offset (0.065 em right, 0.052 em down) in the
+ *  mid tone, the name narrowed by its static scaleX(0.8), and #find carries data-sm-rim for the nine darkest (chipRim);
+ *  the paint, aria-hidden and one kind on every result: Sam's swatch where the build has it (a fill of the drawn shade
+ *  masked by the image deck.ts points --qz-rub at, the image over it in hard-light, isolated, and loaded), our own stroke
+ *  where it has not (the shade with its edge and ridge, a Pearl Whisper highlight on a gloss result only and a Pearl
+ *  outline on the nine darkest); the eyebrow, the name (no full stop), the family line, the finish, the personality, the
+ *  profile, the colour profile and "We also recommend:"; the chips (the rest of the group in its order, each painted in
+ *  its shade, the darkest with the Pearl hairline, its name on it in its ink, each chip as tall as its name needs); the
+ *  links. Once settled, every line (data-dc="prop") is one text node again, reading Sam's words in his case, the
+ *  capitals drawn by the style sheet on the name and the labels; and so are the offer's lines where it shares the
+ *  screen */
 async function expectResult(page: Page, r: Drawn): Promise<void> {
   // the result state first: after a retry the previous run's article keeps its attributes under the hidden container
   await expect(page.locator('#find')).toHaveAttribute('data-state', 'result');
@@ -272,33 +382,101 @@ async function expectResult(page: Page, r: Drawn): Promise<void> {
   await expect(shown).toHaveCount(1);
   await expect(shown).toHaveAttribute('data-persona', r.p.id);
   await expect(shown).toHaveAttribute('data-finish', r.p.finish);
-  const big = shown.locator('.qz-big');
-  await expect(big).toHaveAttribute('data-shade', r.shade);
-  if (r.ring) await expect(big).toHaveAttribute('data-ring', ''); else await expect(big).not.toHaveAttribute('data-ring');
-  if (r.night) await expect(big).toHaveAttribute('data-ring-night', ''); else await expect(big).not.toHaveAttribute('data-ring-night');
-  await expect(big).toHaveCSS('background-color', r.rgb);
-  const lines: [string, string][] = [['.qz-eyebrow', Q.eyebrow], ['.qz-shade', `${r.name}.`], ['.qz-fam', r.fam], ['.qz-finish', Q.finish(r.p.finish)], ['.qz-persona', r.p.name], ['.qz-text', r.p.profile], ['.qz-palette', r.p.palette], ['.qz-also-h', Q.also], ['.qz-own', Q.own]];
+  const pick = shown.locator(`.qz-mini[data-shade="${r.shade}"]`);
+  await expect(pick, 'the drawn shade is not among the chips').toHaveAttribute('hidden', '');
+  const tones = await pick.evaluate((m) => ['deep', 'band', 'mid', 'sd', 'sl'].map((k) => (m as HTMLElement).dataset[k] ?? ''));
+  expect(tones, 'the drawn chip\'s tones, as config/quiz-tones.ts gives them').toEqual([r.tones.deep, r.tones.band, r.tones.mid, r.tones.dark, r.tones.light]);
+  expect(await page.locator('#find').evaluate((f) => ['--qz-shade', '--qz-deep', '--qz-band', '--qz-mid', '--qz-sd', '--qz-sl'].map((k) => (f as HTMLElement).style.getPropertyValue(k))), '#find carries the drawn chip\'s tones').toEqual([`var(--shade-${r.shade})`, ...tones]);
+  const look = await page.evaluate(() => {
+    const find = document.getElementById('find')!, res = find.querySelector('.qz-result:not([hidden])')!, ground = getComputedStyle(find.querySelector(':scope > .qz-ground')!);
+    const gift = document.getElementById('qzGift'), name = getComputedStyle(res.querySelector('.qz-shade')!), paint = res.querySelector<HTMLElement>('.qz-smear')!;
+    // the paint of every result, shown or not: Sam's swatch (div.qz-rub) or our own stroke (svg)
+    const kinds = [...find.querySelectorAll('.qz-result .qz-smear')].map((e) => (e.matches('div.qz-rub') ? 'swatch' : e.matches('svg') ? 'stroke' : e.tagName.toLowerCase()));
+    let drawn: Record<string, string | null>;
+    if (paint.matches('div.qz-rub')) {
+      const col = paint.querySelector('.qz-rub-col'), img = paint.querySelector<HTMLImageElement>('img.qz-rub-img');
+      drawn = {
+        kind: 'swatch', fill: col ? getComputedStyle(col).backgroundColor : null, mask: col ? getComputedStyle(col).maskImage : null, rub: paint.style.getPropertyValue('--qz-rub'),
+        src: img?.getAttribute('src') ?? null, url: img?.src ?? null, alt: img?.getAttribute('alt') ?? null, blend: img ? getComputedStyle(img).mixBlendMode : null, isolation: getComputedStyle(paint).isolation,
+      };
+    } else {
+      const fill = (sel: string) => { const e = paint.querySelector(sel); return e ? getComputedStyle(e).fill : null; }, body = paint.querySelector('.qz-sm-body');
+      drawn = { kind: 'stroke', body: fill('.qz-sm-body'), edge: fill('.qz-sm-dark'), ridge: fill('.qz-sm-light'), gloss: fill('.qz-sm-gloss'), outline: body ? getComputedStyle(body).stroke : null };
+    }
+    // each swatch's proportions as deck.ts writes them (--qz-paint-ar, its image's width over height, to 5 decimals) beside
+    // its image's own
+    const ratios = [...find.querySelectorAll<HTMLElement>('.qz-rub')].map((e) => { const i = e.querySelector('img'); return `${e.style.getPropertyValue('--qz-paint-ar')} of ${(Number(i?.getAttribute('width')) / Number(i?.getAttribute('height'))).toFixed(5)}`; });
+    return {
+      ground: ground.backgroundColor, groundShown: ground.display, band: gift ? getComputedStyle(gift).backgroundColor : null, shadow: name.textShadow, size: parseFloat(name.fontSize),
+      narrow: name.transform, rim: find.hasAttribute('data-sm-rim'), hidden: paint.getAttribute('aria-hidden'), kinds, drawn, ratios,
+    };
+  });
+  const { shadow, size, kinds, drawn: paint, ratios, ...drawnTones } = look;
+  // the reference's darker copy behind the letters, 20 px right and down at its 341 px capitals: 0.065 em and 0.052 em
+  const m = new RegExp(`^${literal(rgb(r.tones.mid))} ([\\d.]+)px ([\\d.]+)px 0px$`).exec(shadow);
+  expect(m, `the name's offset layer in the mid tone ${rgb(r.tones.mid)}: ${shadow}`).not.toBeNull();
+  expect(Math.abs(Number(m![1]) - 0.065 * size), `one hard offset, 0.065 em (of ${size} px) right: ${shadow}`).toBeLessThan(0.01);
+  expect(Math.abs(Number(m![2]) - 0.052 * size), `and 0.052 em down: ${shadow}`).toBeLessThan(0.01);
+  // the nine darkest shades (chipRim) mark #find[data-sm-rim], which outlines our own stroke in Pearl Whisper so it does
+  // not sink into its own ground (Sam's swatch carries its own rim)
+  const rim = chipRim(byId.get(r.shade)!.hex);
+  expect(drawnTones, 'the ground and the band in the drawn shade\'s tones, the name narrowed, the dark shades marked, the paint aria-hidden').toEqual({
+    ground: rgb(r.tones.deep), groundShown: 'block', band: rgb(r.tones.band), narrow: NARROW, rim, hidden: 'true',
+  });
+  expect(kinds, 'one paint on each of the seven results, one kind on all of them: Sam\'s swatch where the build has it, our own stroke where it has not').toEqual(QUIZ_PERSONAS.map(() => paint.kind));
+  if (paint.kind === 'swatch') {
+    // Sam's swatch (scripts/quiz/prepare-rub.mjs): its outline filled with the drawn shade (the image as the fill's mask,
+    // deck.ts pointing --qz-rub at it) and its relief over that fill in hard-light, isolated, so each shade is the same paint
+    expect(paint, 'Sam\'s swatch in the drawn shade').toEqual({
+      kind: 'swatch', fill: r.rgb, mask: `url("${paint.url}")`, rub: `url("${paint.src}")`, src: expect.stringMatching(/\/_astro\/rub\.[\w-]+\.webp$/), url: expect.stringMatching(/^https?:\/\/[^/]+\/_astro\/rub\.[\w-]+\.webp$/),
+      alt: '', blend: 'hard-light', isolation: 'isolate',
+    });
+    await expect.poll(() => shown.locator('img.qz-rub-img').evaluate((e) => (e as HTMLImageElement).complete && (e as HTMLImageElement).naturalWidth > 0), { message: 'the swatch\'s image loaded, so the mask has its outline' }).toBe(true);
+    expect(ratios, 'every swatch at its image\'s own proportions (deck.ts, --qz-paint-ar, the box\'s aspect-ratio)').toEqual(ratios.map((x) => { const v = x.split(' of ')[1]; return `${v} of ${v}`; }));
+    expect(ratios, 'one on each result').toHaveLength(QUIZ_PERSONAS.length);
+  } else {
+    // our own stroke (Smear.astro): flat fills of the shade, its edge and its ridge, the Pearl highlight on a gloss result,
+    // the Pearl outline on the nine darkest
+    expect(paint, 'our own stroke in the drawn shade\'s tones').toEqual({ kind: 'stroke', body: r.rgb, edge: rgb(r.tones.dark), ridge: rgb(r.tones.light), gloss: r.p.finish === 'gloss' ? PEARL : null, outline: rim ? PEARL : 'none' });
+  }
+  // the lines: [selector, Sam's words, drawn in capitals by the style sheet]
+  const lines: [string, string, boolean][] = [['.qz-eyebrow', Q.eyebrow, true], ['.qz-shade', r.name, true], ['.qz-fam', r.fam, true], ['.qz-finish', Q.finish(r.p.finish), true], ['.qz-persona', r.p.name, true], ['.qz-text', r.p.profile, false], ['.qz-palette > span:not(.qz-also-h)', r.p.palette, false], ['.qz-also-h', Q.also, false]];
   for (const [sel, text] of lines) await expect(shown.locator(`${sel} > .sr-only`), sel).toHaveText(text);
-  await expect(shown.getByRole('heading', { name: `${r.name}.`, exact: true })).toHaveClass(/qz-shade/);
+  await expect(shown.getByRole('heading', { name: r.name, exact: true }), 'the name with no full stop').toHaveClass(/qz-shade/);
   await expect(shown.locator('.qz-see')).toHaveAccessibleName(Q.see);
   await expect(shown.locator('.qz-retry')).toHaveAccessibleName(Q.retry);
+  await expect(said(shown.locator('.qz-togift'))).toHaveText(Q.toGift);
   const minis = shown.locator('.qz-mini:not([hidden])');
   await expect(minis).toHaveCount(r.others.length);
   await expect(minis.locator('.qz-mini-name > .sr-only')).toHaveText(r.others.map((id) => byId.get(id)!.name));
-  expect(await minis.evaluateAll((els) => els.map((m) => `${(m as HTMLElement).dataset.shade}|${getComputedStyle(m.querySelector('.qz-mini-sw')!).backgroundColor}|${m.hasAttribute('data-ring')}|${m.hasAttribute('data-ring-night')}`))).toEqual(r.others.map(mini));
+  expect(await chipsDrawn(minis), 'each chip in its shade, the darkest with the Pearl hairline, its name on it in its ink').toEqual(r.others.map((id) => chip(id)));
+  expect(await chipsFit(minis), 'each chip as tall as its name needs, a line of the row one height').toEqual([]);
   await expect(shown.locator('a.qz-see')).toHaveAttribute('href', r.href);
   await settled(page);
-  for (const [sel, text] of [...lines, ['.qz-see', Q.see], ['.qz-retry', Q.retry]] as [string, string][]) {
-    const c = await copies(shown.locator(sel));
-    expect(c.row?.replace(/\s+/g, ' '), `${sel} drawn`).toBe(text.toUpperCase().replace(/\s+/g, ' '));
-    expect(c.faded, `${sel} settled at full opacity`).toBe(0);
+  // at rest every line is plain text again (decode.ts join()): one text node in Sam's case, so the face keeps its kerning
+  for (const [sel, text, caps] of [...lines, ['.qz-see', Q.see, true], ['.qz-retry', Q.retry, true], ['.qz-togift', Q.toGift, true]] as [string, string, boolean][]) {
+    expect(await atRest(shown.locator(sel)), `${sel}: one text node at rest, Sam's words in his case, ${caps ? 'drawn in capitals' : 'drawn as written'}`).toEqual(settledLine(text, caps));
+  }
+  for (const [k, name] of (await minis.locator('.qz-mini-name').all()).entries()) expect(await atRest(name), `the chip ${r.others[k]}: its name one text node at rest, as written`).toEqual(settledLine(byId.get(r.others[k])!.name, false));
+  // the offer's lines where it shares the screen (with data-swap they stay out until the offer's turn): its line's three
+  // runs as written and "Back to your shade" (drawn on a phone held sideways only) in capitals, and while the fields are
+  // shown the consent in capitals and the fine print as written. Send is left out: its words are the form's state
+  if (await page.locator('#qzGift').count() && !(await swapped(page))) {
+    const gift = page.locator('#qzGift'), giftLines: [string, string, boolean][] = [['.qz-offer > span:first-child', Q.offerLead, false], ['.qz-offer > strong', Q.offerStrong, false], ['.qz-offer > span:last-child', Q.offerTail, false], ['.qz-toresult', Q.toResult, true]];
+    if (await gift.locator('.qz-fields').isVisible()) giftLines.push(['.qz-check > span:last-child', Q.consent, true], ['.qz-fine', Q.fine, false]);
+    for (const [sel, text, caps] of giftLines) expect(await atRest(gift.locator(sel)), `the offer's ${sel}: one text node at rest, Sam's words in his case, ${caps ? 'drawn in capitals' : 'drawn as written'}`).toEqual(settledLine(text, caps));
   }
 }
 
 /** one decoded element as it stands: its glyphs' opacity range, how many sit strictly between 0 and 1, how many show a
- *  character other than their final upper-cased one (and of those, how many are visible), whether the opacity never
- *  rises from left to right (both wipes keep the left of a line the more visible) and whether every glyph has one opacity */
-interface Row { k: string; n: number; min: number; max: number; mid: number; rolled: number; shownRolled: number; mono: boolean; equal: boolean }
+ *  character other than their final one (in the labels' mono a glyph whose text is not its upper-cased character, the
+ *  roll swapping it; in a proportional face, data-dc="prop", a glyph carrying data-r, the rolled character drawn over its
+ *  own; and of those, how many are visible), whether a proportional row's glyphs all keep their own characters in their
+ *  own case under the roll, so the line never changes width (true of the mono, whose roll is the swap), whether the
+ *  opacity never rises from left to right (both wipes keep the left of a line the more visible) and whether every glyph
+ *  has one opacity. A proportional row at rest is one text node again (decode.ts join()): drawn in full, a glyph per
+ *  character */
+interface Row { k: string; n: number; min: number; max: number; mid: number; rolled: number; shownRolled: number; kept: boolean; mono: boolean; equal: boolean }
 /** one frame: the decode flag, the state, the answer marked (aria-pressed) and the answers drawn with the 2 px underline
  *  (the mark as seen), each part on screen (intro, card<i>, result, gift) as its decoded elements in reading order, the
  *  running animations inside #find, anything moved by a transform, and whether the page scrolls sideways */
@@ -315,15 +493,16 @@ interface Phase { on: number; off: number }
 interface Mark { act: 'on' | 'off'; persona: string; part: string; before: number; cardHidden: boolean }
 /** snaps: every element after every step of the decoder (a MutationObserver callback runs at the microtask checkpoint
  *  straight after the animation frame callback that wrote it, so no step is missed, however few frames the page
- *  draws); rolledWrites: glyph writes of a character other than the final one; partial: per part, the glyph opacity
- *  writes strictly between 0 and 1 (a hide in one write to 0 makes none) */
+ *  draws); rolledWrites: glyph writes of a character other than the final one (a mono glyph's text swapped, or a
+ *  proportional glyph's data-r set); partial: per part, the glyph opacity writes strictly between 0 and 1 (a hide in one
+ *  write to 0 makes none) */
 interface Watched { frames: Frame[]; snaps: Snap[]; phases: Phase[]; marks: Mark[]; rolledWrites: number; partial: Record<string, number>; timedOut: boolean }
 
 /** every frame from now until `stop` matches and nothing decodes (or 10 s, the old sampler's cap), with every step of the
  *  decoder, the decode phases and the marks. The window follows the page, not the moment of the press, so a slow
  *  machine cannot close it before the motion starts */
 function watch(page: Page, stop: string, capMs = 10_000): Promise<Watched> {
-  return page.evaluate(({ stop, capMs }) => new Promise<Watched>((res) => {
+  return page.evaluate(({ stop, capMs, narrow }) => new Promise<Watched>((res) => {
     const root = document.getElementById('find')!;
     const frames: Frame[] = [], snaps: Snap[] = [], phases: Phase[] = [], marks: Mark[] = [];
     let rolledWrites = 0;
@@ -348,24 +527,32 @@ function watch(page: Page, stop: string, capMs = 10_000): Promise<Watched> {
     });
     const partOf = (s: Element) => { const c = s.closest<HTMLElement>('.qz-card'); return c ? `card${c.dataset.i}` : s.closest('.qz-result') ? 'result' : s.closest('#qzGift') ? 'gift' : s.closest('#qzIntro') ? 'intro' : 'other'; };
     const scopeOf = (s: Element, p: string) => (p.startsWith('card') ? s.closest('.qz-card') : p === 'result' ? s.closest('.qz-result') : p === 'gift' ? document.getElementById('qzGift') : p === 'intro' ? document.getElementById('qzIntro') : null) as HTMLElement | null;
-    const finalOf = (row: Element) => [...(row.parentElement?.querySelector(':scope > .sr-only')?.textContent ?? '').toUpperCase()];
+    // what each glyph of a row ends on (decode.ts split()): in the labels' mono one upper-cased character per glyph, its
+    // text swapped while it rolls; in a proportional face (data-dc="prop": the result and the offer since 2026-11-02) its
+    // own character in its own case, kept while the rolled one is drawn over it from data-r (the style sheet sets the
+    // capitals where it wants them)
+    const propOf = (row: Element) => (row.parentElement as HTMLElement | null)?.dataset.dc === 'prop';
+    const finalOf = (row: Element) => { const text = row.parentElement?.querySelector(':scope > .sr-only')?.textContent ?? ''; return [...(propOf(row) ? text : text.toUpperCase())]; };
     // deck.ts's items(): the decoded elements of a part in reading order, less those inside something hidden
     const items = (scope: HTMLElement) => [...scope.querySelectorAll<HTMLElement>('[data-dc]')].filter((e) => { for (let p = e.parentElement; p && p !== scope; p = p.parentElement) if (p.hidden) return false; return true; });
     const key = (el: HTMLElement) => (el.id ? `#${el.id}` : el.classList.contains('qz-opt') ? `opt:${el.dataset.persona}` : el.classList.length ? `.${el.classList[el.classList.length - 1]}` : el.tagName.toLowerCase());
     const rowOf = (el: HTMLElement): Row => {
       const r = el.querySelector(':scope > .dc'), k = key(el);
-      if (!r) return { k, n: 0, min: 1, max: 1, mid: 0, rolled: 0, shownRolled: 0, mono: true, equal: true };   // not split: drawn as the server drew it
-      const fin = finalOf(r);
-      let min = 1, max = 0, mid = 0, rolled = 0, shownRolled = 0, mono = true, prev = 1;
+      if (!r) return { k, n: 0, min: 1, max: 1, mid: 0, rolled: 0, shownRolled: 0, kept: true, mono: true, equal: true };   // not split: drawn as the server drew it
+      // a proportional row whose reveal has settled: one text node again (decode.ts join()), drawn in full
+      if (!r.children.length && r.textContent) return { k, n: [...r.textContent].length, min: 1, max: 1, mid: 0, rolled: 0, shownRolled: 0, kept: true, mono: true, equal: true };
+      const prop = propOf(r), fin = finalOf(r);
+      let min = 1, max = 0, mid = 0, rolled = 0, shownRolled = 0, kept = true, mono = true, prev = 1;
       [...r.children].forEach((s, i) => {
         const o = (s as HTMLElement).style.opacity, a = o === '' ? 1 : Number(o);
         min = Math.min(min, a); max = Math.max(max, a);
         if (a > 0 && a < 1) mid++;
-        if (s.textContent !== fin[i]) { rolled++; if (a > 0) shownRolled++; }
+        if (prop ? s.hasAttribute('data-r') : s.textContent !== fin[i]) { rolled++; if (a > 0) shownRolled++; }
+        if (prop && s.textContent !== fin[i]) kept = false;   // the face's own glyph swapped: the line would change width
         if (a > prev + 0.002) mono = false;   // the decoder skips writes under 0.001 and rounds to 0.001
         prev = a;
       });
-      return { k, n: r.children.length, min, max, mid, rolled, shownRolled, mono, equal: max - min < 1e-6 };
+      return { k, n: r.children.length, min, max, mid, rolled, shownRolled, kept, mono, equal: max - min < 1e-6 };
     };
     const glyphAt = new WeakMap<Element, number>(), indexed = new WeakSet<Element>();
     const onRecords = (recs: MutationRecord[]) => {
@@ -378,10 +565,14 @@ function watch(page: Page, stop: string, capMs = 10_000): Promise<Watched> {
           if (act) marks.push({ act, persona: o.dataset.persona ?? '', part: p, before: partial[p] ?? 0, cardHidden: !!c?.hidden });
           continue;
         }
+        // a row split into its glyphs or joined back into one text node (a proportional row is joined once its reveal has
+        // settled and split again as its next wipe starts; the glyphs of a join's last step are gone with it): the row
+        if (r.type === 'childList' && target.nodeType === Node.ELEMENT_NODE && target.classList.contains('dc')) { dirty.add(target); continue; }
         const s = target.nodeType === Node.ELEMENT_NODE ? target : target.parentElement, row = s?.parentElement;
         if (!s || !row?.classList.contains('dc')) continue;
         dirty.add(row);
-        if (r.type === 'attributes') { const a = Number((s as HTMLElement).style.opacity || 1); if (a > 0 && a < 1) { const p = partOf(s); partial[p] = (partial[p] ?? 0) + 1; } }
+        if (r.type === 'attributes' && r.attributeName === 'data-r') { if (s.hasAttribute('data-r')) rolledWrites++; }   // a proportional glyph's roll, drawn over its own (one write per glyph per step)
+        else if (r.type === 'attributes') { const a = Number((s as HTMLElement).style.opacity || 1); if (a > 0 && a < 1) { const p = partOf(s); partial[p] = (partial[p] ?? 0) + 1; } }
         else {
           if (!indexed.has(row)) { indexed.add(row); [...row.children].forEach((g, i) => glyphAt.set(g, i)); }
           let fin = finals.get(row);
@@ -399,7 +590,7 @@ function watch(page: Page, stop: string, capMs = 10_000): Promise<Watched> {
       }
     };
     const mo = new MutationObserver(onRecords);
-    mo.observe(root, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['style', 'aria-pressed'], attributeOldValue: true });
+    mo.observe(root, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['style', 'data-r', 'aria-pressed'], attributeOldValue: true });
     const parts = () => {
       const p: Record<string, Row[]> = {};
       const intro = document.getElementById('qzIntro')!, results = document.getElementById('qzResults')!, gift = document.getElementById('qzGift');
@@ -413,10 +604,12 @@ function watch(page: Page, stop: string, capMs = 10_000): Promise<Watched> {
     const anims = () => document.getAnimations().filter((a) => { const t = (a.effect as KeyframeEffect | null)?.target; return t instanceof Element && root.contains(t); }).map((a) => {
       const e = a.effect as KeyframeEffect;
       const props = [...new Set(e.getKeyframes().flatMap((f) => Object.keys(f)))].filter((k) => !/^(offset|computedOffset|easing|composite)$/.test(k)).sort().join(',');
-      return `${(e.target as Element).className}|${props}|${e.getTiming().duration}`;
+      return `${(e.target as Element).getAttribute('class')}|${props}|${e.getTiming().duration}`;   // the class attribute: our own stroke is an SVG element
     });
-    const moved = () => [...root.querySelectorAll<HTMLElement>('.qz-stage, .qz-intro, .qz-deck, .qz-cards, .qz-card, .qz-opt, .qz-results, .qz-result, .qz-big, .qz-mini-sw, .qz-gift, .qz-gift-in')]
-      .filter((e) => { const cs = getComputedStyle(e); return cs.transform !== 'none' || cs.translate !== 'none' || cs.rotate !== 'none' || cs.scale !== 'none'; }).map((e) => e.className);
+    // anything moved by a transform: nothing, the name's static narrowing aside (scaleX(0.8) as Sam's design draws it,
+    // E-S3-result), which stands on every name, shown or hidden, at exactly that in every frame
+    const moved = () => [...root.querySelectorAll<Element>('.qz-stage, .qz-intro, .qz-deck, .qz-cards, .qz-card, .qz-opt, .qz-results, .qz-result, .qz-ground, .qz-r-head, .qz-shade, .qz-smear, .qz-rtext, .qz-mini, .qz-gift, .qz-gift-in, .qz-offer')]
+      .filter((e) => { const cs = getComputedStyle(e); return cs.transform !== (e.matches('.qz-shade') ? narrow : 'none') || cs.translate !== 'none' || cs.rotate !== 'none' || cs.scale !== 'none'; }).map((e) => e.getAttribute('class') ?? '');
     const underlined = () => [...root.querySelectorAll<HTMLElement>('.qz-card:not([hidden]) .qz-opt')]
       .filter((o) => { const cs = getComputedStyle(o); return cs.textDecorationLine.includes('underline') && cs.textDecorationThickness === '2px'; }).map((o) => o.dataset.persona ?? '');
     const t0 = performance.now();
@@ -431,7 +624,7 @@ function watch(page: Page, stop: string, capMs = 10_000): Promise<Watched> {
       } else requestAnimationFrame(tick);
     };
     tick();
-  }), { stop, capMs });
+  }), { stop, capMs, narrow: NARROW });
 }
 /** the rows of a part in a frame, or undefined when the part is not on screen */
 const part = (f: Frame, p: string): Row[] | undefined => f.parts[p];
@@ -445,8 +638,11 @@ const full = (rows: Row[] | undefined) => !!rows && rows.length > 0 && rows.ever
  *  over before its last element's end) and none late (nothing still visible, still coming in or still rolling after its
  *  end, to the decoder's own frame); a step of the decoder seen part-way; the shape at every step (a wipe keeps the left
  *  of a line the more visible and is uneven part-way; a fade keeps a line's glyphs at one opacity); the roll seen on a
- *  visible glyph (a decode in) or never (the rest) */
-function expectMotion(at: string, w: Watched, p: number, m: { dir: 'in' | 'out'; keys: string[]; reduced?: boolean }): void {
+ *  visible glyph (a decode in) or never (the rest), and in a proportional face (data-dc="prop") drawn over each glyph's
+ *  own character, which stays, so no line changes width. `base`: the key index of the first element of the list the phase
+ *  decodes in (the watch numbers the gift's lines after the result's; on a phone held sideways the offer decodes in on
+ *  its own, its first line at 0 s) */
+function expectMotion(at: string, w: Watched, p: number, m: { dir: 'in' | 'out'; keys: string[]; reduced?: boolean; base?: number }): void {
   const ph = w.phases[p];
   expect(ph, `${at}: decode phase ${p + 1} ran`).toBeTruthy();
   expect(ph.off, `${at}: and ended`).toBeLessThan(Infinity);
@@ -455,13 +651,18 @@ function expectMotion(at: string, w: Watched, p: number, m: { dir: 'in' | 'out';
   const n = m.keys.length, step = m.dir === 'in' && n > 1 ? Math.min(50, 600 / (n - 1)) : 0;
   const dur = m.reduced || m.dir === 'out' ? 200 : 400, roll = m.dir === 'in' && !m.reduced ? 750 : 0;
   for (const k of m.keys) {
-    const mine = snaps.filter((s) => id(s) === k), last = mine[mine.length - 1], start = Number(k.split(':')[1]) * (m.dir === 'in' ? step : 0);
+    const mine = snaps.filter((s) => id(s) === k), last = mine[mine.length - 1], start = (Number(k.split(':')[1]) - (m.base ?? 0)) * (m.dir === 'in' ? step : 0);
     const name = `${at}: ${k} (${last.k})`;
     if (m.dir === 'in') {
+      // decode.ts draws glyph i of a row of n at clamp(11u - 10x), x = i / (n - 1) and u the time over the wipe: a row is in
+      // full at the wipe's end, but a row of one glyph (x = 0) at a eleventh of it, 36 ms (no line of the quiz is one
+      // glyph: the result's names decode glyph by glyph too, data-dc="prop", where a row at rest is one text node, its
+      // glyphs counted by its characters). Under reduced motion every glyph fades over 0.2 s alike
+      const inFull = start + (!m.reduced && last.n === 1 ? dur / 11 : dur);
       expect(last.min === 1 && last.rolled === 0, `${name} ends drawn in full, settled`).toBe(true);
       expect(since(mine.find((s) => s.max > 0)!), `${name}: nothing drawn before its start at ${start.toFixed(1)} ms`).toBeGreaterThan(start - 1);
-      expect(since(mine.find((s) => s.min === 1)!), `${name}: not in full before ${(start + dur).toFixed(1)} ms`).toBeGreaterThan(start + dur - 1);
-      expect(mine.filter((s) => s.min < 1 && since(s) > start + dur + 5).map(since), `${name}: still coming in after ${(start + dur).toFixed(1)} ms`).toEqual([]);
+      expect(since(mine.find((s) => s.min === 1)!), `${name}: not in full before ${inFull.toFixed(1)} ms`).toBeGreaterThan(inFull - 1);
+      expect(mine.filter((s) => s.min < 1 && since(s) > inFull + 5).map(since), `${name}: still coming in after ${inFull.toFixed(1)} ms`).toEqual([]);
       if (roll) expect(mine.filter((s) => s.rolled > 0 && since(s) > start + roll + 5).map(since), `${name}: still rolling after ${(start + roll).toFixed(1)} ms`).toEqual([]);
     } else {
       expect(last.max, `${name} ends gone`).toBe(0);
@@ -478,17 +679,20 @@ function expectMotion(at: string, w: Watched, p: number, m: { dir: 'in' | 'out';
     expect(snaps.filter((s) => !s.mono).map(id), `${at}: the left of each line the more visible at every step (${m.dir === 'in' ? 'in from the left' : 'out from the right'})`).toEqual([]);
     expect(moving.some((s) => !s.equal), `${at}: a wipe, uneven part-way, not a fade`).toBe(true);
   }
+  // a proportional line (data-dc="prop") keeps each glyph's own character, in its own case, under the roll: the rolled one
+  // is drawn over it (data-r), so the line never changes width ("the text animation of the site intact", Sam, 2026-11-02)
+  expect(snaps.filter((s) => !s.kept).map(id), `${at}: every proportional glyph keeps its own character`).toEqual([]);
   if (roll) expect(snaps.some((s) => s.shownRolled > 0), `${at}: a visible glyph shows a character other than its final one`).toBe(true);
   else expect(snaps.filter((s) => s.rolled > 0).map(id), `${at}: no glyph rolls`).toEqual([]);
 }
 
-test('AC5 and AC6: ten answers for The Quiet Curator with Math.random at 0.01 give Porcelain in full; the answer taken is marked at the press (underlined at 2 px) and stays marked and at full opacity while the rest of its question wipes out, holds 120 ms, then wipes out itself, and the next question decodes in; the result and the gift decode in staggered within 0.6 s; the swatches fade in on opacity; the announcement, the focus and the events queue', async ({ page, baseURL }) => {
+test('AC5 and AC6: ten answers for The Quiet Curator with Math.random at 0.01 give Porcelain in full; the answer taken is marked at the press (underlined at 2 px) and stays marked and at full opacity while the rest of its question wipes out, holds 120 ms, then wipes out itself, and the next question decodes in; the result and the gift decode in staggered within 0.6 s, glyph by glyph with the roll drawn over each glyph's own; the ground, the paint and the chips fade in on opacity; the announcement, the focus and the events queue', async ({ page, baseURL }) => {
   const r = drawn(CURATOR, 0.01);
   // the result as literals, so the derivation every other test leans on is pinned here once: the catalog's name and
   // family line, the link with the three-digit number (AC10 samples Porcelain as ?shade=010), and Sam's profile and
   // colour profile in his words (his dash written as a full stop, CLAUDE.md rule 16)
-  expect({ persona: r.p.name, shade: r.shade, name: r.name, fam: r.fam, finish: Q.finish(r.p.finish), href: r.href, ring: r.ring, profile: r.p.profile, palette: r.p.palette })
-    .toEqual({ persona: 'The Quiet Curator', shade: 'frosty-white-10', name: 'Porcelain', fam: 'Frosty White, shade 10 of 24', finish: 'Best in matte.', href: '/shades/frosty-white/?shade=010', ring: true,
+  expect({ persona: r.p.name, shade: r.shade, name: r.name, fam: r.fam, finish: Q.finish(r.p.finish), href: r.href, profile: r.p.profile, palette: r.p.palette })
+    .toEqual({ persona: 'The Quiet Curator', shade: 'frosty-white-10', name: 'Porcelain', fam: 'Frosty White, shade 10 of 24', finish: 'Best in matte.', href: '/shades/frosty-white/?shade=010',
       profile: 'You curate your life the way you’d curate a gallery. Nothing stays unless it earns its place. You’re thoughtful, observant, and quietly confident. You have a calming presence and an eye for the understated. You choose with intention, gravitating towards things that feel balanced, timeless, and effortlessly distinctive rather than simply trendy.',
       palette: 'Soft, warm neutrals with quiet depth. Your palette doesn’t shout.' });
   expect(r.others.map((id) => byId.get(id)!.name)).toEqual(['Stone', 'Almond', 'Sage', 'Pale Grey', 'Powder', 'Linen']);
@@ -540,7 +744,7 @@ test('AC5 and AC6: ten answers for The Quiet Curator with Math.random at 0.01 gi
   expect(full(two(frames[frames.length - 1])), 'and settles at full opacity').toBe(true);
   for (const f of frames) expect(f.moved, 'nothing moves by transform').toEqual([]);
   expect(await deckState(page)).toEqual(only(1));
-  // cards 2 to 9, then the last one watched: the result's lines and the gift's (23 in one list) decode in, the step
+  // cards 2 to 9, then the last one watched: the result's lines and the gift's (24 in one list) decode in, the step
   // shrunk from 0.05 s so the last starts at 0.6 s
   await answer(page, CURATOR.slice(0, 9), 1);
   await onTop(page, 9);
@@ -555,16 +759,17 @@ test('AC5 and AC6: ten answers for The Quiet Curator with Math.random at 0.01 gi
   expectMotion('the result and the gift decode in', e, 2, { dir: 'in', keys: [...keys('result', lines), ...keys('gift', GIFT_LINES, lines)] });
   await expect(page.locator('#find')).toHaveAttribute('data-state', 'result');
   await expectResult(page, r);
-  await expect(page.locator('#qzLive')).toHaveText(`${Q.eyebrow}: Porcelain. The Quiet Curator.`);
+  await expect(page.locator('#qzLive')).toHaveText(`${Q.eyebrow} Porcelain. The Quiet Curator.`);
   await expect(page.locator('.qz-result:not([hidden]) .qz-shade')).toBeFocused();
   await expect(page.locator('#qzDeck')).toBeHidden();
   await expect(page.locator('#qzGift')).toBeVisible();
-  // the large swatch and the six compatible ones fade in on opacity over 400 ms; nothing else in the section is animated
-  // through the Web Animations API (the decode sets each glyph's opacity itself)
-  expect(await animateLog(page)).toEqual(['qz-big|opacity|400', ...r.others.map(() => 'qz-mini-sw|opacity|400')]);
+  // the ground, the paint (Sam's swatch or our own stroke, whichever the build has) and the six chips fade in on opacity
+  // over 400 ms; nothing else in the section is animated through the Web Animations API (the decode sets each glyph's
+  // opacity itself)
+  expect(await animateLog(page)).toEqual(['qz-ground|opacity|400', `${await paintClass(page)}|opacity|400`, ...r.others.map(() => 'qz-mini|opacity|400')]);
   const form = page.locator('#qzForm');
   for (const [k, v] of [['shade', r.shade], ['family', 'frosty-white'], ['finish', 'matte'], ['persona', 'curator']]) await expect(form, k).toHaveAttribute(`data-${k}`, v);
-  expect(await events(page)).toEqual([['quiz_start', {}], ...answered(CURATOR), ['quiz_complete', { persona: 'curator', shade: 'frosty-white-10', others: r.others.join(',') }]]);
+  expect(await events(page)).toEqual([['quiz_start', {}], ...answered(CURATOR), UNLOCKED, ['quiz_complete', { persona: 'curator', shade: 'frosty-white-10', others: r.others.join(',') }]]);
 });
 
 test('AC6 a tie: The Warm Optimist, The Romantic Rebel and The Dreamer three each, the Rebel picked last among them, give The Romantic Rebel; Math.random at 0.5 draws the group\'s fourth shade, Blush', async ({ page, baseURL }) => {
@@ -583,9 +788,9 @@ test('AC6 a tie: The Warm Optimist, The Romantic Rebel and The Dreamer three eac
   await answer(page, TIE);
   await expect(page.locator('#find')).toHaveAttribute('data-state', 'result');
   await expectResult(page, r);
-  await expect(page.locator('#qzLive')).toHaveText(`${Q.eyebrow}: ${r.name}. ${r.p.name}.`);
+  await expect(page.locator('#qzLive')).toHaveText(`${Q.eyebrow} ${r.name}. ${r.p.name}.`);
   await expect(page.locator('.qz-result:not([hidden]) .qz-shade')).toBeFocused();
-  expect(await events(page)).toEqual([['quiz_start', {}], ...answered(TIE), ['quiz_complete', { persona: 'rebel', shade: r.shade, others: r.others.join(',') }]]);
+  expect(await events(page)).toEqual([['quiz_start', {}], ...answered(TIE), UNLOCKED, ['quiz_complete', { persona: 'rebel', shade: r.shade, others: r.others.join(',') }]]);
 });
 
 test('AC5 Back: absent on card 1; after three answers it wipes card 4 out (an answer pressed meanwhile is not taken) and decodes card 3 back in, reading 03 / 10, the only card unhidden, no answer marked; answered again, the result follows the corrected answers', async ({ page, baseURL }) => {
@@ -627,7 +832,7 @@ test('AC5 Back: absent on card 1; after three answers it wipes card 4 out (an an
   await expect(page.locator('#find')).toHaveAttribute('data-state', 'result');
   const r = drawn(FIXED, 0.01);
   await expectResult(page, r);
-  expect(await events(page)).toEqual([['quiz_start', {}], ...answered(BEFORE), ['quiz_back', { q: 4 }], ...answered(FIXED, 2), ['quiz_complete', { persona: r.p.id, shade: r.shade, others: r.others.join(',') }]]);
+  expect(await events(page)).toEqual([['quiz_start', {}], ...answered(BEFORE), ['quiz_back', { q: 4 }], ...answered(FIXED, 2), UNLOCKED, ['quiz_complete', { persona: r.p.id, shade: r.shade, others: r.others.join(',') }]]);
 });
 
 /** every click on the page from now on, caught before the deck's own listeners: when (the page's clock), its detail (2
@@ -906,13 +1111,17 @@ test('AC5 "Not quite? Try again" wipes the result and the gift out, decodes card
   await answer(page, DREAMER);
   await expectResult(page, one);
   await expect(page.locator('#qzGift')).toBeVisible();
-  // down to the gift's end, so the section's top is well above the viewport when the retry is pressed
-  await page.evaluate(() => document.getElementById('qzGift')!.scrollIntoView({ block: 'end' }));
+  // the result is one screen (E-S3-result), so the visitor scrolls on past it into section 4 (open under the result,
+  // quiz-gate.md D2) as far as the link stays on screen: the section's top is well above the viewport when the retry is
+  // pressed
+  const retry = page.locator('.qz-result:not([hidden]) .qz-retry');
+  await page.evaluate(() => { const r = document.querySelector('.qz-result:not([hidden]) .qz-retry')!.getBoundingClientRect(); scrollBy({ top: Math.min(300, r.top - 8), behavior: 'instant' }); });
   const top = () => page.evaluate(() => document.getElementById('find')!.getBoundingClientRect().top);
   expect(await top()).toBeLessThan(-100);
+  await expect(retry, 'the link still on screen').toBeInViewport({ ratio: 1 });
   await quiet(page);
   const flow = watch(page, '.qz-card[data-i="0"].is-top');
-  await page.locator('.qz-result:not([hidden]) .qz-retry').click();
+  await retry.click();
   const w = await flow, { frames } = w;
   expect(w.timedOut).toBe(false);
   expect(w.phases.length, 'the result and the gift out, card 1 in').toBe(2);
@@ -933,7 +1142,7 @@ test('AC5 "Not quite? Try again" wipes the result and the gift out, decodes card
   await page.evaluate(() => { Math.random = () => 0.5; });
   await answer(page, DREAMER);
   await expectResult(page, two);   // the first draw is back among the compatible shades and the second one hidden there
-  expect((await events(page)).filter(([n]) => n !== 'quiz_answer')).toEqual([['quiz_start', {}], ['quiz_complete', { persona: 'dreamer', shade: one.shade, others: one.others.join(',') }], ['quiz_retake', {}], ['quiz_complete', { persona: 'dreamer', shade: two.shade, others: two.others.join(',') }]]);
+  expect((await events(page)).filter(([n]) => n !== 'quiz_answer')).toEqual([['quiz_start', {}], UNLOCKED, ['quiz_complete', { persona: 'dreamer', shade: one.shade, others: one.others.join(',') }], ['quiz_retake', {}], ['quiz_complete', { persona: 'dreamer', shade: two.shade, others: two.others.join(',') }]]);
 });
 
 /** a label the server split (or the loader's say()): each child as class|aria-hidden|text|text-transform */
@@ -1074,86 +1283,158 @@ test('AC5 a hidden page: a decode under way jumps to its end state at visibility
   await expect(page.locator('#find')).not.toHaveAttribute('data-decoding');
 });
 
+/** each quiz shade's colour as computed, by catalog id (a chip is painted with its catalog token through the CSSOM) */
+const SHADE_RGB: Record<string, string> = Object.fromEntries([...new Set(QUIZ_PERSONAS.flatMap((p) => p.shades))].map((id) => [id, rgb(byId.get(id)!.hex)]));
+
 /** every element of #find, hidden ones too (a box on one would show the moment it is shown), and its ::before and ::after
- *  with a fill, a background image or a border: none but the swatches (the shade's colour, with a 1 px hairline: Urban
- *  Slate where data-ring asks for it on the fog of the 3D tier, Pearl Whisper where data-ring-night asks for it on the
- *  poster tier's night), the email field's underline (checked on its own) and the strips of an answer picture, whose
- *  background is the photograph (picture.ts draws the <img>'s chosen source through the CSSOM) with no fill and no border.
- *  Focus is dropped first: the focus ring's ::before is a box on :focus-visible only */
-const boxed = (page: Page): Promise<string[]> => page.evaluate(({ CLEAR, URBAN_SLATE, PEARL }) => {
+ *  with a fill, a background image or a border: none but the result's fills of 2026-11-02 (E-S3-result) and the answer
+ *  pictures. The result's: the ground (.qz-ground) in the drawn shade's deep tone (--qz-deep on #find; --night before a
+ *  result has set it), the offer's band (#qzGift, and its ::after, which carries the fill on below the section by 100lvh -
+ *  100svh) in its band tone (--qz-band; clear before), the colour layer of Sam's swatch (.qz-rub-col, where the build has
+ *  it) in the drawn shade (--qz-shade; clear before), the email field in Pearl Whisper with no border (a 3 px Urban Slate
+ *  line under it while aria-invalid), Send in Urban Slate (--night under the pointer), and each chip in its own shade
+ *  with the 1 px Pearl Whisper hairline where data-rim asks for it; a chip's name has no fill of its own. The strips of
+ *  an answer picture carry the photograph (picture.ts draws the <img>'s chosen source through the CSSOM) with no fill and no
+ *  border. Focus is dropped first: the focus ring's ::before is a box on :focus-visible only */
+const boxed = (page: Page): Promise<string[]> => page.evaluate(({ CLEAR, URBAN_SLATE, PEARL, NIGHT, SHADE_RGB }) => {
   const had = document.activeElement as HTMLElement | null;
   had?.blur?.();
+  const find = document.getElementById('find')!;
+  const tone = (k: string) => { const v = find.style.getPropertyValue(k).trim(); return v ? `rgb(${[1, 3, 5].map((i) => parseInt(v.slice(i, i + 2), 16)).join(', ')})` : null; };
+  // the drawn shade as finish() writes it, its catalog token (var(--shade-<id>)), as computed
+  const shade = /^var\(--shade-([a-z]+(?:-[a-z]+)*-\d+)\)$/.exec(find.style.getPropertyValue('--qz-shade').trim())?.[1];
   const found = [...document.querySelectorAll<HTMLElement>('#find, #find *')].flatMap((e) => [null, '::before', '::after'].map((p) => {
-    const cs = getComputedStyle(e, p), border = [cs.borderTopWidth, cs.borderRightWidth, cs.borderBottomWidth, cs.borderLeftWidth].join(' ');
+    const cs = getComputedStyle(e, p), border = [cs.borderTopWidth, cs.borderRightWidth, cs.borderBottomWidth, cs.borderLeftWidth].join(' '), none = border === '0px 0px 0px 0px';
     const what = `${e.tagName.toLowerCase()}${e.id ? `#${e.id}` : ''}${[...e.classList].map((c) => `.${c}`).join('')}${p ?? ''}`;
+    const fillOf = (want: string | null, line = '0px 0px 0px 0px', edge = '') => (border === line && (!edge || `${cs.borderTopStyle === 'none' ? cs.borderBottomStyle : cs.borderTopStyle} ${cs.borderTopStyle === 'none' ? cs.borderBottomColor : cs.borderTopColor}` === edge) && cs.backgroundColor === want && cs.backgroundImage === 'none' ? '' : `${what}: ${cs.backgroundColor} ${cs.backgroundImage} ${border} (want ${want} ${line} ${edge})`);
     if (!p && e.matches('.qz-pics .qz-strip')) {
       const layer = e.closest<HTMLElement>('.qz-shot'), img = e.closest('.qz-pics')?.querySelector<HTMLImageElement>(`.qz-pic[data-persona="${layer?.dataset.persona}"] img`);
       const photo = !!img?.currentSrc && cs.backgroundImage === `url("${img.currentSrc}")`;   // built and drawn at once (picture.ts build()), so never none
-      return border === '0px 0px 0px 0px' && cs.backgroundColor === CLEAR && photo ? '' : `${what}: ${cs.backgroundColor} ${cs.backgroundImage} ${border}`;
+      return none && cs.backgroundColor === CLEAR && photo ? '' : `${what}: ${cs.backgroundColor} ${cs.backgroundImage} ${border}`;
     }
-    if (!p && e.matches('.qz-big, .qz-mini-sw')) {
-      const fog = document.documentElement.classList.contains('hero3d'), ring = e.hasAttribute(fog ? 'data-ring' : 'data-ring-night');
-      return border === (ring ? '1px 1px 1px 1px' : '0px 0px 0px 0px') && (!ring || cs.borderTopColor === (fog ? URBAN_SLATE : PEARL)) && cs.backgroundImage === 'none' ? '' : `${what}: ${border} ${cs.borderTopColor} ${cs.backgroundImage}`;
-    }
-    const fill = cs.backgroundColor !== CLEAR || cs.backgroundImage !== 'none', edge = border !== '0px 0px 0px 0px' && !(!p && e.id === 'qzEmail');
-    return fill || edge ? `${what}: ${cs.backgroundColor} ${cs.backgroundImage} ${border}` : '';
+    if (!p && e.matches('.qz-ground')) return fillOf(tone('--qz-deep') ?? NIGHT);
+    if (!p && e.matches('.qz-rub-col')) return fillOf(shade ? SHADE_RGB[shade] ?? `the catalog's ${shade}` : CLEAR);
+    if (e.id === 'qzGift' && p !== '::before') return fillOf(tone('--qz-band') ?? CLEAR);   // its ::after runs the band's fill on under the section where a phone browser's bars have gone
+    if (!p && e.id === 'qzEmail') return e.getAttribute('aria-invalid') === 'true' ? fillOf(PEARL, '0px 0px 3px 0px', `solid ${URBAN_SLATE}`) : fillOf(PEARL);
+    if (!p && e.id === 'qzSend') return fillOf(e.matches(':hover') && e.getAttribute('aria-disabled') !== 'true' ? NIGHT : URBAN_SLATE);
+    if (!p && e.matches('.qz-mini')) return e.hasAttribute('data-rim') ? fillOf(SHADE_RGB[e.dataset.shade ?? ''], '1px 1px 1px 1px', `solid ${PEARL}`) : fillOf(SHADE_RGB[e.dataset.shade ?? '']);
+    const fill = cs.backgroundColor !== CLEAR || cs.backgroundImage !== 'none';
+    return fill || !none ? `${what}: ${cs.backgroundColor} ${cs.backgroundImage} ${border}` : '';
   })).filter(Boolean);
   had?.focus?.({ preventScroll: true });   // and given back, so the deck's own focus carries on
   return found;
-}, { CLEAR, URBAN_SLATE, PEARL });
+}, { CLEAR, URBAN_SLATE, PEARL, NIGHT, SHADE_RGB });
 
-/** no box-shadow or text-shadow on anything in #find, its ::before and ::after included */
-const shadowed = (page: Page): Promise<string[]> => page.evaluate(() => [...document.querySelectorAll('#find, #find *')].flatMap((e) => [null, '::before', '::after'].map((p) => { const cs = getComputedStyle(e, p); return cs.boxShadow !== 'none' || cs.textShadow !== 'none' ? `${e.className}${p ?? ''}: ${cs.boxShadow} ${cs.textShadow}` : ''; })).filter(Boolean));
+/** box-shadow and text-shadow on anything in #find, its ::before and ::after included: none but the shade's name's one hard
+ *  offset (E-S3-result: the reference's darker copy behind the letters, 20 px right and down at its 341 px capitals),
+ *  0.065 em right and 0.052 em down in the drawn shade's mid tone (--qz-mid on #find; Urban Slate before a result has set
+ *  it), which the name's own words inherit; and every name has it. (The decode's roll overlay carries the name's offset
+ *  while a glyph rolls; at rest no glyph rolls, so it is not here) */
+const shadowed = (page: Page): Promise<string[]> => page.evaluate(({ URBAN_SLATE }) => {
+  const mid = document.getElementById('find')!.style.getPropertyValue('--qz-mid').trim();
+  const tone = mid ? `rgb(${[1, 3, 5].map((i) => parseInt(mid.slice(i, i + 2), 16)).join(', ')})` : URBAN_SLATE;
+  return [...document.querySelectorAll('#find, #find *')].flatMap((e) => [null, '::before', '::after'].map((p) => {
+    const cs = getComputedStyle(e, p), name = e.closest('.qz-shade'), what = `${e.getAttribute('class') ?? e.tagName.toLowerCase()}${p ?? ''}`;
+    if (!name) return cs.boxShadow !== 'none' || cs.textShadow !== 'none' ? `${what}: ${cs.boxShadow} ${cs.textShadow}` : '';
+    const em = parseFloat(getComputedStyle(name).fontSize), x = 0.065 * em, y = 0.052 * em, m = /^(rgb\([^)]*\)) (-?[\d.]+)px (-?[\d.]+)px 0px$/.exec(cs.textShadow);
+    return cs.boxShadow === 'none' && m && m[1] === tone && Math.abs(Number(m[2]) - x) < 0.01 && Math.abs(Number(m[3]) - y) < 0.01 ? '' : `${what}: ${cs.boxShadow} ${cs.textShadow}, not ${tone} ${x.toFixed(3)}px ${y.toFixed(3)}px 0px`;
+  })).filter(Boolean);
+}, { URBAN_SLATE });
 
-/** the type scale (quiz.css, 2026-10-20): each size a clamp() of the screen's width and height, 1rem being 16 px; the
- *  label (the body and the answers) 15 to 22 px, the question and headline step 24 to 52, the shade's name 36 to 88 */
-interface Sizes { label: number; step: number; name: number }
+/** the type scale (quiz.css): each size a clamp() of the screen's width and height, 1rem being 16 px. The intro's and the
+ *  questions' (2026-10-20): the label (--qz-fs: the body and the answers) 15 to 22 px, the question and headline step
+ *  (--qz-fs-q) 24 to 52. The result's and the offer's (2026-11-02, E-S3-result; DESIGN.md, The quiz result's type): its
+ *  words (--qz-fs-rt) 15 to 30, its labels (--qz-fs-label) 16 to 37 and the offer's line (--qz-fs-offer) 15 to 36 */
+interface Sizes { label: number; step: number; rt: number; rlabel: number; offer: number }
 function typeScale(w: number, h: number): Sizes {
   const clamp = (lo: number, v: number, hi: number) => Math.min(hi, Math.max(lo, v)), vw = w / 100, vh = h / 100, rem = 16;
-  return { label: clamp(15, Math.min(0.6 * rem + 0.95 * vw, 2.6 * vh), 22), step: clamp(24, Math.min(rem + 2.3 * vw, 5 * vh), 52), name: clamp(36, Math.min(rem + 4.6 * vw, 10 * vh), 88) };
+  return {
+    label: clamp(15, Math.min(0.6 * rem + 0.95 * vw, 2.6 * vh), 22), step: clamp(24, Math.min(rem + 2.3 * vw, 5 * vh), 52),
+    rt: clamp(15, Math.min(1.5 * vw, 2.7 * vh), 30), rlabel: clamp(16, Math.min(1.85 * vw, 3.3 * vh), 37), offer: clamp(15, Math.min(1.8 * vw, 3.2 * vh), 36),
+  };
 }
 
-/** every line of #find as drawn, hidden ones too, that is not in section 2's label type: each decoded element and its
- *  glyph row, the lines that are not decoded (the field errors, the status line, the done line, Not you), the consent
- *  tick and anything else holding text of its own; less the visually hidden copies (what assistive technology reads, not
- *  what is drawn) and the email field (the address keeps the case it is typed in, at 16 px against iOS's zoom). The size
- *  by role, from the type scale for the screen (typeScale()): the label's (the body and the answers), the question and
- *  headline step, and the shade's name, each within 0.01 px of its clamp() */
+/** every line of #find as drawn, hidden ones too, held to the type of its role: each decoded element and its glyph row,
+ *  the lines that are not decoded (the field errors, the status line, the done line, Not you), the consent tick and
+ *  anything else holding text of its own; less the visually hidden copies (what assistive technology reads, not what is
+ *  drawn) and the email field (checked on its own). Section 2's label type (IBM Plex Mono 500, upper case, no
+ *  letter-spacing, Pearl Whisper) on the intro and the questions: the label (the intro's lines, the answers, the footers)
+ *  and the question and headline step. The result and the offer in Sam's design's faces (E-S3-result), each size from
+ *  the type scale for the screen (typeScale()) times the result's step (--qz-rs on #find, 1 while unset) and never under
+ *  12 px (CHECKLIST A3): the shade's name in Anton 400 capitals at the size deck.ts fits it to its column (--qz-name-fs;
+ *  64 px on a result never shown); in Work Sans 300 capitals the eyebrow at the result's label step at -0.02 em, the
+ *  personality at 0.72 of it at -0.02 em, the family line, the finish and the links at 0.6 of it, and the band's own lines
+ *  (the consent and its tick, the errors, the status line, the done line, Not you, Back to your shade) at 0.5 of it; in
+ *  Poppins 400 as written the profile, the colour profile and "We also recommend:" at the words' step, and the chips'
+ *  names in its italic at 0.9 of it in their chip's ink (data-ink: --night or Pearl Whisper); the offer's line in Poppins
+ *  400 as written, its middle at 700, at the offer's step and 13 px at the least; Send in Work Sans 300 capitals at the
+ *  offer's step, 14 px at the least; the fine print in Poppins 400 at 12 px. Every line roman and in Pearl Whisper with
+ *  no letter-spacing unless said; each size within 0.01 px */
 const offType = async (page: Page, sizes: Sizes): Promise<string[]> => {
-  const lines = await page.evaluate(() => {
+  const { lines, rs } = await page.evaluate(() => {
     const els = new Set<Element>(document.querySelectorAll('#find [data-dc], #find .dc, #find .qz-err, #find .qz-msg, #find .qz-done-text, #find .qz-notyou, #find .qz-tick'));
     for (const e of document.querySelectorAll('#find *')) if ([...e.childNodes].some((n) => n.nodeType === Node.TEXT_NODE && n.textContent!.trim())) els.add(e);
-    return [...els].filter((e) => !e.closest('.sr-only, .dc > span, #qzEmail, noscript')).map((e) => {
-      const cs = getComputedStyle(e), role = e.closest('.qz-shade') ? 'name' : e.closest('.qz-h, .qz-q, .qz-own, .qz-gift-h') ? 'step' : 'label';
-      return { what: `${e.tagName.toLowerCase()}${e.id ? `#${e.id}` : ''}${[...e.classList].map((c) => `.${c}`).join('')}`, role, got: [cs.fontFamily.split(',')[0].trim(), cs.fontWeight, cs.textTransform, cs.letterSpacing === 'normal' ? '0px' : cs.letterSpacing, cs.color, cs.fontSize].join('|') };
-    });
+    return {
+      rs: parseFloat(getComputedStyle(document.getElementById('find')!).getPropertyValue('--qz-rs')) || 1,
+      lines: [...els].filter((e) => !e.closest('.sr-only, .dc > span, #qzEmail, noscript')).map((e) => {
+        const cs = getComputedStyle(e), name = e.closest<HTMLElement>('.qz-shade'), chip = e.closest<HTMLElement>('.qz-mini');
+        const role = name ? 'name' : e.closest('.qz-h, .qz-q') ? 'step' : e.closest('.qz-eyebrow') ? 'eyebrow' : e.closest('.qz-persona') ? 'persona' : e.closest('.qz-text, .qz-palette') ? 'words' : chip ? 'chip'
+          : e.closest('.qz-result') ? 'result' : e.closest('.qz-offer') ? 'offer' : e.closest('.qz-fine') ? 'fine' : e.closest('#qzSend') ? 'send' : e.closest('#qzGift') ? 'band' : 'label';
+        return {
+          what: `${e.tagName.toLowerCase()}${e.id ? `#${e.id}` : ''}${[...e.classList].map((c) => `.${c}`).join('')}`, role, bold: !!e.closest('.qz-offer strong'), ink: chip?.dataset.ink ?? '',
+          fit: name ? parseFloat(name.style.getPropertyValue('--qz-name-fs')) || 64 : 0,
+          family: cs.fontFamily.split(',')[0].trim().replace(/"/g, ''), weight: cs.fontWeight, style: cs.fontStyle, transform: cs.textTransform, spacing: cs.letterSpacing === 'normal' ? 0 : parseFloat(cs.letterSpacing), color: cs.color, size: parseFloat(cs.fontSize),
+        };
+      }),
+    };
   });
   expect(lines.length, 'lines found').toBeGreaterThan(100);
-  return lines.filter((l) => {
-    const cut = l.got.lastIndexOf('|'), size = parseFloat(l.got.slice(cut + 1));
-    return l.got.slice(0, cut) !== `"IBM Plex Mono"|500|uppercase|0px|${PEARL}` || !(Math.abs(size - sizes[l.role as keyof Sizes]) <= 0.01);
-  }).map((l) => `${l.what} (${l.role}): ${l.got}, not ${sizes[l.role as keyof Sizes].toFixed(3)}px`);
+  const mono = { family: 'IBM Plex Mono', weight: '500', style: 'normal', transform: 'uppercase', spacing: 0, color: PEARL };
+  const work = { family: 'Work Sans', weight: '300', style: 'normal', transform: 'uppercase', spacing: 0, color: PEARL }, poppins = { family: 'Poppins', weight: '400', style: 'normal', transform: 'none', spacing: 0, color: PEARL };
+  // the result's and the band's type shrinks to fit (--qz-rs), never under 12 px (CHECKLIST A3), the offer 13 and Send 14
+  const at = (v: number, least = 12) => Math.max(least, v * rs);
+  return lines.flatMap((l) => {
+    const want = l.role === 'name' ? { family: 'Anton', weight: '400', style: 'normal', transform: 'uppercase', spacing: 0, color: PEARL, size: l.fit }
+      : l.role === 'step' ? { ...mono, size: sizes.step }
+      : l.role === 'eyebrow' ? { ...work, spacing: -0.02 * at(sizes.rlabel), size: at(sizes.rlabel) }
+      : l.role === 'persona' ? { ...work, spacing: -0.02 * at(sizes.rlabel * 0.72), size: at(sizes.rlabel * 0.72) }
+      : l.role === 'words' ? { ...poppins, size: at(sizes.rt) }
+      : l.role === 'chip' ? { ...poppins, style: 'italic', color: INK[l.ink] ?? `no ink (data-ink "${l.ink}")`, size: at(sizes.rt * 0.9) }
+      : l.role === 'result' ? { ...work, size: at(sizes.rlabel * 0.6) }
+      : l.role === 'offer' ? { ...poppins, weight: l.bold ? '700' : '400', size: at(sizes.offer, 13) }
+      : l.role === 'fine' ? { ...poppins, size: 12 }
+      : l.role === 'send' ? { ...work, size: at(sizes.offer, 14) }
+      : l.role === 'band' ? { ...work, size: at(sizes.rlabel * 0.5) }
+      : { ...mono, size: sizes.label };
+    const ok = l.family === want.family && l.weight === want.weight && l.style === want.style && l.transform === want.transform && Math.abs(l.spacing - want.spacing) <= 0.01 && l.color === want.color && Math.abs(l.size - want.size) <= 0.01;
+    return ok ? [] : [`${l.what} (${l.role}): ${l.family}|${l.weight}|${l.style}|${l.transform}|${l.spacing}px|${l.color}|${l.size}px, not ${want.family}|${want.weight}|${want.style}|${want.transform}|${want.spacing.toFixed(3)}px|${want.color}|${want.size.toFixed(3)}px`];
+  });
 };
 
-/** the text controls of #find (Begin, Back, See it on the case, Try again, Send my gift, Not you) that are not underlined */
+/** the text controls of #find (Begin, Skip quiz, Back, See it on the case, Try again, Get an exclusive launch discount,
+ *  Back to your shade, Not you) that are not underlined; Send is a filled button since 2026-11-02, not one of them */
 const plainLinks = (page: Page): Promise<string[]> => page.evaluate(() => [...document.querySelectorAll<HTMLElement>('#find .qz-link')].filter((l) => !getComputedStyle(l).textDecorationLine.includes('underline')).map((l) => l.className));
 
-test('AC1 and AC7 no boxes: no fill, border or shadow on any element of the section or its ::before and ::after, hidden ones included, but the swatches (on the poster tier a Pearl hairline on the dark shades, none on the pale), the email field\'s underline and an answer picture\'s strips (the photograph, nothing else); every line in section 2\'s label type, IBM Plex Mono 500, upper case, no letter-spacing, Pearl Whisper, at the type scale\'s clamp() sizes for the screen (18.72, 36 and 72 px at 1280 x 720), the error, status, done and Not-you lines and the consent tick included; every text control underlined', async ({ page, baseURL }) => {
+test('AC1 and AC7 no boxes but the result\'s own: no fill, border or shadow on any element of the section or its ::before and ::after, hidden ones included, but the ground in the drawn shade\'s deep tone, the offer\'s band in its band tone, the colour layer of Sam\'s swatch in the drawn shade (where the build has it), the Pearl Whisper email field (its 3 px Urban Slate line when invalid), the Urban Slate Send, the chips in their shades (a Pearl hairline on the darkest, their names with no fill of their own), the name\'s one offset layer in its mid tone (E-S3-result), and an answer picture\'s strips (the photograph, nothing else); every line in its role\'s type: on the intro and the questions section 2\'s label type, IBM Plex Mono 500, upper case, no letter-spacing, Pearl Whisper, at the type scale\'s clamp() sizes for the screen (18.72 and 36 px at 1280 x 720), and on the result and the offer Sam\'s design\'s faces at the result\'s step: the name in Anton capitals, the labels, Send and the band\'s own lines (the error, status, done and Not-you lines and the consent tick included) in Work Sans Light capitals, the words, the offer and the fine print in Poppins, the chips\' names in its italic; the field\'s words in Work Sans Light, 16 px at the least; every text control underlined', async ({ page, baseURL }) => {
   let status = 500;
   await page.route('**/api/quiz-lead', (route) => route.fulfill({ status, contentType: 'application/json', body: '{}' }));
   // the clamp() tokens against the sizes measured on 2026-10-20: the answers and the questions 20.8 and 40 px at 1280 x 800,
-  // 17.08 and 32.85 at 1366 x 657, 15 and 24.97 on a 390 x 844 phone
-  const r2 = (s: Sizes) => [s.label, s.step, s.name].map((v) => Math.round(v * 100) / 100);
-  expect([r2(typeScale(1280, 800)), r2(typeScale(1366, 657)), r2(typeScale(390, 844)), r2(typeScale(1280, 720))]).toEqual([[20.8, 40, 74.88], [17.08, 32.85, 65.7], [15, 24.97, 36], [18.72, 36, 72]]);
+  // 17.08 and 32.85 at 1366 x 657, 15 and 24.97 on a 390 x 844 phone; beside them the result's three of 2026-11-02 (its
+  // words, its labels and the offer's line) as quiz.css writes them, each at its floor on the phone
+  const r2 = (s: Sizes) => [s.label, s.step, s.rt, s.rlabel, s.offer].map((v) => Math.round(v * 100) / 100);
+  expect([r2(typeScale(1280, 800)), r2(typeScale(1366, 657)), r2(typeScale(390, 844)), r2(typeScale(1280, 720))]).toEqual([[20.8, 40, 19.2, 23.68, 23.04], [17.08, 32.85, 17.74, 21.68, 21.02], [15, 24.97, 15, 16, 15], [18.72, 36, 19.2, 23.68, 23.04]]);
   await pin(page, 0.01);
   await openQuiz(page, baseURL);
   const { width, height } = page.viewportSize()!;
   expect([width, height], 'the default screen').toEqual([1280, 720]);
   const sizes = typeScale(width, height);
   const check = async (at: string) => {
-    expect(await boxed(page), `${at}: no fill or border`).toEqual([]);
-    expect(await shadowed(page), `${at}: no shadow`).toEqual([]);
-    expect(await offType(page, sizes), `${at}: the label type`).toEqual([]);
+    // Send changes colour under the pointer on the standard ease (150 ms): read once it stands at the end its hover state
+    // gives it (--night under the pointer, Urban Slate otherwise)
+    await expect.poll(() => page.locator('#qzSend').evaluate((e, [slate, night]) => getComputedStyle(e).backgroundColor === (e.matches(':hover') && e.getAttribute('aria-disabled') !== 'true' ? night : slate), [URBAN_SLATE, NIGHT]), { message: `${at}: Send at its colour` }).toBe(true);
+    expect(await boxed(page), `${at}: no fill or border but the result's`).toEqual([]);
+    expect(await shadowed(page), `${at}: no shadow but the name's offset layer`).toEqual([]);
+    expect(await offType(page, sizes), `${at}: each line in its role's type`).toEqual([]);
     expect(await plainLinks(page), `${at}: the controls underlined`).toEqual([]);
   };
   await check('the intro');
@@ -1173,8 +1454,17 @@ test('AC1 and AC7 no boxes: no fill, border or shadow on any element of the sect
   await answer(page, CURATOR, 1);
   await expectResult(page, drawn(CURATOR, 0.01));
   await check('the result and the gift');
-  expect(await page.locator('#qzEmail').evaluate((e) => { const cs = getComputedStyle(e); return { bg: cs.backgroundColor, image: cs.backgroundImage, border: [cs.borderTopWidth, cs.borderRightWidth, cs.borderBottomWidth, cs.borderLeftWidth].join(' '), shadow: cs.boxShadow }; }), 'the email field is its underline only').toEqual({ bg: CLEAR, image: 'none', border: '0px 0px 1px 0px', shadow: 'none' });
-  await expect(page.locator('#qzEmail')).toHaveCSS('border-bottom-color', PEARL);
+  // the field is a Pearl Whisper box with Urban Slate words in Work Sans Light at the offer's step times the result's, 16 px
+  // at the least (iOS zooms the page on focusing a smaller field), as typed; Send an Urban Slate button with its words in
+  // Pearl Whisper (Sam's reference of 2026-11-02, E-S3-result)
+  const rs = await page.locator('#find').evaluate((f) => parseFloat(getComputedStyle(f).getPropertyValue('--qz-rs')) || 1), fieldAt = Math.max(16, sizes.offer * rs);
+  const { size: fieldSize, ...field } = await page.locator('#qzEmail').evaluate((e) => { const cs = getComputedStyle(e); return { bg: cs.backgroundColor, image: cs.backgroundImage, border: [cs.borderTopWidth, cs.borderRightWidth, cs.borderBottomWidth, cs.borderLeftWidth].join(' '), shadow: cs.boxShadow, color: cs.color, font: `${cs.fontFamily.split(',')[0].replace(/"/g, '')}|${cs.fontWeight}|${cs.fontStyle}`, transform: cs.textTransform, size: parseFloat(cs.fontSize) }; });
+  expect(field, 'the email field, a Pearl Whisper box with Urban Slate words in Work Sans Light').toEqual({ bg: PEARL, image: 'none', border: '0px 0px 0px 0px', shadow: 'none', color: URBAN_SLATE, font: 'Work Sans|300|normal', transform: 'none' });
+  expect(Math.abs(fieldSize - fieldAt), `its words at ${fieldAt.toFixed(3)} px, the offer's step at --qz-rs ${rs}, 16 px at the least (${fieldSize} px)`).toBeLessThanOrEqual(0.01);
+  await expect(page.locator('#qzEmail')).toHaveAttribute('placeholder', Q.emailPlaceholder);
+  await page.mouse.move(0, 0);
+  await expect(page.locator('#qzSend')).toHaveCSS('background-color', URBAN_SLATE);
+  expect(await page.locator('#qzSend').evaluate((e) => { const cs = getComputedStyle(e); return { color: cs.color, border: [cs.borderTopWidth, cs.borderRightWidth, cs.borderBottomWidth, cs.borderLeftWidth].join(' '), line: cs.textDecorationLine }; }), 'Send, an Urban Slate button with Pearl words and no underline').toEqual({ color: PEARL, border: '0px 0px 0px 0px', line: 'none' });
   // the lines that are not decoded, with words in them: both field errors (an empty submit), the status line (500), the
   // done line and Not you (200)
   await page.locator('#qzSend').click();
@@ -1190,59 +1480,73 @@ test('AC1 and AC7 no boxes: no fill, border or shadow on any element of the sect
   await check('the done line and Not you');
 });
 
-/** every swatch of #find, hidden ones too: its shade, its two hairline attributes and its border as computed, with
- *  whether the page is on the fog (html.hero3d) at that moment */
-const swatches = (page: Page) => page.evaluate(() => ({
+/** every chip of #find, hidden ones too: its shade, data-ink, data-rim, its fill and its border as computed, and its
+ *  name's own fill and colour, with whether the page is on the fog (html.hero3d) at that moment */
+const chipList = (page: Page) => page.evaluate(() => ({
   fog: document.documentElement.classList.contains('hero3d'),
-  list: [...document.querySelectorAll<HTMLElement>('#find .qz-big, #find .qz-mini-sw')].map((e) => {
-    const cs = getComputedStyle(e);
-    return { what: `${e.classList[0]} ${e.dataset.shade}`, shade: e.dataset.shade ?? '', ring: e.hasAttribute('data-ring'), night: e.hasAttribute('data-ring-night'), border: [cs.borderTopWidth, cs.borderRightWidth, cs.borderBottomWidth, cs.borderLeftWidth].join(' '), style: cs.borderTopStyle, color: cs.borderTopColor };
+  list: [...document.querySelectorAll<HTMLElement>('#find .qz-mini')].map((e) => {
+    const cs = getComputedStyle(e), name = getComputedStyle(e.querySelector('.qz-mini-name')!);
+    return { shade: e.dataset.shade ?? '', ink: e.dataset.ink ?? null, rim: e.hasAttribute('data-rim'), fill: cs.backgroundColor, border: [cs.borderTopWidth, cs.borderRightWidth, cs.borderBottomWidth, cs.borderLeftWidth].join(' '), style: cs.borderTopStyle, edge: cs.borderTopColor, nameFill: name.backgroundColor, name: name.color };
   }),
 }));
 
-test('AC7 the swatches\' hairline follows the ground: on the poster tier (the quiz on --night) the ten dark shades under 3:1 against it carry data-ring-night and a 1 px Pearl Whisper border and the pale data-ring shades none; the drawn shade\'s large swatch takes its own (Wine for The Main Character, Thyme for The Strategist, whose server default is Navy); on the 3D tier (the fog) the 1 px Urban Slate ring is back and no Pearl border is drawn', async ({ page, baseURL }) => {
-  expect(NIGHT.map((id) => byId.get(id)!.name), 'Sam\'s ten dark shades').toEqual(['Chestnut', 'Sapphire', 'Prussian', 'Navy', 'Midnight', 'Pine', 'Claret', 'Burgundy', 'Wine', 'Fig']);
-  const pearl = { border: '1px 1px 1px 1px', style: 'solid', color: PEARL }, slate = { border: '1px 1px 1px 1px', style: 'solid', color: URBAN_SLATE }, none = { border: '0px 0px 0px 0px' };
-  const each = (list: Awaited<ReturnType<typeof swatches>>['list'], want: (s: { ring: boolean; night: boolean }) => Record<string, string>) => {
-    for (const s of list) {
-      const hex = byId.get(s.shade)!.hex;
-      expect([s.ring, s.night], `${s.what}: data-ring and data-ring-night as config/quiz.ts gives them`).toEqual([needsRing(hex), needsRingNight(hex)]);
-      expect(s, s.what).toMatchObject(want(s));
+test('AC7 and E-S3-result the chips and the ground: every chip of every result (hidden ones too) is painted in its own shade, the nine darkest (chipRim: under 1.5:1 against the lightest ground) with a 1 px Pearl Whisper hairline and the rest no border, its name on the chip itself with no fill of its own, in --night or Pearl Whisper, whichever reads better on the shade (chipInk, data-ink: 4.4:1 or better, Fuchsia and Teal the two under AA\'s 4.5), alike on the poster tier and the 3D tier and under every result; the drawn shade\'s tones colour the ground, the band, the name\'s offset layer and the paint (Wine for The Main Character, gloss and one of the nine: #find[data-sm-rim], and where the build draws our own stroke its Pearl highlight and outline; Thyme for The Calm Strategist, matte, with neither), Pearl Whisper reading 13.6:1 or better on the ground and 11.6:1 on the band', async ({ page, baseURL }) => {
+  expect(RIM.map((id) => byId.get(id)!.name), 'the nine dark shades').toEqual(['Chestnut', 'Sapphire', 'Prussian', 'Navy', 'Midnight', 'Pine', 'Burgundy', 'Wine', 'Fig']);
+  const each = (at: string, list: Awaited<ReturnType<typeof chipList>>['list']) => {
+    for (const c of list) {
+      const hex = byId.get(c.shade)!.hex, rim = chipRim(hex), ink = chipInk(hex);
+      expect([c.ink, c.rim], `${at}: ${c.shade}: data-ink and data-rim as config/quiz-tones.ts gives them`).toEqual([ink, rim]);
+      expect({ border: c.border, ...(rim ? { style: c.style, edge: c.edge } : {}), nameFill: c.nameFill, name: c.name }, `${at}: ${c.shade}`).toEqual({ border: rim ? '1px 1px 1px 1px' : '0px 0px 0px 0px', ...(rim ? { style: 'solid', edge: PEARL } : {}), nameFill: CLEAR, name: INK[ink] });
+      // read against the catalog's hex (on the 3D tier the deck has painted no chip yet); the unit test's floor
+      // (tests/unit/quiz.test.ts): Teal's 4.395 is the 4.4:1 at the least
+      expect(contrast(c.name, rgb(hex)), `${at}: ${c.shade}: its name on it at 4.4:1 at the least`).toBeGreaterThanOrEqual(4.39);
     }
   };
   await pin(page, 0.5);
   await openQuiz(page, baseURL);
-  const night = await swatches(page);
+  const night = await chipList(page);
   expect(night.fog, 'the poster tier').toBe(false);
-  expect([...new Set(night.list.filter((s) => s.night).map((s) => s.shade))].sort(), 'the ten dark shades carry data-ring-night').toEqual(NIGHT);
-  expect(night.list.filter((s) => s.ring).length, 'pale shades with data-ring among them').toBeGreaterThan(0);
-  each(night.list, (s) => (s.night ? pearl : none));
-  // the drawn shade's large swatch: Wine (dark) on Ruby's article, toggled on
+  expect(night.list.length, 'every result\'s group').toBe(QUIZ_PERSONAS.reduce((n, p) => n + p.shades.length, 0));
+  each('poster tier, before a result', night.list);
+  expect(night.list.filter((c) => c.fill !== rgb(byId.get(c.shade)!.hex)).map((c) => `${c.shade} ${c.fill}`), 'each chip painted in its shade (deck.ts, through the CSSOM)').toEqual([]);
+  expect([...new Set(night.list.filter((c) => c.rim).map((c) => c.shade))].sort(), 'the nine dark shades carry data-rim').toEqual(RIM);
+  // the drawn shade's tones (expectResult): Wine on Ruby's article (gloss), then Thyme on Navy's (matte)
   const MAIN = Array<PersonaId>(10).fill('main'), STRATEGIST = Array<PersonaId>(10).fill('strategist');
-  expect([drawn(MAIN, 0.5).name, drawn(MAIN, 0.5).night, byId.get(QUIZ_PERSONAS.find((p) => p.id === 'main')!.shades[0])!.name], 'Wine is drawn where Ruby stood').toEqual(['Wine', true, 'Ruby']);
-  expect([drawn(STRATEGIST, 0.5).name, drawn(STRATEGIST, 0.5).night, byId.get(QUIZ_PERSONAS.find((p) => p.id === 'strategist')!.shades[0])!.name], 'Thyme is drawn where Navy stood').toEqual(['Thyme', false, 'Navy']);
-  const big = page.locator('.qz-result:not([hidden]) .qz-big');
-  const bigLine = () => big.evaluate((e) => { const cs = getComputedStyle(e); return { border: [cs.borderTopWidth, cs.borderRightWidth, cs.borderBottomWidth, cs.borderLeftWidth].join(' '), style: cs.borderTopStyle, color: cs.borderTopColor }; });
+  expect([drawn(MAIN, 0.5).name, drawn(MAIN, 0.5).p.finish, chipRim(byId.get(drawn(MAIN, 0.5).shade)!.hex), byId.get(QUIZ_PERSONAS.find((p) => p.id === 'main')!.shades[0])!.name], 'Wine, one of the nine, is drawn where Ruby stood').toEqual(['Wine', 'gloss', true, 'Ruby']);
+  expect([drawn(STRATEGIST, 0.5).name, drawn(STRATEGIST, 0.5).p.finish, chipRim(byId.get(drawn(STRATEGIST, 0.5).shade)!.hex), byId.get(QUIZ_PERSONAS.find((p) => p.id === 'strategist')!.shades[0])!.name], 'Thyme is drawn where Navy stood').toEqual(['Thyme', 'matte', false, 'Navy']);
+  const grounds = () => page.evaluate(() => ({ ground: getComputedStyle(document.querySelector('#find > .qz-ground')!).backgroundColor, band: getComputedStyle(document.getElementById('qzGift')!).backgroundColor }));
   await begin(page);
   await answer(page, MAIN);
   await expectResult(page, drawn(MAIN, 0.5));
-  await expect(big).toHaveAttribute('data-ring-night', '');
-  expect(await bigLine(), 'Wine large, with the Pearl hairline').toMatchObject(pearl);
-  // and toggled off: Thyme on Navy's article
+  const wine = await grounds();
+  expect(contrast(PEARL, wine.ground), 'Pearl Whisper on Wine\'s ground').toBeGreaterThanOrEqual(13.6);
+  expect(contrast(PEARL, wine.band), 'and on its band').toBeGreaterThanOrEqual(11.6);
+  each('Wine\'s result, every chip of every result', (await chipList(page)).list);
+  // the paint shows the finish and the dark shades' rim: our own stroke by its Pearl highlight and its outline
+  // (#find[data-sm-rim]); Sam's swatch carries its own highlights and rim (expectResult reads which the build has)
+  const ownStroke = async () => (await paintClass(page)) === 'qz-smear';
+  await expect(page.locator('#find'), 'one of the nine: #find[data-sm-rim], which outlines our own stroke').toHaveAttribute('data-sm-rim', '');
+  if (await ownStroke()) await expect(page.locator('.qz-result:not([hidden]) .qz-sm-gloss'), 'a gloss result\'s highlight').toHaveCount(1);
+  // and toggled: Thyme on Navy's article, its own tones, no highlight and no outline
   await page.locator('.qz-result:not([hidden]) .qz-retry').click();
   await answer(page, STRATEGIST);
   await expectResult(page, drawn(STRATEGIST, 0.5));
-  await expect(big).not.toHaveAttribute('data-ring-night');
-  expect(await bigLine(), 'Thyme large, no hairline').toMatchObject(none);
-  // the 3D tier: on the fog the pale shades take the Urban Slate hairline and the dark ones none
+  const thyme = await grounds();
+  expect(thyme, 'the ground and the band follow the drawn shade').not.toEqual(wine);
+  expect(contrast(PEARL, thyme.ground), 'Pearl Whisper on Thyme\'s ground').toBeGreaterThanOrEqual(13.6);
+  expect(contrast(PEARL, thyme.band), 'and on its band').toBeGreaterThanOrEqual(11.6);
+  each('Thyme\'s result', (await chipList(page)).list);
+  await expect(page.locator('#find')).not.toHaveAttribute('data-sm-rim');
+  if (await ownStroke()) await expect(page.locator('.qz-result:not([hidden]) .qz-sm-gloss'), 'a matte result has none').toHaveCount(0);
+  // the 3D tier: the same chips (the fog never lies under them), read before the deck has painted any
   await page.goto(new URL('/?tier=hero3d', baseURL).href);
-  const fog = await swatches(page);
+  const fog = await chipList(page);
   expect(fog.fog, 'the 3D tier').toBe(true);
   expect(fog.list.length).toBe(night.list.length);
-  each(fog.list, (s) => (s.ring ? slate : none));
+  each('3D tier, before a result', fog.list);
 });
 
-test('AC7 the underlines are written as longhands and computed from them: every quiz rule that draws one sets text-decoration-line and text-decoration-thickness in the page\'s style sheets, never the text-decoration shorthand (Safari before 26.2 drops a shorthand with a thickness; Chromium computes the same from either); every text control (Begin, Back, See it on the case, Try again, Send my gift, Not you, hidden ones too) text-decoration-line underline at 1 px; the answer taken underline at 2 px from the press, the other answers none; on hover an answer is underlined at 1 px and a control thickens to 2', async ({ page, baseURL }) => {
+test('AC7 the underlines are written as longhands and computed from them: every quiz rule that draws one sets text-decoration-line and text-decoration-thickness in the page\'s style sheets, never the text-decoration shorthand (Safari before 26.2 drops a shorthand with a thickness; Chromium computes the same from either); every text control (Begin, Skip quiz, Back, See it on the case, Try again, Get an exclusive launch discount, Back to your shade, Not you, hidden ones too) text-decoration-line underline at 1 px, and Send my code, a filled button since 2026-11-02, none; the answer taken underline at 2 px from the press, the other answers none; on hover an answer is underlined at 1 px and a control thickens to 2', async ({ page, baseURL }) => {
   await page.route('**/api/quiz-lead', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
   await pin(page, 0.01);
   await openQuiz(page, baseURL);
@@ -1298,38 +1602,52 @@ test('AC7 the underlines are written as longhands and computed from them: every 
   await answer(page, CURATOR, 1);
   await expectResult(page, drawn(CURATOR, 0.01));
   await page.mouse.move(0, 0);
-  expect(await lineOf('.qz-result:not([hidden]) .qz-link'), 'See it on the case, Try again').toEqual(['underline 1px', 'underline 1px']);
-  expect(await lineOf('#qzSend'), 'Send my gift').toEqual(['underline 1px']);
+  expect(await lineOf('.qz-result:not([hidden]) .qz-link'), 'See it on the case, Try again, Get an exclusive launch discount (shown on a phone held sideways)').toEqual(Array(3).fill('underline 1px'));
+  // Send is a button since Sam's reference of 2026-11-02 (E-S3-result): Urban Slate, its words not underlined
+  expect(await page.locator('#qzSend').evaluate((e) => getComputedStyle(e).textDecorationLine), 'Send my code').toBe('none');
   await page.locator('#qzEmail').fill(EMAIL); await tick(page); await page.locator('#qzSend').click();
   await expect(said(page.locator('.qz-done-text'))).toHaveText(Q.done(EMAIL));
   await page.mouse.move(0, 0);
   expect(await lineOf('.qz-notyou'), 'Not you').toEqual(['underline 1px']);
-  // every control of the section, hidden ones included: Begin, nine Backs, two links on each of the seven results, Send, Not
-  // you; at 1 px unless it still matches :hover (Chromium keeps :hover on Send, hidden under the pointer by the done state)
+  // every word control of the section, hidden ones included: Begin and Skip quiz on the intro, nine Backs and ten Skip
+  // quizzes on the questions, three links on each of the seven results, Back to your shade and Not you on the offer; at
+  // 1 px unless it still matches :hover
   const all = await page.locator('#find .qz-link').evaluateAll((els) => els.map((e) => { const cs = getComputedStyle(e); return { what: e.id || e.className, hover: e.matches(':hover'), line: `${cs.textDecorationLine} ${cs.textDecorationThickness}` }; }));
-  expect(all.length).toBe(1 + 9 + 7 * 2 + 1 + 1);
+  expect(all.length).toBe(2 + 9 + 10 + 7 * 3 + 1 + 1);
   expect(all.filter((l) => l.line !== (l.hover ? 'underline 2px' : 'underline 1px')), 'each underlined at 1 px, 2 under the pointer').toEqual([]);
   expect(all.filter((l) => !l.hover).length, 'at most one under the pointer').toBeGreaterThanOrEqual(all.length - 1);
 });
 
-test('AC10 the fonts: one family in two files split by unicode-range, each fetched once and loaded by the time card 1 has settled; the quiz\'s own glyphs for "’,.?" are drawn by the Plex web font (the browser\'s platform fonts for them), and every character the quiz draws outside the capitals file is in the rest file (each measures at the mono\'s 0.6 em with a serif fallback behind the family, so a missing glyph would fall back and show)', async ({ page, baseURL }) => {
+test('AC10 the fonts: the quiz\'s mono in one family of two files split by unicode-range, each fetched once and loaded by the time card 1 has settled; the quiz\'s own glyphs for "’,.?" are drawn by the Plex web font (the browser\'s platform fonts for them), and every character the quiz draws outside the capitals file is in the rest file (each measures at the mono\'s 0.6 em with a serif fallback behind the family, so a missing glyph would fall back and show); and the result\'s faces of 2026-11-02 (E-S3-result), Anton 400, Poppins 400 and its italic, Work Sans 300 and the brand\'s Poppins 700, each fetched once and every one loaded at the moment the result is put on screen (deck.ts asks for them when its chunk mounts); each line of the result and the offer, plain text at rest, drawn by its own face\'s file alone: the name by Anton, the words, the offer and the fine print by Poppins (the offer\'s middle by Poppins Bold), the chips\' names by Poppins Italic, the labels, the links, Send and the consent by Work Sans Light', async ({ page, baseURL }) => {
   const rest: string[] = [], caps: string[] = [];
-  page.on('request', (r) => { const p = new URL(r.url()).pathname; if (p === REST_FONT) rest.push(r.url()); if (p === '/fonts/ibm-plex-mono-500-caps.woff2') caps.push(r.url()); });
+  /** the result's five files (src/styles/fonts.css): Anton, Poppins 400 and its italic, Work Sans 300 and the brand's Poppins 700 for the offer's bold */
+  const RESULT_FACES = ['/fonts/anton-400-latin.woff2', '/fonts/poppins-400-latin.woff2', '/fonts/poppins-400-italic-latin.woff2', '/fonts/work-sans-300-latin.woff2', '/fonts/poppins-700-latin.woff2'];
+  const fetched: Record<string, number> = Object.fromEntries(RESULT_FACES.map((f) => [f, 0]));
+  page.on('request', (r) => {
+    const p = new URL(r.url()).pathname;
+    if (p === REST_FONT) rest.push(r.url()); if (p === '/fonts/ibm-plex-mono-500-caps.woff2') caps.push(r.url());
+    if (p in fetched) fetched[p]++;
+  });
   await openQuiz(page, baseURL);
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('DOM.enable'); await cdp.send('CSS.enable');
+  /** the platform fonts Chrome drew each marked node's text with (data-qz-probe n): the family and the PostScript name each
+   *  reports, and whether it is a web font */
+  const drawnWith = async (n: number): Promise<{ family: string; ps: string; web: boolean }[][]> => {
+    const { root } = await cdp.send('DOM.getDocument', { depth: 0 }), used: { family: string; ps: string; web: boolean }[][] = [];
+    for (let k = 0; k < n; k++) {
+      const { nodeId } = await cdp.send('DOM.querySelector', { nodeId: root.nodeId, selector: `[data-qz-probe="${k}"]` });
+      const { fonts } = await cdp.send('CSS.getPlatformFontsForNode', { nodeId });
+      used.push(fonts.map((f) => ({ family: f.familyName, ps: f.postScriptName, web: f.isCustomFont })));
+    }
+    await page.evaluate(() => { for (const g of document.querySelectorAll<HTMLElement>('[data-qz-probe]')) delete g.dataset.qzProbe; });
+    return used;
+  };
   // the intro's own glyph spans for ’ , . ? (and S, a capital): the platform font Chrome drew each with
   const probe = ['’', ',', '.', '?', 'S'];
   const marked = await page.evaluate((chars) => chars.map((ch, n) => { const g = [...document.querySelectorAll<HTMLElement>('#qzIntro .dc > span')].find((s) => s.textContent === ch && s.getClientRects().length > 0); if (g) g.dataset.qzProbe = String(n); return !!g; }), probe);
   expect(marked, 'each on screen in the intro').toEqual(probe.map(() => true));
-  const cdp = await page.context().newCDPSession(page);
-  await cdp.send('DOM.enable'); await cdp.send('CSS.enable');
-  const { root } = await cdp.send('DOM.getDocument', { depth: 0 });
-  const used: Record<string, string[]> = {};
-  for (const [n, ch] of probe.entries()) {
-    const { nodeId } = await cdp.send('DOM.querySelector', { nodeId: root.nodeId, selector: `[data-qz-probe="${n}"]` });
-    const { fonts } = await cdp.send('CSS.getPlatformFontsForNode', { nodeId });
-    used[ch] = fonts.map((f) => `${f.familyName}${f.isCustomFont ? ' (web font)' : ''}`);
-  }
-  await page.evaluate(() => { for (const g of document.querySelectorAll<HTMLElement>('[data-qz-probe]')) delete g.dataset.qzProbe; });
+  const used = Object.fromEntries((await drawnWith(probe.length)).map((f, n) => [probe[n], f.map((x) => `${x.family}${x.web ? ' (web font)' : ''}`)]));
   expect(used, 'drawn by IBM Plex Mono, the web font, alone').toEqual(Object.fromEntries(probe.map((ch) => [ch, [expect.stringMatching(/^IBM Plex Mono\b.* \(web font\)$/)]])));
   await begin(page);
   await settled(page);
@@ -1337,11 +1655,46 @@ test('AC10 the fonts: one family in two files split by unicode-range, each fetch
   expect(caps, 'the capitals and digits, once').toHaveLength(1);
   const faces = await page.evaluate(() => [...document.fonts].filter((f) => f.family.replace(/"/g, '') === 'IBM Plex Mono').map((f) => `${f.weight}|${f.unicodeRange}|${f.status}`).sort());
   expect(faces, 'one family in two files split by unicode-range, both loaded').toEqual(['500|U+20, U+30-39, U+41-5A|loaded', '500|U+21-2F, U+3A-40, U+5B-7E, U+A0, U+2018-201E, U+2026|loaded']);
+  // the result's faces: deck.ts asks for them at mount, so the name is measured in Anton when the result comes; read in the
+  // task that puts the result on screen (an observer of #find's data-state), before anything could wait for them
+  await answer(page, CURATOR.slice(0, 9));
+  await onTop(page, 9);
+  await page.evaluate(() => {
+    const find = document.getElementById('find')!, w = window as unknown as { __qzFaces?: string[] };
+    const mo = new MutationObserver(() => {
+      if (find.dataset.state !== 'result') return;
+      mo.disconnect();
+      w.__qzFaces = [...document.fonts].filter((f) => ['Anton', 'Poppins', 'Work Sans'].includes(f.family.replace(/"/g, ''))).map((f) => `${f.family.replace(/"/g, '')}|${f.weight}|${f.style}|${f.status}`).sort();
+    });
+    mo.observe(find, { attributes: true, attributeFilter: ['data-state'] });
+  });
+  await answer(page, CURATOR, 9);
+  await expect(page.locator('#find')).toHaveAttribute('data-state', 'result');
+  await settled(page);
+  expect(await page.evaluate(() => (window as unknown as { __qzFaces?: string[] }).__qzFaces), 'every face of the result loaded as the result is put on screen').toEqual(['Anton|400|normal|loaded', 'Poppins|400|italic|loaded', 'Poppins|400|normal|loaded', 'Poppins|700|normal|loaded', 'Work Sans|300|normal|loaded']);
+  expect(fetched, 'each file fetched once').toEqual(Object.fromEntries(RESULT_FACES.map((f) => [f, 1])));
+  // each line as it stands at rest, one text node (data-dc="prop", decode.ts join()): the platform fonts Chrome drew its
+  // whole text with, the face's own file alone (a glyph missing from it would add a fallback). The Work Sans file names
+  // its family "Work Sans Light" (name ID 1) and "Work Sans" (ID 16), so either is taken; the PostScript name tells the
+  // file: Anton-Regular, Poppins-Regular, Poppins-Italic, Poppins-Bold, WorkSans-Light
+  const ANTON = /^Anton \[Anton-Regular\] \(web font\)$/, POPPINS = /^Poppins \[Poppins-Regular\] \(web font\)$/, ITALIC = /^Poppins \[Poppins-Italic\] \(web font\)$/;
+  const BOLD = /^Poppins \[Poppins-Bold\] \(web font\)$/, WORK = /^Work Sans\b.* \[WorkSans-Light\] \(web font\)$/;
+  const lines: [string, RegExp][] = [
+    ...([['.qz-eyebrow', WORK], ['.qz-shade', ANTON], ['.qz-fam', WORK], ['.qz-finish', WORK], ['.qz-persona', WORK], ['.qz-text', POPPINS], ['.qz-palette > span:not(.qz-also-h)', POPPINS], ['.qz-also-h', POPPINS],
+      ['.qz-mini:not([hidden]) .qz-mini-name', ITALIC], ['.qz-see', WORK], ['.qz-retry', WORK]] as [string, RegExp][]).map(([s, f]): [string, RegExp] => [`.qz-result:not([hidden]) ${s}`, f]),
+    ['.qz-offer > span:first-child', POPPINS], ['.qz-offer > strong', BOLD], ['.qz-offer > span:last-child', POPPINS], ['#qzSend', WORK], ['.qz-check > span:last-child', WORK], ['.qz-fine', POPPINS],
+  ];
+  const found = await page.evaluate((sels) => sels.map((sel, n) => { const row = document.querySelector<HTMLElement>(`${sel} > .dc`); const plain = !!row && row.childNodes.length === 1 && row.firstChild!.nodeType === Node.TEXT_NODE; if (plain) row.dataset.qzProbe = String(n); return plain; }), lines.map(([s]) => s));
+  expect(found, 'each line drawn, plain text at rest').toEqual(lines.map(() => true));
+  const faceOf = Object.fromEntries((await drawnWith(lines.length)).map((f, n) => [lines[n][0].replace('.qz-result:not([hidden]) ', ''), f.map((x) => `${x.family} [${x.ps}]${x.web ? ' (web font)' : ''}`)]));
+  expect(faceOf, 'the name in Anton, the words, the offer and the fine print in Poppins (the bold in its 700), the chips\' names in its italic, the labels, the links, Send and the consent in Work Sans Light').toEqual(Object.fromEntries(lines.map(([s, f]) => [s.replace('.qz-result:not([hidden]) ', ''), [expect.stringMatching(f)]])));
   // every character the quiz draws: its copy upper-cased as drawn (the no-JS line, the counts, the family lines, the
-  // done line included) and the email as typed (the field keeps its case), less the capitals file's space, digits and A-Z
+  // done line included) and the email as typed (the field keeps its case), less the capitals file's space, digits and A-Z;
+  // the result's and the offer's lines, in Sam's design's faces since 2026-11-02, are in it too, which the Plex covers all
+  // the same
   const copy = [...(Object.values(Q) as unknown[]).filter((v): v is string => typeof v === 'string'), ...QUIZ_QUESTIONS.map((_c, i) => Q.count(i + 1)), Q.finish('gloss'), Q.finish('matte'), Q.done(EMAIL),
     ...QUIZ_QUESTIONS.flatMap((c) => [c.q, ...c.answers.map((a) => a.text)]),
-    ...QUIZ_PERSONAS.flatMap((p) => [p.name, p.profile, p.palette, ...p.shades.map((id) => { const s = byId.get(id)!; return `${s.name}. ${Q.fam(familyName(s.family), s.index)}`; })])];
+    ...QUIZ_PERSONAS.flatMap((p) => [p.name, p.profile, p.palette, ...p.shades.flatMap((id) => { const s = byId.get(id)!; return [s.name, Q.fam(familyName(s.family), s.index)]; })])];
   const chars = [...new Set([...copy.join('').toUpperCase(), ...EMAIL])].filter((c) => !/[ 0-9A-Z]/.test(c)).sort();
   expect(chars, 'the curly apostrophe, the comma, the full stop, the question mark and Sam\'s no-break space among them').toEqual(expect.arrayContaining(['’', ',', '.', '?', '\u00a0']));
   const em = await page.evaluate(async (chars) => {
@@ -1357,49 +1710,56 @@ test('AC10 the fonts: one family in two files split by unicode-range, each fetch
   expect(em, 'each drawn at the mono\'s 0.6 em, a capital as well').toEqual(Object.fromEntries([...chars, 'A'].map((c) => [c, 0.6])));
 });
 
-test('AC7 the email field shows focus as its underline at 3 px with no outline, over an invalid field\'s 2 px; the consent row shows keyboard focus as the Ember Luxe outline with the Urban Slate ring inside it (its box is 1 px at opacity 0), and nothing on a click; it reads [ ] then [X]', async ({ page, baseURL }) => {
+test('AC7 and E-S3-result the email field is a Pearl Whisper box with Urban Slate words in Work Sans Light, 16 px at the least, in the case they are typed (Sam\'s reference of 2026-11-02), that shows focus as the Ember Luxe outline on a click and from the keyboard alike, and an invalid field a 3 px Urban Slate line under it, the outline over that when focused; the consent row shows keyboard focus as the Ember Luxe outline with the Urban Slate ring inside it (its box is 1 px at opacity 0), and nothing on a click; it reads [ ] then [X]', async ({ page, baseURL }) => {
   await pin(page, 0.01);
   await openQuiz(page, baseURL);
   await begin(page);
   await answer(page, CURATOR);
   await expectResult(page, drawn(CURATOR, 0.01));
-  const email = page.locator('#qzEmail');
-  const line = () => email.evaluate((e) => { const cs = getComputedStyle(e); return { outline: cs.outlineStyle, bottom: cs.borderBottomWidth, others: [cs.borderTopWidth, cs.borderRightWidth, cs.borderLeftWidth].join(' '), color: cs.borderBottomColor, bg: cs.backgroundColor }; });
-  expect(await line(), 'at rest, a 1 px Pearl line').toEqual({ outline: 'none', bottom: '1px', others: '0px 0px 0px', color: PEARL, bg: CLEAR });
+  const email = page.locator('#qzEmail'), send = page.locator('#qzSend');
+  const look = () => email.evaluate((e) => { const cs = getComputedStyle(e); return { outline: cs.outlineStyle === 'none' ? 'none' : `${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineColor} offset ${cs.outlineOffset}`, border: [cs.borderTopWidth, cs.borderRightWidth, cs.borderBottomWidth, cs.borderLeftWidth].join(' '), line: cs.borderBottomStyle === 'none' ? 'none' : `${cs.borderBottomStyle} ${cs.borderBottomColor}`, bg: cs.backgroundColor, color: cs.color }; });
+  const box = { bg: PEARL, color: URBAN_SLATE }, plain = { border: '0px 0px 0px 0px', line: 'none' }, invalid = { border: '0px 0px 3px 0px', line: `solid ${URBAN_SLATE}` }, ring = `solid 2px ${EMBER} offset 2px`;
+  expect(await look(), 'at rest, a Pearl Whisper box with no line and no outline').toEqual({ outline: 'none', ...plain, ...box });
   await email.click();
   await expect(email).toBeFocused();
-  expect(await line(), 'focused by a click').toEqual({ outline: 'none', bottom: '3px', others: '0px 0px 0px', color: PEARL, bg: CLEAR });
+  expect(await look(), 'focused by a click: the Ember Luxe outline').toEqual({ outline: ring, ...plain, ...box });
   await email.blur();
-  expect((await line()).bottom).toBe('1px');
-  await page.locator('#qzConsent').focus(); await page.keyboard.press('Shift+Tab');
+  expect((await look()).outline).toBe('none');
+  // from the keyboard: Shift+Tab from Send, beside it in the row
+  await send.focus(); await page.keyboard.press('Shift+Tab');
   await expect(email).toBeFocused();
-  expect(await line(), 'focused by the keyboard').toEqual({ outline: 'none', bottom: '3px', others: '0px 0px 0px', color: PEARL, bg: CLEAR });
+  expect(await look(), 'focused by the keyboard').toEqual({ outline: ring, ...plain, ...box });
   await expect(email).toHaveCSS('text-transform', 'none');   // the address keeps the case it is typed in
-  // an invalid field is drawn at 2 px, so focus on it still shows, at 3
+  // in the labels' face, Work Sans Light, at 16 px at the least (iOS zooms the page on focusing a smaller field)
+  const face = await email.evaluate((e) => { const cs = getComputedStyle(e); return { family: cs.fontFamily.split(',')[0].trim().replace(/"/g, ''), weight: cs.fontWeight, style: cs.fontStyle, size: parseFloat(cs.fontSize) }; });
+  expect({ family: face.family, weight: face.weight, style: face.style }, 'the address in Work Sans Light').toEqual({ family: 'Work Sans', weight: '300', style: 'normal' });
+  expect(face.size, '16 px at the least').toBeGreaterThanOrEqual(16);
+  // an invalid field takes a 3 px Urban Slate line under it; focus on it still shows, as the outline
   await email.fill('nope'); await email.blur();
   await expect(email).toHaveAttribute('aria-invalid', 'true');
-  expect(await line(), 'invalid').toEqual({ outline: 'none', bottom: '2px', others: '0px 0px 0px', color: PEARL, bg: CLEAR });
+  expect(await look(), 'invalid').toEqual({ outline: 'none', ...invalid, ...box });
   await email.focus();
-  expect(await line(), 'invalid and focused').toEqual({ outline: 'none', bottom: '3px', others: '0px 0px 0px', color: PEARL, bg: CLEAR });
+  expect(await look(), 'invalid and focused').toEqual({ outline: ring, ...invalid, ...box });
   // the consent box: the native input 1 px at opacity 0 inside its row, the row's tick text after it
-  const box = page.locator('#qzConsent');
-  expect(await box.evaluate((b) => { const cs = getComputedStyle(b), r = b.getBoundingClientRect(); return { w: r.width, h: r.height, opacity: cs.opacity, in: !!b.closest('label.qz-check') }; })).toEqual({ w: 1, h: 1, opacity: '0', in: true });
-  await expect(box).toHaveAccessibleName(Q.consent);
+  const consent = page.locator('#qzConsent');
+  expect(await consent.evaluate((b) => { const cs = getComputedStyle(b), r = b.getBoundingClientRect(); return { w: r.width, h: r.height, opacity: cs.opacity, in: !!b.closest('label.qz-check') }; })).toEqual({ w: 1, h: 1, opacity: '0', in: true });
+  await expect(consent).toHaveAccessibleName(Q.consent);
   const mark = () => page.locator('.qz-check .qz-tick').evaluate((t) => getComputedStyle(t, '::before').content);
   expect(await mark()).toBe('"[ ]"');
   // so the row carries keyboard focus (DESIGN.md 4): the outline, and the ring as its ::before
-  const ring = () => page.locator('.qz-check').evaluate((c) => {
+  const rowRing = () => page.locator('.qz-check').evaluate((c) => {
     const cs = getComputedStyle(c), b = getComputedStyle(c, '::before');
     return { outline: cs.outlineStyle === 'none' ? 'none' : `${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineColor} offset ${cs.outlineOffset}`, ring: b.content === 'none' || b.content === 'normal' ? 'none' : `${b.borderTopStyle} ${b.borderTopWidth} ${b.borderTopColor} inset ${b.top}` };
   });
-  expect(await ring(), 'the row while the email has focus').toEqual({ outline: 'none', ring: 'none' });
-  await page.keyboard.press('Tab');
-  await expect(box).toBeFocused();
-  expect(await ring(), 'the consent focused by the keyboard').toEqual({ outline: `solid 2px ${EMBER} offset 2px`, ring: `solid 2px ${URBAN_SLATE} inset -2px` });
+  expect(await rowRing(), 'the row while the email has focus').toEqual({ outline: 'none', ring: 'none' });
+  // Tab from Send (the field, Send, then the box in the Tab order since Send stands in the field's row)
+  await send.focus(); await page.keyboard.press('Tab');
+  await expect(consent).toBeFocused();
+  expect(await rowRing(), 'the consent focused by the keyboard').toEqual({ outline: `solid 2px ${EMBER} offset 2px`, ring: `solid 2px ${URBAN_SLATE} inset -2px` });
   expect(await mark(), 'focus alone ticks nothing').toBe('"[ ]"');
   await email.click();
   await tick(page);
-  expect(await ring(), 'ticked by a click: no ring').toEqual({ outline: 'none', ring: 'none' });
+  expect(await rowRing(), 'ticked by a click: no ring').toEqual({ outline: 'none', ring: 'none' });
   expect(await mark()).toBe('"[X]"');
 });
 
@@ -1431,9 +1791,14 @@ test('AC8 the gift form: blur with a value validates and an empty submit shows b
   await expect(email).toHaveAttribute('aria-invalid', 'true');
   await expect(consent).toHaveAttribute('aria-invalid', 'true');
   await expect(email).toBeFocused();
-  await expect(email).toHaveCSS('border-bottom-width', '3px');   // invalid and focused: focus at 3 px over the error's 2
+  // invalid: the 3 px Urban Slate line under the field (E-S3-result); focused, the Ember Luxe outline over it as well
+  await expect(email).toHaveCSS('border-bottom-width', '3px');
+  await expect(email).toHaveCSS('border-bottom-color', URBAN_SLATE);
+  await expect(email).toHaveCSS('outline-style', 'solid');
+  await expect(email).toHaveCSS('outline-color', EMBER);
   await email.blur();
-  await expect(email).toHaveCSS('border-bottom-width', '2px');   // invalid: the line at 2 px
+  await expect(email).toHaveCSS('border-bottom-width', '3px');
+  await expect(email).toHaveCSS('outline-style', 'none');
   expect(posts).toEqual([]);
   // 500: the line under the button, the values kept, the button back to its label (aria-disabled, never disabled)
   await email.fill(EMAIL); await tick(page); await send.click();
@@ -1441,7 +1806,7 @@ test('AC8 the gift form: blur with a value validates and an empty submit shows b
   await expect(email).toHaveValue(EMAIL);
   await expect(consent).toBeChecked();
   await expect(send).toHaveAccessibleName(Q.send);
-  expect(await copies(send)).toEqual({ sr: Q.send, row: Q.send.toUpperCase(), faded: 0 });
+  expect(await atRest(send), 'Send my code set back at once: one text node in Sam\'s case, drawn in capitals').toEqual(settledLine(Q.send, true));
   await expect(send).toHaveAttribute('aria-disabled', 'false');
   await expect(send).toBeEnabled();
   expect(JSON.parse(posts[0])).toEqual({ email: EMAIL, shadeId: r.shade, familyId: r.family, finish: r.p.finish, persona: 'rebel', answers: TIE.join(','), source: 'quiz' });
@@ -1473,7 +1838,7 @@ test('AC8 the gift form: blur with a value validates and an empty submit shows b
   expect((await events(page)).filter(([n]) => n.startsWith('lead_'))).toEqual([['lead_submit', {}], ['lead_error', { kind: 'network' }], ['lead_submit', {}], ['lead_success', {}], ['lead_submit', {}], ['lead_error', { kind: 'duplicate' }], ['lead_submit', {}], ['lead_error', { kind: 'invalid' }]]);
 });
 
-test('AC9 reduced motion: no transform anywhere and no animation but opacity; Begin, a commit and the result are 0.2 s fades (each line\'s glyphs one opacity, staggered as the decode is) in which no glyph ever shows a character other than its final one; the answer taken goes with no hold; the swatches fade in over 200 ms; the quiz still works', async ({ browser, baseURL }) => {
+test('AC9 reduced motion: no transform anywhere (the name\'s static narrowing aside, the same in every frame) and no animation but opacity; Begin, a commit and the result are 0.2 s fades (each line\'s glyphs one opacity, staggered as the decode is) in which no glyph ever shows a character other than its final one, the result\'s proportional lines carrying no rolled glyph at all; the answer taken goes with no hold; the result\'s ground, paint and chips fade in over 200 ms; the quiz still works', async ({ browser, baseURL }) => {
   const ctx = await browser.newContext({ reducedMotion: 'reduce' });
   const page = await ctx.newPage();
   await pin(page, 0.01);
@@ -1501,7 +1866,7 @@ test('AC9 reduced motion: no transform anywhere and no animation but opacity; Be
     expect(w.timedOut, name).toBe(false);
     expect(w.rolledWrites, `${name}: no glyph is ever written with another character`).toBe(0);
     for (const f of w.frames) {
-      expect(f.moved, `${name}: nothing moved by a transform`).toEqual([]);
+      expect(f.moved, `${name}: nothing moved by a transform (the name narrowed, as ever)`).toEqual([]);
       for (const an of f.anims) expect(an.split('|')[1], `${name}: ${an}`).toBe('opacity');
     }
   }
@@ -1519,7 +1884,7 @@ test('AC9 reduced motion: no transform anywhere and no animation but opacity; Be
   expect(c.phases.length, 'card 10 out (the rest, then the answer), the result in').toBe(3);
   expect(c.phases[1].on - c.phases[0].off, 'no hold on the last card either').toBeLessThan(20);
   expectMotion('the result and the gift fade in', c, 2, { dir: 'in', reduced: true, keys: [...keys('result', lines), ...keys('gift', GIFT_LINES, lines)] });
-  expect(await animateLog(page)).toEqual(['qz-big|opacity|200', ...r.others.map(() => 'qz-mini-sw|opacity|200')]);
+  expect(await animateLog(page), 'the ground, the paint and the chips fade in over 200 ms').toEqual(['qz-ground|opacity|200', `${await paintClass(page)}|opacity|200`, ...r.others.map(() => 'qz-mini|opacity|200')]);
   await expect(page.locator('.qz-card[data-i="0"]')).toBeHidden();
   await ctx.close();
 });
@@ -1586,23 +1951,22 @@ test('AC8 a slow route: "Still trying..." at 8 s, the error line and a timeout e
   await page.locator('#qzEmail').fill(EMAIL); await tick(page);
   await send.click();
   await expect(send).toHaveAccessibleName(Q.sending);
-  expect(await copies(send), 'Sending..., drawn at once').toEqual({ sr: Q.sending, row: Q.sending.toUpperCase(), faded: 0 });
+  expect(await atRest(send), 'Sending..., drawn at once: one text node in Sam\'s case, drawn in capitals').toEqual(settledLine(Q.sending, true));
   await expect(page.locator('#find')).not.toHaveAttribute('data-decoding');
   await expect(send).toHaveAttribute('aria-disabled', 'true');
   await expect(send).toHaveAccessibleName(Q.trying, { timeout: 10_000 });
-  expect(await copies(send), 'Still trying..., drawn at once').toEqual({ sr: Q.trying, row: Q.trying.toUpperCase(), faded: 0 });
+  expect(await atRest(send), 'Still trying..., drawn at once').toEqual(settledLine(Q.trying, true));
   await expect(said(page.locator('#qzMsg'))).toHaveText(Q.errSend, { timeout: 15_000 });
   await expect(send).toHaveAccessibleName(Q.send);
-  expect(await copies(send)).toEqual({ sr: Q.send, row: Q.send.toUpperCase(), faded: 0 });
+  expect(await atRest(send), 'Send my code, drawn at once').toEqual(settledLine(Q.send, true));
   await expect(send).toHaveAttribute('aria-disabled', 'false');
   await expect(page.locator('#qzEmail')).toHaveValue(EMAIL);
   expect((await events(page)).filter(([n]) => n.startsWith('lead_'))).toEqual([['lead_submit', {}], ['lead_error', { kind: 'timeout' }]]);
 });
 
-/** the gift's decoded lines as the watch keys them, in reading order (deck.ts items(): the consent words are a bare span) */
-const GIFT_KEYS = ['.qz-gift-h', '.qz-gift-sub', '.qz-label', 'span', '#qzSend', '.qz-fine'];
 
 test('AC8 Try again while a send is in flight, for a 500, a 200 and a 409 each answered 1.5 s after the send: the request is aborted at the press; the result and the gift wipe out whole, Send under its sending label with them; once the answer would have come no error line, announcement, done state, focus on the done line or lead event appears; and each next result\'s gift decodes in whole, Send hidden at its start like the rest of its lines and back in its own words', async ({ page, baseURL }) => {
+  test.setTimeout(300_000);   // four results, each ten answers and the result's checks
   const STATUSES = [500, 200, 409] as const;
   const posts: string[] = [], aborted: string[] = [];
   let landed = (): void => undefined;
@@ -1659,7 +2023,7 @@ test('AC8 Try again while a send is in flight, for a 500, a 200 and a 409 each a
     expect(part(first!, 'gift')!.map((x) => `${x.k}:${x.max}`), `${at}: the gift comes with every line hidden, Send included`).toEqual(GIFT_KEYS.map((x) => `${x}:0`));
     expectMotion(`${at}: the result and the gift decode in, Send with them`, e, 2, { dir: 'in', keys: gone });
     await expectResult(page, r);
-    expect(await copies(send), `${at}: Send my gift in its own words again, settled`).toEqual({ sr: Q.send, row: Q.send.toUpperCase(), faded: 0 });
+    expect(await atRest(send), `${at}: Send my code in its own words again, settled into one text node`).toEqual(settledLine(Q.send, true));
     await expect(send).toHaveAttribute('aria-disabled', 'false');
     await expect(page.locator('.qz-fields')).toBeVisible();
     for (const sel of ['#qzErrEmail', '#qzErrConsent', '#qzMsg']) await expect(page.locator(sel), `${at}: ${sel} empty`).toHaveText('');
@@ -1668,6 +2032,7 @@ test('AC8 Try again while a send is in flight, for a 500, a 200 and a 409 each a
 });
 
 test('AC8 Try again clears the form\'s lines and frees the form: a 500\'s line under Send and both field errors are gone from the next result\'s gift, aria-invalid false on both fields; a send that is never answered is aborted at the press, so Send on the next result, inside the 20 s the abandoned send would have held it, posts again and is answered', async ({ page, baseURL }) => {
+  test.setTimeout(300_000);   // three results, each ten answers and the result's checks
   const posts: string[] = [], aborted: string[] = [];
   let mode: 'fail' | 'hold' | 'ok' = 'fail';
   let release = (): void => undefined; const held = new Promise<void>((r) => { release = r; });
@@ -1716,14 +2081,17 @@ test('AC8 Try again clears the form\'s lines and frees the form: a 500\'s line u
   await retry.click();
   await expect.poll(() => aborted, { message: 'the held request aborted at the press', timeout: 1000 }).toEqual(['net::ERR_ABORTED']);
   await onTop(page, 0);
-  // the third result, inside the 20 s deck.ts's own timeout would otherwise keep Send busy for: Send posts and is answered
+  // the third result, inside the 20 s deck.ts's own timeout would otherwise keep Send busy for: Send posts and is answered.
+  // Pressed as soon as the result is in, and the result checked after: the result's checks (expectResult, heavier since
+  // 2026-11-02) would otherwise eat into the 20 s on a slow machine
   mode = 'ok';
   await answer(page, CURATOR);
-  await expectResult(page, r);
+  await expect(page.locator('#find')).toHaveAttribute('data-state', 'result');
   // read at once, not waited for: held by the abandoned send, Send would stay aria-disabled until that 20 s timeout
   expect(await send.getAttribute('aria-disabled'), 'Send free on the next result, not held by the abandoned send').toBe('false');
   await send.click();
   expect(Date.now() - sentAt, 'Send pressed again inside the 20 s').toBeLessThan(20_000);
+  await expectResult(page, r);
   await expect.poll(() => posts.length, { message: 'posted again' }).toBe(3);
   await expect(said(page.locator('.qz-done-text'))).toHaveText(Q.done(EMAIL));
   await expect(page.locator('.qz-done-text')).toBeFocused();
@@ -1842,9 +2210,11 @@ test('AC1 assistive technology gets Sam\'s sentence case: the browser\'s accessi
   await answer(page, CURATOR, 1);
   const r = drawn(['main', ...CURATOR.slice(1)], 0.01);
   await expectResult(page, r);
-  const heard = `${Q.eyebrow}: ${r.name}. ${r.p.name}.`;
+  const heard = `${Q.eyebrow} ${r.name}. ${r.p.name}.`;
   await expect(page.locator('#qzLive')).toHaveText(heard);
-  await cased('the result and the live region', [Q.eyebrow, `${r.name}.`, r.p.name, Q.see, Q.retry, Q.email, Q.consent, Q.send, heard]);
+  // the name with no full stop (E-S3-result), capitalised on screen only; the words, the recommendation and the offer as
+  // written (the three runs of the offer each its own text)
+  await cased('the result and the live region', [Q.eyebrow, r.name, r.p.name, r.p.profile, r.p.palette, Q.also, Q.see, Q.retry, Q.offerLead, Q.offerStrong, Q.offerTail, Q.email, Q.consent, Q.send, Q.fine, heard]);
   await page.locator('#qzSend').click();
   await expect(said(page.locator('#qzErrConsent'))).toHaveText(Q.errConsent);
   await cased('the field errors', [Q.errEmail, Q.errConsent]);
@@ -1857,24 +2227,36 @@ test('AC1 assistive technology gets Sam\'s sentence case: the browser\'s accessi
   await cased('the done line and "Not you?"', [Q.done(EMAIL), Q.notYou]);
 });
 
-test('AC1 the decode keeps Sam\'s no-break space: The Spark\'s profile reads "11 p.m." with U+00A0 in both its copies', async ({ page, baseURL }) => {
+test('AC1 the decode keeps Sam\'s no-break space: The Spark\'s profile reads "11 p.m." with U+00A0 in both its copies; while it decodes in, its row is one glyph per character of the profile in its own case, U+00A0 one of them, and at rest it is the profile as written, one text node', async ({ page, baseURL }) => {
   const SPARK = Array<PersonaId>(10).fill('spark');
   const profile = QUIZ_PERSONAS.find((p) => p.id === 'spark')!.profile;
-  expect(profile, 'config/quiz.ts writes it with U+00A0').toContain('11 p.m.');
+  expect(profile, 'config/quiz.ts writes it with U+00A0').toContain('11\u00a0p.m.');
   await pin(page, 0.01);
   await openQuiz(page, baseURL);
   await begin(page);
-  await answer(page, SPARK);
+  await answer(page, SPARK.slice(0, 9));
+  await onTop(page, 9);
+  // the profile's glyph row as the result first splits it (decode.ts, data-dc="prop": the result's decode in)
+  await page.evaluate(() => {
+    const text = document.querySelector('.qz-result[data-persona="spark"] .qz-text')!, w = window as unknown as { __qzSplit?: string[] };
+    const mo = new MutationObserver(() => { const row = text.querySelector(':scope > .dc'); if (row?.children.length) { mo.disconnect(); w.__qzSplit = [...row.children].map((s) => s.textContent ?? ''); } });
+    mo.observe(text, { subtree: true, childList: true });
+  });
+  await answer(page, SPARK, 9);
   await expect(page.locator('#find')).toHaveAttribute('data-state', 'result');
   await settled(page);
-  const c = await copies(page.locator('.qz-result:not([hidden]) .qz-text'));
-  expect({ sr: c.sr?.includes('11 p.m.'), row: c.row?.includes('11 P.M.') }, 'the hidden copy and the glyph row both keep U+00A0').toEqual({ sr: true, row: true });
+  // decoded glyph by glyph in its own case since 2026-11-02 (E-S3-result): the no-break space is a glyph of its own, which
+  // never rolls (only printable ASCII does)
+  expect(await page.evaluate(() => (window as unknown as { __qzSplit?: string[] }).__qzSplit), 'one glyph per character, U+00A0 among them').toEqual([...profile]);
+  const text = page.locator('.qz-result:not([hidden]) .qz-text'), c = await copies(text);
+  expect({ sr: c.sr?.includes('11\u00a0p.m.'), row: c.row?.includes('11\u00a0p.m.') }, 'the hidden copy and the drawn row both keep U+00A0').toEqual({ sr: true, row: true });
   expect(c.sr).toBe(profile);
+  expect(await atRest(text), 'at rest the profile as written, one text node').toEqual(settledLine(profile, false));
 });
 
 for (const [w, h] of [[360, 780], [430, 932], [768, 1024], [1024, 768], [1280, 800], [844, 390]] as const) {
   const scale = typeScale(w, h), px = (v: number) => String(Math.round(v * 100) / 100);
-  test(`AC4 at ${w} x ${h}: the intro, a card, the result, the gift and its done line fit the width, the text columns and their words sit inside the gutters, every control is at least 44 px each way (Begin, the answers, Back, the links, Send, the field, the consent row, Not you), and every line is at the type scale's clamp() sizes for the screen, ${px(scale.label)}, ${px(scale.step)} and ${px(scale.name)} px`, async ({ browser, baseURL }) => {
+  test(`AC4 at ${w} x ${h}: the intro, a card, the result, the gift (taking the screen in turn with the result where the two do not share it, data-swap: a phone held sideways, The Quiet Curator's result at 360 x 780) and its done line fit the width, the text columns and their words sit inside the gutters, every control is at least 44 px each way (Begin, the answers, Back, the links, Send, the field, the consent row, Not you), and every line is in its role's type at the type scale's clamp() sizes for the screen, ${px(scale.label)} and ${px(scale.step)} px on the intro and the questions, and on the result and the offer ${px(scale.rt)} for the words, ${px(scale.rlabel)} for the labels and ${px(scale.offer)} for the offer's line, times the result's step`, async ({ browser, baseURL }) => {
     const ctx = await browser.newContext({ viewport: { width: w, height: h } });
     const page = await ctx.newPage();
     await page.route('**/api/quiz-lead', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
@@ -1920,7 +2302,15 @@ for (const [w, h] of [[360, 780], [430, 932], [768, 1024], [1024, 768], [1280, 8
     await settled(page);
     await fits('result', '.qz-result:not([hidden])');
     await tap('result', '.qz-result:not([hidden]) .qz-link');
-    await page.evaluate(() => document.getElementById('qzGift')!.scrollIntoView({ block: 'end' }));
+    if (w >= 640 && h <= 599) expect(await swapped(page), 'a phone held sideways takes the result and the offer in turn').toBe(true);
+    if (await swapped(page)) {
+      // the offer waits for its own turn of the screen: "Get an exclusive launch discount" swaps it in
+      await expect(page.locator('#qzGift')).toBeHidden();
+      await page.locator('.qz-result:not([hidden]) .qz-togift').click();
+      await expect(page.locator('#find')).toHaveAttribute('data-gift', 'open');
+      await settled(page);
+      await tap('gift', '.qz-toresult');
+    } else await page.evaluate(() => document.getElementById('qzGift')!.scrollIntoView({ block: 'end' }));
     await fits('gift', '.qz-gift-in');
     await tap('gift', '#qzSend');
     await tap('gift', '#qzEmail');
@@ -1935,7 +2325,7 @@ for (const [w, h] of [[360, 780], [430, 932], [768, 1024], [1024, 768], [1280, 8
   });
 }
 
-test('AC4 at 360 x 780 the done line with a 60-character address breaks inside the gutters: every glyph of it between 16 and 344 px, over three lines or more, with nothing scrolling sideways', async ({ browser, baseURL }) => {
+test('AC4 at 360 x 780 the done line with a 60-character address breaks inside the gutters (in the offer\'s own turn of the screen, where The Quiet Curator\'s result and the offer take it in turn): every glyph of it between 16 and 344 px, over three lines or more, with nothing scrolling sideways', async ({ browser, baseURL }) => {
   const ADDRESS = `${'a'.repeat(48)}@example.com`;
   expect(ADDRESS).toHaveLength(60);
   const ctx = await browser.newContext({ viewport: { width: 360, height: 780 } });
@@ -1947,22 +2337,265 @@ test('AC4 at 360 x 780 the done line with a 60-character address breaks inside t
   await answer(page, CURATOR);
   await expect(page.locator('#find')).toHaveAttribute('data-state', 'result');
   await settled(page);
+  // the longest result and the offer do not share a 360 x 780 screen (data-swap, measured on 2026-11-02): the offer is
+  // opened as a visitor would, by "Get an exclusive launch discount"
+  if (await swapped(page)) {
+    await page.locator('.qz-result:not([hidden]) .qz-togift').click();
+    await expect(page.locator('#find')).toHaveAttribute('data-gift', 'open');
+    await settled(page);
+  }
   await page.locator('#qzEmail').fill(ADDRESS); await tick(page); await page.locator('#qzSend').click();
   const done = page.locator('.qz-done-text');
   await expect(said(done)).toHaveText(Q.done(ADDRESS));
   await page.evaluate(() => document.getElementById('qzGift')!.scrollIntoView({ block: 'end' }));
-  const m = await done.evaluate((d) => {
+  // the address's own glyphs measured in the band's face (Work Sans Light, proportional since 2026-11-02)
+  const m = await done.evaluate((d, { from, length }) => {
     const glyphs = [...d.querySelectorAll<HTMLElement>(':scope > .dc > span')].map((s) => s.getBoundingClientRect());
-    return { n: glyphs.length, left: Math.min(...glyphs.map((r) => r.left)), right: Math.max(...glyphs.map((r) => r.right)), lines: new Set(glyphs.map((r) => Math.round(r.top))).size, glyph: glyphs[0].width, col: d.closest('.qz-gift-in')!.getBoundingClientRect().width, line: d.getBoundingClientRect().right, wide: document.scrollingElement!.scrollWidth > innerWidth };
-  });
+    return { n: glyphs.length, left: Math.min(...glyphs.map((r) => r.left)), right: Math.max(...glyphs.map((r) => r.right)), lines: new Set(glyphs.map((r) => Math.round(r.top))).size, address: glyphs.slice(from, from + length).reduce((w, r) => w + r.width, 0), col: d.closest('.qz-gift-in')!.getBoundingClientRect().width, line: d.getBoundingClientRect().right, wide: document.scrollingElement!.scrollWidth > innerWidth };
+  }, { from: Q.done(ADDRESS).indexOf(ADDRESS), length: ADDRESS.length });
   expect(m.n, 'one glyph per character').toBe(Q.done(ADDRESS).length);
-  expect(ADDRESS.length * m.glyph, 'the address alone is wider than the column, so it has to break').toBeGreaterThan(m.col);
+  expect(m.address, 'the address alone is wider than the column, so it has to break').toBeGreaterThan(m.col);
   expect(m.left, 'left gutter').toBeGreaterThanOrEqual(16 - 0.01);
   expect(m.right, 'right gutter').toBeLessThanOrEqual(360 - 16 + 0.01);
   expect(m.line, 'the line itself').toBeLessThanOrEqual(360 - 16 + 0.01);
   expect(m.lines, 'broken over three lines or more').toBeGreaterThanOrEqual(3);
   expect(m.wide, 'no horizontal scroll').toBe(false);
   await ctx.close();
+});
+
+// ---- the result as one screen (Sam, 2026-11-02, with his reference: "for the results page, first of all it should fit
+// inside one screen, after the results, there should be no scrolling ... do the layout for the phone ratio as well";
+// asked how a phone should hold the longest result, "Shrink to fit"; E-S3-result). deck.ts's fitResult() sizes the name to
+// its column and steps --qz-rs down from 1 by 0.03 (to 0.7 at the least) until #find, the offer's band included, is no
+// taller than the .qz-vh probe (100svh). Where even 0.7 does not hold both, and on a phone held sideways, it sets
+// data-swap on #find: the result and the offer take the screen in turn, "Get an exclusive launch discount" and "Back to
+// your shade" moving between them, and each fits the screen on its own. The paint keeps its own proportions
+// (--qz-paint-ar): on a laptop it fills its column up to the reference's height, 55.5% of the screen times the fit, so a
+// screen wider than 16:9 (1366 x 657) does not draw it two thirds of the screen tall ----
+
+/** the shown result as it stands: #find's box against the 100svh probe and the viewport, --qz-rs, the name's size
+ *  against the one fitted to it and its width as drawn (scaleX(0.8): fitResult() fits the drawn name to its column)
+ *  against its column's, the offer's band (when it is drawn), whether anything scrolls sideways, and the paint: its box,
+ *  its width over height (--qz-paint-ar: deck.ts writes the swatch's image's own on each .qz-rub, our own stroke's is its
+ *  200 x 600), the image's own ratio from its width and height (Sam's swatch) and the result's grid tracks (on a laptop
+ *  the reference's five columns, the paint's the third) */
+const oneScreen = (page: Page) => page.evaluate(() => {
+  const find = document.getElementById('find')!, box = find.getBoundingClientRect(), res = find.querySelector<HTMLElement>('.qz-result:not([hidden])')!;
+  const name = res.querySelector<HTMLElement>('.qz-shade')!, head = res.querySelector<HTMLElement>('.qz-r-head')!, gift = document.getElementById('qzGift');
+  const band = gift && getComputedStyle(gift).display !== 'none' ? gift.getBoundingClientRect() : null;
+  const smear = res.querySelector<HTMLElement>('.qz-smear')!, pb = smear.getBoundingClientRect(), img = smear.querySelector<HTMLImageElement>('img.qz-rub-img');
+  return {
+    height: box.height, top: box.top, bottom: box.bottom, vh: find.querySelector(':scope > .qz-vh')!.getBoundingClientRect().height, inner: innerHeight,
+    rs: parseFloat(find.style.getPropertyValue('--qz-rs')), fit: parseFloat(name.style.getPropertyValue('--qz-name-fs')), size: parseFloat(getComputedStyle(name).fontSize),
+    nameW: name.getBoundingClientRect().width, headW: head.clientWidth, band: band ? { top: band.top, bottom: band.bottom } : null,
+    wide: document.scrollingElement!.scrollWidth > innerWidth,
+    paint: {
+      swatch: smear.matches('.qz-rub'), left: pb.left, width: pb.width, height: pb.height, ar: parseFloat(getComputedStyle(smear).getPropertyValue('--qz-paint-ar')), own: smear.style.getPropertyValue('--qz-paint-ar'),
+      image: img ? Number(img.getAttribute('width')) / Number(img.getAttribute('height')) : null, tracks: getComputedStyle(res).gridTemplateColumns.split(' ').map(parseFloat), resLeft: res.getBoundingClientRect().left,
+    },
+  };
+});
+/** #find's box against the probe while the offer has the screen on its own */
+const offerScreen = (page: Page) => page.evaluate(() => {
+  const find = document.getElementById('find')!, box = find.getBoundingClientRect();
+  return { height: box.height, top: box.top, bottom: box.bottom, vh: find.querySelector(':scope > .qz-vh')!.getBoundingClientRect().height, inner: innerHeight, wide: document.scrollingElement!.scrollWidth > innerWidth };
+});
+
+/** the screens of the one-screen test and whether The Quiet Curator's result and The Spark's take it in turn with the offer
+ *  there (data-swap), as measured on 2026-11-02 with the paint capped on a laptop (docs/specs/quiz.md AC14): both share
+ *  the screen with the offer at 390 x 844, 412 x 915, 768 x 1024, 1024 x 768, 1280 x 800, 1366 x 657 and 1920 x 1080,
+ *  and The Spark at 360 x 780; the longest result (The Quiet Curator's) and the offer are too tall for a 360 x 780 phone,
+ *  and both results are at 375 x 667, at 390 x 664 (a phone with its browser's bars shown) and in a 683 x 657 half-screen
+ *  window, even at 0.7 (844 x 390, a phone held sideways, swaps always: its own test below) */
+const SCREENS: [number, number, { curator: boolean; spark: boolean }][] = [
+  [390, 844, { curator: false, spark: false }], [360, 780, { curator: true, spark: false }], [412, 915, { curator: false, spark: false }],
+  [768, 1024, { curator: false, spark: false }], [1024, 768, { curator: false, spark: false }],
+  [1280, 800, { curator: false, spark: false }], [1366, 657, { curator: false, spark: false }], [1920, 1080, { curator: false, spark: false }],
+  [375, 667, { curator: true, spark: true }], [390, 664, { curator: true, spark: true }], [683, 657, { curator: true, spark: true }],
+];
+
+for (const [w, h, swaps] of SCREENS) {
+  test(`E-S3-result one screen at ${w} x ${h}: for The Quiet Curator (the longest profile) and, after Try again, The Spark (the shortest), the settled result fits the screen with no scrolling: #find no taller than the 100svh probe (within 0.5 px) and its top at the viewport's top, --qz-rs between 0.7 and 1, the name at the size fitted to it and inside its column as drawn, nothing scrolling sideways; the paint at its own proportions, ${w >= 900 && h >= 600 ? 'as wide as its column up to 55.5% of the screen\'s height times the fit, centred in the column' : '18vw wide (56 to 120 px) times the fit'}; ${swaps.curator || swaps.spark ? `data-swap where the two do not share it (${swaps.curator ? 'the Curator' : ''}${swaps.curator && swaps.spark ? ' and ' : ''}${swaps.spark ? 'the Spark' : ''}), the result alone fitting and "Get an exclusive launch discount" opening the offer, which fits alone; ` : ''}the offer's band inside the section where they share it`, async ({ browser, baseURL }) => {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+    const page = await ctx.newPage();
+    const SPARK = Array<PersonaId>(10).fill('spark');
+    const byLength = [...QUIZ_PERSONAS].sort((a, b) => a.profile.length - b.profile.length);
+    expect([byLength[byLength.length - 1].id, byLength[0].id], 'the longest profile and the shortest').toEqual(['curator', 'spark']);
+    await pin(page, 0.01);
+    await openQuiz(page, baseURL);
+    await begin(page);
+    for (const [k, answers] of [CURATOR, SPARK].entries()) {
+      const r = drawn(answers, 0.01), at = `${r.p.name} (${r.name}) at ${w} x ${h}`, swap = r.p.id === 'curator' ? swaps.curator : swaps.spark;
+      if (k) { await page.locator('.qz-result:not([hidden]) .qz-retry').click(); await onTop(page, 0); }
+      await answer(page, answers);
+      await expectResult(page, r);
+      // fitResult runs at the result and again once the fonts are in
+      await page.evaluate(() => document.fonts.ready);
+      await page.evaluate(() => new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res))));
+      const m = await oneScreen(page);
+      expect(await swapped(page), `${at}: ${swap ? 'the result and the offer in turn (data-swap)' : 'the result and the offer on one screen'} (--qz-rs ${m.rs})`).toBe(swap);
+      expect(m.vh, `${at}: the probe is one screen`).toBeCloseTo(m.inner, 0);
+      expect(m.height, `${at}: #find no taller than one screen (--qz-rs ${m.rs})`).toBeLessThanOrEqual(m.vh + 0.5);
+      expect(Math.abs(m.top), `${at}: its top at the viewport's top`).toBeLessThanOrEqual(1);
+      expect(m.bottom, `${at}: so its foot is on screen`).toBeLessThanOrEqual(m.inner + 0.5);
+      expect(m.rs, `${at}: --qz-rs no less than 0.7`).toBeGreaterThanOrEqual(0.7);
+      expect(m.rs, `${at}: and no more than 1`).toBeLessThanOrEqual(1);
+      expect(Math.abs(m.size - m.fit), `${at}: the name at its fitted ${m.fit} px`).toBeLessThan(0.05);
+      expect(m.nameW, `${at}: the name as drawn (at 80% of its width) inside its column (${m.headW} px)`).toBeLessThanOrEqual(m.headW + 1);
+      expect(m.wide, `${at}: nothing scrolls sideways`).toBe(false);
+      // the paint at its own proportions: the swatch's image's, which deck.ts writes on it, or our own stroke's 200 x 600
+      const p = m.paint;
+      if (p.swatch) expect(p.own, `${at}: Sam's swatch at its image's own width over height, written by deck.ts`).toBe((p.image ?? 0).toFixed(5));
+      else expect(p.ar, `${at}: our own stroke's 200 x 600`).toBeCloseTo(1 / 3, 3);
+      expect(Math.abs(p.height - p.width / p.ar), `${at}: the paint ${p.width.toFixed(1)} x ${p.height.toFixed(1)} px, at its proportions`).toBeLessThanOrEqual(1);
+      if (w >= 900 && h >= 600) {
+        // a laptop: the reference's five columns (34, 5, 13, 8 and 40), the paint in the third, as wide as the column up to
+        // the reference's height, 55.5% of the screen (624 of its 1125 px), times the fit, and centred in it
+        expect(p.tracks, `${at}: the reference's five columns`).toHaveLength(5);
+        const col = p.tracks[2], left = p.resLeft + p.tracks[0] + p.tracks[1], want = Math.min(col, 0.555 * m.vh * p.ar * m.rs);
+        expect(Math.abs(p.width - want), `${at}: the paint ${want.toFixed(1)} px wide, its ${col.toFixed(1)} px column up to 55.5% of the screen's height at --qz-rs ${m.rs}`).toBeLessThanOrEqual(0.5);
+        expect(p.height, `${at}: no taller than 55.5% of the screen times the fit`).toBeLessThanOrEqual(0.555 * m.vh * m.rs + 1);
+        expect(Math.abs(p.left + p.width / 2 - (left + col / 2)), `${at}: centred in its column`).toBeLessThanOrEqual(0.5);
+      } else expect(Math.abs(p.width - Math.min(120, Math.max(56, 0.18 * w)) * m.rs), `${at}: the paint 18vw wide (56 to 120 px) times the fit, as before the laptop's cap`).toBeLessThanOrEqual(0.5);
+      if (!swap) {
+        expect(m.band, `${at}: the offer's band drawn`).not.toBeNull();
+        expect(m.band!.bottom, `${at}: the band closes the section, on screen`).toBeLessThanOrEqual(m.bottom + 0.5);
+        continue;
+      }
+      // the offer on its own turn of the screen, and back
+      expect(m.band, `${at}: the offer's band waits for its turn`).toBeNull();
+      const togift = page.locator('.qz-result:not([hidden]) .qz-togift');
+      await expect(togift, `${at}: "Get an exclusive launch discount" shown`).toBeVisible();
+      await togift.click();
+      await expect(page.locator('#find')).toHaveAttribute('data-gift', 'open');
+      await settled(page);
+      const g = await offerScreen(page);
+      expect(g.height, `${at}: the offer alone no taller than one screen`).toBeLessThanOrEqual(g.vh + 0.5);
+      expect(Math.abs(g.top), `${at}: from the viewport's top`).toBeLessThanOrEqual(1);
+      expect(g.wide, `${at}: nothing scrolls sideways`).toBe(false);
+      for (const sel of ['.qz-offer', '#qzEmail', '#qzSend', '.qz-check', '.qz-toresult']) await expect(page.locator(sel), `${at}: ${sel} on the screen`).toBeInViewport({ ratio: 1 });
+      await page.locator('.qz-toresult').click();
+      await expect(page.locator('#find')).not.toHaveAttribute('data-gift');
+      await expect(page.locator('.qz-result:not([hidden]) .qz-shade')).toBeFocused();
+      await settled(page);
+      expect((await oneScreen(page)).height, `${at}: the result alone again, one screen`).toBeLessThanOrEqual(m.vh + 0.5);
+    }
+    await ctx.close();
+  });
+}
+
+test('E-S3-result on a phone held sideways (844 x 390): data-swap on #find, the result takes the screen alone, one screen, the offer\'s band not drawn and its lines out; "Get an exclusive launch discount" wipes the result out and decodes the offer in on its own (data-gift="open", the stage hidden), focus on the offer\'s line (no box drawn), still one screen with the field, Send, the consent and "Back to your shade" on it; "Back to your shade" wipes the offer out and decodes the result back in, the name focused, one screen again', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 844, height: 390 } });
+  const page = await ctx.newPage();
+  await pin(page, 0.01);
+  await openQuiz(page, baseURL);
+  await begin(page);
+  await answer(page, CURATOR);
+  const r = drawn(CURATOR, 0.01), lines = resultLines(r);
+  await expectResult(page, r);
+  const find = page.locator('#find'), stage = page.locator('#find > .qz-stage'), gift = page.locator('#qzGift'), offer = page.locator('.qz-offer');
+  const fitsScreen = async (at: string) => {
+    const s = await page.evaluate(() => { const f = document.getElementById('find')!, b = f.getBoundingClientRect(); return { height: b.height, top: b.top, vh: f.querySelector(':scope > .qz-vh')!.getBoundingClientRect().height, wide: document.scrollingElement!.scrollWidth > innerWidth }; });
+    expect(s.height, `${at}: no taller than one screen`).toBeLessThanOrEqual(s.vh + 0.5);
+    expect(Math.abs(s.top), `${at}: from the viewport's top`).toBeLessThanOrEqual(1);
+    expect(s.wide, `${at}: nothing scrolls sideways`).toBe(false);
+  };
+  /** the most opaque glyph of a decoded line: 0 while it is out, 1 once a proportional line has settled into one text node
+   *  again (decode.ts join(): no glyphs, its text drawn in full) */
+  const most = (sel: string) => page.locator(sel).evaluate((e) => {
+    const row = e.querySelector(':scope > .dc'), glyphs = row ? [...row.querySelectorAll<HTMLElement>(':scope > span')] : [];
+    return glyphs.length ? Math.max(...glyphs.map((s) => (s.style.opacity === '' ? 1 : Number(s.style.opacity)))) : row?.textContent ? 1 : -1;
+  });
+  const offerLines = ['.qz-offer > span:first-child', '.qz-offer > strong', '.qz-offer > span:last-child', '#qzSend', '.qz-check > span:last-child', '.qz-fine', '.qz-toresult'];
+  // the result alone (data-swap, set by fitResult() on a phone held sideways): the band not drawn and its lines kept out
+  // until their turn
+  await expect(find).toHaveAttribute('data-swap', '');
+  await expect(find).not.toHaveAttribute('data-gift');
+  await expect(stage).toBeVisible();
+  await expect(gift, 'the offer waits for its turn').toBeHidden();
+  await fitsScreen('the result');
+  for (const sel of offerLines) expect(await most(sel), `${sel}: out until the offer's turn`).toBe(0);
+  const togift = page.locator('.qz-result:not([hidden]) .qz-togift');
+  await expect(togift).toBeVisible();
+  await expect(togift).toHaveAccessibleName(Q.toGift);
+  await quiet(page);
+  // the swap, watched until the offer has decoded in: every line of the result wipes out, then the offer's decode in, on
+  // their own (the first at 0 s), as every change of screen does
+  const opening = watch(page, '#find[data-gift="open"]');
+  await togift.click();
+  const w = await opening;
+  expect(w.timedOut, 'the offer settled within the window').toBe(false);
+  expect(w.phases.length, 'the result out, the offer in').toBe(2);
+  expectMotion('the result wipes out', w, 0, { dir: 'out', keys: keys('result', lines) });
+  expectMotion('then the offer decodes in on its own', w, 1, { dir: 'in', keys: keys('gift', GIFT_LINES, lines), base: lines });
+  await expect(find).toHaveAttribute('data-gift', 'open');
+  await expect(stage, 'the result is not drawn beside it').toBeHidden();
+  await expect(gift).toBeVisible();
+  await expect(offer, 'focus on the offer\'s line').toBeFocused();
+  expect(await focusLook(offer), 'which draws no box').toEqual({ outline: 'none', ring: 'none' });
+  await settled(page);
+  for (const sel of offerLines) expect(await most(sel), `${sel}: decoded in`).toBe(1);
+  // and at rest each is plain text again (data-dc="prop"), Sam's words in his case, the capitals drawn by the style sheet
+  const offerWords: [string, boolean][] = [[Q.offerLead, false], [Q.offerStrong, false], [Q.offerTail, false], [Q.send, true], [Q.consent, true], [Q.fine, false], [Q.toResult, true]];
+  for (const [k, sel] of offerLines.entries()) expect(await atRest(page.locator(sel)), `${sel} at rest`).toEqual(settledLine(...offerWords[k]));
+  await fitsScreen('the offer');
+  for (const sel of ['.qz-offer', '#qzEmail', '#qzSend', '.qz-check', '.qz-fine', '.qz-toresult']) await expect(page.locator(sel), `${sel} on the screen`).toBeInViewport({ ratio: 1 });
+  await expect(page.locator('.qz-toresult')).toHaveAccessibleName(Q.toResult);
+  // and back to the shade
+  const closing = watch(page, '#find:not([data-gift])');
+  await page.locator('.qz-toresult').click();
+  const b = await closing;
+  expect(b.timedOut, 'the result settled within the window').toBe(false);
+  expect(b.phases.length, 'the offer out, the result in').toBe(2);
+  expectMotion('the offer wipes out', b, 0, { dir: 'out', keys: keys('gift', GIFT_LINES, lines) });
+  expectMotion('then the result decodes in', b, 1, { dir: 'in', keys: keys('result', lines) });
+  await expect(find).not.toHaveAttribute('data-gift');
+  await expect(stage).toBeVisible();
+  await expect(gift).toBeHidden();
+  await expect(page.locator('.qz-result:not([hidden]) .qz-shade'), 'focus back on the name').toBeFocused();
+  await settled(page);
+  await fitsScreen('the result again');
+  await ctx.close();
+});
+
+test('E-S3-result the logotype\'s band over the ground: html carries data-qz-ground while the result is shown and #find covers the band\'s line (64 px), so the logotype and Back to top, turned Urban Slate over the light fog, stay Pearl Whisper over the deep ground; scrolled on until #find ends above the line, or back until it starts below it, the mark goes and the tone with it; at the result\'s top it comes back, and Try again takes it off', async ({ page, baseURL }) => {
+  await pin(page, 0.01);
+  await openQuiz(page, baseURL);
+  const html = page.locator('html'), logo = page.locator('#siteLogo'), toTop = page.locator('#toTop'), find = page.locator('#find');
+  await expect(html, 'not on the intro').not.toHaveAttribute('data-qz-ground');
+  await begin(page);
+  await expect(html, 'nor on a question').not.toHaveAttribute('data-qz-ground');
+  await answer(page, CURATOR);
+  await expect(find).toHaveAttribute('data-state', 'result');
+  await expect(html, 'the result at the top, under the band').toHaveAttribute('data-qz-ground', '');
+  // the tone the hero's ride gives the logotype over the light fog (glitch.ts setTone; to-top.ts copies it to Back to top)
+  await logo.evaluate((l) => { (l as HTMLElement).dataset.tone = 'light'; });
+  await expect(toTop).toHaveAttribute('data-tone', 'light');
+  await expect(logo, 'Pearl Whisper over the ground').toHaveCSS('color', PEARL);
+  await expect(toTop).toHaveCSS('color', PEARL);
+  const scrollFind = (dy: number) => page.evaluate((dy) => { const f = document.getElementById('find')!; scrollTo({ top: f.getBoundingClientRect().top + scrollY + dy, behavior: 'instant' }); }, dy);
+  const rect = () => find.evaluate((f) => { const b = f.getBoundingClientRect(); return { top: b.top, bottom: b.bottom }; });
+  // on past the result into section 4 (open under it): #find ends above the line
+  await scrollFind((await rect()).bottom - 64 + 40);
+  expect((await rect()).bottom, '#find ends above the band\'s line').toBeLessThan(64);
+  await expect(html, 'the ground no longer under the band').not.toHaveAttribute('data-qz-ground');
+  await expect(logo, 'the logotype back to its tone over the fog').toHaveCSS('color', URBAN_SLATE);
+  await expect(toTop).toHaveCSS('color', URBAN_SLATE);
+  // the result's top at the viewport's top again
+  await scrollFind(0);
+  await expect(html).toHaveAttribute('data-qz-ground', '');
+  await expect(logo).toHaveCSS('color', PEARL);
+  // back up the page: #find starts below the line
+  await scrollFind(-120);
+  expect((await rect()).top, '#find starts below the band\'s line').toBeGreaterThan(64);
+  await expect(html, 'the fog over the band again').not.toHaveAttribute('data-qz-ground');
+  // Try again: the deck on the fog, never the mark
+  await scrollFind(0);
+  await expect(html).toHaveAttribute('data-qz-ground', '');
+  await page.locator('.qz-result:not([hidden]) .qz-retry').click();
+  await expect(find).toHaveAttribute('data-state', 'quiz');
+  await expect(html, 'not once the result has gone').not.toHaveAttribute('data-qz-ground');
+  await logo.evaluate((l) => { delete (l as HTMLElement).dataset.tone; });
 });
 
 // ---- the answer pictures (Sam, 2026-10-20; config/quiz-pictures.ts, picture.ts) ----
@@ -2733,11 +3366,12 @@ for (const [w, h] of [[390, 844], [412, 915]] as const) {
     await answer(page, CURATOR);
     await expect(page.locator('#find')).toHaveAttribute('data-state', 'result');
     await settled(page);
-    // the visitor has scrolled down to the link: the section's top is well above the viewport when retry measures
+    // the visitor has scrolled on past the one-screen result (section 4 open under it) as far as the link stays on screen:
+    // the section's top is well above the viewport when retry measures
     const retry = page.locator('.qz-result:not([hidden]) .qz-retry');
-    await page.evaluate(() => { const top = document.getElementById('find')!.getBoundingClientRect().top + scrollY; scrollTo({ top: top + 400, behavior: 'instant' }); });
+    await page.evaluate(() => { const top = document.getElementById('find')!.getBoundingClientRect().top + scrollY, r = document.querySelector('.qz-result:not([hidden]) .qz-retry')!.getBoundingClientRect(); scrollTo({ top: top + Math.min(400, r.top - 8), behavior: 'instant' }); });
     await quiet(page);
-    await expect(retry, 'the link in view, the section\'s top 400 px above the viewport').toBeInViewport();
+    await expect(retry, 'the link in view, the section\'s top up to 400 px above the viewport').toBeInViewport();
     expect(await page.evaluate(() => document.getElementById('find')!.getBoundingClientRect().top), 'the section scrolled up past the viewport\'s top').toBeLessThan(-200);
     await retry.tap();
     await onTop(page, 0);

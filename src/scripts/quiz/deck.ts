@@ -4,7 +4,9 @@
 // element after element; the answer taken stays a beat after the rest of its question has gone. No library: the decode
 // sets each glyph's opacity, and the swatches fade in on opacity alone; reduced motion makes both a 0.2 s fade. Every
 // string comes from config/quiz.ts and the markup is server-rendered (shade names, numbers and links included); this
-// file only shows, hides, decodes and paints it.
+// file only shows, hides, decodes and paints it. The result is one screen since Sam's reference of 2026-11-02
+// (E-S3-result): the drawn shade's tones go onto the section, fitResult() sizes the name to its column and steps the type
+// down until the result and the offer fit the screen, and on a phone held sideways the two take the screen in turn.
 import { QUIZ_COPY as Q, QUIZ_LEAD_ENDPOINT, QUIZ_QUESTIONS, pickShade, scoreQuiz, type PersonaId } from '../../config/quiz.ts';
 import { reducedMQ } from '../motion.ts';
 import { createDecoder } from './decode.ts';
@@ -37,6 +39,8 @@ export function mountQuiz(root: HTMLElement): void {
   /** and its labels put back before the gift decodes in again: an abandoned send leaves Send as it stood, for the wipe to take */
   let restoreGift = () => {};
   const early = () => performance.now() < readyAt;
+  // the result's faces (E-S3-result), fetched now, so the name is measured in Anton when the result comes
+  try { for (const f of ['400 1em Anton', '400 1em Poppins', 'italic 400 1em Poppins', '700 1em Poppins', '300 1em "Work Sans"']) void document.fonts.load(f); } catch { /* no FontFaceSet: the fallbacks are measured, and fonts.ready measures again */ }
   const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
   /** the decoded elements of a part, in reading order, less those inside something hidden (the drawn shade's mini, the done line) */
   const items = (scope: HTMLElement) => [...scope.querySelectorAll<HTMLElement>('[data-dc]')].filter((e) => { for (let p = e.parentElement; p && p !== scope; p = p.parentElement) if (p.hidden) return false; return true; });
@@ -69,10 +73,77 @@ export function mountQuiz(root: HTMLElement): void {
   }
   addEventListener('resize', fitPics); wide.addEventListener('change', fitPics); side.addEventListener('change', fitPics);
 
-  // the swatches take their shade from the catalog token through the CSSOM (the CSP allows no style attributes)
-  for (const el of root.querySelectorAll<HTMLElement>('.qz-big, .qz-mini-sw')) el.style.background = `var(--shade-${el.dataset.shade})`;
+  // ---- the result's one screen (Sam, 2026-11-02: "it should fit inside one screen, after the results, there should be no
+  // scrolling", and asked how a phone should hold the longest result, "Shrink to fit"; E-S3-result): the name is sized to
+  // its column, at most a share of the screen's height, and --qz-rs steps the type and the gaps down from 1 (to RS_MIN at
+  // the least) until the section, the offer's band included, is no taller than one screen with a phone browser's bars
+  // shown (the 100svh probe)
+  const vh = root.querySelector<HTMLElement>('.qz-vh'), ground = root.querySelector<HTMLElement>('.qz-ground');
+  const RS_MIN = 0.7, RS_STEP = 0.03;
+  /** the name is drawn at 80% of its width (quiz.css .qz-shade, Sam's design): it is fitted to its column as drawn */
+  const NAME_SX = 0.8;
+  /** the result and the offer take the screen in turn (quiz.css, data-swap): on a phone held sideways, and wherever even the
+   *  smallest type does not hold both in one screen (a 375 x 667 phone, a phone with its browser's bars shown, a short
+   *  half-screen window); the visitor moves between them with "Get an exclusive launch discount" and "Back to your shade" */
+  const swapped = () => root.hasAttribute('data-swap');
+  function fitResult() {
+    if (state !== 'result') return;
+    if (busy) { refit(); return; }   // a wipe is under way: fitted once it has settled
+    const shown = results.querySelector<HTMLElement>('.qz-result:not([hidden])');
+    const name = shown?.querySelector<HTMLElement>('.qz-shade'), head = shown?.querySelector<HTMLElement>('.qz-r-head');
+    if (!shown || !name || !head) return;
+    const H = vh?.getBoundingClientRect().height || innerHeight;
+    // the name's size at the most: Sam's reference sets it 34% of the screen's height (Anton at a 0.88 cap height, 30% in
+    // capitals); less on a phone, where the words below it need the screen too
+    const cap = wide.matches ? Math.min(H * 0.344, 420) : side.matches ? Math.min(H * 0.26, 140) : Math.min(H * 0.16, 150);
+    let rs = 1;
+    const apply = () => {
+      root.style.setProperty('--qz-rs', rs.toFixed(3));
+      name.style.setProperty('--qz-name-fs', '100px');
+      const w = name.scrollWidth || 1;
+      name.style.setProperty('--qz-name-fs', `${Math.max(16, Math.min(cap * rs, (head.clientWidth / (w * NAME_SX)) * 100)).toFixed(1)}px`);
+    };
+    const tall = () => root.getBoundingClientRect().height > H + 0.5;
+    const fit = () => { rs = 1; apply(); while (tall() && rs > RS_MIN + 1e-6) { rs = Math.max(RS_MIN, rs - RS_STEP); apply(); } };
+    const was = swapped(), open = root.dataset.gift;
+    if (!gift) { root.removeAttribute('data-swap'); fit(); return; }
+    if (side.matches) { root.setAttribute('data-swap', ''); fit(); }
+    else {
+      // both in one screen where the type can hold them; failing that, in turn, the offer keeping the screen if it had it
+      root.removeAttribute('data-swap'); delete root.dataset.gift;
+      fit();
+      if (tall()) { root.setAttribute('data-swap', ''); if (open) root.dataset.gift = open; fit(); }
+    }
+    const now = swapped();
+    if (was && !now) {
+      // both parts on one screen again: whichever was out comes back in, and a swap word about to go hands focus to the name
+      void dc.showAll([...items(shown), ...items(gift)]);
+      if ((document.activeElement as HTMLElement | null)?.matches?.('.qz-togift, .qz-toresult')) name.focus({ preventScroll: true });
+    } else if (!was && now && gift.contains(document.activeElement)) { root.dataset.gift = 'open'; fit(); }   // the visitor is in the offer: it keeps the screen
+  }
+  let fitRaf = 0;
+  /** fitResult() at the next frame, once: after a resize, a turn of the phone, a message in the offer, a wipe settling */
+  function refit() { if (!fitRaf) fitRaf = requestAnimationFrame(() => { fitRaf = 0; fitResult(); }); }
+  addEventListener('resize', () => { if (state === 'result') refit(); });
 
-  function setState(s: State) { state = s; root.dataset.state = s; }
+  // the swatches take their shade from the catalog token through the CSSOM (the CSP allows no style attributes)
+  for (const el of root.querySelectorAll<HTMLElement>('.qz-mini')) el.style.background = `var(--shade-${el.dataset.shade})`;
+  // the paint's outline: its own image as the mask of the shade's fill (quiz.css .qz-rub-col), and its own proportions
+  for (const el of root.querySelectorAll<HTMLElement>('.qz-rub')) {
+    const img = el.querySelector('img'), src = img?.getAttribute('src'), w = Number(img?.getAttribute('width')), h = Number(img?.getAttribute('height'));
+    if (src) el.style.setProperty('--qz-rub', `url("${src}")`);
+    if (w > 0 && h > 0) el.style.setProperty('--qz-paint-ar', (w / h).toFixed(5));
+  }
+
+  let groundRaf = 0;
+  function setState(s: State) { state = s; root.dataset.state = s; groundBand(); }
+  /** the fixed logotype and Back to top stay Pearl Whisper while the result's deep ground lies under them (quiz.css) */
+  function groundBand() {
+    groundRaf = 0;
+    const r = root.getBoundingClientRect();
+    document.documentElement.toggleAttribute('data-qz-ground', state === 'result' && r.top <= 64 && r.bottom >= 64);
+  }
+  addEventListener('scroll', () => { if (!groundRaf) groundRaf = requestAnimationFrame(groundBand); }, { passive: true });
   function announce(text: string) { live.textContent = ''; requestAnimationFrame(() => { live.textContent = text; }); }
 
   // ---- the intro is visible at rest, as the server drew it (rule 12: no reveal on scroll); its text is split into glyphs
@@ -152,26 +223,34 @@ export function mountQuiz(root: HTMLElement): void {
     deck.hidden = true;
     for (const el of results.querySelectorAll<HTMLElement>('.qz-result')) el.hidden = el.dataset.persona !== p.id;
     const shown = results.querySelector<HTMLElement>(`.qz-result[data-persona="${p.id}"]`)!;
-    // the drawn shade takes the large swatch, the heading, the family line and the link; the rest are the compatible ones
+    // the drawn shade takes the name, the family line and the link, and its tones (config/quiz-tones.ts, written on its
+    // chip at build) colour the ground, the offer's band, the name's offset layer and the stroke; the rest are the chips
     const pick = shown.querySelector<HTMLElement>(`.qz-mini[data-shade="${shade}"]`)!;
-    const big = shown.querySelector<HTMLElement>('.qz-big')!;
-    big.dataset.shade = shade; big.style.background = `var(--shade-${shade})`;
-    big.toggleAttribute('data-ring', pick.hasAttribute('data-ring')); big.toggleAttribute('data-ring-night', pick.hasAttribute('data-ring-night'));
-    dc.prepare(shown.querySelector<HTMLElement>('.qz-shade')!, `${pick.dataset.name}.`);
+    root.style.setProperty('--qz-shade', `var(--shade-${shade})`);
+    const tones: [string, string | undefined][] = [['--qz-deep', pick.dataset.deep], ['--qz-band', pick.dataset.band], ['--qz-mid', pick.dataset.mid], ['--qz-sd', pick.dataset.sd], ['--qz-sl', pick.dataset.sl]];
+    for (const [k, v] of tones) if (v) root.style.setProperty(k, v);
+    root.toggleAttribute('data-sm-rim', pick.hasAttribute('data-rim'));   // the darkest shades' stroke takes the chips' hairline (quiz.css)
+    dc.prepare(shown.querySelector<HTMLElement>('.qz-shade')!, pick.dataset.name ?? '');
     dc.prepare(shown.querySelector<HTMLElement>('.qz-fam')!, pick.dataset.fam ?? '');
     shown.querySelector<HTMLAnchorElement>('.qz-see')!.href = pick.dataset.href ?? '';
     for (const m of shown.querySelectorAll<HTMLElement>('.qz-mini')) m.hidden = m.dataset.shade === shade;
+    delete root.dataset.gift;
     results.hidden = false; if (gift) gift.hidden = false; setState('result');
     unlock('result');   // section 4 opens under the result and the gift (quiz-gate.md D2); nothing moves
     track('quiz_complete', { persona: p.id, shade, others: others.join(',') });
-    const els = [...items(shown), ...(gift ? items(gift) : [])];
+    fitResult();
     restoreGift();
-    for (const el of els) { dc.prepare(el); dc.conceal(el); }   // a label set at once earlier (Send) goes too, so the whole part decodes in
-    for (const sw of shown.querySelectorAll<HTMLElement>('.qz-big, .qz-mini:not([hidden]) .qz-mini-sw')) sw.animate([{ opacity: 0 }, { opacity: 1 }], { duration: reduced() ? 200 : DUR_SWATCH, easing: 'linear' });
-    void dc.showAll(els);
-    announce(`${Q.eyebrow}: ${pick.dataset.name}. ${p.name}.`);
+    for (const el of [...items(shown), ...(gift ? items(gift) : [])]) { dc.prepare(el); dc.conceal(el); }   // a label set at once earlier (Send) goes too, so the whole part decodes in
+    const fade = { duration: reduced() ? 200 : DUR_SWATCH, easing: 'linear' };
+    for (const el of [ground, ...shown.querySelectorAll('.qz-smear, .qz-mini:not([hidden])')]) el?.animate([{ opacity: 0 }, { opacity: 1 }], fade);
+    // on a phone held sideways the offer waits for its own turn of the screen (quiz.css): its words stay out until then
+    void dc.showAll([...items(shown), ...(gift && !swapped() ? items(gift) : [])]);
+    announce(`${Q.eyebrow} ${pick.dataset.name}. ${p.name}.`);
     shown.querySelector<HTMLElement>('.qz-shade')?.focus({ preventScroll: true });
     if (form) { form.dataset.shade = shade; form.dataset.family = pick.dataset.family ?? ''; form.dataset.finish = p.finish; form.dataset.persona = p.id; }
+    // the result is one screen from the section's top: a page left part way down the last question comes back to it
+    if (Math.abs(root.getBoundingClientRect().top) > 1) root.scrollIntoView({ block: 'start', behavior: reduced() ? 'instant' : 'smooth' });
+    void document.fonts?.ready.then(() => { if (state === 'result') fitResult(); });
   }
 
   async function retry() {
@@ -180,10 +259,12 @@ export function mountQuiz(root: HTMLElement): void {
     track('quiz_retake');
     resetGift();
     const shown = results.querySelector<HTMLElement>('.qz-result:not([hidden])');
+    const out = ground?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: reduced() ? 200 : DUR_SWATCH / 2, easing: 'linear', fill: 'forwards' });
     await dc.hideAll([...(shown ? items(shown) : []), ...(gift ? items(gift) : [])]);
     results.hidden = true; if (gift) gift.hidden = true;
+    delete root.dataset.gift; root.removeAttribute('data-swap'); root.style.removeProperty('--qz-rs');
     answers.length = 0; top = 0; busy = false;
-    deck.hidden = false; setState('quiz'); showCard(0);
+    deck.hidden = false; setState('quiz'); out?.cancel(); showCard(0);
     root.scrollIntoView({ block: 'start', behavior: reduced() ? 'instant' : 'smooth' });   // the section's top, so the deck sits where the intro stood
   }
 
@@ -248,14 +329,15 @@ export function mountQuiz(root: HTMLElement): void {
   const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
   // the form's own lines go through the decoder too (set: at once, no animation), so each has its sentence-case copy for
   // assistive technology beside the capitals on screen
-  const setErr = (el: HTMLElement, input: HTMLInputElement, text: string) => { dc.set(el, text); input.setAttribute('aria-invalid', text ? 'true' : 'false'); };   // the line keeps its height (quiz.css), so a message never moves the controls under it
+  const setErr = (el: HTMLElement, input: HTMLInputElement, text: string) => { dc.set(el, text); input.setAttribute('aria-invalid', text ? 'true' : 'false'); refit(); };   // the line keeps its height (quiz.css), so a message never moves the controls under it; a longer one is fitted again
   const validEmail = () => { const ok = EMAIL.test(email.value.trim()); setErr(errEmail, email, ok ? '' : Q.errEmail); return ok; };
   const validConsent = () => { const ok = consent.checked; setErr(errConsent, consent, ok ? '' : Q.errConsent); return ok; };
   email.addEventListener('blur', () => { if (email.value) validEmail(); });   // on blur only once there is a value, never per keystroke
   consent.addEventListener('change', () => { if (consent.checked) validConsent(); });
-  const note = (text: string) => { dc.set(msg, text); if (text) announce(text); };   // the status line stays in the tree so the live region is heard; the sr-only region repeats it
+  const note = (text: string) => { dc.set(msg, text); if (text) announce(text); refit(); };   // the status line stays in the tree so the live region is heard; the sr-only region repeats it; the screen is fitted again around it
   const closeForm = (text: string) => { fields.hidden = true; doneEl.hidden = false; dc.set(doneText, text); note(''); doneText.focus(); };
-  const openForm = () => { doneEl.hidden = true; fields.hidden = false; email.value = ''; consent.checked = false; setErr(errEmail, email, ''); setErr(errConsent, consent, ''); note(''); email.focus(); };
+  // the fields' words come back in too: a swap that took the offer off the screen left them out
+  const openForm = () => { doneEl.hidden = true; fields.hidden = false; email.value = ''; consent.checked = false; setErr(errEmail, email, ''); setErr(errConsent, consent, ''); note(''); void dc.showAll(items(fields)); email.focus(); };
   let sending = false, queued: Record<string, string> | null = null, gen = 0, inflight: AbortController | null = null;
   resetGift = () => { gen++; inflight?.abort(); inflight = null; setErr(errEmail, email, ''); setErr(errConsent, consent, ''); note(''); };
   restoreGift = () => { if (!sending) dc.prepare(send, Q.send); };
@@ -309,4 +391,27 @@ export function mountQuiz(root: HTMLElement): void {
     void submit(payload(email.value.trim()));
   });
   notYou.addEventListener('click', () => { queued = null; try { sessionStorage.removeItem(QUEUE_KEY); } catch { /* ignore */ } openForm(); });
+
+  // ---- the swap (data-swap: a phone held sideways, or a screen too short for both): the result and the offer take the
+  // screen in turn, each wiping out as the other decodes in, as every change of screen does; focus goes to the part shown
+  // (the offer's line, or the shade's name)
+  const offer = gift.querySelector<HTMLElement>('.qz-offer');
+  async function swap(open: boolean) {
+    if (busy || state !== 'result' || !swapped()) return;
+    busy = true;
+    const shown = results.querySelector<HTMLElement>('.qz-result:not([hidden])');
+    const res = shown ? items(shown) : [], off = items(gift!);
+    await dc.hideAll(open ? res : off);
+    if (open) root.dataset.gift = 'open'; else delete root.dataset.gift;
+    for (const el of open ? off : res) { dc.prepare(el); dc.conceal(el); }
+    busy = false;
+    if (!open) fitResult();
+    void dc.showAll(open ? off : res);
+    (open ? offer : shown?.querySelector<HTMLElement>('.qz-shade'))?.focus({ preventScroll: true });
+  }
+  for (const b of results.querySelectorAll<HTMLButtonElement>('.qz-togift')) b.addEventListener('click', () => { void swap(true); });
+  gift.querySelector<HTMLButtonElement>('.qz-toresult')?.addEventListener('click', () => { void swap(false); });
+  // turned with the result on screen: fitResult() decides whether the two share the screen, and keeps the offer on it
+  // while the visitor is in it
+  side.addEventListener('change', () => { if (state === 'result') refit(); });
 }
