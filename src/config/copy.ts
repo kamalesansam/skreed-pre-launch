@@ -22,7 +22,7 @@ export const COPY = {
     noscriptDate: '15 November 2026',
     noscriptDatetime: '2026-11-15T00:00+05:30',
   },
-  /** the cue's words beside the chevrons (docs/specs/scroll-cue.md; the brief of 2026-11-02) */
+  /** the cue's words: over the chevrons on phones, in the bottom right corner on laptops (docs/specs/scroll-cue.md; the brief of 2026-11-02) */
   cue: { label: 'Scroll to see more' },
   /** section 2's labels (section-2.md 3): igloo's three slots, carrying our facts, uppercase (E-S2-font) */
   s2: { count: '24 SHADES', click: 'CLICK TO EXPLORE', tap: 'TAP TO EXPLORE', aria: 'Colour families' },

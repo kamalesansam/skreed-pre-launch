@@ -33,7 +33,7 @@ Same scroll map. The logo rides up to v 0.26 at 0.313 H. Two rows of five in rea
   - Title (always shown): the family's name in the singular, uppercase (Sam, 2026-10-10: "not reds, it's red"; Basic Brown is Basic Brown): `FROSTY WHITE`, `BLISSFUL BLUE`, `PLAYFUL PINK`, `VIVID VIOLET`, `MELLOW YELLOW`, `BASIC BROWN`, `BLUSHING CORAL`, `STORMY GREY`, `GO GREEN`, `ROARING RED`. No `FAMILY_nn` line.
   - (Removed by Sam, 2026-10-10: no shade name, number or hex on hover.)
   - Call to action (igloo's date slot), on the active gem only: `24 SHADES` over `CLICK TO EXPLORE` (`TAP TO EXPLORE` on touch) (igloo: `D 01.02.2020` over `CLICK TO EXPLORE`).
-- The cue's words (2026-11-02, `docs/specs/scroll-cue.md`, E-cue-text): "Scroll to see more", the one line outside the labels, in Open Sans 600 at the bottom of the screen, shown once the page has rested in the pin and gone at the next scroll; not a label, so not in Plex.
+- The cue's words (2026-11-02, `docs/specs/scroll-cue.md`, E-cue-text): "Scroll to see more", the one line outside the labels, IBM Plex Mono Medium in capitals at `--fs-label` (E-chrome-font; 14 px beside the labels' 12 and 13 px), Urban Slate over the fog, in the bottom left corner on phones and the bottom right on laptops, shown once the page has rested in the pin and gone at the next scroll; not a label, so it shares the labels' face and nothing of their reveal or hover.
 - Accessible names (not visible): each link reads "<Family>, 24 shades", e.g. "Blissful Blue, 24 shades". The section's landmark is labelled "Colour families".
 - Gems, slot j = catalog order, each in its family's key shade (the hero block's colour):
 
