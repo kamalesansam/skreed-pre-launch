@@ -120,8 +120,31 @@ test('the type scale: quiz.css sets the three sizes as clamp() tokens once, with
   const side = '(min-width: 640px) and (max-height: 599px)';
   assert.ok(css.includes(`@media ${side} {`), 'quiz.css, the sideways block');
   assert.ok(read('src/scripts/quiz/deck.ts').includes(`matchMedia('${side}')`), 'deck.ts, the sideways query');
-  assert.ok(read('src/components/quiz/Quiz.astro').includes(`const PIC_SIZES = '${wide} min(30vw, 440px), ${side} calc((100vw - 92px) * 0.4), calc(100vw - 32px)';`), 'Quiz.astro');
+  assert.ok(read('src/components/quiz/Quiz.astro').includes(`const PIC_SIZES = '${wide} min(30vw, 440px), ${side} min(calc((100vw - 92px) * 0.4), 368px), calc(100vw - 32px)';`), 'Quiz.astro');   // capped at 368 px: the columns stop at 960 px (2026-11-02)
   assert.match(tokens, /\.qz-card \{ grid-template-columns: minmax\(0, 2fr\) minmax\(0, 3fr\); column-gap: clamp\(32px, 4vw, 64px\); \}/, 'the left column is two fifths of the card less the gap');
   // the picture's column on a laptop is the width the sizes attribute names
   assert.match(tokens, /--qz-pic-w: clamp\(260px, 30vw, 440px\)/);
+});
+
+test('the frame\'s room and the side safe areas (the review of 2026-11-02): the band is measured for the stage where it rests, above the section\'s top only where the island draws the fog, each show path fits its card\'s frame just before the picture comes, and the stage and the gift pad their sides with the safe areas', () => {
+  const deck = read('src/scripts/quiz/deck.ts');
+  // the page's length can change with no resize (section 4 opening by Skip quiz): the mouse and pen's pointerenter,
+  // keyboard focus and a finger's pointerdown each fit the frame again, then show
+  assert.equal(deck.split('fitPic(card, ctl); void ctl.show(key);').length - 1, 3, 'the three show paths fit, then show');
+  assert.match(deck, /opt\.addEventListener\('pointerenter', \(e\) => \{ if \(e\.pointerType !== 'touch' && live\(\)\) \{ fitPic\(card, ctl\); void ctl\.show\(key\); \} \}\);/);
+  assert.match(deck, /opt\.addEventListener\('focus', \(\) => \{ if \(live\(\) && opt\.matches\(':focus-visible'\)\) \{ fitPic\(card, ctl\); void ctl\.show\(key\); \} \}\);/);
+  assert.match(deck, /opt\.addEventListener\('pointerdown', \(e\) => \{ if \(e\.pointerType === 'touch' && live\(\)\) \{ touchPic = opt; fitPic\(card, ctl\); void ctl\.show\(key\); \} \}\);/);
+  assert.match(deck, /function fitPics\(\) \{ for \(const \[card, ctl\] of pics\) fitPic\(card, ctl\); \}/, 'showCard and resize fit every card the same way');
+  // the island (hero3d, not fallen to the poster) draws the fog above the section; elsewhere the family links stand there
+  assert.match(deck, /const island = \(\) => \{ const c = document\.documentElement\.classList; return c\.contains\('hero3d'\) && !c\.contains\('poster'\); \};/);
+  // the room for the stage where it rests (the page scrolled as far toward the quiz as it goes), so no scroll leaves it stale;
+  // that rest sits below the viewport's top only where the page ends at the locked quiz's foot; with no island the band never
+  // ends above the section's top, where the family links end
+  assert.match(deck, /const rest = Math\.max\(0, top \+ scrollY \+ innerHeight - \(document\.scrollingElement \?\? document\.documentElement\)\.scrollHeight\);/);
+  assert.match(deck, /const end = top - rest \+ BAND;\n\s*return island\(\) \? end : Math\.max\(end, top\);/);
+  // the side safe areas, as shell.css's .copy, the logotype and Back to top take them: 0 except on a notched phone held sideways
+  const css = read('src/styles/quiz.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  const sides = 'calc(var(--inset) + env(safe-area-inset-right, 0px)) calc(var(--inset) + env(safe-area-inset-bottom, 0px)) calc(var(--inset) + env(safe-area-inset-left, 0px))';
+  assert.ok(css.includes(`padding: calc(var(--inset) + env(safe-area-inset-top, 0px)) ${sides}; }`), 'the stage');
+  assert.ok(css.includes(`.qz-gift { padding: var(--s5) ${sides}; }`), 'the gift');
 });

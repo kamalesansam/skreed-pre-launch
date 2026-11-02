@@ -2678,14 +2678,16 @@ test('Pictures on a phone held sideways (844 x 390, since 2026-10-29): the count
   await quiet(page);
   const place = await page.evaluate(() => {
     const c = document.querySelector('.qz-card.is-top')!, f = c.querySelector<HTMLElement>('.qz-pics')!, r = (e: Element) => e.getBoundingClientRect();
-    const inset = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--inset')) || 0;
+    const s = document.querySelector('.qz-stage')!, inset = parseFloat(getComputedStyle(s).paddingLeft);   // --inset as a length: the stage's side padding (Playwright reports no safe areas); the custom property itself reads back as its clamp() text, which parses to NaN
     return { side: matchMedia('(min-width: 640px) and (max-height: 599px)').matches, wide: matchMedia('(min-width: 900px) and (min-height: 600px)').matches, frame: [r(f).left, r(f).top, r(f).right, r(f).bottom], none: f.hasAttribute('data-none'), h: getComputedStyle(f).getPropertyValue('--qz-pic-h'),
-      count: r(c.querySelector('.qz-count')!), q: r(c.querySelector('.qz-q')!), opts: r(c.querySelector('.qz-opts')!), foot: r(c.querySelector('.qz-foot')!), card: r(c), scrollY, inset, vw: innerWidth };
+      count: r(c.querySelector('.qz-count')!), q: r(c.querySelector('.qz-q')!), opts: r(c.querySelector('.qz-opts')!), foot: r(c.querySelector('.qz-foot')!), card: r(c), stageTop: r(s).top, inset };
   });
   expect([place.side, place.wide], 'the sideways layout, not the laptop one').toEqual([true, false]);
   expect(place.none, 'room for the picture under the question').toBe(false);
   expect(place.h, 'no height set by deck.ts: the grid row gives it').toBe('');
-  expect(place.count.top + place.scrollY, 'the count under the logotype\'s band (the stage pads 56 px over its inset)').toBeGreaterThanOrEqual(place.inset + 56 - 0.5);
+  expect(place.inset, 'the inset read as a length (29.5 px at 844)').toBeGreaterThanOrEqual(16);
+  expect(Math.abs(place.stageTop), 'the stage at the viewport\'s top, where openQuiz put the section').toBeLessThan(1);
+  expect(place.count.top - place.stageTop, 'the count under the logotype\'s band (the stage pads 56 px over its inset)').toBeGreaterThanOrEqual(place.inset + 56 - 0.5);
   expect(place.opts.left, 'the answers at the right of the question').toBeGreaterThan(place.q.right + 31);
   expect(place.opts.top, 'the answers level with the count').toBeCloseTo(place.count.top, 0);
   expect(place.foot.top, 'the footer under the frame').toBeGreaterThanOrEqual(place.frame[3] + 16 - 0.5);
@@ -2768,7 +2770,7 @@ for (const [w, h] of [[390, 844], [412, 915]] as const) {
   });
 }
 
-test('Pictures with the stage lower than the viewport\'s top at 390 x 844 (section 4 open for the visit, the page scrolled so the quiz\'s top sits 180 px down, as a phone browser whose bars have hidden leaves it): the frame is measured from the viewport\'s band, 72 px from its top, and stands above the section\'s top, at most 40% of the screen; a finger\'s press draws the picture there', async ({ browser, baseURL }) => {
+test('Pictures with the stage lower than the viewport\'s top at 390 x 844 on the poster tier (section 4 open for the visit, the page scrolled so the quiz\'s top sits 180 px down, as a phone browser whose bars have hidden leaves it): with no island the frame is measured from the stage\'s top, 72 px under it, so it never stands over the family links above the section, at most 40% of the screen; it keeps that room when the page comes back to the section\'s top with no resize, and a finger\'s press there draws the picture in it', async ({ browser, baseURL }) => {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
   await ctx.addInitScript((key) => { sessionStorage.setItem(key, '1'); }, QUIZ_GATE.key);   // the visit's flag: section 4 opens at parse, so the page goes on below the quiz
   const page = await ctx.newPage();
@@ -2780,22 +2782,30 @@ test('Pictures with the stage lower than the viewport\'s top at 390 x 844 (secti
   await expect(page.locator('#find')).toHaveAttribute('data-state', 'quiz');
   await onTop(page, 0);
   await settled(page);
+  const frame = () => page.evaluate(() => {
+    const f = document.querySelector<HTMLElement>('.qz-card[data-i="0"] .qz-pics')!, c = document.querySelector<HTMLElement>('.qz-card[data-i="0"]')!, r = f.getBoundingClientRect();
+    return { none: f.hasAttribute('data-none'), top: r.top, bottom: r.bottom, height: r.height, stageTop: document.querySelector('.qz-stage')!.getBoundingClientRect().top, count: c.querySelector('.qz-count')!.getBoundingClientRect().top, links: document.querySelector('.fl')!.getBoundingClientRect().bottom, vh: innerHeight };
+  });
   // the stage lowered under the band, then the resize a phone's browser fires as its bars go: fitPics measures again
   await page.evaluate(() => { const top = document.getElementById('find')!.getBoundingClientRect().top + scrollY; scrollTo({ top: top - 180, behavior: 'instant' }); });
   await quiet(page);
   expect(Math.round(await page.evaluate(() => document.getElementById('find')!.getBoundingClientRect().top)), 'the quiz\'s top 180 px down the viewport').toBe(180);
   await page.evaluate(() => dispatchEvent(new Event('resize')));
   await quiet(page);
-  const m = await page.evaluate(() => {
-    const f = document.querySelector<HTMLElement>('.qz-card[data-i="0"] .qz-pics')!, c = document.querySelector<HTMLElement>('.qz-card[data-i="0"]')!, r = f.getBoundingClientRect();
-    return { none: f.hasAttribute('data-none'), top: r.top, bottom: r.bottom, height: r.height, cardTop: c.getBoundingClientRect().top, stageTop: document.querySelector('.qz-stage')!.getBoundingClientRect().top, count: c.querySelector('.qz-count')!.getBoundingClientRect().top, vh: innerHeight };
-  });
+  const m = await frame();
   expect(m.none, 'the frame is drawn').toBe(false);
   expect(m.stageTop, 'the stage lower than the viewport\'s top').toBeGreaterThan(100);
-  expect(m.top, 'the frame starts 72 px under the viewport\'s top, not the stage\'s').toBeCloseTo(56 + 16, 0);
-  expect(m.top, 'so it stands above the section\'s top').toBeLessThan(m.stageTop);
+  expect(m.top, 'the frame starts 72 px under the stage\'s top: no island draws fog above the section on the poster tier').toBeCloseTo(m.stageTop + 56 + 16, 0);
+  expect(m.top, 'so it stays clear of the family links above the section').toBeGreaterThanOrEqual(m.links);
   expect(m.bottom, 'and ends 24 px over the question').toBeCloseTo(m.count - 24, 0);
   expect(m.height, 'at most 40% of the screen').toBeLessThanOrEqual(Math.floor(0.4 * m.vh) + 0.5);
+  // back at the section's top with no resize (the visitor's own scroll): the measure did not depend on the scroll
+  await page.evaluate(() => { const top = document.getElementById('find')!.getBoundingClientRect().top + scrollY; scrollTo({ top, behavior: 'instant' }); });
+  await quiet(page);
+  const back = await frame();
+  expect(Math.round(back.stageTop), 'the section\'s top at the viewport\'s top').toBe(0);
+  expect(back.top, 'the frame 72 px under the viewport\'s top, clear of the logotype\'s band').toBeCloseTo(56 + 16, 0);
+  expect(back.height, 'with the room it had').toBeCloseTo(m.height, 0);
   await picsLoaded(page, 0);
   await recordPics(page);
   const box = (await page.locator(`.qz-card.is-top .qz-opt[data-persona="${p}"]`).boundingBox())!;
@@ -2806,8 +2816,60 @@ test('Pictures with the stage lower than the viewport\'s top at 390 x 844 (secti
   await ctx.close();
   const down = picEvent(log, 'pointerdown:touch', p);
   const steps = between(log, 0, p, down, Infinity), at = steps.findIndex(settledPic);
-  expect(at, 'the picture settles in the frame above the section\'s top').toBeGreaterThan(0);
-  for (const s of steps.filter((s) => s.o.some((o) => o > 0))) expect(s.box[1], 'drawn from the band').toBeCloseTo(m.top, 0);
+  expect(at, 'the picture settles in the frame').toBeGreaterThan(0);
+  for (const s of steps.filter((s) => s.o.some((o) => o > 0))) expect(s.box[1], 'drawn from the band').toBeCloseTo(back.top, 0);
+});
+
+test('Pictures with the page ending at the locked quiz\'s foot and the stage resting 80 px down (a phone\'s bars hidden, the viewport taller than the stage\'s 100svh, stood in for by a stage 80 px shorter than the viewport) at 390 x 844 on the poster tier: the frame starts at the section\'s top, where the family links end, never over them, with the room it has where the stage rests at every scroll, and a finger\'s press draws the picture there', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const page = await ctx.newPage();
+  const p = QUIZ_QUESTIONS[0].answers[2].persona;
+  await pin(page, 0.01);
+  await openQuiz(page, baseURL);
+  await expect(page.locator('#room')).toHaveAttribute('data-locked', '');
+  // the stand-in for the bars: the stage 80 px shorter than the viewport, so the page ends with the stage's top 80 px down
+  await page.evaluate(() => { const sheet = [...document.styleSheets].find((x) => { try { return x.cssRules.length > 0; } catch { return false; } })!; sheet.insertRule('.quiz .qz-stage { min-height: calc(100vh - 80px) !important; }', sheet.cssRules.length); });
+  const toEnd = () => page.evaluate(() => { scrollTo({ top: document.scrollingElement!.scrollHeight, behavior: 'instant' }); });
+  await toEnd();
+  await quiet(page);
+  await page.locator('#qzBegin').tap();
+  await expect(page.locator('#find')).toHaveAttribute('data-state', 'quiz');
+  await onTop(page, 0);
+  await settled(page);
+  await toEnd();
+  await page.evaluate(() => dispatchEvent(new Event('resize')));
+  await quiet(page);
+  const frame = () => page.evaluate(() => {
+    const f = document.querySelector<HTMLElement>('.qz-card[data-i="0"] .qz-pics')!, c = document.querySelector<HTMLElement>('.qz-card[data-i="0"]')!, r = f.getBoundingClientRect();
+    return { none: f.hasAttribute('data-none'), top: r.top, bottom: r.bottom, height: r.height, stageTop: document.querySelector('.qz-stage')!.getBoundingClientRect().top, count: c.querySelector('.qz-count')!.getBoundingClientRect().top, links: document.querySelector('.fl')!.getBoundingClientRect().bottom, end: document.scrollingElement!.scrollHeight - innerHeight - scrollY };
+  });
+  const m = await frame();
+  expect(Math.round(m.end), 'the page at its end').toBe(0);
+  expect(Math.round(m.stageTop), 'the stage resting 80 px down').toBe(80);
+  expect(m.none, 'the frame is drawn').toBe(false);
+  expect(m.top, 'from the section\'s top, where the family links end: never over them on the poster tier').toBeCloseTo(m.links, 0);
+  expect(m.top, 'clear of the logotype\'s band').toBeGreaterThanOrEqual(56 + 16 - 0.5);
+  expect(m.bottom, 'and 24 px over the question').toBeCloseTo(m.count - 24, 0);
+  expect(m.height, '96 px high or more').toBeGreaterThanOrEqual(96);
+  // a resize 300 px higher, then back to the end with no resize: the room is the stage's where it rests, whatever the scroll
+  await page.evaluate(() => { scrollBy({ top: -300, behavior: 'instant' }); dispatchEvent(new Event('resize')); });
+  await quiet(page);
+  await toEnd();
+  await quiet(page);
+  const back = await frame();
+  expect([back.top, back.height], 'the same frame back at the page\'s end').toEqual([expect.closeTo(m.top, 0), expect.closeTo(m.height, 0)]);
+  await picsLoaded(page, 0);
+  await recordPics(page);
+  const box = (await page.locator(`.qz-card.is-top .qz-opt[data-persona="${p}"]`).boundingBox())!;
+  await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+  await onTop(page, 1);
+  await settled(page);
+  const log = await picLog(page);
+  await ctx.close();
+  const down = picEvent(log, 'pointerdown:touch', p);
+  const steps = between(log, 0, p, down, Infinity), at = steps.findIndex(settledPic);
+  expect(at, 'the picture settles in the frame').toBeGreaterThan(0);
+  for (const s of steps.filter((s) => s.o.some((o) => o > 0))) expect(s.box[1], 'drawn from the section\'s top').toBeCloseTo(back.top, 0);
 });
 
 test('Pictures on a tall portrait screen under 900 px wide (800 x 1280): the room above question 1 is more than 40% of the screen\'s height, and the frame takes 40% of it (512 px), above the question, under the logotype\'s band, as wide as the question\'s column', async ({ browser, baseURL }) => {
