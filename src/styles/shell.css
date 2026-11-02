@@ -32,7 +32,8 @@ body{color:var(--pearl-whisper);font-family:var(--font-ui);margin:0;font-synthes
 /* the cue's words (docs/specs/scroll-cue.md, E-cue-text; the brief of 2026-11-02, and the same day of their place and face:
    "place it in the bottom corner maybe, for desktop, figure it out to place it properly for phone ratio as well"): "Scroll
    to see more" in the later sections' face, IBM Plex Mono Medium in capitals (E-chrome-font). Above 1100 px in the bottom
-   right corner on --inset, under Back to top's edge, at the top and in the pin alike, the countdown holding the bottom left.
+   right corner on --inset, the edge the section index's last word ends on at the top right (site-nav.css; Back to top left the
+   landing on 2026-11-02), at the top and in the pin alike, the countdown holding the bottom left.
    Up to 1100 px centred over the chevrons at the top, a --s1 above their column, so the words and the arrows read as one
    cue (the countdown lifts to make room); in the pin, alone, in the bottom left corner on --inset, level with the countdown
    and the logotype and clear of the last gem at the column's foot (data-at="pin", set while they are hidden and dropped at

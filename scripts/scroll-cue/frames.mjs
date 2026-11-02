@@ -39,7 +39,7 @@ const probe = (page, sel) => page.evaluate((sel) => {
   const out = {};
   for (const e of document.querySelectorAll(sel)) {
     const cs = getComputedStyle(e), tb = textBox(e);
-    const others = shown(e) ? [...document.querySelectorAll('#cue, #cue2, #cdEyebrow, #count .n, #count .l, #toTop, .s2lab, #famBack, .fp-scrub, .fp-ctl, .bar, .beat.on .beat-txt, .beatnav, .hud-btn, #siteLogo, .allfam')]
+    const others = shown(e) ? [...document.querySelectorAll('#cue, #cue2, #cdEyebrow, #count .n, #count .l, #toTop, .s2lab, #famBack, .fp-scrub, .fp-ctl, .bar, .beat.on .beat-txt, .beatnav, .hud-btn, #siteLogo, #siteNav .snav-a, .allfam')]
       .filter((o) => o !== e && shown(o)).map((o) => {
         const isText = ['toTop', 'famBack'].includes(o.id) || o.classList.contains('allfam');
         return { id: o.id || o.className.toString().split(' ')[0], b: isText ? textBox(o) : box(o.getBoundingClientRect()) };
