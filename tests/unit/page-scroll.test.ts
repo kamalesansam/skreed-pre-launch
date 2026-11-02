@@ -28,7 +28,7 @@ test('the numbers: 2 px dead band, 150 ms still, 300 ms input, 500 ms settle, th
   assert.deepEqual(GLUE, { dead: 2, stillMs: 150, inputMs: 300, settleMs: 500 });
   assert.deepEqual(BURST, { silenceMs: 200, keep: 0.5, carriedMs: 700 });
   assert.deepEqual(TOUCH, { stepPx: 12, wrapPx: 16 });
-  assert.deepEqual(threeSpans(745, 844).map((s) => [s.start, s.end]), [[1862.5, 2235], [3911.25, 5697], [5697, 7385]]);   // the map of 2026-11-02 (section-2.md 14)
+  assert.deepEqual(threeSpans(745, 844).map((s) => [s.start, s.end]), [[1862.5, 2607.5], [4097.5, 6330], [6330, 8018]]);   // the map of 2026-11-03 (section-2.md 15): the first wipe 2.5 to 3.5 screens, the second from 5.5, the track 7.5
 });
 
 test('the glue at the three spans with innerHeight 745 and svh 844: every settle lands on an end, by the midpoint, and is itself at rest', () => {

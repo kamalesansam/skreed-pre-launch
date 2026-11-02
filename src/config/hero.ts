@@ -14,10 +14,13 @@ export const INTRO_POSE = { cam: [0, 20.5, 19.8], tgt: [0, 0, 0] } as const;
 
 export interface ScrollSegment { readonly name: string; readonly screens: number }
 /**
- * The scroll map in screens: the pull-back, then the wipe into section 2. Half of v11.2's 5 and 1 since 2026-11-02 (Sam:
- * "remove half of the scroll from the hero section, that's just too much scrolling"; section-2.md 14, hero.md 12.8).
+ * The scroll map in screens: the pull-back, then the wipe into section 2. The pull-back is half of v11.2's 5 since
+ * 2026-11-02 (Sam: "remove half of the scroll from the hero section, that's just too much scrolling"; section-2.md 14,
+ * hero.md 12.8) and since 2026-11-03 covers half the camera's road at the prototype's rate (CAM_TRAVEL below; Sam: "cut
+ * down the travelling of the 3d world itself into half, the scroll speed remains the same"; section-2.md 15). The wipe is
+ * the prototype's one screen again (half a screen on 2026-11-02 only, which doubled its speed).
  */
-export const SCROLL_MAP: readonly ScrollSegment[] = [{ name: 'pull', screens: 2.5 }, { name: 'wipe', screens: 0.5 }];
+export const SCROLL_MAP: readonly ScrollSegment[] = [{ name: 'pull', screens: 2.5 }, { name: 'wipe', screens: 1 }];
 
 /**
  * Section 2's timings in screens (round 4, Sam, 2026-11-02: "all the blocks from the logo will disperse and align itself in
@@ -31,16 +34,31 @@ export const S2T = (() => {
   return { PULL, WIPE, CAS0, FLY, W1END: PULL + WIPE, LAND, W2, W2END: W2 + WIPE } as const;
 })();
 
+/** The pinned v11.4 prototype's map (tests/fixtures/hero-v11.4/template.html: PULL 5, S2T.LAND 14.5), whose rates per screen the world keeps. */
+export const PROTO_MAP = { PULL: 5, LAND: 14.5 } as const;
+
+/**
+ * The camera's road (CAMX, camCurve) runs in a parameter v: 0..1 over the prototype's pull-back and 1..2 over its drift
+ * after it, through the wipe and the flights. Since 2026-11-03 the port's pull-back covers CAM_TRAVEL of the road (0.5:
+ * half the travel, at the prototype's rate of a fifth of the road per screen) and the drift after it goes on at the
+ * prototype's rate for the screens it has (CAM_DRIFT = (LAND - PULL) / 9.5), so v = CAM_TRAVEL x s + CAM_DRIFT x u2
+ * (camera/rig.ts). Sam, 2026-11-03: "cut down the travelling of the 3d world itself into half, the scroll speed remains
+ * the same" (section-2.md 15). On 2026-11-02 the whole road ran over the halved scroll, twice as fast.
+ */
+export const CAM_TRAVEL = S2T.PULL / PROTO_MAP.PULL;
+export const CAM_DRIFT = (S2T.LAND - S2T.PULL) / (PROTO_MAP.LAND - PROTO_MAP.PULL);
+
 /**
  * The pull-back path (Sam, 2026-10-11): straight back, weaving like a road, 6 units left, 6 right, then slowly back
- * left; v runs 0..1 over the pull-back and 1..2 after it. [v, x] pairs, smoothstep between them (camera/rig.ts camX).
+ * left; v runs 0..1 over the prototype's pull-back and 1..2 after it (the port's pull-back reaches CAM_TRAVEL, 0.5: left
+ * to -6 and back across to +4.26, camX(0.5) on the quintic ease between the keys at 0.25 and 0.6). [v, x] pairs, smoothstep between them (camera/rig.ts camX).
  */
 export const CAMX: readonly (readonly [number, number])[] = [[0, 0], [0.25, -6], [0.6, 6], [1.0, -3], [1.5, -5.25], [2.0, -1.5]];
 
 /**
  * Height of the scroll track on the 3D path, in svh: the second wipe's end plus the one screen in which section 3 rises
- * (docs/specs/quiz.md D8: the quiz rises the moment the second wipe has crossed the screen). 675 since 2026-11-02 (1720
- * from section 3, 1820 in v11.2). The poster path collapses it to 100; shell.css carries the literal, kept equal by unit test.
+ * (docs/specs/quiz.md D8: the quiz rises the moment the second wipe has crossed the screen). 750 since 2026-11-03 (675 on
+ * 2026-11-02, 1720 from section 3, 1820 in v11.2). The poster path collapses it to 100; shell.css carries the literal, kept equal by unit test.
  */
 export const TRACK_SVH = Math.round((S2T.W2END + 1) * 100);
 
