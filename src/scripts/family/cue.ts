@@ -1,4 +1,4 @@
-// The cue's words on a family page (docs/specs/family-page.md 24, docs/specs/scroll-cue.md): whether the first screen's
+// The cue's words on a family page (docs/specs/family-page.md 25, docs/specs/scroll-cue.md): whether the first screen's
 // line, on the side columns' bottom line, clears the front case. Pure, so the unit test can run it over solve()'s fit.
 
 /** The line's box (`lineH` px tall, its bottom `bottom` px above the stage's foot) clears the front case's box, whose foot

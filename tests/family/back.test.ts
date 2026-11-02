@@ -43,7 +43,7 @@ test('the stylesheet: .fam-back fixed at z-index 4 after .allfam, set as "All fa
   assert.ok(rule, 'one base .fam-back rule');
   assert.equal((css.match(/^\.fam-back \{/gm) ?? []).length, 1, 'the base rule once; the wide block carries the other');
   assert.ok(css.indexOf('.allfam {') < css.indexOf('.fam-back {') && css.indexOf('.ring2 {') < css.indexOf('.fam-back {'), 'declared after .allfam and .ring2, so position: fixed wins');
-  for (const d of ['position: fixed', 'z-index: 4', 'min-height: var(--hit)', 'padding: 0 var(--s2)', 'display: inline-flex', 'align-items: center', 'font-family: var(--font-mono)', 'font-size: var(--fs-label)', 'font-weight: 500', 'line-height: 1', 'text-transform: uppercase', 'letter-spacing: 0', 'white-space: nowrap', 'color: var(--pearl-whisper)', 'text-decoration: none']) {   // set as "All families" is, in Plex Mono capitals since round 6 (E-chrome-font)
+  for (const d of ['position: fixed', 'z-index: 4', 'min-height: var(--hit)', 'padding: 0 var(--s2)', 'display: inline-flex', 'align-items: center', 'font-family: var(--font-mono)', 'font-size: var(--fs-label)', 'font-weight: 500', 'line-height: 1', 'text-transform: uppercase', 'letter-spacing: 0', 'white-space: nowrap', 'color: var(--pearl-whisper)', 'text-decoration: none']) {   // set as "All families" is, in Plex Mono capitals since 2026-11-02 (E-chrome-font)
     assert.ok(rule.includes(d), `.fam-back: ${d}`);
   }
   assert.doesNotMatch(rule, /transition|(?<!text-)transform|opacity|box-shadow|border|background/, 'no transition (the fade is the Web Animations API), no transform (.press owns it; text-transform is the capitals), no box');
@@ -87,7 +87,7 @@ test('the phone row\'s arithmetic (section 23, the table): the row, the boxes an
   const CHEVRON = px(toTop.match(/\.to-top svg \{[^}]*width: ([\d.]+)px/)?.[1]);
   assert.match(toTop, /\.to-top \{[^}]*gap: var\(--s1\);[^}]*min-height: 44px;[^}]*padding: 0 var\(--s2\);/, 'Back to top: the --s1 gap before its chevron, the 44 px row, --s2 of padding each side');
   assert.equal(HIT, 44); assert.equal(BOTTOM, 14); assert.equal(S2, 12); assert.equal(S1, 8); assert.equal(CHEVRON, 17.5);
-  // the words' widths since round 6 (E-chrome-font): IBM Plex Mono in capitals at 14 px, 0.6 em an advance, so 17 and 11 glyphs
+  // the words' widths since 2026-11-02 (E-chrome-font): IBM Plex Mono in capitals at 14 px, 0.6 em an advance, so 17 and 11 glyphs
   // (section 23 measured 124.3 and 76.5 px in Open Sans 600)
   const WORDS_BACK = 17 * 0.6 * 14, WORDS_TOP = 11 * 0.6 * 14;
   const row = (w: number, h: number) => {
@@ -98,7 +98,7 @@ test('the phone row\'s arithmetic (section 23, the table): the row, the boxes an
     return { inset: i, top, bottom, back, tt, apart: tt.x - back.r };
   };
   const near = (a: number, b: number, msg: string) => assert.ok(Math.abs(a - b) < 0.06, `${msg}: ${a} against ${b}`);
-  // the table of section 23 ("The phone row at the other sizes"), recomputed for round 6's Plex Mono words, one row each
+  // the table of section 23 ("The phone row at the other sizes"), recomputed for the Plex Mono words of 2026-11-02, one row each
   const TABLE: [number, number, number, number, number, number, number, number][] = [
     // w, h, --inset, row top, back x, back r, to-top x, apart
     [360, 780, 16, 722, 4, 170.8, 214.1, 43.3],
@@ -116,7 +116,7 @@ test('the phone row\'s arithmetic (section 23, the table): the row, the boxes an
     near(r.back.x, bx, `${w}: the control's left edge`); near(r.back.r, br, `${w}: the control's right edge`);
     near(r.tt.x, tx, `${w}: Back to top's left edge`); near(r.tt.r, w - (r.inset - S2), `${w}: Back to top's right edge`);
     near(r.apart, apart, `${w}: the boxes apart`);
-    assert.ok(r.apart >= 40, `${w}: 40 px or more between the two hit boxes (criterion 5, 48 px until round 6's wider Plex words)`);
+    assert.ok(r.apart >= 40, `${w}: 40 px or more between the two hit boxes (criterion 5, 48 px until the wider Plex words of 2026-11-02)`);
     assert.equal(r.back.words, r.inset, `${w}: the words start at --inset, as the wordmark does`);
     assert.equal(r.tt.chevronEnd, w - r.inset, `${w}: the chevron ends at --inset, as "All families" does`);
   }

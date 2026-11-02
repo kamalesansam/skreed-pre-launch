@@ -100,7 +100,7 @@ html.beats-on .fade, html.arg-on .fade { opacity: 0; }
 .scrollcue.is-right { right: calc(4% + 3.5px + env(safe-area-inset-right, 0px)); transform: translateX(50%); }
 .scrollcue svg { display: block; width: 100%; height: auto; }
 html.loading .scrollcue, html[data-scrolled] .scrollcue, html:not(.js) .scrollcue, html:not(.m3d) .scrollcue { opacity: 0; visibility: hidden; }   /* swatch grid mode is one screen: nothing below (hero.md D27) */
-/* the cue's words (section 24, docs/specs/scroll-cue.md, E-cue-text): "Scroll to see more", set as "All families" is (IBM Plex Mono Medium in capitals, E-chrome-font). The
+/* the cue's words (docs/specs/family-page.md 25, docs/specs/scroll-cue.md, E-cue-text): "Scroll to see more", set as "All families" is (IBM Plex Mono Medium in capitals, E-chrome-font). The
    first screen's stand between the two columns on their bottom line (laptops: under the controls row), shown with them and
    again once the page has rested (data-still, page.ts), and only where they clear the front case (html.cue-tight, page.ts
    and cue.ts, hides them on a short phone screen); the story's stand at the bottom right, just above Back to top's row on

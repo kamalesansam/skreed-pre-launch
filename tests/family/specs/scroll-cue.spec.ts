@@ -1,4 +1,4 @@
-// Round 6 (docs/specs/family-page.md 24, docs/specs/scroll-cue.md 7, acceptance 5): the cue's words on a family page,
+// The cue's words on a family page (docs/specs/family-page.md 25, docs/specs/scroll-cue.md 7, acceptance 5): the cue's words on a family page,
 // at 390 x 844 and 1280 x 800, then at 360 x 780, 430 x 932, 375 x 667 and 375 x 553 against the front case's box.
 // The 3D rows need a PUBLIC_FAMILY_3D=on (or dev) build and force the 3D path past SwiftShader (?render=force&tier=high,
 // as back.spec.ts does); grid mode runs on any build. The words settle by their own fade, awaited, never a fixed frame.

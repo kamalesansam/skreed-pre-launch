@@ -61,7 +61,7 @@ test('the skeleton: the silhouettes of the cases in frame, five at 1280 and two 
   assert.notEqual(skeletonPolys(1280, 800, 'wide', DIMS, 5).join(), wide.join(), 'the selection moves the line');
 });
 
-test('the scroll map: nothing but the chrome on the landing screen, no beat text in the zoom (the cue\'s words aside, section 24), one case type at a time, the argument from 5.6', () => {
+test('the scroll map: nothing but the chrome on the landing screen, no beat text in the zoom (the cue\'s words aside, family-page.md 25), one case type at a time, the argument from 5.6', () => {
   assert.equal(activeBeat(0), 'none');
   assert.equal(activeBeat(0.5), 'none');
   assert.equal(activeBeat(1), 'z');

@@ -229,7 +229,7 @@ sw?.addEventListener('toggle', (e) => {
 // ---- the skeleton (rule 41): the 24 silhouettes at the carousel pose, drawn in the stage's own pixels; it shows until
 // the canvas is live and again while a context is lost ----
 const skel = document.getElementById('skel');
-// the first screen's cue words (section 24) stand on the columns' line only where they clear the front case (cue.ts):
+// the first screen's cue words (family-page.md 25) stand on the columns' line only where they clear the front case (cue.ts):
 // on a short phone screen the fit brings the case down to that line, so the columns stand alone there (html.cue-tight)
 const landLine = document.querySelector<HTMLElement>('.cuetext.is-land');
 let skelKey = '';
@@ -307,7 +307,7 @@ function backCheck(): void {
 }
 backEl?.addEventListener('click', () => track('family_back', { from: 'argument' }));   // the browser follows the link (D4)
 
-// ---- the cue's words (section 24, docs/specs/scroll-cue.md, E-cue-text): html[data-still] once the scroll position has
+// ---- the cue's words (docs/specs/family-page.md 25, docs/specs/scroll-cue.md, E-cue-text): html[data-still] once the scroll position has
 // not changed for CUE_STILL_MS (timing.ts); family.css shows the words from it. Any scroll, the visitor's or the page's own (the beat
 // nav's), drops it at once and starts the wait again ----
 let stillT = 0;

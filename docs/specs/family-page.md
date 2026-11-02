@@ -1100,7 +1100,7 @@ How they are graded:
 
 **Iteration 5 (2026-10-28, after the review's FAIL on iteration 4, the loop's last).** The record only, with no product code, browser row or frame changed: `history.scrollRestoration` belongs to the history entry, not the load, so the `manual` that `links.ts` sets on a return stays on the landing's entry for every later load of it, and on that entry a reload and a later Back start at the top and are centred by the module, and Back to top's way home ends at the top with `#families` kept, where on an entry no return has set it ends at the visitor's old place (the review's runs). Four passages now say so: the poster-path line under "After the press, the landing" gains that clause, the iteration 4 paragraph's "Not verified" sentence is corrected, the comment in `links.ts` says the setting is the entry's and holds for later loads (with no new mention of the property's name, which its source test counts once), and the header of `return-path.test.ts` names its iteration 3 and 4 tests as the third and fourth of seven instead of "the last two tests", wrong since iteration 3. `npm run test:family` 64 of 64, and `npm run test:unit` 192 tests, 191 passing and 1 skipped (the ffprobe probe).
 
-## 24. Round 6: the cue's words (2026-11-02)
+## 25. The cue's words on a family page (2026-11-02)
 
 The brief of 2026-11-02: "Apart from the backgrounds, please also add some text like \"Scroll to see more\" wherever one has to scroll. It's not very clear otherwise that one has to scroll and keep scrolling, especially on the phone, and the arrows are not enough." The whole change, the landing included, is `docs/specs/scroll-cue.md`; this page's part:
 
