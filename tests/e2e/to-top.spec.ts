@@ -1,49 +1,38 @@
-// Back to top (Sam, 2026-10-19 and 2026-10-20; src/components/shell/BackToTop.astro, src/scripts/shell/to-top.ts): on the landing page
-// hidden in the first screen and shown past it, on a family page always; on the landing page a press reaches section 1 in place (no navigation, the page's state
-// survives), keyboard focus lands on the logotype; on a family page a press returns to the landing page's section 1
-// (through the history when the landing page is behind it, else by the link). The harness's Chromium has the
-// back-forward cache disabled, so a history step reloads here; the restore itself is checked in real Chrome by hand.
+// Back to top (Sam, 2026-10-19 and 2026-10-20; src/components/shell/BackToTop.astro, src/scripts/shell/to-top.ts): on a
+// family page always shown, and a press returns to the landing page's section 1 (through the history when the landing
+// page is behind it, else by the link). On the landing page the section index's Home makes the jump the control made
+// there (docs/specs/navbar.md, 2026-11-02): section 1 in place (no navigation, the page's state survives), keyboard focus
+// on the logotype, and the landing page draws no control of its own. The harness's Chromium has the back-forward cache
+// disabled, so a history step reloads here; the restore itself is checked in real Chrome by hand.
 import { test, expect, type Page } from '@playwright/test';
 
 const events = (page: Page): Promise<string[]> => page.evaluate(() => ((window as unknown as { __skreedEvents?: { name: string }[] }).__skreedEvents ?? []).map((e) => e.name));
 
 for (const vp of [{ name: '390 x 844', width: 390, height: 844 }, { name: '1280 x 800', width: 1280, height: 800 }]) {
-  test(`landing page at ${vp.name}: hidden in section 1, shown past it, a press reaches section 1 with no reload`, async ({ page, baseURL }) => {
+  test(`landing page at ${vp.name}: no control of its own; the section index's Home reaches section 1 with no reload`, async ({ page, baseURL }) => {
     await page.setViewportSize({ width: vp.width, height: vp.height });
     await page.goto(new URL('/?tier=poster', baseURL).href);
     await expect(page.locator('html')).toHaveClass('js poster');
-    const btn = page.locator('#toTop');
-    await expect(btn).toBeHidden();
+    await expect(page.locator('#toTop')).toHaveCount(0);   // Home took its place at the top right (docs/specs/navbar.md, 2026-11-02)
+    await expect(page.locator('#toTopVeil')).toHaveCount(1);   // the veil every jump on the landing page happens under stays
     await page.evaluate(() => { (window as unknown as { __alive: boolean }).__alive = true; const f = document.getElementById('find')!; scrollTo({ top: f.getBoundingClientRect().top + scrollY, behavior: 'instant' }); });
-    await expect(btn).toBeVisible();
-    const box = (await btn.boundingBox())!;
-    expect(box.width).toBeGreaterThanOrEqual(44); expect(box.height).toBeGreaterThanOrEqual(44);
-    expect(box.x + box.width).toBeLessThanOrEqual(vp.width); expect(box.y).toBeGreaterThanOrEqual(0);
-    // no box (Sam, 2026-10-20): the words as its name, no fill, the logotype's colour, which it follows into Urban Slate
-    await expect(btn).toHaveAccessibleName('Back to top');
-    await expect(btn).toHaveText('Back to top');
-    const look = () => page.evaluate(() => { const b = getComputedStyle(document.getElementById('toTop')!), l = getComputedStyle(document.getElementById('siteLogo')!); return { bg: b.backgroundColor, border: b.borderTopStyle, color: b.color, logo: l.color }; });
-    const before = await look();
-    expect(before.bg).toBe('rgba(0, 0, 0, 0)'); expect(before.border).toBe('none'); expect(before.color).toBe(before.logo);
-    await page.evaluate(() => { document.getElementById('siteLogo')!.dataset.tone = 'light'; });
-    await expect.poll(async () => (await look()).color).toBe('rgb(56, 63, 67)');
-    await page.evaluate(() => { delete document.getElementById('siteLogo')!.dataset.tone; });
-    await expect.poll(async () => (await look()).color).toBe(before.color);
-    await btn.click();
+    if (vp.width < 768) await page.locator('#siteNav .snav-menu').click();
+    const home = page.locator(vp.width < 768 ? '#site-sections a[data-sec="top"]' : '#siteNav .snav-list a[data-sec="top"]');
+    await expect(home).toBeVisible();
+    await expect(home).toHaveText('Home');
+    await home.click();
     await page.waitForFunction(() => scrollY === 0, null, { timeout: 5000 });
     expect(await page.evaluate(() => (window as unknown as { __alive?: boolean }).__alive)).toBe(true);   // no reload
-    await expect(btn).toBeHidden();
-    expect(await events(page)).toContain('to_top');
+    expect(await events(page)).toContain('nav');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 }
 
-test('landing page by keyboard: Enter on the control reaches section 1 and puts focus on the logotype', async ({ page, baseURL }) => {
+test('landing page by keyboard: Enter on Home reaches section 1 and puts focus on the logotype', async ({ page, baseURL }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(new URL('/?tier=poster', baseURL).href);
   await page.evaluate(() => { const f = document.getElementById('find')!; scrollTo({ top: f.getBoundingClientRect().top + scrollY, behavior: 'instant' }); });
-  await expect(page.locator('#toTop')).toBeVisible();
-  await page.focus('#toTop');
+  await page.focus('#siteNav .snav-list a[data-sec="top"]');
   await page.keyboard.press('Enter');
   await page.waitForFunction(() => scrollY === 0, null, { timeout: 5000 });
   await expect(page.locator('#siteLogo')).toBeFocused();

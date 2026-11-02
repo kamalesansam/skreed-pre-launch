@@ -1,6 +1,6 @@
 // Section 4's contrast on the scene (docs/specs/section-4-flux.md AC12, E-S4-contrast): Pearl Whisper text straight on
 // the hall, the bubble and the five loops, measured with section 3's method (scripts/quiz/contrast.mjs): each decoded
-// line's box is read on the page (its glyph row, .dc), the section's text, the logotype and the Back to top control
+// line's box is read on the page (its glyph row, .dc), the section's text, the logotype and the section index
 // are hidden through the CSSOM for one shot, the scene alone is shot, and inside every box the scene's luminance gives
 // the median and the lightest 5 percent, Pearl's ratio printed against each. AC12's frames: the prompt at the station;
 // Skip over the bubble at 25, 50 and 90 percent with scene 1's loop playing; and every text box of each scene at rest
@@ -37,8 +37,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor(s.length / 2)] : NaN; };
 // the entry's beats at the defaults (as render-stills.mjs): the bubble from 0.35 s for 2 s
 const BUBBLE_AT = 0.35, BUBBLE_S = 2.0;
-const HIDE = () => { window.__c4Focus = document.activeElement; for (const el of [document.getElementById('rmStage'), document.querySelector('.site-logo'), document.getElementById('toTop')]) if (el) el.style.visibility = 'hidden'; };
-const SHOW = () => { for (const el of [document.getElementById('rmStage'), document.querySelector('.site-logo'), document.getElementById('toTop')]) if (el) el.style.visibility = ''; window.__c4Focus?.focus?.({ preventScroll: true }); };
+const HIDE = () => { window.__c4Focus = document.activeElement; for (const el of [document.getElementById('rmStage'), document.querySelector('.site-logo'), document.getElementById('siteNav')]) if (el) el.style.visibility = 'hidden'; };
+const SHOW = () => { for (const el of [document.getElementById('rmStage'), document.querySelector('.site-logo'), document.getElementById('siteNav')]) if (el) el.style.visibility = ''; window.__c4Focus?.focus?.({ preventScroll: true }); };
 
 /** the installed Chrome when Playwright finds it, else its own Chromium */
 async function launch(a) {
@@ -154,7 +154,7 @@ if (mdOut) {
   const lines = [
     `# Section 4, part three: Pearl Whisper's contrast on the scene (AC12, E-S4-contrast)`, '',
     `Measured ${date} by \`scripts/room/contrast.mjs\` on the served hooks build (\`build:test\`) at ${base}, in ${renderer.includes('Metal') ? 'the installed Chrome on the Metal GPU' : renderer}, at 390 x 844 and 1280 x 800, device pixel ratio 1, so a CSS pixel is a pixel of the shot. The bottom shade: ${shadeInForce ? `set live to ${shadeInForce.dark} of black at the bottom edge, solid up to ${shadeInForce.solid ?? 'its own'} of the frame's height and clear by ${shadeInForce.height ?? 'its own'}` : 'the build\'s own (SHADE in carousel.ts)'}.`, '',
-    `**Method (AC12).** Each decoded line's box is read from its glyph row (\`.dc\`); the section's text, the logotype and the Back to top control are hidden through the CSSOM for one shot and the scene alone is shot; inside each box the scene's relative luminance gives the median and the lightest 5 percent, and Pearl Whisper's (#F7F6F3) ratio is taken against each. The prompt is one frame over the hall, which holds still; Skip over the bubble at 25, 50 and 90 percent and every text box of each scene at rest are ${FRAMES} frames ${GAP_MS} ms apart with the loop playing: the **median** is the median over the frames of each frame's median ratio, the **worst** the lowest over the frames of each frame's lightest-5-percent ratio. Ratios under 4.5:1 are in bold. AC12 says the bottom shade is darkened until every median is 4.5:1 or better and anything under is flagged to Sam, never boxed.`, '',
+    `**Method (AC12).** Each decoded line's box is read from its glyph row (\`.dc\`); the section's text, the logotype and the section index are hidden through the CSSOM for one shot and the scene alone is shot; inside each box the scene's relative luminance gives the median and the lightest 5 percent, and Pearl Whisper's (#F7F6F3) ratio is taken against each. The prompt is one frame over the hall, which holds still; Skip over the bubble at 25, 50 and 90 percent and every text box of each scene at rest are ${FRAMES} frames ${GAP_MS} ms apart with the loop playing: the **median** is the median over the frames of each frame's median ratio, the **worst** the lowest over the frames of each frame's lightest-5-percent ratio. Ratios under 4.5:1 are in bold. AC12 says the bottom shade is darkened until every median is 4.5:1 or better and anything under is flagged to Sam, never boxed.`, '',
     `## Every box, median / worst`, '',
     `| Frame | Box | 390 x 844 | 1280 x 800 |`, `|---|---|---|---|`,
   ];

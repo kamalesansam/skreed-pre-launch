@@ -1,26 +1,21 @@
-/* Back to top (src/components/shell/BackToTop.astro; DESIGN.md "Back to top"). Sam, 2026-10-20, of the Pearl square it
-   was: "fix that and make it look a part of the site". Now plain text as "All families" is on a family page (the label
-   size, Open Sans 600, a 44 px tall hit row, no box), followed by the scroll cue's five-dot chevron (ScrollCue.astro) at
-   the cue's own size, turned to point up and static (rule 45). Its colour is the logotype's: Pearl Whisper, and Urban
-   Slate where the logotype turns Urban Slate over the light fog (to-top.ts copies its data-tone). The hit row is set out
-   past --inset by its padding, so the chevron's right edge sits on --inset, as the logotype's left edge does. States
-   as "All families" (.press, family.css): hover lift 1 px, press scale 0.98; the two-tone focus ring.
-   Hidden in the landing page's first screen; always shown on a family page. The landing page: top right, level with
-   the logotype, above the riders and the sections (z-index 4, the logotype's layer). A family page: in the bar's free
-   right end on phones; on the wide layout (the family page's own query) under "All families", clear of the Matte and
-   Gloss switch at the bottom right. The veil is the --night layer the jump happens under (z-index 5, under the loader). */
+/* Back to top (src/components/shell/BackToTop.astro; DESIGN.md "Back to top"), on every family page. Sam, 2026-10-20,
+   of the Pearl square it was: "fix that and make it look a part of the site". Now plain text as "All families" is (the
+   label size, Open Sans 600, a 44 px tall hit row, no box), followed by the scroll cue's five-dot chevron (ScrollCue.astro)
+   at the cue's own size, turned to point up and static (rule 45), in Pearl Whisper on the family page's dark ground. The
+   hit row is set out past --inset by its padding, so the chevron's right edge sits on --inset, as the logotype's left
+   edge does. States as "All families" (.press, family.css): hover lift 1 px, press scale 0.98; the two-tone focus ring.
+   Always shown: in the bar's free right end on phones; on the wide layout (the family page's own query) under "All
+   families", clear of the Matte and Gloss switch at the bottom right. The landing page draws no control since the
+   section index took its place at the top right (site-nav.css; docs/specs/navbar.md, 2026-11-02). The veil is the
+   --night layer every jump on the landing page happens under (z-index 5, under the loader; scripts/shell/veil.ts). */
 :root { --to-top-bottom: 14px; }   /* Back to top's bottom offset on a family page (DESIGN.md component dimensions); on the phone layout "Back to main page" shares that row at the left (family.css .fam-back, family-page.md 23) */
 .to-top { position: fixed; z-index: 4; display: inline-flex; align-items: center; gap: var(--s1); min-height: 44px; padding: 0 var(--s2); font-family: var(--font-ui); font-size: var(--fs-label); font-weight: 600; line-height: 1; white-space: nowrap; text-decoration: none; color: var(--pearl-whisper); -webkit-tap-highlight-color: transparent; transition: transform var(--dur-press) var(--ease-standard); }
-.to-top[data-tone="light"] { color: var(--urban-slate); }
 .to-top[hidden] { display: none; }
 .to-top svg { display: block; flex: none; width: 17.5px; height: auto; overflow: visible; }
 @media (hover: hover) { .to-top:hover { transform: translateY(-1px); } }
 .to-top:active { transform: scale(0.98); }
 .to-top:focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }
 .to-top:focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
-/* the landing page: centred on the logotype's row (the logotype is 23.25 px tall at --inset; 32.94 px from 1024 px) */
-.to-top[data-page="home"] { top: calc(var(--inset) + env(safe-area-inset-top, 0px) + 11.625px - 22px); right: calc(var(--inset) + env(safe-area-inset-right, 0px) - var(--s2)); }
-@media (min-width: 1024px) { .to-top[data-page="home"] { top: calc(var(--inset) + env(safe-area-inset-top, 0px) + 16.47px - 22px); } }
 /* a family page: the bar's right end on phones (the bar is 72 px plus the safe area, its name on the left), above the bar */
 .to-top[data-page="family"] { z-index: 6; right: calc(var(--inset) + env(safe-area-inset-right, 0px) - var(--s2)); bottom: calc(var(--to-top-bottom) + env(safe-area-inset-bottom, 0px)); }
 @media (min-width: 900px) and (min-height: 600px) {
