@@ -71,10 +71,10 @@
 // drawn at 80% of its width by a static scaleX(0.8), over one hard offset of itself in its mid tone (0.065 em right,
 // 0.052 em down), with no full stop; the labels (the eyebrow, the family line, the finish, the personality, the links),
 // the band's own lines and Send in Work Sans Light capitals; the profile, the colour profile with "We also recommend:",
-// the offer (its middle in Poppins Bold) and the fine print in Poppins; the paint, Sam's swatch recoloured where the build
-// has it (div.qz-smear.qz-rub: a fill of the shade masked by the image, the image over it in hard-light) and our own
-// stroke where it has not (svg.qz-smear: the shade, its edge and its ridge, a Pearl highlight on gloss, a Pearl outline
-// on the nine darkest), every row about it branching on the one the page has; the rest of the group as chips painted in
+// the offer (its middle in Poppins Bold) and the fine print in Poppins; the paint, a relief image recoloured
+// (div.qz-smear.qz-rub: a fill of the shade masked by the image, the image over it in hard-light), Sam's swatch where
+// the build has it and our own (src/assets/quiz/smear/, scripts/quiz/make-smear.py) where it has not, the same markup
+// and rows for either since 2026-11-03; the rest of the group as chips painted in
 // their shades, each name on its chip in Poppins italic, in --night or Pearl Whisper by chipInk (data-ink), and a Pearl
 // hairline on the nine darkest (chipRim, data-rim); every line of the result and the offer decoded glyph by glyph with
 // the site's roll (data-dc="prop": one span per character in its own case, the rolled glyph drawn over the face's own
@@ -222,12 +222,12 @@ const logAnimate = (page: Page): Promise<void> => page.addInitScript(() => {
   };
 });
 const animateLog = (page: Page): Promise<string[]> => page.evaluate(() => (window as unknown as { __qzAnimate?: string[] }).__qzAnimate ?? []);
-/** the shown result's paint as animateLog names it, its class attribute: "qz-smear qz-rub" for Sam's swatch (a div) where
- *  the build has it (src/assets/quiz/rub/, git-ignored), "qz-smear" for our own stroke (an svg, Smear.astro) where it has
- *  not; either is the paint, and nothing else is */
+/** the shown result's paint as animateLog names it, its class attribute, "qz-smear qz-rub": one div for either relief,
+ *  Sam's swatch where the build has it (src/assets/quiz/rub/, git-ignored) or our own (src/assets/quiz/smear/, committed;
+ *  since 2026-11-03, when the SVG stroke went); it is the paint, and nothing else is */
 async function paintClass(page: Page): Promise<string> {
   const cls = await page.locator('.qz-result:not([hidden]) .qz-smear').evaluate((e) => `${e.tagName.toLowerCase()}|${e.getAttribute('class')}`);
-  expect(['div|qz-smear qz-rub', 'svg|qz-smear'], 'the paint: Sam\'s swatch or our own stroke').toContain(cls);
+  expect(cls, 'the paint: a relief image, Sam\'s swatch or our own').toBe('div|qz-smear qz-rub');
   return cls.split('|')[1];
 }
 
@@ -366,11 +366,9 @@ const literal = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
  *  carries its tones as config/quiz-tones.ts gives them, and #find takes them as custom properties (--qz-shade its
  *  catalog token, --qz-deep, --qz-band, --qz-mid, --qz-sd and --qz-sl the chip's data attributes), so the ground is drawn in
  *  the deep tone, the offer's band in the band tone and the name's one hard offset (0.065 em right, 0.052 em down) in the
- *  mid tone, the name narrowed by its static scaleX(0.8), and #find carries data-sm-rim for the nine darkest (chipRim);
- *  the paint, aria-hidden and one kind on every result: Sam's swatch where the build has it (a fill of the drawn shade
- *  masked by the image deck.ts points --qz-rub at, the image over it in hard-light, isolated, and loaded), our own stroke
- *  where it has not (the shade with its edge and ridge, a Pearl Whisper highlight on a gloss result only and a Pearl
- *  outline on the nine darkest); the eyebrow, the name (no full stop), the family line, the finish, the personality, the
+ *  mid tone, the name narrowed by its static scaleX(0.8); the paint, aria-hidden and one kind on every result: a relief
+ *  image, Sam's swatch where the build has it or our own (a fill of the drawn shade masked by the image deck.ts points
+ *  --qz-rub at, the image over it in hard-light, isolated, and loaded); the eyebrow, the name (no full stop), the family line, the finish, the personality, the
  *  profile, the colour profile and "We also recommend:"; the chips (the rest of the group in its order, each painted in
  *  its shade, the darkest with the Pearl hairline, its name on it in its ink, each chip as tall as its name needs); the
  *  links. Once settled, every line (data-dc="prop") is one text node again, reading Sam's words in his case, the
@@ -391,25 +389,19 @@ async function expectResult(page: Page, r: Drawn): Promise<void> {
   const look = await page.evaluate(() => {
     const find = document.getElementById('find')!, res = find.querySelector('.qz-result:not([hidden])')!, ground = getComputedStyle(find.querySelector(':scope > .qz-ground')!);
     const gift = document.getElementById('qzGift'), name = getComputedStyle(res.querySelector('.qz-shade')!), paint = res.querySelector<HTMLElement>('.qz-smear')!;
-    // the paint of every result, shown or not: Sam's swatch (div.qz-rub) or our own stroke (svg)
-    const kinds = [...find.querySelectorAll('.qz-result .qz-smear')].map((e) => (e.matches('div.qz-rub') ? 'swatch' : e.matches('svg') ? 'stroke' : e.tagName.toLowerCase()));
-    let drawn: Record<string, string | null>;
-    if (paint.matches('div.qz-rub')) {
-      const col = paint.querySelector('.qz-rub-col'), img = paint.querySelector<HTMLImageElement>('img.qz-rub-img');
-      drawn = {
-        kind: 'swatch', fill: col ? getComputedStyle(col).backgroundColor : null, mask: col ? getComputedStyle(col).maskImage : null, rub: paint.style.getPropertyValue('--qz-rub'),
-        src: img?.getAttribute('src') ?? null, url: img?.src ?? null, alt: img?.getAttribute('alt') ?? null, blend: img ? getComputedStyle(img).mixBlendMode : null, isolation: getComputedStyle(paint).isolation,
-      };
-    } else {
-      const fill = (sel: string) => { const e = paint.querySelector(sel); return e ? getComputedStyle(e).fill : null; }, body = paint.querySelector('.qz-sm-body');
-      drawn = { kind: 'stroke', body: fill('.qz-sm-body'), edge: fill('.qz-sm-dark'), ridge: fill('.qz-sm-light'), gloss: fill('.qz-sm-gloss'), outline: body ? getComputedStyle(body).stroke : null };
-    }
+    // the paint of every result, shown or not: one relief image each (div.qz-rub), Sam's swatch or our own
+    const kinds = [...find.querySelectorAll('.qz-result .qz-smear')].map((e) => (e.matches('div.qz-rub') ? 'relief' : e.tagName.toLowerCase()));
+    const col = paint.querySelector('.qz-rub-col'), img = paint.querySelector<HTMLImageElement>('img.qz-rub-img');
+    const drawn: Record<string, string | null> = {
+      kind: 'relief', fill: col ? getComputedStyle(col).backgroundColor : null, mask: col ? getComputedStyle(col).maskImage : null, rub: paint.style.getPropertyValue('--qz-rub'),
+      src: img?.getAttribute('src') ?? null, url: img?.src ?? null, alt: img?.getAttribute('alt') ?? null, blend: img ? getComputedStyle(img).mixBlendMode : null, isolation: getComputedStyle(paint).isolation,
+    };
     // each swatch's proportions as deck.ts writes them (--qz-paint-ar, its image's width over height, to 5 decimals) beside
     // its image's own
     const ratios = [...find.querySelectorAll<HTMLElement>('.qz-rub')].map((e) => { const i = e.querySelector('img'); return `${e.style.getPropertyValue('--qz-paint-ar')} of ${(Number(i?.getAttribute('width')) / Number(i?.getAttribute('height'))).toFixed(5)}`; });
     return {
       ground: ground.backgroundColor, groundShown: ground.display, band: gift ? getComputedStyle(gift).backgroundColor : null, shadow: name.textShadow, size: parseFloat(name.fontSize),
-      narrow: name.transform, rim: find.hasAttribute('data-sm-rim'), hidden: paint.getAttribute('aria-hidden'), kinds, drawn, ratios,
+      narrow: name.transform, hidden: paint.getAttribute('aria-hidden'), kinds, drawn, ratios,
     };
   });
   const { shadow, size, kinds, drawn: paint, ratios, ...drawnTones } = look;
@@ -418,28 +410,20 @@ async function expectResult(page: Page, r: Drawn): Promise<void> {
   expect(m, `the name's offset layer in the mid tone ${rgb(r.tones.mid)}: ${shadow}`).not.toBeNull();
   expect(Math.abs(Number(m![1]) - 0.065 * size), `one hard offset, 0.065 em (of ${size} px) right: ${shadow}`).toBeLessThan(0.01);
   expect(Math.abs(Number(m![2]) - 0.052 * size), `and 0.052 em down: ${shadow}`).toBeLessThan(0.01);
-  // the nine darkest shades (chipRim) mark #find[data-sm-rim], which outlines our own stroke in Pearl Whisper so it does
-  // not sink into its own ground (Sam's swatch carries its own rim)
-  const rim = chipRim(byId.get(r.shade)!.hex);
-  expect(drawnTones, 'the ground and the band in the drawn shade\'s tones, the name narrowed, the dark shades marked, the paint aria-hidden').toEqual({
-    ground: rgb(r.tones.deep), groundShown: 'block', band: rgb(r.tones.band), narrow: NARROW, rim, hidden: 'true',
+  expect(drawnTones, 'the ground and the band in the drawn shade\'s tones, the name narrowed, the paint aria-hidden').toEqual({
+    ground: rgb(r.tones.deep), groundShown: 'block', band: rgb(r.tones.band), narrow: NARROW, hidden: 'true',
   });
-  expect(kinds, 'one paint on each of the seven results, one kind on all of them: Sam\'s swatch where the build has it, our own stroke where it has not').toEqual(QUIZ_PERSONAS.map(() => paint.kind));
-  if (paint.kind === 'swatch') {
-    // Sam's swatch (scripts/quiz/prepare-rub.mjs): its outline filled with the drawn shade (the image as the fill's mask,
-    // deck.ts pointing --qz-rub at it) and its relief over that fill in hard-light, isolated, so each shade is the same paint
-    expect(paint, 'Sam\'s swatch in the drawn shade').toEqual({
-      kind: 'swatch', fill: r.rgb, mask: `url("${paint.url}")`, rub: `url("${paint.src}")`, src: expect.stringMatching(/\/_astro\/rub\.[\w-]+\.webp$/), url: expect.stringMatching(/^https?:\/\/[^/]+\/_astro\/rub\.[\w-]+\.webp$/),
-      alt: '', blend: 'hard-light', isolation: 'isolate',
-    });
-    await expect.poll(() => shown.locator('img.qz-rub-img').evaluate((e) => (e as HTMLImageElement).complete && (e as HTMLImageElement).naturalWidth > 0), { message: 'the swatch\'s image loaded, so the mask has its outline' }).toBe(true);
-    expect(ratios, 'every swatch at its image\'s own proportions (deck.ts, --qz-paint-ar, the box\'s aspect-ratio)').toEqual(ratios.map((x) => { const v = x.split(' of ')[1]; return `${v} of ${v}`; }));
-    expect(ratios, 'one on each result').toHaveLength(QUIZ_PERSONAS.length);
-  } else {
-    // our own stroke (Smear.astro): flat fills of the shade, its edge and its ridge, the Pearl highlight on a gloss result,
-    // the Pearl outline on the nine darkest
-    expect(paint, 'our own stroke in the drawn shade\'s tones').toEqual({ kind: 'stroke', body: r.rgb, edge: rgb(r.tones.dark), ridge: rgb(r.tones.light), gloss: r.p.finish === 'gloss' ? PEARL : null, outline: rim ? PEARL : 'none' });
-  }
+  expect(kinds, 'one paint on each of the seven results, a relief image on all of them').toEqual(QUIZ_PERSONAS.map(() => 'relief'));
+  // the relief (scripts/quiz/prepare-rub.mjs for Sam's swatch, scripts/quiz/make-smear.py for our own): its outline filled
+  // with the drawn shade (the image as the fill's mask, deck.ts pointing --qz-rub at it) and its shading over that fill in
+  // hard-light, isolated, so each shade is the same paint
+  expect(paint, 'the relief in the drawn shade').toEqual({
+    kind: 'relief', fill: r.rgb, mask: `url("${paint.url}")`, rub: `url("${paint.src}")`, src: expect.stringMatching(/\/_astro\/(rub|smear)\.[\w-]+\.webp$/), url: expect.stringMatching(/^https?:\/\/[^/]+\/_astro\/(rub|smear)\.[\w-]+\.webp$/),
+    alt: '', blend: 'hard-light', isolation: 'isolate',
+  });
+  await expect.poll(() => shown.locator('img.qz-rub-img').evaluate((e) => (e as HTMLImageElement).complete && (e as HTMLImageElement).naturalWidth > 0), { message: 'the relief\'s image loaded, so the mask has its outline' }).toBe(true);
+  expect(ratios, 'every paint at its image\'s own proportions (deck.ts, --qz-paint-ar, the box\'s aspect-ratio)').toEqual(ratios.map((x) => { const v = x.split(' of ')[1]; return `${v} of ${v}`; }));
+  expect(ratios, 'one on each result').toHaveLength(QUIZ_PERSONAS.length);
   // the lines: [selector, Sam's words, drawn in capitals by the style sheet]
   const lines: [string, string, boolean][] = [['.qz-eyebrow', Q.eyebrow, true], ['.qz-shade', r.name, true], ['.qz-fam', r.fam, true], ['.qz-finish', Q.finish(r.p.finish), true], ['.qz-persona', r.p.name, true], ['.qz-text', r.p.profile, false], ['.qz-palette > span:not(.qz-also-h)', r.p.palette, false], ['.qz-also-h', Q.also, false]];
   for (const [sel, text] of lines) await expect(shown.locator(`${sel} > .sr-only`), sel).toHaveText(text);

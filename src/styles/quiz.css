@@ -70,6 +70,15 @@ html:not(.js) .qz-skip { display: none; }   /* and nothing is locked there, so t
 .qz-foot { display: grid; grid-template-columns: auto auto; justify-content: space-between; min-height: 44px; }
 .qz-foot .qz-skip { grid-column: 2; }
 
+/* the reveal (quiz.md D50; Sam, 2026-11-03): four lines at the question's size, one under another as they decode in, and
+   under them a hairline in Urban Slate that a Pearl Whisper line fills over the reveal's length, the fill a transform
+   (CHECKLIST C3); in the deck's place, so the result's screen follows where the question stood */
+.qz-reveal { display: grid; gap: var(--s3); width: 100%; max-width: 560px; }
+.qz-reveal[hidden] { display: none; }
+.qz-rv-line { font-size: var(--qz-fs-q); line-height: 1.25; }
+.qz-bar { position: relative; height: 1px; margin-top: var(--s2); background: var(--urban-slate); }
+.qz-bar-fill { position: absolute; left: 0; top: -1px; width: 100%; height: 3px; background: var(--pearl-whisper); transform: scaleX(0); transform-origin: left center; }
+
 /* the result (Sam, 2026-11-02, with his reference: "for the results page, first of all it should fit inside one screen,
    after the results, there should be no scrolling, ad make it look something like this for the results ... dynamic to all
    the colors that we got"; later the same day: "use the exact same font from this picture for the results page, as well
@@ -111,12 +120,6 @@ svg.qz-smear { aspect-ratio: var(--qz-paint-ar); }   /* our own stroke takes the
 .qz-rub { --qz-paint-ar: 0.41026; position: relative; isolation: isolate; aspect-ratio: var(--qz-paint-ar); }   /* the swatch's 256 x 624; deck.ts writes the image's own */
 .qz-rub-col { position: absolute; inset: 0; background: var(--qz-shade); -webkit-mask: var(--qz-rub) center / 100% 100% no-repeat; mask: var(--qz-rub) center / 100% 100% no-repeat; }
 .qz-rub-img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; mix-blend-mode: hard-light; }
-/* our own stroke, where the build has no copy of the swatch (Smear.astro) */
-.qz-sm-body { fill: var(--qz-shade); }
-.qz-sm-dark { fill: var(--qz-sd, var(--qz-shade)); }
-.qz-sm-light { fill: var(--qz-sl, var(--qz-shade)); }
-.qz-sm-gloss { fill: var(--pearl-whisper); }   /* a gloss result's highlight, plain Pearl Whisper (no alpha: Pearl at alpha is the hero's, E-A2; review iteration 4); a matte one has none */
-.quiz[data-sm-rim] .qz-sm-body { stroke: var(--pearl-whisper); stroke-width: 1.5px; vector-effect: non-scaling-stroke; }   /* the darkest shades (chipRim) would sink into their own ground: the stroke takes the chips' hairline */
 .qz-rtext { grid-area: text; display: grid; gap: calc(var(--s2) * var(--qz-rs, 1)); justify-items: start; min-width: 0; }   /* one gap carries the rhythm; no per-line margins (rule 15) */
 .qz-persona { font-size: max(12px, calc(var(--qz-fs-label) * 0.72 * var(--qz-rs, 1))); letter-spacing: -0.02em; }
 /* the words: Poppins 400, Sam's sentence case */

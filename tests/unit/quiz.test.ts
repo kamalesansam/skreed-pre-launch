@@ -15,7 +15,7 @@ const IDS: PersonaId[] = ['main', 'curator', 'spark', 'optimist', 'rebel', 'drea
 const RECOMMENDED: Record<PersonaId, string> = { main: 'Ruby', curator: 'Porcelain', spark: 'Sunflower', optimist: 'Autumn', rebel: 'Ballerina', dreamer: 'Wildberry', strategist: 'Navy' };
 const allStrings = (): string[] => {
   const out: string[] = [];
-  for (const v of Object.values(QUIZ_COPY)) out.push(typeof v === 'function' ? (v as (...a: never[]) => string)(...(['Mellow Yellow', 11] as never[])) : v);
+  for (const v of Object.values(QUIZ_COPY)) out.push(...(Array.isArray(v) ? (v as readonly string[]) : [typeof v === 'function' ? (v as (...a: never[]) => string)(...(['Mellow Yellow', 11] as never[])) : (v as string)]));
   for (const q of QUIZ_QUESTIONS) out.push(q.q, ...q.answers.map((a) => a.text));
   for (const p of QUIZ_PERSONAS) out.push(p.name, p.profile, p.palette);
   return out;
@@ -106,7 +106,7 @@ test('the result\'s tones (E-S3-result; Sam, 2026-11-02: "dynamic to all the col
   // every chip's name on the chip in its ink, and the darkest strokes outlined
   assert.match(css, /\.qz-mini \{ --qz-ink: var\(--night\);[^}]*color: var\(--qz-ink\);/);
   assert.match(css, /\.qz-mini\[data-ink="pearl"\] \{ --qz-ink: var\(--pearl-whisper\); \}/);
-  assert.match(css, /\.quiz\[data-sm-rim\] \.qz-sm-body \{ stroke: var\(--pearl-whisper\);/);
+  assert.doesNotMatch(css, /qz-sm-|data-sm-rim/, 'the stroke of 2026-11-02 is gone: the paint is a relief image in every build (make-smear.py), so no fill or hairline for it');
   // the component writes every chip's tones and deck.ts copies the drawn shade's onto the section
   const astro = readFileSync(new URL('../../src/components/quiz/Quiz.astro', import.meta.url), 'utf8');
   for (const a of ['data-ink={s.ink}', 'data-deep={s.tones.deep}', 'data-band={s.tones.band}', 'data-mid={s.tones.mid}', 'data-sd={s.tones.dark}', 'data-sl={s.tones.light}']) assert.ok(astro.includes(a), a);
