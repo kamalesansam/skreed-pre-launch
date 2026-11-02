@@ -1,10 +1,11 @@
 # Session 3: section 5, the sign-up, rebuilt as Sam's four-jar picture
 
 - **Old session:** "Section 5 signup page with glass jar" (`local_a3664742`).
-- **Branch:** `claude/section-5-signup-glass-jar-9d74d2`, three commits on `2d0d319` (an old default):
+- **Branch:** `claude/section-5-signup-glass-jar-9d74d2`, four commits on `2d0d319` (an old default):
   - `14183d8`: the first section 5, glass jars that the follows fill.
   - `78eae8f`: a checkpoint of one jar of sand.
   - `f722ac3`: the WIP handoff of the picture rebuild.
+  - `3e4673a`: the final jar renders. The Blender job the session had started kept running after the pause, finished at 17:51 IST ("ALL DONE 1445.1s") and installed all 16 states. `jars.json` is no longer provisional.
 - **Set aside:** `wip/section-5-liquid-2026-11-02` (`728e0fd`), the liquid version stopped when the picture arrived.
 - **Spec:** `docs/specs/section-5-picture.md`. Section 14 is the For Sam list; section 16 is the measuring checklist, still to fill. The older `section-5.md`, `section-5-sand.md` and `section-5-liquid` docs are superseded.
 - **The picture:** in the carry folder, `sam-sources/references/section-5-four-jars-picture.webp`. It is the spec.
@@ -32,7 +33,7 @@
 - **Renders:**
   - Pre-rendered in Blender 5.2 headless (Cycles on the CPU) by `scripts/signup/jars/` (`pack.py`, `render.py`, `compose.mjs`, `run.sh`, `README.md`).
   - The files are `src/assets/signup/jars/jar-<state>-<1x|2x>.<avif|webp>`, plus `jars.json`.
-  - **The committed images are stand-ins: `jars.json` says `"provisional": true`.** The carry folder's `section-5-jar-work/` (`final/`, `install/`, `raw/`, `pile.json`) may hold finished renders; compare before re-rendering. Each render took 1 to 4 minutes on the old loaded machine.
+  - **The committed images are the final renders** (`3e4673a`, with a `seam` per state in `jars.json`). They have not yet been checked against the picture or section 16's measures. The carry folder's `section-5-jar-work/` holds the Blender intermediates (`pile.json`, `raw/`, `render.log`), needed only to re-render. The full run took 24 minutes on the old machine.
 - **The island:**
   - The jar chunk, `jar.bin` and its stills are removed (deleted on the branch).
   - The island draws a flat cream ground for the fourth wipe and while section 5 is in view (`src/scripts/hero/section5/ground.ts`, `src/config/signup-ground.ts`). The DOM is transparent when `data-ground="island"`, cream on the poster tier.
@@ -48,7 +49,7 @@ The build workflow, started at 16:15 IST on 2026-11-02. It ran four agents in pa
 
 1. Set up a worktree on the branch, run `npm ci`, and copy `section-5-jar-work/` into `scripts/signup/jars/work/`.
 2. Run `npm run test:unit`, `npm run check` and `npm run build`. Read the diff against `section-5-picture.md`, to find which of A to D finished.
-3. Finish what is missing. Render the 16 final jar states if `work/final` lacks them (`bash scripts/signup/jars/run.sh`), drop `"provisional"`, and fill section 16's measurements: the fit at the nine sizes, form on and off.
+3. Finish what is missing. Check the final jars against the picture (re-render with `bash scripts/signup/jars/run.sh` only if they are off), and fill section 16's measurements: the fit at the nine sizes, form on and off.
 4. **First land session 2 (the hall's removal),** then merge it in here. Section 5's entry follows scene 5's exit, and this branch was built on the hall's map. Expect conflicts in the shared docs and `tests/e2e/room.spec.ts`.
 5. Start the dev server (`astro-dev-win` on 4321, or `npm run dev`). Open it for Sam and send phone (390 x 844) and laptop (1280 x 800) screenshots. Wait for his verdict.
 6. On his yes: run the e2e, regenerate the frames, finish the docs, commit, then land after his word.
