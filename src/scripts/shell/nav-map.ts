@@ -8,7 +8,7 @@ export type SectionId = 'top' | 'families' | 'quiz' | 'room';
 export const SECTION_IDS: readonly SectionId[] = ['top', 'families', 'quiz', 'room'];
 
 export interface PageMap {
-  /** the 3D path: the island runs and draws section 4's hall (false on the poster tier, or for section 4 alone when it fell to its stills) */
+  /** the 3D path: the island runs and draws section 4's scenes (false on the poster tier, or for section 4 alone when it fell to its stills) */
   island: boolean;
   /** section 4 shows its stills (its data-tier "poster"): it rests at its top, as Skip quiz's ride lands there */
   roomStill: boolean;
@@ -28,7 +28,7 @@ export interface PageMap {
 /**
  * Where a section rests, rounded and clamped to the page's range. 3D path: the top; section 2 at rest with the gems
  * landed (S2T.LAND, the return path's position, hero.ts); the quiz's top (the second seam's end, where its glue settles);
- * section 4's q 1, its top plus one stage, the hall fully in (gate.ts rideTarget). Poster tier: the top, nav#families
+ * section 4's q 1, its top plus one stage, scene 1 fully in (the hall until 2026-11-02; gate.ts rideTarget). Poster tier: the top, nav#families
  * centred (as boot.ts centres it on a return), the quiz's top and section 4's top.
  */
 export function restY(id: SectionId, m: PageMap): number {

@@ -291,10 +291,11 @@ for (const s of RESULT_ONLY ? [] : sized(PHONE_SETUPS)) {
 
 // The quiz gate's frames (docs/specs/quiz-gate.md 7): on a page with no flag, section 4 locked, `intro` (the track's end, 6.75 screens since 2026-11-02,
 // the intro at rest with Skip quiz) and `card2-foot` (question 2 settled, Back and Skip quiz in its footer; no pictures
-// on that question, so no licensed photograph is in the frame); on ?room=open once the hall is resident (__s4.ready),
-// `ride-mid` (the ride at a raw q of about 0.5, the third wipe part way) and `arrival` (the hall fully in after a
-// keyboard press, the pad's ring); and at 390 x 844 on the poster tier `poster-arrival` (the hall's still with its
-// prompt). Written to docs/specs/screenshots/quiz-gate-<w>x<h>-<state>.png.
+// on that question, so no licensed photograph is in the frame); on ?room=open once the scenes are resident (__s4.ready),
+// `ride-mid` (the ride at a raw q of about 0.5, the third wipe part way) and `arrival` (scene 1 fully in after a
+// keyboard press, its lines and the focus ring); and at 390 x 844 on the poster tier `poster-arrival` (the column's
+// first scene with its name focused; the hall's still with its prompt until 2026-11-02). Written to
+// docs/specs/screenshots/quiz-gate-<w>x<h>-<state>.png.
 const GATE_BASE = new URL(BASE);
 for (const s of FLAGS.has('--phone-only') || FLAGS.has('--no-gate') || RESULT_ONLY ? [] : sized(SETUPS)) {
   const shotGate = (page, state) => page.screenshot({ path: `${OUT}/quiz-gate-${s.name}-${state}.png` });
@@ -317,7 +318,7 @@ for (const s of FLAGS.has('--phone-only') || FLAGS.has('--no-gate') || RESULT_ON
   await settledIn(page);
   await shotGate(page, 'card2-foot');
   await ctx.close();
-  // open, the hall resident: the ride through the third wipe from a keyboard press, and the arrival on the pad
+  // open, the scenes resident: the ride through the third wipe from a keyboard press, and the arrival at scene 1
   const open = new URL(GATE_BASE); open.searchParams.set('room', 'open');
   const ctx2 = await browser.newContext({ viewport: s.viewport, deviceScaleFactor: s.deviceScaleFactor });
   const p2 = await ctx2.newPage();
@@ -325,7 +326,7 @@ for (const s of FLAGS.has('--phone-only') || FLAGS.has('--no-gate') || RESULT_ON
   await p2.waitForFunction(() => window.__s2 && window.__s2() && window.__s2().ready, null, { timeout: 420_000 }).catch(() => console.warn(s.name, 'gate: section 2 did not report ready'));
   await toQuiz(p2);
   await p2.locator('#qzSkip > .dc').waitFor();
-  await p2.waitForFunction(() => window.__s4 && window.__s4.ready, null, { timeout: 300_000 }).catch(() => console.warn(s.name, 'gate: the hall did not become ready'));
+  await p2.waitForFunction(() => window.__s4 && window.__s4.ready, null, { timeout: 300_000 }).catch(() => console.warn(s.name, 'gate: the scenes did not become ready'));
   await p2.locator('#qzBegin').focus();
   await p2.keyboard.press('Tab');
   await p2.keyboard.press('Enter');
@@ -336,7 +337,7 @@ for (const s of FLAGS.has('--phone-only') || FLAGS.has('--no-gate') || RESULT_ON
   console.log(s.name, 'gate: arrival', await p2.evaluate(() => ({ focus: document.activeElement && document.activeElement.id, q: window.__s4 && window.__s4.state() && window.__s4.state().q, y: scrollY, roomTop: Math.round(document.getElementById('room').getBoundingClientRect().top + scrollY) })));
   await shotGate(p2, 'arrival');
   await ctx2.close();
-  // the poster tier at 390 x 844: the hall's still with its prompt after the ride
+  // the poster tier at 390 x 844: the column's first scene after the ride
   if (s.viewport.width < 900) {
     const poster = new URL(GATE_BASE); poster.searchParams.set('tier', 'poster');
     const ctx3 = await browser.newContext({ viewport: s.viewport, deviceScaleFactor: s.deviceScaleFactor });
@@ -346,7 +347,7 @@ for (const s of FLAGS.has('--phone-only') || FLAGS.has('--no-gate') || RESULT_ON
     await p3.locator('#qzSkip > .dc').waitFor();
     await p3.locator('#qzSkip').evaluate((b) => b.click());
     await p3.waitForFunction(() => document.getElementById('room').dataset.open === 'skip' && !document.getElementById('room').hasAttribute('data-ride'), null, { timeout: 10_000 }).catch(() => console.warn(s.name, 'gate: the poster ride did not end'));
-    await p3.waitForFunction(() => { const img = document.querySelector('#room .rm-still img'); return !!img && img.complete && img.naturalWidth > 0; }, null, { timeout: 30_000 }).catch(() => console.warn(s.name, 'gate: the hall still did not decode'));
+    await p3.waitForFunction(() => { const img = document.querySelector('#room .rm-scene[data-i="0"] img'); return !!img && img.complete && img.naturalWidth > 0; }, null, { timeout: 30_000 }).catch(() => console.warn(s.name, 'gate: scene 1\'s still did not decode'));
     await sleep(400);
     await shotGate(p3, 'poster-arrival');
     await ctx3.close();

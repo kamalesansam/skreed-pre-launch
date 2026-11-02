@@ -1,12 +1,11 @@
 // Section 4's contrast on the scene (docs/specs/section-4-flux.md AC12, E-S4-contrast): Pearl Whisper text straight on
-// the hall, the bubble and the five loops, measured with section 3's method (scripts/quiz/contrast.mjs): each decoded
-// line's box is read on the page (its glyph row, .dc), the section's text, the logotype and the section index
-// are hidden through the CSSOM for one shot, the scene alone is shot, and inside every box the scene's luminance gives
-// the median and the lightest 5 percent, Pearl's ratio printed against each. AC12's frames: the prompt at the station;
-// Skip over the bubble at 25, 50 and 90 percent with scene 1's loop playing; and every text box of each scene at rest
-// (the four lines, the hint on scene 1, the loading line and the 2.2.2 control where they show, the previous and next
-// words) over 10 frames 0.5 s apart of its loop, at 390 x 844 and 1280 x 800, device pixel ratio 1 (a CSS pixel is a
-// pixel of the shot). Per box, the median is the median over the frames of each frame's median ratio, and the worst
+// the five loops, measured with section 3's method (scripts/quiz/contrast.mjs): each decoded line's box is read on the
+// page (its glyph row, .dc), the section's text, the logotype and the section index are hidden through the CSSOM
+// for one shot, the scene alone is shot, and inside every box the scene's luminance gives the median and the lightest
+// 5 percent, Pearl's ratio printed against each. AC12's frames: every text box of each scene at rest (the four lines,
+// the hint on scene 1, the loading line and the 2.2.2 control where they show, the previous and next words) over 10
+// frames 0.5 s apart of its loop, at 390 x 844 and 1280 x 800, device pixel ratio 1 (a CSS pixel is a pixel of the
+// shot). The prompt over the hall and Skip over the bubble left with them on 2026-11-02 (docs/specs/section-4-no-hall.md). Per box, the median is the median over the frames of each frame's median ratio, and the worst
 // is the lowest over the frames of each frame's lightest-5-percent ratio. It also reads the GPU estimate the hooks
 // report at scene 1 at 390 x 844. Serve a hooks build (build:test) first:
 //   node scripts/room/contrast.mjs [base=http://127.0.0.1:4322/] [--shade d] [--shade-height h] [--shade-solid s] [--frames n] [--json <file>] [--md <file>]
@@ -15,7 +14,7 @@
 // carousel.ts otherwise), for AC12's tuning; --md writes the
 // evidence document (docs/specs/evidence/section-4-flux-contrast.md by default when given without a path). The
 // browser is the installed Chrome (channel chrome) when present, else Playwright's Chromium (no H.264: the planes show
-// the stills); WebGL on the Metal GPU, or SKREED_GL=swiftshader for the test harness's flags.
+// the stills); WebGL on the GPU (Metal on a Mac), or SKREED_GL=swiftshader for the test harness's flags.
 import { writeFileSync } from 'node:fs';
 import sharp from 'sharp';
 import { chromium } from '@playwright/test';
@@ -28,7 +27,8 @@ const jsonOut = opt('--json');
 const mdOut = args.includes('--md') ? (opt('--md') && !opt('--md').startsWith('--') ? opt('--md') : 'docs/specs/evidence/section-4-flux-contrast.md') : null;
 const FRAMES = Number(opt('--frames') ?? 10), GAP_MS = 500;
 const shade = opt('--shade') !== undefined ? { dark: Number(opt('--shade')), height: opt('--shade-height') !== undefined ? Number(opt('--shade-height')) : undefined, solid: opt('--shade-solid') !== undefined ? Number(opt('--shade-solid')) : undefined } : null;
-const GL = process.env.SKREED_GL === 'swiftshader' ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] : ['--use-angle=metal', '--ignore-gpu-blocklist', '--enable-gpu'];
+const GPU = process.platform === 'darwin' ? ['--use-angle=metal', '--ignore-gpu-blocklist', '--enable-gpu'] : ['--ignore-gpu-blocklist', '--enable-gpu'];
+const GL = process.env.SKREED_GL === 'swiftshader' ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] : GPU;
 const lin = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
 const lum = (r, g, b) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
 const PEARL = lum(0xf7, 0xf6, 0xf3);
@@ -36,7 +36,6 @@ const ratio = (l) => (Math.max(PEARL, l) + 0.05) / (Math.min(PEARL, l) + 0.05);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor(s.length / 2)] : NaN; };
 // the entry's beats at the defaults (as render-stills.mjs): the bubble from 0.35 s for 2 s
-const BUBBLE_AT = 0.35, BUBBLE_S = 2.0;
 const HIDE = () => { window.__c4Focus = document.activeElement; for (const el of [document.getElementById('rmStage'), document.querySelector('.site-logo'), document.getElementById('siteNav')]) if (el) el.style.visibility = 'hidden'; };
 const SHOW = () => { for (const el of [document.getElementById('rmStage'), document.querySelector('.site-logo'), document.getElementById('siteNav')]) if (el) el.style.visibility = ''; window.__c4Focus?.focus?.({ preventScroll: true }); };
 
@@ -68,11 +67,6 @@ async function go(page, q, settle = 900) {
   await sleep(settle);
 }
 const state = (page) => page.evaluate(() => window.__s4.state());
-async function seek(page, sec, settle = 900) {
-  await page.waitForFunction(() => window.__s4?.state()?.worldReady, null, { timeout: 180_000 });
-  await page.evaluate((s) => window.__s4.seek(s), sec);
-  await sleep(settle);
-}
 /** the boxes of the section's decoded lines on screen, by their visible glyph row */
 const boxesOf = (page, sel) => page.evaluate((s) => [...document.querySelectorAll(s)].filter((e) => e.getClientRects().length && !e.hidden && !e.closest('[hidden]') && getComputedStyle(e).visibility !== 'hidden')
   .map((e) => { const row = e.querySelector(':scope > .dc') ?? e, r = row.getBoundingClientRect(); return { el: (e.id || e.className.split(' ').find((c) => c.startsWith('rm-')) || e.className), x: r.x, y: r.y, w: r.width, h: r.height }; })
@@ -109,18 +103,8 @@ async function measure(page, vp, frame, boxes, n = FRAMES) {
 
 for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
   const { ctx, page } = await open(vp);
-  await go(page, 1, 1200); await go(page, 4, 300); await go(page, 9.5, 2600);
-  // the prompt at the station: the hall holds still, one frame
-  await measure(page, vp, 'the prompt at the station', await boxesOf(page, '#rmEnter .rm-key, #rmEnter .rm-enter-text'), 1);
-  // Skip over the bubble at 25, 50 and 90 percent, held by the entry clock while scene 1's loop plays
-  await page.waitForFunction(() => window.__s4?.state()?.worldReady, null, { timeout: 180_000 });
-  for (const pct of [25, 50, 90]) {
-    await seek(page, BUBBLE_AT + (BUBBLE_S * pct) / 100);
-    await page.waitForFunction(() => { const s = window.__s4.state(); return s.loops[0]?.playing || s.loops[0]?.state === 'failed' || !s.video; }, null, { timeout: 30_000 }).catch(() => {});
-    await measure(page, vp, `Skip, the bubble at ${pct} percent`, await boxesOf(page, '#rmSkip'));
-  }
-  const arrive = (await state(page)).arrive;
-  await seek(page, arrive + 0.1, 400);
+  // the arrival at scene 1 (q 1, the third wipe's end)
+  await go(page, 1, 1200);
   await page.waitForFunction(() => window.__s4.state().state === 'world', null, { timeout: 20_000 });
   if (shade) shadeInForce = await page.evaluate((s) => { window.__s4.shade(s.dark, s.height, s.solid); return s; }, shade);
   // each scene at rest with its loop playing: every text box over 10 frames

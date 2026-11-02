@@ -276,7 +276,7 @@ export function mountQuiz(root: HTMLElement): void {
   }
 
   /** Skip quiz (quiz-gate.md D3, D4): taken when Back's press would be (not during a change of screen, not inside the
-   *  guard) and not while a ride runs; section 4 opens and the page rides to the hall; the quiz itself stays as it is */
+   *  guard) and not while a ride runs; section 4 opens and the page rides to scene 1; the quiz itself stays as it is */
   async function skipQuiz(control: HTMLButtonElement, q: number) {
     if (busy || early() || riding() || state !== (q ? 'quiz' : 'intro')) return;
     track('quiz_skip', { q });
