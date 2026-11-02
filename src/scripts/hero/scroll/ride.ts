@@ -13,14 +13,17 @@ export type { RideEls } from './reset.ts';
 
 // the rest clock (any change of the scroll position, the visitor's or the page's own, restarts it) and two layout reads,
 // each made at most once per rest and only when everything else holds, never per frame (CHECKLIST C3): whether the quiz's
-// section is still below the screen, and at the top whether the document goes on below it (the countdown script's test)
+// section is still below the screen, and at the top whether the document goes on below it (the countdown script's test);
+// neither is read while the loader or the intro lock the page, since a read kept from under the lock would be wrong
+const H = document.documentElement;
 let lastY = Number.NaN, restSince = 0, quizBelow: boolean | null = null, pageBelow: boolean | null = null;
+const isLocked = () => H.classList.contains('loading') || H.classList.contains('intro');   // the page lock (shell.css): overflow hidden, nothing below
 const findBelow = () => (quizBelow ??= (document.getElementById('find')?.getBoundingClientRect().top ?? Infinity) >= innerHeight - 2);
 const docBelow = () => (pageBelow ??= document.documentElement.scrollHeight > innerHeight + CUE.top);
 function cueWords(m: HTMLElement, cue: HTMLElement | null, tp: number, s2ready: boolean): void {
   const y = scrollY, now = performance.now();
   if (y !== lastY) { lastY = y; restSince = now; quizBelow = null; pageBelow = null; }
-  const on = cueWordsOn({ y, vh: innerHeight, restMs: now - restSince, tp, s2ready, cueOff: !!cue?.classList.contains('is-off'), quizBelow: findBelow, pageBelow: docBelow });
+  const on = cueWordsOn({ y, vh: innerHeight, restMs: now - restSince, tp, s2ready, cueOff: !!cue?.classList.contains('is-off'), locked: isLocked(), quizBelow: findBelow, pageBelow: docBelow });
   if (on && y > CUE.top && m.dataset.at !== 'pin') m.dataset.at = 'pin';   // before the class, in the same frame: placed while hidden
   else if (y <= CUE.top && m.dataset.at) delete m.dataset.at;
   if (on !== m.classList.contains('is-on')) m.classList.toggle('is-on', on);   // written only on a change

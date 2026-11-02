@@ -18,7 +18,7 @@ const read = (p: string) => readFileSync(new URL(p, root), 'utf8');
 const VH = 844;
 /** the page at rest at `screens`, its first wipe settled to the matching end, section 2 built, the quiz below */
 const at = (screens: number, o: Partial<CueWordsIn> = {}): CueWordsIn => ({
-  y: screens * VH, vh: VH, restMs: CUE.stillMs, tp: Math.min(1, Math.max(0, screens - S2T.PULL)), s2ready: true, cueOff: screens * VH > CUE.top,
+  y: screens * VH, vh: VH, restMs: CUE.stillMs, tp: Math.min(1, Math.max(0, screens - S2T.PULL)), s2ready: true, cueOff: screens * VH > CUE.top, locked: false,
   quizBelow: () => true, pageBelow: () => true, ...o,
 });
 
@@ -54,14 +54,17 @@ test('the top: the chevrons speak there, unless they stay hidden at rest with th
   assert.equal(cueWordsOn(at(0, { cueOff: false })), false, 'chevrons shown: the words follow them by CSS');
   assert.equal(cueWordsOn(at(0, { cueOff: true })), true, 'chevrons stuck off after a jump the followers reach late');
   assert.equal(cueWordsOn(at(0, { cueOff: true, restMs: CUE.stillMs - 1 })), false, 'not before the rest');
-  assert.equal(cueWordsOn(at(0, { cueOff: true, pageBelow: () => false })), false, 'the loader and the intro lock the page: nothing below');
+  assert.equal(cueWordsOn(at(0, { cueOff: true, pageBelow: () => false })), false, 'nothing below (a one-screen document): the chevrons alone');
+  assert.equal(cueWordsOn(at(0, { cueOff: true, locked: true })), false, 'the loader and the intro lock the page: off, whatever the document says');
+  assert.equal(cueWordsOn(at(3, { locked: true })), false, 'locked in the pin too (a jump the loader lands on)');
   assert.equal(cueWordsOn(at(8 / VH, { cueOff: true })), true, 'at 8 px still the top');
   let reads = 0;
   const count = () => { reads++; return true; };
   cueWordsOn(at(0, { cueOff: false, pageBelow: count }));
   cueWordsOn(at(0, { cueOff: true, restMs: 0, pageBelow: count }));
   cueWordsOn(at(3, { pageBelow: count }));
-  assert.equal(reads, 0, 'the document is measured only at the top, at rest, with the chevrons off');
+  cueWordsOn(at(0, { cueOff: true, locked: true, pageBelow: count }));
+  assert.equal(reads, 0, 'the document is measured only at the top, at rest, with the chevrons off, and never under the lock (a read kept from there, where the track is collapsed, would say nothing is below until the scroll position next changes)');
 });
 
 test('the pin: the quiz is read last, only when everything else holds (one layout read per rest, CHECKLIST C3)', () => {

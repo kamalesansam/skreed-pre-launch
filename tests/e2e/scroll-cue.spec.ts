@@ -142,7 +142,10 @@ test.describe('the landing in the pin, 3D path', () => {
     await page.goto('/?tier=hero3d');
     await page.waitForFunction(() => !!(window.__s2?.() as { ready?: boolean } | undefined)?.ready, null, { timeout: 420_000 });
     await page.evaluate(() => { scrollTo(0, 10 * innerHeight); window.__skreedSnap?.(10); });
-    await settled(page, true, 90_000);
+    // on by the island's own class (is-on), not merely visible: at the top the words were visible with the chevrons, and under
+    // SwiftShader a frame can take a second, so a jump back inside that frame would leave the island's rest clock at the top
+    await page.waitForFunction(() => document.getElementById('cueText')!.classList.contains('is-on'), null, { timeout: 90_000 });
+    await settled(page, true, 90_000, 'in the pin:');
     await page.evaluate(() => scrollTo(0, 0));   // no snap: the Home key, a scrollbar drag, a status-bar tap
     // the camera's followers reach the top late, and the ride keeps the chevrons off for the wipe meanwhile: the words go
     await settled(page, false, 30_000);
