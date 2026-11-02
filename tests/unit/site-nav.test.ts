@@ -14,8 +14,8 @@ import { restY, sectionAt, SECTION_IDS, type PageMap } from '../../src/scripts/s
 
 const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const vh = 800;
-// the 3D path at 800 px: the track is 17.2 screens, the quiz under it, section 4 two screens below the quiz's top
-const island: PageMap = { island: true, roomStill: false, vh, families: 13760, familiesH: 300, quiz: 13760, room: 15360, stage: 800, max: 40000 };
+// the 3D path at 800 px: the track is TRACK_SVH / 100 screens (6.75 since 2026-11-02; 17.2 before), the quiz under it, section 4 two screens below the quiz's top
+const island: PageMap = { island: true, roomStill: false, vh, families: 5400, familiesH: 300, quiz: 5400, room: 7000, stage: 800, max: 40000 };
 const poster: PageMap = { island: false, roomStill: false, vh, families: 800, familiesH: 300, quiz: 1100, room: 2900, stage: 800, max: 6000 };
 
 test('the 3D path: each section rests where the hero, the glue and Skip quiz put it', () => {
@@ -37,15 +37,16 @@ test('the poster tier: the top, nav#families centred, the quiz and section 4 at 
 
 test('rest positions are clamped to the page and never NaN (section 4 locked has no box)', () => {
   assert.equal(restY('room', { ...island, room: NaN }), 0);
-  assert.equal(restY('room', { ...island, max: 15000 }), 15000);
+  assert.equal(restY('room', { ...island, max: 7500 }), 7500);   // q 1 would be 7800 on this fixture
   assert.equal(restY('families', { ...poster, families: 0, familiesH: 100 }), 0);
 });
 
 test('the 3D path: the section on screen changes at the middle of each seam', () => {
   const s = (screens: number) => sectionAt(screens * vh, island);
   assert.equal(s(0), 'top');
-  assert.equal(s(5.49), 'top');
-  assert.equal(s(5.5), 'families');
+  const seam1 = (S2T.PULL + S2T.W1END) / 2;   // the middle of the first wipe (2.75 screens since 2026-11-02; 5.5 before)
+  assert.equal(s(seam1 - 0.01), 'top');
+  assert.equal(s(seam1), 'families');
   assert.equal(s(S2T.LAND), 'families');
   const seam2 = (Math.min(S2T.W2 * vh, island.quiz - vh) + island.quiz) / 2;
   assert.equal(sectionAt(seam2 - 1, island), 'families');

@@ -5,6 +5,7 @@
 // screenshot is decoded on a blank page of the same browser (no image library; the site's CSP does not apply there).
 // Serve a hooks build first (as for frames.mjs).   node scripts/quiz/contrast.mjs [baseUrl]
 import { chromium } from 'playwright';
+import { TRACK_SVH } from '../../src/config/hero.ts';
 
 const BASE = process.argv[2] || 'http://127.0.0.1:8799/?tier=hero3d';
 const GL_ARGS = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
@@ -48,7 +49,7 @@ for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
       rows.push({ vp: `${vp.width}x${vp.height}`, state, el: b.cls, median: ratio(med).toFixed(2), lightest5: ratio(hi).toFixed(2) });
     }
   }
-  await page.evaluate(() => { scrollTo(0, 17.2 * innerHeight); if (window.__skreedSnap) window.__skreedSnap(17.2); });
+  await page.evaluate((k) => { scrollTo(0, k * innerHeight); if (window.__skreedSnap) window.__skreedSnap(k); }, TRACK_SVH / 100);   // the intro at the track's end (6.75 screens since 2026-11-02)
   await sleep(600); await settled();
   await measure('intro');
   await page.locator('#qzBegin').evaluate((b) => b.click());
