@@ -44,7 +44,8 @@ test('the scroll map (section-4-no-hall.md 5; section-5.md 5): the third wipe, t
   assert.doesNotMatch(astro, /rm-loopend|rm-fade/, 'and Room.astro');
   const director = read('src/scripts/hero/section4/director.ts');
   assert.doesNotMatch(director, /startExit\(|LOOP_START|exitGuard/, 'no exit seam and no guard for one: the page ends at section 5');
-  assert.match(director, /const wipeOut = qRaw >= WIPE4_START \+ ROOM_SCREENS\.out - eps \? 1 : clamp01\(\(qRaw - WIPE4_START\) \/ ROOM_SCREENS\.out\);/, 'the fourth wipe from WIPE4_START over one screen, done within 2 px of its end (2026-11-03)');
+  assert.match(director, /const end = Number\.isFinite\(rest\) \? Math\.max\(WIPE4_START \+ ROOM_SCREENS\.out \/ 2, Math\.min\(nominal, \(rest - top\) \/ screenPx\(\)\)\) : nominal;/, 'the fourth wipe from WIPE4_START over one screen, or to section 5\'s rest when that comes first (a phone\'s taller viewport, 2026-11-03)');
+  assert.match(director, /wipeOut = qRaw >= end - eps \? 1 : clamp01\(\(qRaw - WIPE4_START\) \/ \(end - WIPE4_START\)\);/, 'done within 2 px of its end (2026-11-03)');
   assert.match(director, /const on = showable && inRoom && qRaw > 0 && wipeOut < 1;/, 'section 4\'s frame off once the cut is done: the ground the island\'s alone at section 5\'s rest');
   assert.match(director, /if \(o\.signupReady\(\) \|\| e >= SEAM\.holdS\)/, 'the wrap holds for the readiness of section 5 (its data-ready)');
 });

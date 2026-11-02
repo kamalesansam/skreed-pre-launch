@@ -24,8 +24,12 @@ export interface SignupLayout { top: number; height: number; bodyBottom: number 
 
 /** the exit seam's trigger for a viewport height: the body's end at the viewport's bottom */
 export const exitOf = (l: SignupLayout, vh: number): number => l.bodyBottom - vh;
-/** the section's rest: the trigger, or the section's top when that is lower down the page (a body shorter than the screen) */
-export const restOf = (l: SignupLayout, vh: number): number => Math.max(l.top, exitOf(l, vh));
+/**
+ * the section's rest: the trigger, or the section's top when that is lower down the page (a body shorter than the
+ * screen), and never past the page's last position, `last` (a phone's viewport taller than 100svh once its toolbar
+ * hides: the page ends at the body's end and stops short of the section's top)
+ */
+export const restOf = (l: SignupLayout, vh: number, last = Infinity): number => Math.min(Math.max(l.top, exitOf(l, vh)), last);
 /** any of the section inside the viewport at scroll y */
 export const inViewOf = (l: SignupLayout, y: number, vh: number): boolean => l.top < y + vh && l.top + l.height > y;
 
@@ -79,11 +83,12 @@ export function createSignupGround(root: HTMLElement): SignupGround {
   const tex = new DataTexture(groundBytes(SIGNUP_GROUND), 1, 1, RGBAFormat, UnsignedByteType);
   tex.needsUpdate = true;
   const body = root.querySelector<HTMLElement>('.su-body');
-  let at = -Infinity, cached: SignupLayout | null = null, marked = false;
-  /** the section's rect and the body's, read now; no box (hidden behind the quiz gate) reads null */
+  let at = -Infinity, cached: SignupLayout | null = null, end = Infinity, marked = false;
+  /** the section's rect and the body's, read now, and the page's height with them; no box (hidden behind the quiz gate) reads null */
   const read = (): SignupLayout | null => {
     if (!root.getClientRects().length) return null;
     const s = root.getBoundingClientRect(), b = (body && body.getClientRects().length ? body : root).getBoundingClientRect(), y = scrollY;
+    end = typeof document === 'undefined' ? Infinity : document.documentElement.scrollHeight;
     return { top: s.top + y, height: Math.max(1, s.height), bodyBottom: b.bottom + y };
   };
   const layout = (): SignupLayout | null => {
@@ -100,7 +105,7 @@ export function createSignupGround(root: HTMLElement): SignupGround {
     tex,
     layout,
     exitY() { const l = layout(); return l ? exitOf(l, innerHeight) : NaN; },
-    restY() { const l = layout(); return l ? restOf(l, innerHeight) : NaN; },
+    restY() { const l = layout(); return l ? restOf(l, innerHeight, end - innerHeight) : NaN; },
     inView() { const l = layout(); return !!l && inViewOf(l, scrollY, innerHeight); },
     ready: () => root.dataset.ready === '1',
     mark,

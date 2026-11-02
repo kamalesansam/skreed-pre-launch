@@ -488,10 +488,17 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       // the position
       if (!seam) { holdFrame(f.t); arrival(f.t, eps); }
       prevRaw = qRaw;
-      // the fourth wipe (section-5.md 2): from q 3.8 over one screen, on the raw position; no exit seam follows it (2026-11-03).
-      // Done within 2 px of its end: the page's last position stops a fraction of a pixel short of section 5's sub-pixel
-      // top, and a cut a hair short of whole kept section 4's frame on and the island's ground off at the section's rest
-      const wipeOut = qRaw >= WIPE4_START + ROOM_SCREENS.out - eps ? 1 : clamp01((qRaw - WIPE4_START) / ROOM_SCREENS.out);
+      // the fourth wipe (section-5.md 2): from q 3.8 over one screen, on the raw position; no exit seam follows it
+      // (2026-11-03). It ends at section 5's rest when that comes first (a phone's viewport taller than 100svh once its
+      // toolbar hides, where the page stops short of the section's top), and it is done within 2 px of its end: the last
+      // position stops a fraction of a pixel short of the section's sub-pixel top, and a cut a hair short of whole kept
+      // section 4's frame on and the island's ground off at the section's rest. The rest is read inside the cut alone
+      let wipeOut = 0;
+      if (qRaw > WIPE4_START) {
+        const rest = o.restY(), nominal = WIPE4_START + ROOM_SCREENS.out;
+        const end = Number.isFinite(rest) ? Math.max(WIPE4_START + ROOM_SCREENS.out / 2, Math.min(nominal, (rest - top) / screenPx())) : nominal;
+        wipeOut = qRaw >= end - eps ? 1 : clamp01((qRaw - WIPE4_START) / (end - WIPE4_START));
+      }
       lastWipeOut = wipeOut;
       // a seam first: its phase sets the carousel's cloud for this frame's draw, and may change the state (the exit's jump, the wrap's landing)
       const cover = seam ? seamFrame(f.t, seam) : 0;

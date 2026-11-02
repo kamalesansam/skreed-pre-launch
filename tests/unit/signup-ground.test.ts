@@ -108,6 +108,10 @@ test('the trigger, the rest and the view (document px): the body\'s end at the v
   assert.equal(exitOf(short, vh), 29_856); assert.equal(restOf(short, vh), 30_000);
   const land: SignupLayout = { top: 20_000, height: 890, bodyBottom: 20_890 };   // a landscape phone at 844 x 390: the rest at the body's end
   assert.equal(exitOf(land, 390), 20_500); assert.equal(restOf(land, 390), 20_500);
+  // a phone with its toolbar hidden (innerHeight 924 over a 100svh of 844): the page ends at the body's end, 80 px short of
+  // the section's top, and the rest is the page's last position (2026-11-03)
+  assert.equal(restOf(one, 924, 30_844 - 924), 29_920);
+  assert.equal(restOf(one, vh, 30_844 - vh), 30_000, 'a page that reaches the top: the top');
   assert.equal(inViewOf(one, 30_000 - vh, vh), false, 'its top at the viewport\'s bottom edge: not yet');
   assert.equal(inViewOf(one, 30_000 - vh + 1, vh), true, 'a pixel in');
   assert.equal(inViewOf(one, 30_000, vh), true);
