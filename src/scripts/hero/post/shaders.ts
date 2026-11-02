@@ -58,7 +58,9 @@ export const compositeFrag = (s: CompositeSlots = {}): string => s.full ?? `
  * alpha, display values, section 4's carousel target) over its result while uCover is above 0. Both seams of section 4
  * run through it; the fourth wipe's cut is retired (X-15). Applied to a whole fragment (the v11 composite's literal, so
  * that literal stays the prototype's for tests/unit/glsl-v11.test.ts); a fragment without the anchors comes back as it is.
+ * The final write is matched with or without the spaces beside its commas and its brace, since the shader strip
+ * (scripts/build/glsl-strip.mjs) takes them out of the literal in every build and on the dev server.
  */
 export const withCover = (frag: string): string => frag
   .replace('varying vec2 vUv;', 'uniform sampler2D tCloud; uniform float uCover; varying vec2 vUv;')
-  .replace('gl_FragColor = vec4(mix(uFlat, col, uIntro), 1.0); }', 'vec3 fin = mix(uFlat, col, uIntro); if (uCover > 0.0) { vec4 cl = texture2D(tCloud, vUv); fin = fin * (1.0 - cl.a) + cl.rgb; } gl_FragColor = vec4(fin, 1.0); }');
+  .replace(/gl_FragColor = vec4\(mix\(uFlat,\s*col,\s*uIntro\),\s*1\.0\);\s*\}/, 'vec3 fin = mix(uFlat, col, uIntro); if (uCover > 0.0) { vec4 cl = texture2D(tCloud, vUv); fin = fin * (1.0 - cl.a) + cl.rgb; } gl_FragColor = vec4(fin, 1.0); }');

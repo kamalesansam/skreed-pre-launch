@@ -21,11 +21,12 @@
 .room .dc { white-space: normal; }
 :where(.room) :where(p, h2, h3, ol) { margin: 0; }
 :where(.room) :where(h2, h3) { font: inherit; }
-/* the track: 6.8 screens in every state (the third wipe, the five scenes at half a screen each, the hold, the loop
-   screen, the tail and the pinned screen after it); tests/unit/room.test.ts reads this against config/room.ts ROOM_HEIGHT */
-.room .rm-track { height: 680svh; }
+/* the track: 4.8 screens in every state (the third wipe, the five scenes at half a screen each, the hold and the fourth
+   wipe's screen, during which the stage unpins and section 5 rises under the cut; section-5-picture.md 18);
+   tests/unit/room.test.ts reads this against config/room.ts ROOM_HEIGHT */
+.room .rm-track { height: 480svh; }
 .rm-stage { position: sticky; top: 0; height: 100svh; overflow: clip; }
-.rm-loopend, .rm-scene-pic { display: none; }
+.rm-scene-pic { display: none; }
 
 /* the pad under the controls: the stage's focusable group; the stage clips, so its two-tone ring is drawn inside it */
 .rm-pad { position: absolute; inset: 0; outline: none; -webkit-tap-highlight-color: transparent; }
@@ -75,8 +76,6 @@
 .room:not([data-pause="1"]) .rm-pause, .room:is([data-state="approach"]) .rm-pause { display: none; }
 
 /* the fade of the poster tier's loop (through --night to the first screen) */
-.rm-fade { position: fixed; inset: 0; z-index: 5; background: var(--night); pointer-events: none; }
-.rm-fade[hidden] { display: none; }
 
 /* the poster tier and no JavaScript: the track collapses and the scenes stand one per screen in a column from the
    section's top, each its still over its four lines, every picture on a --skeleton box of its aspect ratio until it
@@ -91,12 +90,10 @@
 :is(html:not(.hero3d), html.poster) .rm-scene-pic img, .room[data-tier="poster"] .rm-scene-pic img, .rm-scenes-static .rm-scene-pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
 :is(html:not(.hero3d), html.poster) .rm-scene-text, .room[data-tier="poster"] .rm-scene-text, .rm-scenes-static .rm-scene-text { padding: 0 var(--inset); max-width: calc(520px + 2 * var(--inset)); }
 :is(html:not(.hero3d), html.poster) .rm-scene-alt, .room[data-tier="poster"] .rm-scene-alt { display: none; }
-:is(html:not(.hero3d), html.poster) .rm-loopend, .room[data-tier="poster"] .rm-loopend { display: block; height: 100svh; }
 /* the quiz gate (docs/specs/quiz-gate.md D1): with JavaScript the section is rendered hidden and data-locked until the
    quiz's result or Skip quiz opens it; without JavaScript nothing is locked, since the quiz cannot run there, so the
    section shows (an author rule outranks the browser's own [hidden] rule) */
 html:not(.js) .room[data-locked] { display: block; }
 html:not(.js) .room .rm-track { height: auto; }
 html:not(.js) .rm-stage { position: relative; height: auto; overflow: visible; display: grid; grid-template-columns: minmax(0, 1fr); background: var(--night); }
-html:not(.js) .rm-loopend { display: none; }
 html:not(.js) .room :is(.rm-pad, .rm-nav, .rm-pause), html:not(.js) .rm-scenes:not(.rm-scenes-static) { display: none; }

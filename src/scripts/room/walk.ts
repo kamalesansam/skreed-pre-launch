@@ -13,14 +13,14 @@
 // scenes belong to section4/scroll.ts alone. A control whose wipe ends takes hidden, its focus moving first; the
 // scenes' text is clipped instead, so all five stay in the accessibility tree, inert during the approach. On the
 // poster tier, and when an asset fails, the scenes stand in a column from the section's top (their stills lazy, within
-// one screen under Save-Data), and the loop is a fade through --night to the top. Every string comes from
+// one screen under Save-Data), and the page ends at section 5 (no loop since 2026-11-03). Every string comes from
 // config/room.ts.
 import { ROOM_COPY as R, ROOM_SCENES, SCENE_COUNT, WORLD_START, fill, productById, shadeLine, type RoomFrame, type RoomIsland, type RoomState } from '../../config/room.ts';
 import { hoverNoneMQ, reducedMQ } from '../motion.ts';
 import { createDecoder } from '../quiz/decode.ts';
 import { track } from '../quiz/track.ts';
 
-const SLOW_MS = 8000, NO_FRAME_MS = 500, SCENE_STEP = 0.12, FADE_MS = 300;
+const SLOW_MS = 8000, NO_FRAME_MS = 500, SCENE_STEP = 0.12;
 const N = SCENE_COUNT;
 
 export function mountRoom(root: HTMLElement): void {
@@ -75,6 +75,9 @@ export function mountRoom(root: HTMLElement): void {
     // scene on with nothing shown arrives now, so scene 1 never stands without its lines
     if (f.state === 'world' && !f.stepping && shownScene === -1 && f.scene >= 0) arrive(f.scene);
     if (f.state === 'world') worldFrame(f);
+    // the fourth wipe (section-5.md 2): the scene's lines and the words wipe out as the cut onto section 5 begins, and
+    // decode back in when the scroll returns under it
+    if (f.state === 'world') outWipe(f.wipeOut > 0, f.scene);
     // the "Pause motion" control, where the director shows it (E-S4-loops declined): in the scenes and under a seam, never in the approach
     if (pause) { const want = root.dataset.pause === '1' && f.state !== 'approach'; if (want === pause.hidden) { pause.hidden = !want; pause.inert = !want; if (want) void dec.show(pause); } }
     // a seam's cover: the section's own DOM goes under the cloud with it (its lines were wiped at the seam's start)
@@ -133,6 +136,19 @@ export function mountRoom(root: HTMLElement): void {
     for (const b of [prevB, nextB]) if (b) void dec.hide(b);
   }
 
+  /** the fourth wipe's start and its return: the shown scene's lines and the words wipe out, and come back once the cut has run back */
+  let outWiped = false;
+  function outWipe(on: boolean, i: number) {
+    if (on === outWiped) return;
+    outWiped = on;
+    const sc = scenes[i];
+    if (on) {
+      if (sceneHint && !sceneHint.hidden) setLine(sceneHint, '');
+      hideNav();
+      if (sc && shownScene === i) void dec.hideAll([...sc.lines, sc.more]);
+    } else if (sc && shownScene === i) { setNav(i); void dec.showAll(sc.lines, SCENE_STEP); }
+  }
+
   /** a step's start: the scene's lines wipe out (0.2 s) and are clipped again, the hint goes for good */
   function startStep(from: number, to: number) {
     const sc = scenes[from];
@@ -163,8 +179,11 @@ export function mountRoom(root: HTMLElement): void {
     // announcement (focus already on a scene's name moves to the new one too: a name is never focused and its line
     // announced both)
     const a = document.activeElement, moving = a === pad || a === prevB || a === nextB || (a instanceof HTMLElement && a.classList.contains('rm-scene-name')) || (!!a && root.contains(a) && keyboarding());
-    const said = fill(wrapped ? R.wrapLive : R.sceneLive, { n: i + 1, N, name: productById(s.product).name, shade: shadeLine(s) });
-    if (moving) focusQuietly(sc.name); else live.textContent = said;
+    // after the wrap the page stands on section 5, whose script announces the landing (section-5.md 2); the scenes wait under it
+    if (!wrapped) {
+      const said = fill(R.sceneLive, { n: i + 1, N, name: productById(s.product).name, shade: shadeLine(s) });
+      if (moving) focusQuietly(sc.name); else live.textContent = said;
+    }
     setNav(i);
     void dec.showAll(sc.lines, SCENE_STEP).then(() => {
       // the hint on scene 1's first visit, once its text has settled, until the first step
@@ -232,7 +251,7 @@ export function mountRoom(root: HTMLElement): void {
   }
 
   // ---- the poster tier: the column from the section's top, each scene's still loading lazily (under Save-Data only once
-  // it is within one screen; never on the 3D path or in the first view); the loop is a fade through --night to the top
+  // it is within one screen; never on the 3D path or in the first view); the page ends at section 5, with no loop
   const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
   const swapIn = (pic: Element) => {
     if (!pic.hasAttribute('data-lazy')) return;
@@ -253,16 +272,7 @@ export function mountRoom(root: HTMLElement): void {
     for (const s of scenes) for (const el of s.lines) dec.set(el, textOf(el));
   }
   if (isPoster()) { loadPosterPictures(); posterLines(); describe(); if (list) list.inert = false; }
-  if (loopEnd && fade && 'IntersectionObserver' in window) {
-    let fading = false;
-    new IntersectionObserver((es) => {
-      if (!isPoster() || fading || !es.some((x) => x.isIntersecting)) return;
-      fading = true; fade.hidden = false;
-      const a = fade.animate([{ opacity: 0 }, { opacity: 1 }], { duration: FADE_MS, fill: 'forwards' });
-      a.finished.then(() => { scrollTo({ top: 0, behavior: 'instant' }); track('room_loop'); return fade.animate([{ opacity: 1 }, { opacity: 0 }], { duration: FADE_MS, fill: 'forwards' }).finished; })
-        .catch(() => {}).finally(() => { fade.hidden = true; fading = false; });
-    }, { threshold: 0.95 }).observe(loopEnd);
-  }
+  // no loop from the section's end on any tier since 2026-11-03 (section-5-picture.md 18): the page ends at section 5
   // a hard fall to the poster path while the section is on screen keeps the visitor at the column's top
   const mo = new MutationObserver(() => {
     if (!isPoster()) return;

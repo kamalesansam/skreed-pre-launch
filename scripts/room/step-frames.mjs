@@ -19,7 +19,7 @@
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium } from '@playwright/test';
-import { LOOP_START, roomParams } from '../../src/config/room.ts';
+import { WIPE4_START, roomParams } from '../../src/config/room.ts';
 
 const args = process.argv.slice(2);
 const base = args.find((a) => /^https?:/.test(a)) ?? 'http://127.0.0.1:4322/';
@@ -106,7 +106,7 @@ for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
       await go(LOOP_START - 0.3, 1200);
       const folder = folderFor(`seam-${W}-exit`);
       await freeze(page, true); await sleep(100);
-      await page.evaluate((q) => { const room = document.getElementById('room'), top = room.getBoundingClientRect().top + scrollY, y = top + q * innerHeight; scrollTo({ top: y, behavior: 'instant' }); window.__skreedSnap?.(y / innerHeight); }, LOOP_START + 0.05);
+      await page.evaluate((q) => { const room = document.getElementById('room'), top = room.getBoundingClientRect().top + scrollY, y = top + q * innerHeight; scrollTo({ top: y, behavior: 'instant' }); window.__skreedSnap?.(y / innerHeight); }, WIPE4_START + 0.05);
       for (let k = 0; k < N; k++) await tick(page, join(folder, frame(k)));
       console.log(`[${W}] the exit seam: ${N} frames at 1/24 s into ${folder}; after: ${JSON.stringify(await after(page))}`);
       await freeze(page, false); await sleep(1200);

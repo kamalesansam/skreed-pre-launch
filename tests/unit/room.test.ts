@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import * as ROOM from '../../src/config/room.ts';
-import { LOOP_START, ROOM_COPY, ROOM_HEIGHT, ROOM_PARAMS, ROOM_PRODUCTS, ROOM_RANGES, ROOM_SCENES, ROOM_SCREENS, SCENE_COUNT, SCENE_SIZE, SCENES_END, WORLD_START, fill, productById, sceneQ, shadeLine } from '../../src/config/room.ts';
+import { ROOM_COPY, ROOM_HEIGHT, ROOM_PARAMS, ROOM_PRODUCTS, ROOM_RANGES, ROOM_SCENES, ROOM_SCREENS, SCENE_COUNT, SCENE_SIZE, SCENES_END, WIPE4_START, WORLD_START, fill, productById, sceneQ, shadeLine } from '../../src/config/room.ts';
 import { SHADES } from '../../src/config/shades.gen.ts';
 import { STEP } from '../../src/scripts/hero/section4/carousel-math.ts';
 import { COMPOSITE_FRAG_V11, COMPOSITE_FRAG_V11_COVER } from '../../src/scripts/hero/v11/glsl.ts';
@@ -21,19 +21,33 @@ const exists = (p: string) => existsSync(new URL(`../../${p}`, import.meta.url))
 const byId = new Map(SHADES.map((s) => [s.id, s]));
 const css = read('src/styles/room.css'), astro = read('src/components/room/Room.astro');
 
-test('the scroll map (section-4-no-hall.md 5): the third wipe, then the scenes at a step of 0.5 from 1, the hold to 3.8, the loop screen and the tail, 6.8 screens in every state', () => {
-  assert.deepEqual({ ...ROOM_SCREENS }, { wipe: 1, step: 0.5, hold: 0.8, loop: 1, tail: 1 });
+test('the scroll map (section-4-no-hall.md 5; section-5.md 5): the third wipe, then the scenes at a step of 0.5 from 1, the hold to 3.8, the fourth wipe to 4.8, 4.8 screens, the stage unpinned as the cut begins', () => {
+  assert.deepEqual({ ...ROOM_SCREENS }, { wipe: 1, step: 0.5, hold: 0.8, out: 1 });
   assert.equal(WORLD_START, 1, "scene 1 at the third wipe's end");
   assert.equal(SCENE_COUNT, 5);
   assert.deepEqual(Array.from({ length: SCENE_COUNT }, (_, i) => sceneQ(i)), [1, 1.5, 2, 2.5, 3]);
   assert.equal(SCENES_END, 3);
-  assert.ok(Math.abs(LOOP_START - 3.8) < 1e-9, 'the exit seam at 3.8');
-  assert.ok(Math.abs(ROOM_HEIGHT - 6.8) < 1e-9, '6.8 screens');
-  assert.ok(css.includes(`.room .rm-track { height: ${Math.round(ROOM_HEIGHT * 100)}svh; }`), 'room.css: the track at 680svh');
-  assert.doesNotMatch(css, /data-lands|1580svh|1300svh|1400svh|1600svh|1800svh|2000svh/, "no per-N heights, and not the hall's 15.8 screens: the track is the same in every state");
-  // the stage is pinned through the loop screen and the tail: the seam's trigger and the jump's screen end inside the document
-  assert.ok(LOOP_START + ROOM_SCREENS.loop + ROOM_SCREENS.tail <= ROOM_HEIGHT - 1 + 1e-9, 'the loop and the tail inside the pinned track');
-  assert.ok(Math.abs(SCENES_END + ROOM_SCREENS.hold - LOOP_START) < 1e-9, 'the hold ends at the seam');
+  assert.ok(Math.abs(WIPE4_START - 3.8) < 1e-9, 'the fourth wipe at 3.8');
+  assert.ok(Math.abs(ROOM_HEIGHT - 4.8) < 1e-9, '4.8 screens');
+  assert.ok(css.includes(`.room .rm-track { height: ${Math.round(ROOM_HEIGHT * 100)}svh; }`), 'room.css: the track at 480svh');
+  assert.doesNotMatch(css, /data-lands|1480svh|1580svh|680svh|580svh|1300svh|1400svh|1600svh|1800svh|2000svh/, "no per-N heights, and neither the hall's track, the loop screen's nor the pinned screen's: the track is the same in every state");
+  // the stage unpins exactly as the cut begins (section-5-picture.md 18, 2026-11-03): section 5 rises under the cut
+  assert.ok(Math.abs(WIPE4_START - (ROOM_HEIGHT - 1)) < 1e-9, 'the stage unpins where the cut begins');
+  assert.ok(Math.abs(SCENES_END + ROOM_SCREENS.hold - WIPE4_START) < 1e-9, 'the hold ends at the cut');
+  // no exit seam anywhere since 2026-11-03 (section-5-picture.md 18): no LOOP_START, no loop screen, no tail, no loop end in the DOM
+  assert.doesNotMatch(read('src/config/room.ts') + read('src/config/room-map.ts'), /LOOP_START|ROOM_SCREENS\.loop\b|ROOM_SCREENS\.tail\b/, 'LOOP_START, the loop screen and the tail are gone');
+  // the map on its own (config/room-map.ts), so the hero island's static read of the fourth wipe's span (hero.ts) carries no copy, scene or file
+  assert.match(read('src/scripts/hero/hero.ts'), /from '\.\.\/\.\.\/config\/room-map\.ts';/);
+  assert.doesNotMatch(read('src/scripts/hero/hero.ts'), /from '\.\.\/\.\.\/config\/room\.ts'/, 'hero.ts imports nothing from config/room.ts itself');
+  assert.doesNotMatch(read('src/config/room-map.ts'), /import /, 'room-map.ts imports nothing');
+  assert.doesNotMatch(css, /rm-loopend|rm-fade/, 'the loop end and the fade left room.css');
+  assert.doesNotMatch(astro, /rm-loopend|rm-fade/, 'and Room.astro');
+  const director = read('src/scripts/hero/section4/director.ts');
+  assert.doesNotMatch(director, /startExit\(|LOOP_START|exitGuard/, 'no exit seam and no guard for one: the page ends at section 5');
+  assert.match(director, /const end = Number\.isFinite\(rest\) \? Math\.max\(WIPE4_START \+ ROOM_SCREENS\.out \/ 2, Math\.min\(nominal, \(rest - top\) \/ screenPx\(\)\)\) : nominal;/, 'the fourth wipe from WIPE4_START over one screen, or to section 5\'s rest when that comes first (a phone\'s taller viewport, 2026-11-03)');
+  assert.match(director, /wipeOut = qRaw >= end - eps \? 1 : clamp01\(\(qRaw - WIPE4_START\) \/ \(end - WIPE4_START\)\);/, 'done within 2 px of its end (2026-11-03)');
+  assert.match(director, /const on = showable && inRoom && qRaw > 0 && wipeOut < 1;/, 'section 4\'s frame off once the cut is done: the ground the island\'s alone at section 5\'s rest');
+  assert.match(director, /if \(o\.signupReady\(\) \|\| e >= SEAM\.holdS\)/, 'the wrap holds for the readiness of section 5 (its data-ready)');
 });
 
 test('the five scenes (section-4-flux.md 3): the rooms in order, the products, the catalog shades by id, the finishes, the key lights, the alts, the files', () => {
@@ -69,6 +83,7 @@ test('the five scenes (section-4-flux.md 3): the rooms in order, the products, t
   // under a seam's cloud (Pearl Whisper where it is thickest) the logotype and the control turn Urban Slate from half cover,
   // and the frame applies the plan's tone under any cover, after the exit's jump too (the checker's finding on D5's first fix)
   assert.match(director, /toneDark \|\|= cover >= 0\.5;/, 'Urban Slate from half cover');
+  assert.match(director, /toneDark \|\|= wipeOut >= 0\.5;/, 'and from half the fourth wipe, over section 5\'s fog (section-5.md 4)');
   assert.match(read('src/scripts/hero/loop.ts'), /if \(plan && \(cover > 0 \|\| \(roomOn && plan\.wipeIn >= 0\.5\)\)\) window\.__skreedLogo\?\.setTone\(plan\.toneDark\);/, "the plan's tone applied under any cover");
   assert.deepEqual(SCENE_SIZE, { wide: { width: 1280, height: 666 }, portrait: { width: 720, height: 1280 } });
   assert.equal(shadeLine(ROOM_SCENES[0]), 'Lilac, vivid violet');
@@ -113,7 +128,7 @@ test("straight into the scenes (section-4-no-hall.md 2 and D3): the arrival at s
   assert.match(director, /if \(e\.type === 'keydown' && \(e as KeyboardEvent\)\.repeat\) \{ if \(hold\) hold\.renew = true; return; \}/, "a held key's repeat is the key that carried the page in, never the new key that lets go: it renews the hold (AC3)");
   assert.match(director, /if \(e\.type === 'wheel' && \(e as WheelEvent\)\.deltaY >= 0\) \{ if \(hold\) hold\.renew = true; return; \}/, 'a downward wheel during the hold renews it: the input that carried the page in');
   assert.match(director, /if \(hold\.renew\) \{ hold\.renew = false; hold\.t0 = t; \}\n\s*if \(t - hold\.last >= HOLD\.stillS \|\| t - hold\.t0 >= HOLD\.maxS\) endHold\(\);/, "maxS counted from the carrying wheel's latest event");
-  assert.match(director, /if \(!seam\) \{ holdFrame\(f\.t\); arrival\(f\.t, eps\); \}\n\s*\/\/ the exit seam/, "the hold and the arrival before the exit's trigger reads the position");
+  assert.match(director, /if \(!seam\) \{ holdFrame\(f\.t\); arrival\(f\.t, eps\); \}\n\s*prevRaw = qRaw;\n\s*\/\/ the fourth wipe/, "the hold and the arrival before the frame's position is read for the fourth wipe (no exit trigger since 2026-11-03)");
   assert.match(director, /edge\(dir\) \{ const i = scene\(\); return dir > 0 \? i >= N - 1 : i <= 0; \}/, "both edges are the page's");
   assert.doesNotMatch(scroll, /room\.back\(\)|kind === 'back'/, 'no way back');
   assert.match(walk, /edge\(prevB, i <= 0\); edge\(nextB, i >= N - 1\);/, '"Previous scene" disabled at scene 1, "Next scene" at scene 5');
@@ -124,7 +139,6 @@ test("straight into the scenes (section-4-no-hall.md 2 and D3): the arrival at s
   // the exit from the scenes only (never from the approach while scene 1 loads)
   assert.match(director, /setState\('world'\); under = 'world';\n\s*if \(scene\(\) !== 0\) setScene\(0, true\);\n\s*if \(root\) root\.dataset\.scene = '0';\n\s*if \(fingers > 0\) pendingHold = true; else startHold\(t, yAt\(WORLD_START\)\);/, 'the arrival lands on scene 1, whatever scroll carried the page');
   assert.match(director, /pendingHold = false; current\(\); holdAt = yAt\(WORLD_START\);/, "a finger's release puts the page back on scene 1");
-  assert.match(director, /if \(crossed && !seam && inRoom && state === 'world' && !holding\(\)\) startExit\(f\.t\);/, 'the exit from the scenes alone, never under a hold');
   assert.match(director, /if \(!carousel\.busy\(\) && stepTo < 0 && !holding\(\) && qRaw >= WORLD_START - eps/, 'no re-sync under a hold');
   // the loading: scene 1's still alone in phase 1; every loop after the arrival, the nearest first
   assert.match(director, /carousel\.prepare\(0, false\); await carousel\.warm\(\);/, "phase 1 fetches scene 1's still alone");

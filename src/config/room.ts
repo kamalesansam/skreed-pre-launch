@@ -1,3 +1,4 @@
+import { SCENE_COUNT as MAP_SCENE_COUNT } from './room-map.ts';
 // Section 4, the five scenes (docs/specs/section-4-flux.md for the scenes; docs/specs/section-4-no-hall.md since
 // 2026-11-02, when the hall, the door and the bubble left and the third wipe took the fog straight to scene 1): every
 // string by id, the five scenes with their products, shades, key lights and files, the scroll map in screens, and the
@@ -141,6 +142,7 @@ const SCENE_ROWS: readonly SceneRow[] = [
  */
 export const ROOM_SCENES: readonly RoomScene[] = Object.freeze(SCENE_ROWS.map((r, i) => Object.freeze({ ...r, basePitch: r.basePitch ?? 0, i, files: files(r.id) })));
 export const SCENE_COUNT = ROOM_SCENES.length;
+if (SCENE_COUNT !== MAP_SCENE_COUNT) throw new Error('config/room: ROOM_SCENES and room-map.ts disagree on the scene count');
 /** a scene's shade line, "Lilac, vivid violet" (spec 3, "Each scene's four lines") */
 export const shadeLine = (s: RoomScene): string => `${s.shadeName}, ${s.family}`;
 
@@ -150,21 +152,9 @@ export const shadeLine = (s: RoomScene): string => `${s.shadeName}, ${s.family}`
  * (1, 1.5, 2, 2.5, 3), the hold 3 to 3.8, the exit seam at 3.8, the loop screen 3.8 to 4.8, the tail to 5.8 and one
  * pinned screen. The same map in every state: under q 1 the section is approaching, scene 1 drawn under the wipe.
  */
-export const ROOM_SCREENS = Object.freeze({ wipe: 1, step: 0.5, hold: 0.8, loop: 1, tail: 1 });
-/** where the scenes start (q 1, the wipe's end): scene 1's position */
-export const WORLD_START = ROOM_SCREENS.wipe;
-/** scene i's position (the reference's 50 vh a step) */
-export const sceneQ = (i: number): number => WORLD_START + ROOM_SCREENS.step * i;
-/** the last scene's position: the carousel is in range while the raw q is within 2 px of [WORLD_START, SCENES_END] */
-export const SCENES_END = sceneQ(SCENE_COUNT - 1);
-/** the exit seam's trigger: the raw scroll crossing it downward runs the cloud and the jump to the top */
-export const LOOP_START = SCENES_END + ROOM_SCREENS.hold;
-/**
- * The track's height in screens: a sticky 100svh stage inside an H-screen track is pinned for q 0 to H - 1, so one screen
- * beyond the tail keeps the stage pinned through the loop screen and the tail, and the seam fires while the raw scroll is
- * still inside the document. src/styles/room.css carries the literal (680svh) and tests/unit/room.test.ts reads it back.
- */
-export const ROOM_HEIGHT = LOOP_START + ROOM_SCREENS.loop + ROOM_SCREENS.tail + 1;
+// the scroll map lives in config/room-map.ts (the hero island reads the fourth wipe's span statically, hero.ts, and must
+// not carry this module's copy, scenes and files in its first-view chunk); every name of it is re-exported here
+export { ROOM_SCREENS, WORLD_START, sceneQ, SCENES_END, WIPE4_START, ROOM_HEIGHT } from './room-map.ts';
 
 /**
  * The tunable parameters (Tune, "Section 4"): the spec's defaults. Numbers only, as HERO_PARAMS, so the panel binds them
@@ -243,6 +233,8 @@ export interface RoomFrame {
   note: string | null;
   /** a seam's cloud cover, 0 to 1 */
   cover: number;
+  /** the fourth wipe's progress (section-5.md 2): 0 before it, 1 once section 5's frame is whole; the scene's lines wipe out above 0 */
+  wipeOut: number;
   /** true on the frame the page jumped back to the top */
   jumped: boolean;
 }

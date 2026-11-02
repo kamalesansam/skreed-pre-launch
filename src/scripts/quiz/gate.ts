@@ -69,12 +69,15 @@ const flag = () => { try { sessionStorage.setItem(QUIZ_GATE.key, '1'); } catch {
 /**
  * Opens section 4 (D2): nothing when it is not locked; else hidden and data-locked go, data-open says how, the visit's
  * flag is written, room_unlock is tracked and the hero hears skreed:quiz-unlock (it loads the scenes and re-evaluates
- * the page scroll). True when this call opened it.
+ * the page scroll). Section 5 (section#signup), locked with the room since it follows it in the page (D9), opens in the
+ * same call. True when this call opened it.
  */
 export function unlock(by: UnlockBy): boolean {
   const r = room();
   if (!r || !r.hasAttribute('data-locked')) return false;
   r.removeAttribute('hidden'); r.removeAttribute('data-locked'); r.dataset.open = by;
+  const s = document.getElementById('signup');
+  if (s) { s.removeAttribute('hidden'); s.removeAttribute('data-locked'); s.dataset.open = by; }
   flag();
   track('room_unlock', { by });
   dispatchEvent(new CustomEvent('skreed:quiz-unlock', { detail: { by } }));

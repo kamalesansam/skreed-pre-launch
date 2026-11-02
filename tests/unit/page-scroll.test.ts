@@ -10,6 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { S2T, TRACK_SVH } from '../../src/config/hero.ts';
+import { ROOM_SCREENS, WIPE4_START } from '../../src/config/room-map.ts';
 import {
   BURST, EASE_STANDARD, GLUE, TOUCH, burstConsume, burstReset, burstFeed, createBurst, cubicBezier, easeStandard, glueDecision, isScrollKey, keyDir, keyStep,
   touchDecision, wheelDecision, type Span, type WheelContext,
@@ -18,17 +19,31 @@ import { SCROLL_MARK, createPageScroll } from '../../src/scripts/hero/section4/s
 
 const root = new URL('../../', import.meta.url);
 
-/** the three spans as the wiring builds them: the first wipe and the quiz seam in innerHeight, the quiz's top and the room in the probe's 100svh */
+/**
+ * the four spans as the wiring builds them (hero.ts; section-4-flux.md 5 "Glue spans", section-5.md 2 "The elastic
+ * glue"): the first wipe and the quiz seam in innerHeight, the quiz's top, the room and the fourth wipe in the probe's 100svh
+ */
 const threeSpans = (ih: number, svh: number, quizH = svh): Span[] => {
   const quizTop = (TRACK_SVH / 100) * svh, roomTop = quizTop + quizH;
-  return [{ start: S2T.PULL * ih, end: S2T.W1END * ih }, { start: S2T.W2 * ih, end: quizTop }, { start: roomTop - svh, end: roomTop + svh }];
+  return [{ start: S2T.PULL * ih, end: S2T.W1END * ih }, { start: S2T.W2 * ih, end: quizTop }, { start: roomTop - svh, end: roomTop + svh }, { start: roomTop + WIPE4_START * svh, end: roomTop + (WIPE4_START + ROOM_SCREENS.out) * svh }];
 };
 
 test('the numbers: 2 px dead band, 150 ms still, 300 ms input, 500 ms settle, the burst at 200 ms and half the peak, 12 px step, 16 px wrap', () => {
   assert.deepEqual(GLUE, { dead: 2, stillMs: 150, inputMs: 300, settleMs: 500 });
   assert.deepEqual(BURST, { silenceMs: 200, keep: 0.5, carriedMs: 700 });
   assert.deepEqual(TOUCH, { stepPx: 12, wrapPx: 16 });
-  assert.deepEqual(threeSpans(745, 844).map((s) => [s.start, s.end]), [[1862.5, 2607.5], [4097.5, 6330], [6330, 8018]]);   // the map of 2026-11-03 (section-2.md 15): the first wipe 2.5 to 3.5 screens, the second from 5.5, the track 7.5
+  assert.deepEqual(threeSpans(745, 844).map((s) => [+s.start.toFixed(2), +s.end.toFixed(2)]), [[1862.5, 2607.5], [4097.5, 6330], [6330, 8018], [10381.2, 11225.2]]);   // the map of 2026-11-03 (section-2.md 14, the 750svh track), the fourth from the room's top (7174) and its screens 3.8 to 4.8
+  // hero.ts builds the fourth from the room's top and its screens (the probe's 100svh)
+  assert.match(readFileSync(new URL('src/scripts/hero/hero.ts', root), 'utf8'), /\{ start: top \+ WIPE4_START \* one, end: top \+ \(WIPE4_START \+ ROOM_SCREENS\.out\) \* one \}/);
+});
+
+test('the fourth span (section-5.md AC7): a run that stops inside the cut settles to the nearer end; nothing settles at section 5\'s top or inside its body', () => {
+  const ih = 745, svh = 844, spans = threeSpans(ih, svh), cut = spans[3];
+  assert.equal(glueDecision(cut.start + 100, spans, ih, svh), cut.start, 'the lower half: back to the hold');
+  assert.equal(glueDecision(cut.end - 100, spans, ih, svh), cut.end, 'the upper half: the cut done');
+  assert.equal(glueDecision(cut.end, spans, ih, svh), null, 'the end is at rest');
+  for (const y of [cut.end + 10, cut.end + svh, cut.end + 3 * svh]) assert.equal(glueDecision(y, spans, ih, svh), null, `${y}: section 5 rises as flow content, no seam to settle`);
+  assert.ok(cut.start > spans[2].end + 2 * svh, 'well apart from section 4\'s seam');
 });
 
 test('the glue at the three spans with innerHeight 745 and svh 844: every settle lands on an end, by the midpoint, and is itself at rest', () => {
