@@ -1,0 +1,13 @@
+# Memory index
+
+- [Windows machine: Blender 5.2 headless, no FBX sources, connector needs its server, dev server via Git bash](windows-machine-no-blender.md) — headless Blender works; the three 2026-10-16 FBX files are missing; use the astro-dev-win launch entry
+- [Deployment not yet live (2026-10-26): workflow and runbook exist, Sam's Cloudflare steps pending](deployment-not-yet-live.md) — no gh CLI, no wrangler login here; secrets not set
+- [Windows 3D review with Playwright Chrome](windows-3d-review-with-playwright-chrome.md) — review the 3D path through headless Playwright with the installed Chrome, not the hidden app pane; worktrees need npm ci; write globbed assets at the end
+- [Windows Lighthouse and e2e](windows-lighthouse-and-e2e.md) — headless shell on a quiet machine only; wrangler on 8787 serving dist-s5t with BASE_URL and SKREED_DIST; Lighthouse JSON in the scratchpad, never test-results; wrangler needs short paths, never the scratchpad; the quiz laptop 0.9 s rows are machine timing
+- [Section 4 frame review gotchas](section-4-frame-review-gotchas.md) — the swap is at eased 0.5 (about 160 ms, frame 3 to 4), the product keeps its own light mid-step, hide the dev toolbar in captures, keep verifier fan-out small
+- [Skreed Windows checkout](skreed-windows-checkout.md) — the clone in Documents: LF settled by .gitattributes, bash as npm's script shell, Sam's identity for commits, wrangler leftovers block worktree removal, Playwright runs in the installed Chrome through CHROME_PATH, worktree branches merge into main with git -C in that clone after a merge-tree check
+- [Skreed machine load](skreed-machine-load.md) — another session shares the repo and port 8791; under load the loader's 20 s stall sends deep arrivals to the poster
+- [Graphify on this machine: pip-installed CLI, graph per checkout via npm run graph, per-call hooks off](graphify-on-this-machine.md) — build it in every new worktree before exploring; hooks cost 1.4 to 2.3 s per tool call here
+- [App sync fails on git identity: merge by plumbing](app-sync-needs-git-identity.md) — pinned origin first, then "Committer identity unknown"; merge-tree + commit-tree, test in a scratch worktree, push <sha>:refs/heads/<default>; delete junctions before worktree remove
+- [A module shared by the hero island and the family page splits into its own chunk](family-grid-shared-chunk.md) — grid mode then fetches it and the family specs' islandRequests allowlist flags it; give the family page its own twin
+- [Reading Sam's .mov recordings on Windows](reading-mac-recordings-on-windows.md) — no ffmpeg here; decode H.264 .mov in headless Chrome to a canvas; glob the U+202F before PM

@@ -58,7 +58,7 @@ export interface RoomPlan {
   /** a seam's cloud cover, 0 to 1: above 0 the composite blends cloud (premultiplied) over its result */
   cover: number;
   cloud: Texture | null;
-  /** the logotype and the Back to top control over the section: Pearl in the hall; over the scenes the front scene's own tone (ROOM_SCENES toneDark, measured on the stills); Urban Slate while a seam's cloud covers half the frame or more, whatever is under it */
+  /** the logotype (and the section index, which copies its tone) over the section: Pearl in the hall; over the scenes the front scene's own tone (ROOM_SCENES toneDark, measured on the stills); Urban Slate while a seam's cloud covers half the frame or more, whatever is under it */
   toneDark: boolean;
 }
 
@@ -69,8 +69,12 @@ export interface RoomDirector {
   begin(ratio: number): void;
   /** the scene work of the frame: update, render the hall, the bubble, the carousel and a seam's cloud; the plan for the composite */
   step(f: RoomStepIn): RoomPlan;
-  /** the page went to the top by other means (the back-to-top control): every clock stops, and the next lap starts as the exit's does */
-  reset(): void;
+  /**
+   * the page jumped by other means (the section index, a family page's Back to top restoring section 1): every clock
+   * stops, and the next lap starts as the exit's does; with y, the page's new position, a landing inside the section
+   * (the index's Products, at q 1) has the section's followers snapped there too, so the third wipe is not played again
+   */
+  reset(y?: number): void;
   resize(w: number, h: number): void;
   /** the hall's model and lightmap, the bubble's program (when the quiz or the section nears) */
   load(): Promise<void>;
@@ -311,7 +315,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
     setState('hall'); under = 'hall';
     x = HALL.start; snapped = true;
   }
-  /** the top of the page (the exit's jump, the back-to-top control): every clock stops, the next lap starts the hall's walk (Tune lapReset 0 keeps the scenes entered) */
+  /** the top of the page (the exit's jump, the section index): every clock stops, the next lap starts the hall's walk (Tune lapReset 0 keeps the scenes entered) */
   function resetLap(fromSeam: boolean) {
     jumped = true;
     follow.snap(0); q = qAll = 0; qRaw = prevRaw = 0; revealAt = -1; pendingEnter = false; snapped = true;
@@ -597,7 +601,16 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       jumped = false;
       return { on: on && !!tex, tex: on ? tex : null, wipeIn: wipe, groundNeeded, cover, cloud: cover > 0 ? carousel.cloud : null, toneDark };
     },
-    reset() { resetLap(false); },
+    reset(y) {
+      resetLap(false);
+      if (y === undefined) return;
+      current();
+      // locked behind the quiz gate the section has no box and no reading yet (top 0, height 1): nothing to land on, and a
+      // landing measured against that would put the followers thousands of screens deep for the unlock to inherit
+      if (!measured) return;
+      const qq = (y - top) / screenPx();
+      if (qq > 0) { follow.snap(qq); q = qAll = qq; qRaw = prevRaw = lastRaw = qq; }
+    },
     resize(w, h) {
       curW = w; curH = h; hall.resize(w, h); trans.resize(w, h); mix?.resize(w, h); carousel.resize(w, h, o.dpr); measure();
       hallStale = true;
