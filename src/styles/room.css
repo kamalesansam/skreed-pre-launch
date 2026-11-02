@@ -21,9 +21,10 @@
 .room .dc { white-space: normal; }
 :where(.room) :where(p, h2, h3, ol) { margin: 0; }
 :where(.room) :where(h2, h3) { font: inherit; }
-/* the track: 5.8 screens in every state (the third wipe, the five scenes at half a screen each, the hold, the fourth wipe's
-   screen and the pinned screen after it; section-5.md 5); tests/unit/room.test.ts reads this against config/room.ts ROOM_HEIGHT */
-.room .rm-track { height: 580svh; }
+/* the track: 4.8 screens in every state (the third wipe, the five scenes at half a screen each, the hold and the fourth
+   wipe's screen, during which the stage unpins and section 5 rises under the cut; section-5-picture.md 18);
+   tests/unit/room.test.ts reads this against config/room.ts ROOM_HEIGHT */
+.room .rm-track { height: 480svh; }
 .rm-stage { position: sticky; top: 0; height: 100svh; overflow: clip; }
 .rm-scene-pic { display: none; }
 

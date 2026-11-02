@@ -21,18 +21,18 @@ const exists = (p: string) => existsSync(new URL(`../../${p}`, import.meta.url))
 const byId = new Map(SHADES.map((s) => [s.id, s]));
 const css = read('src/styles/room.css'), astro = read('src/components/room/Room.astro');
 
-test('the scroll map (section-4-no-hall.md 5; section-5.md 5): the third wipe, then the scenes at a step of 0.5 from 1, the hold to 3.8, the fourth wipe to 4.8, 5.8 screens, the stage pinned through the cut', () => {
+test('the scroll map (section-4-no-hall.md 5; section-5.md 5): the third wipe, then the scenes at a step of 0.5 from 1, the hold to 3.8, the fourth wipe to 4.8, 4.8 screens, the stage unpinned as the cut begins', () => {
   assert.deepEqual({ ...ROOM_SCREENS }, { wipe: 1, step: 0.5, hold: 0.8, out: 1 });
   assert.equal(WORLD_START, 1, "scene 1 at the third wipe's end");
   assert.equal(SCENE_COUNT, 5);
   assert.deepEqual(Array.from({ length: SCENE_COUNT }, (_, i) => sceneQ(i)), [1, 1.5, 2, 2.5, 3]);
   assert.equal(SCENES_END, 3);
   assert.ok(Math.abs(WIPE4_START - 3.8) < 1e-9, 'the fourth wipe at 3.8');
-  assert.ok(Math.abs(ROOM_HEIGHT - 5.8) < 1e-9, '5.8 screens');
-  assert.ok(css.includes(`.room .rm-track { height: ${Math.round(ROOM_HEIGHT * 100)}svh; }`), 'room.css: the track at 580svh');
-  assert.doesNotMatch(css, /data-lands|1480svh|1580svh|680svh|1300svh|1400svh|1600svh|1800svh|2000svh/, "no per-N heights, and neither the hall's track nor the loop screen's: the track is the same in every state");
-  // the stage is pinned through the cut and unpins exactly as it ends (section-5.md 5): section 5 rises after it
-  assert.ok(Math.abs(WIPE4_START + ROOM_SCREENS.out - (ROOM_HEIGHT - 1)) < 1e-9, 'the cut ends where the stage unpins');
+  assert.ok(Math.abs(ROOM_HEIGHT - 4.8) < 1e-9, '4.8 screens');
+  assert.ok(css.includes(`.room .rm-track { height: ${Math.round(ROOM_HEIGHT * 100)}svh; }`), 'room.css: the track at 480svh');
+  assert.doesNotMatch(css, /data-lands|1480svh|1580svh|680svh|580svh|1300svh|1400svh|1600svh|1800svh|2000svh/, "no per-N heights, and neither the hall's track, the loop screen's nor the pinned screen's: the track is the same in every state");
+  // the stage unpins exactly as the cut begins (section-5-picture.md 18, 2026-11-03): section 5 rises under the cut
+  assert.ok(Math.abs(WIPE4_START - (ROOM_HEIGHT - 1)) < 1e-9, 'the stage unpins where the cut begins');
   assert.ok(Math.abs(SCENES_END + ROOM_SCREENS.hold - WIPE4_START) < 1e-9, 'the hold ends at the cut');
   // no exit seam anywhere since 2026-11-03 (section-5-picture.md 18): no LOOP_START, no loop screen, no tail, no loop end in the DOM
   assert.doesNotMatch(read('src/config/room.ts') + read('src/config/room-map.ts'), /LOOP_START|ROOM_SCREENS\.loop\b|ROOM_SCREENS\.tail\b/, 'LOOP_START, the loop screen and the tail are gone');

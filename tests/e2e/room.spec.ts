@@ -1,5 +1,5 @@
 // Section 4 (docs/specs/section-4-flux.md 7 for the scenes; docs/specs/section-4-no-hall.md 7 since the hall left on
-// 2026-11-02; docs/specs/section-5.md 2 and section-5-picture.md 18 for the end): AC5 the track's 5.8 screens in every state and no horizontal scroll; AC2 straight in (the approach shows
+// 2026-11-02; docs/specs/section-5.md 2 and section-5-picture.md 18 for the end): AC5 the track's 4.8 screens in every state and no horizontal scroll; AC2 straight in (the approach shows
 // no text, the pad's focus by a visitor puts the page on scene 1 and the arrival takes that focus on to scene 1's name,
 // the scenes' names, lines and alts all exposed, the pad's label the scenes'); AC3 the arrival's hold (a jump from the
 // approach past the scenes is put back on scene 1 and stays there, a wheel fling's tail never steps, a finger dragged
@@ -90,8 +90,8 @@ test('section 4 at 390 x 844: the track, the approach, the pad, the arrival and 
   // the quiz on screen: no room_view yet (the section's top is below the viewport's); the scenes load one section ahead
   await scenesIn(page);
   expect(await events(page)).not.toContain('room_view');
-  // the section is 5.8 screens in every state (section-5.md 5: the fourth wipe's screen and one pinned)
-  expect(await page.evaluate(() => document.getElementById('room')!.offsetHeight)).toBeCloseTo(5.8 * H, -1);
+  // the section is 4.8 screens in every state (section-5-picture.md 18: the stage unpins as the cut begins, section 5 rising under it)
+  expect(await page.evaluate(() => document.getElementById('room')!.offsetHeight)).toBeCloseTo(4.8 * H, -1);
   // the director's cached layout is a reading taken after the intro, at the section's real top (D1: a reading under
   // html.intro, with the hero's track collapsed, is replaced when the intro ends)
   await expect.poll(async () => (await s4(page)).layout?.intro, { timeout: 10_000 }).toBe(false);
