@@ -47,7 +47,7 @@ No library: the Web Animations API for the veil, as Back to top had it, and a CS
 
 ## 6. Budget
 
-At most 3 KB gz of JS in a deferred module (no change to the critical boot chunk), at most 2 KB gz of CSS, no images, no fonts. Measured on the production build of the merged default branch (`budget.mjs`): the index's script 1.3 KB gz and the shared veil 0.4 KB gz, critical JS 17.6 of 60 KB, total JS 242.1 of 250 KB with section 4.
+At most 3 KB gz of JS in a deferred module (no change to the critical boot chunk), at most 2 KB gz of CSS, no images, no fonts. Measured on the production build of the pushed default branch (`budget.mjs`, e5895e5): the index's script 2.0 KB gz and the shared veil 0.5 KB gz, critical JS 18.5 of 60 KB, total JS 243.2 of 250 KB with section 4. Lighthouse (CHECKLIST C4) not yet run for the index: on 2026-11-02 the machine was shared and loaded (another session's Playwright suite, four dev servers, 1.2 GB free), where Lighthouse runs crash or read as noise; to be run on a quiet machine on the poster tier, as E-C4 grades the hero.
 
 ## 7. Acceptance criteria
 
