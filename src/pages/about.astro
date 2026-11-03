@@ -1,14 +1,17 @@
 ---
 // /about/ (docs/specs/about.md): the brief's copy on plain Pearl Whisper in skreed.com's face (exception E-About-font,
-// src/styles/about.css), text only (E-About-38), and the wordmark at the top left as the way home. The page ships no
-// JavaScript: the wordmark is drawn from the sprite here, never through SiteLogo.astro, whose script installs the glitch
-// (E-24 is not extended to this page), and there is no Back to top (D13). The one script element is the JSON-LD data
-// block, which is not executed. The landing page's section index links here (D7; navbar.md AC11); the sitemap lists it.
+// src/styles/about.css), text only (E-About-38), and the wordmark at the top left as the way home, with "Back to main
+// page" at the top right (2026-11-03: "there's no navigation helper to go back to the site"). The wordmark is SiteLogo,
+// with the landing page's glitch (2026-11-03: "the glitch effect on the logo is not there in the about page, add that as
+// well"; E-24 extended to this page); both links are data-home (scripts/shell/back-home.ts), so a visitor who came from
+// the landing page goes Back to it, restored from the back-forward cache at the section they left. There is no Back to
+// top (D13). The landing page's section index links here (D7; navbar.md AC11); the sitemap lists it.
 import Base from '../layouts/Base.astro';
 import '../styles/about.css';
 import WordmarkSprite from '../components/shell/WordmarkSprite.astro';
+import SiteLogo from '../components/shell/SiteLogo.astro';
+import { FAM_COPY } from '../scripts/family/copy.ts';
 import { ABOUT_COPY as c, ABOUT_H1_LINES, ABOUT_RING } from '../config/about.ts';
-import { COPY } from '../config/copy.ts';
 import { LAUNCH_ISO, SITE_URL } from '../config/site.ts';
 import { PEARL_WHISPER } from '../config/tokens.ts';
 import { SITE_COPY } from '../scripts/family/site-copy.ts';
@@ -40,7 +43,8 @@ const ld = JSON.stringify({
   </Fragment>
   <WordmarkSprite />
   <header class="ab-top">
-    <a class="site-logo" href="/" aria-label={COPY.logo.aria}><svg viewBox="0 0 1209.46 292.9" aria-hidden="true" focusable="false"><use href="#skreed-wordmark"/></svg></a>
+    <SiteLogo />
+    <a class="ab-home" href="/" data-home>{FAM_COPY.backHome}</a>
   </header>
   <main class="ab">
     <span class="ab-quote" aria-hidden="true">”</span>

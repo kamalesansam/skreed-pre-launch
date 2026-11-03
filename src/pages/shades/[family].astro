@@ -69,5 +69,5 @@ const Loader = ON3D ? (await import('../../components/shell/Loader.astro')).defa
   <FamilyPage fam={fam} has3d={has3d} supplier={mode === 'on'} />
   {Island && <Island mode={mode === 'on' ? 'on' : 'dev'} />}
   <BackToTop page="family" />
-  {has3d && <a class="fam-back ring2 press" id="famBack" href="/#families" hidden>{FAM_COPY.backHome}</a>}
+  {has3d && <a class="fam-back ring2 press" id="famBack" href="/#families" data-home hidden>{FAM_COPY.backHome}</a>}
 </Base>
