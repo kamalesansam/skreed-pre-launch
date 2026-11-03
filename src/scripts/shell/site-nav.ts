@@ -12,9 +12,13 @@
 // data-sec; navbar.md D7), is left to the browser: no veil and no jump, only a plain press tracked as the sections' are
 // (a modifier press opens a new tab, untracked, as theirs is). The drawer is closed as the page leaves (pagehide), so a
 // landing page restored from the back-forward cache comes back without it; a restore that still finds it open closes it.
+// The gift at the end (2026-11-03) jumps to section 5, the sign-up, opening it as Products opens section 4 while the quiz
+// gate holds both; it carries the logotype's glitch with a shorter idle wait (GIFT_EVERY), and its bounce is CSS.
 import { track } from '../quiz/track.ts';
 import { veiled } from './veil.ts';
-import { restY, sectionAt, type PageMap, type SectionId } from './nav-map.ts';
+import { restY, sectionAt, type JumpId, type PageMap } from './nav-map.ts';
+import { createLogoGlitch } from '../logotype/glitch.ts';
+import { GIFT_EVERY, GIFT_TARGET, LOGO_IDLE, LOGO_SPLIT } from '../../config/glitch.ts';
 
 const nav = document.getElementById('siteNav');
 const sheet = document.getElementById('site-sections');
@@ -43,13 +47,17 @@ if (nav) {
     const fam = document.getElementById('families');
     return (cached = {
       island: island(), roomStill: room?.dataset.tier === 'poster', vh: innerHeight,
-      families: docTop(fam), quiz: docTop(document.getElementById('find')), room: docTop(room),
+      families: docTop(fam), quiz: docTop(document.getElementById('find')), room: docTop(room), signup: docTop(document.getElementById('signup')),
       familiesH: fam?.offsetHeight ?? 0, stage: document.getElementById('rmStage')?.offsetHeight || innerHeight,
       max: Math.max(0, (document.scrollingElement ?? html).scrollHeight - innerHeight),
     });
   };
 
-  let current: SectionId | null = null, raf = 0;
+  // the gift's glitch: the logotype's, on the gift's symbol, twitching more often (2026-11-03: "glitches more often")
+  const gift = document.getElementById('snavGift');
+  if (gift) createLogoGlitch(gift, { split: LOGO_SPLIT, idle: LOGO_IDLE, every: GIFT_EVERY, target: { ...GIFT_TARGET, href: '#skreed-gift', prefix: 'gg-' } });
+
+  let current: JumpId | null = null, raf = 0;
   const mark = () => {
     raf = 0;
     const s = sectionAt(scrollY, map());
@@ -122,7 +130,7 @@ if (nav) {
   const rideOver = () => new Promise<void>((r) => { const tick = () => (room?.hasAttribute('data-ride') ? requestAnimationFrame(tick) : r()); tick(); });
 
   /** the section at once: section 1 by the hero's own jump (Back to top's), the rest by the island's jump to y, or a plain instant scroll */
-  const jump = (id: SectionId) => {
+  const jump = (id: JumpId) => {
     cached = null;
     if (id === 'top' && window.__skreedTop) { window.__skreedTop(); return; }
     const y = restY(id, map());
@@ -137,9 +145,10 @@ if (nav) {
    * the first control on screen (Begin on the intro); section 4's pad on the 3D path (the arrival at scene 1 moves that
    * focus on to scene 1's name, walk.ts), or the first scene's name on the poster tier.
    */
-  const focusIn = (id: SectionId) => {
+  const focusIn = (id: JumpId) => {
     let list: (HTMLElement | null)[];
     if (id === 'top') list = [logo];
+    else if (id === 'signup') list = [...document.querySelectorAll<HTMLElement>('#signup :is(a[href], input, button:not([disabled]))')];
     else if (id === 'families') list = [document.querySelector<HTMLElement>('#families a')];
     else if (id === 'quiz') list = [document.querySelector<HTMLElement>('#find .qz-card.is-top'), ...document.querySelectorAll<HTMLElement>('#find .qz-shade'), ...document.querySelectorAll<HTMLElement>('#find :is(a[href], button:not([disabled]))')];
     else { const m = map(); list = [m.island && !m.roomStill ? document.getElementById('rmPad') : null, document.querySelector<HTMLElement>('#rmScenes .rm-scene-name')]; }
@@ -157,7 +166,7 @@ if (nav) {
   for (const a of links) {
     a.addEventListener('click', async (e) => {
       if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;   // a new tab or window opens the fragment as a link does
-      const id = a.dataset.sec as SectionId;
+      const id = a.dataset.sec as JumpId;
       e.preventDefault();
       const keyboard = focusVisible(a);
       if (open()) sheet!.hidePopover();
@@ -169,7 +178,9 @@ if (nav) {
         // Products: section 4 opened if the gate holds it; on the 3D path the scenes load from the unlock (or from this
         // press where they have not started) and the page waits for them under the veil, so the landing shows scene 1
         // drawn and its reveal is not played again after the lift; then a frame for the shown section's layout
-        if (id === 'room') {
+        // The gift (section 5) waits the same way: section 4's director measures its section once the scenes load, and
+        // a jump to the page's end before that left the hero reading the page as at its top (the countdown over section 5)
+        if (id === 'room' || id === 'signup') {
           const opened = unlock(), scenes = window.__skreedScenes;
           if (island() && scenes && !scenes.ready) {
             a.setAttribute('aria-busy', 'true');

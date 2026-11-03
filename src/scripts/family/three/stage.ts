@@ -1,9 +1,9 @@
 // The family page's stage (docs/specs/family-page.md 19 to 21 and 24; the prototype's module, ported): ciao's carousel
 // with the case in place of the can, ciao's two spots and the procedural studio, the calibrated colour, the seven-screen
-// scroll (the zoom, the four case types with the half turn, the argument pose with its float), the inputs of the first
+// scroll (the zoom, the four case types with the whole turn, the argument pose with its float), the inputs of the first
 // screen (tap, drag, hover tilt), the tier probe, render on demand, context loss and disposal. Round 6 (section 24):
 // each beat shows its own case type (the Tough, then Sam's MagTough, Snap and Armor as their models land), and from a
-// hand-over's edge-on frame the incoming case takes the outgoing one over in depth.fyi's sweep, re-created for two
+// hand-over, once the case's whole turn has ended, the incoming case takes the outgoing one over in depth.fyi's sweep, re-created for two
 // models (takeover.ts, takeover-material.ts). One renderer; the carousel's row on its plain materials, the front case on
 // materials that carry the takeover, off at rest. No GSAP: the loop lags the scroll and the line with its own rates.
 import {
@@ -268,7 +268,7 @@ export async function createStage(o: StageOptions) {
     cam.position.set(0, 0, CFG.camZ);
     const phone = () => o.layout() === 'phone';
 
-    // the takeover (section 24 D3 to D9; Sam, 2026-11-03): the sweep rides the turn's second half, so what the front slot
+    // the takeover (section 24 D3 to D9 and D15; Sam, 2026-11-03): the sweep follows the case's whole turn, so what the front slot
     // shows is a function of the stage's own scroll (takeover.ts: the beat's case, or the outgoing and the incoming case
     // at the sweep's progress; a type whose model has not landed keeps the case before it); a hooks-only hold pins a pair
     // at a raw progress for frames

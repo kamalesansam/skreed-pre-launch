@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { CASE_REST, CASE_TYPES, CFG, DIMS_DEFAULT, HANDOVERS, SV, TURNS, TURN_LEN, activeBeat, beatPose, caseBox, caseTargetAt, edgeOn, poseOf, profileLightOffset, project, scrollClasses, skeletonPolys, solve, xform } from '../../src/scripts/family/three/pose.ts';
+import { CASE_REST, CASE_TYPES, CFG, DIMS_DEFAULT, HANDOVERS, SV, SWEEP_LEN, TURNS, TURN_LEN, activeBeat, beatPose, caseBox, caseTargetAt, poseOf, turnEnd, profileLightOffset, project, scrollClasses, skeletonPolys, solve, xform } from '../../src/scripts/family/three/pose.ts';
 
 const manifest = JSON.parse(readFileSync(new URL('../../src/data/case-model.json', import.meta.url), 'utf8'));
 const [mw, mh, md] = manifest.sizeMm as number[];
@@ -68,10 +68,16 @@ test('the scroll map: nothing but the chrome on the landing screen, no beat text
   assert.equal(activeBeat(1.5), 'z');
   assert.equal(activeBeat(1.7), '1');
   assert.equal(activeBeat(2.5), '1');
-  assert.equal(activeBeat(2.7), '2');
+  // each next type's text at its hand-over, where the sweep starts (section 24 D14): never during the whole turn before it
+  assert.equal(activeBeat(2.79), '1');
+  assert.equal(activeBeat(2.8), '2');
   assert.equal(activeBeat(3.5), '2');
+  assert.equal(activeBeat(3.79), '2');
+  assert.equal(activeBeat(3.8), '3');
   assert.equal(activeBeat(4.5), '3');
+  assert.equal(activeBeat(4.8), '4');
   assert.equal(activeBeat(5.5), '4');
+  for (let i = 160; i < 560; i++) { const sv = i / 100, want = sv >= 4.8 ? '4' : sv >= 3.8 ? '3' : sv >= 2.8 ? '2' : '1'; assert.equal(activeBeat(sv), want, `sv ${sv}`); }
   assert.equal(activeBeat(5.7), 'none');
   assert.equal(activeBeat(7), 'none');
   const rest = scrollClasses(0);
@@ -96,35 +102,40 @@ test('the beat pose: the zoom blends over 1 to 2, the case rises through the fou
   assert.equal(beatPose(6.5).A, 1);
 });
 
-test('D3: every feature transition is one half turn about the vertical axis, edge-on at its middle, and nothing turns between them', () => {
+test('D15: every feature transition is one whole turn about the vertical axis, its back to the camera at the half, and nothing turns between them', () => {
+  assert.deepEqual([TURN_LEN, SWEEP_LEN], [0.4, 0.2]);
+  assert.deepEqual(TURNS.map(turnEnd), [2, 2.8, 3.8, 4.8], 'the turn into Tough ends at its beat, each hand-over\'s a sweep before it');
   for (const n of TURNS) {
-    const start = n - TURN_LEN, mid = n - TURN_LEN / 2;
+    const end = turnEnd(n), start = end - TURN_LEN, mid = end - TURN_LEN / 2;
     assert.equal(beatPose(start - 0.01).yaw, 0, `still before ${n}`);
-    assert.ok(edgeOn(beatPose(mid).yaw), `edge-on at ${mid}: yaw ${beatPose(mid).yaw}`);
-    assert.equal(beatPose(n + 0.01).yaw, 0, `still after ${n}`);
-    // the yaw runs through a quarter turn and back the other way, so the back that comes round is the other side's
-    assert.ok(beatPose(mid - 0.05).yaw > 0 && beatPose(mid + 0.05).yaw < 0, `the turn flips at ${mid}`);
+    assert.ok(Math.abs(beatPose(mid).yaw - Math.PI) < 1e-9, `the back to the camera at ${mid}: yaw ${beatPose(mid).yaw}`);
+    assert.equal(beatPose(end + 0.001).yaw, 0, `still after the turn into ${n}`);
+    // one way round, never back: the yaw rises through the whole turn
+    for (let i = 0; i < 39; i++) { const t = start + i / 100; assert.ok(beatPose(t + 0.01).yaw >= beatPose(t).yaw, `the turn runs one way at ${t.toFixed(2)}`); }
+    assert.ok(beatPose(end - 0.001).yaw > 1.99 * Math.PI, `a whole turn by ${end}`);
   }
-  // the turn as round 3 built it (section 24 D6: unchanged): sampled every 0.01 screen against its own formula
+  // sampled every 0.01 screen against its own formula
   for (let sv = 1.5; sv < 5.5; sv += 0.01) {
     let yaw = 0;
-    for (const n of TURNS) { const t = Math.max(0, Math.min(1, (sv - (n - 0.3)) / 0.3)), u = t * t * (3 - 2 * t); if (u > 0 && u < 1) yaw = (u <= 0.5 ? u : u - 1) * Math.PI; }
+    for (const n of TURNS) { const e = n === 2 ? 2 : n - 0.2, t = Math.max(0, Math.min(1, (sv - (e - 0.4)) / 0.4)), u = t * t * (3 - 2 * t); if (u > 0 && u < 1) yaw = u * 2 * Math.PI; }
     assert.equal(beatPose(sv).yaw, yaw, `the turn at ${sv.toFixed(2)}`);
   }
 });
 
-test('24 D3: the case type each frame asks for, every 0.01 screen: Tough below 2.85 and on the carousel, MagTough from 2.85, Snap from 3.85, Armor from 4.85 through the argument screen', () => {
+test('24 D3: the case type each frame asks for, every 0.01 screen: Tough below 2.8 and on the carousel, MagTough from 2.8, Snap from 3.8, Armor from 4.8 through the argument screen', () => {
   assert.deepEqual([...CASE_TYPES], ['tough', 'magtough', 'snap', 'armor']);
-  assert.deepEqual([...HANDOVERS], [2.85, 3.85, 4.85]);
+  assert.deepEqual([...HANDOVERS], [2.8, 3.8, 4.8]);
   for (let i = 0; i <= 750; i++) {
     const sv = i / 100;
-    const want = sv >= 4.85 ? 'armor' : sv >= 3.85 ? 'snap' : sv >= 2.85 ? 'magtough' : 'tough';
+    const want = sv >= 4.8 ? 'armor' : sv >= 3.8 ? 'snap' : sv >= 2.8 ? 'magtough' : 'tough';
     assert.equal(caseTargetAt(sv), want, `sv ${sv.toFixed(2)}`);
   }
-  for (const [h, before, after] of [[2.85, 'tough', 'magtough'], [3.85, 'magtough', 'snap'], [4.85, 'snap', 'armor']] as const) {
+  for (const [h, before, after] of [[2.8, 'tough', 'magtough'], [3.8, 'magtough', 'snap'], [4.8, 'snap', 'armor']] as const) {
     assert.equal(caseTargetAt(h - 1e-6), before);
     assert.equal(caseTargetAt(h), after);
-    assert.ok(edgeOn(beatPose(h).yaw), `the hand-over at ${h} is the turn's edge-on frame`);
+    assert.equal(beatPose(h).yaw, 0, `the hand-over at ${h} is the whole turn's end, the case facing the camera`);
+    // the whole turn before it shows the outgoing type alone: the turn never changes the model (D15)
+    for (let t = h - TURN_LEN; t < h; t += 0.01) assert.equal(caseTargetAt(t), before, `the turn at ${t.toFixed(2)} keeps ${before}`);
   }
   // the zoom at 0 is the carousel, the Tough's alone; the turn into Tough changes no model
   for (const sv of [0, 0.5, 1]) { assert.equal(beatPose(sv).k, 0); assert.equal(caseTargetAt(sv), 'tough'); }
