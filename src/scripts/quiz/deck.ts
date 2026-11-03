@@ -167,6 +167,9 @@ export function mountQuiz(root: HTMLElement): void {
     if (o < 1) root.style.setProperty('--qz-fade', o.toFixed(3)); else root.style.removeProperty('--qz-fade');
     // the logotype and the section index stay Pearl Whisper while the ground is the greater part of what lies under them
     document.documentElement.toggleAttribute('data-qz-ground', state === 'result' && o >= 0.5);
+    // part faded: read again next frame, so a fade read mid-change (the result replacing the deck after Try again, with no
+    // scroll event to follow) never sticks; at rest (1) or gone (0) the reads stop
+    if (o > 0 && o < 1) groundRaf = requestAnimationFrame(groundBand);
   }
   addEventListener('scroll', () => { if (!groundRaf) groundRaf = requestAnimationFrame(groundBand); }, { passive: true });
   // the section can come to rest with no scroll event (a layout change above or within it, the result replacing the deck
