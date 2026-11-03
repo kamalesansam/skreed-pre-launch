@@ -119,11 +119,18 @@ export function skeletonPolys(W: number, H: number, cls: Layout, dims: Dims = DI
  * In screens of scroll: 0 to 1 the carousel, 1 to 2 the zoom (no text), 2 to 6 the four case types, 6 to 7 ciao's
  * argument screen. The HUD leaves at 0.5; the tint runs 1.1 to 5.6; the beats' text and nav 1.6 to 5.6; the argument
  * from 5.6. Nothing but the family's name shows on the first screen (D9); Tough and its description come with beat 1.
+ * Each next type's text comes in at its hand-over (2.8, 3.8, 4.8), where the sweep to it starts, so the name never runs
+ * ahead of the case on screen through its whole turn (section 24 D14; Sam, 2026-11-03; 2.6, 3.6 and 4.6 until then).
  */
 export const SV = { hudOff: 0.5, tintOn: 1.1, beatsOn: 1.6, beatsOff: 5.6, argOn: 5.6, screens: 7 } as const;
 export type Beat = 'none' | 'z' | '1' | '2' | '3' | '4';
 export function activeBeat(sv: number): Beat {
-  return sv <= 0.6 ? 'none' : sv < SV.beatsOn ? 'z' : sv < SV.beatsOff ? (String(Math.min(4, Math.floor(sv - 0.6))) as Beat) : 'none';
+  if (sv <= 0.6) return 'none';
+  if (sv < SV.beatsOn) return 'z';
+  if (sv >= SV.beatsOff) return 'none';
+  let n = 1;
+  for (const t of TURNS.slice(1)) if (sv >= turnEnd(t)) n++;
+  return String(n) as Beat;
 }
 export function scrollClasses(sv: number): { hudOff: boolean; beatsOn: boolean; tintOn: boolean; argOn: boolean } {
   return { hudOff: sv > SV.hudOff, beatsOn: sv > SV.beatsOn && sv < SV.beatsOff, tintOn: sv > SV.tintOn && sv < SV.beatsOff, argOn: sv > SV.argOn };
@@ -136,16 +143,19 @@ export function scrollClasses(sv: number): { hudOff: boolean; beatsOn: boolean; 
  * 5 to 6 ciao's argument pose (its row 5000 to 6000: camera at z 8, level, FOV 45; the case at the centre, z -0.5,
  * tipped back 20 degrees and rolled -5, facing the camera; the two carousel spots back at 45 of 50), held over 6 to 7
  * with the pointer's influence and a slow bob. Between beats the values ease with ciao's power1.inOut (a smoothstep).
- * The turn (section 21 D3, kept by section 24 D6): over each feature transition (into Tough 1.7 to 2, then 2.7 to 3,
- * 3.7 to 4 and 4.7 to 5) the case makes a half turn about its vertical axis; at the edge-on frame the model is re-posed a
- * half turn back, so the back that comes round is the next case's. Section 24 D3: each beat has its own case type, and
- * the edge-on frames of the three hand-over turns (2.85, 3.85, 4.85) are where the next type is asked for; the sweep
- * (three/takeover.ts) rides the turn's second half from there, its progress the stage's scroll (D6). The turn into Tough
- * changes no model.
+ * The turn (section 24 D15; Sam, 2026-11-03: "rotate 360 degrees completely, even the backside of the phone should be
+ * visible, and after the rotation only comes the transition effect"): over each feature transition the case on screen
+ * makes one whole turn about its vertical axis, its back coming round at the half, and no model changes during it (the
+ * half turn of section 21 D3, re-posed at its edge-on frame, ends here). The turn into Tough runs 1.6 to 2 and changes
+ * no model; each hand-over's turn (2.4 to 2.8, 3.4 to 3.8, 4.4 to 4.8) ends facing the camera at its hand-over (2.8,
+ * 3.8, 4.8), where the next type is asked for, and the sweep (three/takeover.ts) runs from there to the beat's rest
+ * (SWEEP_LEN), its progress the stage's scroll (D6).
  */
 export const sm = (t: number): number => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
 export const RZ = [0, -0.1745, 0.0873, -0.1745, 0.0873, 0, 0] as const, CY = [0, -0.96, -0.58, 0.02, 0.6, 0, 0] as const;
-export const TURNS = [2, 3, 4, 5] as const, TURN_LEN = 0.3;
+export const TURNS = [2, 3, 4, 5] as const, TURN_LEN = 0.4, SWEEP_LEN = 0.2;
+/** Where the turn into beat n ends: the turn into Tough at its beat, each hand-over's SWEEP_LEN before it, so the sweep follows the turn. */
+export const turnEnd = (n: number): number => (n === TURNS[0] ? n : n - SWEEP_LEN);
 export interface BeatPose { k: number; rz: number; cy: number; A: number; yaw: number }
 export function beatPose(sv: number): BeatPose {
   const k = sm(sv - 1);
@@ -153,7 +163,7 @@ export function beatPose(sv: number): BeatPose {
   const rz = RZ[j - 1] + (RZ[j] - RZ[j - 1]) * t, cy = CY[j - 1] + (CY[j] - CY[j - 1]) * t;
   const A = sm(sv - 5);
   let yaw = 0;
-  for (const n of TURNS) { const u = sm((sv - (n - TURN_LEN)) / TURN_LEN); if (u > 0 && u < 1) yaw = (u <= 0.5 ? u : u - 1) * Math.PI; }
+  for (const n of TURNS) { const e = turnEnd(n), u = sm((sv - (e - TURN_LEN)) / TURN_LEN); if (u > 0 && u < 1) yaw = u * 2 * Math.PI; }
   return { k, rz, cy, A, yaw };
 }
 
@@ -174,11 +184,11 @@ export const CASE_TYPES = ['tough', 'magtough', 'snap', 'armor'] as const;
 export type CaseType = (typeof CASE_TYPES)[number];
 /** The screen each type rests at: its beat, where the turn's yaw is 0 and its sweep has ended. */
 export const CASE_REST: Readonly<Record<CaseType, number>> = { tough: 2, magtough: 3, snap: 4, armor: 5 };
-/** The hand-overs: the edge-on frames of the turns into beats 2 to 4 (TURNS[i] - TURN_LEN / 2: 2.85, 3.85, 4.85). */
-export const HANDOVERS = TURNS.slice(1).map((n) => n - TURN_LEN / 2) as readonly number[];
+/** The hand-overs: the ends of the whole turns into beats 2 to 4, the case facing the camera again (TURNS[i] - SWEEP_LEN: 2.8, 3.8, 4.8). */
+export const HANDOVERS = TURNS.slice(1).map(turnEnd) as readonly number[];
 /**
- * The case type a frame asks for (section 24 D3): Tough below 2.85 and whenever the zoom is at 0 (the carousel),
- * MagTough from 2.85, Snap from 3.85, Armor from 4.85 through the argument screen.
+ * The case type a frame asks for (section 24 D3): Tough below 2.8 and whenever the zoom is at 0 (the carousel),
+ * MagTough from 2.8, Snap from 3.8, Armor from 4.8 through the argument screen.
  */
 export function caseTargetAt(sv: number): CaseType {
   if (!(beatPose(sv).k > 0)) return 'tough';
@@ -186,5 +196,3 @@ export function caseTargetAt(sv: number): CaseType {
   while (i < HANDOVERS.length && sv >= HANDOVERS[i]) i++;
   return CASE_TYPES[i];
 }
-/** The yaw of the turning case is edge-on (an odd multiple of a quarter turn) within tol radians. */
-export const edgeOn = (yaw: number, tol = 0.02): boolean => Math.abs(Math.abs(((yaw % Math.PI) + Math.PI) % Math.PI) - Math.PI / 2) < tol;

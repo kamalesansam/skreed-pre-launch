@@ -1,6 +1,6 @@
 // Round 6 (docs/specs/family-page.md 24): each beat's own case type and depth.fyi's takeover between them, the browser
-// rows of 24.4's criteria 2 (each beat shows its own case, with its frames), 4 (the sweep on the page rides the turn's
-// second half: its progress is the stage's own scroll from the edge-on frame to the rest, Sam's words of 2026-11-03),
+// rows of 24.4's criteria 2 (each beat shows its own case, with its frames), 4 (the sweep on the page follows the case's
+// whole turn: its progress is the stage's own scroll from the turn's end to the rest, section 24 D15, Sam, 2026-11-03),
 // 6 (back up: the sweep plays back as the scroll falls, and forward again as it rises, never off its scroll), 7 (no
 // program compiles for a sweep), 8 (nothing of the type models before 0.5 screens; one model failing keeps the case
 // before it, with no sweep; a model let through late stands at its beat once it lands) and 10 (reduced motion: the type
@@ -16,8 +16,8 @@ const SHOTS = new URL('../../../docs/specs/screenshots/', import.meta.url);
 const shot = (name: string) => fileURLToPath(new URL(`family-r6-${name}.png`, SHOTS));
 const TYPE_GLB = /\/models\/(magtough|snap|armor)\.lod[01]\.[0-9a-f]{8}\.glb$/;
 type Tk = { phase: string; from: string; to: string; raw: number; eased: number; p: number; held: boolean };
-/** the sweep's raw progress the scroll gives at sv: 0 at the edge-on frame h, 1 at h + 0.15 (pose.ts TURN_LEN / 2) */
-const rawAt = (sv: number, h: number) => Math.min(1, Math.max(0, (sv - h) / 0.15));
+/** the sweep's raw progress the scroll gives at sv: 0 at the hand-over h (the whole turn's end), 1 at h + 0.2 (pose.ts SWEEP_LEN) */
+const rawAt = (sv: number, h: number) => Math.min(1, Math.max(0, (sv - h) / 0.2));
 type St = { sv: number; type: string; takeover: Tk };
 type Types = { listed: string[]; started: boolean; loaded: string[]; failed: Record<string, string>; detailFailed: string[] };
 type Row = { t: number; sv: number; type: string } & Tk;
@@ -94,29 +94,29 @@ for (const [label, opts] of [['390', PHONE], ['1280', WIDE]] as const) {
   });
 }
 
-test('criteria 4 and 7: scrolled at a steady pace over each hand-over, the sweep to the next type runs from the edge-on frame with the turn, its progress the stage\'s own scroll, and ends as the case comes to rest; no program compiles for it', async ({ browser }) => {
+test('criteria 4 and 7: scrolled at a steady pace over each hand-over, the case\'s whole turn shows the type it started with and the sweep to the next type runs after it, its progress the stage\'s own scroll, and ends as the case comes to rest; no program compiles for it', async ({ browser }) => {
   test.setTimeout(400_000);
   const ctx = await browser.newContext(WIDE);
   const page = await ctx.newPage();
   await open(page);
   await toScreen(page, 0.6);
   await settledTypes(page);
-  for (const [a, from, type] of [[2.7, 'tough', 'magtough'], [3.7, 'magtough', 'snap'], [4.7, 'snap', 'armor']] as const) {
-    const h = a + 0.15;
+  for (const [a, from, type] of [[2.4, 'tough', 'magtough'], [3.4, 'magtough', 'snap'], [4.4, 'snap', 'armor']] as const) {
+    const h = a + 0.4;
     await toScreen(page, a);
     await rest(page, a);
     const before = await programs(page);
-    const log = await glide(page, a, a + 0.3, 300);
+    const log = await glide(page, a, a + 0.6, 500);
     const running = log.filter((r) => r.phase !== 'idle');
     expect(running.length, `frames of the sweep to ${type}`).toBeGreaterThan(5);
     for (const r of running) {
       expect([r.from, r.to], `the pair at ${r.sv.toFixed(3)}`).toEqual([from, type]);
-      expect(r.sv, 'a sweep only inside the turn\'s second half').toBeGreaterThanOrEqual(h);
-      expect(r.sv, 'the sweep ends a hair before the beat (SWEEP_END_SLACK, 0.004 of a screen)').toBeLessThan(h + 0.15 - 0.004 + 1e-6);
+      expect(r.sv, 'a sweep only after the whole turn').toBeGreaterThanOrEqual(h);
+      expect(r.sv, 'the sweep ends a hair before the beat (SWEEP_END_SLACK, 0.004 of a screen)').toBeLessThan(h + 0.2 - 0.004 + 1e-6);
       expect(Math.abs(r.raw - rawAt(r.sv, h)), `raw is the scroll\'s at ${r.sv.toFixed(3)}`).toBeLessThan(1e-6);
     }
-    for (const r of log) if (r.sv < h) expect(r.type, `before the edge-on frame at ${r.sv.toFixed(3)}`).toBe(from);
-    const after = log.filter((r) => r.sv >= h + 0.15 - 0.004 + 1e-6);   // the mapping's SWEEP_END_SLACK (0.004 of a screen, pinned by the unit suite): the page scrolls by whole pixels, so its rest can sit a few short of the beat
+    for (const r of log) if (r.sv < h) expect([r.phase, r.type], `the turn at ${r.sv.toFixed(3)} keeps its own case`).toEqual(['idle', from]);
+    const after = log.filter((r) => r.sv >= h + 0.2 - 0.004 + 1e-6);   // the mapping's SWEEP_END_SLACK (0.004 of a screen, pinned by the unit suite): the page scrolls by whole pixels, so its rest can sit a few short of the beat
     expect(after.length).toBeGreaterThan(0);
     for (const r of after) expect([r.phase, r.type], `at rest at ${r.sv.toFixed(3)}`).toEqual(['idle', type]);
     expect(log.at(-1)!.type).toBe(type);
@@ -125,7 +125,7 @@ test('criteria 4 and 7: scrolled at a steady pace over each hand-over, the sweep
   await ctx.close();
 });
 
-test('criterion 6: from rest at Snap, up through 3.85 the sweep plays back as the scroll falls (the band left to right) and the MagTough stands below it; down again it plays forward; raw is the scroll\'s, never a jump of its own', async ({ browser }) => {
+test('criterion 6: from rest at Snap, up through 3.8 the sweep plays back as the scroll falls (the band left to right) and the MagTough stands below it; down again it plays forward; raw is the scroll\'s, never a jump of its own', async ({ browser }) => {
   test.setTimeout(400_000);
   const ctx = await browser.newContext(WIDE);
   const page = await ctx.newPage();
@@ -134,17 +134,17 @@ test('criterion 6: from rest at Snap, up through 3.85 the sweep plays back as th
   await settledTypes(page);
   await toScreen(page, 4.2);
   await rest(page, 4.2);
-  const up = await glide(page, 4.2, 3.6, 400, 250);
+  const up = await glide(page, 4.2, 3.5, 400, 250);
   const back = up.filter((r) => r.phase !== 'idle');
   expect(back.length, 'frames of the sweep on the way up').toBeGreaterThan(3);
-  for (const r of back) { expect([r.from, r.to]).toEqual(['magtough', 'snap']); expect(Math.abs(r.raw - rawAt(r.sv, 3.85))).toBeLessThan(1e-6); }
+  for (const r of back) { expect([r.from, r.to]).toEqual(['magtough', 'snap']); expect(Math.abs(r.raw - rawAt(r.sv, 3.8))).toBeLessThan(1e-6); }
   for (let k = 1; k < back.length; k++) expect(back[k].raw, 'raw falls with the scroll').toBeLessThanOrEqual(back[k - 1].raw + 1e-9);
   expect(up.at(-1)!.type, 'the MagTough below the hand-over').toBe('magtough');
   expect(up.at(-1)!.phase).toBe('idle');
-  const down = await glide(page, 3.6, 4.2, 300, 600);
+  const down = await glide(page, 3.5, 4.2, 300, 600);
   const fore = down.filter((r) => r.phase !== 'idle');
   expect(fore.length, 'frames of the sweep on the way down').toBeGreaterThan(3);
-  for (const r of fore) { expect([r.from, r.to]).toEqual(['magtough', 'snap']); expect(Math.abs(r.raw - rawAt(r.sv, 3.85))).toBeLessThan(1e-6); }
+  for (const r of fore) { expect([r.from, r.to]).toEqual(['magtough', 'snap']); expect(Math.abs(r.raw - rawAt(r.sv, 3.8))).toBeLessThan(1e-6); }
   for (let k = 1; k < fore.length; k++) expect(fore[k].raw, 'raw rises with the scroll').toBeGreaterThanOrEqual(fore[k - 1].raw - 1e-9);
   expect(down.at(-1)!.type).toBe('snap');
   expect(down.at(-1)!.phase).toBe('idle');
@@ -192,14 +192,14 @@ test('criterion 8: a model let through late stands at its beat once it lands, wi
   await page.waitForFunction(() => (window as unknown as W).__famStage.state().type === 'magtough', null, { timeout: 10_000, polling: 50 });
   await rest(page, 3);
   expect((await st(page)).takeover.phase, 'no sweep at rest').toBe('idle');
-  // and the hand-over's sweep still runs for it from here on: back up and down through 2.85
-  const down = await glide(page, 2.7, 3.0, 300, 600);
+  // and the hand-over's sweep still runs for it from here on: back up and down through 2.8
+  const down = await glide(page, 2.4, 3.0, 300, 600);
   expect(down.filter((r) => r.phase !== 'idle').every((r) => r.from === 'tough' && r.to === 'magtough')).toBe(true);
   expect(down.at(-1)!.type).toBe('magtough');
   await ctx.close();
 });
 
-test('criterion 10: reduced motion changes the case type in one frame at the edge-on frame, never a run (or, on the poster tier, grid mode as before)', async ({ browser }) => {
+test('criterion 10: reduced motion changes the case type in one frame at the hand-over, never a run (or, on the poster tier, grid mode as before)', async ({ browser }) => {
   test.setTimeout(400_000);
   const ctx = await browser.newContext({ ...WIDE, reducedMotion: 'reduce' });
   const page = await ctx.newPage();
@@ -214,12 +214,12 @@ test('criterion 10: reduced motion changes the case type in one frame at the edg
   await open(page);
   await toScreen(page, 0.6);
   await settledTypes(page);
-  await toScreen(page, 2.7);
-  await rest(page, 2.7);
-  const log = await glide(page, 2.7, 3.0, 300, 300);
+  await toScreen(page, 2.6);
+  await rest(page, 2.6);
+  const log = await glide(page, 2.6, 3.0, 300, 300);
   expect(log.filter((r) => r.phase !== 'idle'), 'no frame of a run').toEqual([]);
   const first = log.find((r) => r.type === 'magtough')!;
-  expect(first.sv).toBeGreaterThanOrEqual(2.85);
-  expect(log.filter((r) => r.sv < 2.85).every((r) => r.type === 'tough')).toBe(true);
+  expect(first.sv).toBeGreaterThanOrEqual(2.8);
+  expect(log.filter((r) => r.sv < 2.8).every((r) => r.type === 'tough')).toBe(true);
   await ctx.close();
 });
