@@ -36,6 +36,8 @@ export const COPY = {
     close: 'Close',
     items: { top: 'Home', families: 'Families', quiz: 'Quiz', room: 'Products' },
     pages: { about: 'About' },
+    /** the gift at the index's end, which opens section 5 (2026-11-03); its name for assistive technology */
+    gift: 'Sign up',
   },
   page: {
     h1: 'Skreed. Tech essentials that go beyond basic.',

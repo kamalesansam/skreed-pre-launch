@@ -2,7 +2,8 @@
 //   PUBLIC_HERO_HOOKS=0 PUBLIC_TUNE=0 PUBLIC_STAGING=0 PUBLIC_FAMILY_3D=on npx astro build --outDir dist-about
 //   node scripts/csp.mjs --dist dist-about; npx wrangler dev --ip 127.0.0.1 --port <port> --assets dist-about
 //   BASE_URL=http://127.0.0.1:<port>/ SKREED_DIST=dist-about npx playwright test tests/e2e/about.spec.ts --project=e2e
-// The page ships no script, so every row reads what a visitor's browser has: the network, the DOM, the computed styles
+// The page ships one script since 2026-11-03, SiteLogo's (the glitch and the way back, E-About-home), so the rows read
+// what a visitor's browser has: the network, the DOM, the computed styles
 // and, through the DevTools protocol, the platform font each run of text was drawn with.
 import { test, expect, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
@@ -277,15 +278,17 @@ test.describe('AC7 reflow, zoom and text spacing', () => {
   }
 });
 
-test('AC8 zero JavaScript: no script fetched, one data block, no handlers; the same boxes with JavaScript off; the bytes', async ({ browser, baseURL }) => {
+test('AC8 JavaScript: SiteLogo\'s module only (2026-11-03), one data block, no handlers; the same boxes with JavaScript off; the bytes', async ({ browser, baseURL }) => {
   const url = new URL(PATH, baseURL).href;
   const on = await browser.newContext({ viewport: PHONE });
   const page = await on.newPage();
   const types: string[] = [];
   page.on('request', (r) => types.push(r.resourceType()));
   await page.goto(url, { waitUntil: 'load' }); await page.evaluate(() => document.fonts.ready); await page.waitForTimeout(300);
-  expect(types.filter((t) => t === 'script')).toEqual([]);
-  expect(await page.evaluate(() => [...document.scripts].map((s) => s.type))).toEqual(['application/ld+json']);
+  // the logotype's glitch and the way back (E-About-home, E-way-back): one module script and its chunks, nothing else
+  expect(types.filter((t) => t === 'script').length).toBeGreaterThan(0);
+  expect(await page.evaluate(() => [...document.scripts].map((s) => s.type).sort())).toEqual(['application/ld+json', 'module']);
+  expect(await page.evaluate(() => !!(window as unknown as { __skreedLogo?: unknown }).__skreedLogo)).toBe(true);
   expect(await page.evaluate(() => [...document.querySelectorAll('*')].flatMap((e) => [...e.attributes].filter((a) => /^on/i.test(a.name)).map((a) => `${e.tagName} ${a.name}`)))).toEqual([]);
   expect(await page.locator('noscript').count()).toBe(0);
   // the first view's bytes as transferred: the document and every resource it fetched

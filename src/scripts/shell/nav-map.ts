@@ -6,6 +6,8 @@ import { S2T } from '../../config/hero.ts';
 
 export type SectionId = 'top' | 'families' | 'quiz' | 'room';
 export const SECTION_IDS: readonly SectionId[] = ['top', 'families', 'quiz', 'room'];
+/** the sections the index jumps to: the four it names, and section 5, the sign-up, which the gift at its end opens (2026-11-03) */
+export type JumpId = SectionId | 'signup';
 
 export interface PageMap {
   /** the 3D path: the island runs and draws section 4's scenes (false on the poster tier, or for section 4 alone when it fell to its stills) */
@@ -14,10 +16,11 @@ export interface PageMap {
   roomStill: boolean;
   /** innerHeight, px */
   vh: number;
-  /** document tops, px: nav#families (the poster tier's swatch grid), section#find, section#room (NaN while the quiz gate hides it) */
+  /** document tops, px: nav#families (the poster tier's swatch grid), section#find, section#room and section#signup (NaN while the quiz gate hides them) */
   families: number;
   quiz: number;
   room: number;
+  signup?: number;
   /** nav#families' height and section 4's stage (one 100svh), px */
   familiesH: number;
   stage: number;
@@ -29,10 +32,13 @@ export interface PageMap {
  * Where a section rests, rounded and clamped to the page's range. 3D path: the top; section 2 at rest with the gems
  * landed (S2T.LAND, the return path's position, hero.ts); the quiz's top (the second seam's end, where its glue settles);
  * section 4's q 1, its top plus one stage, scene 1 fully in (the hall until 2026-11-02; gate.ts rideTarget). Poster tier: the top, nav#families
- * centred (as boot.ts centres it on a return), the quiz's top and section 4's top.
+ * centred (as boot.ts centres it on a return), the quiz's top and section 4's top. Section 5: the page's end on the 3D
+ * path (the fourth wipe ends at the page's last position, which can come before the section's top on a phone), its top
+ * on the poster tier.
  */
-export function restY(id: SectionId, m: PageMap): number {
-  const y = id === 'top' ? 0
+export function restY(id: JumpId, m: PageMap): number {
+  const y = id === 'signup' ? (m.island ? m.max : m.signup ?? NaN)
+    : id === 'top' ? 0
     : id === 'families' ? (m.island ? S2T.LAND * m.vh : m.families + m.familiesH / 2 - m.vh / 2)
     : id === 'quiz' ? m.quiz
     : m.island && !m.roomStill ? m.room + m.stage : m.room;
@@ -42,10 +48,12 @@ export function restY(id: SectionId, m: PageMap): number {
 /**
  * The section on screen at scroll y. 3D path: the countdown until the middle of the first wipe, section 2 until the
  * middle of the second seam (the glue's span, hero.ts), the quiz until section 4's top (the middle of the third seam),
- * then section 4. Poster tier: the section under the middle of the screen.
+ * then section 4, then section 5 once its top is half a screen up (or the page's end is reached). Poster tier: the
+ * section under the middle of the screen.
  */
-export function sectionAt(y: number, m: PageMap): SectionId {
+export function sectionAt(y: number, m: PageMap): JumpId {
   const has = Number.isFinite;
+  if (has(m.signup) && y >= Math.min(m.signup! - m.vh / 2, m.max - 1)) return 'signup';
   if (m.island) {
     if (y < ((S2T.PULL + S2T.W1END) / 2) * m.vh) return 'top';
     if (!has(m.quiz) || y < (Math.min(S2T.W2 * m.vh, m.quiz - m.vh) + m.quiz) / 2) return 'families';
