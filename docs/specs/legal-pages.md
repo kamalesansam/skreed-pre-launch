@@ -1,6 +1,6 @@
 # The legal pages: /privacy/ and /terms/
 
-Status: built 2026-11-03 on `claude/privacy-terms-pages` at Sam's request ("Do this task here: Privacy and terms pages for skreed.shop"), after skreed.shop went live with the two lead forms and both legal paths answered 404. Drafts: the copy is written from what the code does, and section 6 lists what only Sam (and his lawyer) can settle before the pages count as final.
+Status: built 2026-11-03 on `claude/privacy-terms-pages`, corrected the same day after the email codes (bc1ee64: a required first name, the six-digit code) and the dated mailings (09ac423) landed, at Sam's request ("Do this task here: Privacy and terms pages for skreed.shop"), after skreed.shop went live with the two lead forms and both legal paths answered 404. Drafts: the copy is written from what the code does, and section 6 lists what only Sam (and his lawyer) can settle before the pages count as final.
 
 ## 1. Goal
 
@@ -10,18 +10,19 @@ CLAUDE.md rules 46 and 47 and CHECKLIST G15 and G16 require a terms page and a D
 
 | Claim | Source |
 |---|---|
-| Email, and that the box was ticked | `lead_handle`: `email`, `consent` must be `yes` or no row is written |
-| Quiz: shade, family, finish, personality, answers | `$keep` for `quiz`: `shadeId`, `familyId`, `finish`, `persona`, `answers` |
+| First name and email, and that the box was ticked | `leads.first_name` (required since the email codes of 2026-11-03), `email`, `consent` must be `yes` or no row is written |
+| A six-digit code, kept only hashed, 10 minutes, and when the address was confirmed | `OTP_TTL` 600, `code_hash` (an HMAC of the code), `verified_at` |
+| Quiz: shade, family, finish, personality, the other shades recommended, answers | `$keep` for `quiz`: `shadeId`, `familyId`, `finish`, `persona`, `answers`, the names, `also`, `alsoIds`, `shadeHref` |
 | Sign-up: which platform pages were opened | `$keep` for `signup`: `follows` |
 | A one-way scramble of the IP address, the browser's reported name and version, the time | `ip_hash` (SHA-256 of the address and a secret salt), `user_agent` (255 characters), `created_at` |
-| No name, phone or payment details | the two forms send only the fields above |
+| No phone or payment details | the two forms send only the fields above |
 | No cookies, no analytics or advertising trackers | no `document.cookie` anywhere in `src/`; the analytics events are queued on the window and nothing sends them (`src/scripts/quiz/track.ts`, `src/scripts/family/track.ts`) |
 | Fonts, pictures and models from skreed.shop itself | every face self-hosted (`src/styles/fonts.css`); the CSP's `default-src 'self'` |
 | Notes in the browser for this tab only | `sessionStorage` only (31 uses, no `localStorage`): the quiz's place and gate, the follows, Back to top |
-| A confirmation now, launch news with the launch offer later, a note to the team | `lead_confirmation` and the `notify_to` mail |
+| The code; once confirmed, a welcome (the quiz's with wallpapers), a November reminder and the launch email; a note to the team; nothing more to an unconfirmed address | `lead_confirmation`, `server/lib/mailing.php` (`reminder`, `launch`, verified addresses only), the `notify_to` mail on a verified lead |
 | Abuse limit | 8 sends per scrambled address per 10 minutes, then 429 |
 | Hostinger hosts, Zoho sends | the deploy (`scripts/deploy/hostinger.sh`), `smtp.zoho.in` |
-| Withdraw by replying | the confirmation mail's own line: "Reply to this email and we remove you." |
+| Withdraw by replying, or by writing to collab@skreed.in | a manual removal by the team: the emails of 2026-11-03 carry no unsubscribe link (section 6, item 10) |
 | Skreed, Hyderabad, Telangana, India; collab@skreed.in | `SITE_COPY.org`, from the catalog (CHECKLIST G19) |
 
 ## 3. Decisions
@@ -59,3 +60,5 @@ A cookie notice (G17: the site sets no cookies, so none is needed while that hol
 7. The terms' launch offers: the terms say only that each offer's details come with it at launch. The discounts section 5 names ("5% OFF" to "UP TO 20% OFF") are its open question in `docs/specs/section-5-picture.md` 14; the terms should match whatever Sam decides there.
 8. Courts: the terms name the laws of India only. Add "the courts at Hyderabad, Telangana" as the place for disputes?
 9. A lawyer's read of both pages before the store opens.
+10. Withdrawal: DPDP asks that consent be as easy to withdraw as to give. The emails (Sam's welcome, reminder and launch copy, since the email codes of 2026-11-03) carry no unsubscribe line or link, so today withdrawal is a reply or a mail to collab@skreed.in and a removal by hand. An unsubscribe link in each email, or at least a line saying "reply to stop", would match what the notice promises.
+11. Unconfirmed addresses: a row is saved before the code is entered, and an address never confirmed stays in the table. A rule to delete those after a short time (a day, a week) would keep only what the notice needs.

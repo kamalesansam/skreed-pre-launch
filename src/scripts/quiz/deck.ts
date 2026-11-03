@@ -13,6 +13,8 @@ import { createDecoder } from './decode.ts';
 import { ride, riding, unlock } from './gate.ts';
 import { createPictures, type Pictures } from './picture.ts';
 import { track } from './track.ts';
+import { LEAD_CODE_COPY as K, codeLine, waitLine, wrongLine } from '../../config/lead-code.ts';
+import { RESEND_GAP_S, checkCode, cleanCode, cleanName, codeComplete, readCheck, readSave, validName as nameOk } from '../lead/code.ts';
 
 const DUR_MARK = 120, DUR_SWATCH = 400;
 /** a press on a question this soon after it was put on screen is dropped: its words are still at opacity 0, so it is the
@@ -254,7 +256,15 @@ export function mountQuiz(root: HTMLElement): void {
     void dc.showAll([...items(shown), ...(gift && !swapped() ? items(gift) : [])]);
     announce(`${Q.eyebrow} ${pick.dataset.name}. ${p.name}.`);
     shown.querySelector<HTMLElement>('.qz-shade')?.focus({ preventScroll: true });
-    if (form) { form.dataset.shade = shade; form.dataset.family = pick.dataset.family ?? ''; form.dataset.finish = p.finish; form.dataset.persona = p.id; }
+    if (form) {
+      form.dataset.shade = shade; form.dataset.family = pick.dataset.family ?? ''; form.dataset.finish = p.finish; form.dataset.persona = p.id;
+      // the email's copy of the result (server/lib/lead.php): the names as shown, the rest of the group in its order, whose
+      // first five carry the quiz email's wallpapers after the drawn shade's
+      const rest = [...shown.querySelectorAll<HTMLElement>('.qz-mini')].filter((m) => m.dataset.shade !== shade);
+      form.dataset.shadeName = pick.dataset.name ?? ''; form.dataset.familyName = pick.dataset.fam ?? ''; form.dataset.personaName = p.name;
+      form.dataset.shadeHref = pick.dataset.href ?? '';
+      form.dataset.also = rest.map((m) => m.dataset.name ?? '').join(', '); form.dataset.alsoIds = rest.map((m) => m.dataset.shade ?? '').join(',');
+    }
     // the result is one screen from the section's top: a page left part way down the last question comes back to it
     if (Math.abs(root.getBoundingClientRect().top) > 1) root.scrollIntoView({ block: 'start', behavior: reduced() ? 'instant' : 'smooth' });
     void document.fonts?.ready.then(() => { if (state === 'result') fitResult(); });
@@ -325,54 +335,102 @@ export function mountQuiz(root: HTMLElement): void {
   for (const b of results.querySelectorAll<HTMLButtonElement>('.qz-retry')) b.addEventListener('click', () => { void retry(); });
 
   // ---- the gift form (quiz.md 5: validation on blur and submit, sending, error, offline queue, duplicate, success);
-  // rendered only when the build has PUBLIC_LEADS on (Quiz.astro), so everything below is skipped without it
+  // rendered only when the build has PUBLIC_LEADS on (Quiz.astro), so everything below is skipped without it. Since
+  // 2026-11-03 a save mails a six-digit code and the form asks for it where the fields stood; the address counts once the
+  // code is right (src/scripts/lead/code.ts)
   if (!form || !gift) return;
   const email = form.querySelector<HTMLInputElement>('#qzEmail')!, consent = form.querySelector<HTMLInputElement>('#qzConsent')!;
   const send = form.querySelector<HTMLButtonElement>('#qzSend')!, msg = form.querySelector<HTMLElement>('#qzMsg')!;
   const errEmail = form.querySelector<HTMLElement>('#qzErrEmail')!, errConsent = form.querySelector<HTMLElement>('#qzErrConsent')!;
   const doneEl = $('qzDone')!, doneText = doneEl.querySelector<HTMLElement>('.qz-done-text')!, notYou = doneEl.querySelector<HTMLButtonElement>('.qz-notyou')!;
   const fields = form.querySelector<HTMLElement>('.qz-fields')!;
+  const name = form.querySelector<HTMLInputElement>('#qzName')!, errName = form.querySelector<HTMLElement>('#qzErrName')!;
+  const verify = $('qzVerify')!, code = verify.querySelector<HTMLInputElement>('#qzCode')!, confirm = verify.querySelector<HTMLButtonElement>('#qzConfirm')!;
+  const errCode = verify.querySelector<HTMLElement>('#qzErrCode')!, resendB = verify.querySelector<HTMLButtonElement>('.qz-resend')!, otherB = verify.querySelector<HTMLButtonElement>('.qz-other')!;
   dc.prepare(notYou, undefined, true);
   const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
   // the form's own lines go through the decoder too (set: at once, no animation), so each has its sentence-case copy for
   // assistive technology beside the capitals on screen
   const setErr = (el: HTMLElement, input: HTMLInputElement, text: string) => { dc.set(el, text); input.setAttribute('aria-invalid', text ? 'true' : 'false'); refit(); };   // the line keeps its height (quiz.css), so a message never moves the controls under it; a longer one is fitted again
+  const validName = () => { const ok = nameOk(name.value); setErr(errName, name, ok ? '' : K.errName); return ok; };
+  name.addEventListener('blur', () => { if (name.value) validName(); });
   const validEmail = () => { const ok = EMAIL.test(email.value.trim()); setErr(errEmail, email, ok ? '' : Q.errEmail); return ok; };
   const validConsent = () => { const ok = consent.checked; setErr(errConsent, consent, ok ? '' : Q.errConsent); return ok; };
   email.addEventListener('blur', () => { if (email.value) validEmail(); });   // on blur only once there is a value, never per keystroke
   consent.addEventListener('change', () => { if (consent.checked) validConsent(); });
   const note = (text: string) => { dc.set(msg, text); if (text) announce(text); refit(); };   // the status line stays in the tree so the live region is heard; the sr-only region repeats it; the screen is fitted again around it
-  const closeForm = (text: string) => { fields.hidden = true; doneEl.hidden = false; dc.set(doneText, text); note(''); doneText.focus(); };
+  /** the code step's line: an error under the code field, or the line that says where the code went; heard through the live region */
+  const codeNote = (text: string, bad = false) => { setErr(errCode, code, text); code.setAttribute('aria-invalid', bad ? 'true' : 'false'); if (text) announce(text); };
+
+  // the form's three stages: the fields, the code, done
+  let step: 'email' | 'code' | 'done' = 'email', lastBody: Record<string, string> | null = null;
+  const showStep = (s: typeof step) => { step = s; fields.hidden = s !== 'email'; verify.hidden = s !== 'code'; doneEl.hidden = s !== 'done'; refit(); };
+  // "Send a new code" waits out the server's gap, counting down in its own words
+  let tick = 0;
+  const stopTimer = () => { clearInterval(tick); tick = 0; resendB.setAttribute('aria-disabled', 'false'); dc.set(resendB, K.resend); };
+  const startTimer = (s: number) => {
+    clearInterval(tick);
+    const until = performance.now() + s * 1000;
+    const step = () => {
+      const left = Math.ceil((until - performance.now()) / 1000);
+      if (left <= 0) { stopTimer(); return; }
+      resendB.setAttribute('aria-disabled', 'true'); dc.set(resendB, codeLine(K.resendIn, { s: left }));
+    };
+    step(); tick = window.setInterval(step, 1000);
+  };
+  const closeForm = (text: string) => { stopTimer(); showStep('done'); dc.set(doneText, text); note(''); doneText.focus(); };
   // the fields' words come back in too: a swap that took the offer off the screen left them out
-  const openForm = () => { doneEl.hidden = true; fields.hidden = false; email.value = ''; consent.checked = false; setErr(errEmail, email, ''); setErr(errConsent, consent, ''); note(''); void dc.showAll(items(fields)); email.focus(); };
-  let sending = false, queued: Record<string, string> | null = null, gen = 0, inflight: AbortController | null = null;
-  resetGift = () => { gen++; inflight?.abort(); inflight = null; setErr(errEmail, email, ''); setErr(errConsent, consent, ''); note(''); };
-  restoreGift = () => { if (!sending) dc.prepare(send, Q.send); };
+  const openForm = () => { gen++; inflight?.abort(); inflight = null; stopTimer(); lastBody = null; showStep('email'); name.value = ''; email.value = ''; code.value = ''; consent.checked = false; setErr(errName, name, ''); setErr(errEmail, email, ''); setErr(errConsent, consent, ''); note(''); void dc.showAll(items(fields)); name.focus(); };
+  const askCode = (b: Record<string, string>, again: boolean, gap: number) => {
+    const was = step;
+    lastBody = b; showStep('code'); code.value = '';
+    if (was !== 'code') void dc.showAll(items(verify));
+    codeNote(codeLine(again ? K.resent : K.sent, { email: b.email })); startTimer(gap); code.focus();
+  };
+  let sending = false, checking = false, queued: Record<string, string> | null = null, gen = 0, inflight: AbortController | null = null;
+  resetGift = () => { gen++; inflight?.abort(); inflight = null; setErr(errName, name, ''); setErr(errEmail, email, ''); setErr(errConsent, consent, ''); note(''); };
+  restoreGift = () => { if (!sending) dc.prepare(send, Q.send); if (!checking) dc.prepare(confirm, Q.confirm); };
   /** an error line is not a live region: when focus does not move to its field (it is there already), it is announced */
   const flag = (input: HTMLInputElement, text: string) => { if (document.activeElement === input) announce(text); else input.focus(); };
   const setSending = (on: boolean, label: string) => { sending = on; send.setAttribute('aria-disabled', on ? 'true' : 'false'); dc.set(send, label); };
-  function payload(address: string) { return { email: address, shadeId: form!.dataset.shade ?? '', familyId: form!.dataset.family ?? '', finish: form!.dataset.finish ?? '', persona: form!.dataset.persona ?? '', answers: answers.join(','), consent: 'yes', source: 'quiz' }; }
+  function payload(address: string) { return { email: address, name: cleanName(name.value), shadeId: form!.dataset.shade ?? '', familyId: form!.dataset.family ?? '', finish: form!.dataset.finish ?? '', persona: form!.dataset.persona ?? '', answers: answers.join(','), shadeName: form!.dataset.shadeName ?? '', familyName: form!.dataset.familyName ?? '', personaName: form!.dataset.personaName ?? '', also: form!.dataset.also ?? '', alsoIds: form!.dataset.alsoIds ?? '', shadeHref: form!.dataset.shadeHref ?? '', consent: 'yes', source: 'quiz' }; }
   function queueLead(body: Record<string, string>) { queued = body; try { sessionStorage.setItem(QUEUE_KEY, JSON.stringify(body)); } catch { /* no storage: the queue lives in memory */ } closeForm(Q.offline); }
-  async function submit(body: Record<string, string>) {
+  const unqueue = () => { queued = null; try { sessionStorage.removeItem(QUEUE_KEY); } catch { /* ignore */ } };
+  /** a save, from the fields or as "Send a new code" from the code step */
+  async function submit(body: Record<string, string>, again = false) {
     if (sending) return;
-    setSending(true, Q.sending); note('');
+    if (again) { sending = true; resendB.setAttribute('aria-disabled', 'true'); } else setSending(true, Q.sending);
+    note('');
     const ac = new AbortController(), g = gen;
     inflight = ac;
-    const slow = setTimeout(() => { dc.set(send, Q.trying); }, 8000), hard = setTimeout(() => ac.abort(), 20000);
+    const slow = setTimeout(() => { if (!again) dc.set(send, Q.trying); }, 8000), hard = setTimeout(() => ac.abort(), 20000);
     try {
       const res = await fetch(QUIZ_LEAD_ENDPOINT, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), signal: ac.signal });
       if (g !== gen) return;   // Try again was pressed while it was sending: the answer belongs to a result no longer shown
-      // a definite answer (sent, duplicate, rejected) settles a queued lead too: it must not be re-sent on the next load
-      if (res.ok || res.status === 409 || res.status === 422) { queued = null; try { sessionStorage.removeItem(QUEUE_KEY); } catch { /* ignore */ } }
-      if (res.status === 409) { closeForm(Q.dup); track('lead_error', { kind: 'duplicate' }); }
-      else if (res.status === 422) { fields.hidden = false; doneEl.hidden = true; setErr(errEmail, email, Q.errEmail); flag(email, Q.errEmail); track('lead_error', { kind: 'invalid' }); }
-      else if (!res.ok) throw new Error(String(res.status));
-      else { closeForm(Q.done(body.email)); track('lead_success'); }
+      const a = await readSave(res);
+      if (g !== gen) return;
+      if (a.kind === 'error') throw new Error(String(a.status));
+      unqueue();   // a definite answer settles a queued lead too: it must not be re-sent on the next load
+      if (a.kind === 'code') { askCode(body, again, a.gap); track('lead_code_sent', { again: again ? 1 : 0 }); }
+      else if (a.kind === 'dup') { closeForm(Q.dup); track('lead_error', { kind: 'duplicate' }); }
+      else if (a.kind === 'invalid') { showStep('email'); setErr(errEmail, email, Q.errEmail); flag(email, Q.errEmail); track('lead_error', { kind: 'invalid' }); }
+      else if (a.kind === 'name') { showStep('email'); setErr(errName, name, K.errName); flag(name, K.errName); track('lead_error', { kind: 'name' }); }
+      // too soon: a code went out a moment ago (a reload, a second press), so the form asks for that one
+      else if (a.kind === 'wait') {
+        if (a.wait <= RESEND_GAP_S && step !== 'code') askCode(body, false, a.wait);
+        else if (step === 'code') { codeNote(waitLine(a.wait)); startTimer(a.wait); }
+        else { showStep('email'); note(waitLine(a.wait)); }
+        track('lead_error', { kind: 'wait' });
+      }
+      else if (step === 'code') { codeNote(K.mail); stopTimer(); track('lead_error', { kind: 'mail' }); }
+      else { showStep('email'); note(K.mail); track('lead_error', { kind: 'mail' }); }
     } catch (err) {
       if (g !== gen) return;
       // offline is a failed request with navigator.onLine false (a pre-check lies on captive portals): queue and retry on `online`
-      if (!navigator.onLine) queueLead(body);
-      else { fields.hidden = false; doneEl.hidden = true; note(Q.errSend); track('lead_error', { kind: err instanceof DOMException && err.name === 'AbortError' ? 'timeout' : 'network' }); }
+      if (!navigator.onLine && !again) queueLead(body);
+      else if (step === 'code') { codeNote(Q.errSend); stopTimer(); }
+      else { showStep('email'); note(Q.errSend); }
+      track('lead_error', { kind: err instanceof DOMException && err.name === 'AbortError' ? 'timeout' : 'network' });
     } finally {
       clearTimeout(slow); clearTimeout(hard); if (inflight === ac) inflight = null;
       // abandoned by Try again: Send is wiping out with the rest of the gift, so only the state is reset here and its
@@ -380,24 +438,60 @@ export function mountQuiz(root: HTMLElement): void {
       if (g === gen) setSending(false, Q.send); else { sending = false; send.setAttribute('aria-disabled', 'false'); }
     }
   }
+  /** the code checked */
+  async function check() {
+    if (checking || !lastBody) return;
+    if (!codeComplete(code.value)) { codeNote(K.errCode, true); if (document.activeElement !== code) code.focus(); return; }
+    const body = lastBody, ac = new AbortController(), g = gen;
+    checking = true; confirm.setAttribute('aria-disabled', 'true'); dc.set(confirm, Q.checking); setErr(errCode, code, '');
+    inflight = ac;
+    const hard = setTimeout(() => ac.abort(), 20000);
+    try {
+      const a = await readCheck(await checkCode(body.email, 'quiz', code.value, ac.signal));
+      if (g !== gen) return;
+      if (a.kind === 'ok') { lastBody = null; closeForm(Q.done(body.email)); track('lead_success'); return; }
+      if (a.kind === 'wrong') { codeNote(wrongLine(a.left), true); code.select(); track('lead_error', { kind: 'code' }); }
+      else if (a.kind === 'format') codeNote(K.errCode, true);
+      else if (a.kind === 'expired') { codeNote(K.expired, true); code.value = ''; stopTimer(); track('lead_error', { kind: 'expired' }); }
+      else throw new Error(String(a.status));
+    } catch (err) {
+      if (g !== gen) return;
+      codeNote(Q.errSend); track('lead_error', { kind: err instanceof DOMException && err.name === 'AbortError' ? 'timeout' : 'network' });
+    } finally {
+      clearTimeout(hard); if (inflight === ac) inflight = null;
+      checking = false; confirm.setAttribute('aria-disabled', 'false');
+      if (g === gen) dc.set(confirm, Q.confirm);
+    }
+  }
+  // typed or pasted: the digits alone, and a whole code checks itself (a phone's one-time-code fill included)
+  code.addEventListener('input', () => {
+    const v = cleanCode(code.value);
+    if (v !== code.value) code.value = v;
+    if (code.getAttribute('aria-invalid') === 'true') code.setAttribute('aria-invalid', 'false');
+    if (codeComplete(v)) void check();
+  });
+  resendB.addEventListener('click', () => { if (resendB.getAttribute('aria-disabled') !== 'true' && !checking && lastBody) void submit(lastBody, true); });
+  otherB.addEventListener('click', openForm);
   addEventListener('online', () => { const q = queued; if (q && !sending) { queued = null; void submit(q); } });
   try {
     const saved = sessionStorage.getItem(QUEUE_KEY);
     if (saved) {
       const q = JSON.parse(saved) as Record<string, string>;
-      email.value = q.email ?? ''; consent.checked = true;   // the visitor consented when it was queued; a failure then shows over the address, not an empty field
+      email.value = q.email ?? ''; name.value = q.name ?? ''; consent.checked = true;   // the visitor consented when it was queued; a failure then shows over the address, not an empty field
       if (navigator.onLine) void submit(q); else queueLead(q);
     }
   } catch { /* a bad entry is dropped */ }
   form.addEventListener('submit', (e) => {
     e.preventDefault();
+    if (step === 'code') { void check(); return; }
     if (sending) return;
-    const okEmail = validEmail(), okConsent = validConsent();
+    const okName = validName(), okEmail = validEmail(), okConsent = validConsent();
+    if (!okName) { flag(name, K.errName); return; }
     if (!okEmail || !okConsent) { if (okEmail) flag(consent, Q.errConsent); else flag(email, Q.errEmail); return; }
     track('lead_submit');
     void submit(payload(email.value.trim()));
   });
-  notYou.addEventListener('click', () => { queued = null; try { sessionStorage.removeItem(QUEUE_KEY); } catch { /* ignore */ } openForm(); });
+  notYou.addEventListener('click', () => { unqueue(); openForm(); });
 
   // ---- the swap (data-swap: a phone held sideways, or a screen too short for both): the result and the offer take the
   // screen in turn, each wiping out as the other decodes in, as every change of screen does; focus goes to the part shown

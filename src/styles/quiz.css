@@ -157,11 +157,15 @@ svg.qz-smear { aspect-ratio: var(--qz-paint-ar); }   /* our own stroke takes the
 .qz-offer { max-width: 66ch; font: 400 max(13px, calc(var(--qz-fs-offer) * var(--qz-rs, 1))) / 1.3 var(--qz-f-text); text-transform: none; text-wrap: balance; }
 .qz-offer strong { font-weight: 700; }
 .qz-form { width: 100%; }
-.qz-form, .qz-fields, .qz-done { display: grid; gap: calc(var(--s1) * var(--qz-rs, 1)); justify-items: center; }
+.qz-form, .qz-fields, .qz-verify, .qz-done { display: grid; gap: calc(var(--s1) * var(--qz-rs, 1)); justify-items: center; }
 .qz-fields { gap: 0; }   /* the lines kept for the messages under the field and the consent are the rhythm here */
 .qz-done-text { max-width: 100%; overflow-wrap: anywhere; }   /* the address is one long word: it breaks anywhere rather than run past the gutter */
-.qz-fields[hidden], .qz-done[hidden] { display: none; }
+.qz-fields[hidden], .qz-verify[hidden], .qz-done[hidden] { display: none; }
+.qz-verify { gap: 0; }   /* as the fields: the line kept under the code field is the rhythm */
+.qz-codelinks { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 var(--s4); }   /* the email code's two links, where the tick stood */
+.qz-code:not(:placeholder-shown) { letter-spacing: 0.08em; }
 .qz-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; width: min(100%, 640px); }
+.qz-name { width: min(100%, 640px); }   /* the first name (2026-11-03) as wide as the email's row under it */
 /* the field: a Pearl Whisper box with Urban Slate words in Work Sans Light, square; the address keeps the case it is typed in */
 .qz-input { width: 100%; min-height: 48px; padding: 0 var(--s3); border: 0; border-radius: 0; background: var(--pearl-whisper); color: var(--urban-slate); font: 300 max(16px, calc(var(--qz-fs-offer) * var(--qz-rs, 1))) / 1.2 var(--qz-f-label); text-transform: none; letter-spacing: 0; caret-color: var(--urban-slate); }   /* 16 px at the least: iOS Safari zooms the page on focusing a smaller field (DESIGN.md 8) */
 .qz-input::placeholder { color: var(--urban-slate); opacity: 1; }   /* the words' own colour with no tint: a grey at alpha is no colour of the palette (review iteration 4, 2026-11-03) */
@@ -264,8 +268,9 @@ svg.qz-smear { aspect-ratio: var(--qz-paint-ar); }   /* our own stroke takes the
   .qz-gift { padding-top: calc(3.4vh * var(--qz-rs, 1)); padding-bottom: calc(2.6vh * var(--qz-rs, 1) + env(safe-area-inset-bottom, 0px)); }
   .qz-gift-in { max-width: min(94vw, 1840px); gap: calc(3.6vh * var(--qz-rs, 1)); }
   .qz-offer { max-width: none; }   /* Sam's line on one line, as his reference sets it, where it fits */
-  .qz-fields { width: auto; }
+  .qz-fields, .qz-verify { width: auto; }
   .qz-row { width: min(100%, 58vw); grid-template-columns: minmax(0, 44fr) minmax(0, 14fr); }
+  .qz-name { width: min(100%, 58vw); }
   .qz-input, .qz-send { min-height: clamp(48px, calc(9vh * var(--qz-rs, 1)), 101px); }
   .qz-input { padding: 0 2.3vw; }
   .qz-send { padding: 0 1vw; }

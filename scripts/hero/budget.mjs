@@ -86,10 +86,18 @@ grow(roomRoots, graph, new Set(scrollGraph.keys()));
 // and in the total, never in section 4's script. The island has no section 5 chunk since that day: its jar went, and the
 // flat ground it holds under the section (section5/ground.ts) is part of the island chunk
 const signupDomGraph = new Map();
-grow([...dynamic].filter((p) => usable(p) && isSignupDom(p)), signupDomGraph, new Set([...scrollGraph.keys(), ...graph.keys()]));
+// section 5's email form (scripts/signup/form.ts, marker suCodePill): its own chunk since the email code of 2026-11-03,
+// fetched by the page script only where the build renders the form (PUBLIC_LEADS on), so it has its own line beside the
+// page script's and is in the total
+const SIGNUP_FORM_MARK = /suCodePill/;
+const signupFormRoots = astroFiles.filter((n) => n.endsWith('.js') && SIGNUP_FORM_MARK.test(readFileSync(join(dist, '_astro', n), 'utf8'))).map((n) => '/_astro/' + n);
+grow([...dynamic].filter((p) => usable(p) && isSignupDom(p)), signupDomGraph, new Set([...scrollGraph.keys(), ...graph.keys(), ...signupFormRoots]));
+const signupFormGraph = new Map();
+grow(signupFormRoots, signupFormGraph, new Set([...scrollGraph.keys(), ...graph.keys(), ...signupDomGraph.keys()]));
 for (const p of scrollGraph.keys()) add('scroll js (lazy)', p, join(dist, p));
 for (const p of graph.keys()) add('room js (lazy)', p, join(dist, p));
 for (const p of signupDomGraph.keys()) add('signup dom js (lazy)', p, join(dist, p));
+for (const p of signupFormGraph.keys()) add('signup form js (lazy)', p, join(dist, p));
 // the page script bundled into another chunk instead (no lazy chunk of its own): named on its line, counted where it is
 const signupDomElsewhere = signupDomGraph.size ? [] : astroFiles.filter((n) => n.endsWith('.js') && SIGNUP_DOM_MARK.test(readFileSync(join(dist, '_astro', n), 'utf8'))).map((n) => '/_astro/' + n);
 
@@ -184,7 +192,9 @@ const signupDomScript = gzOf(signupDomGraph);
 // (scripts/signup/jar-srcs.ts), not the first view's markup, and the loop's trigger at the page's end came on 2026-11-03;
 // 6.4 KB measured on 2026-11-03 against the 6.5 KB line set from the measure of 2026-11-02 (6 KB was the old page's)
 line("section 5's page script (scripts/signup/signup.ts, marker skreed:signup-filled; gzip)", signupDomScript, 7, { note: signupDomScript ? 'lazy, within a screen; the states\' URLs ride it' : signupDomElsewhere.length ? `bundled into ${signupDomElsewhere.join(', ')}, counted there` : 'not in this build' });
-line('total JS with sections 4 and 5 and scroll.ts (gzip)', totalJs + roomScript + scrollScript + signupDomScript, 250, { enforced: !tune, note: tune ? "production's line; this staging build carries Tune" : 'production' });
+const signupFormScript = gzOf(signupFormGraph);
+line("section 5's email form (scripts/signup/form.ts with the email code, marker suCodePill; gzip)", signupFormScript, 4, { note: signupFormScript ? 'lazy, fetched by the page script where the form is rendered' : 'not in this build (PUBLIC_LEADS off)' });
+line('total JS with sections 4 and 5 and scroll.ts (gzip)', totalJs + roomScript + scrollScript + signupDomScript + signupFormScript, 250, { enforced: !tune, note: tune ? "production's line; this staging build carries Tune" : 'production' });
 // the section's two type faces (D3: Inter and Jost, variable, latin, the Google Fonts files shipped unchanged), as stored
 // (woff2 is compressed already); fetched only once the section's lines render, so never in the first view
 const S5_FONTS = ['inter-opsz-wght-latin.woff2', 'jost-wght-latin.woff2'];

@@ -13,6 +13,7 @@
 // here at build, and deck.ts sets the drawn shade's on the section.
 import { QUIZ_COPY as Q, QUIZ_PERSONAS, QUIZ_QUESTIONS, shadeHref } from '../../config/quiz.ts';
 import { PRIVACY, PRIVACY_LINK } from '../../config/legal.ts';
+import { LEAD_CODE_COPY as K } from '../../config/lead-code.ts';
 import { chipInk, chipRim, resultTones } from '../../config/quiz-tones.ts';
 import { SHADES } from '../../config/shades.gen.ts';
 import { QUIZ_PICTURES } from '../../config/quiz-pictures.ts';
@@ -133,6 +134,9 @@ const shade = (id: string) => {
       <p class="qz-offer" tabindex="-1"><span data-dc="prop">{Q.offerLead}</span>{' '}<strong data-dc="prop">{Q.offerStrong}</strong>{' '}<span data-dc="prop">{Q.offerTail}</span></p>
       <form class="qz-form" id="qzForm" novalidate>
         <div class="qz-fields">
+          <label class="qz-label sr-only" for="qzName">{K.name}</label>
+          <input class="qz-input qz-name" id="qzName" name="name" type="text" autocomplete="given-name" autocapitalize="words" maxlength="60" spellcheck="false" required aria-describedby="qzErrName" placeholder={K.name}>
+          <p class="qz-err" id="qzErrName"></p>
           <div class="qz-row">
             <label class="qz-label sr-only" for="qzEmail">{Q.email}</label>
             <input class="qz-input" id="qzEmail" name="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" required aria-describedby="qzErrEmail" placeholder={Q.emailPlaceholder}>
@@ -143,6 +147,18 @@ const shade = (id: string) => {
           <p class="qz-err" id="qzErrConsent"></p>
           <p class="qz-msg" id="qzMsg" role="status"></p>
           <p class="qz-fine"><span data-dc="prop">{Q.fine}</span>{' '}<a class="qz-privacy" href={PRIVACY.path} data-dc="prop">{PRIVACY_LINK}</a></p>
+        </div>
+        <div class="qz-verify" id="qzVerify" hidden>
+          <div class="qz-row">
+            <label class="qz-label sr-only" for="qzCode">{K.code}</label>
+            <input class="qz-input qz-code" id="qzCode" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="9" spellcheck="false" aria-describedby="qzErrCode" placeholder={K.code}>
+            <button type="submit" class="qz-send" id="qzConfirm" data-dc="prop">{Q.confirm}</button>
+          </div>
+          <p class="qz-err" id="qzErrCode"></p>
+          <div class="qz-codelinks">
+            <button type="button" class="qz-link qz-resend" data-dc="prop">{K.resend}</button>
+            <button type="button" class="qz-link qz-other" data-dc="prop">{K.other}</button>
+          </div>
         </div>
         <div class="qz-done" id="qzDone" hidden>
           <p class="qz-done-text" tabindex="-1"></p>

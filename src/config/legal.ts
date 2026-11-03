@@ -38,12 +38,13 @@ export const PRIVACY: LegalPage = {
     { h: 'What we collect', blocks: [
       ['Only what you send us with the sign-up form or the quiz’s form, and only once you tick the box that says you are happy to hear from us by email:'],
       { list: [
-        ['Your email address, and that you ticked the box.'],
-        ['From the quiz: the shade it drew for you, its family, the finish, the personality it matched and your answers.'],
+        ['Your first name and email address, and that you ticked the box.'],
+        ['To check the address is yours: a six-digit code we email you. We keep only a scrambled form of it, it stops working after 10 minutes, and we note when you confirmed.'],
+        ['From the quiz: the shade it drew for you, its family, the finish, the personality it matched, the other shades it recommended and your answers.'],
         ['From the sign-up: which of our Facebook, YouTube and Instagram pages you opened from the jars.'],
         ['With either form, to keep it safe: a one-way scramble of your IP address that cannot be turned back into the address, the name and version your browser reports, and the time.'],
       ] },
-      ['We ask for no name, no phone number and no payment details.'],
+      ['We ask for no phone number and no payment details.'],
     ] },
     { h: 'What we do not collect', blocks: [
       ['The site sets no cookies and runs no analytics or advertising trackers. Its fonts, pictures and 3D models come from skreed.shop itself, not from other companies.'],
@@ -51,7 +52,8 @@ export const PRIVACY: LegalPage = {
     ] },
     { h: 'Why we use it', blocks: [
       { list: [
-        ['To email you: one note now to confirm, and our launch news with your launch offer when the store opens.'],
+        ['To confirm your address: the six-digit code.'],
+        ['To email you once you have confirmed: a welcome note (from the quiz, with wallpapers in your shade), then in November 2026 a reminder and our launch email with your launch offer. An address that is never confirmed gets nothing but the code.'],
         ['To tell our team that you signed up, with what you sent.'],
         ['To stop abuse: the scrambled IP address limits how often one connection can send the forms.'],
       ] },
