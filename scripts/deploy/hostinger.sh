@@ -16,5 +16,8 @@ mkdir -p dist/api && cp server/public/api/*.php dist/api/
 
 $SSH "$SKREED_SSH" "mkdir -p skreed-api/lib && test -f skreed-api/config.php || echo 'WARNING: ~/skreed-api/config.php is missing: the forms will answer 500 until it is written'"
 rsync -az --delete -e "$SSH" server/lib/ "$SKREED_SSH:skreed-api/lib/"
+# the quiz email's wallpapers (Sam's, git-ignored: node scripts/quiz/prepare-wallpapers.mjs "<folder>" makes them)
+if [ -f server/wallpapers/index.json ]; then rsync -az --delete -e "$SSH" server/wallpapers/ "$SKREED_SSH:skreed-api/wallpapers/"
+else echo 'WARNING: server/wallpapers/ is empty: the quiz email goes without its wallpapers (scripts/quiz/prepare-wallpapers.mjs)'; fi
 rsync -az --delete --exclude '.well-known' -e "$SSH" dist/ "$SKREED_SSH:$ROOT/public_html/"
 echo "Deployed to https://skreed.shop"

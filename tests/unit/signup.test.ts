@@ -50,7 +50,7 @@ test('the copy, verbatim from the picture top to bottom: the curly apostrophe ev
   assert.doesNotMatch(astro, /su-credit|Pentristo|sketchfab|su-count|su-state|Follow on|Subscribe on/i);
   assert.match(astro, /<input type="checkbox" id="suConsent" name="consent" required/);
   assert.equal(C.consent, 'I’m happy to hear from Skreed by email.');
-  assert.match(dom, /consent: 'yes'/);
+  assert.match(read('src/scripts/signup/form.ts'), /consent: 'yes'/);   // the form's own chunk since the email code (2026-11-03)
 });
 
 test('the follows (D6): the three addresses, Facebook a quarter of blue, YouTube a quarter of red, Instagram a half of the mixed lot, each column one link to a new tab named for assistive technology, the star column no link', () => {

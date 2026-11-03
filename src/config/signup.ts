@@ -64,6 +64,9 @@ export const SIGNUP_COPY = Object.freeze({
   offline: 'You’re offline. We’ll send it when you’re back.',
   done: 'Done. Your colours are saved to {email}.',
   notYou: 'Not you? Use another email.',
+  /** the email code's button (its lines are LEAD_CODE_COPY's), in the form's capitals */
+  confirm: 'CONFIRM',
+  checking: 'CHECKING...',
   noscript: 'The form needs JavaScript.',
 });
 

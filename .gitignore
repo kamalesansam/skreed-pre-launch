@@ -35,3 +35,6 @@ graphify-out/
 .claude/proven-config.json
 .claude/.proven-config-version
 __pycache__/
+
+# Sam's quiz wallpapers, his upload: never in the public repository (scripts/quiz/prepare-wallpapers.mjs)
+/server/wallpapers/
