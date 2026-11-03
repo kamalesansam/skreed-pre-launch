@@ -90,6 +90,7 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
 import { S2T } from '../../src/config/hero.ts';
 import { QUIZ_COPY as Q, QUIZ_GATE, QUIZ_PERSONAS, QUIZ_QUESTIONS, QUIZ_REVEAL_MS, luminance, pickShade, scoreQuiz, shadeHref, type Persona, type PersonaId } from '../../src/config/quiz.ts';
+import { PRIVACY_LINK } from '../../src/config/legal.ts';
 import { chipInk, chipRim, resultTones, type ResultTones } from '../../src/config/quiz-tones.ts';
 import { ROOM_COPY } from '../../src/config/room.ts';
 import { SHADES } from '../../src/config/shades.gen.ts';
@@ -119,12 +120,12 @@ const GUARD = 350, GUARD_REDUCED = 150;
  *  neutral at OKLab 0.27), by catalog id: Chestnut, Sapphire, Prussian, Navy, Midnight, Pine, Burgundy, Wine and Fig */
 const RIM = ['basic-brown-20', 'blissful-blue-15', 'blissful-blue-21', 'blissful-blue-22', 'blissful-blue-24', 'go-green-21', 'roaring-red-21', 'roaring-red-23', 'vivid-violet-16'];
 /** the gift's decoded lines (deck.ts items(), in reading order): the offer's three runs (its lead, its bold middle and its
- *  tail), Send my code, the consent words, the fine print, and Back to your shade (shown on a phone held sideways only,
- *  decoded with the rest on every screen) */
-const GIFT_LINES = 7;
+ *  tail), Send my code, the consent words, the fine print and its privacy notice link (docs/specs/legal-pages.md D4),
+ *  and Back to your shade (shown on a phone held sideways only, decoded with the rest on every screen) */
+const GIFT_LINES = 8;
 /** the same lines as the watch keys them (an element with neither id nor class by its tag: the offer's runs and the
- *  consent words) */
-const GIFT_KEYS = ['span', 'strong', 'span', '#qzSend', 'span', '.qz-fine', '.qz-toresult'];
+ *  consent words and the fine print) */
+const GIFT_KEYS = ['span', 'strong', 'span', '#qzSend', 'span', 'span', '.qz-privacy', '.qz-toresult'];
 /** whether the result and the offer take the screen in turn (deck.ts fitResult() sets data-swap on #find on a phone held
  *  sideways, and wherever the two do not share one screen at --qz-rs 0.7) */
 const swapped = (page: Page): Promise<boolean> => page.locator('#find').evaluate((f) => f.hasAttribute('data-swap'));
@@ -448,7 +449,7 @@ async function expectResult(page: Page, r: Drawn): Promise<void> {
   // shown the consent in capitals and the fine print as written. Send is left out: its words are the form's state
   if (await page.locator('#qzGift').count() && !(await swapped(page))) {
     const gift = page.locator('#qzGift'), giftLines: [string, string, boolean][] = [['.qz-offer > span:first-child', Q.offerLead, false], ['.qz-offer > strong', Q.offerStrong, false], ['.qz-offer > span:last-child', Q.offerTail, false], ['.qz-toresult', Q.toResult, true]];
-    if (await gift.locator('.qz-fields').isVisible()) giftLines.push(['.qz-check > span:last-child', Q.consent, true], ['.qz-fine', Q.fine, false]);
+    if (await gift.locator('.qz-fields').isVisible()) giftLines.push(['.qz-check > span:last-child', Q.consent, true], ['.qz-fine > span', Q.fine, false], ['.qz-privacy', PRIVACY_LINK, false]);
     for (const [sel, text, caps] of giftLines) expect(await atRest(gift.locator(sel)), `the offer's ${sel}: one text node at rest, Sam's words in his case, ${caps ? 'drawn in capitals' : 'drawn as written'}`).toEqual(settledLine(text, caps));
   }
 }

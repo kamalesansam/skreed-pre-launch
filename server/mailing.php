@@ -34,7 +34,7 @@ try {
     $to = strtolower(trim((string) $opt['test']));
     if ($cmd === 'due' || !filter_var($to, FILTER_VALIDATE_EMAIL)) { fwrite(STDERR, "--test needs reminder or launch and an email\n"); exit(2); }
     [$subject, $text, $html] = mailing_message($cmd, is_string($opt['name'] ?? null) ? $opt['name'] : 'Sam');
-    $ok = lead_smtp($to, $subject, $text, lead_config()['reply_to'] ?? null, $html);
+    $ok = lead_smtp($to, $subject, $text, lead_config()['reply_to'] ?? null, $html, [], true);
     mailing_log("{$cmd}: test to {$to} " . ($ok ? 'sent' : 'FAILED (' . lead_smtp_reply() . ')'));
     exit($ok ? 0 : 1);
   }
@@ -51,6 +51,8 @@ try {
 
   $failed = 0;
   if ($cmd === 'due') {
+    // every cron run also deletes the addresses never confirmed a day after their last code (docs/specs/legal-pages.md D7)
+    if (!isset($opt['dry-run']) && ($gone = lead_purge_unconfirmed(lead_db())) > 0) mailing_log("unconfirmed: {$gone} deleted");
     $open = array_filter(MAILINGS, function ($m) use ($now) { [$a, $b] = mailing_window($m); return $now >= $a && $now < $b; });
     foreach ($open as $m) $failed += mailing_run($m, $now, isset($opt['dry-run']));
     // nothing open: quiet, so the cron's every-5-minutes run writes no log outside the windows

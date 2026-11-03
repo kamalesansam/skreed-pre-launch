@@ -14,6 +14,7 @@ const OTP_TTL = 600;     // a code works for 10 minutes
 const OTP_TRIES = 5;     // wrong entries before the code is spent
 const OTP_GAP = 30;      // seconds between two codes to one address
 const OTP_SENDS = 5;     // codes to one address in an hour
+const UNCONFIRMED_TTL = 86400;   // an address never confirmed is deleted a day after its last code (docs/specs/legal-pages.md D7)
 
 function lead_config(): array {
   static $c = null;
@@ -37,9 +38,17 @@ function lead_reply(int $code, array $body = []): never {
 
 // a plain SMTP client over implicit TLS (port 465), AUTH LOGIN; returns true when the server queued the message
 // $attach: [[file name shown, path on disk], ...], PNG files (the quiz email's wallpapers)
-function lead_smtp(string $to, string $subject, string $text, ?string $replyTo = null, ?string $html = null, array $attach = []): bool {
+// $unsub: a mail to a visitor's list (the welcome, the reminder, the launch email): the unsubscribe line at its foot and the
+// one-click headers (RFC 8058) mail clients show as their own Unsubscribe (docs/specs/legal-pages.md D6)
+function lead_smtp(string $to, string $subject, string $text, ?string $replyTo = null, ?string $html = null, array $attach = [], bool $unsub = false): bool {
   $c = lead_config();
   lead_smtp_reply('');
+  if ($unsub) {
+    $page = lead_unsub_url($to);
+    $text = rtrim($text) . "\n\nDon’t want these emails? Unsubscribe: {$page}\n";
+    if ($html !== null) $html = str_replace('</div></body></html>', '<p style="margin:24px 0 0;font-size:13px;color:#383F43">Don’t want these emails? <a href="'
+      . htmlspecialchars($page, ENT_QUOTES | ENT_HTML5, 'UTF-8') . '" style="color:#383F43">Unsubscribe</a></p></div></body></html>', $html);
+  }
   $s = @stream_socket_client('ssl://' . $c['smtp_host'] . ':' . $c['smtp_port'], $errno, $err, 10);
   if (!$s) { lead_smtp_reply("connect: {$err}"); return false; }
   stream_set_timeout($s, 10);
@@ -57,6 +66,7 @@ function lead_smtp(string $to, string $subject, string $text, ?string $replyTo =
     'MIME-Version: 1.0',
   ];
   if ($replyTo) $headers[] = 'Reply-To: <' . $replyTo . '>';
+  if ($unsub) array_push($headers, 'List-Unsubscribe: <' . lead_unsub_api($to) . '>', 'List-Unsubscribe-Post: List-Unsubscribe=One-Click');
   if ($html === null) {
     array_push($headers, 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64');
     $body = chunk_split(base64_encode($text));
@@ -229,6 +239,56 @@ function lead_code_hash(string $email, string $source, string $code): string {
   return hash_hmac('sha256', "{$source}|{$email}|{$code}", lead_config()['ip_salt']);
 }
 
+/** the unsubscribe token for an address: keyed, so a link works for its own address only, and never expires */
+function lead_unsub_token(string $email): string {
+  return substr(hash_hmac('sha256', 'unsubscribe|' . strtolower($email), lead_config()['ip_salt']), 0, 32);
+}
+/** the page a person opens from the mail's line: it asks before anything is deleted, since mail scanners open links */
+function lead_unsub_url(string $email): string {
+  return lead_config()['site_url'] . '/unsubscribe/?e=' . rawurlencode(strtolower($email)) . '&t=' . lead_unsub_token($email);
+}
+/** the endpoint the one-click header posts to (RFC 8058) */
+function lead_unsub_api(string $email): string {
+  return lead_config()['site_url'] . '/api/unsubscribe?e=' . rawurlencode(strtolower($email)) . '&t=' . lead_unsub_token($email);
+}
+
+/** addresses never confirmed, a day after their last code: deleted (docs/specs/legal-pages.md D7); returns how many */
+function lead_purge_unconfirmed(PDO $db): int {
+  $q = $db->prepare('DELETE FROM leads WHERE verified_at IS NULL AND COALESCE(code_sent_at, created_at) < ?');
+  $q->execute([lead_now(-UNCONFIRMED_TTL)]);
+  return $q->rowCount();
+}
+
+// an unsubscribe: the address's rows (both forms) and its mailing records deleted, so nothing more goes to it and nothing
+// of it is kept. POST only, so a link opened by a mail scanner changes nothing: the one-click header's form post
+// (List-Unsubscribe=One-Click, the address and token in the query) or the page's JSON ({email, token}). 200 whether or not
+// the address was on the list, 403 a token that is not the address's, 400 nothing to go on.
+function lead_unsubscribe(): never {
+  $c = lead_config();
+  if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { header('Allow: POST'); lead_reply(405); }
+  $raw = (string) file_get_contents('php://input', false, null, 0, 4096);
+  $in = json_decode($raw, true);
+  if (!is_array($in)) $in = [];
+  $email = strtolower(trim((string) ($in['email'] ?? $_GET['e'] ?? '')));
+  $token = (string) ($in['token'] ?? $_GET['t'] ?? '');
+  if ($email === '' || $token === '' || strlen($email) > 254 || !filter_var($email, FILTER_VALIDATE_EMAIL)) lead_reply(400);
+  if (!hash_equals(lead_unsub_token($email), $token)) lead_reply(403);
+  try {
+    $db = lead_db();
+    $q = $db->prepare('DELETE FROM leads WHERE email = ?');
+    $q->execute([$email]);
+    $gone = $q->rowCount();
+    $db->prepare('DELETE FROM lead_mailings WHERE email = ?')->execute([$email]);
+  } catch (PDOException $e) {
+    error_log('skreed unsubscribe: ' . $e->getMessage());
+    lead_reply(500);
+  }
+  lead_reply_then(200);
+  // the team hears of it, so a copy kept anywhere else (a spreadsheet, the store) can be removed too
+  if ($gone > 0) foreach ((array) $c['notify_to'] as $to) lead_smtp($to, 'Skreed: unsubscribed', "{$email} unsubscribed. Their rows and mailing records were deleted from the leads database.\nRemove the address from any other list it was copied to.\n");
+  exit;
+}
+
 function lead_now(int $offset = 0): string { return gmdate('Y-m-d H:i:s', time() + $offset); }
 function lead_age(?string $utc): int { return $utc ? time() - (int) strtotime($utc . ' UTC') : PHP_INT_MAX; }
 
@@ -283,6 +343,7 @@ function lead_handle(string $source): never {
 
   try {
     $db = lead_db();
+    lead_purge_unconfirmed($db);
     // one address from one network: at most 8 different addresses sent a code in 10 minutes
     $q = $db->prepare('SELECT COUNT(*) FROM leads WHERE ip_hash = ? AND code_sent_at > ? AND NOT (email = ? AND source = ?)');
     $q->execute([$ipHash, lead_now(-600), $email, $source]);
@@ -368,7 +429,7 @@ function lead_verify(): never {
   $id = (int) $row['id'];
   $fields = json_decode((string) $row['fields'], true) ?: [];
   [$subject, $text, $html, $files] = lead_confirmation($source, $fields, (string) $row['first_name']);
-  $sent = lead_smtp($email, $subject, $text, $c['reply_to'] ?? null, $html, $files);
+  $sent = lead_smtp($email, $subject, $text, $c['reply_to'] ?? null, $html, $files, true);
   $note = "New verified {$source} lead #{$id}: {$row['first_name']} <{$email}>\n\n" . json_encode($fields, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
     . "\n\nWelcome mail: " . ($sent ? 'sent' : 'FAILED') . "\nVerified leads in total: {$total}\nAll leads: " . $c['site_url'] . "/api/leads\n";
   foreach ((array) $c['notify_to'] as $to) lead_smtp($to, "Skreed: new {$source} sign-up ({$total})", $note);

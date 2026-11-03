@@ -11,6 +11,7 @@
 // fills the visitor's jar, drives the form. No style attributes (the CSP has no
 // style-src-attr): the jars' frame numbers ride an inline style block, which scripts/csp.mjs hashes.
 import { SIGNUP_COPY as C, SIGNUP_FOLLOWS, followAria } from '../../config/signup.ts';
+import { PRIVACY, PRIVACY_LINK } from '../../config/legal.ts';
 import { JARS, SIZES, STATE_SRCS } from '../../scripts/signup/jar-srcs.ts';
 import { QUIZ_GATE } from '../../config/quiz.ts';
 import gate from '../../inline/signup-gate.inline.js?raw';
@@ -114,7 +115,7 @@ const yours = STATE_SRCS['0'] ?? null;
           </div>
           <p class="su-done" id="suDone" tabindex="-1" hidden></p>
         </div>
-        <label class="su-consent" id="suConsentRow"><input type="checkbox" id="suConsent" name="consent" required aria-describedby="suMsg"><span>{C.consent}</span></label>
+        <div class="su-consent" id="suConsentRow"><label><input type="checkbox" id="suConsent" name="consent" required aria-describedby="suMsg"><span>{C.consent}</span></label><a class="su-privacy" href={PRIVACY.path}>{PRIVACY_LINK}</a></div>
         <div class="su-msgrow">
           <p class="su-msg" id="suMsg" role="status"></p>
           <button type="button" class="su-notyou" id="suNotYou" hidden>{C.notYou}</button>

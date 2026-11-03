@@ -167,7 +167,7 @@ function mailing_run(string $mailing, DateTimeImmutable $now, bool $dry = false)
     if ($i > 0 && $gap > 0) usleep((int) ($gap * 1e6));
     if (!mailing_claim($db, $mailing, $r)) continue;   // another run took it
     [$subject, $text, $html] = mailing_message($mailing, (string) $r['first_name']);
-    $ok = lead_smtp($r['email'], $subject, $text, $c['reply_to'] ?? null, $html);
+    $ok = lead_smtp($r['email'], $subject, $text, $c['reply_to'] ?? null, $html, [], true);
     $reply = substr(preg_replace('/\s+/', ' ', lead_smtp_reply()), 0, 255);
     $db->prepare('UPDATE lead_mailings SET status = ?, last_reply = ?, sent_at = ? WHERE mailing = ? AND email = ?')
       ->execute([$ok ? 'sent' : 'failed', $reply, $ok ? lead_now() : null, $mailing, $r['email']]);

@@ -187,7 +187,10 @@ svg.qz-smear { aspect-ratio: var(--qz-paint-ar); }   /* our own stroke takes the
 @media (hover: hover) { .qz-send:hover:not([aria-disabled="true"]) { background: var(--night); } }
 .qz-send[aria-disabled="true"] { cursor: default; }
 @media (max-width: 399px) { .qz-input { padding: 0 var(--s2); } .qz-send { padding: 0 var(--s3); } }   /* under 400 px the placeholder needs the room: "Your email address" is 142.4 px at 16 px, and a 170 px field less 2 x 16 px cut it short at 360 x 780 (review iteration 4) */
-.qz-fine { max-width: 72ch; font: 400 12px / 1.4 var(--qz-f-text); text-transform: none; }   /* 12 px, CHECKLIST A3's least */
+.qz-fine { max-width: 72ch; font: 400 12px / 1.4 var(--qz-f-text); text-transform: none; }
+.qz-privacy { color: inherit; text-decoration-line: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; }   /* the privacy notice beside the fine print (docs/specs/legal-pages.md D4), in the quiz's link idiom */
+@media (hover: hover) { .qz-privacy:hover { text-decoration-thickness: 2px; } }
+.qz-privacy:focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }   /* 12 px, CHECKLIST A3's least */
 /* the consent tick is text too: the box itself stays in the tree for the keyboard and assistive technology, unseen, and
    the row shows [ ] or [X] in the same type */
 .qz-check { display: grid; grid-template-columns: auto auto; gap: var(--s2); align-items: baseline; align-content: center; min-height: 44px; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }   /* the tick on the words' first line (the words take two lines on a phone; centred, it floated between them), the row's words centred in its 44 px */

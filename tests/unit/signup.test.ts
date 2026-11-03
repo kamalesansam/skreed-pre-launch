@@ -61,7 +61,9 @@ test('the follows (D6): the three addresses, Facebook a quarter of blue, YouTube
   assert.deepEqual(SIGNUP_FOLLOWS.map(followAria), ['Follow Skreed on Facebook, 5% off (opens in a new tab)', 'Subscribe to Skreed on YouTube, 5% off (opens in a new tab)', 'Follow Skreed on Instagram, 10% off (opens in a new tab)']);
   // the follow columns: one <a> each, target _blank and rel noopener, the column's accessible name; the star column a group, no link inside
   assert.match(astro, /<a class="su-col su-follow" href=\{j\.url\} target="_blank" rel="noopener" data-id=\{j\.id\} aria-label=\{j\.aria\}>/);
-  assert.equal((astro.match(/<a\b/g) ?? []).length, 1, 'one link template, rendered once per follow');
+  // the follow template, rendered once per follow, and the privacy notice beside the consent (docs/specs/legal-pages.md D4)
+  assert.equal((astro.match(/<a\b/g) ?? []).length, 2, 'one link template, rendered once per follow, and the privacy notice');
+  assert.equal((astro.match(/<a class="su-privacy" href=\{PRIVACY\.path\}>/g) ?? []).length, 1, 'the privacy notice beside the consent');
   const star = astro.slice(astro.indexOf('<div class="su-col su-yours"'), astro.indexOf('{LEADS && (', astro.indexOf('<div class="su-col su-yours"')));
   assert.ok(star.length > 0, 'the star column');
   assert.doesNotMatch(star, /<a\b|href=/, 'the star column is not a link');
