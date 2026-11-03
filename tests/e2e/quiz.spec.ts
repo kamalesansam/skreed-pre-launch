@@ -2604,7 +2604,8 @@ test('E-S3-result the ground leaves with the scroll (D53; Sam, 2026-11-03: "afte
   });
   // the fade as deck.ts draws it: full within 3% of a screen of the rest, then linear to 0 at half a screen
   const faded = (f: number) => Math.max(0, Math.min(1, 1 - Math.max(0, Math.abs(f) - 0.03) / 0.47));
-  // fixed to the screen, full at the rest
+  // fixed to the screen, full at the rest, once its rise from the screen's foot (D51, 0.7 s) has ended
+  await page.evaluate(() => Promise.all(document.querySelector('#find > .qz-ground')!.getAnimations().map((a) => a.finished.catch(() => null))));
   expect(await ground(), 'the ground covers the screen, full').toMatchObject({ position: 'fixed', top: 0, height: vh, opacity: 1 });
   // a stray pixel of scroll starts nothing
   await scrollFind(3);

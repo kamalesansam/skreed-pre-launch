@@ -150,8 +150,8 @@ export function mountQuiz(root: HTMLElement): void {
     if (w > 0 && h > 0) el.style.setProperty('--qz-paint-ar', (w / h).toFixed(5));
   }
 
-  let groundRaf = 0;
-  function setState(s: State) { state = s; root.dataset.state = s; groundBand(); }
+  let groundRaf = 0, bandUntil = 0;
+  function setState(s: State) { state = s; root.dataset.state = s; bandUntil = performance.now() + 1500; groundBand(); }
   /** the fixed logotype and Back to top stay Pearl Whisper while the result's deep ground lies under them (quiz.css) */
   function groundBand() {
     groundRaf = 0;
@@ -167,9 +167,9 @@ export function mountQuiz(root: HTMLElement): void {
     if (o < 1) root.style.setProperty('--qz-fade', o.toFixed(3)); else root.style.removeProperty('--qz-fade');
     // the logotype and the section index stay Pearl Whisper while the ground is the greater part of what lies under them
     document.documentElement.toggleAttribute('data-qz-ground', state === 'result' && o >= 0.5);
-    // part faded: read again next frame, so a fade read mid-change (the result replacing the deck after Try again, with no
-    // scroll event to follow) never sticks; at rest (1) or gone (0) the reads stop
-    if (o > 0 && o < 1) groundRaf = requestAnimationFrame(groundBand);
+    // read again next frame while part faded, and for 1.5 s after a change of screen whatever it reads, so a fade read
+    // mid-change (the result replacing the deck after Try again, with no scroll event to follow) never sticks
+    if ((o > 0 && o < 1) || performance.now() < bandUntil) groundRaf = requestAnimationFrame(groundBand);
   }
   addEventListener('scroll', () => { if (!groundRaf) groundRaf = requestAnimationFrame(groundBand); }, { passive: true });
   // the section can come to rest with no scroll event (a layout change above or within it, the result replacing the deck
