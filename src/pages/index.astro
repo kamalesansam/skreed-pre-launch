@@ -22,13 +22,26 @@ import Signup from '../components/signup/Signup.astro';
 import BackToTop from '../components/shell/BackToTop.astro';
 import { COPY } from '../config/copy.ts';
 import { NIGHT } from '../config/tokens.ts';
+import { SITE_URL } from '../config/site.ts';
+import { SITE_COPY } from '../scripts/family/site-copy.ts';
 // The dev-only component is imported only when its flag is set, so production carries neither its markup nor its
 // scripts and styles (Astro bundles the scripts of every imported component, rendered or not).
+// the landing's place in the site as structured data: the Organization node the family and About pages share, and the site
+const o = SITE_COPY.org;
+const ld = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@graph': [
+    { '@type': 'Organization', '@id': `${SITE_URL}/#org`, name: o.name, url: `${SITE_URL}/`, email: o.email, logo: `${SITE_URL}/icon-512.png`,
+      address: { '@type': 'PostalAddress', addressLocality: o.locality, addressRegion: o.region, addressCountry: o.country }, sameAs: [o.instagram] },
+    { '@type': 'WebSite', '@id': `${SITE_URL}/#site`, url: `${SITE_URL}/`, name: o.name, description: COPY.page.description, inLanguage: 'en-IN', publisher: { '@id': `${SITE_URL}/#org` } },
+  ],
+}).replace(/</g, '\\u003c');
 const Tune = import.meta.env.PUBLIC_TUNE === '1' ? (await import('../components/dev/Tune.astro')).default : null;
 ---
 <Base title={COPY.page.title} description={COPY.page.description} path="/" preloadFonts={['/fonts/open-sans-400-600-latin.woff2', '/fonts/ibm-plex-mono-500-caps.woff2']} themeColor={NIGHT}>
   <Gate slot="head-first" />
   <HeroPosterPreload slot="head" />
+  <script slot="head" type="application/ld+json" is:inline set:html={ld}></script>
   <HeroStage>
     <HeroPoster slot="poster" />
     <WordmarkSprite slot="sprite" />

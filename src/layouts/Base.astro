@@ -2,7 +2,9 @@
 // The page skeleton every route uses (hero-architecture.md 4.2): lang, meta, canonical, font preloads, staging noindex,
 // and the global stylesheets (tokens, the 240 shade tokens, the faces). Page-specific head items go in two slots:
 // "head-first" (inline scripts that must run before any CSS applies, such as the hero's Gate) and "head" (preloads).
-// Meta slots for OG, icons and JSON-LD arrive with the site-essentials pass (CHECKLIST G).
+// The share tags (Open Graph and the large summary card, with a 1200 by 630 render of the real cases from public/og/),
+// the icons and the manifest are here for every page; a page that should not be indexed (the 404) passes indexable false
+// and gets noindex with no canonical and no share tags. JSON-LD stays with each page.
 import '../styles/tokens.css';
 import '../styles/shades.gen.css';
 import '../styles/fonts.css';
@@ -17,10 +19,17 @@ interface Props {
   preloadFonts?: string[];
   /** the browser UI colour, matching the page's first background (a token value from config/tokens.ts) */
   themeColor?: string;
+  /** the share image, a 1200 by 630 JPEG under public/og/, and its alt text */
+  image?: string;
+  imageAlt?: string;
+  /** false for pages search engines should skip (the 404): noindex, no canonical, no share tags */
+  indexable?: boolean;
 }
 import { PEARL_WHISPER } from '../config/tokens.ts';
-const { title, description, path = '/', preloadFonts = [], themeColor = PEARL_WHISPER } = Astro.props;
+const { title, description, path = '/', preloadFonts = [], themeColor = PEARL_WHISPER, image = '/og/skreed.jpg',
+  imageAlt = 'Skreed cases in a row of shades, turning in a dark studio', indexable = true } = Astro.props;
 const canonical = new URL(path, SITE_URL).href;
+const imageUrl = new URL(image, SITE_URL).href;
 const staging = import.meta.env.PUBLIC_STAGING === '1';
 ---
 <!doctype html>
@@ -34,8 +43,28 @@ const staging = import.meta.env.PUBLIC_STAGING === '1';
 <slot name="head" />
 <title>{title}</title>
 <meta name="description" content={description}>
-<link rel="canonical" href={canonical}>
-{staging && <meta name="robots" content="noindex">}
+{indexable && <link rel="canonical" href={canonical}>}
+{(staging || !indexable) && <meta name="robots" content="noindex">}
+{indexable && <>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Skreed">
+<meta property="og:locale" content="en_IN">
+<meta property="og:title" content={title}>
+<meta property="og:description" content={description}>
+<meta property="og:url" content={canonical}>
+<meta property="og:image" content={imageUrl}>
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content={imageAlt}>
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content={imageUrl}>
+<meta name="twitter:image:alt" content={imageAlt}>
+</>}
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
 </head>
 <body>
 <slot />

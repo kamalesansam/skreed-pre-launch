@@ -331,7 +331,8 @@ test('AC9 the head, the JSON-LD, the sitemap, the redirect, caching and the CSP'
   await expect(pre).toHaveCount(1);
   expect(await pre.evaluate((l) => [l.getAttribute('as'), l.getAttribute('type'), l.hasAttribute('crossorigin'), l.getAttribute('href')])).toEqual(['font', 'font/woff2', true, FONT]);
   for (const [p, v] of [['og:type', 'website'], ['og:site_name', 'Skreed'], ['og:locale', 'en_IN'], ['og:title', C.title], ['og:description', C.description], ['og:url', 'https://skreed.shop/about/']]) expect(await attr(`meta[property="${p}"]`, 'content'), p).toBe(v);
-  expect(await attr('meta[name="twitter:card"]', 'content')).toBe('summary');
+  expect(await attr('meta[name="twitter:card"]', 'content')).toBe('summary_large_image');
+  expect(await attr('meta[property="og:image"]', 'content')).toBe('https://skreed.shop/og/skreed.jpg');
   expect(await page.locator('link[rel="icon"], link[rel="apple-touch-icon"], link[rel="manifest"]').evaluateAll((ls) => ls.map((l) => `${l.getAttribute('rel')} ${l.getAttribute('href')}`)))
     .toEqual(['icon /favicon.ico', 'icon /icon.svg', 'apple-touch-icon /apple-touch-icon.png', 'manifest /manifest.webmanifest']);
   await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
