@@ -64,11 +64,11 @@ body { font-family: var(--font-about); font-weight: 400; }
 @media (prefers-reduced-motion: reduce) { .site-logo { transition: none; } .site-logo:hover, .site-logo:active { transform: none; } }
 
 /* the way back (2026-11-03: "there's no navigation helper to go back to the site"): "Back to main page" at the top right,
-   centred on the wordmark's row as the landing page's section index is, and set as its words are (Work Sans Light in
-   capitals at the label size, letter-spacing 0, the quiz result's label face, declared in fonts.css), Urban Slate, a 44 px hit row with
+   centred on the wordmark's row as the landing page's section index is, and set as its words are (Work Sans Medium in
+   capitals at 16 px, letter-spacing 0, the quiz result's label face, declared in fonts.css), Urban Slate, a 44 px hit row with
    --s2 at its sides and its text on --inset; the wordmark's press idiom and two-tone ring */
 .ab-home { position: absolute; top: calc(var(--inset) + env(safe-area-inset-top, 0px) + 11.625px - 22px); right: calc(var(--inset) + env(safe-area-inset-right, 0px) - var(--s2));
-  display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--s2); font-family: "Work Sans", Arial, sans-serif; font-size: var(--fs-label); font-weight: 300; line-height: 1;
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--s2); font-family: "Work Sans", Arial, sans-serif; font-size: 1rem; font-weight: 500; line-height: 1;
   text-transform: uppercase; letter-spacing: 0; white-space: nowrap; color: var(--urban-slate); text-decoration: none; -webkit-tap-highlight-color: transparent;
   transition: transform var(--dur-press) var(--ease-standard); }
 @media (min-width: 1024px) { .ab-home { top: calc(var(--inset) + env(safe-area-inset-top, 0px) + 16.47px - 22px); } }
