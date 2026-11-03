@@ -1,0 +1,41 @@
+---
+// /unsubscribe/ (docs/specs/legal-pages.md D6): the page the line at the foot of every email to the list opens, with the
+// address and its token in the query. It asks before anything is deleted (a mail scanner that opens the link changes
+// nothing); the press posts to /api/unsubscribe. The legal pages' look; never indexed.
+import Base from '../layouts/Base.astro';
+import '../styles/legal.css';
+import WordmarkSprite from '../components/shell/WordmarkSprite.astro';
+import { LEGAL_NAV, PRIVACY, UNSUB_COPY as U } from '../config/legal.ts';
+import { COPY } from '../config/copy.ts';
+import { PEARL_WHISPER } from '../config/tokens.ts';
+import { SITE_COPY } from '../scripts/family/site-copy.ts';
+const contact = SITE_COPY.org.email;
+const [nsBefore, nsAfter] = U.noscript.split('{contact}');
+---
+<Base title={U.title} description={U.description} path="/unsubscribe/" indexable={false} preloadFonts={['/fonts/poppins-700-latin.woff2', '/fonts/open-sans-400-600-latin.woff2']} themeColor={PEARL_WHISPER}>
+  <WordmarkSprite />
+  <header class="lg-top">
+    <a class="site-logo" href="/" aria-label={COPY.logo.aria}><svg viewBox="0 0 1209.46 292.9" aria-hidden="true" focusable="false"><use href="#skreed-wordmark"/></svg></a>
+  </header>
+  <main class="lg">
+    <article class="lg-col">
+      <header class="lg-head">
+        <h1>{U.h1}</h1>
+      </header>
+      <form class="lg-unsub" id="unsub" hidden data-ask={U.ask} data-done={U.done} data-broken={U.broken} data-error={U.error} data-working={U.working} data-button={U.button} data-contact={contact}>
+        <p class="lg-intro" id="unsubText"></p>
+        <button type="submit" class="lg-btn" id="unsubBtn">{U.button}</button>
+        <p class="lg-msg" id="unsubMsg" role="status"></p>
+      </form>
+      <noscript><p class="lg-intro">{nsBefore}<a href={`mailto:${contact}?subject=Unsubscribe`}>{contact}</a>{nsAfter}</p></noscript>
+      <nav class="lg-foot" aria-label="Legal">
+        <a href={PRIVACY.path}>{LEGAL_NAV.privacy}</a>
+        <a href="/">{LEGAL_NAV.home}</a>
+      </nav>
+    </article>
+  </main>
+</Base>
+<script>
+  import { unsubscribe } from '../scripts/legal/unsubscribe.ts';
+  unsubscribe();
+</script>

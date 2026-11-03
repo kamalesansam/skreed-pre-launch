@@ -22,7 +22,8 @@ CLAUDE.md rules 46 and 47 and CHECKLIST G15 and G16 require a terms page and a D
 | The code; once confirmed, a welcome (the quiz's with wallpapers), a November reminder and the launch email; a note to the team; nothing more to an unconfirmed address | `lead_confirmation`, `server/lib/mailing.php` (`reminder`, `launch`, verified addresses only), the `notify_to` mail on a verified lead |
 | Abuse limit | 8 sends per scrambled address per 10 minutes, then 429 |
 | Hostinger hosts, Zoho sends | the deploy (`scripts/deploy/hostinger.sh`), `smtp.zoho.in` |
-| Withdraw by replying, or by writing to collab@skreed.in | a manual removal by the team: the emails of 2026-11-03 carry no unsubscribe link (section 6, item 10) |
+| Every email to the list has an unsubscribe link; one press deletes the address; or reply, or write to collab@skreed.in | D6: `lead_unsubscribe`, the footer and the one-click headers in `lead_smtp` |
+| An unconfirmed address deleted a day after its last code | D7: `lead_purge_unconfirmed` |
 | Skreed, Hyderabad, Telangana, India; collab@skreed.in | `SITE_COPY.org`, from the catalog (CHECKLIST G19) |
 
 ## 3. Decisions
@@ -35,6 +36,10 @@ D3. Each page ends with a hairline and two links: the other legal page and "Back
 
 D4. The link beside each form: "Privacy notice", next to the consent tick on section 5 (`#suConsentRow`, now a row holding the label and the link, so a press on the link never ticks the box) and after the quiz's fine print (`.qz-fine`, its words and the link as two decoded runs, so the link decodes with the rest of the band; the quiz suite's gift lines go from 7 to 8).
 
+D6. **Unsubscribe** (Sam, 2026-11-03: "do it", to section 6's item 10). Every email to the list (the welcome of either form, the reminder and the launch email, and the mailing command's `--test` sends) ends with "Don’t want these emails? Unsubscribe", a link to `/unsubscribe/?e=<address>&t=<token>`, and carries `List-Unsubscribe` and `List-Unsubscribe-Post: List-Unsubscribe=One-Click` (RFC 8058), so Gmail and Outlook show their own Unsubscribe. The token is an HMAC of the lower-cased address with the server's salt (`lead_unsub_token`), so a link works for its own address only. The page asks before anything is deleted, because mail scanners open links on their own; its press, and the mail client's one-click post, POST to `/api/unsubscribe` (`lead_unsubscribe`), which deletes the address's rows from both forms and its mailing records, answers 200 whether or not the address was there, 403 to a wrong token, 400 with nothing to go on and 405 to a GET, and tells the team so any copy elsewhere can be removed. The code mail carries no link: it is not a mail to the list, and an unconfirmed address is deleted on its own (D7). Added to Sam's copy as a footer in `lead_smtp`, so his words are unchanged.
+
+D7. **Unconfirmed addresses** (the same day, item 11). A row whose address was never confirmed is deleted a day after its last code (`UNCONFIRMED_TTL` 86400, `lead_purge_unconfirmed`, keyed on the latest of the code's send and the row's making, so a fresh code keeps an old row), on every save and on every run of the mailing cron's `due` (not a dry run).
+
 D5. Nothing is invented. Where the code does not state a fact, the copy either leaves it out (the legal entity, a named grievance officer, a fixed retention period, the courts) or states the plainest default the site already practises, marked in section 6 for Sam.
 
 ## 4. Acceptance criteria
@@ -44,6 +49,8 @@ D5. Nothing is invented. Where the code does not state a fact, the copy either l
 3. Section 5's form and the quiz's offer band each show a "Privacy notice" link to `/privacy/` beside the consent, and pressing it does not tick the box.
 4. No em or en dash, no emoji, no banned face; the pages load no script.
 5. `npm run test:unit` and `npm run build` pass; frames at 390 and 1280 px, looked at.
+6. Unsubscribe (D6): a GET of `/api/unsubscribe` changes nothing (405); a wrong token is refused (403); the page's post and the one-click post delete every row and mailing record of the address and answer 200, again 200 when it is already gone; the page shows a broken link's way out when the query lacks either part.
+7. Unconfirmed (D7): a row unconfirmed for more than a day after its last code is deleted on the next save or cron run; a fresher code, a confirmed row and a row under a day stay.
 
 ## 5. Out of scope
 
@@ -60,5 +67,5 @@ A cookie notice (G17: the site sets no cookies, so none is needed while that hol
 7. The terms' launch offers: the terms say only that each offer's details come with it at launch. The discounts section 5 names ("5% OFF" to "UP TO 20% OFF") are its open question in `docs/specs/section-5-picture.md` 14; the terms should match whatever Sam decides there.
 8. Courts: the terms name the laws of India only. Add "the courts at Hyderabad, Telangana" as the place for disputes?
 9. A lawyer's read of both pages before the store opens.
-10. Withdrawal: DPDP asks that consent be as easy to withdraw as to give. The emails (Sam's welcome, reminder and launch copy, since the email codes of 2026-11-03) carry no unsubscribe line or link, so today withdrawal is a reply or a mail to collab@skreed.in and a removal by hand. An unsubscribe link in each email, or at least a line saying "reply to stop", would match what the notice promises.
-11. Unconfirmed addresses: a row is saved before the code is entered, and an address never confirmed stays in the table. A rule to delete those after a short time (a day, a week) would keep only what the notice needs.
+10. Done (D6, 2026-11-03). Withdrawal: DPDP asks that consent be as easy to withdraw as to give. The emails (Sam's welcome, reminder and launch copy, since the email codes of 2026-11-03) carry no unsubscribe line or link, so today withdrawal is a reply or a mail to collab@skreed.in and a removal by hand. An unsubscribe link in each email, or at least a line saying "reply to stop", would match what the notice promises.
+11. Done (D7, 2026-11-03, a day). Unconfirmed addresses: a row is saved before the code is entered, and an address never confirmed stays in the table. A rule to delete those after a short time (a day, a week) would keep only what the notice needs.

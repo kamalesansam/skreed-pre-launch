@@ -63,10 +63,10 @@ export const PRIVACY: LegalPage = {
       ['Hostinger hosts the site and the database your address is saved in. Zoho sends our emails. Both handle it on our instructions only.'],
     ] },
     { h: 'How long we keep it', blocks: [
-      ['Until you ask us to remove it, or until we no longer need it for the launch, whichever comes first.'],
+      ['An address that is never confirmed is deleted a day after its last code. A confirmed address we keep until you unsubscribe or ask us to remove it, or until we no longer need it for the launch, whichever comes first.'],
     ] },
     { h: 'Your rights', blocks: [
-      ['You can ask to see the data we hold about you, to correct it, or to erase it. You can withdraw your consent at any time, as easily as you gave it: reply to any email we sent you, or write to ', mail, '. Withdrawing stops what we do next; it does not undo what we did before.'],
+      ['You can ask to see the data we hold about you, to correct it, or to erase it. You can withdraw your consent at any time, as easily as you gave it: every email we send you has an unsubscribe link, and one press stops our emails and deletes your address and everything you sent with it. You can also reply to any of our emails, or write to ', mail, '. Withdrawing stops what we do next; it does not undo what we did before.'],
     ] },
     { h: 'Questions and complaints', blocks: [
       ['Write to ', mail, ' with “Privacy” in the subject, and we will answer you by email. If we do not resolve your complaint, you can take it to the Data Protection Board of India.'],
@@ -120,6 +120,24 @@ export const TERMS: LegalPage = {
     ] },
   ],
 };
+
+/**
+ * The unsubscribe page (/unsubscribe/, docs/specs/legal-pages.md D6), opened from the line at the foot of every email to
+ * the list. It asks before anything is deleted, because mail scanners open links on their own; the press posts to
+ * /api/unsubscribe, which deletes the address and what came with it.
+ */
+export const UNSUB_COPY = {
+  title: 'Unsubscribe. Skreed',
+  description: 'Stop emails from Skreed and delete your address.',
+  h1: 'Unsubscribe',
+  ask: 'Stop all emails from Skreed to {email}? We delete your address and everything you sent us with it.',
+  button: 'Unsubscribe',
+  working: 'Unsubscribing...',
+  done: 'Done. We have deleted {email}, and we will not write to it again.',
+  broken: 'This link is not complete. Write to {contact} and we remove you by hand.',
+  error: 'That didn’t go through. Try again.',
+  noscript: 'This page needs JavaScript. Or write to {contact} and we remove you by hand.',
+} as const;
 
 /** the link beside each form's consent tick */
 export const PRIVACY_LINK = 'Privacy notice';

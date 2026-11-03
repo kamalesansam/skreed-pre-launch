@@ -3,7 +3,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { PRIVACY, PRIVACY_LINK, TERMS, type Block, type LegalPage, type Run } from '../../src/config/legal.ts';
+import { PRIVACY, PRIVACY_LINK, TERMS, UNSUB_COPY, type Block, type LegalPage, type Run } from '../../src/config/legal.ts';
+import { readUnsubQuery, readUnsubStatus } from '../../src/scripts/legal/unsubscribe.ts';
 
 const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const runText = (r: Run) => (typeof r === 'string' ? r : r.text);
@@ -47,4 +48,28 @@ test('AC3: a privacy notice link beside each form\'s consent, outside the label 
 
 test('AC4: the pages load no script', () => {
   assert.doesNotMatch(read('src/components/legal/LegalPage.astro'), /<script/);
+});
+
+test('D6: the unsubscribe page reads its query and the server\'s answer', () => {
+  const t = 'a'.repeat(32);
+  assert.deepEqual(readUnsubQuery(`?e=Sam%40Example.in&t=${t}`), { email: 'sam@example.in', token: t });
+  for (const q of ['', '?e=sam%40example.in', `?t=${t}`, `?e=not-an-address&t=${t}`, '?e=sam%40example.in&t=xyz']) assert.equal(readUnsubQuery(q), null, q);
+  assert.deepEqual([200, 403, 400, 500, 502, 405].map(readUnsubStatus), ['done', 'broken', 'broken', 'error', 'error', 'error']);
+  for (const v of Object.values(UNSUB_COPY)) { assert.doesNotMatch(v, /[\u2013\u2014]/); }
+  assert.match(read('src/pages/unsubscribe.astro'), /indexable=\{false\}/);
+});
+
+test('D6 and D7: the server sends the unsubscribe line and headers on every list mail, routes the endpoint, and deletes unconfirmed rows after a day', () => {
+  const lead = read('server/lib/lead.php'), mailing = read('server/lib/mailing.php'), cli = read('server/mailing.php');
+  assert.match(lead, /'List-Unsubscribe: <' \. lead_unsub_api\(\$to\) \. '>', 'List-Unsubscribe-Post: List-Unsubscribe=One-Click'/);
+  assert.match(lead, /lead_smtp\(\$email, \$subject, \$text, \$c\['reply_to'\] \?\? null, \$html, \$files, true\)/, 'the welcome');
+  assert.match(mailing, /lead_smtp\(\$r\['email'\], \$subject, \$text, \$c\['reply_to'\] \?\? null, \$html, \[\], true\)/, 'the reminder and the launch email');
+  assert.match(cli, /lead_smtp\(\$to, \$subject, \$text, lead_config\(\)\['reply_to'\] \?\? null, \$html, \[\], true\)/, 'the test send');
+  assert.doesNotMatch(lead, /lead_code_mail\(\$code, \$name\);\n\s*if \(!lead_smtp\([^)]*true\)/, 'no unsubscribe on the code mail');
+  assert.match(lead, /const UNCONFIRMED_TTL = 86400;/);
+  assert.match(lead, /DELETE FROM leads WHERE verified_at IS NULL AND COALESCE\(code_sent_at, created_at\) < \?/);
+  assert.match(lead, /\$db = lead_db\(\);\n\s*lead_purge_unconfirmed\(\$db\);/, 'on every save');
+  assert.match(cli, /lead_purge_unconfirmed\(lead_db\(\)\)/, 'on the cron run');
+  assert.match(read('server/public/api/unsubscribe.php'), /lead_unsubscribe\(\);/);
+  assert.match(read('scripts/deploy/htaccess.mjs'), /RewriteRule \^api\/unsubscribe\/\?\$ api\/unsubscribe\.php \[L\]/);
 });

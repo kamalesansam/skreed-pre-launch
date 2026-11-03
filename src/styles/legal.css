@@ -48,3 +48,18 @@ body { font-family: var(--font-ui); font-weight: 400; }
 .lg-foot a { display: inline-flex; align-items: center; min-height: 44px; font-size: var(--fs-legal); font-weight: 600; }
 
 @media (prefers-reduced-motion: reduce) { .site-logo { transition: none; } .site-logo:hover, .site-logo:active { transform: none; } }
+
+/* the unsubscribe page (docs/specs/legal-pages.md D6): the primary button in Ember Luxe, square (rule 39), as the 404's */
+.lg-unsub { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s3); }
+.lg-unsub[hidden] { display: none; }
+.lg-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 var(--s3); border: 0; border-radius: 0; background: var(--ember-luxe); color: var(--urban-slate);
+  font-family: var(--font-ui); font-size: var(--fs-button, 1rem); font-weight: 600; line-height: 1; cursor: pointer; transition: transform var(--dur-press) var(--ease-standard); }
+.lg-btn[hidden] { display: none; }
+.lg-btn:disabled { cursor: default; }
+@media (hover: hover) { .lg-btn:not(:disabled):hover { transform: translateY(-1px); } }
+.lg-btn:not(:disabled):active { transform: scale(0.98); }
+.lg-btn:focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; position: relative; }
+.lg-btn:focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
+.lg-msg { min-height: 1.45em; font-size: var(--fs-legal); }
+.lg-intro:focus { outline: none; }
+@media (prefers-reduced-motion: reduce) { .lg-btn { transition: none; } .lg-btn:hover, .lg-btn:active { transform: none; } }
