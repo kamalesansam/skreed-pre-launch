@@ -33,7 +33,7 @@ Sam's confirmed emails, pages 3 and 4 of "PRE-LAUNCH EMAILS": the reminder of 18
 
 Before the cron job (each step needs Sam's word):
 1. phpMyAdmin: run `server/migrate-mailings.sql` once (a new database has the table from `server/schema.sql`).
-2. `~/skreed-api/config.php`: copy the `mailings`, `launch_codes`, `shop_url` and `bulk_*` keys from `server/config.sample.php` and fill them in.
+2. `~/skreed-api/config.php`: copy the `mailings`, `launch_codes`, `shop_url` and `bulk_*` keys from `server/config.sample.php`, which carries Sam's choices of 2026-11-03 (the reminder 18 Nov 08:00 to 14:00 IST, the launch email 19 Nov 10:00 to 21 Nov 23:59 IST, the shop link https://www.skreed.in/ as in his PDF, at most 300 mailing sends a day, 30 a run, 5 s apart), and fill in the three codes from his PDF.
 3. Over SSH, rehearse: `php ~/skreed-api/mailing.php status`, then `php ~/skreed-api/mailing.php reminder --test=<your address> --name=Sam` and the same for `launch` (one mail to that address now, recorded nowhere), then `php ~/skreed-api/mailing.php reminder --dry-run --at='2026-11-18 10:05'` (who the first batch would go to; nothing sent).
 4. hPanel, Advanced, Cron Jobs: a custom command every 5 minutes (`*/5 * * * *`), `/usr/bin/php /home/u918474217/skreed-api/mailing.php due` (the PHP path from `which php` over SSH). It does nothing outside the windows, so it can be set up days before; delete it after the launch window closes.
 
