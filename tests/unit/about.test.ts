@@ -62,10 +62,10 @@ test('the launch line is LAUNCH_ISO\'s date, and the page gives the <time> that 
   assert.match(read('src/pages/about.astro'), /<time datetime=\{LAUNCH_ISO\}>\{c\.launch\[1\]\}<\/time>/);
 });
 
-test('the sitemap lists the landing, then /about/, then the ten family pages', async () => {
+test('the sitemap lists the landing, then /about/, then the two legal pages (docs/specs/legal-pages.md AC1), then the ten family pages', async () => {
   const res = await GET({} as never);
   const locs = [...(await res.text()).matchAll(/<loc>([^<]+)<\/loc>/g)].map((x) => x[1]);
-  assert.deepEqual(locs, ['https://skreed.shop/', 'https://skreed.shop/about/', ...FAMILIES.map((f) => `https://skreed.shop/shades/${f.slug}/`)]);
+  assert.deepEqual(locs, ['https://skreed.shop/', 'https://skreed.shop/about/', 'https://skreed.shop/privacy/', 'https://skreed.shop/terms/', ...FAMILIES.map((f) => `https://skreed.shop/shades/${f.slug}/`)]);
 });
 
 test('about.astro: no script but the JSON-LD block, no script-carrying component, no client: directive, no style attribute', () => {
