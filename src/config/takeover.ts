@@ -3,7 +3,8 @@
 // takeover, measured from its built module and from Sam's recording of it (24.1), and re-created for two models: the
 // incoming case takes the outgoing one over in a sweep across the screen, the boundary roughened by two layers of noise
 // and lined with a narrow icy band. Since 2026-11-03 (Sam: "the transition animation comes after the rotation, it should
-// come simultaneously ... not after the rotation") the sweep rides the second half of the turn instead of a clock
+// come simultaneously ... not after the rotation") the sweep runs on the scroll instead of a clock, and since later that
+// day (Sam: "rotate 360 degrees completely ... after the rotation only comes the transition effect") after the case's whole turn
 // (three/takeover.ts) and its field is read on the screen instead of in each case's own space (three/takeover-material.ts),
 // so depth.fyi's 1,350 ms run, its 240 ms finish and its mirrored axis are measurements in 24.1 and no longer values
 // here. Plain data, read by the mapping, the shader and the stage; the unit tests import it under Node. Nothing of
