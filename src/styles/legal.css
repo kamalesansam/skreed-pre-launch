@@ -1,0 +1,65 @@
+/* The legal pages, /privacy/ and /terms/ (docs/specs/legal-pages.md; CHECKLIST G15, G16). Pearl Whisper and Urban
+   Slate only (rule 24), the brand's own faces (rule 4): Poppins 700 for the headings in sentence case, Open Sans for the
+   legal prose at --fs-legal (docs/brand/type-system.md), in one column at the left gutter capped at the prose measure.
+   No box, no shadow, no radius (rules 25, 39); links underlined, Ember Luxe for the focus ring only. */
+:root {
+  --s6: 48px;                                                    /* the spacing step past --s5, as family.css and about.css define it */
+  --lg-mark-h: 23.25px;                                          /* the wordmark's height at 96 px (1209.46 x 292.9) */
+  --lg-measure: 38rem;
+}
+@media (min-width: 1024px) { :root { --lg-mark-h: 32.94px; } }
+
+html, body { margin: 0; background: var(--pearl-whisper); color: var(--urban-slate); }
+body { font-family: var(--font-ui); font-weight: 400; }
+
+.sprite { position: absolute; }
+
+/* the wordmark, as /about/ draws it (about.css), in Urban Slate: the press idiom, the two-tone ring */
+.site-logo { position: absolute; top: calc(var(--inset) + env(safe-area-inset-top, 0px)); left: calc(var(--inset) + env(safe-area-inset-left, 0px));
+  display: block; line-height: 0; color: var(--urban-slate); -webkit-tap-highlight-color: transparent; transition: transform var(--dur-press) var(--ease-standard); }
+.site-logo::after { content: ""; position: absolute; inset: -11px -8px; }
+.site-logo svg { display: block; width: 96px; height: auto; overflow: visible; }
+.site-logo:focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 6px; }
+.site-logo:focus-visible::before { content: ""; position: absolute; inset: -4px; border: 2px solid var(--urban-slate); }
+@media (min-width: 1024px) { .site-logo svg { width: 136px; } }
+@media (hover: hover) { .site-logo:hover { transform: translateY(-1px); } }
+.site-logo:active { transform: scale(0.98); }
+
+.lg { box-sizing: border-box; font-variant-numeric: proportional-nums;
+  padding: calc(var(--inset) + env(safe-area-inset-top, 0px) + var(--lg-mark-h) + var(--s6)) calc(var(--inset) + env(safe-area-inset-right, 0px))
+    calc(var(--s6) + env(safe-area-inset-bottom, 0px)) calc(var(--inset) + env(safe-area-inset-left, 0px)); }
+.lg-col { max-width: var(--lg-measure); display: flex; flex-direction: column; gap: var(--s5); }
+.lg-head, .lg-sec { display: flex; flex-direction: column; gap: var(--s2); }
+.lg-head { gap: var(--s3); }
+
+.lg h1, .lg h2 { margin: 0; font-family: var(--font-display); font-weight: 700; text-transform: none; text-wrap: balance; }
+.lg h1 { font-size: var(--fs-h2); line-height: 1.05; letter-spacing: var(--ls-hero); }
+.lg h2 { font-size: var(--fs-clause); line-height: 1.2; }
+.lg p, .lg ul { margin: 0; font-size: var(--fs-legal); line-height: var(--lh-prose); }
+.lg ul { padding-left: 1.25em; display: flex; flex-direction: column; gap: var(--s1); }
+.lg-date { font-size: var(--fs-small); font-weight: 600; }
+.lg-intro { font-size: var(--fs-prose); }
+
+.lg a { color: inherit; text-decoration-line: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; overflow-wrap: anywhere; }
+@media (hover: hover) { .lg a:hover { text-decoration-thickness: 2px; } }
+.lg a:focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }
+
+.lg-foot { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); padding-top: var(--s4); border-top: 1px solid var(--urban-slate); }
+.lg-foot a { display: inline-flex; align-items: center; min-height: 44px; font-size: var(--fs-legal); font-weight: 600; }
+
+@media (prefers-reduced-motion: reduce) { .site-logo { transition: none; } .site-logo:hover, .site-logo:active { transform: none; } }
+
+/* the unsubscribe page (docs/specs/legal-pages.md D6): the primary button in Ember Luxe, square (rule 39), as the 404's */
+.lg-unsub { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s3); }
+.lg-unsub[hidden] { display: none; }
+.lg-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 var(--s3); border: 0; border-radius: 0; background: var(--ember-luxe); color: var(--urban-slate);
+  font-family: var(--font-ui); font-size: var(--fs-button, 1rem); font-weight: 600; line-height: 1; cursor: pointer; transition: transform var(--dur-press) var(--ease-standard); }
+.lg-btn[hidden] { display: none; }
+.lg-btn:disabled { cursor: default; }
+@media (hover: hover) { .lg-btn:not(:disabled):hover { transform: translateY(-1px); } }
+.lg-btn:not(:disabled):active { transform: scale(0.98); }
+.lg-btn:focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; position: relative; }
+.lg-btn:focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
+.lg-msg { min-height: 1.45em; font-size: var(--fs-legal); }
+.lg-intro:focus { outline: none; }
+@media (prefers-reduced-motion: reduce) { .lg-btn { transition: none; } .lg-btn:hover, .lg-btn:active { transform: none; } }

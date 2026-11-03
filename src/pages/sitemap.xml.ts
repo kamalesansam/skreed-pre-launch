@@ -1,5 +1,5 @@
-// sitemap.xml (CHECKLIST G8; docs/specs/family-page.md acceptance 1): the landing and the About page (docs/specs/about.md
-// D16, in every build), plus the ten family pages whenever the build emits them (FAMILY_PAGES, mode.ts). Prerendered to
+// sitemap.xml (CHECKLIST G8; docs/specs/family-page.md acceptance 1): the landing, the About page (docs/specs/about.md
+// D16, in every build) and the two legal pages (docs/specs/legal-pages.md), plus the ten family pages whenever the build emits them (FAMILY_PAGES, mode.ts). Prerendered to
 // dist/sitemap.xml; robots.txt points here.
 import type { APIRoute } from 'astro';
 import { SITE_URL } from '../config/site.ts';
@@ -7,7 +7,7 @@ import { FAMILIES } from '../scripts/family/data.ts';
 import { familyPagesOn } from '../scripts/family/mode.ts';
 
 function sitemapPaths(pages = familyPagesOn()): string[] {
-  return ['/', '/about/', ...(pages ? FAMILIES.map((f) => `/shades/${f.slug}/`) : [])];
+  return ['/', '/about/', '/privacy/', '/terms/', ...(pages ? FAMILIES.map((f) => `/shades/${f.slug}/`) : [])];
 }
 
 export const GET: APIRoute = () => {

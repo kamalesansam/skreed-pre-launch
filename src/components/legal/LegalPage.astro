@@ -1,0 +1,44 @@
+---
+// One legal page (docs/specs/legal-pages.md; CHECKLIST G15, G16): the copy from src/config/legal.ts on Pearl Whisper in
+// the brand's own faces, Poppins 700 for the two levels of heading and Open Sans for the legal prose
+// (docs/brand/type-system.md), the wordmark at the top left as the way home, drawn from the sprite as /about/ draws it,
+// so the page ships no JavaScript. At the foot, the other legal page and the way back.
+import Base from '../../layouts/Base.astro';
+import '../../styles/legal.css';
+import WordmarkSprite from '../shell/WordmarkSprite.astro';
+import { LEGAL_NAV, PRIVACY, TERMS, type Block, type LegalPage, type Run } from '../../config/legal.ts';
+import { COPY } from '../../config/copy.ts';
+import { PEARL_WHISPER } from '../../config/tokens.ts';
+
+interface Props { page: LegalPage }
+const { page } = Astro.props;
+const other = page.path === PRIVACY.path ? { href: TERMS.path, text: LEGAL_NAV.terms } : { href: PRIVACY.path, text: LEGAL_NAV.privacy };
+const isList = (b: Block): b is { readonly list: readonly (readonly Run[])[] } => !Array.isArray(b);
+---
+<Base title={page.title} description={page.description} path={page.path} preloadFonts={['/fonts/poppins-700-latin.woff2', '/fonts/open-sans-400-600-latin.woff2']} themeColor={PEARL_WHISPER}>
+  <WordmarkSprite />
+  <header class="lg-top">
+    <a class="site-logo" href="/" aria-label={COPY.logo.aria}><svg viewBox="0 0 1209.46 292.9" aria-hidden="true" focusable="false"><use href="#skreed-wordmark"/></svg></a>
+  </header>
+  <main class="lg">
+    <article class="lg-col">
+      <header class="lg-head">
+        <h1>{page.h1}</h1>
+        <p class="lg-date"><time datetime={page.updated[1]}>{page.updated[0]}</time></p>
+        <p class="lg-intro">{page.intro.map((r) => typeof r === 'string' ? r : <a href={r.href}>{r.text}</a>)}</p>
+      </header>
+      {page.sections.map((s) => (
+        <section class="lg-sec">
+          <h2>{s.h}</h2>
+          {s.blocks.map((b) => isList(b)
+            ? <ul>{b.list.map((item) => <li>{item.map((r) => typeof r === 'string' ? r : <a href={r.href}>{r.text}</a>)}</li>)}</ul>
+            : <p>{b.map((r) => typeof r === 'string' ? r : <a href={r.href}>{r.text}</a>)}</p>)}
+        </section>
+      ))}
+      <nav class="lg-foot" aria-label="Legal">
+        <a href={other.href}>{other.text}</a>
+        <a href="/">{LEGAL_NAV.home}</a>
+      </nav>
+    </article>
+  </main>
+</Base>

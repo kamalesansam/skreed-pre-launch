@@ -21,6 +21,7 @@ const out = [
   'RewriteRule ^api/signup/?$ api/signup.php [L]',
   'RewriteRule ^api/quiz-lead/?$ api/quiz-lead.php [L]',
   'RewriteRule ^api/verify/?$ api/verify.php [L]',
+  'RewriteRule ^api/unsubscribe/?$ api/unsubscribe.php [L]',
   'RewriteRule ^api/leads/?$ api/leads.php [L]',
   '<IfModule mod_headers.c>',
 ];
