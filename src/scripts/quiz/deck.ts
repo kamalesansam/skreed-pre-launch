@@ -139,7 +139,7 @@ export function mountQuiz(root: HTMLElement): void {
   let fitRaf = 0;
   /** fitResult() at the next frame, once: after a resize, a turn of the phone, a message in the offer, a wipe settling */
   function refit() { if (!fitRaf) fitRaf = requestAnimationFrame(() => { fitRaf = 0; fitResult(); }); }
-  addEventListener('resize', () => { if (state === 'result') refit(); });
+  addEventListener('resize', () => { if (state === 'result') { refit(); if (!groundRaf) groundRaf = requestAnimationFrame(groundBand); } });   // the fade is read against the new height
 
   // the swatches take their shade from the catalog token through the CSSOM (the CSP allows no style attributes)
   for (const el of root.querySelectorAll<HTMLElement>('.qz-mini')) el.style.background = `var(--shade-${el.dataset.shade})`;
@@ -169,6 +169,9 @@ export function mountQuiz(root: HTMLElement): void {
     document.documentElement.toggleAttribute('data-qz-ground', state === 'result' && o >= 0.5);
   }
   addEventListener('scroll', () => { if (!groundRaf) groundRaf = requestAnimationFrame(groundBand); }, { passive: true });
+  // the section can come to rest with no scroll event (a layout change above or within it, the result replacing the deck
+  // after Try again): read it again whenever the page's size changes, so a fade read mid-change never sticks
+  if ('ResizeObserver' in window) new ResizeObserver(() => { if (state === 'result' && !groundRaf) groundRaf = requestAnimationFrame(groundBand); }).observe(document.body);
   function announce(text: string) { live.textContent = ''; requestAnimationFrame(() => { live.textContent = text; }); }
 
   // ---- the intro is visible at rest, as the server drew it (rule 12: no reveal on scroll); its text is split into glyphs
@@ -298,7 +301,8 @@ export function mountQuiz(root: HTMLElement): void {
     // links, then the offer), the section decoding (data-decoding) from the result's first frame. Reduced motion fades
     // the ground and starts the lines at once. On a phone held sideways the offer waits for its own turn (quiz.css)
     const slow = !reduced();
-    ground?.animate(slow ? [{ transform: 'translateY(100%)' }, { transform: 'translateY(0)' }] : [{ opacity: 0 }, { opacity: 1 }], { duration: slow ? DUR_GROUND : 200, easing: slow ? EASE_STANDARD : 'linear' });
+    ground?.animate(slow ? [{ transform: 'translateY(100%)' }, { transform: 'translateY(0)' }] : [{ opacity: 0 }, { opacity: 1 }], { duration: slow ? DUR_GROUND : 200, easing: slow ? EASE_STANDARD : 'linear' })
+      .finished.then(() => { if (state === 'result') groundBand(); }, () => {});   // the fade read again once the result stands
     for (const el of shown.querySelectorAll('.qz-smear, .qz-mini:not([hidden])')) el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: slow ? DUR_SWATCH : 200, easing: 'linear', delay: slow ? DUR_GROUND * 0.6 : 0, fill: 'backwards' });
     void dc.showAll([...items(shown), ...(gift && !swapped() ? items(gift) : [])], undefined, slow ? DUR_GROUND / 2000 : 0);
     announce(`${Q.eyebrow} ${pick.dataset.name}. ${p.name}.`);
@@ -315,7 +319,7 @@ export function mountQuiz(root: HTMLElement): void {
     track('quiz_retake');
     resetGift();
     const shown = results.querySelector<HTMLElement>('.qz-result:not([hidden])');
-    const out = ground?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: reduced() ? 200 : DUR_SWATCH / 2, easing: 'linear', fill: 'forwards' });
+    const out = ground?.animate([{ opacity: ground ? getComputedStyle(ground).opacity : 1 }, { opacity: 0 }], { duration: reduced() ? 200 : DUR_SWATCH / 2, easing: 'linear', fill: 'forwards' });   // from where the scroll-out's fade left it
     await dc.hideAll([...(shown ? items(shown) : []), ...(gift ? items(gift) : [])]);
     results.hidden = true; if (gift) gift.hidden = true;
     delete root.dataset.gift; root.removeAttribute('data-swap'); root.style.removeProperty('--qz-rs');
@@ -469,5 +473,5 @@ export function mountQuiz(root: HTMLElement): void {
   gift.querySelector<HTMLButtonElement>('.qz-toresult')?.addEventListener('click', () => { void swap(false); });
   // turned with the result on screen: fitResult() decides whether the two share the screen, and keeps the offer on it
   // while the visitor is in it
-  side.addEventListener('change', () => { if (state === 'result') refit(); });
+  side.addEventListener('change', () => { if (state === 'result') { refit(); if (!groundRaf) groundRaf = requestAnimationFrame(groundBand); } });
 }

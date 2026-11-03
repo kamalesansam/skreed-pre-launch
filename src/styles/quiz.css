@@ -87,8 +87,8 @@ html:not(.js) .qz-skip { display: none; }   /* and nothing is locked there, so t
    look exactly how it looks on the image"; E-S3-result). His Canva design's faces by his own naming: Anton for the name,
    Poppins for the words and, in italic, the chips' names, Work Sans Light for the labels and Send. Its placement on a
    laptop: "Your shade is" over the name at the left, the paint between, the words and the chips at the right, the offer
-   as a band along the bottom. The paint is his swatch recoloured (rub.webp, Quiz.astro), our own stroke where the build
-   has no copy of it (Smear.astro). One screen: the drawn shade's deep tone fills the section, every tone the shade's own
+   as a band along the bottom. The paint is his swatch recoloured (rub.webp, Quiz.astro), our own paint where the build
+   has no copy of it (smear.webp, D52). One screen: the drawn shade's deep tone fills the section, every tone the shade's own
    (config/quiz-tones.ts) and set on the section by deck.ts; --qz-rs, stepped down by deck.ts until the section fits the
    screen (Sam: "Shrink to fit"), scales the type and the gaps, never a line under 12 px; deck.ts sizes the name to its
    column (--qz-name-fs). */
