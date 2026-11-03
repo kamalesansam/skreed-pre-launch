@@ -119,11 +119,18 @@ export function skeletonPolys(W: number, H: number, cls: Layout, dims: Dims = DI
  * In screens of scroll: 0 to 1 the carousel, 1 to 2 the zoom (no text), 2 to 6 the four case types, 6 to 7 ciao's
  * argument screen. The HUD leaves at 0.5; the tint runs 1.1 to 5.6; the beats' text and nav 1.6 to 5.6; the argument
  * from 5.6. Nothing but the family's name shows on the first screen (D9); Tough and its description come with beat 1.
+ * Each next type's text comes in at its hand-over (2.8, 3.8, 4.8), where the sweep to it starts, so the name never runs
+ * ahead of the case on screen through its whole turn (section 24 D14; Sam, 2026-11-03; 2.6, 3.6 and 4.6 until then).
  */
 export const SV = { hudOff: 0.5, tintOn: 1.1, beatsOn: 1.6, beatsOff: 5.6, argOn: 5.6, screens: 7 } as const;
 export type Beat = 'none' | 'z' | '1' | '2' | '3' | '4';
 export function activeBeat(sv: number): Beat {
-  return sv <= 0.6 ? 'none' : sv < SV.beatsOn ? 'z' : sv < SV.beatsOff ? (String(Math.min(4, Math.floor(sv - 0.6))) as Beat) : 'none';
+  if (sv <= 0.6) return 'none';
+  if (sv < SV.beatsOn) return 'z';
+  if (sv >= SV.beatsOff) return 'none';
+  let n = 1;
+  for (const t of TURNS.slice(1)) if (sv >= turnEnd(t)) n++;
+  return String(n) as Beat;
 }
 export function scrollClasses(sv: number): { hudOff: boolean; beatsOn: boolean; tintOn: boolean; argOn: boolean } {
   return { hudOff: sv > SV.hudOff, beatsOn: sv > SV.beatsOn && sv < SV.beatsOff, tintOn: sv > SV.tintOn && sv < SV.beatsOff, argOn: sv > SV.argOn };
