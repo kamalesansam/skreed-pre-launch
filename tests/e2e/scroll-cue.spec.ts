@@ -41,7 +41,7 @@ const settled = (page: Page, want: boolean, timeout = 60_000, label = '') => pag
 
 test.describe('the landing at the top, poster tier', () => {
   for (const [w, h] of [[360, 780], [390, 844], [430, 932], [768, 1024], [1024, 768], [1100, 800], [1280, 800]]) {
-    test(`${w} x ${h}: "Scroll to see more" in Plex Mono capitals, centred a --s1 over the column up to 1100 px, in the bottom right corner above it, in the gutters`, async ({ browser }) => {
+    test(`${w} x ${h}: "Scroll to see more" in Plex Mono capitals, in the bottom right corner (small under 768 px), in the gutters`, async ({ browser }) => {
       const ctx = await browser.newContext({ viewport: { width: w, height: h } });
       const page = await ctx.newPage();
       await page.goto('/?tier=poster');
@@ -51,15 +51,10 @@ test.describe('the landing at the top, poster tier', () => {
       expect(g.label).toBe('Scroll to see more');
       expect(g.hidden).toBe('true');
       expect(g.pe).toBe('none');
-      expect(g.style).toMatchObject({ family: 'IBM Plex Mono', weight: '500', size: '14px', color: PEARL, transform: 'uppercase', style: 'normal', opacity: '1', visibility: 'visible' });
+      expect(g.style).toMatchObject({ family: 'IBM Plex Mono', weight: '500', size: w < 768 ? '11px' : '14px', color: PEARL, transform: 'uppercase', style: 'normal', opacity: '1', visibility: 'visible' });
       const inset = Math.min(56, Math.max(16, 0.035 * w));
-      if (w > 1100) {
-        expect(Math.abs(w - g.text.r - inset), 'the bottom right corner: the right inset').toBeLessThan(1.5);
-        expect(Math.abs(h - g.el.b - inset), 'the bottom right corner: the bottom inset').toBeLessThan(1.5);
-      } else {
-        expect(Math.abs((g.text.l + g.text.r) / 2 - (g.cue.l + g.cue.r) / 2), 'centred over the column').toBeLessThan(1.5);
-        expect(Math.abs(g.cue.t - g.el.b - 8), 'a --s1 over the column').toBeLessThan(1.5);
-      }
+      expect(Math.abs(w - g.text.r - inset), 'the bottom right corner: the right inset').toBeLessThan(1.5);
+      expect(Math.abs(h - g.el.b - inset), 'the bottom right corner: the bottom inset').toBeLessThan(1.5);
       expect(g.text.l).toBeGreaterThanOrEqual(16);
       expect(w - g.text.r).toBeGreaterThanOrEqual(16);
       for (const c of g.countdown) expect(hit(g.text, c), `clear of the countdown ${JSON.stringify(c)}`).toBe(false);
@@ -70,7 +65,7 @@ test.describe('the landing at the top, poster tier', () => {
   }
 
   for (const [w, h] of [[390, 844], [1280, 800]]) {
-    test(`${w} x ${h}: the countdown's eyebrow and unit labels in the chrome's face (E-chrome-font); the countdown lifted 106 px up to 1100 px for the column and the words`, async ({ browser }) => {
+    test(`${w} x ${h}: the countdown's eyebrow and unit labels in the chrome's face (E-chrome-font); the countdown lifted 84 px up to 1100 px for the column`, async ({ browser }) => {
       const ctx = await browser.newContext({ viewport: { width: w, height: h } });
       const page = await ctx.newPage();
       await page.goto('/?tier=poster');
@@ -84,7 +79,7 @@ test.describe('the landing at the top, poster tier', () => {
       expect(r.labels.length).toBe(4);
       for (const l of r.labels) expect(l).toMatchObject(PLEX);
       const inset = Math.min(56, Math.max(16, 0.035 * w));
-      expect(Math.abs(h - r.countBottom - inset - (w <= 1100 ? 106 : 0)), 'the countdown\'s bottom edge on --inset, lifted 106 px up to 1100 px (shell.css .copy)').toBeLessThan(2);
+      expect(Math.abs(h - r.countBottom - inset - (w <= 1100 ? 84 : 0)), 'the countdown\'s bottom edge on --inset, lifted 84 px up to 1100 px (shell.css .copy)').toBeLessThan(2);
       await ctx.close();
     });
   }
@@ -188,13 +183,12 @@ test.describe('the landing in the pin, 3D path', () => {
     await settled(page, true, 30_000, 'at the top:');
     expect(await page.locator('#cue').evaluate((e) => e.classList.contains('is-off')), 'the chevrons stayed off (the older state this row covers)').toBe(true);
     const g = await geometry(page);
-    expect(Math.abs((g.text.l + g.text.r) / 2 - (g.cue.l + g.cue.r) / 2), 'centred over the column again').toBeLessThan(1.5);
-    expect(Math.abs(g.cue.t - g.el.b - 8), 'a --s1 over the column').toBeLessThan(1.5);
+    expect(g.text.l, 'in the bottom right corner again, right of the column').toBeGreaterThan(g.cue.r);
     expect(g.style.color).toBe(PEARL);
     await ctx.close();
   });
 
-  test('390 x 844: a jump to the top from the pin: the words leave the corner hidden and come back over the column, never moving while they show (D10)', async ({ browser }) => {
+  test('390 x 844: a jump to the top from the pin: the words leave the pin corner hidden and come back in the bottom right corner, never moving while they show (D10)', async ({ browser }) => {
     test.setTimeout(900_000);
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
     const page = await ctx.newPage();
@@ -218,8 +212,7 @@ test.describe('the landing in the pin, 3D path', () => {
       // back at the top: with the chevrons once the camera's followers arrive, or alone after the rest if they stay off
       await settled(page, true, 90_000, `${from} at the top:`);
       const top = await geometry(page);
-      expect(Math.abs((top.text.l + top.text.r) / 2 - (top.cue.l + top.cue.r) / 2), `${from}: centred over the column`).toBeLessThan(1.5);
-      expect(Math.abs(top.cue.t - top.el.b - 8), `${from}: a --s1 over the column`).toBeLessThan(1.5);
+      expect(top.text.l, `${from}: in the bottom right corner, right of the column`).toBeGreaterThan(top.cue.r);
       expect(pin.el.l, `${from}: the pin was the corner, left of the column`).toBeLessThan(top.el.l - 20);
     }
     const places = await page.evaluate(() => (window as unknown as { __places: { at?: string; on: boolean; opacity: number; visibility: string; y: number }[] }).__places);
