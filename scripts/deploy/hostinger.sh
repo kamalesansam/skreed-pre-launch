@@ -7,7 +7,8 @@ set -euo pipefail
 : "${SKREED_SSH:?set SKREED_SSH=u918474217@<host>}"
 PORT="${SKREED_SSH_PORT:-65002}"
 ROOT="${SKREED_REMOTE_ROOT:-domains/skreed.shop}"
-SSH="ssh -p $PORT"
+KEY="${SKREED_SSH_KEY:-$HOME/.ssh/skreed_hostinger}"
+SSH="ssh -p $PORT -i $KEY -o IdentitiesOnly=yes"
 
 PUBLIC_LEADS=on npm run build
 node scripts/deploy/htaccess.mjs dist
