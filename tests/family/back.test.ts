@@ -23,7 +23,8 @@ test('the route: one a#famBack.fam-back.ring2.press to /#families, hidden at ren
   const lines = route.split('\n');
   const k = lines.findIndex((l) => l.includes('id="famBack"'));
   assert.ok(k >= 0, 'the route carries #famBack');
-  assert.equal(lines[k].trim(), '{has3d && <a class="fam-back ring2 press" id="famBack" href="/#families" hidden>{FAM_COPY.backHome}</a>}');
+  // data-home (2026-11-03, E-way-back): a press goes Back through the history to the landing page when the visitor came from it (back-home.ts)
+  assert.equal(lines[k].trim(), '{has3d && <a class="fam-back ring2 press" id="famBack" href="/#families" data-home hidden>{FAM_COPY.backHome}</a>}');
   assert.equal(route.split('famBack').length - 1, 1, 'one element');
   assert.ok(lines[k - 1].includes('<BackToTop page="family" />'), 'directly after Back to top, so Tab reaches it last');
   assert.equal(lines.slice(k + 1).join('\n').trim(), '</Base>', 'the body\'s last element');
