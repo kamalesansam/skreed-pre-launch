@@ -4070,8 +4070,9 @@ test('QG AC1 and AC6 on ?tier=hero3d with the glue on and section 4 locked: a wh
   page.on('pageerror', (e) => errors.push(e.message));
   await open3dQuiz(page, baseURL, '');
   expect(await roomState(page)).toEqual(LOCKED);
-  // a wheel run stopping inside section 2 (half way between the first wipe's end and the second wipe), outside the first wipe's span and the quiz seam's: nothing settles it
-  await page.evaluate((k) => scrollTo({ top: k * innerHeight - 300, behavior: 'instant' }), (S2T.W1END + S2T.W2) / 2);
+  // a wheel run stopping inside section 2 (half way between the gems' rest and the second wipe), outside the first seam's span (which ends at
+  // S2T.LAND since 2026-11-03) and the quiz seam's: nothing settles it
+  await page.evaluate((k) => scrollTo({ top: k * innerHeight - 300, behavior: 'instant' }), (S2T.LAND + S2T.W2) / 2);
   await page.waitForTimeout(400);
   await page.mouse.move(200, 400);
   await page.mouse.wheel(0, 300);

@@ -10,13 +10,17 @@ import { REF_DIR, REF_SHA256, readReference, referenceAssetSums } from '../harne
 const root = new URL('../../', import.meta.url);
 const sha = (u: URL | string) => createHash('sha256').update(readFileSync(u)).digest('hex');
 
-test('src/assets/hero/SHA256SUMS equals the v9.10 asset manifest, and every copy matches it', () => {
+// the one intended difference from the prototype's assets: the sky with its three planets painted out (Sam, 2026-11-03:
+// "remove those 2 planets in the backround sky"; each disc covered by a feathered patch of the same sky's stars)
+const DIVERGED: Record<string, string> = { 'sky.webp': '744f4c4136c5b83ebf07c6517473d4e0706cccf84e51625effcd3170f13e97e6' };
+
+test('src/assets/hero/SHA256SUMS equals the v9.10 asset manifest but for the recorded differences, and every copy matches it', () => {
   const lines = readFileSync(new URL('src/assets/hero/SHA256SUMS', root), 'utf8').trim().split('\n');
-  const ref = referenceAssetSums();
+  const ref = referenceAssetSums().map((r) => ({ ...r, hash: DIVERGED[r.name] ?? r.hash }));
   assert.equal(ref.length, 8);
   assert.deepEqual(lines, ref.map((r) => `${r.hash}  ${r.name}`));
   for (const { hash, name } of ref) {
-    assert.equal(sha(new URL(`src/assets/hero/${name}`, root)), hash, `${name}: copy differs from prototype v9.10`);
+    assert.equal(sha(new URL(`src/assets/hero/${name}`, root)), hash, `${name}: copy differs from prototype v9.10 (or its recorded difference)`);
   }
 });
 
