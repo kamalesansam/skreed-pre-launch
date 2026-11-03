@@ -1,23 +1,23 @@
 /* The section index (src/components/shell/SiteNav.astro; docs/specs/navbar.md; DESIGN.md "Section index"), the landing
    page only. Fixed at the top right on the logotype's row (2026-11-02: "stick it more from the center to the top right"),
    where Back to top sat before Home took its job, the logotype's layer (z-index 4), under the veil (5) and the loader. No
-   fill, no hairline, no blur, no shadow: the words on the scene, set as Back to top was (Open Sans 600 at the label size,
-   a 44 px tall hit row with --s2 at its sides, the last word's right edge on --inset), --s4 between the hits ("flex it
+   fill, no hairline, no blur, no shadow: the words on the scene, set as Back to top is (IBM Plex Mono Medium in capitals
+   at the label size, letter-spacing 0, the chrome's face since 2026-11-03, E-chrome-font; Open Sans 600 until then; a
+   44 px tall hit row with --s2 at its sides, the last word's right edge on --inset), --s4 between the hits, wider with the screen from about 1040 px ("flex it
    throughout the navbar"), in the logotype's colour (site-nav.ts copies its data-tone: Pearl Whisper, Urban Slate over
    the light fog and a seam's cloud; below AA over the mid-grey fog and the lit hall, pending, spec 10, E-NAV-contrast).
    The bar's box lets the pointer through; only the words take it. Phone first: under 768 px one word, Menu, opening a
    light drawer from the right ("make it come from the side, and just 75 % OF THE SCREEN from the side"); from 768 px the
    five words (the four sections and About, a plain page link; spec D7) in a row, which clear the logotype from there.
-   The section on screen is underlined, and in the drawer also
-   set at 600, as the family switcher sets the current family. States as Back to top's: hover lift 1 px, press scale
+   The section on screen is underlined, in the bar and the drawer alike (Plex ships at 500 only). States as Back to top's: hover lift 1 px, press scale
    0.98, the two-tone focus ring. Hidden with the logotype while the intro runs. */
 .snav { position: fixed; z-index: 4; top: calc(var(--inset) + env(safe-area-inset-top, 0px) + 11.625px - 22px); right: calc(var(--inset) + env(safe-area-inset-right, 0px) - var(--s2)); display: flex; align-items: center; pointer-events: none; color: var(--pearl-whisper); }   /* centred on the logotype's row: it is 23.25 px tall at --inset (32.94 px from 1024 px) */
 @media (min-width: 1024px) { .snav { top: calc(var(--inset) + env(safe-area-inset-top, 0px) + 16.47px - 22px); } }
 .snav[data-tone="light"] { color: var(--urban-slate); }
 html.uh1 .snav { visibility: hidden; opacity: 0; }
-.snav-list { display: none; gap: var(--s4); margin: 0; padding: 0; list-style: none; }
+.snav-list { display: none; gap: clamp(var(--s4), calc(10vw - 80px), calc(var(--s4) * 4)); margin: 0; padding: 0; list-style: none; }   /* --s4 up to about 1040 px, then wider with the screen (48 px at 1280, 64 at 1440, 96 at most), so the row reaches toward the centre (2026-11-03: "flex the navbar more till the center, it's too much too the right") with its last word kept on --inset */
 .snav-list li { display: flex; }
-.snav-a { position: relative; pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-width: 44px; min-height: 44px; margin: 0; padding: 0 var(--s2); border: 0; border-radius: var(--radius-none); background: none; font-family: var(--font-ui); font-size: var(--fs-label); font-weight: 600; line-height: 1; white-space: nowrap; text-decoration: none; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform var(--dur-press) var(--ease-standard); }
+.snav-a { position: relative; pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-width: 44px; min-height: 44px; margin: 0; padding: 0 var(--s2); border: 0; border-radius: var(--radius-none); background: none; font-family: var(--font-mono); font-size: var(--fs-label); font-weight: 500; line-height: 1; text-transform: uppercase; letter-spacing: 0; white-space: nowrap; text-decoration: none; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform var(--dur-press) var(--ease-standard); }
 .snav-a[aria-current] { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 @media (hover: hover) { .snav-a:hover { transform: translateY(-1px); } }
 .snav-a:active { transform: scale(0.98); }
@@ -45,16 +45,15 @@ html.uh1 .snav { visibility: hidden; opacity: 0; }
   .snav-sheet:popover-open .snav-in { transform: none; }
   @starting-style { .snav-sheet:popover-open .snav-in { transform: translateX(100%); } }
 }
-.snav-in { display: flex; flex-direction: column; gap: var(--s2); padding: env(safe-area-inset-top, 0px) calc(var(--inset) + env(safe-area-inset-right, 0px)) calc(var(--s4) + env(safe-area-inset-bottom, 0px)) var(--inset); font-family: var(--font-ui); }
+.snav-in { display: flex; flex-direction: column; gap: var(--s2); padding: env(safe-area-inset-top, 0px) calc(var(--inset) + env(safe-area-inset-right, 0px)) calc(var(--s4) + env(safe-area-inset-bottom, 0px)) var(--inset); font-family: var(--font-mono); font-weight: 500; text-transform: uppercase; letter-spacing: 0; }
 .snav-head { display: flex; align-items: center; justify-content: space-between; min-height: 56px; }
-.snav-h { margin: 0; font-size: 1rem; font-weight: 600; line-height: var(--lh-ui); }
+.snav-h { margin: 0; font-size: 1rem; line-height: var(--lh-ui); }
 .snav-close { font-size: var(--fs-button); margin-right: calc(var(--s2) * -1); }
 .snav-rows { margin: 0; padding: 0; list-style: none; }
 .snav-rows a { position: relative; display: flex; align-items: center; min-height: 56px; font-size: var(--fs-button); line-height: var(--lh-ui); color: inherit; text-decoration: none; border-bottom: 1px solid var(--urban-slate); -webkit-tap-highlight-color: transparent; }
 .snav-rows a span { display: inline-block; transform-origin: 0 50%; transition: transform var(--dur-press) var(--ease-standard); }
 .snav-rows a:active span { transform: scale(0.98); }   /* the press, as the bar's words have it; the row's hairlines stay put */
 .snav-rows li:first-child a { border-top: 1px solid var(--urban-slate); }
-.snav-rows a[aria-current] { font-weight: 600; }
 .snav-rows a[aria-current] span { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 @media (hover: hover) { .snav-rows a:hover span { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; } }
 
