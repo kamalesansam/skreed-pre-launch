@@ -24,7 +24,8 @@
     "test:family:e2e": "playwright test -c tests/family/playwright.config.ts",
     "deploy:dry": "wrangler deploy --env=\"\" --dry-run --outdir .wrangler/dry-run",
     "graph": "graphify update .",
-    "graph:force": "graphify update . --force"
+    "graph:force": "graphify update . --force",
+    "deploy:hostinger": "bash scripts/deploy/hostinger.sh"
   },
   "repository": {
     "type": "git",

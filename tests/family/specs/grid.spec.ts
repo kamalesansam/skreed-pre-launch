@@ -12,7 +12,7 @@ test.describe('1. routes, titles and links', () => {
       await expect(page).toHaveTitle(`${NAMES[i]}, all 24 shades. Skreed`);
       const desc = await page.locator('meta[name="description"]').getAttribute('content');
       expect(desc).toMatch(new RegExp(`^All 24 ${NAMES[i]} shades, from .+ to .+, on a Skreed case in matte or gloss\\. Doors open Nov 15\\.$`));
-      await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `https://skreed.in/shades/${slug}/`);
+      await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `https://skreed.shop/shades/${slug}/`);
       await expect(page.locator('a.fh-logo')).toHaveAttribute('href', '/');
       await expect(page.locator('.famnav .fn-all')).toHaveAttribute('href', `/?family=${slug}#wall`);
       const sw = await page.locator('#family-switcher a[href^="/shades/"]').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
@@ -30,15 +30,15 @@ test.describe('1. routes, titles and links', () => {
   test('the sitemap lists the landing, the About page and the ten pages; robots.txt names it; the favicon set and the OG and JSON-LD facts ship', async ({ request }) => {
     const sm = await (await request.get('/sitemap.xml')).text();
     const locs = [...sm.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
-    expect(locs).toEqual(['https://skreed.in/', 'https://skreed.in/about/', ...FAMILIES.map((f) => `https://skreed.in/shades/${f}/`)]);   // the About page, docs/specs/about.md D16
-    expect(await (await request.get('/robots.txt')).text()).toContain('Sitemap: https://skreed.in/sitemap.xml');
+    expect(locs).toEqual(['https://skreed.shop/', 'https://skreed.shop/about/', ...FAMILIES.map((f) => `https://skreed.shop/shades/${f}/`)]);   // the About page, docs/specs/about.md D16
+    expect(await (await request.get('/robots.txt')).text()).toContain('Sitemap: https://skreed.shop/sitemap.xml');
     for (const f of ['/favicon.ico', '/icon.svg', '/apple-touch-icon.png', '/icon-192.png', '/icon-512.png', '/manifest.webmanifest']) expect((await request.get(f)).status(), f).toBe(200);
     const html = await (await request.get(url('go-green'))).text();
     expect(html).toContain('<meta property="og:title" content="Go Green, all 24 shades. Skreed">');
-    expect(html).toContain('<meta property="og:url" content="https://skreed.in/shades/go-green/">');
+    expect(html).toContain('<meta property="og:url" content="https://skreed.shop/shades/go-green/">');
     const ld = JSON.parse(html.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)![1]);
     expect(ld['@graph'][0]).toMatchObject({ '@type': 'Organization', email: 'collab@skreed.in', sameAs: ['https://www.instagram.com/skreedofficial/'] });
-    expect(ld['@graph'][1].itemListElement[1]).toMatchObject({ name: 'Go Green', item: 'https://skreed.in/shades/go-green/' });
+    expect(ld['@graph'][1].itemListElement[1]).toMatchObject({ name: 'Go Green', item: 'https://skreed.shop/shades/go-green/' });
   });
 
   test('the switcher opens with JavaScript off (popover), lists the ten families and closes', async ({ browser }) => {
