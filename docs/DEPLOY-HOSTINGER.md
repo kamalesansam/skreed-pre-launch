@@ -14,12 +14,30 @@ Sam: "the emails are veified with an otp, so we actually know thats the right em
 - A save (`/api/signup`, `/api/quiz-lead`) needs `name` and answers 202: a six-digit code is mailed (10 minutes, 5 tries, 30 s between codes, 5 an hour). `/api/verify` checks it (200, 422 with the tries left, 410 for a new code); only then go the welcome mail and the team's note. Only the code's keyed hash is stored.
 - The welcome mails are Sam's sign-up and quiz emails word for word, plain text and HTML, opening with the first name. The quiz email carries the visitor's result and six of Sam's wallpapers (the drawn shade and the next two of its group plain, the three after them patterned, about 0.6 MB).
 - `/api/leads` shows the first name and when each address was verified; `?verified=1` lists only those (the list to mail).
-- The Nov 18 reminder and the launch-day email are not built: they go to the whole verified list on a date, a separate piece of work.
+- The Nov 18 reminder and the launch-day email: the next section.
 
 Before the deploy that carries this:
 1. phpMyAdmin: run `server/migrate-otp.sql` once on the leads table (a new database takes `server/schema.sql`).
 2. `~/skreed-api/config.php`: add `'quiz_code' => '<the quiz email's 5% code>',` (empty leaves that paragraph out of the quiz email).
 3. On the deploying machine: `node scripts/quiz/prepare-wallpapers.mjs "<the unzipped Quiz Wallpapers folder>"` fills the git-ignored `server/wallpapers/`, which the deploy uploads to `~/skreed-api/wallpapers/`. Without it the quiz email goes without wallpapers or their paragraph.
+
+## The dated mailings: the reminder and the launch email (2026-11-03)
+Sam's confirmed emails, pages 3 and 4 of "PRE-LAUNCH EMAILS": the reminder of 18 November ("Last Chance to Unlock 25% OFF!") and the launch-day email ("SKREED IS LIVE! Your Exclusive Discounts + A Surprise Freebie Awaits"), word for word, plain text and HTML, each opening with the first name ("Hey there," where a row has none).
+- `server/lib/mailing.php` holds the two emails and the sending; `server/mailing.php` is the command, uploaded to `~/skreed-api/mailing.php` by the deploy. Uploading it sends nothing: only the cron job, or a run by hand, does.
+- Who: every verified address (`verified_at` set), once per mailing. An address in both forms is one address, named by its latest row. Someone verified while a mailing's window is open gets it on the next run.
+- When: each mailing has a window in `config.php` (`mailings`, IST). A run outside it sends nothing; inside it, one batch.
+- How fast: `bulk_per_run` mails per run, `bulk_gap` seconds apart, and no more than `bulk_daily` mailing sends in any 24 hours (keep it under Zoho's daily limit for the mailbox, with room for the code and welcome mails, which go by the same account). Three refusals in a row end a run (Zoho's limit reached or the account held); the next run tries again.
+- Never twice: each address is written to `lead_mailings` (status `sending`) before its mail goes, then marked `sent` or `failed`. A failed address is tried again on a later run, 15 minutes on, three tries in all. A row left at `sending` (the run died mid-mail) is never retried, since the mail may have gone; `status` counts it as stuck, and deleting the row in phpMyAdmin sends it again. One run at a time (`~/skreed-api/mailing.lock`).
+- The log: `~/skreed-api/logs/mailing.log`, one line per send with the address and, for a failure, Zoho's reply.
+- The codes and the shop link are in `config.php` only (`launch_codes`, `shop_url`): the repository is public. The launch email will not send while any of them is missing, nor any mailing without its window and the throttle.
+
+Before the cron job (each step needs Sam's word):
+1. phpMyAdmin: run `server/migrate-mailings.sql` once (a new database has the table from `server/schema.sql`).
+2. `~/skreed-api/config.php`: copy the `mailings`, `launch_codes`, `shop_url` and `bulk_*` keys from `server/config.sample.php`, which carries Sam's choices of 2026-11-03 (the reminder 18 Nov 08:00 to 14:00 IST, the launch email 19 Nov 10:00 to 21 Nov 23:59 IST, the shop link https://www.skreed.in/ as in his PDF, at most 300 mailing sends a day, 30 a run, 5 s apart), and fill in the three codes from his PDF.
+3. Over SSH, rehearse: `php ~/skreed-api/mailing.php status`, then `php ~/skreed-api/mailing.php reminder --test=<your address> --name=Sam` and the same for `launch` (one mail to that address now, recorded nowhere), then `php ~/skreed-api/mailing.php reminder --dry-run --at='2026-11-18 10:05'` (who the first batch would go to; nothing sent).
+4. hPanel, Advanced, Cron Jobs: a custom command every 5 minutes (`*/5 * * * *`), `/usr/bin/php /home/u918474217/skreed-api/mailing.php due` (the PHP path from `which php` over SSH). It does nothing outside the windows, so it can be set up days before; delete it after the launch window closes.
+
+By hand: `php mailing.php reminder` or `launch` runs one batch of that mailing (inside its window), `status` gives the counts, `--at='YYYY-MM-DD HH:MM'` sets the clock for the window check (a rehearsal), `--dry-run` sends nothing. Exit 0 done, 1 a send failed, 2 the config or the command is wrong.
 
 ## One-time setup (hPanel, skreed.shop)
 1. Advanced, SSH Access: enable SSH, note the IP, port and username, add this Mac's public key (`~/.ssh/id_ed25519.pub`).

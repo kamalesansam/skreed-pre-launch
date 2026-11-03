@@ -16,6 +16,8 @@ mkdir -p dist/api && cp server/public/api/*.php dist/api/
 
 $SSH "$SKREED_SSH" "mkdir -p skreed-api/lib && test -f skreed-api/config.php || echo 'WARNING: ~/skreed-api/config.php is missing: the forms will answer 500 until it is written'"
 rsync -az --delete -e "$SSH" server/lib/ "$SKREED_SSH:skreed-api/lib/"
+# the dated mailings' command, run by the hPanel cron job (docs/DEPLOY-HOSTINGER.md); uploading it starts nothing
+rsync -az -e "$SSH" server/mailing.php "$SKREED_SSH:skreed-api/mailing.php"
 # the quiz email's wallpapers (Sam's, git-ignored: node scripts/quiz/prepare-wallpapers.mjs "<folder>" makes them)
 if [ -f server/wallpapers/index.json ]; then rsync -az --delete -e "$SSH" server/wallpapers/ "$SKREED_SSH:skreed-api/wallpapers/"
 else echo 'WARNING: server/wallpapers/ is empty: the quiz email goes without its wallpapers (scripts/quiz/prepare-wallpapers.mjs)'; fi
