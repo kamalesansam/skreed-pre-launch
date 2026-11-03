@@ -39,10 +39,11 @@ function lead_reply(int $code, array $body = []): never {
 // $attach: [[file name shown, path on disk], ...], PNG files (the quiz email's wallpapers)
 function lead_smtp(string $to, string $subject, string $text, ?string $replyTo = null, ?string $html = null, array $attach = []): bool {
   $c = lead_config();
+  lead_smtp_reply('');
   $s = @stream_socket_client('ssl://' . $c['smtp_host'] . ':' . $c['smtp_port'], $errno, $err, 10);
-  if (!$s) return false;
+  if (!$s) { lead_smtp_reply("connect: {$err}"); return false; }
   stream_set_timeout($s, 10);
-  $read = function () use ($s): string { $out = ''; while (($l = fgets($s, 515)) !== false) { $out .= $l; if (($l[3] ?? '') === ' ') break; } return $out; };
+  $read = function () use ($s): string { $out = ''; while (($l = fgets($s, 515)) !== false) { $out .= $l; if (($l[3] ?? '') === ' ') break; } lead_smtp_reply(trim($out)); return $out; };
   // a TLS socket may take a long write in parts (the quiz email carries its wallpapers): written until all of it is out
   $write = function (string $d) use ($s): bool { for ($o = 0, $n = strlen($d); $o < $n; $o += $w) { $w = fwrite($s, substr($d, $o, 65536)); if (!$w) return false; } return true; };
   $say = function (string $cmd, string $want) use ($read, $write): bool { if ($cmd !== '' && !$write($cmd . "\r\n")) return false; return str_starts_with($read(), $want); };
@@ -87,6 +88,13 @@ function lead_smtp(string $to, string $subject, string $text, ?string $replyTo =
   fwrite($s, "QUIT\r\n");
   fclose($s);
   return $ok;
+}
+
+/** the server's last reply in lead_smtp (set while it runs, read after it): what the mailing log records for a failed send */
+function lead_smtp_reply(?string $set = null): string {
+  static $last = '';
+  if ($set !== null) $last = $set;
+  return $last;
 }
 
 function lead_family_name(string $id): string {
