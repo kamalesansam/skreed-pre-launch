@@ -28,7 +28,7 @@ test('the route: one a#famBack.fam-back.ring2.press to /#families, hidden at ren
   assert.equal(route.split('famBack').length - 1, 1, 'one element');
   assert.ok(lines[k - 1].includes('<BackToTop page="family" />'), 'directly after Back to top, so Tab reaches it last');
   assert.equal(lines.slice(k + 1).join('\n').trim(), '</Base>', 'the body\'s last element');
-  assert.doesNotMatch(lines[k], /aria-label|data-|<svg|style=/, 'no aria-label, no icon, no data state, no style attribute');
+  assert.doesNotMatch(lines[k], /aria-label|data-(?!home\b)|<svg|style=/, 'no aria-label, no icon, no data state (data-home is the way back\'s marker, not a state), no style attribute');
   assert.match(route, /const has3d = mode !== 'off';/, 'has3d folds at build time: an off build renders nothing');
   assert.equal(FAM_COPY.backHome, 'Back to main page');
 });
