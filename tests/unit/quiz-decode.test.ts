@@ -41,7 +41,7 @@ test('every character the quiz draws, and every glyph its roll passes through, i
   // Plex Mono has no U+201B or U+201F (scripts/fonts/manifest.txt); the range names them but the roll never draws them
   const missing = new Set([0x201b, 0x201f]);
   const strings: string[] = [];
-  for (const v of Object.values(QUIZ_COPY)) strings.push(typeof v === 'function' ? (v as (...a: never[]) => string)(...(['Mellow Yellow', 11] as never[])) : v);
+  for (const v of Object.values(QUIZ_COPY)) strings.push(...(Array.isArray(v) ? (v as readonly string[]) : [typeof v === 'function' ? (v as (...a: never[]) => string)(...(['Mellow Yellow', 11] as never[])) : (v as string)]));
   for (const n of [1, 10]) strings.push(QUIZ_COPY.count(n), QUIZ_COPY.fam('Frosty White', n));
   for (const q of QUIZ_QUESTIONS) strings.push(q.q, ...q.answers.map((a) => a.text));
   for (const p of QUIZ_PERSONAS) strings.push(p.name, p.profile, p.palette, QUIZ_COPY.finish(p.finish));
@@ -57,10 +57,12 @@ test('every character the quiz draws, and every glyph its roll passes through, i
 test('no boxes outside the result: no panel, no fill, no shadow, the controls are words (Sam, 2026-10-19); on the result only the fills of his reference of 2026-11-02 (E-S3-result)', () => {
   const css = read('src/styles/quiz.css').replace(/\/\*[\s\S]*?\*\//g, '');
   // fills: none, but the result's ground, the offer's band (and its run to the screen's foot), the paint's colour layer
-  // (Sam's swatch's outline filled with the drawn shade), the field and Send (the chips are painted through the CSSOM)
+  // (the swatch's outline filled with the drawn shade), the field and Send (the chips are painted through the CSSOM), and
+  // the reveal's hairline and the line that fills it (quiz.md D50): lines, not boxes; and the band's fill fading with the
+  // ground as the result scrolls away (D53)
   for (const m of css.matchAll(/([^{}]+)\{[^{}]*?\bbackground(?:-color)?:\s*([^;}]+)/g)) {
     if (/^(none|transparent)$/.test(m[2].trim())) continue;
-    assert.match(m[1].trim(), /^(\.qz-ground|\.qz-gift|\.qz-gift::after|\.qz-rub-col|\.qz-input|\.qz-send|\.qz-send:hover:not\(\[aria-disabled="true"\]\))$/, `a fill in quiz.css: ${m[1].trim()} ${m[2]}`);
+    assert.match(m[1].trim(), /^(\.qz-ground|\.qz-gift|\.qz-gift::after|\.qz-rub-col|\.qz-input|\.qz-send|\.qz-send:hover:not\(\[aria-disabled="true"\]\)|\.qz-bar|\.qz-bar-fill|\.quiz\[data-fade\] \.qz-gift::before)$/, `a fill in quiz.css: ${m[1].trim()} ${m[2]}`);
   }
   // shadows: the shade name's one hard offset (the reference's darker copy behind the letters) and nothing else
   // (the decode's roll in a proportional face draws the rolled glyph over the face's own: the name's layer goes with it)

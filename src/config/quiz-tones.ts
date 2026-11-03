@@ -3,7 +3,8 @@
 // got"; asked what the result should stand on, "Shade's deep tone, flat". Every tone is the drawn shade's own, moved in
 // OKLab (the family pages' maths, scripts/family/tint.ts) at build: Quiz.astro writes each shade's tones into its chip's
 // data attributes and deck.ts copies the drawn shade's onto the section as custom properties, so each of the 240 shades
-// gives its own ground, band, name layer and brush stroke, and nothing is computed in the browser.
+// gives its own ground, band and name layer, and nothing is computed in the browser (the paint is recoloured by the
+// shade itself, quiz.css .qz-rub; the SVG stroke's edge and ridge tones went with it on 2026-11-03).
 import { hexToOklab, oklabToHex } from '../scripts/family/tint.ts';
 import { luminance } from './quiz.ts';
 
@@ -14,9 +15,6 @@ export interface ResultTones {
   band: string;
   /** the shade name's offset layer (the reference's darker copy behind the letters) */
   mid: string;
-  /** the brush stroke's shaded edge and its lit ridge (the ridge at lightness 0.42 at the least, so a dark shade's stroke still shows on its ground) */
-  dark: string;
-  light: string;
 }
 
 /** inside sRGB before rounding (oklabToHex clips, which would shift the hue and the lightness) */
@@ -40,8 +38,6 @@ export function resultTones(hex: string): ResultTones {
     deep: at(o, L, Cd),
     band: at(o, L + 0.045, Cd),
     mid: at(o, Math.min(0.55, Math.max(0.42, L + 0.2)), Math.min(C, 0.09)),
-    dark: at(o, Math.max(0.05, o[0] - 0.07), C),
-    light: at(o, Math.min(0.98, Math.max(o[0] + 0.08, 0.42)), C * 0.9),
   };
 }
 

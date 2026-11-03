@@ -17,7 +17,6 @@ import { LEAD_CODE_COPY as K } from '../../config/lead-code.ts';
 import { chipInk, chipRim, resultTones } from '../../config/quiz-tones.ts';
 import { SHADES } from '../../config/shades.gen.ts';
 import { QUIZ_PICTURES } from '../../config/quiz-pictures.ts';
-import Smear from './Smear.astro';
 import '../../styles/quiz.css';
 // The visual questions' answer pictures (Sam, 2026-10-20; config/quiz-pictures.ts): AVIF and WebP at two widths from
 // scripts/quiz/encode-pictures.mjs, in a git-ignored folder (the Envato licence does not allow the files to be shared and
@@ -26,11 +25,19 @@ const picUrls = import.meta.glob<string>('../../assets/quiz/pics/*.{avif,webp}',
 const picIndex: Record<string, { width: number; height: number; widths: number[] }> =
   Object.values(import.meta.glob<{ default: Record<string, { width: number; height: number; widths: number[] }> }>('../../assets/quiz/pics/index.json', { eager: true }))[0]?.default ?? {};
 // The result's paint (E-S3-result; Sam, 2026-11-02: "the paint rub on the page should look exactly how it looks on the
-// image"): his swatch, a Canva element, taken from his reference by scripts/quiz/prepare-rub.mjs into a git-ignored folder
-// (out of the public repository until he confirms the licence); a build without it draws our own stroke (Smear.astro).
-const rubUrl = Object.values(import.meta.glob<string>('../../assets/quiz/rub/rub.webp', { eager: true, query: '?url', import: 'default' }))[0];
-const rubIndex = Object.values(import.meta.glob<{ default: { width: number; height: number } }>('../../assets/quiz/rub/index.json', { eager: true }))[0]?.default;
-const rub = rubUrl && rubIndex ? { src: rubUrl, width: rubIndex.width, height: rubIndex.height } : null;
+// image"): a relief image the page recolours (the outline as alpha, the shading as hard-light grey). Two in the same
+// format: his swatch, a Canva element, taken from his reference by scripts/quiz/prepare-rub.mjs into a git-ignored folder
+// (out of the public repository until he confirms the licence), and our own, scripts/quiz/make-smear.py's, matched to
+// his by measurement and committed, so every build from git draws the same paint (Sam, 2026-11-03: the earlier stroke
+// "doesn't look right, it's supposed to look similar to the white one"). His where the build has it, ours otherwise;
+// PUBLIC_PAINT=own takes ours first (the frames and the tests of what production ships).
+const asset = (file: string) => Object.values(import.meta.glob<string>('../../assets/quiz/{rub,smear}/*.webp', { eager: true, query: '?url', import: 'default' })).find((u) => u.includes(file));
+const index = (dir: string) => Object.entries(import.meta.glob<{ default: { width: number; height: number } }>('../../assets/quiz/{rub,smear}/index.json', { eager: true })).find(([k]) => k.includes(`/${dir}/`))?.[1]?.default;
+const paints = [{ src: asset('/rub.'), ix: index('rub') }, { src: asset('/smear.'), ix: index('smear') }];
+if (import.meta.env.PUBLIC_PAINT === 'own') paints.reverse();
+const found = paints.find((p) => p.src && p.ix);
+if (!found) throw new Error('quiz: no paint: src/assets/quiz/smear/ is missing (python3 -I scripts/quiz/make-smear.py writes it)');
+const rub = { src: found.src!, width: found.ix!.width, height: found.ix!.height };
 const PIC_SIZES = '(min-width: 900px) and (min-height: 600px) min(30vw, 440px), (min-width: 640px) and (max-height: 599px) min(calc((100vw - 92px) * 0.4), 368px), calc(100vw - 32px)';   // the frame's width: the laptop's column, a sideways phone's left column (two insets and the gap are 92 px at 844; 300.8 px there, quiz.css; at most 368 px, since the columns stop at 960 px: the left one peaks near 367.5 px at about 1032 px wide and is 363.5 px at 1280), the width between an upright phone's gutters
 const picture = (key: string) => {
   const m = picIndex[key];
@@ -93,6 +100,13 @@ const shade = (id: string) => {
         ))}
       </div>
     </div>
+    {/* the reveal between the last answer and the result (quiz.md D50; Sam, 2026-11-03): four lines decoding in one after
+        another over a hairline that fills, then the result; its lines are pacing, hidden from assistive technology, which
+        hears one sentence from the live region instead (deck.ts) */}
+    <div class="qz-reveal" id="qzReveal" aria-hidden="true" hidden>
+      {Q.reveal.map((line) => <p class="qz-rv-line" data-dc>{line}</p>)}
+      <div class="qz-bar"><span class="qz-bar-fill" id="qzBarFill"></span></div>
+    </div>
     <div class="qz-results" id="qzResults" hidden>
       {QUIZ_PERSONAS.map((p) => {
         const first = shade(p.shades[0]);
@@ -104,7 +118,7 @@ const shade = (id: string) => {
               <p class="qz-fam" data-dc="prop">{first.fam}</p>
               <p class="qz-finish" data-dc="prop">{Q.finish(p.finish)}</p>
             </div>
-            {rub ? <div class="qz-smear qz-rub" aria-hidden="true"><span class="qz-rub-col"></span><img class="qz-rub-img" src={rub.src} width={rub.width} height={rub.height} alt="" decoding="async" loading="lazy" /></div> : <Smear gloss={p.finish === 'gloss'} />}
+            <div class="qz-smear qz-rub" aria-hidden="true"><span class="qz-rub-col"></span><img class="qz-rub-img" src={rub.src} width={rub.width} height={rub.height} alt="" decoding="async" loading="lazy" /></div>
             <div class="qz-rtext">
               <p class="qz-persona" data-dc="prop">{p.name}</p>
               <p class="qz-text" data-dc="prop">{p.profile}</p>
@@ -112,7 +126,7 @@ const shade = (id: string) => {
               <div class="qz-r-more">
               <ul class="qz-also">
                 {p.shades.map((id) => { const s = shade(id); return (
-                  <li class="qz-mini" data-shade={s.id} data-family={s.family} data-name={s.name} data-fam={s.fam} data-href={s.href} data-ink={s.ink} data-rim={s.rim ? '' : undefined} data-deep={s.tones.deep} data-band={s.tones.band} data-mid={s.tones.mid} data-sd={s.tones.dark} data-sl={s.tones.light} hidden={id === first.id}>
+                  <li class="qz-mini" data-shade={s.id} data-family={s.family} data-name={s.name} data-fam={s.fam} data-href={s.href} data-ink={s.ink} data-rim={s.rim ? '' : undefined} data-deep={s.tones.deep} data-band={s.tones.band} data-mid={s.tones.mid} hidden={id === first.id}>
                     <span class="qz-mini-name" data-dc="prop">{s.name}</span>
                   </li>
                 ); })}

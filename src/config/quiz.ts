@@ -26,6 +26,13 @@ export const QUIZ_COPY = {
   /** the count over each question, in the labels' mono: "01 / 10" (aria-hidden; the card's name says it in words) */
   count: (n: number) => `${String(n).padStart(2, '0')} / ${QUIZ_QUESTION_COUNT}`,
   back: 'Back',
+  /** the reveal between the last answer and the result (quiz.md D50; Sam, 2026-11-03: "a little loading animation or like,
+   *  a progress bar filling or something to make the user excited, for like 3-4 seconds, where while the loading animation
+   *  is playing, it says a few things like, picking ur right color, are u excited? something more of that, appearing one by
+   *  one"): four lines, one after another over a line that fills, his two in his words */
+  reveal: ['Reading your answers.', 'Weighing all 240 shades.', 'Picking your colour.', 'Are you excited?'],
+  /** what assistive technology hears when the reveal starts, once (its lines are aria-hidden pacing) */
+  revealAria: 'Picking your colour. Your shade is on its way.',
   /** the line over the shade's name (Sam's reference of 2026-11-02: "YOUR SHADE IS") */
   eyebrow: 'Your shade is',
   fam: (family: string, index: number) => `${family}, shade ${index} of 24`,
@@ -61,6 +68,9 @@ export const QUIZ_COPY = {
   confirm: 'Confirm',
   checking: 'Checking...',
 } as const;
+
+/** the reveal's clock (deck.ts, quiz.md D50): a line every `step` ms, the fill over `total`, and `hold` after it before the lines wipe out and the result comes */
+export const QUIZ_REVEAL_MS = { step: 850, total: 3500, hold: 300 } as const;
 
 export type Finish = 'gloss' | 'matte';
 export type PersonaId = 'main' | 'curator' | 'spark' | 'optimist' | 'rebel' | 'dreamer' | 'strategist';
