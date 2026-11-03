@@ -57,10 +57,16 @@ export const SIGNUP_COPY = Object.freeze({
   sending: 'SENDING...',
   still: 'STILL TRYING...',
   errEmail: 'That doesn’t look like an email address.',
+  /** the consent tick under the field (DPDP Act; Sam, 2026-11-03: "yeah add that"), the quiz's words */
+  consent: 'I’m happy to hear from Skreed by email.',
+  errConsent: 'Tick the box so we can email you.',
   errSend: 'That didn’t go through. Try again.',
   offline: 'You’re offline. We’ll send it when you’re back.',
   done: 'Done. Your colours are saved to {email}.',
   notYou: 'Not you? Use another email.',
+  /** the email code's button (its lines are LEAD_CODE_COPY's), in the form's capitals */
+  confirm: 'CONFIRM',
+  checking: 'CHECKING...',
   noscript: 'The form needs JavaScript.',
 });
 

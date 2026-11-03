@@ -6,6 +6,7 @@ import { lerpFPS } from './util/math.ts';
 import { updateBlocks } from './logo/motion.ts';
 import { updateFogLogoRect } from './world/fog.ts';
 import { createScrollFollower, mapScroll, PULL } from './scroll/scrollMap.ts';
+import { S2T } from '../../config/hero.ts';
 import { rideCopy } from './scroll/ride.ts';
 import { ghostTarget, type Pointer } from './interaction/pointer.ts';
 import type { Labels } from './interaction/labels.ts';
@@ -64,7 +65,10 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
     const pr = innerHeight > 0 ? scrollY / innerHeight : 0;                       // F6
     scroll.update(pr, ratio);
     if (S2 && !S2.started && intro.done) void S2.build();
-    if (S2 && !S2.ready && !S2.failed && scroll.b > PULL) scroll.b = PULL;   // section 2 is still being built: the wipe waits
+    // section 2 is still being built: the wipe waits, unless the page stands past the second wipe (the section index's
+    // jumps to the quiz, section 4 and section 5), where section 2 is never shown and a hold would leave the countdown over
+    // the section until the gems were built (2026-11-03)
+    if (S2 && !S2.ready && !S2.failed && scroll.b > PULL && pr < S2T.W2END) scroll.b = PULL;
     // section 4 (section-4-flux.md 5): its own followers first; its exit jumps the page to scroll 0 under the seam's cloud,
     // so the hero's rest pose is the page's own at 0 and no loop screen holds the followers (X-15)
     const room = ctx.room; room?.begin(ratio);

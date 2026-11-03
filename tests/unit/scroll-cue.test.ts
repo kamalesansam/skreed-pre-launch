@@ -97,14 +97,14 @@ test('the landing\'s markup: the words follow the chevrons as their next sibling
   assert.match(read('src/scripts/boot.ts'), /more: \$\('cueText'\)/);
 });
 
-test('the landing\'s CSS: Plex Mono capitals at the label size, in the corner or over the chevrons, hidden with them, opacity and visibility only', () => {
+test('the landing\'s CSS: Plex Mono capitals at the label size, in the corner, hidden with them, opacity and visibility only', () => {
   const css = read('src/styles/shell.css');
   const base = css.match(/\n\.cuetext\{([^}]*)\}/)![1];
   assert.ok(base.includes('font:500 var(--fs-label)/1 var(--font-mono);text-transform:uppercase;letter-spacing:0'), 'IBM Plex Mono Medium in capitals (E-chrome-font)');
-  assert.ok(base.includes('right:calc(var(--inset) + env(safe-area-inset-right,0px));bottom:calc(var(--inset) + env(safe-area-inset-bottom,0px))'), 'above 1100 px the bottom right corner, at the top and in the pin');
-  assert.ok(css.includes('@media (max-width:1100px){.cuetext{right:auto;left:50%;bottom:calc(var(--inset) + 73px + var(--s1) + env(safe-area-inset-bottom,0px));transform:translateX(-50%)}'), 'up to 1100 px centred a --s1 over the 73 px column at the top');
-  assert.ok(css.includes('.cuetext[data-at="pin"]{left:calc(var(--inset) + env(safe-area-inset-left,0px));bottom:calc(var(--inset) + env(safe-area-inset-bottom,0px));transform:none}.cuetext[data-at="pin"]:not(.is-on){opacity:0;visibility:hidden;transition:opacity .5s cubic-bezier(.333,0,.667,1),visibility 0s .5s}}'), 'up to 1100 px in the pin: the bottom left corner, keyed on the place alone, and hidden while the place is held without the words being on, so they leave the corner hidden (D10); the bottom left corner');
-  assert.ok(css.includes('@media (max-width:1100px){.copy{padding-bottom:calc(var(--inset) + 106px + env(safe-area-inset-bottom,0px))}}'), 'the countdown lifts for the column (73), the words over it (8 and 14) and 11 px');
+  assert.ok(base.includes('right:calc(var(--inset) + env(safe-area-inset-right,0px));bottom:calc(var(--inset) + env(safe-area-inset-bottom,0px))'), 'the bottom right corner at the top at every width, and in the pin above 1100 px');
+  assert.ok(css.includes('@media (max-width:767px){.cuetext{font-size:11px}}'), 'small on phones (Sam, 2026-11-03)');
+  assert.ok(css.includes('@media (max-width:1100px){.cuetext[data-at="pin"]{right:auto;left:calc(var(--inset) + env(safe-area-inset-left,0px));bottom:calc(var(--inset) + env(safe-area-inset-bottom,0px))}.cuetext[data-at="pin"]:not(.is-on){opacity:0;visibility:hidden;transition:opacity .5s cubic-bezier(.333,0,.667,1),visibility 0s .5s}}'), 'up to 1100 px in the pin: the bottom left corner, keyed on the place alone, and hidden while the place is held without the words being on, so they leave the corner hidden (D10); the bottom left corner');
+  assert.ok(css.includes('@media (max-width:1100px){.copy{padding-bottom:calc(var(--inset) + 84px + env(safe-area-inset-bottom,0px))}}'), 'the countdown lifts for the column (73) and 11 px');
   assert.ok(!css.includes('.intro.po~.cuetext'), 'no forced show over the loader poster state: the words follow is-off there');
   assert.match(css, /\.scrollcue\.is-off~\.cuetext:not\(\.is-on\),html\.loading \.cuetext,html\.uh3 \.cuetext\{opacity:0;visibility:hidden;/);
   const fade = `opacity ${String(CUE.fadeMs / 1000).replace(/^0\./, '.')}s`;   // .5s: the ride holds the pin place this long after the words go off (CUE.fadeMs)

@@ -45,9 +45,12 @@ test('the copy, verbatim from the picture top to bottom: the curly apostrophe ev
   const order = ['{C.h1}', '{C.h2}', '{C.subLead}<strong>{C.subBold}</strong>{C.subMid}<br class="su-br">{C.subTail}', '{C.jars}', '{j.label}', '{C.starLead}', '{C.starWorth}', '{C.got}', '{C.gotLead}<br class="su-br">{C.gotTail}', 'placeholder={C.email}', '{C.send}', '{C.keep}'];
   let at = 0;
   for (const s of order) { const k = astro.indexOf(s, at); assert.ok(k > at, `${s} after the line before it`); at = k; }
-  // nothing else shows: no credit line, no consent box, no counts, no follow words
-  assert.doesNotMatch(astro, /su-credit|Pentristo|sketchfab|type="checkbox"|consent|su-count|su-state|Follow on|Subscribe on/i);
-  assert.doesNotMatch(dom, /consent/);
+  // nothing else shows: no credit line, no counts, no follow words; the one addition is the consent tick (DPDP Act, Sam
+  // 2026-11-03: "yeah add that"), required, its words the quiz's, sent with the lead
+  assert.doesNotMatch(astro, /su-credit|Pentristo|sketchfab|su-count|su-state|Follow on|Subscribe on/i);
+  assert.match(astro, /<input type="checkbox" id="suConsent" name="consent" required/);
+  assert.equal(C.consent, 'I’m happy to hear from Skreed by email.');
+  assert.match(read('src/scripts/signup/form.ts'), /consent: 'yes'/);   // the form's own chunk since the email code (2026-11-03)
 });
 
 test('the follows (D6): the three addresses, Facebook a quarter of blue, YouTube a quarter of red, Instagram a half of the mixed lot, each column one link to a new tab named for assistive technology, the star column no link', () => {

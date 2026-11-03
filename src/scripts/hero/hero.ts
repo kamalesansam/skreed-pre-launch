@@ -41,7 +41,7 @@ import type { RideEls } from './scroll/ride.ts';
 import type { RoomDirector } from './section4/director.ts';
 import type { PageScroll } from './section4/scroll.ts';
 import { createSignupGround } from './section5/ground.ts';
-import { ROOM_SCREENS, WIPE4_START } from '../../config/room-map.ts';
+import { ROOM_HEIGHT, SCENES_END } from '../../config/room-map.ts';
 import type { HeroContext, HeroUniforms, SkyState } from './types.ts';
 
 export interface StartOptions {
@@ -320,13 +320,16 @@ export async function startHero(o: StartOptions): Promise<void> {
     pageScroll = m.createPageScroll({
       reduced, hooks: HOOKS, svh, settleMs: () => tune?.room?.params.snapMs,
       // the four spans (section-4-flux.md 5 "Glue spans"; section-5.md 2 "The elastic glue"): the first seam, the quiz seam,
-      // section 4's seam, and the fourth wipe (the room's top plus 12.8 and 13.8 of its screens, which are the probe's 100svh).
+      // section 4's seam, and scene 5 to section 5 (the room's top plus 3 and 4.8 of its screens, which are the probe's
+      // 100svh: the hold and the fourth wipe as one seam, so a stop in the hold settles too; Sam, 2026-11-03, of the phone:
+      // "enable the glue stick section scroll for the last section sign up page as well"), its end never past the page's
+      // last position (a phone's viewport taller than 100svh once its toolbar hides, where the director's cut ends too).
       // The first seam runs from the pull-back's end to S2T.LAND, where the ten gems are at rest and their labels are on
       // (Sam, 2026-11-03: "the place where the section 2 should be glued is where the stones are properly aligned in their
       // own respective place in section where the labels start showing"); until then it ended at the wipe's end (W1END)
       spans: () => {
-        const vh = innerHeight, one = svh(), quiz = docTop('find'), top = docTop('room');
-        return [{ start: S2T.PULL * vh, end: S2T.LAND * vh }, { start: Math.min(S2T.W2 * vh, quiz - vh), end: quiz }, { start: top - one, end: top + one }, { start: top + WIPE4_START * one, end: top + (WIPE4_START + ROOM_SCREENS.out) * one }].filter((x) => Number.isFinite(x.start) && Number.isFinite(x.end));
+        const vh = innerHeight, one = svh(), quiz = docTop('find'), top = docTop('room'), last = document.documentElement.scrollHeight - vh;
+        return [{ start: S2T.PULL * vh, end: S2T.LAND * vh }, { start: Math.min(S2T.W2 * vh, quiz - vh), end: quiz }, { start: top - one, end: top + one }, { start: top + SCENES_END * one, end: Math.min(top + ROOM_HEIGHT * one, last) }].filter((x) => Number.isFinite(x.start) && Number.isFinite(x.end));
       },
       room: {
         inRange: () => !!ctx.room?.inRange(), edge: (d) => !!ctx.room?.edge(d), step: (d) => !!ctx.room?.stepScene(d),

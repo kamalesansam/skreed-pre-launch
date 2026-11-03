@@ -7,13 +7,7 @@ import { SITE_COPY } from '../scripts/family/site-copy.ts';
 import { PEARL_WHISPER } from '../config/tokens.ts';
 const c = SITE_COPY.notFound;
 ---
-<Base title={c.title} description={c.description} path="/404.html" preloadFonts={['/fonts/poppins-700-latin.woff2']} themeColor={PEARL_WHISPER}>
-  <Fragment slot="head">
-    <meta name="robots" content="noindex">
-    <link rel="icon" href="/favicon.ico" sizes="32x32">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  </Fragment>
+<Base title={c.title} description={c.description} path="/404.html" indexable={false} preloadFonts={['/fonts/poppins-700-latin.woff2']} themeColor={PEARL_WHISPER}>
   <main class="nf">
     <span class="nf-sw" aria-hidden="true"></span>
     <h1 class="h404">{c.h1}</h1>

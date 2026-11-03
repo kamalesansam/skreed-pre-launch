@@ -146,6 +146,21 @@ test('About is a plain link: site-nav.ts jumps only the data-sec links, tracks a
   assert.match(js, /addEventListener\('pagehide', \(\) => \{ if \(open\(\)\) sheet\.hidePopover\(\); \}\);/);
   assert.match(js, /addEventListener\('pageshow', \(e\) => \{ if \(e\.persisted && open\(\)\) sheet\.hidePopover\(\); \}\);/);
   const about = read('src/pages/about.astro');
-  assert.doesNotMatch(about, /SiteNav|site-nav/, 'the About page ships no script: its wordmark is its way home (docs/specs/about.md D6, D13)');
-  assert.match(about, /<a class="site-logo" href="\/" aria-label=\{COPY\.logo\.aria\}>/);
+  assert.doesNotMatch(about, /SiteNav|site-nav/, 'the About page has no index: its wordmark and Back to main page are its way home (docs/specs/about.md D6, D13)');
+  // 2026-11-03: the wordmark with the glitch, and "Back to main page", both going Back to the landing page when it is behind them
+  assert.match(about, /<SiteLogo \/>/);
+  assert.match(about, /<a class="ab-home" href="\/" data-home>/);
+});
+
+test('section 5, the gift: the page end on the 3D path, its top on the poster tier, marked once it is half a screen up', () => {
+  const i5: PageMap = { ...island, signup: 39500 }, p5: PageMap = { ...poster, signup: 5400 };
+  assert.equal(restY('signup', i5), i5.max);
+  assert.equal(restY('signup', p5), 5400);
+  assert.equal(restY('signup', { ...poster, signup: NaN }), 0, 'locked: no target');
+  assert.equal(sectionAt(i5.max, i5), 'signup');
+  assert.equal(sectionAt(39200, i5), 'signup');
+  assert.equal(sectionAt(38000, i5), 'room');
+  assert.equal(sectionAt(5000, p5), 'signup');
+  assert.equal(sectionAt(4900, p5), 'room');
+  assert.equal(sectionAt(island.max, island), 'room', 'no section 5 measured (locked): never marked');
 });

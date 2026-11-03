@@ -1,0 +1,10 @@
+/* Section 5's first name and email code (2026-11-03): the name a full pill of its own above the email's, the code field
+   in the email's pill (.su-pill, .su-input, .su-send in signup.css), the code's two links where the consent tick stood.
+   Loaded with the form's chunk (form.ts), never in the first view. */
+.signup .su-namef { width: var(--pill-w); max-width: 100%; }
+.signup .su-namef[hidden] { display: none; }
+.signup .su-name { padding-right: calc(var(--pill-h) * 0.517); }   /* no button over its right end */
+.signup .su-codelinks { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.4em 1.5em; min-height: 1.1em; }   /* the email code's two links, where the consent tick stood */
+.signup .su-codelinks[hidden] { display: none; }
+.signup .su-notyou[aria-disabled="true"] { cursor: default; text-decoration-line: none; }
+.signup .su-code:not(:placeholder-shown) { letter-spacing: 0.08em; }   /* the digits a touch apart, easier to check against the email */

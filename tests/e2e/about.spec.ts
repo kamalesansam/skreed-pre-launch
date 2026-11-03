@@ -2,7 +2,8 @@
 //   PUBLIC_HERO_HOOKS=0 PUBLIC_TUNE=0 PUBLIC_STAGING=0 PUBLIC_FAMILY_3D=on npx astro build --outDir dist-about
 //   node scripts/csp.mjs --dist dist-about; npx wrangler dev --ip 127.0.0.1 --port <port> --assets dist-about
 //   BASE_URL=http://127.0.0.1:<port>/ SKREED_DIST=dist-about npx playwright test tests/e2e/about.spec.ts --project=e2e
-// The page ships no script, so every row reads what a visitor's browser has: the network, the DOM, the computed styles
+// The page ships one script since 2026-11-03, SiteLogo's (the glitch and the way back, E-About-home), so the rows read
+// what a visitor's browser has: the network, the DOM, the computed styles
 // and, through the DevTools protocol, the platform font each run of text was drawn with.
 import { test, expect, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
@@ -277,15 +278,17 @@ test.describe('AC7 reflow, zoom and text spacing', () => {
   }
 });
 
-test('AC8 zero JavaScript: no script fetched, one data block, no handlers; the same boxes with JavaScript off; the bytes', async ({ browser, baseURL }) => {
+test('AC8 JavaScript: SiteLogo\'s module only (2026-11-03), one data block, no handlers; the same boxes with JavaScript off; the bytes', async ({ browser, baseURL }) => {
   const url = new URL(PATH, baseURL).href;
   const on = await browser.newContext({ viewport: PHONE });
   const page = await on.newPage();
   const types: string[] = [];
   page.on('request', (r) => types.push(r.resourceType()));
   await page.goto(url, { waitUntil: 'load' }); await page.evaluate(() => document.fonts.ready); await page.waitForTimeout(300);
-  expect(types.filter((t) => t === 'script')).toEqual([]);
-  expect(await page.evaluate(() => [...document.scripts].map((s) => s.type))).toEqual(['application/ld+json']);
+  // the logotype's glitch and the way back (E-About-home, E-way-back): one module script and its chunks, nothing else
+  expect(types.filter((t) => t === 'script').length).toBeGreaterThan(0);
+  expect(await page.evaluate(() => [...document.scripts].map((s) => s.type).sort())).toEqual(['application/ld+json', 'module']);
+  expect(await page.evaluate(() => !!(window as unknown as { __skreedLogo?: unknown }).__skreedLogo)).toBe(true);
   expect(await page.evaluate(() => [...document.querySelectorAll('*')].flatMap((e) => [...e.attributes].filter((a) => /^on/i.test(a.name)).map((a) => `${e.tagName} ${a.name}`)))).toEqual([]);
   expect(await page.locator('noscript').count()).toBe(0);
   // the first view's bytes as transferred: the document and every resource it fetched
@@ -325,23 +328,24 @@ test('AC9 the head, the JSON-LD, the sitemap, the redirect, caching and the CSP'
   await page.goto(new URL(PATH, baseURL).href);
   await page.evaluate(() => document.fonts.ready);
   const attr = (sel: string, a: string) => page.locator(sel).getAttribute(a);
-  expect(await attr('link[rel="canonical"]', 'href')).toBe('https://skreed.in/about/');
+  expect(await attr('link[rel="canonical"]', 'href')).toBe('https://skreed.shop/about/');
   expect(await attr('meta[name="theme-color"]', 'content')).toBe('#F7F6F3');
   const pre = page.locator('link[rel="preload"]');
   await expect(pre).toHaveCount(1);
   expect(await pre.evaluate((l) => [l.getAttribute('as'), l.getAttribute('type'), l.hasAttribute('crossorigin'), l.getAttribute('href')])).toEqual(['font', 'font/woff2', true, FONT]);
-  for (const [p, v] of [['og:type', 'website'], ['og:site_name', 'Skreed'], ['og:locale', 'en_IN'], ['og:title', C.title], ['og:description', C.description], ['og:url', 'https://skreed.in/about/']]) expect(await attr(`meta[property="${p}"]`, 'content'), p).toBe(v);
-  expect(await attr('meta[name="twitter:card"]', 'content')).toBe('summary');
+  for (const [p, v] of [['og:type', 'website'], ['og:site_name', 'Skreed'], ['og:locale', 'en_IN'], ['og:title', C.title], ['og:description', C.description], ['og:url', 'https://skreed.shop/about/']]) expect(await attr(`meta[property="${p}"]`, 'content'), p).toBe(v);
+  expect(await attr('meta[name="twitter:card"]', 'content')).toBe('summary_large_image');
+  expect(await attr('meta[property="og:image"]', 'content')).toBe('https://skreed.shop/og/skreed.jpg');
   expect(await page.locator('link[rel="icon"], link[rel="apple-touch-icon"], link[rel="manifest"]').evaluateAll((ls) => ls.map((l) => `${l.getAttribute('rel')} ${l.getAttribute('href')}`)))
     .toEqual(['icon /favicon.ico', 'icon /icon.svg', 'apple-touch-icon /apple-touch-icon.png', 'manifest /manifest.webmanifest']);
   await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
   const ld = JSON.parse((await page.locator('script[type="application/ld+json"]').textContent())!);
   const fam = JSON.parse((await (await request.get('/shades/frosty-white/')).text()).match(/<script type="application\/ld\+json">([^<]+)<\/script>/)![1]);
   expect(ld['@graph'][0], 'the Organization node, as the family pages build it').toEqual(fam['@graph'][0]);
-  expect(ld['@graph'][1]).toEqual({ '@type': 'AboutPage', url: 'https://skreed.in/about/', name: 'About Skreed', about: { '@id': 'https://skreed.in/#org' } });
+  expect(ld['@graph'][1]).toEqual({ '@type': 'AboutPage', url: 'https://skreed.shop/about/', name: 'About Skreed', about: { '@id': 'https://skreed.shop/#org' } });
   expect(ld['@graph'][2]).toEqual({ '@type': 'BreadcrumbList', itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Skreed', item: 'https://skreed.in/' },
-    { '@type': 'ListItem', position: 2, name: 'About Skreed', item: 'https://skreed.in/about/' }] });
+    { '@type': 'ListItem', position: 1, name: 'Skreed', item: 'https://skreed.shop/' },
+    { '@type': 'ListItem', position: 2, name: 'About Skreed', item: 'https://skreed.shop/about/' }] });
   expect(ld['@graph']).toHaveLength(3);
   // links: https or same-origin paths only; no storage touched; no CSP violation on load or on the first Tab
   expect(await page.locator('a[href]').evaluateAll((as) => as.map((a) => a.getAttribute('href')))).toEqual(['/']);
@@ -353,7 +357,7 @@ test('AC9 the head, the JSON-LD, the sitemap, the redirect, caching and the CSP'
 
   const sm = await (await request.get('/sitemap.xml')).text();
   const locs = [...sm.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
-  expect(locs.slice(0, 2)).toEqual(['https://skreed.in/', 'https://skreed.in/about/']);
+  expect(locs.slice(0, 2)).toEqual(['https://skreed.shop/', 'https://skreed.shop/about/']);
   expect(locs).toHaveLength(12);
-  expect(await (await request.get('/robots.txt')).text()).toContain('Sitemap: https://skreed.in/sitemap.xml');
+  expect(await (await request.get('/robots.txt')).text()).toContain('Sitemap: https://skreed.shop/sitemap.xml');
 });

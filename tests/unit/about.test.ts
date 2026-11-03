@@ -65,15 +65,18 @@ test('the launch line is LAUNCH_ISO\'s date, and the page gives the <time> that 
 test('the sitemap lists the landing, then /about/, then the ten family pages', async () => {
   const res = await GET({} as never);
   const locs = [...(await res.text()).matchAll(/<loc>([^<]+)<\/loc>/g)].map((x) => x[1]);
-  assert.deepEqual(locs, ['https://skreed.in/', 'https://skreed.in/about/', ...FAMILIES.map((f) => `https://skreed.in/shades/${f.slug}/`)]);
+  assert.deepEqual(locs, ['https://skreed.shop/', 'https://skreed.shop/about/', ...FAMILIES.map((f) => `https://skreed.shop/shades/${f.slug}/`)]);
 });
 
-test('about.astro: no script but the JSON-LD block, no script-carrying component, no client: directive, no style attribute', () => {
+test('about.astro: no script but the JSON-LD block and SiteLogo\'s (its glitch and the way back, 2026-11-03), no client: directive, no style attribute', () => {
   const page = read('src/pages/about.astro');
   const imports = [...page.matchAll(/^import\s+[^'"]*?['"]([^'"]+)['"]/gm)].map((x) => x[1]);
   assert.ok(imports.length >= 8);
-  assert.ok(!imports.some((p) => /SiteLogo|BackToTop/.test(p)), 'SiteLogo.astro and BackToTop.astro carry scripts');
-  for (const p of imports.filter((x) => x.endsWith('.astro'))) {
+  assert.ok(!imports.some((p) => /BackToTop|SiteNav/.test(p)), 'no Back to top and no index on About (D13)');
+  // the wordmark is SiteLogo with the landing's glitch (E-About-home); "Back to main page" goes Back to the cached landing (E-way-back)
+  assert.ok(imports.some((p) => /SiteLogo/.test(p)));
+  assert.match(page, /<a class="ab-home" href="\/" data-home>/);
+  for (const p of imports.filter((x) => x.endsWith('.astro') && !/SiteLogo/.test(x))) {
     assert.doesNotMatch(readFileSync(new URL(p, new URL('src/pages/', root)), 'utf8'), /<script\b/i, `${p} carries a script`);
   }
   assert.deepEqual([...page.matchAll(/<script\b[^>]*>/gi)].map((x) => x[0]), ['<script type="application/ld+json" is:inline set:html={ld}>']);
@@ -113,7 +116,7 @@ test('under src/, Inter is named only by about.css, the page\'s preload and comm
   const walk = (dir: URL): URL[] => readdirSync(dir).flatMap((n) => { const u = new URL(n, dir); return statSync(u).isDirectory() ? walk(new URL(`${n}/`, dir)) : [u]; });
   const hits = walk(new URL('src/', root)).filter((u) => /\.(ts|js|mjs|astro|css|json|svg|md|txt|html)$/.test(u.pathname))
     .filter((u) => /\bInter\b|inter-400-700/.test(readFileSync(u, 'utf8'))).map((u) => u.href.slice(root.href.length)).sort();
-  // section 5 (the sign-up) names Inter as well, in its stylesheet's token, the shared fonts.css @font-face group and its script's font load (docs/specs/section-5-picture.md D3; added 2026-11-03 at the merge of the two landings)
+  // section 5 (the sign-up) names Inter as well, in its stylesheet's token, the shared fonts.css @font-face group and its script's font load (docs/specs/section-5-picture.md D3; added 2026-11-03 at the merge of the two landings) (the section index, briefly in it on 2026-11-03, is in Work Sans Light, E-NAV-font)
   assert.deepEqual(hits, ['src/config/about.ts', 'src/pages/about.astro', 'src/scripts/signup/signup.ts', 'src/styles/about.css', 'src/styles/fonts.css', 'src/styles/signup.css']);
   const page = read('src/pages/about.astro').split('\n').filter((l) => /\bInter\b|inter-400-700/.test(l));
   assert.equal(page.length, 1); assert.match(page[0], /preloadFonts=/);
