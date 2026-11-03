@@ -12,7 +12,7 @@ import { MeshPhysicalMaterial, ShaderChunk, ShaderLib } from 'three';
 import { TAKEOVER, easeTakeover, takeoverP } from '../../src/config/takeover.ts';
 import { SWEEP_END_SLACK, SWEEP_SPAN, availableType, handoverTypes, takeoverAt, takeoverSeed } from '../../src/scripts/family/three/takeover.ts';
 import { TAKEOVER_PROGRAM, createRunUniforms, createSideUniforms, injectTakeover, withTakeover } from '../../src/scripts/family/three/takeover-material.ts';
-import { CASE_TYPES, HANDOVERS, TURN_LEN, beatPose, type CaseType } from '../../src/scripts/family/three/pose.ts';
+import { CASE_TYPES, HANDOVERS, SWEEP_LEN, TURN_LEN, beatPose, type CaseType } from '../../src/scripts/family/three/pose.ts';
 
 const all = () => true;
 const close = (a: number, b: number, eps = 1e-9) => Math.abs(a - b) <= eps;
@@ -29,17 +29,19 @@ test('the measured constants: -0.12 to 1.12, the noise, the band, the relief, th
   assert.equal(TAKEOVER.bandLight, 1);
   // the clock of 2026-11-02 is gone: no duration, no finish, no mirrored axis
   assert.deepEqual(Object.keys(TAKEOVER).filter((k) => /ms$|mirror/i.test(k)), []);
-  assert.ok(close(SWEEP_SPAN, TURN_LEN / 2) && close(SWEEP_SPAN, 0.15));
-  assert.deepEqual([...HANDOVERS], [2.85, 3.85, 4.85]);
+  assert.ok(close(SWEEP_SPAN, SWEEP_LEN) && close(SWEEP_SPAN, 0.2));
+  assert.deepEqual([...HANDOVERS], [2.8, 3.8, 4.8]);
   assert.ok(close(easeTakeover(0.5), 0.5) && close(takeoverP(1), 1.12) && close(takeoverP(0), -0.12));
 });
 
-test('the mapping (D3 to D6): one case outside the hand-overs; inside each, the outgoing and the incoming case with the sweep linear in the scroll, the in-out cubic and p from -0.12 to 1.12, ending as the turn does', () => {
-  for (const sv of [0, 0.5, 1, 1.85, 2, 2.5, 2.849]) assert.deepEqual(takeoverAt(sv, { has: all }), { a: 'tough', b: null, raw: 0, eased: 0, p: -0.12 }, `sv ${sv}`);
+test('the mapping (D3 to D6): one case outside the hand-overs; inside each, the outgoing and the incoming case with the sweep linear in the scroll, the in-out cubic and p from -0.12 to 1.12, after the whole turn', () => {
+  for (const sv of [0, 0.5, 1, 1.85, 2, 2.5, 2.799]) assert.deepEqual(takeoverAt(sv, { has: all }), { a: 'tough', b: null, raw: 0, eased: 0, p: -0.12 }, `sv ${sv}`);
   for (const [i, h] of HANDOVERS.entries()) {
     const [from, to] = handoverTypes(i);
     assert.deepEqual([from, to], [CASE_TYPES[i], CASE_TYPES[i + 1]]);
-    assert.ok(Math.abs(beatPose(h).yaw) > 1.5, `the hand-over at ${h} is near the turn's edge-on frame`);
+    assert.equal(beatPose(h).yaw, 0, `the hand-over at ${h} is the whole turn's end`);
+    // the turn before it is the outgoing case's alone (D15): no sweep while it turns
+    for (let t = h - TURN_LEN; t < h - 1e-9; t += 0.01) assert.deepEqual([takeoverAt(t, { has: all }).a, takeoverAt(t, { has: all }).b], [from, null], `the turn at ${t.toFixed(2)}`);
     const start = takeoverAt(h, { has: all });
     assert.deepEqual([start.a, start.b, start.raw, start.eased, start.p], [from, to, 0, 0, -0.12], `at ${h}`);
     for (const k of [0.1, 0.25, 0.5, 0.75, 0.9]) {
@@ -54,30 +56,30 @@ test('the mapping (D3 to D6): one case outside the hand-overs; inside each, the 
     assert.deepEqual([hair.a, hair.b], [to, null], 'a hair short of the rest');
     assert.ok(takeoverAt(h + SWEEP_SPAN - SWEEP_END_SLACK * 2, { has: all }).b === to, 'two hairs short is still the sweep');
     assert.equal(SWEEP_END_SLACK, 0.004, 'the browser row of criteria 4 and 7 carries this figure');
-    assert.equal(beatPose(h + SWEEP_SPAN).yaw, 0, 'the turn ends there too');
+    for (const k of [0, 0.5, 1]) assert.equal(beatPose(h + k * SWEEP_SPAN).yaw, 0, 'the case faces the camera through the sweep');
   }
-  for (const sv of [3, 3.5, 3.849]) assert.equal(takeoverAt(sv, { has: all }).a, 'magtough');
+  for (const sv of [3, 3.5, 3.799]) assert.equal(takeoverAt(sv, { has: all }).a, 'magtough');
   for (const sv of [4, 4.5]) assert.equal(takeoverAt(sv, { has: all }).a, 'snap');
   for (const sv of [5, 5.5, 6.5, 7]) assert.equal(takeoverAt(sv, { has: all }).a, 'armor');
   // the way up is the same function: the sweep plays back as the scroll falls (D5)
-  const up = [2.99, 2.95, 2.9, 2.86].map((sv) => takeoverAt(sv, { has: all }).raw);
+  const up = [2.99, 2.95, 2.9, 2.81].map((sv) => takeoverAt(sv, { has: all }).raw);
   for (let i = 1; i < up.length; i++) assert.ok(up[i] < up[i - 1], 'raw falls with the scroll');
-  assert.equal(takeoverAt(2.84, { has: all }).a, 'tough');
+  assert.equal(takeoverAt(2.79, { has: all }).a, 'tough');
 });
 
-test('a model that has not landed keeps the case before it with no sweep (D2); a later type sweeps in from whatever stands; reduced motion changes the type at the edge-on frame with no sweep (D8)', () => {
+test('a model that has not landed keeps the case before it with no sweep (D2); a later type sweeps in from whatever stands; reduced motion changes the type at the hand-over with no sweep (D8)', () => {
   const noSnap = (t: CaseType) => t !== 'snap';
   assert.equal(availableType('snap', noSnap), 'magtough');
   assert.equal(availableType('armor', noSnap), 'armor');
   assert.equal(availableType('tough', () => false), 'tough');
-  for (const sv of [3.85, 3.9, 3.99, 4, 4.5]) assert.deepEqual([takeoverAt(sv, { has: noSnap }).a, takeoverAt(sv, { has: noSnap }).b], ['magtough', null], `sv ${sv} without the Snap`);
-  const v = takeoverAt(4.925, { has: noSnap });
+  for (const sv of [3.8, 3.9, 3.99, 4, 4.5]) assert.deepEqual([takeoverAt(sv, { has: noSnap }).a, takeoverAt(sv, { has: noSnap }).b], ['magtough', null], `sv ${sv} without the Snap`);
+  const v = takeoverAt(4.9, { has: noSnap });
   assert.deepEqual([v.a, v.b], ['magtough', 'armor'], 'the Armor takes over from the MagTough that stands');
   assert.ok(close(v.raw, 0.5, 1e-9));
   const none = (t: CaseType) => t === 'tough';
   for (const sv of [2.9, 3, 4, 5, 6.5]) assert.deepEqual([takeoverAt(sv, { has: none }).a, takeoverAt(sv, { has: none }).b], ['tough', null]);
-  assert.deepEqual([takeoverAt(2.84, { has: all, instant: true }).a, takeoverAt(2.85, { has: all, instant: true }).a, takeoverAt(2.9, { has: all, instant: true }).b], ['tough', 'magtough', null]);
-  assert.deepEqual([takeoverAt(4.85, { has: all, instant: true }).a, takeoverAt(4.84, { has: all, instant: true }).a], ['armor', 'snap']);
+  assert.deepEqual([takeoverAt(2.79, { has: all, instant: true }).a, takeoverAt(2.8, { has: all, instant: true }).a, takeoverAt(2.9, { has: all, instant: true }).b], ['tough', 'magtough', null]);
+  assert.deepEqual([takeoverAt(4.8, { has: all, instant: true }).a, takeoverAt(4.79, { has: all, instant: true }).a], ['armor', 'snap']);
 });
 
 test('the seed: the same pair always the same three values in 0 to 37, another pair others', () => {

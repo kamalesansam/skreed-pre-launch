@@ -39,17 +39,6 @@ const ld = JSON.stringify({
 ---
 <Base title={c.title} description={c.description} path={path} preloadFonts={['/fonts/inter-400-700-latin.woff2']} themeColor={PEARL_WHISPER}>
   <Fragment slot="head">
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content={o.name}>
-    <meta property="og:locale" content="en_IN">
-    <meta property="og:title" content={c.title}>
-    <meta property="og:description" content={c.description}>
-    <meta property="og:url" content={url}>
-    <meta name="twitter:card" content="summary">
-    <link rel="icon" href="/favicon.ico" sizes="32x32">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="manifest" href="/manifest.webmanifest">
     <script type="application/ld+json" is:inline set:html={ld}></script>
   </Fragment>
   <WordmarkSprite />

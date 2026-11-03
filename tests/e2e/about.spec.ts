@@ -328,23 +328,24 @@ test('AC9 the head, the JSON-LD, the sitemap, the redirect, caching and the CSP'
   await page.goto(new URL(PATH, baseURL).href);
   await page.evaluate(() => document.fonts.ready);
   const attr = (sel: string, a: string) => page.locator(sel).getAttribute(a);
-  expect(await attr('link[rel="canonical"]', 'href')).toBe('https://skreed.in/about/');
+  expect(await attr('link[rel="canonical"]', 'href')).toBe('https://skreed.shop/about/');
   expect(await attr('meta[name="theme-color"]', 'content')).toBe('#F7F6F3');
   const pre = page.locator('link[rel="preload"]');
   await expect(pre).toHaveCount(1);
   expect(await pre.evaluate((l) => [l.getAttribute('as'), l.getAttribute('type'), l.hasAttribute('crossorigin'), l.getAttribute('href')])).toEqual(['font', 'font/woff2', true, FONT]);
-  for (const [p, v] of [['og:type', 'website'], ['og:site_name', 'Skreed'], ['og:locale', 'en_IN'], ['og:title', C.title], ['og:description', C.description], ['og:url', 'https://skreed.in/about/']]) expect(await attr(`meta[property="${p}"]`, 'content'), p).toBe(v);
-  expect(await attr('meta[name="twitter:card"]', 'content')).toBe('summary');
+  for (const [p, v] of [['og:type', 'website'], ['og:site_name', 'Skreed'], ['og:locale', 'en_IN'], ['og:title', C.title], ['og:description', C.description], ['og:url', 'https://skreed.shop/about/']]) expect(await attr(`meta[property="${p}"]`, 'content'), p).toBe(v);
+  expect(await attr('meta[name="twitter:card"]', 'content')).toBe('summary_large_image');
+  expect(await attr('meta[property="og:image"]', 'content')).toBe('https://skreed.shop/og/skreed.jpg');
   expect(await page.locator('link[rel="icon"], link[rel="apple-touch-icon"], link[rel="manifest"]').evaluateAll((ls) => ls.map((l) => `${l.getAttribute('rel')} ${l.getAttribute('href')}`)))
     .toEqual(['icon /favicon.ico', 'icon /icon.svg', 'apple-touch-icon /apple-touch-icon.png', 'manifest /manifest.webmanifest']);
   await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
   const ld = JSON.parse((await page.locator('script[type="application/ld+json"]').textContent())!);
   const fam = JSON.parse((await (await request.get('/shades/frosty-white/')).text()).match(/<script type="application\/ld\+json">([^<]+)<\/script>/)![1]);
   expect(ld['@graph'][0], 'the Organization node, as the family pages build it').toEqual(fam['@graph'][0]);
-  expect(ld['@graph'][1]).toEqual({ '@type': 'AboutPage', url: 'https://skreed.in/about/', name: 'About Skreed', about: { '@id': 'https://skreed.in/#org' } });
+  expect(ld['@graph'][1]).toEqual({ '@type': 'AboutPage', url: 'https://skreed.shop/about/', name: 'About Skreed', about: { '@id': 'https://skreed.shop/#org' } });
   expect(ld['@graph'][2]).toEqual({ '@type': 'BreadcrumbList', itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Skreed', item: 'https://skreed.in/' },
-    { '@type': 'ListItem', position: 2, name: 'About Skreed', item: 'https://skreed.in/about/' }] });
+    { '@type': 'ListItem', position: 1, name: 'Skreed', item: 'https://skreed.shop/' },
+    { '@type': 'ListItem', position: 2, name: 'About Skreed', item: 'https://skreed.shop/about/' }] });
   expect(ld['@graph']).toHaveLength(3);
   // links: https or same-origin paths only; no storage touched; no CSP violation on load or on the first Tab
   expect(await page.locator('a[href]').evaluateAll((as) => as.map((a) => a.getAttribute('href')))).toEqual(['/']);
@@ -356,7 +357,7 @@ test('AC9 the head, the JSON-LD, the sitemap, the redirect, caching and the CSP'
 
   const sm = await (await request.get('/sitemap.xml')).text();
   const locs = [...sm.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
-  expect(locs.slice(0, 2)).toEqual(['https://skreed.in/', 'https://skreed.in/about/']);
+  expect(locs.slice(0, 2)).toEqual(['https://skreed.shop/', 'https://skreed.shop/about/']);
   expect(locs).toHaveLength(12);
-  expect(await (await request.get('/robots.txt')).text()).toContain('Sitemap: https://skreed.in/sitemap.xml');
+  expect(await (await request.get('/robots.txt')).text()).toContain('Sitemap: https://skreed.shop/sitemap.xml');
 });

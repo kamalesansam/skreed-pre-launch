@@ -65,7 +65,7 @@ test('the launch line is LAUNCH_ISO\'s date, and the page gives the <time> that 
 test('the sitemap lists the landing, then /about/, then the ten family pages', async () => {
   const res = await GET({} as never);
   const locs = [...(await res.text()).matchAll(/<loc>([^<]+)<\/loc>/g)].map((x) => x[1]);
-  assert.deepEqual(locs, ['https://skreed.in/', 'https://skreed.in/about/', ...FAMILIES.map((f) => `https://skreed.in/shades/${f.slug}/`)]);
+  assert.deepEqual(locs, ['https://skreed.shop/', 'https://skreed.shop/about/', ...FAMILIES.map((f) => `https://skreed.shop/shades/${f.slug}/`)]);
 });
 
 test('about.astro: no script but the JSON-LD block and SiteLogo\'s (its glitch and the way back, 2026-11-03), no client: directive, no style attribute', () => {

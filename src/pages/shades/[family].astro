@@ -54,23 +54,14 @@ const Loader = ON3D ? (await import('../../components/shell/Loader.astro')).defa
   title={title}
   description={description}
   path={`/shades/${fam.slug}/`}
+  image={`/og/${fam.slug}.jpg`}
+  imageAlt={`Skreed cases in the ${fam.name} shades, turning in a dark studio`}
   preloadFonts={['/fonts/poppins-700-latin.woff2', '/fonts/open-sans-400-600-latin.woff2', '/fonts/ibm-plex-mono-500-caps.woff2']}
   themeColor={NIGHT}
 >
   <FamilyHeadFirst slot="head-first" fam={fam} has3d={has3d} />
   <style slot="head" is:inline set:html={pageCss(fam)}></style>
   <Fragment slot="head">
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content={o.name}>
-    <meta property="og:locale" content="en_IN">
-    <meta property="og:title" content={title}>
-    <meta property="og:description" content={description}>
-    <meta property="og:url" content={url}>
-    <meta name="twitter:card" content="summary">
-    <link rel="icon" href="/favicon.ico" sizes="32x32">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="manifest" href="/manifest.webmanifest">
     <script type="application/ld+json" is:inline set:html={ld}></script>
   </Fragment>
   <WordmarkSprite />
