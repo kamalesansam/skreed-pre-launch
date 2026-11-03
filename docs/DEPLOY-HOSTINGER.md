@@ -12,11 +12,11 @@ Why the sign-up form was missing: Signup.astro and Quiz.astro render the email f
 ## One-time setup (hPanel, skreed.shop)
 1. Advanced, SSH Access: enable SSH, note the IP, port and username, add this Mac's public key (`~/.ssh/id_ed25519.pub`).
 2. Databases, MySQL Databases: create a database and user; open phpMyAdmin and run `server/schema.sql`.
-3. Zoho: create an app-specific password for the sending mailbox (accounts.zoho.in, Security, App Passwords).
+3. Zoho: create an app-specific password for partner@skreed.info, the sending mailbox (accounts.zoho.in, Security, App Passwords).
 4. On the server: `mkdir -p ~/domains/skreed.shop/skreed-api`, then write `config.php` from the sample with the values above (chmod 600).
 5. PHP 8.1 or newer (hPanel, Advanced, PHP Configuration).
 
 ## Each deploy
 `SKREED_SSH=<user>@<ip> SKREED_SSH_PORT=<port> npm run deploy:hostinger`, then post a test email to the form and check `/api/leads`.
 
-Still open: the site URL, canonical and sitemap name skreed.in (`src/config/site.ts`); no consent box on section 5 (DPDP); what the launch offer is.
+Still open: what the launch offer is (Sam will send it). skreed.in forwarding to skreed.shop is set at Name.com, outside this repository.

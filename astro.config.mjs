@@ -4,7 +4,7 @@ import { glslStrip, GLSL_MODULES } from './scripts/build/glsl-strip.mjs';
 // Section 4 ships one build: the five scene loops and their stills are in every mode (docs/specs/section-4-flux.md 5,
 // "Build modes"); the travel pick, its alias to a stub and its environment variable went with the lands (X-11).
 export default defineConfig({
-  site: 'https://skreed.in',
+  site: 'https://skreed.shop',
   output: 'static',
   build: { inlineStylesheets: 'always' },
   vite: {

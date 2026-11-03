@@ -86,6 +86,7 @@ function lead_handle(string $source): never {
   if (!is_array($in)) lead_reply(400);
   $email = strtolower(trim((string) ($in['email'] ?? '')));
   if (strlen($email) > 254 || !filter_var($email, FILTER_VALIDATE_EMAIL)) lead_reply(422);
+  if (($in['consent'] ?? '') !== 'yes') lead_reply(400, ['error' => 'consent']);   // DPDP: no row without the tick
 
   $keep = $source === 'quiz' ? ['shadeId', 'familyId', 'finish', 'persona', 'answers', 'consent'] : ['follows', 'consent'];
   $fields = [];

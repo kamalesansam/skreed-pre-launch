@@ -7,16 +7,16 @@ return [
   'db_dsn' => 'mysql:host=localhost;dbname=u918474217_skreed;charset=utf8mb4',
   'db_user' => 'u918474217_skreed',
   'db_pass' => 'CHANGE-ME',
-  // Zoho Mail SMTP (India data centre): the mailbox and an app-specific password from accounts.zoho.in, Security
+  // Zoho Mail SMTP (India data centre): partner@skreed.info and an app-specific password from accounts.zoho.in, Security
   'smtp_host' => 'smtp.zoho.in',
   'smtp_port' => 465,
-  'smtp_user' => 'hello@example.com',
+  'smtp_user' => 'partner@skreed.info',
   'smtp_pass' => 'CHANGE-ME',
-  'mail_from' => 'hello@example.com',
+  'mail_from' => 'partner@skreed.info',
   'mail_from_name' => 'Skreed',
-  'reply_to' => 'hello@example.com',
+  'reply_to' => 'partner@skreed.info',
   // who hears about each new sign-up
-  'notify_to' => ['hello@example.com'],
+  'notify_to' => ['partner@skreed.info'],
   // /api/leads: the user name and a hash made by: php -r 'echo password_hash("your password", PASSWORD_DEFAULT);'
   'admin_user' => 'skreed',
   'admin_hash' => 'CHANGE-ME',

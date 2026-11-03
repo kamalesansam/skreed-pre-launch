@@ -257,16 +257,19 @@ export function mountSignup(root: HTMLElement): void {
   if (!form) return;
   const email = form.querySelector<HTMLInputElement>('#suEmail'), send = form.querySelector<HTMLButtonElement>('#suSend'), msg = form.querySelector<HTMLElement>('#suMsg');
   const pill = form.querySelector<HTMLElement>('#suPill'), done = form.querySelector<HTMLElement>('#suDone'), notYou = form.querySelector<HTMLButtonElement>('#suNotYou');
-  if (!email || !send || !msg || !pill || !done || !notYou) return;
+  const consent = form.querySelector<HTMLInputElement>('#suConsent'), consentRow = form.querySelector<HTMLElement>('#suConsentRow');
+  if (!email || !send || !msg || !pill || !done || !notYou || !consent || !consentRow) return;
   const note = (text: string) => { msg.textContent = text; };   // role=status: read politely
   const setErr = (text: string) => { note(text); email.setAttribute('aria-invalid', text ? 'true' : 'false'); };
   const validEmail = () => { const ok = EMAIL.test(email.value.trim()); setErr(ok ? '' : C.errEmail); return ok; };
+  const validConsent = () => { const ok = consent.checked; consent.setAttribute('aria-invalid', ok ? 'false' : 'true'); if (!ok) note(C.errConsent); return ok; };
+  consent.addEventListener('change', () => { if (consent.checked && msg.textContent === C.errConsent) { note(''); consent.setAttribute('aria-invalid', 'false'); } });
   email.addEventListener('blur', () => { if (email.value) validEmail(); });   // on blur only once there is a value, never per keystroke
-  const closeForm = (text: string) => { pill.hidden = true; done.hidden = false; done.textContent = text; done.title = text; note(''); notYou.hidden = false; done.focus(); };
-  const openForm = () => { done.hidden = true; notYou.hidden = true; pill.hidden = false; email.value = ''; setErr(''); email.focus(); };
+  const closeForm = (text: string) => { pill.hidden = true; consentRow.hidden = true; done.hidden = false; done.textContent = text; done.title = text; note(''); notYou.hidden = false; done.focus(); };
+  const openForm = () => { done.hidden = true; notYou.hidden = true; pill.hidden = false; consentRow.hidden = false; consent.checked = false; email.value = ''; setErr(''); email.focus(); };
   let sending = false, queued: Record<string, string> | null = null, inflight: AbortController | null = null;
   const setSending = (on: boolean, label: string) => { sending = on; send.setAttribute('aria-disabled', on ? 'true' : 'false'); send.textContent = label; };
-  const payload = (address: string): Record<string, string> => ({ email: address, follows: follows.join(','), source: 'signup' });
+  const payload = (address: string): Record<string, string> => ({ email: address, follows: follows.join(','), consent: 'yes', source: 'signup' });
   const queueLead = (b: Record<string, string>) => { queued = b; try { sessionStorage.setItem(SIGNUP_KEYS.queue, JSON.stringify(b)); } catch { /* no storage: the queue lives in memory */ } closeForm(C.offline); track('signup_offline'); };
   const submit = async (b: Record<string, string>): Promise<void> => {
     if (sending) return;
@@ -278,13 +281,13 @@ export function mountSignup(root: HTMLElement): void {
       const res = await fetch(SIGNUP_LEAD_ENDPOINT, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(b), signal: ac.signal, credentials: 'omit' });
       // a definite answer (saved, saved before, rejected) settles a queued lead too
       if (res.ok || res.status === 409 || res.status === 422) { queued = null; try { sessionStorage.removeItem(SIGNUP_KEYS.queue); } catch { /* ignore */ } }
-      if (res.status === 422) { pill.hidden = false; done.hidden = true; notYou.hidden = true; setErr(C.errEmail); email.focus(); track('signup_error', { kind: 'invalid' }); }
+      if (res.status === 422) { pill.hidden = false; consentRow.hidden = false; done.hidden = true; notYou.hidden = true; setErr(C.errEmail); email.focus(); track('signup_error', { kind: 'invalid' }); }
       else if (!res.ok && res.status !== 409) throw new Error(String(res.status));
       else { closeForm(fill(C.done, { email: b.email })); track('signup_success', { dup: res.status === 409 ? 1 : 0 }); }
     } catch (err) {
       // offline is a failed request with navigator.onLine false (a pre-check lies on captive portals): queue and retry on `online`
       if (!navigator.onLine) queueLead(b);
-      else { pill.hidden = false; done.hidden = true; notYou.hidden = true; note(C.errSend); track('signup_error', { kind: err instanceof DOMException && err.name === 'AbortError' ? 'timeout' : 'network' }); }
+      else { pill.hidden = false; consentRow.hidden = false; done.hidden = true; notYou.hidden = true; note(C.errSend); track('signup_error', { kind: err instanceof DOMException && err.name === 'AbortError' ? 'timeout' : 'network' }); }
     } finally {
       clearTimeout(slow); clearTimeout(hard); if (inflight === ac) inflight = null;
       setSending(false, C.send);
@@ -295,7 +298,7 @@ export function mountSignup(root: HTMLElement): void {
     const saved = sessionStorage.getItem(SIGNUP_KEYS.queue);
     if (saved) {
       const q = JSON.parse(saved) as Record<string, string>;
-      email.value = q.email ?? '';
+      email.value = q.email ?? ''; consent.checked = true;   // the visitor ticked it when it was queued
       if (navigator.onLine) void submit(q); else queueLead(q);
     }
   } catch { /* a bad entry is dropped */ }
@@ -303,6 +306,7 @@ export function mountSignup(root: HTMLElement): void {
     e.preventDefault();
     if (sending) return;
     if (!validEmail()) { if (document.activeElement === email) announce(C.errEmail); else email.focus(); return; }
+    if (!validConsent()) { consent.focus(); announce(C.errConsent); return; }
     track('signup_submitted', { follows: follows.length });
     void submit(payload(email.value.trim()));
   });
