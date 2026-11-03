@@ -15,8 +15,9 @@
 // the same); --phone-only takes the phone pass alone, --no-gate skips the gate's frames. --result-only (2026-11-02, the
 // result screen after Sam's reference, quiz.md AC14) takes the result's frames alone at every size and at 1366x657 and
 // 1920x1080 (the reference's proportions): `result`, `gift` wherever the result and the offer take the screen in turn
-// (#find[data-swap]: a phone held sideways, The Quiet Curator at 360x780), and at 390x844 and 1280x800 the gift's states
-// and the results of The Spark and The Calm Strategist.
+// (#find[data-swap]: a phone held sideways, The Quiet Curator at 360x780), and at 390x844 and 1280x800 the reveal before
+// the result (2026-11-03, AC15), the gift's states, the results of The Spark and The Calm Strategist, and the last one a
+// quarter of a screen into leaving with the scroll (`result-leaving`, D53).
 //   node scripts/quiz/frames.mjs [baseUrl] [--phone-only] [--no-gate] [--result-only] [--only=<w>x<h>,...]
 // --only takes the passes at those sizes alone (a size that timed out under load, taken again)
 import { chromium } from 'playwright';
@@ -33,12 +34,13 @@ const OUT = fileURLToPath(new URL('../../docs/specs/screenshots', import.meta.ur
 /** the hand-off frames (the second wipe's middle, its end, the quiz half risen) and the intro, in screens, from the map */
 const HANDOFF = [S2T.W2 + 0.5, S2T.W2END, S2T.W2END + 0.5].map((k) => +k.toFixed(2)), INTRO = TRACK_SVH / 100;
 // frames that show the licensed answer pictures go to a git-ignored folder: the Envato licence does not allow the
-// photographs to be shared outside the site, and this repository is public. So do the result's frames where the build
-// has Sam's paint swatch (`.qz-rub`): a Canva element, kept out of the repository until he confirms Canva's licence
-// covers the site (quiz.md D49); a build without it draws our own stroke, and its frames are written beside the others
+// photographs to be shared outside the site, and this repository is public. So do the result's frames where the page
+// draws Sam's paint swatch (rub.webp): a Canva element, kept out of the repository until he confirms Canva's licence
+// covers the site (quiz.md D49); a build that draws our own relief (smear.webp, D52: every build from the repository, or
+// PUBLIC_PAINT=own) has its frames written beside the others
 const LICENSED = `${OUT}/licensed`;
 /** where a frame that shows the result goes: the git-ignored folder where the page draws Sam's swatch */
-const paintDir = async (page) => ((await page.evaluate(() => !!document.querySelector('#find .qz-rub'))) ? LICENSED : OUT);
+const paintDir = async (page) => ((await page.evaluate(() => /\/rub\.[\w-]+\.webp$/.test(document.querySelector('#find .qz-rub-img')?.getAttribute('src') ?? ''))) ? LICENSED : OUT);
 mkdirSync(LICENSED, { recursive: true });
 // SKREED_GL=gpu runs the browser on the machine's GPU, as tests/harness/browser.ts does (on Sam's Mac SwiftShader ticks the
 // page's animation clock about twice a second, 2026-11-02)
@@ -85,8 +87,16 @@ if (RESULT_ONLY) for (const s of sized([...SETUPS, ...PHONE_SETUPS, ...RESULT_SE
   await toQuizOn(page);
   await page.locator('#qzBegin > .dc').waitFor();
   await page.locator('#qzBegin').evaluate((b) => b.click());
-  await answerOn(page, Array(10).fill('curator'), 0);
-  await sleep(500);   // the ground, the stroke and the chips faded in
+  // nine answers, then the tenth by hand, so the reveal can be taken (quiz.md D50, AC15): its four lines in, its line
+  // nearly full, 3.4 s in (a frame of fog and words, no paint, so it goes beside the others)
+  await answerOn(page, Array(9).fill('curator'), 0);
+  await sleep(400);
+  await page.locator('.qz-card[data-i="9"] .qz-opt[data-persona="curator"]').evaluate((b) => b.click());
+  await page.waitForFunction(() => document.getElementById('find').dataset.state === 'reveal');
+  if (s.name === '390x844' || s.name === '1280x800') { await sleep(3400); await page.screenshot({ path: `${OUT}/quiz-${s.name}-reveal.png` }); }
+  await page.waitForFunction(() => document.getElementById('find').dataset.state === 'result', null, { timeout: 30_000 });
+  await settledOn(page);
+  await sleep(500);   // the ground risen, the paint and the chips faded in
   await shot('result');
   const fit = () => page.evaluate(() => { const f = document.getElementById('find'); return { rs: f.style.getPropertyValue('--qz-rs'), h: Math.round(f.getBoundingClientRect().height), vh: Math.round(document.querySelector('.qz-vh').getBoundingClientRect().height), scrollW: document.scrollingElement.scrollWidth }; });
   console.log(s.name, 'result', JSON.stringify(await fit()));
@@ -127,6 +137,10 @@ if (RESULT_ONLY) for (const s of sized([...SETUPS, ...PHONE_SETUPS, ...RESULT_SE
       await shot(name);
       console.log(s.name, name, JSON.stringify(await fit()));
     }
+    // the result leaving with the scroll (D53): a quarter of a screen down, the ground and the band's fill half gone
+    await page.evaluate(() => scrollBy({ top: Math.round(innerHeight * 0.25), behavior: 'instant' }));
+    await sleep(400);
+    await shot('result-leaving');
   }
   await ctx.close();
 }

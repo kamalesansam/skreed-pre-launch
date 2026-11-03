@@ -7,7 +7,7 @@
 // file only shows, hides, decodes and paints it. The result is one screen since Sam's reference of 2026-11-02
 // (E-S3-result): the drawn shade's tones go onto the section, fitResult() sizes the name to its column and steps the type
 // down until the result and the offer fit the screen, and on a phone held sideways the two take the screen in turn.
-import { QUIZ_COPY as Q, QUIZ_LEAD_ENDPOINT, QUIZ_QUESTIONS, pickShade, scoreQuiz, type PersonaId } from '../../config/quiz.ts';
+import { QUIZ_COPY as Q, QUIZ_LEAD_ENDPOINT, QUIZ_QUESTIONS, QUIZ_REVEAL_MS, pickShade, scoreQuiz, type PersonaId } from '../../config/quiz.ts';
 import { reducedMQ } from '../motion.ts';
 import { createDecoder } from './decode.ts';
 import { ride, riding, unlock } from './gate.ts';
@@ -17,12 +17,19 @@ import { LEAD_CODE_COPY as K, codeLine, waitLine, wrongLine } from '../../config
 import { RESEND_GAP_S, checkCode, cleanCode, cleanName, codeComplete, readCheck, readSave, validName as nameOk } from '../lead/code.ts';
 
 const DUR_MARK = 120, DUR_SWATCH = 400;
+/** the result's entrance (quiz.md D51): the ground's rise in ms; the lines start decoding in halfway through it */
+const DUR_GROUND = 700;
+/** the ground leaves with the scroll (quiz.md D53): full within the first share of the screen off its rest (a stray pixel
+ *  of scroll starts nothing), gone once the section has moved the second share */
+const GROUND_HOLD = 0.03, GROUND_FADE = 0.5;
+/** the site's standard ease (tokens.css --ease-standard), for the ground's rise */
+const EASE_STANDARD = 'cubic-bezier(0.2, 0, 0, 1)';
 /** a press on a question this soon after it was put on screen is dropped: its words are still at opacity 0, so it is the
  *  second click of a double click (on Begin, an answer or Back), not a choice (review 2026-10-19) */
 const GUARD = 350, GUARD_REDUCED = 150;
 const QUEUE_KEY = 'skreed-quiz-lead';
 
-type State = 'intro' | 'quiz' | 'result';
+type State = 'intro' | 'quiz' | 'reveal' | 'result';
 
 export function mountQuiz(root: HTMLElement): void {
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T | null;
@@ -30,6 +37,7 @@ export function mountQuiz(root: HTMLElement): void {
   const must = <T extends HTMLElement>(id: string): T => { const el = $<T>(id); if (!el) throw new Error(`quiz: #${id} missing`); return el; };
   const intro = must('qzIntro'), begin = must<HTMLButtonElement>('qzBegin'), skip = must<HTMLButtonElement>('qzSkip'), deck = must('qzDeck'), cardsEl = must('qzCards');
   const results = must('qzResults'), live = must('qzLive'), gift = $('qzGift'), form = $<HTMLFormElement>('qzForm');
+  const reveal = $('qzReveal'), barFill = $('qzBarFill');
   const cards = [...cardsEl.querySelectorAll<HTMLDivElement>('.qz-card')];
   const reduced = () => reducedMQ.matches;
   // data-decoding is on the section while any text is moving (the frame script and the tests wait for it to go)
@@ -133,7 +141,7 @@ export function mountQuiz(root: HTMLElement): void {
   let fitRaf = 0;
   /** fitResult() at the next frame, once: after a resize, a turn of the phone, a message in the offer, a wipe settling */
   function refit() { if (!fitRaf) fitRaf = requestAnimationFrame(() => { fitRaf = 0; fitResult(); }); }
-  addEventListener('resize', () => { if (state === 'result') refit(); });
+  addEventListener('resize', () => { if (state === 'result') { refit(); if (!groundRaf) groundRaf = requestAnimationFrame(groundBand); } });   // the fade is read against the new height
 
   // the swatches take their shade from the catalog token through the CSSOM (the CSP allows no style attributes)
   for (const el of root.querySelectorAll<HTMLElement>('.qz-mini')) el.style.background = `var(--shade-${el.dataset.shade})`;
@@ -144,15 +152,31 @@ export function mountQuiz(root: HTMLElement): void {
     if (w > 0 && h > 0) el.style.setProperty('--qz-paint-ar', (w / h).toFixed(5));
   }
 
-  let groundRaf = 0;
-  function setState(s: State) { state = s; root.dataset.state = s; groundBand(); }
+  let groundRaf = 0, bandUntil = 0;
+  function setState(s: State) { state = s; root.dataset.state = s; bandUntil = performance.now() + 1500; groundBand(); }
   /** the fixed logotype and Back to top stay Pearl Whisper while the result's deep ground lies under them (quiz.css) */
   function groundBand() {
     groundRaf = 0;
-    const r = root.getBoundingClientRect();
-    document.documentElement.toggleAttribute('data-qz-ground', state === 'result' && r.top <= 64 && r.bottom >= 64);
+    // the ground is fixed to the screen in the result state (quiz.css) and leaves with the scroll (D53; Sam, 2026-11-03:
+    // "after getting the results, the transition is not coming, only that box"): full while the section rests at the
+    // screen's top, fading as it moves off in either direction, gone by half a screen, so the result dissolves into the
+    // fog and the page's wipes instead of sliding off as a box with a hard edge; the offer's band fades its fill with it
+    // (quiz.css, [data-fade] and --qz-fade, written only while it fades so the rest state's colours stay plain)
+    const top = root.getBoundingClientRect().top;
+    const hold = innerHeight * GROUND_HOLD, span = innerHeight * GROUND_FADE - hold;
+    const o = state === 'result' ? Math.max(0, Math.min(1, 1 - Math.max(0, Math.abs(top) - hold) / span)) : 1;
+    root.toggleAttribute('data-fade', o < 1);
+    if (o < 1) root.style.setProperty('--qz-fade', o.toFixed(3)); else root.style.removeProperty('--qz-fade');
+    // the logotype and the section index stay Pearl Whisper while the ground is the greater part of what lies under them
+    document.documentElement.toggleAttribute('data-qz-ground', state === 'result' && o >= 0.5);
+    // read again next frame while part faded, and for 1.5 s after a change of screen whatever it reads, so a fade read
+    // mid-change (the result replacing the deck after Try again, with no scroll event to follow) never sticks
+    if ((o > 0 && o < 1) || performance.now() < bandUntil) groundRaf = requestAnimationFrame(groundBand);
   }
   addEventListener('scroll', () => { if (!groundRaf) groundRaf = requestAnimationFrame(groundBand); }, { passive: true });
+  // the section can come to rest with no scroll event (a layout change above or within it, the result replacing the deck
+  // after Try again): read it again whenever the page's size changes, so a fade read mid-change never sticks
+  if ('ResizeObserver' in window) new ResizeObserver(() => { if (state === 'result' && !groundRaf) groundRaf = requestAnimationFrame(groundBand); }).observe(document.body);
   function announce(text: string) { live.textContent = ''; requestAnimationFrame(() => { live.textContent = text; }); }
 
   // ---- the intro is visible at rest, as the server drew it (rule 12: no reveal on scroll); its text is split into glyphs
@@ -212,7 +236,7 @@ export function mountQuiz(root: HTMLElement): void {
     await dc.hide(opt);
     card.hidden = true; card.classList.remove('is-top');
     top = i + 1; busy = false;
-    if (top >= QUIZ_QUESTIONS.length) finish(); else showCard(top);
+    if (top >= QUIZ_QUESTIONS.length) void revealThen(); else showCard(top);
   }
 
   /** Back: the last answer is dropped, this question wipes out and the previous one decodes in */
@@ -226,6 +250,33 @@ export function mountQuiz(root: HTMLElement): void {
     showCard(top);
   }
 
+  /** the reveal (quiz.md D50; Sam, 2026-11-03): the last answer gone, four lines decode in one after another over a line
+   *  that fills, three and a half seconds, then they wipe out and the result comes; busy throughout, so nothing is taken.
+   *  Reduced motion: the lines fade in on the same clock (the decoder's 0.2 s fade) and the full line brightens a quarter
+   *  at a time, by opacity alone (quiz.css drops its transform there) */
+  async function revealThen() {
+    if (!reveal) { finish(); return; }
+    busy = true; setState('reveal');
+    deck.hidden = true;   // the deck's cell keeps its tallest card's height while shown (quiz.css): gone, so the reveal stands where the question stood
+    const lines = items(reveal);
+    for (const el of lines) { dc.prepare(el); dc.conceal(el); }
+    reveal.hidden = false;
+    announce(Q.revealAria);
+    // the reveal and the result are one screen from the section's top: a page left part way down the last question comes back to it
+    if (Math.abs(root.getBoundingClientRect().top) > 1) root.scrollIntoView({ block: 'start', behavior: reduced() ? 'instant' : 'smooth' });
+    const { step, total, hold } = QUIZ_REVEAL_MS;
+    const fill = reduced()
+      ? barFill?.animate([{ opacity: 0 }, { opacity: 1 }], { duration: total, easing: `steps(${lines.length}, jump-end)`, fill: 'forwards' })
+      : barFill?.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: total, easing: 'cubic-bezier(0.3, 0, 0.4, 1)', fill: 'forwards' });
+    const t0 = performance.now();
+    for (const el of lines) { void dc.show(el); await wait(step); }
+    await wait(Math.max(0, total + hold - (performance.now() - t0)));
+    await dc.hideAll(lines);
+    fill?.cancel(); reveal.hidden = true;
+    busy = false;
+    finish();
+  }
+
   function finish() {
     const p = scoreQuiz(answers);
     const { shade, others } = pickShade(p);
@@ -236,9 +287,8 @@ export function mountQuiz(root: HTMLElement): void {
     // chip at build) colour the ground, the offer's band, the name's offset layer and the stroke; the rest are the chips
     const pick = shown.querySelector<HTMLElement>(`.qz-mini[data-shade="${shade}"]`)!;
     root.style.setProperty('--qz-shade', `var(--shade-${shade})`);
-    const tones: [string, string | undefined][] = [['--qz-deep', pick.dataset.deep], ['--qz-band', pick.dataset.band], ['--qz-mid', pick.dataset.mid], ['--qz-sd', pick.dataset.sd], ['--qz-sl', pick.dataset.sl]];
+    const tones: [string, string | undefined][] = [['--qz-deep', pick.dataset.deep], ['--qz-band', pick.dataset.band], ['--qz-mid', pick.dataset.mid]];
     for (const [k, v] of tones) if (v) root.style.setProperty(k, v);
-    root.toggleAttribute('data-sm-rim', pick.hasAttribute('data-rim'));   // the darkest shades' stroke takes the chips' hairline (quiz.css)
     dc.prepare(shown.querySelector<HTMLElement>('.qz-shade')!, pick.dataset.name ?? '');
     dc.prepare(shown.querySelector<HTMLElement>('.qz-fam')!, pick.dataset.fam ?? '');
     shown.querySelector<HTMLAnchorElement>('.qz-see')!.href = pick.dataset.href ?? '';
@@ -250,10 +300,16 @@ export function mountQuiz(root: HTMLElement): void {
     fitResult();
     restoreGift();
     for (const el of [...items(shown), ...(gift ? items(gift) : [])]) { dc.prepare(el); dc.conceal(el); }   // a label set at once earlier (Send) goes too, so the whole part decodes in
-    const fade = { duration: reduced() ? 200 : DUR_SWATCH, easing: 'linear' };
-    for (const el of [ground, ...shown.querySelectorAll('.qz-smear, .qz-mini:not([hidden])')]) el?.animate([{ opacity: 0 }, { opacity: 1 }], fade);
-    // on a phone held sideways the offer waits for its own turn of the screen (quiz.css): its words stay out until then
-    void dc.showAll([...items(shown), ...(gift && !swapped() ? items(gift) : [])]);
+    // the entrance (quiz.md D51; Sam, 2026-11-03: "make sure the transition works well"): the ground rises from the foot of
+    // the screen on the standard ease, the paint and the chips fade in as it settles, and halfway through the rise the
+    // lines decode in one after another as every screen of the site does (the name first, the words, the chips and the
+    // links, then the offer), the section decoding (data-decoding) from the result's first frame. Reduced motion fades
+    // the ground and starts the lines at once. On a phone held sideways the offer waits for its own turn (quiz.css)
+    const slow = !reduced();
+    ground?.animate(slow ? [{ transform: 'translateY(100%)' }, { transform: 'translateY(0)' }] : [{ opacity: 0 }, { opacity: 1 }], { duration: slow ? DUR_GROUND : 200, easing: slow ? EASE_STANDARD : 'linear' })
+      .finished.then(() => { if (state === 'result') groundBand(); }, () => {});   // the fade read again once the result stands
+    for (const el of shown.querySelectorAll('.qz-smear, .qz-mini:not([hidden])')) el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: slow ? DUR_SWATCH : 200, easing: 'linear', delay: slow ? DUR_GROUND * 0.6 : 0, fill: 'backwards' });
+    void dc.showAll([...items(shown), ...(gift && !swapped() ? items(gift) : [])], undefined, slow ? DUR_GROUND / 2000 : 0);
     announce(`${Q.eyebrow} ${pick.dataset.name}. ${p.name}.`);
     shown.querySelector<HTMLElement>('.qz-shade')?.focus({ preventScroll: true });
     if (form) {
@@ -276,7 +332,7 @@ export function mountQuiz(root: HTMLElement): void {
     track('quiz_retake');
     resetGift();
     const shown = results.querySelector<HTMLElement>('.qz-result:not([hidden])');
-    const out = ground?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: reduced() ? 200 : DUR_SWATCH / 2, easing: 'linear', fill: 'forwards' });
+    const out = ground?.animate([{ opacity: ground ? getComputedStyle(ground).opacity : 1 }, { opacity: 0 }], { duration: reduced() ? 200 : DUR_SWATCH / 2, easing: 'linear', fill: 'forwards' });   // from where the scroll-out's fade left it
     await dc.hideAll([...(shown ? items(shown) : []), ...(gift ? items(gift) : [])]);
     results.hidden = true; if (gift) gift.hidden = true;
     delete root.dataset.gift; root.removeAttribute('data-swap'); root.style.removeProperty('--qz-rs');
@@ -514,5 +570,5 @@ export function mountQuiz(root: HTMLElement): void {
   gift.querySelector<HTMLButtonElement>('.qz-toresult')?.addEventListener('click', () => { void swap(false); });
   // turned with the result on screen: fitResult() decides whether the two share the screen, and keeps the offer on it
   // while the visitor is in it
-  side.addEventListener('change', () => { if (state === 'result') refit(); });
+  side.addEventListener('change', () => { if (state === 'result') { refit(); if (!groundRaf) groundRaf = requestAnimationFrame(groundBand); } });
 }
