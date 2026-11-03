@@ -1,7 +1,8 @@
 // The quiz result's paint swatch (Sam, 2026-11-02: "the paint rub on the page should look exactly how it looks on the
 // image"; docs/specs/quiz.md, "The result screen"). Sam's reference is a Canva design and the swatch a Canva element, so
 // it stays out of the public repository (src/assets/quiz/rub/ is git-ignored) until he confirms Canva's licence covers
-// the site; a build without it draws our own stroke (Smear.astro). This script takes the swatch from his image and
+// the site; a build without it draws our own paint in the same format (scripts/quiz/make-smear.py, since 2026-11-03; the
+// flat SVG stroke before it). This script takes the swatch from his image and
 // writes a recolourable copy: its outline as alpha (the dark ground keyed out, the inside filled, the edge feathered)
 // and its relief as grey (0.5 where the paint is its own colour, darker in the rim's shadow and the thin tip, lighter in
 // the highlights), which the page sets over a fill of the drawn shade with `mix-blend-mode: hard-light`.

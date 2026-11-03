@@ -22,7 +22,7 @@ export function createSkyDome(tex: Texture, P: HeroParams, extents: SkyExtents =
         uC1: { value: new Color(GALAXY[0].hex) }, uC2: { value: new Color(GALAXY[1].hex) }, uC3: { value: new Color(GALAXY[2].hex) }, uC4: { value: new Color(GALAXY[3].hex) } },
       vertexShader: SKY_VERT, fragmentShader: skyFrag(slots),
       side: BackSide, depthWrite: false, fog: false }));
-  dome.scale.x = -1; dome.rotation.x = MathUtils.degToRad(-2.6);   // keeps the approved planet and Milky Way positions after the floor reframing
+  dome.scale.x = -1; dome.rotation.x = MathUtils.degToRad(-2.6);   // keeps the approved Milky Way position after the floor reframing (the planets were painted out of sky.webp on 2026-11-03, Sam: "remove those 2 planets in the backround sky")
   dome.material.side = DoubleSide; dome.renderOrder = -2; dome.frustumCulled = false;
   return dome;
 }

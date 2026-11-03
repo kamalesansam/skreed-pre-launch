@@ -3,7 +3,7 @@
 // dynamically; every disposer is registered with life, and life.check() after every await stops the start-up once a
 // hard failure has killed the island. The 27 milestones (config/loader-weights.json) arrive in key order: import, b1 to
 // b10, sky, ground, intro, scene, c1 to c9, compile, frame1, frame2.
-import { PerspectiveCamera, SRGBColorSpace, Scene } from 'three';
+import { PerspectiveCamera, SRGBColorSpace, Scene, Vector3 } from 'three';
 import { DPR_CAP, POSE, S2T } from '../../config/hero.ts';
 import { heroParams, type HeroParams } from '../../config/params.ts';
 import { hoverNoneMQ, sceneReduced } from '../motion.ts';
@@ -152,7 +152,17 @@ export async function startHero(o: StartOptions): Promise<void> {
   placeFogCards(cards, ground.groundAt);
 
   // 12. the moon world: poses, fog 60 to 430, night background
-  const rig = createCameraRig(camA);
+  // the pointer's guard (camera/rig.ts RigGuard): the logo's lower corners and centre, a quarter up from its foot, seen
+  // over the ground and the stones while the moon world is on
+  logo.geometry.computeBoundingBox();
+  const lb = logo.geometry.boundingBox!, footY = lb.min.y + 0.25 * (lb.max.y - lb.min.y);
+  const sightLocal = [new Vector3(lb.min.x, footY, lb.max.z), new Vector3(0, footY, lb.max.z), new Vector3(lb.max.x, footY, lb.max.z), new Vector3(0, (lb.min.y + lb.max.y) / 2, lb.max.z)];
+  const sightWorld = sightLocal.map((v) => v.clone());
+  const rig = createCameraRig(camA, {
+    clear: (x, z) => Math.max(ground.groundAt(x, z), stones.stoneTopAt(x, z)),
+    sight: () => { logo.updateMatrixWorld(); sightLocal.forEach((v, i) => sightWorld[i].copy(v).applyMatrix4(logo.matrixWorld)); return sightWorld; },
+    on: () => moon.visible,
+  });
   applyMoonWorld(sceneA, moon, rig, pose);
 
   // 13. section 3's ground (the last wipe's far side: the fog alone, quiz.md 5) and section 2, the gems (built after the
@@ -309,14 +319,17 @@ export async function startHero(o: StartOptions): Promise<void> {
     if (life.dead) return;
     pageScroll = m.createPageScroll({
       reduced, hooks: HOOKS, svh, settleMs: () => tune?.room?.params.snapMs,
-      // the four spans (section-4-flux.md 5 "Glue spans"; section-5.md 2 "The elastic glue"): the first wipe, the quiz seam,
+      // the four spans (section-4-flux.md 5 "Glue spans"; section-5.md 2 "The elastic glue"): the first seam, the quiz seam,
       // section 4's seam, and scene 5 to section 5 (the room's top plus 3 and 4.8 of its screens, which are the probe's
       // 100svh: the hold and the fourth wipe as one seam, so a stop in the hold settles too; Sam, 2026-11-03, of the phone:
       // "enable the glue stick section scroll for the last section sign up page as well"), its end never past the page's
-      // last position (a phone's viewport taller than 100svh once its toolbar hides, where the director's cut ends too)
+      // last position (a phone's viewport taller than 100svh once its toolbar hides, where the director's cut ends too).
+      // The first seam runs from the pull-back's end to S2T.LAND, where the ten gems are at rest and their labels are on
+      // (Sam, 2026-11-03: "the place where the section 2 should be glued is where the stones are properly aligned in their
+      // own respective place in section where the labels start showing"); until then it ended at the wipe's end (W1END)
       spans: () => {
         const vh = innerHeight, one = svh(), quiz = docTop('find'), top = docTop('room'), last = document.documentElement.scrollHeight - vh;
-        return [{ start: S2T.PULL * vh, end: S2T.W1END * vh }, { start: Math.min(S2T.W2 * vh, quiz - vh), end: quiz }, { start: top - one, end: top + one }, { start: top + SCENES_END * one, end: Math.min(top + ROOM_HEIGHT * one, last) }].filter((x) => Number.isFinite(x.start) && Number.isFinite(x.end));
+        return [{ start: S2T.PULL * vh, end: S2T.LAND * vh }, { start: Math.min(S2T.W2 * vh, quiz - vh), end: quiz }, { start: top - one, end: top + one }, { start: top + SCENES_END * one, end: Math.min(top + ROOM_HEIGHT * one, last) }].filter((x) => Number.isFinite(x.start) && Number.isFinite(x.end));
       },
       room: {
         inRange: () => !!ctx.room?.inRange(), edge: (d) => !!ctx.room?.edge(d), step: (d) => !!ctx.room?.stepScene(d),

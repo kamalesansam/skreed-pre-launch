@@ -11,7 +11,7 @@
 // quiz's gift form: validation on blur and submit, sending, the error line, the offline queue sent on `online`, a
 // duplicate read as success, the done line with "Not you?"), data-ready (C3), the events (C4), the hooks (C5) and the wrap
 // announcement. No loop from the section's end since 2026-11-03 (Sam: "remove the loop"). Strings from config/signup.ts.
-import { FILL_GATE, FOLLOW_COUNT, SIGNUP_COPY as C, SIGNUP_FOLLOWS, SIGNUP_KEYS, SIGNUP_LEAD_ENDPOINT, addedLine, fill, fillMs, jarById, pressFollow, revealSpan, stateOf, yoursAlt } from '../../config/signup.ts';
+import { FILL_GATE, FOLLOW_COUNT, SIGNUP_COPY as C, SIGNUP_FOLLOWS, SIGNUP_KEYS, addedLine, fillMs, jarById, pressFollow, revealSpan, stateOf, yoursAlt } from '../../config/signup.ts';
 import { SIZES, STATE_SRCS, STATE_TOPS, type Srcs } from './jar-srcs.ts';
 import { clearMask } from './cut.ts';
 import { reducedMQ } from '../motion.ts';
@@ -25,8 +25,7 @@ declare global {
   }
 }
 
-const SLOW_MS = 8000, HARD_MS = 20000, READY_MS = 4000;
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const READY_MS = 4000;
 /** the states' renders from jar-srcs.ts (the table Signup.astro lays the showcase jars out from): the sizes and, per state, the AVIF and WebP srcsets and the fallback */
 interface JarData { sizes: string; states: Record<string, Srcs> }
 
@@ -252,63 +251,7 @@ export function mountSignup(root: HTMLElement): void {
   // no loop from the section's end (Sam, 2026-11-03: "remove the loop, i dont want the sign up page to scroll back to section 1"):
   // the page ends here on every tier; the empty screen and the poster tier's fade that served the loop are gone
 
-  // ---- the form (PUBLIC_LEADS on; the quiz's gift form, quiz.md 5): the field and the button joined, one line under them
+  // ---- the form (PUBLIC_LEADS on): its own chunk (form.ts), fetched only where the build renders the form
   const form = $<HTMLFormElement>('suForm');
-  if (!form) return;
-  const email = form.querySelector<HTMLInputElement>('#suEmail'), send = form.querySelector<HTMLButtonElement>('#suSend'), msg = form.querySelector<HTMLElement>('#suMsg');
-  const pill = form.querySelector<HTMLElement>('#suPill'), done = form.querySelector<HTMLElement>('#suDone'), notYou = form.querySelector<HTMLButtonElement>('#suNotYou');
-  const consent = form.querySelector<HTMLInputElement>('#suConsent'), consentRow = form.querySelector<HTMLElement>('#suConsentRow');
-  if (!email || !send || !msg || !pill || !done || !notYou || !consent || !consentRow) return;
-  const note = (text: string) => { msg.textContent = text; };   // role=status: read politely
-  const setErr = (text: string) => { note(text); email.setAttribute('aria-invalid', text ? 'true' : 'false'); };
-  const validEmail = () => { const ok = EMAIL.test(email.value.trim()); setErr(ok ? '' : C.errEmail); return ok; };
-  const validConsent = () => { const ok = consent.checked; consent.setAttribute('aria-invalid', ok ? 'false' : 'true'); if (!ok) note(C.errConsent); return ok; };
-  consent.addEventListener('change', () => { if (consent.checked && msg.textContent === C.errConsent) { note(''); consent.setAttribute('aria-invalid', 'false'); } });
-  email.addEventListener('blur', () => { if (email.value) validEmail(); });   // on blur only once there is a value, never per keystroke
-  const closeForm = (text: string) => { pill.hidden = true; consentRow.hidden = true; done.hidden = false; done.textContent = text; done.title = text; note(''); notYou.hidden = false; done.focus(); };
-  const openForm = () => { done.hidden = true; notYou.hidden = true; pill.hidden = false; consentRow.hidden = false; consent.checked = false; email.value = ''; setErr(''); email.focus(); };
-  let sending = false, queued: Record<string, string> | null = null, inflight: AbortController | null = null;
-  const setSending = (on: boolean, label: string) => { sending = on; send.setAttribute('aria-disabled', on ? 'true' : 'false'); send.textContent = label; };
-  const payload = (address: string): Record<string, string> => ({ email: address, follows: follows.join(','), consent: 'yes', source: 'signup' });
-  const queueLead = (b: Record<string, string>) => { queued = b; try { sessionStorage.setItem(SIGNUP_KEYS.queue, JSON.stringify(b)); } catch { /* no storage: the queue lives in memory */ } closeForm(C.offline); track('signup_offline'); };
-  const submit = async (b: Record<string, string>): Promise<void> => {
-    if (sending) return;
-    setSending(true, C.sending); note('');
-    const ac = new AbortController();
-    inflight = ac;
-    const slow = setTimeout(() => { send.textContent = C.still; }, SLOW_MS), hard = setTimeout(() => ac.abort(), HARD_MS);
-    try {
-      const res = await fetch(SIGNUP_LEAD_ENDPOINT, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(b), signal: ac.signal, credentials: 'omit' });
-      // a definite answer (saved, saved before, rejected) settles a queued lead too
-      if (res.ok || res.status === 409 || res.status === 422) { queued = null; try { sessionStorage.removeItem(SIGNUP_KEYS.queue); } catch { /* ignore */ } }
-      if (res.status === 422) { pill.hidden = false; consentRow.hidden = false; done.hidden = true; notYou.hidden = true; setErr(C.errEmail); email.focus(); track('signup_error', { kind: 'invalid' }); }
-      else if (!res.ok && res.status !== 409) throw new Error(String(res.status));
-      else { closeForm(fill(C.done, { email: b.email })); track('signup_success', { dup: res.status === 409 ? 1 : 0 }); }
-    } catch (err) {
-      // offline is a failed request with navigator.onLine false (a pre-check lies on captive portals): queue and retry on `online`
-      if (!navigator.onLine) queueLead(b);
-      else { pill.hidden = false; consentRow.hidden = false; done.hidden = true; notYou.hidden = true; note(C.errSend); track('signup_error', { kind: err instanceof DOMException && err.name === 'AbortError' ? 'timeout' : 'network' }); }
-    } finally {
-      clearTimeout(slow); clearTimeout(hard); if (inflight === ac) inflight = null;
-      setSending(false, C.send);
-    }
-  };
-  addEventListener('online', () => { const q = queued; if (q && !sending) { queued = null; void submit(q); } });
-  try {
-    const saved = sessionStorage.getItem(SIGNUP_KEYS.queue);
-    if (saved) {
-      const q = JSON.parse(saved) as Record<string, string>;
-      email.value = q.email ?? ''; consent.checked = true;   // the visitor ticked it when it was queued
-      if (navigator.onLine) void submit(q); else queueLead(q);
-    }
-  } catch { /* a bad entry is dropped */ }
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    if (sending) return;
-    if (!validEmail()) { if (document.activeElement === email) announce(C.errEmail); else email.focus(); return; }
-    if (!validConsent()) { consent.focus(); announce(C.errConsent); return; }
-    track('signup_submitted', { follows: follows.length });
-    void submit(payload(email.value.trim()));
-  });
-  notYou.addEventListener('click', () => { queued = null; try { sessionStorage.removeItem(SIGNUP_KEYS.queue); } catch { /* ignore */ } openForm(); });
+  if (form) void import('./form.ts').then((m) => { m.mountForm(form, { follows: () => follows, announce }); });
 }

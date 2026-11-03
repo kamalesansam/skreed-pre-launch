@@ -15,7 +15,7 @@ const IDS: PersonaId[] = ['main', 'curator', 'spark', 'optimist', 'rebel', 'drea
 const RECOMMENDED: Record<PersonaId, string> = { main: 'Ruby', curator: 'Porcelain', spark: 'Sunflower', optimist: 'Autumn', rebel: 'Ballerina', dreamer: 'Wildberry', strategist: 'Navy' };
 const allStrings = (): string[] => {
   const out: string[] = [];
-  for (const v of Object.values(QUIZ_COPY)) out.push(typeof v === 'function' ? (v as (...a: never[]) => string)(...(['Mellow Yellow', 11] as never[])) : v);
+  for (const v of Object.values(QUIZ_COPY)) out.push(...(Array.isArray(v) ? (v as readonly string[]) : [typeof v === 'function' ? (v as (...a: never[]) => string)(...(['Mellow Yellow', 11] as never[])) : (v as string)]));
   for (const q of QUIZ_QUESTIONS) out.push(q.q, ...q.answers.map((a) => a.text));
   for (const p of QUIZ_PERSONAS) out.push(p.name, p.profile, p.palette);
   return out;
@@ -80,7 +80,7 @@ test('the family link carries the three-digit catalog number', () => {
   assert.equal(shadeHref('mellow-yellow', 107), '/shades/mellow-yellow/?shade=107');
 });
 
-test('the result\'s tones (E-S3-result; Sam, 2026-11-02: "dynamic to all the colors that we got"): every quiz shade gives its own deep ground, a lighter band, a lighter layer for its name and the stroke\'s edge and ridge, Pearl Whisper reads AA on the ground and the band, each chip\'s name takes the better of --night and Pearl Whisper, and the darkest chips and strokes a Pearl hairline', () => {
+test('the result\'s tones (E-S3-result; Sam, 2026-11-02: "dynamic to all the colors that we got"): every quiz shade gives its own deep ground, a lighter band and a lighter layer for its name, Pearl Whisper reads AA on the ground and the band, each chip\'s name takes the better of --night and Pearl Whisper, and the darkest chips and strokes a Pearl hairline', () => {
   const ratio = (a: string, b: string) => { const x = luminance(a), y = luminance(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
   const L = (h: string) => hexToOklab(h)[0];
   const ids = [...new Set(QUIZ_PERSONAS.flatMap((p) => p.shades))];
@@ -89,9 +89,7 @@ test('the result\'s tones (E-S3-result; Sam, 2026-11-02: "dynamic to all the col
     for (const v of Object.values(t)) assert.match(v, /^#[0-9a-f]{6}$/, `${id}: ${v}`);
     assert.ok(L(t.deep) <= 0.275, `${id}: the ground is deep (${t.deep}; OKLab 0.27 and the hex's rounding)`);
     assert.ok(L(t.band) > L(t.deep) && L(t.mid) > L(t.band), `${id}: the band a step over the ground, the name's layer over the band`);
-    assert.ok(L(t.dark) < L(hex) + 1e-3 && L(t.light) >= L(hex) - 1e-3, `${id}: the stroke's edge darker, its ridge lighter`);
     assert.ok(ratio('#f7f6f3', t.deep) >= 4.5 && ratio('#f7f6f3', t.band) >= 4.5, `${id}: Pearl Whisper on the ground and the band, AA`);
-    assert.ok(L(t.light) >= 0.415, `${id}: the stroke's ridge at 0.42 at the least, so a dark shade's stroke shows on its ground`);
     // the chip's name, on the chip as Sam's reference sets it, in the better of --night and Pearl Whisper
     const ink = chipInk(hex) === 'night' ? '#050506' : '#f7f6f3', other = ink === '#050506' ? '#f7f6f3' : '#050506';
     assert.ok(ratio(hex, ink) >= ratio(hex, other), `${id}: the chip's name in the better ink`);
@@ -103,15 +101,17 @@ test('the result\'s tones (E-S3-result; Sam, 2026-11-02: "dynamic to all the col
   assert.deepEqual(ids.filter((id) => chipRim(byId.get(id)!.hex)).sort(), ['basic-brown-20', 'blissful-blue-15', 'blissful-blue-21', 'blissful-blue-22', 'blissful-blue-24', 'go-green-21', 'roaring-red-21', 'roaring-red-23', 'vivid-violet-16']);
   const css = readFileSync(new URL('../../src/styles/quiz.css', import.meta.url), 'utf8');
   assert.match(css, /\.qz-mini\[data-rim\] \{ border: 1px solid var\(--pearl-whisper\); \}/);
-  // every chip's name on the chip in its ink, and the darkest strokes outlined
+  // every chip's name on the chip in its ink
   assert.match(css, /\.qz-mini \{ --qz-ink: var\(--night\);[^}]*color: var\(--qz-ink\);/);
   assert.match(css, /\.qz-mini\[data-ink="pearl"\] \{ --qz-ink: var\(--pearl-whisper\); \}/);
-  assert.match(css, /\.quiz\[data-sm-rim\] \.qz-sm-body \{ stroke: var\(--pearl-whisper\);/);
+  assert.doesNotMatch(css, /qz-sm-|data-sm-rim/, 'the stroke of 2026-11-02 is gone: the paint is a relief image in every build (make-smear.py), so no fill or hairline for it');
   // the component writes every chip's tones and deck.ts copies the drawn shade's onto the section
   const astro = readFileSync(new URL('../../src/components/quiz/Quiz.astro', import.meta.url), 'utf8');
-  for (const a of ['data-ink={s.ink}', 'data-deep={s.tones.deep}', 'data-band={s.tones.band}', 'data-mid={s.tones.mid}', 'data-sd={s.tones.dark}', 'data-sl={s.tones.light}']) assert.ok(astro.includes(a), a);
+  for (const a of ['data-ink={s.ink}', 'data-deep={s.tones.deep}', 'data-band={s.tones.band}', 'data-mid={s.tones.mid}']) assert.ok(astro.includes(a), a);
+  assert.doesNotMatch(astro, /data-sd=|data-sl=/, 'the stroke\'s edge and ridge tones are gone with it');
   const deck = readFileSync(new URL('../../src/scripts/quiz/deck.ts', import.meta.url), 'utf8');
-  for (const k of ['--qz-deep', '--qz-band', '--qz-mid', '--qz-sd', '--qz-sl']) assert.ok(deck.includes(`'${k}'`), k);
+  for (const k of ['--qz-deep', '--qz-band', '--qz-mid']) assert.ok(deck.includes(`'${k}'`), k);
+  assert.doesNotMatch(deck, /--qz-sd|--qz-sl/, 'and nothing writes them');
 });
 
 test('copy: sentence case headings, no em or en dash, no emoji, no banned words, no digits in a question (CLAUDE.md 3, 4, 16, 17)', () => {
