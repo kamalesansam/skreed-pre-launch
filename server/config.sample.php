@@ -1,5 +1,5 @@
 <?php
-// Copy to ~/domains/skreed.shop/skreed-api/config.php on the server (never into git, never into public_html) and fill in.
+// Copy to ~/skreed-api/config.php on the server (chmod 600) (never into git, never into public_html) and fill in.
 return [
   'site_url' => 'https://skreed.shop',
   'origins' => ['https://skreed.shop', 'https://www.skreed.shop'],
@@ -17,9 +17,12 @@ return [
   'reply_to' => 'partner@skreed.info',
   // who hears about each new sign-up
   'notify_to' => ['partner@skreed.info'],
-  // /api/leads: the user name and a hash made by: php -r 'echo password_hash("your password", PASSWORD_DEFAULT);'
+  // /api/leads: the user name and a password of 12 characters or more
   'admin_user' => 'skreed',
-  'admin_hash' => 'CHANGE-ME',
-  // any long random string: the IP is stored only as a salted hash, for the rate limit
+  'admin_pass' => 'CHANGE-ME',
+  // the quiz email's 5% code (Sam's confirmed email of 2026-11-03); here only, never in git: the repository is public.
+  // Empty, the email leaves that paragraph out
+  'quiz_code' => '',
+  // any long random string: the IP is stored only as a salted hash, for the rate limit (and the email codes' key)
   'ip_salt' => 'CHANGE-ME',
 ];

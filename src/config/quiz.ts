@@ -57,6 +57,9 @@ export const QUIZ_COPY = {
   offline: 'You’re offline. We’ll send it when you’re back.',
   done: (email: string) => `Done. Your code is on its way to ${email}.`,
   notYou: 'Not you? Use another email.',
+  /** the email code's button (its lines are LEAD_CODE_COPY's) */
+  confirm: 'Confirm',
+  checking: 'Checking...',
 } as const;
 
 export type Finish = 'gloss' | 'matte';

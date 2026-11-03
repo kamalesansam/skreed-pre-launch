@@ -1,6 +1,6 @@
 // dist/_headers (Cloudflare's format, the CSP appended by scripts/csp.mjs) written again as dist/.htaccess for
-// Hostinger's LiteSpeed: the /* rule for every response, each path rule by SetEnvIf on the request path, the two lead
-// endpoints routed to their PHP files, HTTPS forced and the 404 page served. Run after the build, before the upload.
+// Hostinger's LiteSpeed: the /* rule for every response, each path rule by SetEnvIf on the request path, the lead
+// endpoints and the code check routed to their PHP files, HTTPS forced and the 404 page served. Run after the build, before the upload.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -20,6 +20,7 @@ const out = [
   'RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]',
   'RewriteRule ^api/signup/?$ api/signup.php [L]',
   'RewriteRule ^api/quiz-lead/?$ api/quiz-lead.php [L]',
+  'RewriteRule ^api/verify/?$ api/verify.php [L]',
   'RewriteRule ^api/leads/?$ api/leads.php [L]',
   '<IfModule mod_headers.c>',
 ];
