@@ -1,10 +1,11 @@
 <?php
 // The team's view of the leads: HTTP basic auth (config's admin_user and admin_hash, a password_hash()), a table in the
-// browser, ?format=csv for a file to import into Zoho Campaigns or Shopify's customer import.
+// browser, ?format=csv for a file to import into Zoho Campaigns or Shopify's customer import. The password is config's
+// admin_pass, in a file only the account can read.
 declare(strict_types=1);
-require dirname(__DIR__, 2) . '/skreed-api/lib/lead.php';
+require dirname(__DIR__, 4) . '/skreed-api/lib/lead.php';   // /home/<user>/skreed-api, outside the site
 $c = lead_config();
-if (($_SERVER['PHP_AUTH_USER'] ?? '') !== $c['admin_user'] || !password_verify($_SERVER['PHP_AUTH_PW'] ?? '', $c['admin_hash'])) {
+if (($_SERVER['PHP_AUTH_USER'] ?? '') !== $c['admin_user'] || strlen($c['admin_pass']) < 12 || !hash_equals($c['admin_pass'], (string) ($_SERVER['PHP_AUTH_PW'] ?? ''))) {
   header('WWW-Authenticate: Basic realm="Skreed leads"');
   lead_reply(401);
 }
