@@ -7,7 +7,7 @@
 // are built, and snaps a third time at the lift (life.onRecover, run by __introDone), so the loader's fade opens on the
 // gems at rest. Round 4's veil (shell.css hiding .ld-w and #ldPct, L.skip()) is gone.
 // Iteration 2 (the review of 2026-10-26): the skipped view transition into the landing is never a hero failure (item 1),
-// Back to top's way home is not a return visit (item 2), and a return that falls to the poster centres the families (item 3).
+// Back to top's way home left on 2026-11-04 (item 2 has nothing left to guard), and a return that falls to the poster centres the families (item 3).
 // Round 5, iteration 3 (the review of 2026-10-28): links.ts, the poster path's half of the return, reads Back to top's flag
 // before it centres, holds the centring to the load event and stops at the visitor's first input. Iteration 4 (the same
 // day): on the poster tier proper the loader never ran, so links.ts itself sets manual scroll restoration when it decides
@@ -24,32 +24,28 @@ import { isAbortError, IslandDead } from '../../src/scripts/hero/bridge/life.ts'
 const root = new URL('../../', import.meta.url);
 const read = (p: string) => readFileSync(new URL(p, root), 'utf8');
 
-test('the loader: RET from the two conditions of isReturnVisit(), on html.hero3d only and never for Back to top\'s way home; the ret class hides nothing; on a return visit the exit at FULL waits for the island\'s ready() (round 5)', () => {
+test('the loader: RET from the two conditions of isReturnVisit(), on html.hero3d only; the ret class hides nothing; on a return visit the loader lifts as soon as the island gives its ready() (2026-11-04, family-page.md 27: "make the going back wait time quicker")', () => {
   const loader = read('src/inline/loader.inline.js');
-  assert.match(loader, /^var TT=false;try\{TT=sessionStorage\.getItem\('skreed:to-top'\)==='1'\}catch\(e\)\{\}$/m, 'Back to top\'s flag, read inside a try as to-top.ts reads it');
+  assert.doesNotMatch(loader, /skreed:to-top|\bTT\b/, 'no Back to top flag: a family page\'s Back to top stays on its own page since 2026-11-04');
   const ret = loader.match(/^var RET=(.*);if\(RET\)intro\.classList\.add\('ret'\);$/m)?.[1] ?? '';
   assert.ok(ret, 'the loader computes RET once');
-  assert.ok(ret.startsWith('!TT&&'), 'never a return visit on Back to top\'s way home (item 2)');
-  assert.ok(ret.includes("HT.classList.contains('hero3d')"), 'the landing\'s 3D path only: the family pages share this loader and lift it their own way');
+  assert.ok(ret.startsWith("HT.classList.contains('hero3d')"), 'the landing\'s 3D path only: the family pages share this loader and lift it their own way');
   assert.ok(ret.includes("location.hash==='#families'") && ret.includes("type==='back_forward'"), 'the two conditions of isReturnVisit(), repeated inline (rock-links.ts)');
-  assert.match(loader, /^if\(TT\)\{scrollTo\(0,0\);if\(location\.hash\)history\.replaceState\(history\.state,'',location\.pathname\+location\.search\)\}$/m, 'Back to top\'s fresh load starts at the top, its hash dropped so the fragment\'s own scroll cannot undo it');
-  // round 5 (section 23, D1 and D2): the one condition that schedules the exit. Off a return visit !RET is true and the line
-  // reads as the prototype's; on one the exit waits for manual, which on the landing only the island's ready() sets
-  assert.match(loader, /if\(ready&&\(!RET\|\|manual\)&&tl>=FULL-\.001\)sched\(now\)/, 'on a return visit the exit is scheduled once frame2 is in (ready) and the island has called ready() (manual): the first visit\'s exit, at the next pass');
-  assert.equal((loader.match(/\)sched\(now\)/g) ?? []).length, 1, 'the exit is scheduled by that line alone (the other sched(now) is the function\'s own definition)');
+  // a return visit: the island's ready() (manual, ready) goes straight to enter(): the count to 100 and the lift, no fill timeline and no dim
+  assert.match(loader, /if\(RET&&manual&&ready\)\{fA\.pause\(\);enter\(\);return\}\n\s*if\(ready&&!RET&&tl>=FULL-\.001\)sched\(now\)/, 'on a return visit the lift follows the island\'s word at once; a first visit schedules its exit at FULL as the prototype does');
+  assert.equal((loader.match(/\)sched\(now\)/g) ?? []).length, 1, 'the exit is scheduled by that line alone');
   assert.match(loader, /ready:function\(\)\{manual=true;p=1;ready=true\},/, 'the prototype\'s own ready(): the island\'s word, no new method (D2)');
-  assert.equal((loader.match(/manual=/g) ?? []).length, 6, 'manual is written by its declaration and the five API methods only (setProgress, ready, cut, skip, seek); the landing\'s island calls ready() alone');
+  assert.equal((loader.match(/manual=/g) ?? []).length, 6, 'manual is written by its declaration and the five API methods only');
   assert.match(loader, /skip:function\(\)\{manual=true;ready=true;if\(ph!=='done'&&ph!=='lift'\)\{ph='enter';lift\(\)\}\}/, 'skip() is unchanged: it is still the family pages\' way out of their 3D (three/boot.ts)');
   assert.match(loader, /history\.scrollRestoration='manual';if\(!location\.hash\)scrollTo\(0,0\);/, 'manual restoration, and no scroll to 0 with the hash (the return entry is always /#families)');
-  assert.doesNotMatch(read('src/styles/shell.css'), /\.intro\.ret/, 'the class ret hides nothing: the wordmark and the count show on a return visit as on a first (round 5; E-H1)');
-  assert.match(loader, /the loader in full since round 5, section 23/, 'the comment says what the return path now is');
+  assert.doesNotMatch(read('src/styles/shell.css'), /\.intro\.ret/, 'the class ret hides nothing');
   const rock = read('src/scripts/family/rock-links.ts');
   assert.match(rock, /return nav\?\.type === 'back_forward' \|\| location\.hash === '#families';/, 'isReturnVisit() as the loader repeats it');
-  const toTop = read('src/scripts/shell/to-top.ts');
-  assert.match(toTop, /const FLAG = 'skreed:to-top'/, 'the flag the loader reads');
-  assert.match(toTop, /function backHome\(\) \{\n\s+flag\.set\(\);/, 'set before Back to top steps back through the history');
+  const toTop = read('src/scripts/shell/to-top.ts'), toTopCode = toTop.replace(/^\s*\/\/.*$/gm, '');
+  assert.doesNotMatch(toTopCode, /sessionStorage|traverseToLanding|location\.assign/, 'Back to top never leaves its page');
+  assert.match(toTop, /scrollTo\(\{ top: 0, behavior: reducedMQ\.matches \? 'instant' : 'smooth' \}\)/, 'the page\'s own top, smoothly, at once under reduced motion');
+  assert.match(read('src/components/shell/BackToTop.astro'), /<a class="to-top" id="toTop" href="#" data-page=\{page\} hidden>/, 'a link to the page\'s own top without JavaScript');
 });
-
 test('the hero: the intro skipped, the page and both followers snapped to S2T.LAND under the loader, the island\'s ready() once frame2 is in and the gems are built (never skip or cut), the third snap at the lift, the context checked on a restore; the loader\'s decision read, not made again', () => {
   assert.equal(S2T.LAND, 4.8);   // 14.5 until 2026-11-02, when the hero's scroll was halved and the stagger went (section-2.md 14); 4.55 that day, 4.8 since the wipes went back to one screen (2026-11-03, section-2.md 15)
   const hero = read('src/scripts/hero/hero.ts');
@@ -76,21 +72,10 @@ test('the hero: the intro skipped, the page and both followers snapped to S2T.LA
   assert.match(read('src/scripts/family/links.ts'), /const centre = \(\) => \{ if \(!document\.documentElement\.classList\.contains\('hero3d'\)\) nav\.scrollIntoView\(\{ block: 'center', behavior: 'instant' \}\); \};/);
 });
 
-test('iteration 3 (round 5): links.ts never centres on Back to top\'s way home (the flag read as the loader reads it, before BackToTop\'s module clears it), holds the centring from its module to the load event, and stops for good at the visitor\'s first input', () => {
+test('iteration 3 (round 5): links.ts holds the centring from its module to the load event and stops for good at the visitor\'s first input (Back to top\'s way home and its flag left on 2026-11-04)', () => {
   const links = read('src/scripts/family/links.ts');
-  // item 1: the flag, read inside a try as the loader's TT and to-top.ts read it, decides before isReturnVisit() does; never cleared here
-  assert.match(links, /let toTop = false;\n\s*try \{ toTop = sessionStorage\.getItem\('skreed:to-top'\) === '1'; \} catch \{ \/\*[^*]*\*\/ \}\n\s*if \(!toTop && isReturnVisit\(\)\) \{/, 'the flag first: a cache miss on Back to top\'s way home is a back_forward load too, which isReturnVisit() cannot tell apart');
-  assert.doesNotMatch(links, /removeItem|setItem/, 'the flag is BackToTop\'s to clear (to-top.ts line 92), after this module has read it');
-  assert.match(read('src/scripts/shell/to-top.ts'), /if \(home\) \{\n(?:\s*\/\/[^\n]*\n)*\s*flag\.clear\(\);/, 'BackToTop clears the flag when its module runs on the landing');
-  // the order the read relies on: FamilyLinks (links.ts) is mounted before BackToTop on the landing, so its module script runs first
-  const index = read('src/pages/index.astro');
-  assert.ok(index.indexOf('<FamilyLinks slot="riders" />') > 0 && index.indexOf('<FamilyLinks slot="riders" />') < index.indexOf('<BackToTop slot="riders" page="home" />'), 'FamilyLinks before BackToTop in index.astro');
-  const built = new URL('dist/index.html', root);
-  if (existsSync(built)) {
-    const html = readFileSync(built, 'utf8');
-    const order = [...html.matchAll(/<script type="module" src="\/_astro\/(\w+)\.astro_astro_type_script_[^"]+"/g)].map((m) => m[1]);
-    assert.ok(order.indexOf('FamilyLinksNav') >= 0 && order.indexOf('FamilyLinksNav') < order.indexOf('BackToTop'), `the built landing's module scripts run FamilyLinksNav before BackToTop (${order.join(', ')})`);
-  }
+  assert.doesNotMatch(links, /skreed:to-top|toTop/, 'no Back to top flag since 2026-11-04');
+  assert.match(links, /if \(isReturnVisit\(\)\) \{/, 'a return visit alone decides');
   // item 2: centred now, on each scroll the browser makes and at the load event, all three reading the class; stopped for good at the
   // visitor's first wheel, touch, key or pointer; passive listeners, removed once used, nothing that prevents default
   assert.match(links, /const INPUT = \['wheel', 'touchstart', 'keydown', 'pointerdown'\] as const;/);
@@ -99,7 +84,6 @@ test('iteration 3 (round 5): links.ts never centres on Back to top\'s way home (
   assert.match(links, /centre\(\);\n\s*if \(document\.readyState !== 'complete'\) \{\n\s*addEventListener\('scroll', centre, \{ passive: true \}\);\n\s*addEventListener\('load', loaded\);\n\s*for \(const e of INPUT\) addEventListener\(e, stop, \{ passive: true \}\);\n\s*\}/, 'centred now; the listeners only while the load still runs');
   assert.doesNotMatch(links, /preventDefault|once: true/, 'nothing prevents default; stop() removes the listeners itself (once would leave the other three)');
   assert.equal((links.match(/scrollIntoView/g) ?? []).length, 1, 'one centring call, in centre()');
-  assert.match(links, /Not on Back to top's way home/, 'the comment says so');
 });
 
 test('iteration 4 (round 5): on the poster tier proper the loader never ran, so links.ts sets history.scrollRestoration to manual itself when it decides to centre (a return visit, the flag not set, off the 3D path), before the load event; never on a first visit, on Back to top\'s way home or on the 3D path', () => {
@@ -109,7 +93,7 @@ test('iteration 4 (round 5): on the poster tier proper the loader never ran, so 
   // the assignment, once, guarded by the class as centre() is, first inside the block that decides to centre: before centre() and the
   // listeners, so before the load event, and so on no plain first visit (isReturnVisit() false) and never with the flag set
   assert.equal((links.match(/scrollRestoration/g) ?? []).length, 1, 'one assignment');
-  assert.match(links, /if \(!toTop && isReturnVisit\(\)\) \{\n\s*if \(!document\.documentElement\.classList\.contains\('hero3d'\)\) history\.scrollRestoration = 'manual';\n\s*const INPUT = /, 'the first line of the centring block, guarded by the class: on the 3D path the loader set it already, and a fall to the poster keeps the loader\'s setting');
+  assert.match(links, /if \(isReturnVisit\(\)\) \{\n\s*if \(!document\.documentElement\.classList\.contains\('hero3d'\)\) history\.scrollRestoration = 'manual';\n\s*const INPUT = /, 'the first line of the centring block, guarded by the class: on the 3D path the loader set it already, and a fall to the poster keeps the loader\'s setting');
   assert.ok(links.indexOf("history.scrollRestoration = 'manual'") < links.indexOf('centre();'), 'before the first centring');
   // the premise, read from the loader and the gate: the loader returns without html.loading before the line that sets manual, and the
   // gate adds loading on the hero3d tiers only, so on the poster tier proper nothing but links.ts sets it

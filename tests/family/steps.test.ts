@@ -273,3 +273,23 @@ test('a step from a few pixels off a rest (a resize, a scrollbar drag) starts wh
     assert.ok(Math.abs(half - (hi - 0.1)) < 1e-9, `${from} to ${to}: the band's middle at ${half}`);
   }
 });
+
+test('Back to top\'s jump (skreed:jump) passes the types even right after a tap: never held on Armor; the visitor\'s next input ends the pass', async () => {
+  const page = fakePage(6 * VH);
+  try {
+    const s = createCaseSteps({ reduced: () => false });
+    page.tick(1000);
+    page.touch('touchstart', 600); page.touch('touchend', 600);       // the tap that pressed the link
+    page.tick(30);
+    dispatchEvent(new Event('skreed:jump'));
+    for (const y of [5.6, 5.1, 4.6, 3.2, 1.5, 0]) { page.scroll(y * VH); page.tick(80); }   // the smooth scroll to the top
+    assert.equal(page.y, 0, 'at the top, not held on Armor');
+    assert.equal(s.state().holding, false);
+    // a later swipe from the argument screen is the visitor's: held on Armor as before
+    page.scroll(6 * VH); page.tick(3000);
+    page.touch('touchstart', 600); page.touch('touchmove', 700); page.touch('touchend', 700);
+    page.scroll(4.6 * VH);
+    assert.equal(page.y, at(3), 'a swipe past Armor is held there');
+    s.dispose();
+  } finally { page.restore(); }
+});

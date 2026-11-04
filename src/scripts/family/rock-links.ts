@@ -30,7 +30,8 @@ export const TAP_SLOP_PX = 10;
 export const PREFETCH_HOVER_MS = 150;
 
 /** True when the landing was reached by Back from a family page (or with #families). On the 3D path the landing's loader
- * runs in full and lifts onto section 2 at rest (loader.inline.js RET, hero.ts step 18; family-page.md 23); off it,
+ * shows and lifts onto section 2 at rest as soon as the island is ready (loader.inline.js RET, hero.ts step 18;
+ * family-page.md 23 and 27); off it,
  * links.ts scrolls the ten links into view. */
 export function isReturnVisit(): boolean {
   const nav = performance.getEntriesByType?.('navigation')[0] as PerformanceNavigationTiming | undefined;

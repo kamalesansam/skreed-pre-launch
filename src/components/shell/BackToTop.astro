@@ -1,19 +1,19 @@
 ---
-// Back to top (Sam, 2026-10-19: "add a back to top button throughout the site which navigates back to main section 1,
-// without reloading"), on every family page. A link to / so it works without JavaScript; with it, scripts/shell/to-top.ts
-// steps back through the history to the landing page, which the browser restores from its back-forward cache, and
-// lands on section 1. No box (Sam, 2026-10-20: "fix that and make it look a part of the site"): the words, as "All
+// Back to top on every family page: the top of the same page, the carousel of the family's 24 cases (Sam, 2026-11-04: "the
+// back to top button in product page is supposed to take the same page top section where all sahde 3d models are there,
+// not back to the main page hero section"; from 2026-10-19 to then it stepped back to the landing page's section 1). A
+// link to the page's own top (#) so it works without JavaScript; with it, scripts/shell/to-top.ts scrolls there smoothly. No box (Sam, 2026-10-20: "fix that and make it look a part of the site"): the words, as "All
 // families" is set, then the scroll cue's five-dot chevron (ScrollCue.astro) turned up, static (rule 45: no animated
 // arrows), in Pearl Whisper (to-top.css). The words are its accessible name. page: "family" draws the control in the
 // family page's bar; "home" draws none, because the landing page's section index has Home at the top right where it sat
 // (SiteNav.astro; docs/specs/navbar.md, 2026-11-02), and mounts only the --night veil every jump on the landing page
-// happens under (scripts/shell/veil.ts) and the script, which jumps a page restored by a family page's press to section 1.
+// happens under (scripts/shell/veil.ts).
 import { COPY } from '../../config/copy.ts';
 import '../../styles/to-top.css';
 interface Props { page: 'home' | 'family' }
 const { page } = Astro.props;
 ---
-{page === 'family' && <a class="to-top" id="toTop" href="/" data-page={page} hidden>{COPY.toTop.label}<svg viewBox="0 0 35 18.1" aria-hidden="true" focusable="false"><circle cx="2.4" cy="15.7" r="2.4" fill="currentColor" fill-opacity="0.3" /><circle cx="10" cy="9" r="2.4" fill="currentColor" fill-opacity="0.6" /><circle cx="17.5" cy="2.4" r="2.4" fill="currentColor" /><circle cx="25" cy="9" r="2.4" fill="currentColor" fill-opacity="0.6" /><circle cx="32.6" cy="15.7" r="2.4" fill="currentColor" fill-opacity="0.3" /></svg></a>}
+{page === 'family' && <a class="to-top" id="toTop" href="#" data-page={page} hidden>{COPY.toTop.label}<svg viewBox="0 0 35 18.1" aria-hidden="true" focusable="false"><circle cx="2.4" cy="15.7" r="2.4" fill="currentColor" fill-opacity="0.3" /><circle cx="10" cy="9" r="2.4" fill="currentColor" fill-opacity="0.6" /><circle cx="17.5" cy="2.4" r="2.4" fill="currentColor" /><circle cx="25" cy="9" r="2.4" fill="currentColor" fill-opacity="0.6" /><circle cx="32.6" cy="15.7" r="2.4" fill="currentColor" fill-opacity="0.3" /></svg></a>}
 <div class="to-top-veil" id="toTopVeil" aria-hidden="true" hidden></div>
 <script>
   import '../../scripts/shell/to-top.ts';

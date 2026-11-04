@@ -1,7 +1,7 @@
 // The loader (hero-architecture.md 4.3): src/inline/loader.inline.js is the prototype's loader (template.html lines 89 to
 // 163) with exactly the seven listed deviations plus v10's two (the intro's classes, the gap clock) and round 4's one (the
-// return visit, family-page.md 13 step 3), as round 5 amends it (family-page.md 23: the loader runs in full on a return
-// visit and its exit also waits for the island's ready(), so the class ret hides nothing and line 69 reads manual).
+// return visit, family-page.md 13 step 3), as round 5 and 2026-11-04 amend it (family-page.md 23 and 27: on a return
+// visit the loader lifts on the island's ready(), the class ret hiding nothing).
 // Undoing them must give the prototype's text byte for byte.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -17,10 +17,10 @@ const UNDO: [string, string][] = [
     "var POSE={cam:[0,-2.5,24],tgt:[0,-1,0],fov:30,lw:5.6,z:.475};window.SKREED_POSE=POSE;\nvar WT=/*WT*/null;\nvar D=document,HT=D.documentElement,$=function(i){return D.getElementById(i)},T0=performance.now();"],
   ['OFF=COPY.offline;', "OFF='You are offline. The countdown still runs.';"],
   ["history.scrollRestoration='manual';if(!location.hash)scrollTo(0,0);", "history.scrollRestoration='manual';scrollTo(0,0);"],
-  // round 4 (family-page.md 13 step 3): the return visit, decided once (RET, the class ret); never Back to top's way home.
-  // Round 5 (family-page.md 23): the loader runs in full on a return visit; its exit also waits for the island's ready()
-  ["\n/* the return path (family-page.md 2.2 and 13 step 3; built with round 4, section 22; the loader in full since round 5, section 23): back from a family page, or /#families, on the landing's 3D path. The loader runs as on a first visit (E-H1): the wordmark, the count, the passes, the fill at the load's pace, the status lines and the stall rule. Only its exit also waits for the island's word, ready() below (the prototype's own method), which hero.ts calls once frame2 is in and section 2 is at rest, so the lift opens on the gems. Not for Back to top's way home (to-top.ts sets skreed:to-top before it steps back): on a cache miss that load starts at the top, its hash dropped so the browser's own scroll to the fragment cannot undo it */\nvar TT=false;try{TT=sessionStorage.getItem('skreed:to-top')==='1'}catch(e){}\nvar RET=!TT&&HT.classList.contains('hero3d')&&(location.hash==='#families'||((performance.getEntriesByType?performance.getEntriesByType('navigation'):[])[0]||{}).type==='back_forward');if(RET)intro.classList.add('ret');\nif(TT){scrollTo(0,0);if(location.hash)history.replaceState(history.state,'',location.pathname+location.search)}\n", '\n'],
-  ['if(ready&&(!RET||manual)&&tl>=FULL-.001)sched(now)', 'if(ready&&tl>=FULL-.001)sched(now)'],
+  // round 4 (family-page.md 13 step 3): the return visit, decided once (RET, the class ret). Since 2026-11-04 (family-page.md
+  // 27) the loader lifts on the island's ready() on a return visit, with no wait for the fill's timeline or the dim
+  ["\n/* the return path (family-page.md 2.2 and 13 step 3; built with round 4, section 22; family-page.md 27 since 2026-11-04): back from a family page, or /#families, on the landing's 3D path, where the browser had no copy of the page to restore. The loader shows as on a first visit (E-H1), the wordmark, the count, the passes, the status lines and the stall rule, but lifts as soon as the island gives its word, ready() below, which hero.ts calls once frame2 is in and section 2 is at rest: the count to 100 and the lift, with no wait for the fill's timeline or the dim (Sam, 2026-11-04: \"make the going back wait time quicker\"; the full first-visit timeline, about 7.5 s, since round 5) */\nvar RET=HT.classList.contains('hero3d')&&(location.hash==='#families'||((performance.getEntriesByType?performance.getEntriesByType('navigation'):[])[0]||{}).type==='back_forward');if(RET)intro.classList.add('ret');\n", '\n'],
+  ['if(RET&&manual&&ready){fA.pause();enter();return}\n    if(ready&&!RET&&tl>=FULL-.001)sched(now)', 'if(ready&&tl>=FULL-.001)sched(now)'],
   ["var swA=null;\n/* behind the loader nothing is reachable (D16): every body child except the loader, the sprite, the poster, the canvas and scripts */\nfunction inertAll(on){for(var e=D.body.firstElementChild;e;e=e.nextElementSibling){if(e===intro||e.tagName==='SCRIPT'||e.matches('svg.sprite,picture.hero-poster,canvas#stage'))continue;if(on)e.setAttribute('inert','');else e.removeAttribute('inert')}}", 'var swA=null;'],
   ["HT.classList.remove('loading');inertAll(false);if(window.__introDone)", "HT.classList.remove('loading');if(window.__introDone)"],
   ['function poster(msg,kind){', 'function poster(msg){'],

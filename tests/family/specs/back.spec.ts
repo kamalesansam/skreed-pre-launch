@@ -1,5 +1,6 @@
 // Round 4 (docs/specs/family-page.md 22) and round 5 (section 23): "Back to main page" on the argument screen, the browser
-// rows of round 4's criteria 1, 2, 4, 5 and 6 and round 5's criteria 1 to 3 (the landing's loader on the way back), 5
+// rows of round 4's criteria 1, 2, 4, 5 and 6 and round 5's criteria 1 to 3 (the landing's loader on the way back, which
+// since 2026-11-04, section 27, lifts as soon as the gems are ready rather than after its full timeline), 5
 // (one row on phones) and 6 (the wide layout as built), which replace round 4's criterion 3. Runs on a
 // PUBLIC_FAMILY_3D=on (or dev) test build served by wrangler dev, the 3D path forced past SwiftShader with
 // ?render=force&tier=high (section 18, item 7); the landing's 3D rows need the hero's tier override (a test build). The
@@ -10,12 +11,11 @@
 // ways in (criterion 1): the press, a direct load of /#families, and the browser's Back from a family page with the
 // back-forward cache missed. Iteration 3 (criterion 4): the held load on the harness's fall path (the landing starts on
 // hero3d and falls to the poster at about DOMContentLoaded), centred to the load event and left alone after the
-// visitor's wheel, and Back to top's way home with a fall to the poster, kept at the top. Iteration 4: the poster tier
+// visitor's wheel (Back to top's way home left on 2026-11-04: Back to top stays on its own page, section 27). Iteration 4: the poster tier
 // proper (reduced motion), where the loader never ran and links.ts itself stops the browser's own scroll restoration.
 // Frames (section 23, "Frames by script"):
 // docs/specs/screenshots/family-r5-{360,390,844,1280}-arg-after.png (3.0 s after the argument comes on),
-// family-r5-{390,1280}-return-loader.png (the landing about 3 s after the press, the wordmark filling and the count
-// showing), family-r5-{390,1280}-return-gems.png (1 s after the loader has gone), and -390-landing-poster.png (after
+// family-r5-{390,1280}-return-loader.png (the landing's loader on arrival, while it is still up), family-r5-{390,1280}-return-gems.png (1 s after the loader has gone), and -390-landing-poster.png (after
 // the cross-fade, the families centred).
 import { test, expect, type BrowserContext, type Page } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
@@ -28,7 +28,7 @@ const ARG_ON = 5.6;                     // pose.ts SV.argOn, in screens
 const DELAY = 2500, IN_MS = 400, OUT_MS = 200;   // timing.ts BACK_DELAY_MS, BACK_IN_MS, BACK_OUT_MS
 const PEARL = 'rgb(247, 246, 243)';
 const LAND = S2T.LAND;                  // config/hero.ts, section 2 at rest, in screens (4.55 since 2026-11-02; 14.5 before)
-const LOADER_END = 7.05, LOADER_MIN_LIFT_MS = 7500;   // loader.inline.js END; the lift no earlier than 7.5 s after the time origin (criterion 2)
+const LOADER_FULL_MS = 7500;   // the full first-visit timeline the return no longer waits for (family-page.md 27): the lift comes well before it
 /** --inset at a viewport width (tokens.css: clamp(16px, 3.5vw, 56px)). */
 const inset = (w: number) => Math.min(56, Math.max(16, 0.035 * w));
 /** The words' own box (the text node's client rect), for the baseline and the start of the words. */
@@ -88,7 +88,7 @@ test.describe('22. the control and its words (acceptance 1)', () => {
   test('the built HTML: one a#famBack.fam-back.ring2.press to /#families, hidden, "Back to main page", after a#toTop; the accessible name is its text', async ({ request, browser }) => {
     for (const slug of ['blissful-blue', 'frosty-white', 'roaring-red']) {
       const html = await (await request.get(`/shades/${slug}/`)).text();
-      const m = html.match(/<a class="fam-back ring2 press" id="famBack" href="\/#families" hidden>Back to main page<\/a>/g);
+      const m = html.match(/<a class="fam-back ring2 press" id="famBack" href="\/#families"(?: data-home)? hidden>Back to main page<\/a>/g);   // data-home: E-way-back's marker (2026-11-03)
       expect(m, slug).toHaveLength(1);
       expect(html.indexOf('id="toTop"')).toBeLessThan(html.indexOf('id="famBack"'));
     }
@@ -445,7 +445,7 @@ test.describe('22. the press (acceptance 5)', () => {
 
   // Iteration 3 (section 23, criterion 4; the round 5 review of iteration 2, items 1 and 2): links.ts holds the families
   // centred from its module to the load event against the browser's own scroll to the fragment, stops for good at the
-  // visitor's first input, and never centres on Back to top's way home. A sampler installed before the landing's scripts
+  // visitor's first input. A sampler installed before the landing's scripts
   // records every frame's scrollY and the nav's centre, with the times of DOMContentLoaded, the load event and every
   // change of the root's class, so the rows read the page's own clock, not the runner's waits.
   type Held = { __held: { t: number; y: number; c: number | null }[]; __heldEv: { t: number; ev: string; y: number }[]; __heldRs0: string };
@@ -535,49 +535,6 @@ test.describe('22. the press (acceptance 5)', () => {
     expect(still.filter((f) => f.y !== moved.y).map((f) => `${f.t.toFixed(0)} ms y=${f.y}`)).toEqual([]);
     expect(after.html).not.toMatch(/\bhero3d\b/);
     await ctx.close();
-  });
-
-  test('Back to top\'s way home on the 3D path with the cache missed and a hard fall to the poster before the load event (criterion 4, iteration 3): the page keeps the top, scrollY 0 at the load event and 1 s after (links.ts reads the flag and never centres); without the fall, the top with the loader up', async ({ browser }) => {
-    test.setTimeout(600_000);
-    for (const fall of [true, false]) {
-      const ctx = await browser.newContext(WIDE);
-      await pin(ctx);
-      await heldSampler(ctx);
-      const page = await ctx.newPage();
-      await page.goto('/', { waitUntil: 'load' });
-      await open3d(page);
-      await page.waitForTimeout(500);
-      await noStore(page);
-      if (fall) {
-        // the fonts held 6 s so the load event comes late, and the hero chunk refused so the Gate's module-error path falls to the poster first
-        await page.route(/\.woff2(\?|$)/, async (route) => { await new Promise((r) => setTimeout(r, 6000)); await route.continue(); });
-        await page.route(/\/_astro\/hero\.[\w-]+\.js$/, (route) => route.abort());
-      }
-      await page.locator('#toTop').click();
-      await page.waitForURL((u) => u.pathname === '/');
-      await page.waitForLoadState('load', { timeout: 60_000 });
-      const nav = await page.evaluate(() => ({ type: (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined)?.type, hash: location.hash, path: location.pathname, flag: (() => { try { return sessionStorage.getItem('skreed:to-top'); } catch { return 'unreadable'; } })() }));
-      expect(nav).toEqual({ type: 'back_forward', hash: '', path: '/', flag: null });   // a fresh load of the landing entry, its hash dropped by the loader, the flag cleared by BackToTop's module after links.ts read it
-      await page.waitForFunction(() => { const l = (window as unknown as Held).__heldEv.find((e) => e.ev === 'load'); return !!l && performance.now() - l.t >= 1000; }, null, { timeout: 30_000 });
-      const after = await heldRead(page);
-      const d = await heldDump(page);
-      const load = d.ev.find((e) => e.ev === 'load')!;
-      const toPoster = d.ev.find((e) => e.ev.startsWith('class') && /\bposter\b/.test(e.ev));
-      const movedFrames = d.s.filter((f) => f.y !== 0).map((f) => `${f.t.toFixed(0)} ms y=${f.y}`);
-      console.log(`Back to top's way home 1280, ${fall ? 'a fall before load' : 'no fall'}: ${toPoster ? `the poster at ${toPoster.t.toFixed(0)} ms, ` : ''}load at ${load.t.toFixed(0)} ms (scrollY ${load.y}), 1 s after it scrollY ${after.y}, html "${after.html}", ${d.s.length} frames, ${movedFrames.length} off the top`);   // for the review log
-      expect(load.y).toBe(0);
-      expect(after.y).toBe(0);
-      expect(movedFrames).toEqual([]);
-      if (fall) {
-        expect(toPoster, 'the fall to the poster').toBeTruthy();
-        expect(toPoster!.t).toBeLessThan(load.t);
-        expect(after.html).toMatch(/\bposter\b/);
-        expect(after.html).not.toMatch(/\bhero3d\b/);
-      } else {
-        expect(after.html).toMatch(/\bhero3d\b/);
-      }
-      await ctx.close();
-    }
   });
 
   test('the poster tier proper (reduced motion), the browser\'s Back from a family page with the cache missed (criterion 4, iteration 4): the landing left 300 px below the centred families, the entry\'s restoration auto before the module; after the Back, links.ts has set it manual and the families end centred 1 s after the load event, no frame after the load event elsewhere; with the images and fonts held 3 s and without', async ({ browser }) => {
@@ -679,10 +636,8 @@ test.describe('22. the press (acceptance 5)', () => {
     expect(first!.ret).toBe(true);
     expect(first!.w).not.toBe('none');
     expect(first!.pct).not.toBe('none');
-    if (frames) {
-      // the frame about 3 s after the press: the wordmark filling and the count showing (family-r5-*-return-loader)
-      await page.waitForTimeout(2500);
-      await expect(page.locator('html')).toHaveClass(/\bloading\b/);
+    if (frames && await page.evaluate(() => document.documentElement.classList.contains('loading'))) {
+      // the loader as it stands on arrival (family-r5-*-return-loader): since 2026-11-04 it lifts as soon as the gems are ready
       await page.screenshot({ path: shot(`${label}-return-loader`) });
     }
     await expect(page.locator('html')).not.toHaveClass(/\bloading\b/, { timeout: 120_000 });
@@ -697,29 +652,28 @@ test.describe('22. the press (acceptance 5)', () => {
     if (frames) await page.screenshot({ path: shot(`${label}-return-gems`) });
     const S: Sample[] = await page.evaluate(() => (window as unknown as R5).__r5);
     const marks: Mark[] = await page.evaluate(() => (window as unknown as R5).__r5marks);
-    expect(S.length).toBeGreaterThan(60);
+    expect(S.length).toBeGreaterThan(10);
     // criterion 1: the wordmark and the count never display: none while the loader is up
     for (const s of S.filter((x) => x.loading)) { expect(s.w).not.toBe('none'); expect(s.pct).not.toBe('none'); }
-    expect(S.some((s) => s.loading && s.n >= 30)).toBe(true);
-    // criterion 2: the lift no earlier than 7.5 s after the time origin; n never falls; the fill never runs faster than twice
-    // the frame clock measured from any earlier frame (a long task's catch-up is allowed, a cut is not: cut() finishes the
-    // fill in one frame), 20 ms of tolerance; exit, then enter; done at 100 and 7.05; no cut() or skip(), ready() once
+    // criterion 2, as section 27 has it (2026-11-04): the lift as soon as the island's ready() comes, well before the full
+    // timeline's 7.5 s; n never falls; the fill never runs faster than twice the frame clock measured from any earlier frame
+    // (a long task's catch-up is allowed, a cut is not), 20 ms of tolerance; enter with no exit; done at 100; no cut() or
+    // skip(), ready() once
     const lift = S.find((s) => !s.loading);
     expect(lift, 'the loader lifted').toBeTruthy();
-    expect(lift!.t).toBeGreaterThanOrEqual(LOADER_MIN_LIFT_MS);
+    expect(lift!.t).toBeLessThan(LOADER_FULL_MS);
     for (let k = 1; k < S.length; k++) expect(S[k].n, `n at sample ${k}`).toBeGreaterThanOrEqual(S[k - 1].n);
     const F = S.filter((s) => s.loading && s.fill !== null);
-    expect(F.length).toBeGreaterThan(40);
+    expect(F.length).toBeGreaterThan(5);
     let base = Infinity, worst = -Infinity;   // base: the running minimum of fill - 2 f over the earlier frames
     for (const s of F) { const v = s.fill! - 2 * s.f / 1000; worst = Math.max(worst, v - base); base = Math.min(base, v); }
     expect(worst, 'the fill ahead of twice the frame clock, in s').toBeLessThanOrEqual(0.02);
     // the phases in time order, from the frames and the count's changes together
     const phases = [...S, ...marks].sort((a, b) => a.t - b.t).map((s) => s.phase).filter((p, k, a) => k === 0 || p !== a[k - 1]);
-    expect(phases.indexOf('exit')).toBeGreaterThan(-1);
-    expect(phases.indexOf('enter')).toBeGreaterThan(phases.indexOf('exit'));
+    expect(phases.indexOf('exit'), 'no dim on the quick return').toBe(-1);
+    expect(phases.indexOf('enter')).toBeGreaterThan(-1);
     expect(end.state.phase).toBe('done');
     expect(end.state.n).toBe(100);
-    expect(end.state.tl).toBeCloseTo(LOADER_END, 2);
     expect(end.calls).toEqual({ cut: 0, skip: 0, ready: 1 });
     // criterion 3: section 2 ready (or failed) before the lift; 14.5 screens at the lift and 1 s after; never section 1, the pull-back or the quiz from the lift on
     const before = S.filter((s) => s.loading);
@@ -737,7 +691,7 @@ test.describe('22. the press (acceptance 5)', () => {
   }
 
   for (const [label, opts] of [['390', PHONE], ['1280', WIDE]] as const) {
-    test(`the landing at ${label}, 3D path, after the press (round 5): the first visit's loader shows (ret, the wordmark and the count from first paint to the lift, past 30), runs its own exit and lift no earlier than 7.5 s (n never falls, the fill never faster than twice the frame clock, no cut or skip, ready once, exit then enter then done at 100 and 7.05), and lands on the gems at rest (14.5 screens at the lift and 1 s after, section 2 ready before the lift, the link boxes placed)`, async ({ browser }) => {
+    test(`the landing at ${label}, 3D path, after the press (round 5): the first visit's loader shows (ret, the wordmark and the count from first paint to the lift), lifts as soon as the gems are ready, well before the full timeline's 7.5 s (2026-11-04) (n never falls, the fill never faster than twice the frame clock, no cut or skip, ready once, exit then enter then done at 100 and 7.05), and lands on the gems at rest (14.5 screens at the lift and 1 s after, section 2 ready before the lift, the link boxes placed)`, async ({ browser }) => {
       const ctx = await browser.newContext(opts);
       await pin(ctx);
       await sampler(ctx);

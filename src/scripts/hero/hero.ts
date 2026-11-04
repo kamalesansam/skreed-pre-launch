@@ -62,10 +62,10 @@ export async function startHero(o: StartOptions): Promise<void> {
   if (HOOKS) installStall();
   // the loader hands over at its cut: until then the hero holds the plotted pose exactly
   const initiallyIntroDone = !document.documentElement.classList.contains('loading');
-  // the return path (family-page.md 2.2 and 13, step 3; round 5, section 23): Back from a family page, or /#families; the loader runs in
-  // full, its exit held for this island's word, and section 2 is the destination. The loader decided (loader.inline.js RET:
-  // isReturnVisit()'s two conditions, and not Back to top's way home, whose sessionStorage flag to-top.ts has cleared by now), so its
-  // decision is read, never made again
+  // the return path (family-page.md 2.2 and 13, step 3; round 5, section 23; 27 since 2026-11-04): Back from a family page, or
+  // /#families, with no copy of the page to restore; the loader lifts on this island's word (no longer after its full
+  // timeline), and section 2 is the destination. The loader decided (loader.inline.js RET: isReturnVisit()'s two
+  // conditions), so its decision is read, never made again
   const ret = !!document.getElementById('intro')?.classList.contains('ret');
 
   // 1. the hero chunk and pieces.json

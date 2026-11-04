@@ -131,11 +131,12 @@ export function createCaseSteps(o: { reduced: () => boolean }): CaseSteps {
   // ---- the arrival: the page's own scroll from a visitor's input (a wheel or a scrolling key in the last 300 ms, a finger
   // down or lifted in the last MOMENTUM_MS, whose momentum runs on after it; never a link, the beat nav, Home, End or the
   // scrollbar), crossing into the types past Tough from below or past Armor from above
-  let lastInput = -Infinity, lastFinger = -Infinity, prevY = scrollY;
+  let lastInput = -Infinity, lastFinger = -Infinity, prevY = scrollY, jumpUntil = -Infinity;
   const onScroll = () => {
     const y = scrollY, was = prevY;
     prevY = y;
     if (disposed || riding || hold || pending || !on()) return;
+    if (now() < jumpUntil) return;                              // a jump of the page's own (Back to top): never held
     if (now() - rideEnd < 200) return;                          // a ride's own landing (an instant one under reduced motion)
     if (now() - lastInput > 300 && fingers === 0 && now() - lastFinger > MOMENTUM_MS) return;
     const first = px(0), last = px(CASE_RESTS.length - 1);
@@ -144,8 +145,10 @@ export function createCaseSteps(o: { reduced: () => boolean }): CaseSteps {
   };
   const onInput = (e: Event) => {
     if (e.type === 'keydown') { const k = (e as KeyboardEvent).key; if (!isScrollKey(k) || k === 'Home' || k === 'End') return; }
-    lastInput = now();
+    lastInput = now(); jumpUntil = -Infinity;                   // the visitor's own input ends a jump's pass
   };
+  /** Back to top's jump (shell/to-top.ts, the event skreed:jump): the tap or the key that pressed it is not the visitor's scroll, so its smooth scroll passes the types, at most 2 s or until the visitor's next input (the review of 2026-11-04: a phone's tap was taken for a swipe and the scroll held on Armor) */
+  const onJump = () => { endHold(); lastInput = lastFinger = -Infinity; jumpUntil = now() + 2000; };
 
   // the listeners first, before the page scroll's: a key or a wheel that lets the hold go does so before it is judged as a gesture
   const onLost = () => { fingers = 0; if (pending) { const p = pending; pending = null; startHold(p.y, p.dir); } };
@@ -154,7 +157,7 @@ export function createCaseSteps(o: { reduced: () => boolean }): CaseSteps {
     ['wheel', onInput, { passive: true }], ['touchmove', onInput, { passive: true }], ['keydown', onInput, { passive: true }],
     ['touchstart', onFingers as EventListener, { passive: true }], ['touchend', onFingers as EventListener, { passive: true }], ['touchcancel', onFingers as EventListener, { passive: true }],
     ['touchstart', letGo, { passive: true }], ['pointerdown', letGo, { passive: true }], ['keydown', letGo, { passive: true }], ['wheel', letGo, { passive: true }],
-    ['blur', onLost, {}], ['pagehide', onLost, {}],
+    ['blur', onLost, {}], ['pagehide', onLost, {}], ['skreed:jump', onJump, {}],
   ];
   for (const [n, f, opt] of listeners) addEventListener(n, f, opt);
 

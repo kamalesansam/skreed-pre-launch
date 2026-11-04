@@ -1,6 +1,6 @@
-// Back to top (Sam, 2026-10-19 and 2026-10-20; src/components/shell/BackToTop.astro, src/scripts/shell/to-top.ts): on a
-// family page always shown, and a press returns to the landing page's section 1 (through the history when the landing
-// page is behind it, else by the link). On the landing page the section index's Home makes the jump the control made
+// Back to top (Sam, 2026-10-19, 2026-10-20 and 2026-11-04; src/components/shell/BackToTop.astro, src/scripts/shell/to-top.ts):
+// on a family page always shown, and a press scrolls the same page to its top, the carousel of its cases, never leaving it
+// (since 2026-11-04: "take the same page top section where all sahde 3d models are there"). On the landing page the section index's Home makes the jump the control made
 // there (docs/specs/navbar.md, 2026-11-02): section 1 in place (no navigation, the page's state survives), keyboard focus
 // on the logotype, and the landing page draws no control of its own. The harness's Chromium has the back-forward cache
 // disabled, so a history step reloads here; the restore itself is checked in real Chrome by hand.
@@ -38,25 +38,30 @@ test('landing page by keyboard: Enter on Home reaches section 1 and puts focus o
   await expect(page.locator('#siteLogo')).toBeFocused();
 });
 
-test('family page: the control returns to the landing page\'s section 1, through the history when the landing page is behind it', async ({ page, baseURL }) => {
+test('family page: the control scrolls the same page to its top, the carousel, and never leaves it (2026-11-04)', async ({ page, baseURL }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(new URL('/?tier=poster', baseURL).href);
   await page.goto(new URL('/shades/blissful-blue/', baseURL).href);
   const btn = page.locator('#toTop');
-  await expect(btn).toHaveAttribute('href', '/');
+  await expect(btn).toHaveAttribute('href', '#');
+  await page.evaluate(() => scrollTo({ top: 6 * innerHeight, behavior: 'instant' }));
   await expect(btn).toBeVisible();
   const box = (await btn.boundingBox())!;
   expect(box.x + box.width).toBeLessThanOrEqual(390); expect(box.y + box.height).toBeLessThanOrEqual(844);
+  const before = page.url();
   await btn.click();
-  await page.waitForURL((u) => u.pathname === '/', { timeout: 30_000 });
   await page.waitForFunction(() => scrollY === 0, null, { timeout: 10_000 });
-  expect(await page.evaluate(() => sessionStorage.getItem('skreed:to-top'))).toBeNull();
+  expect(page.url()).toBe(before);
+  expect(new URL(page.url()).pathname).toBe('/shades/blissful-blue/');
+  expect(await events(page)).toContain('to_top');
 });
 
-test('family page with nothing behind it: the control is a link to the landing page', async ({ page, baseURL }) => {
+test('family page by keyboard: Enter on the control scrolls to the top and puts focus on the family\'s name', async ({ page, baseURL }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(new URL('/shades/go-green/', baseURL).href);
-  await page.locator('#toTop').click();
-  await page.waitForURL((u) => u.pathname === '/', { timeout: 30_000 });
-  expect(await page.evaluate(() => scrollY)).toBe(0);
+  await page.evaluate(() => scrollTo({ top: 3 * innerHeight, behavior: 'instant' }));
+  await page.locator('#toTop').focus();
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => scrollY === 0, null, { timeout: 10_000 });
+  await expect(page.locator('h1')).toBeFocused();
+  expect(new URL(page.url()).pathname).toBe('/shades/go-green/');
 });
