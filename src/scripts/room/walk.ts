@@ -41,9 +41,11 @@ export function mountRoom(root: HTMLElement): void {
   const dec = createDecoder(() => reducedMQ.matches);
   const controls = [prevB, nextB, pause].filter((b): b is HTMLButtonElement => !!b);
 
-  // every line split into its glyphs once, hidden until its part decodes in (the loading line, the hint, the scenes, the words)
-  for (const el of [loading, ...controls, ...(sceneHint ? [sceneHint] : [])]) dec.prepare(el);
-  for (const s of scenes) for (const el of s.lines) dec.prepare(el);
+  // every line split into its glyphs once, hidden until its part decodes in (the loading line, the hint, the scenes, the
+  // words); Questrial is proportional (2026-11-04), so each takes the decode's proportional mode (data-dc="prop")
+  const prep = (el: HTMLElement) => { el.dataset.dc = 'prop'; dec.prepare(el); };
+  for (const el of [loading, ...controls, ...(sceneHint ? [sceneHint] : [])]) prep(el);
+  for (const s of scenes) for (const el of s.lines) prep(el);
   // on the 3D path the scenes are inert until the arrival; without JavaScript, and on the poster tier, never
   if (list) list.inert = !isPoster() && root.dataset.state !== 'world';
 

@@ -203,12 +203,16 @@ test('AC10, plain text: room.css and Room.astro carry no panel, fill, border but
   assert.match(css, /\.rm-pad:focus-visible::after \{[^}]*inset: 4px; border: 2px solid var\(--urban-slate\)/);
 });
 
-test("E-S4-font: section 2's label type, IBM Plex Mono Medium in capitals, at the quiz's own sizes; the words with the 44 px hit area", () => {
+test("E-S4-font, amended: Questrial in capitals (Sam, 2026-11-04), at the quiz's own sizes; the words with the 44 px hit area", () => {
   const quiz = read('src/styles/quiz.css');
   const qv = (name: string) => quiz.match(new RegExp(`--qz-${name}: ([^;]+);`))?.[1], rv = (name: string) => css.match(new RegExp(`--rm-${name}: ([^;]+);`))?.[1];
   for (const n of ['fs', 'fs-q']) { assert.ok(qv(n)); assert.equal(rv(n), qv(n), `--rm-${n} equals the quiz's --qz-${n}`); }
-  assert.match(css, /--rm-font: "IBM Plex Mono", ui-monospace, monospace;/);
-  assert.match(css, /\.room \{[^}]*font: 500 var\(--rm-fs\) \/ 1\.45 var\(--rm-font\); text-transform: uppercase; letter-spacing: 0;/);
+  assert.match(css, /--rm-font: "Questrial", "Questrial Fallback", sans-serif;/);
+  assert.match(css, /\.room \{[^}]*font: 400 var\(--rm-fs\) \/ 1\.45 var\(--rm-font\); text-transform: uppercase; letter-spacing: 0;/);
+  assert.match(read('src/styles/fonts.css'), /font-family: "Questrial"; font-weight: 400;[^}]*url\(\/fonts\/questrial-400-latin\.woff2\)/);
+  // a proportional face: every line takes the decode's proportional mode, the rolled glyph drawn over the face's own
+  assert.match(read('src/scripts/room/walk.ts'), /el\.dataset\.dc = 'prop'; dec\.prepare\(el\);/);
+  assert.match(css, /\.room \.dc > span\[data-r\]::after \{ content: attr\(data-r\); position: absolute;/);
   assert.match(css, /\.room \.sr-only \{ text-transform: none; \}/, 'assistive technology keeps the sentence case');
   assert.match(css, /\.rm-scene-name \{ font-size: var\(--rm-fs-q\)/);
   // the controls are words: the quiz's link pattern, 44 px to tap; the previous and next words bottom right in the scenes
