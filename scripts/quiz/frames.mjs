@@ -9,16 +9,16 @@
 // Then the phone pass (2026-10-29; Sam: the quiz laid out "properly for the mobile aspect ratio size"): at 360x780,
 // 412x915 and 844x390 (a phone held sideways), the intro, question 1 (its words, then a finger's picture held, a licensed
 // frame where a picture shows), question 8 (the longest answers), the result and the gift; on the sideways phone the
-// deck's foot too (Back and Skip quiz, below the fold at 390 px tall). Then the quiz gate's frames (below).
+// deck's foot too (Back, below the fold at 390 px tall). The quiz gate's frames left with the gate on 2026-11-04.
 // Serve a hooks build first (PUBLIC_HERO_HOOKS=1 astro build --outDir dist-s3, then wrangler dev --assets dist-s3 --port 8799),
 // or the dev server. CHROME_PATH runs the installed Chrome in place of Playwright's Chromium (tests/harness/browser.ts does
-// the same); --phone-only takes the phone pass alone, --no-gate skips the gate's frames. --result-only (2026-11-02, the
+// the same); --phone-only takes the phone pass alone. --result-only (2026-11-02, the
 // result screen after Sam's reference, quiz.md AC14) takes the result's frames alone at every size and at 1366x657 and
 // 1920x1080 (the reference's proportions): `result`, `gift` wherever the result and the offer take the screen in turn
 // (#find[data-swap]: a phone held sideways, The Quiet Curator at 360x780), and at 390x844 and 1280x800 the reveal before
 // the result (2026-11-03, AC15), the gift's states, the results of The Spark and The Calm Strategist, and the last one a
 // quarter of a screen into leaving with the scroll (`result-leaving`, D53).
-//   node scripts/quiz/frames.mjs [baseUrl] [--phone-only] [--no-gate] [--result-only] [--only=<w>x<h>,...]
+//   node scripts/quiz/frames.mjs [baseUrl] [--phone-only] [--result-only] [--only=<w>x<h>,...]
 // --only takes the passes at those sizes alone (a size that timed out under load, taken again)
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
@@ -301,70 +301,5 @@ for (const s of RESULT_ONLY ? [] : sized(PHONE_SETUPS)) {
   await shotResult('gift');
   console.log(s.name, 'phone pass done', await page.evaluate(() => ({ frame: document.querySelector('.qz-card[data-i="0"] .qz-pics')?.hasAttribute('data-none') ? 'none' : 'drawn', scrollW: document.scrollingElement.scrollWidth })));
   await ctx.close();
-}
-
-// The quiz gate's frames (docs/specs/quiz-gate.md 7): on a page with no flag, section 4 locked, `intro` (the track's end, 6.75 screens since 2026-11-02,
-// the intro at rest with Skip quiz) and `card2-foot` (question 2 settled, Back and Skip quiz in its footer; no pictures
-// on that question, so no licensed photograph is in the frame); on ?room=open once the scenes are resident (__s4.ready),
-// `ride-mid` (the ride at a raw q of about 0.5, the third wipe part way) and `arrival` (scene 1 fully in after a
-// keyboard press, its lines and the focus ring); and at 390 x 844 on the poster tier `poster-arrival` (the column's
-// first scene with its name focused; the hall's still with its prompt until 2026-11-02). Written to
-// docs/specs/screenshots/quiz-gate-<w>x<h>-<state>.png.
-const GATE_BASE = new URL(BASE);
-for (const s of FLAGS.has('--phone-only') || FLAGS.has('--no-gate') || RESULT_ONLY ? [] : sized(SETUPS)) {
-  const shotGate = (page, state) => page.screenshot({ path: `${OUT}/quiz-gate-${s.name}-${state}.png` });
-  const settledIn = (page) => page.waitForFunction(() => !document.getElementById('find').hasAttribute('data-decoding'), null, { timeout: 30_000 }).then(() => sleep(150));
-  const toQuiz = async (page) => { await page.evaluate(() => { const top = document.getElementById('find').getBoundingClientRect().top + scrollY; scrollTo({ top, behavior: 'instant' }); if (window.__skreedSnap) window.__skreedSnap(top / innerHeight); }); await sleep(900); };
-  // locked: the intro with Skip quiz, then question 2's footer
-  const ctx = await browser.newContext({ viewport: s.viewport, deviceScaleFactor: s.deviceScaleFactor });
-  const page = await ctx.newPage();
-  await page.goto(GATE_BASE.href, { waitUntil: 'load' });
-  await page.waitForFunction(() => window.__s2 && window.__s2() && window.__s2().ready, null, { timeout: 420_000 }).catch(() => console.warn(s.name, 'gate: section 2 did not report ready'));
-  await toQuiz(page);
-  await page.locator('#qzSkip > .dc').waitFor();
-  console.log(s.name, 'gate: locked', await page.evaluate(() => { const r = document.getElementById('room'); return { hidden: r.hidden, locked: r.hasAttribute('data-locked'), docEnd: document.documentElement.scrollHeight, quizFoot: Math.round(document.getElementById('find').getBoundingClientRect().bottom + scrollY) }; }));
-  await shotGate(page, 'intro');
-  await page.locator('#qzBegin').evaluate((b) => b.click());
-  await page.locator('.qz-card[data-i="0"].is-top').waitFor();
-  await settledIn(page);
-  await page.locator('.qz-card[data-i="0"] .qz-opt[data-persona="curator"]').evaluate((b) => b.click());
-  await page.locator('.qz-card[data-i="1"].is-top').waitFor();
-  await settledIn(page);
-  await shotGate(page, 'card2-foot');
-  await ctx.close();
-  // open, the scenes resident: the ride through the third wipe from a keyboard press, and the arrival at scene 1
-  const open = new URL(GATE_BASE); open.searchParams.set('room', 'open');
-  const ctx2 = await browser.newContext({ viewport: s.viewport, deviceScaleFactor: s.deviceScaleFactor });
-  const p2 = await ctx2.newPage();
-  await p2.goto(open.href, { waitUntil: 'load' });
-  await p2.waitForFunction(() => window.__s2 && window.__s2() && window.__s2().ready, null, { timeout: 420_000 }).catch(() => console.warn(s.name, 'gate: section 2 did not report ready'));
-  await toQuiz(p2);
-  await p2.locator('#qzSkip > .dc').waitFor();
-  await p2.waitForFunction(() => window.__s4 && window.__s4.ready, null, { timeout: 300_000 }).catch(() => console.warn(s.name, 'gate: the scenes did not become ready'));
-  await p2.locator('#qzBegin').focus();
-  await p2.keyboard.press('Tab');
-  await p2.keyboard.press('Enter');
-  await p2.waitForFunction(() => { const st = window.__s4 && window.__s4.state(); return !!st && st.qRaw >= 0.5; }, null, { timeout: 10_000 }).catch(() => console.warn(s.name, 'gate: the ride did not reach q 0.5'));
-  await shotGate(p2, 'ride-mid');
-  await p2.waitForFunction(() => !document.getElementById('room').hasAttribute('data-ride'), null, { timeout: 10_000 }).catch(() => console.warn(s.name, 'gate: the ride did not end'));
-  await sleep(1200);
-  console.log(s.name, 'gate: arrival', await p2.evaluate(() => ({ focus: document.activeElement && document.activeElement.id, q: window.__s4 && window.__s4.state() && window.__s4.state().q, y: scrollY, roomTop: Math.round(document.getElementById('room').getBoundingClientRect().top + scrollY) })));
-  await shotGate(p2, 'arrival');
-  await ctx2.close();
-  // the poster tier at 390 x 844: the column's first scene after the ride
-  if (s.viewport.width < 900) {
-    const poster = new URL(GATE_BASE); poster.searchParams.set('tier', 'poster');
-    const ctx3 = await browser.newContext({ viewport: s.viewport, deviceScaleFactor: s.deviceScaleFactor });
-    const p3 = await ctx3.newPage();
-    await p3.goto(poster.href, { waitUntil: 'load' });
-    await toQuiz(p3);
-    await p3.locator('#qzSkip > .dc').waitFor();
-    await p3.locator('#qzSkip').evaluate((b) => b.click());
-    await p3.waitForFunction(() => document.getElementById('room').dataset.open === 'skip' && !document.getElementById('room').hasAttribute('data-ride'), null, { timeout: 10_000 }).catch(() => console.warn(s.name, 'gate: the poster ride did not end'));
-    await p3.waitForFunction(() => { const img = document.querySelector('#room .rm-scene[data-i="0"] img'); return !!img && img.complete && img.naturalWidth > 0; }, null, { timeout: 30_000 }).catch(() => console.warn(s.name, 'gate: scene 1\'s still did not decode'));
-    await sleep(400);
-    await shotGate(p3, 'poster-arrival');
-    await ctx3.close();
-  }
 }
 await browser.close();

@@ -10,9 +10,8 @@
 // nav, so the index is one landmark. No fill, no box: the words on the scene as the logotype is (site-nav.css). Home is
 // Back to top's jump, so the landing page draws no Back to top (BackToTop.astro). Plain fragment links, so the index
 // works without JavaScript on the poster layout; with it, scripts/shell/site-nav.ts jumps in place under the --night
-// veil and marks the section on screen. Products is always listed ("its okay add products as well no problem"): pressed
-// while the quiz gate holds section 4, it opens it as Skip quiz does, with the gate's key from config/quiz.ts
-// (data-gate-key, read at build time so the quiz's config stays out of the index's chunk). In the logo slot, after the
+// veil and marks the section on screen. Products is always listed ("its okay add products as well no problem"; nothing is
+// locked behind the quiz since 2026-11-04). In the logo slot, after the
 // logotype: a flat child of body after the loader, and next in the tab order. Last, after Menu, the gift (2026-11-03:
 // "Add this gift bootstrap icon as the last item in the navbar which has keeps bouncing playfully in its own position and
 // has that same glitch effect as the logo, but glitches more often, which basically navigates to the sign up section"):
@@ -20,7 +19,6 @@
 // on it (GIFT_TARGET, GIFT_EVERY), its bounce in site-nav.css. The icon is Bootstrap Icons' "gift" as the owner gave it
 // (Copyright (c) 2019-2024 The Bootstrap Authors, MIT License, https://github.com/twbs/icons/blob/main/LICENSE).
 import { COPY } from '../../config/copy.ts';
-import { QUIZ_GATE } from '../../config/quiz.ts';
 import { SECTION_IDS, type SectionId } from '../../scripts/shell/nav-map.ts';
 import '../../styles/site-nav.css';
 
@@ -32,7 +30,7 @@ const items = SECTION_IDS.map((id) => ({ id, href: HREF[id], label: N.items[id] 
 /** the pages the index links to, after the sections: About (docs/specs/about.md D7) */
 const pages = [{ id: 'about', href: '/about/', label: N.pages.about }];
 ---
-<nav class="snav" id="siteNav" aria-label={N.aria} data-gate-key={QUIZ_GATE.key}>
+<nav class="snav" id="siteNav" aria-label={N.aria}>
   <ol class="snav-list">
     {items.map((s) => <li><a class="snav-a" href={s.href} data-sec={s.id}>{s.label}</a></li>)}
     {pages.map((p) => <li><a class="snav-a" href={p.href} data-page={p.id}>{p.label}</a></li>)}
