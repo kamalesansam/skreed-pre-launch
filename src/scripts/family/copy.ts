@@ -42,12 +42,12 @@ export const FAM_COPY = {
   familyLink: (family: string) => `${family}, all 24 shades`,
 } as const;
 
-/** The four case types after the carousel (section 20; the copy cut from Sam's product descriptions, wording for Sam to confirm). */
+/** The four case types after the carousel (section 20); Sam's descriptions of 2026-11-04, word for word ("replace the description for the given products and case types as per the updated description"; his "seamless" kept on his word, an exception to rule 17). */
 export const BEATS = [
-  { id: '1', name: 'Tough', copy: 'A durable polycarbonate shell over a shock-absorbing TPU layer, for everyday bumps, drops and scratches. Precision cutouts keep the camera, port and controls clear.' },
-  { id: '2', name: 'MagTough', copy: 'The Tough case with a built-in magnetic ring. Works with every magnetic phone accessory.' },
-  { id: '3', name: 'Snap', copy: 'Light everyday protection that keeps the slim profile of your phone. Precision cutouts keep the camera, port and controls clear.' },
-  { id: '4', name: 'Armor', copy: 'Built for everyday impact. Reinforced edges and raised protection around the camera, with a built-in magnetic ring for magnetic accessories.' },
+  { id: '1', name: 'Tough', copy: 'Made from tough Polycarbonate and shock-absorbing TPU for dual-layer protection against everyday drops, bumps, and scratches.' },
+  { id: '2', name: 'MagTough', copy: 'Made from tough Polycarbonate and shock-absorbing TPU for dual-layer protection against everyday drops, bumps, and scratches. Built-in magnetic ring for seamless MagSafe-compatibility.' },
+  { id: '3', name: 'Snap', copy: 'Thin, lightweight, and sleek for everyday protection against scratches and minor drops.' },
+  { id: '4', name: 'Armor', copy: 'Ultra-durable Polycarbonate construction for serious protection in a slim profile. Reinforced edges for high impact absorption and military-grade protection. MagSafe-compatible.' },
 ] as const;
 
 /** The argument screen (section 21, exception E-F3): the tagline's short row over its long row, uppercase like ciao's letters. */
