@@ -1,5 +1,5 @@
 /* countdown to launch: plain script, so it runs even if the 3D module never starts. LAUNCH, LIVE and DG (the dot digits) are prepended by ScrollCue.astro. */
-(function(){var T=LAUNCH;   /* 15 November 2026, 00:00 IST (skreed.in hands over to skreed.com) */
+(function(){var T=LAUNCH;   /* 19 November 2026, 00:00 IST (skreed.in hands over to skreed.com) */
 var U=['d','h','m','s'],el=U.map(function(u){return document.getElementById('cd-'+u)}),box=document.getElementById('count'),eyebrow=document.getElementById('cdEyebrow');
 /* the dot-matrix digits (src/config/countdown-digits.ts): one path per digit, every set cell a circle, in a 0 x 0 sprite on body */
 var NS='http://www.w3.org/2000/svg',sp=document.createElementNS(NS,'svg'),defs=document.createElementNS(NS,'defs'),r=DG.r,d2=(2*r).toFixed(2);

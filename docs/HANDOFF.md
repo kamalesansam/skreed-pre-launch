@@ -6,7 +6,7 @@ For a fresh Claude Code session (or a person) picking this repo up without the p
 
 ## 1. What this is
 
-skreed.in's pre-launch teaser (Astro 7 static on Cloudflare Workers; live until 2026-11-14; the launch is 2026-11-15 00:00 IST). The brand, the 240 shades, the type system, the fifty "never do" rules and the approved exceptions are in `CLAUDE.md`, `DESIGN.md` and `docs/CHECKLIST.md`. The owner and sole reviewer is Sam (sam@zeosmobile.com); he reviews plain reports with frames at 390 x 844 and 1280 x 800, and on a local port.
+skreed.in's pre-launch teaser (Astro 7 static on Cloudflare Workers; live until 2026-11-18; the launch is 2026-11-19 00:00 IST, moved from 2026-11-15 on 2026-11-04). The brand, the 240 shades, the type system, the fifty "never do" rules and the approved exceptions are in `CLAUDE.md`, `DESIGN.md` and `docs/CHECKLIST.md`. The owner and sole reviewer is Sam (sam@zeosmobile.com); he reviews plain reports with frames at 390 x 844 and 1280 x 800, and on a local port.
 
 ## 2. The page, section by section
 
