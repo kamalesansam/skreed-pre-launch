@@ -545,7 +545,7 @@ export function mountQuiz(root: HTMLElement): void {
     if (open) root.dataset.gift = 'open'; else delete root.dataset.gift;
     for (const el of open ? off : res) { dc.prepare(el); dc.conceal(el); }
     busy = false;
-    if (!open) fitResult();
+    fitResult();   // the part now on screen fitted alone (the offer too: at 844 x 390 it stood 23 px over the screen)
     void dc.showAll(open ? off : res);
     (open ? offer : shown?.querySelector<HTMLElement>('.qz-shade'))?.focus({ preventScroll: true });
   }

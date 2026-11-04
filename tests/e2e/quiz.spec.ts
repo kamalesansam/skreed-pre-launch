@@ -1358,12 +1358,15 @@ const shadowed = (page: Page): Promise<string[]> => page.evaluate(({ URBAN_SLATE
  *  questions' (2026-10-20): the label (--qz-fs: the body and the answers) 15 to 22 px, the question and headline step
  *  (--qz-fs-q) 24 to 52. The result's and the offer's (2026-11-02, E-S3-result; DESIGN.md, The quiz result's type): its
  *  words (--qz-fs-rt) 15 to 30, its labels (--qz-fs-label) 16 to 37 and the offer's line (--qz-fs-offer) 15 to 36 */
-interface Sizes { label: number; step: number; rt: number; rlabel: number; offer: number }
+interface Sizes { label: number; step: number; rt: number; rlabel: number; offer: number; rrt: number; rrlabel: number }
 function typeScale(w: number, h: number): Sizes {
   const clamp = (lo: number, v: number, hi: number) => Math.min(hi, Math.max(lo, v)), vw = w / 100, vh = h / 100, rem = 16;
+  const rt = clamp(15, Math.min(1.5 * vw, 2.7 * vh), 30), rlabel = clamp(16, Math.min(1.85 * vw, 3.3 * vh), 37);
   return {
     label: clamp(15, Math.min(0.6 * rem + 0.95 * vw, 2.6 * vh), 22), step: clamp(24, Math.min(rem + 2.3 * vw, 5 * vh), 52),
-    rt: clamp(15, Math.min(1.5 * vw, 2.7 * vh), 30), rlabel: clamp(16, Math.min(1.85 * vw, 3.3 * vh), 37), offer: clamp(15, Math.min(1.8 * vw, 3.2 * vh), 36),
+    rt, rlabel, offer: clamp(15, Math.min(1.8 * vw, 3.2 * vh), 36),
+    // the result's own (.qz-results): on a phone held upright, under 640 px wide, its one row is set smaller (D54, 2026-11-04)
+    rrt: w < 640 ? clamp(12, 3.3 * vw, 15) : rt, rrlabel: w < 640 ? clamp(12, 3.6 * vw, 16) : rlabel,
   };
 }
 
@@ -1409,11 +1412,11 @@ const offType = async (page: Page, sizes: Sizes): Promise<string[]> => {
   return lines.flatMap((l) => {
     const want = l.role === 'name' ? { family: 'Anton', weight: '400', style: 'normal', transform: 'uppercase', spacing: 0, color: PEARL, size: l.fit }
       : l.role === 'step' ? { ...mono, size: sizes.step }
-      : l.role === 'eyebrow' ? { ...work, spacing: -0.02 * at(sizes.rlabel), size: at(sizes.rlabel) }
-      : l.role === 'persona' ? { ...work, spacing: -0.02 * at(sizes.rlabel * 0.72), size: at(sizes.rlabel * 0.72) }
-      : l.role === 'words' ? { ...poppins, size: at(sizes.rt) }
-      : l.role === 'chip' ? { ...poppins, style: 'italic', color: INK[l.ink] ?? `no ink (data-ink "${l.ink}")`, size: at(sizes.rt * 0.9) }
-      : l.role === 'result' ? { ...work, size: at(sizes.rlabel * 0.6) }
+      : l.role === 'eyebrow' ? { ...work, spacing: -0.02 * at(sizes.rrlabel), size: at(sizes.rrlabel) }
+      : l.role === 'persona' ? { ...work, spacing: -0.02 * at(sizes.rrlabel * 0.72), size: at(sizes.rrlabel * 0.72) }
+      : l.role === 'words' ? { ...poppins, size: at(sizes.rrt) }
+      : l.role === 'chip' ? { ...poppins, style: 'italic', color: INK[l.ink] ?? `no ink (data-ink "${l.ink}")`, size: at(sizes.rrt * 0.9) }
+      : l.role === 'result' ? { ...work, size: at(sizes.rrlabel * 0.6) }
       : l.role === 'offer' ? { ...poppins, weight: l.bold ? '700' : '400', size: at(sizes.offer, 13) }
       : l.role === 'fine' ? { ...poppins, size: 12 }
       : l.role === 'send' ? { ...work, size: at(sizes.offer, 14) }
@@ -2409,20 +2412,20 @@ const offerScreen = (page: Page) => page.evaluate(() => {
 });
 
 /** the screens of the one-screen test and whether The Quiet Curator's result and The Spark's take it in turn with the offer
- *  there (data-swap), as measured on 2026-11-02 with the paint capped on a laptop (docs/specs/quiz.md AC14): both share
- *  the screen with the offer at 390 x 844, 412 x 915, 768 x 1024, 1024 x 768, 1280 x 800, 1366 x 657 and 1920 x 1080,
- *  and The Spark at 360 x 780; the longest result (The Quiet Curator's) and the offer are too tall for a 360 x 780 phone,
- *  and both results are at 375 x 667, at 390 x 664 (a phone with its browser's bars shown) and in a 683 x 657 half-screen
- *  window, even at 0.7 (844 x 390, a phone held sideways, swaps always: its own test below) */
+ *  there (data-swap), as measured on 2026-11-04 with the result in one row on every screen (docs/specs/quiz.md D54): both
+ *  share the screen with the offer at 390 x 844, 412 x 915, 768 x 1024, 1024 x 768, 1280 x 800, 1366 x 657, 1920 x 1080
+ *  and in a 683 x 657 half-screen window, and The Spark at 360 x 780, 375 x 667 and 390 x 664; the longest result (The
+ *  Quiet Curator's) and the offer are too tall for those three phones even at 0.7 (844 x 390, a phone held sideways,
+ *  swaps always: its own test below) */
 const SCREENS: [number, number, { curator: boolean; spark: boolean }][] = [
   [390, 844, { curator: false, spark: false }], [360, 780, { curator: true, spark: false }], [412, 915, { curator: false, spark: false }],
   [768, 1024, { curator: false, spark: false }], [1024, 768, { curator: false, spark: false }],
   [1280, 800, { curator: false, spark: false }], [1366, 657, { curator: false, spark: false }], [1920, 1080, { curator: false, spark: false }],
-  [375, 667, { curator: true, spark: true }], [390, 664, { curator: true, spark: true }], [683, 657, { curator: true, spark: true }],
+  [375, 667, { curator: true, spark: false }], [390, 664, { curator: true, spark: false }], [683, 657, { curator: false, spark: false }],
 ];
 
 for (const [w, h, swaps] of SCREENS) {
-  test(`E-S3-result one screen at ${w} x ${h}: for The Quiet Curator (the longest profile) and, after Try again, The Spark (the shortest), the settled result fits the screen with no scrolling: #find no taller than the 100svh probe (within 0.5 px) and its top at the viewport's top, --qz-rs between 0.7 and 1, the name at the size fitted to it and inside its column as drawn, nothing scrolling sideways; the paint at its own proportions, ${w >= 900 && h >= 600 ? 'as wide as its column up to 55.5% of the screen\'s height times the fit, centred in the column' : '18vw wide (56 to 120 px) times the fit'}; ${swaps.curator || swaps.spark ? `data-swap where the two do not share it (${swaps.curator ? 'the Curator' : ''}${swaps.curator && swaps.spark ? ' and ' : ''}${swaps.spark ? 'the Spark' : ''}), the result alone fitting and "Get an exclusive launch discount" opening the offer, which fits alone; ` : ''}the offer's band inside the section where they share it`, async ({ browser, baseURL }) => {
+  test(`E-S3-result one screen at ${w} x ${h}: for The Quiet Curator (the longest profile) and, after Try again, The Spark (the shortest), the settled result fits the screen with no scrolling: #find no taller than the 100svh probe (within 0.5 px) and its top at the viewport's top, --qz-rs between 0.7 and 1, the name at the size fitted to it and inside its column as drawn, nothing scrolling sideways; the result in one row of four columns (D54), the paint at its own proportions, ${w >= 900 && h >= 600 ? '6.5vw wide (64 to 150 px)' : w >= 640 ? '8vw wide (44 to 80 px)' : '10vw wide (32 to 56 px)'} times the fit; ${swaps.curator || swaps.spark ? `data-swap where the two do not share it (${swaps.curator ? 'the Curator' : ''}${swaps.curator && swaps.spark ? ' and ' : ''}${swaps.spark ? 'the Spark' : ''}), the result alone fitting and "Get an exclusive launch discount" opening the offer, which fits alone; ` : ''}the offer's band inside the section where they share it`, async ({ browser, baseURL }) => {
     const ctx = await browser.newContext({ viewport: { width: w, height: h } });
     const page = await ctx.newPage();
     const SPARK = Array<PersonaId>(10).fill('spark');
@@ -2456,15 +2459,12 @@ for (const [w, h, swaps] of SCREENS) {
       if (p.swatch) expect(p.own, `${at}: the relief at its image's own width over height, written by deck.ts`).toBe((p.image ?? 0).toFixed(5));
       else throw new Error(`${at}: the paint has no image (the SVG stroke is gone since 2026-11-03)`);
       expect(Math.abs(p.height - p.width / p.ar), `${at}: the paint ${p.width.toFixed(1)} x ${p.height.toFixed(1)} px, at its proportions`).toBeLessThanOrEqual(1);
-      if (w >= 900 && h >= 600) {
-        // a laptop: the reference's five columns (34, 5, 13, 8 and 40), the paint in the third, as wide as the column up to
-        // the reference's height, 55.5% of the screen (624 of its 1125 px), times the fit, and centred in it
-        expect(p.tracks, `${at}: the reference's five columns`).toHaveLength(5);
-        const col = p.tracks[2], left = p.resLeft + p.tracks[0] + p.tracks[1], want = Math.min(col, 0.555 * m.vh * p.ar * m.rs);
-        expect(Math.abs(p.width - want), `${at}: the paint ${want.toFixed(1)} px wide, its ${col.toFixed(1)} px column up to 55.5% of the screen's height at --qz-rs ${m.rs}`).toBeLessThanOrEqual(0.5);
-        expect(p.height, `${at}: no taller than 55.5% of the screen times the fit`).toBeLessThanOrEqual(0.555 * m.vh * m.rs + 1);
-        expect(Math.abs(p.left + p.width / 2 - (left + col / 2)), `${at}: centred in its column`).toBeLessThanOrEqual(0.5);
-      } else expect(Math.abs(p.width - Math.min(120, Math.max(56, 0.18 * w)) * m.rs), `${at}: the paint 18vw wide (56 to 120 px) times the fit, as before the laptop's cap`).toBeLessThanOrEqual(0.5);
+      // the one row on every screen (D54): the name, the paint, the words and the chips with the links, four columns; the
+      // paint's width by the screen (quiz.css): 10vw (32 to 56 px) on a phone held upright, 8vw (44 to 80 px) from 640 px
+      // wide, 6.5vw (64 to 150 px) on a laptop, times the fit
+      expect(p.tracks, `${at}: four columns`).toHaveLength(4);
+      const [lo, vw, hi] = w >= 900 && h >= 600 ? [64, 0.065, 150] : w >= 640 ? [44, 0.08, 80] : [32, 0.1, 56];
+      expect(Math.abs(p.width - Math.min(hi, Math.max(lo, vw * w)) * m.rs), `${at}: the paint ${vw * 100}vw wide (${lo} to ${hi} px) times the fit`).toBeLessThanOrEqual(0.5);
       if (!swap) {
         expect(m.band, `${at}: the offer's band drawn`).not.toBeNull();
         expect(m.band!.bottom, `${at}: the band closes the section, on screen`).toBeLessThanOrEqual(m.bottom + 0.5);
