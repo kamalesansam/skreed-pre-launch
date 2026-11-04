@@ -177,23 +177,14 @@ export function createGems(o: GemsOptions): Section2Scene {
   function onDown(e: PointerEvent) {
     if (!ready || !live) return;
     const now = nowMs(), h = pick(e.clientX, e.clientY);
-    press = h ? { j: h.st.j, x: e.clientX, y: e.clientY, t: now } : null;
     if (e.pointerType === 'touch' && h) splat(h, now);
-  }
-  // the visitor's own tap on a gem (a press and a lift on it, under 10 px and 600 ms apart, so a swipe that starts on a
-  // gem to scroll is not one): the hint has done its work (hint.ts)
-  let press: { j: number; x: number; y: number; t: number } | null = null;
-  function tapped(e: PointerEvent) {
-    const p = press; press = null;
-    if (!p || e.type !== 'pointerup' || nowMs() - p.t > 600 || Math.hypot(e.clientX - p.x, e.clientY - p.y) > 10) return;
-    const h = pick(e.clientX, e.clientY); if (h && h.st.j === p.j) hint?.dismiss();
   }
   // the click hint (hint.ts, E-S2-hint), on phones and laptops alike since 2026-11-04: its press answers as a finger's,
   // its frost and the gem's CTA (and on a laptop the plexus, as a hover)
   let hint: ReturnType<typeof createHint> | null = null;
   function hintTap(j: number, x: number, y: number) { const h = pick(x, y); if (h && h.st.j === j) splat(h, nowMs()); setActive(j, 'hint'); }
   function hintRelease(j: number) { if (active === j && activeBy === 'hint') setActive(-1, ''); }
-  const lift = (e: PointerEvent) => { if (ready && live) tapped(e); else press = null; if (e.pointerType === 'touch') { par.tx = 0; par.ty = 0; if (hoverSt) { const P = frost.pool.find((p) => p.st === hoverSt); if (P) { P.over = false; P.lastMove = nowMs(); } hoverSt = null; } } };
+  const lift = (e: PointerEvent) => { if (e.pointerType === 'touch') { par.tx = 0; par.ty = 0; if (hoverSt) { const P = frost.pool.find((p) => p.st === hoverSt); if (P) { P.over = false; P.lastMove = nowMs(); } hoverSt = null; } } };
   // the pointer leaving the window lets go of the gem under it, so a gem is never left hovered (and the hint never held back) by a pointer that is gone
   const out = (e: PointerEvent) => { if (!e.relatedTarget) { par.tx = 0; par.ty = 0;
     if (hoverSt) { const P = frost.pool.find((p) => p.st === hoverSt); if (P) { P.over = false; P.lastMove = nowMs(); } hoverSt = null; o.canvas.classList.remove('over-gem'); if (activeBy === 'pointer') setActive(-1, ''); } } };
@@ -343,7 +334,7 @@ export function createGems(o: GemsOptions): Section2Scene {
       for (const st of stones) { const U2 = st.mats.B.userData.U; U2.uRest.value.setFromMatrix4(new Matrix4().makeRotationFromQuaternion(st.rest)); U2.uLatN.value = latticeScale(st); }
       // the family links (family-page.md 2.2): the canvas click rule and the keyboard's way in
       if (nav) offRock = installRockNav({ canvas: o.canvas, nav, pick: (x, y) => { const h = pick(x, y); return h ? h.st.j : null; }, active: () => ready && live > 0 && w2 < 0.3,
-        onFocusGem: (j) => { hint?.dismiss(); if (api.snapTo) api.snapTo(S2T.LAND); setActive(j, 'focus'); }, setCursor: (on) => o.canvas.classList.toggle('over-gem', on) });
+        onFocusGem: (j) => { if (api.snapTo) api.snapTo(S2T.LAND); setActive(j, 'focus'); }, setCursor: (on) => o.canvas.classList.toggle('over-gem', on) });
       // first draw of every program off screen, so the first flight costs no compile
       for (const st of stones) { st.group.visible = true; st.blk.visible = true; }
       const pc = renderer.getClearColor(new Color()), pa = renderer.getClearAlpha();
@@ -391,8 +382,9 @@ export function createGems(o: GemsOptions): Section2Scene {
     frost.step(now, dt); labels.update(stones, now, bg.uniforms, DPR);
     if (nav) placeLinkBoxes(nav, stones.map((st) => { if (!(linksOn && st.L >= 1)) return null; const b = labels.gemBox(st); return { x: b[0], y: b[1], w: b[2] - b[0], h: b[3] - b[1] }; }));
     updatePlexus(now, t);
-    // a mouse resting on a gem shows that gem's own CTA: the hint waits until it leaves, and never takes the CTA from under it
-    hint?.step(now, linksOn && !hoverSt && stones.every((st) => st.L >= 1) && document.visibilityState === 'visible', S, vp.cssH);
+    // a mouse resting on a gem, or a gem's link in keyboard focus, shows that gem's own CTA: the hint waits until it leaves,
+    // and never takes the CTA from under it; otherwise it goes round for as long as the gems rest (E-S2-hint)
+    hint?.step(now, linksOn && !hoverSt && !(nav && nav.contains(document.activeElement)) && stones.every((st) => st.L >= 1) && document.visibilityState === 'visible', S, vp.cssH);
     bg.uniforms.uScroll.value = 2.15 + 0.3 * (S - S2T.W1END);
     writeHues(bg.uniforms, hueFrame(t, REDUCE), 1);   // the fog's shade hues (E-fog-hue), on the clock section 3's ground shares
   }
