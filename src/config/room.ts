@@ -121,8 +121,9 @@ export const fluxUrl = (name: string): string => Object.entries(FLUX_FILES).find
 // still backgrounds, one per product, drawn on the planes as each scene's still with no loop; 'loops', the old version,
 // the five looping videos with their first frames as the stills. ROOM_BACKDROP_DEFAULT picks the version; set it to
 // 'loops' to go back. ?scenes=loops or ?scenes=pictures on the address picks one for that visit, so the two can be put
-// side by side on any build. The pictures are his upload and stay out of the repository (src/assets/room/pictures/,
-// git-ignored, made by scripts/room/prepare-pictures.mjs): a build without them draws the loops, as under Node.
+// side by side on any build. The pictures are committed in src/assets/room/pictures/ (Sam, the same day, asked whether
+// they could go into the public repository: "yes they're fine"), made by scripts/room/prepare-pictures.mjs; a build
+// without them would draw the loops, as under Node.
 export type RoomBackdrop = 'pictures' | 'loops';
 export const ROOM_BACKDROP_DEFAULT: RoomBackdrop = 'pictures';
 let PICTURE_FILES: Record<string, string> = {};

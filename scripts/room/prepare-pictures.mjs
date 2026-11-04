@@ -4,9 +4,9 @@
 // product, encoded for the carousel's planes and the poster column as each scene's still in both classes: the wide
 // 1920 x 1000 (the loops' aspect, carousel-math.ts LOOP_ASPECT, so the planes' cover fit is unchanged) and the portrait
 // 1080 x 1920, each cover-cropped about the centre, AVIF and WebP, at the highest quality inside the lines below (smooth
-// studio gradients band at low quality, so the floors sit high). His uploads never go into the public repository: the
-// outputs land in src/assets/room/pictures/, which is git-ignored, and a build without them draws the loops (the old
-// version, config/room.ts). Run on every machine that builds the site:
+// studio gradients band at low quality, so the floors sit high). The outputs land in src/assets/room/pictures/ and are
+// committed (Sam, the same day, asked whether the pictures could go into the public repository: "yes they're fine");
+// his source PNGs stay outside it. Run again only when a picture changes:
 //   node scripts/room/prepare-pictures.mjs "<the unzipped backgrounds folder>" [--out src/assets/room/pictures]
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';

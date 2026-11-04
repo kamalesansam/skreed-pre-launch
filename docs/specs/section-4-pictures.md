@@ -19,7 +19,7 @@ Every line of section 4 is set in Questrial, in capitals at the same sizes as be
 
 | Version | What the planes draw | Where it lives |
 |---|---|---|
-| `pictures` (the default) | his five still pictures, one per product, no video | `src/assets/room/pictures/`, git-ignored |
+| `pictures` (the default) | his five still pictures, one per product, no video | `src/assets/room/pictures/`, committed |
 | `loops` (the old version) | the five 5 s looping videos, their first frames as the stills | `src/assets/room/flux/`, committed |
 
 His pictures, by scene: cove (the phone case, Lilac) "for Lilac phonecase", the sunlit beige room; grove (the AirPods case, Sage) "For Airpod case", the pink studio; ember (the MagSafe wallet, Desert) "For Magsafe wallet", the grey studio; palace (the Lenskin, Ballerina) "for lenskin", the lilac studio; dawn (the AirPods Max case, Pastel) "For airpod max", the green room.
@@ -53,7 +53,7 @@ Everything else is as it was: the carousel's step, the arc, the pinch, the light
 
 ### The files
 
-His uploads never go into the public repository (the standing rule), so the encoded pictures are made on each machine that builds the site:
+The encoded pictures are committed in `src/assets/room/pictures/`: asked whether they could go into the public repository, Sam answered "yes they're fine" (2026-11-04), an exception to the standing rule on his uploads for these five pictures. His source PNGs stay outside the repository. When a picture changes, the files are made again with:
 
 ```
 node scripts/room/prepare-pictures.mjs "<the unzipped backgrounds folder>"
@@ -73,5 +73,5 @@ Pearl Whisper lines over the pictures with the bottom shade as it is (`scripts/r
 
 1. Whether he likes the pictures version and its five shades, or wants the loops back (one line).
 2. The contrast above: darken the bottom shade, or keep the look.
-3. Whether the pictures may be committed (are they his to publish in a public repository?). Until he says, they stay git-ignored and each building machine runs the prepare script.
+3. ~~Whether the pictures may be committed.~~ Answered: "yes they're fine" (2026-11-04); they are committed.
 4. The AirPods case FBX of 2026-10-16, so the earbuds come back.

@@ -334,8 +334,9 @@ test("the two versions of the scenes' backgrounds (Sam, 2026-11-04; docs/specs/s
   assert.match(cfg, /\/\(\?:\^\|\[\?&\]\)scenes=\(pictures\|loops\)\(\?:&\|\$\)\/\.exec\(search\)/, '?scenes= picks the version for a visit');
   assert.match(cfg, /\{ loop: '', avif: pictureUrl\(`\$\{id\}-\$\{cls\}\.avif`\), webp: pictureUrl\(`\$\{id\}-\$\{cls\}\.webp`\) \}/, 'the pictures version names no loop');
   assert.match(read('src/scripts/hero/section4/director.ts'), /const video: VideoPool \| null = ROOM_LOOPS && !reduced && allowed\(\) \? createPool\(N\) : null;/, 'no loop elements in the pictures version');
-  // his upload stays out of the public repository; the script that makes the files is committed
-  assert.match(read('.gitignore'), /^src\/assets\/room\/pictures\/$/m);
+  // the twenty encoded files are committed (Sam, 2026-11-04: "yes they're fine"), with the script that makes them
+  assert.doesNotMatch(read('.gitignore'), /room\/pictures/);
+  for (const id of ROOM_SCENES.map((s) => s.id)) for (const cls of ['wide', 'portrait']) for (const f of ['avif', 'webp']) assert.ok(exists(`src/assets/room/pictures/${id}-${cls}.${f}`), `${id}-${cls}.${f}`);
   assert.ok(exists('scripts/room/prepare-pictures.mjs'));
   // the pictures' own alts and logotype tones: scripts/room/scene-tone.mjs --pictures on 2026-11-04 measured Urban Slate
   // at 3.11 to 7.73:1 over the first four (ember's worst 2.93:1, flagged, Pearl's 2.15) and Pearl at 5.08 to 5.72:1 over the green room
