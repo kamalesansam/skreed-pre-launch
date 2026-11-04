@@ -8,7 +8,7 @@
 // the first step and whenever the scene changes without one; the loading line under the lines while a loop is
 // expected; the previous and next words bottom right, wired to the island's step ("Previous scene" aria-disabled at
 // scene 1, "Next scene" at scene 5); the "Pause motion" control where E-S4-loops is declined; the live region (one
-// announcement per arrival, only when focus does not move; the wrap's own line); and the pad, the stage's focusable
+// announcement per arrival, only when focus does not move); and the pad, the stage's focusable
 // group, whose focus by the visitor during the approach (a Tab from the quiz) puts the page on scene 1. The keys of the
 // scenes belong to section4/scroll.ts alone. A control whose wipe ends takes hidden, its focus moving first; the
 // scenes' text is clipped instead, so all five stay in the accessibility tree, inert during the approach. On the
@@ -44,12 +44,11 @@ export function mountRoom(root: HTMLElement): void {
   // every line split into its glyphs once, hidden until its part decodes in (the loading line, the hint, the scenes, the words)
   for (const el of [loading, ...controls, ...(sceneHint ? [sceneHint] : [])]) dec.prepare(el);
   for (const s of scenes) for (const el of s.lines) dec.prepare(el);
-  // on the 3D path the scenes are inert until the arrival or the wrap; without JavaScript, and on the poster tier, never
+  // on the 3D path the scenes are inert until the arrival; without JavaScript, and on the poster tier, never
   if (list) list.inert = !isPoster() && root.dataset.state !== 'world';
 
   let viewed = false, lastFrameAt = 0, topReached = false, loadingSince = -1, opacity = 1, shownScene = -1, hinted = false, stepped = false, moreText = '', moreSince = -1;
-  // the state the section is in when this chunk mounts (a cold wrap lands before the chunk is in, so the first frame
-  // would read as a false approach-to-seam transition and wipe the landed scene's lines and its is-on)
+  // the state the section is in when this chunk mounts (a jump into the scenes can land before the chunk is in)
   let lastState: RoomState = (root.dataset.state as RoomState | undefined) ?? 'approach', navShown = false, motionOn = true;
   /** set around the script's own focus calls, so the focus listeners do not take them for the visitor's */
   let selfFocus = false;
@@ -65,7 +64,7 @@ export function mountRoom(root: HTMLElement): void {
   // ---- the frame from the island
   window.__skreedRoomFrame = (f: RoomFrame) => {
     lastFrameAt = performance.now();
-    if (f.jumped) newLap(f.state === 'seam' ? f.under : f.state);
+    if (f.jumped) newLap(f.state);
     if (f.inView) view();
     // the loading line, local to the section (H1): until scene 1 can be drawn, with the slow line at 8 s
     showLoading(f.inView && !f.ready && !f.failed);
@@ -78,7 +77,7 @@ export function mountRoom(root: HTMLElement): void {
     // the fourth wipe (section-5.md 2): the scene's lines and the words wipe out as the cut onto section 5 begins, and
     // decode back in when the scroll returns under it
     if (f.state === 'world') outWipe(f.wipeOut > 0, f.scene);
-    // the "Pause motion" control, where the director shows it (E-S4-loops declined): in the scenes and under a seam, never in the approach
+    // the "Pause motion" control, where the director shows it (E-S4-loops declined): in the scenes, never in the approach
     if (pause) { const want = root.dataset.pause === '1' && f.state !== 'approach'; if (want === pause.hidden) { pause.hidden = !want; pause.inert = !want; if (want) void dec.show(pause); } }
     // a seam's cover: the section's own DOM goes under the cloud with it (its lines were wiped at the seam's start)
     const op = f.cover > 0 ? Math.max(0, 1 - f.cover) : 1;
@@ -93,8 +92,8 @@ export function mountRoom(root: HTMLElement): void {
 
   // ---- the states: the scene text and the words come and go with them
   function stateChanged(from: RoomState, to: RoomState) {
-    if (to === 'seam' || (to === 'approach' && from === 'world')) {
-      // a seam, or the page's own scroll back up from scene 1 (the scrollbar too): the scene's lines and the words wipe out;
+    if (to === 'approach' && from === 'world') {
+      // the page's own scroll back up from scene 1 (the scrollbar too): the scene's lines and the words wipe out;
       // a keyboard user's focus goes to the pad
       const sc = scenes[shownScene], was = shownScene;
       if (sc) void dec.hideAll([...sc.lines, sc.more]).then(() => { if (shownScene !== was) { sc.li.classList.remove('is-on'); sc.more.hidden = true; } });
@@ -161,13 +160,13 @@ export function mountRoom(root: HTMLElement): void {
     shownScene = -2;
   }
 
-  /** arrival at scene i: its four lines decode in one after another; focus or one announcement (the wrap's own line after the wrap) */
-  function arrive(i: number, wrapped = false) {
+  /** arrival at scene i: its four lines decode in one after another; focus or one announcement */
+  function arrive(i: number) {
     const sc = scenes[i], s = ROOM_SCENES[i];
     if (!sc || !s) return;
     // the arrival comes before the frame that reports the state: the list leaves inert here, so focus can reach the name
     if (list) list.inert = false;
-    // the scene changed without a step (the hooks, the scrollbar's re-sync, the wrap): the hint goes, as a step takes it
+    // the scene changed without a step (the hooks, the scrollbar's re-sync): the hint goes, as a step takes it
     if (sceneHint && !sceneHint.hidden && i !== 0) setLine(sceneHint, '');
     for (const o of scenes) if (o !== sc) o.li.classList.remove('is-on');
     shownScene = i;
@@ -179,11 +178,8 @@ export function mountRoom(root: HTMLElement): void {
     // announcement (focus already on a scene's name moves to the new one too: a name is never focused and its line
     // announced both)
     const a = document.activeElement, moving = a === pad || a === prevB || a === nextB || (a instanceof HTMLElement && a.classList.contains('rm-scene-name')) || (!!a && root.contains(a) && keyboarding());
-    // after the wrap the page stands on section 5, whose script announces the landing (section-5.md 2); the scenes wait under it
-    if (!wrapped) {
-      const said = fill(R.sceneLive, { n: i + 1, N, name: productById(s.product).name, shade: shadeLine(s) });
-      if (moving) focusQuietly(sc.name); else live.textContent = said;
-    }
+    const said = fill(R.sceneLive, { n: i + 1, N, name: productById(s.product).name, shade: shadeLine(s) });
+    if (moving) focusQuietly(sc.name); else live.textContent = said;
     setNav(i);
     void dec.showAll(sc.lines, SCENE_STEP).then(() => {
       // the hint on scene 1's first visit, once its text has settled, until the first step
@@ -205,11 +201,6 @@ export function mountRoom(root: HTMLElement): void {
   addEventListener('skreed:room-state', (e) => {
     const s = (e as CustomEvent<string>).detail;
     if (s === 'loop') track('room_loop');
-    else if (s === 'wrap') {
-      // the wrap landed on scene 5 under the cloud: the list leaves inert, the scene arrives with the wrap's own line
-      track('room_wrap');
-      arrive(N - 1, true);
-    }
   });
   addEventListener('skreed:room-scene', (e) => { arrive((e as CustomEvent<{ i: number }>).detail.i); });
   addEventListener('skreed:room-step', (e) => { const d = (e as CustomEvent<{ from: number; to: number }>).detail; startStep(d.from, d.to); });

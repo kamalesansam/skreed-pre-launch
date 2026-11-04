@@ -1,4 +1,4 @@
-// The steps', the seams' and the wrap's frames for AC5's flash check (scripts/room/loop-flash.py): each
+// The steps' and the seams' frames for AC5's flash check (scripts/room/loop-flash.py): each
 // sequence drawn by the hooks build one 1/24 s tick at a time (the loop's clock frozen, window.__skreedTick handing it one
 // frame's worth, so the sequence runs at 24 frames a second whatever the capture's own pace; the loop elements play on at
 // the wall clock, so a frame's video content is whatever the loops show then), shot at device pixel ratio 1 into a folder
@@ -8,11 +8,10 @@
 //                 the first frame the previous one allows (the step and the 150 ms after it), then half a second of rest
 //   exit          the exit seam from scene 5: the raw scroll across q 3.8 (the cover in, the jump to scroll 0, the cover
 //                 out over the hero, the lock), 36 frames
-//   wrap          the wrap from scroll 0 (after the exit) onto scene 5: the cover in over the hero, the landing, the cover
-//                 out, the lock, 36 frames
+//   (no wrap from scroll 0 since 2026-11-04, docs/specs/scroll-steps.md 2)
 // Serve a hooks build first:
-//   node scripts/room/step-frames.mjs [base=http://127.0.0.1:4322/] --out <dir> [--seq 1-2,2-3,3-4,4-5,5-4,burst-400,exit,wrap] [--frames 36]
-// The folders are step-<W>-<from>-<to>, burst-<W>-<ms>, seam-<W>-exit and seam-<W>-wrap (the way back into the hall left
+//   node scripts/room/step-frames.mjs [base=http://127.0.0.1:4322/] --out <dir> [--seq 1-2,2-3,3-4,4-5,5-4,burst-400,exit] [--frames 36]
+// The folders are step-<W>-<from>-<to>, burst-<W>-<ms> and seam-<W>-exit (the way back into the hall left
 // with the hall on 2026-11-02, docs/specs/section-4-no-hall.md). The browser is the installed Chrome (channel chrome) when
 // present, else Playwright's Chromium (no H.264: stills on the planes); WebGL on the GPU (Metal on a Mac), or
 // SKREED_GL=swiftshader for the test harness's flags.
@@ -25,7 +24,7 @@ const args = process.argv.slice(2);
 const base = args.find((a) => /^https?:/.test(a)) ?? 'http://127.0.0.1:4322/';
 const opt = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
 const out = opt('--out') ?? 'step-frames';
-const SEQ = (opt('--seq') ?? '1-2,2-3,3-4,4-5,5-4,burst-400,exit,wrap').split(',');
+const SEQ = (opt('--seq') ?? '1-2,2-3,3-4,4-5,5-4,burst-400,exit').split(',');
 const N = Number(opt('--frames') ?? 36), DT = 1 / 24, FPS = 24;
 const BURST = [1, 1, 1, 1, -1];   // five steps: 1 to 5, then back to 4
 const GPU = process.platform === 'darwin' ? ['--use-angle=metal', '--ignore-gpu-blocklist', '--enable-gpu'] : ['--ignore-gpu-blocklist', '--enable-gpu'];
@@ -110,19 +109,6 @@ for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
       for (let k = 0; k < N; k++) await tick(page, join(folder, frame(k)));
       console.log(`[${W}] the exit seam: ${N} frames at 1/24 s into ${folder}; after: ${JSON.stringify(await after(page))}`);
       await freeze(page, false); await sleep(1200);
-    } else if (seq === 'wrap') {
-      // from scroll 0: the page is there after the exit; else the back-to-top hook takes it there
-      await page.evaluate(() => { if (scrollY > 0) window.__skreedTop?.(); });
-      await page.waitForFunction(() => scrollY < 2 && window.__s4.state().state !== 'seam', null, { timeout: 20_000 }).catch(() => console.warn('  wrap: the page is not at the top'));
-      await sleep(1500);
-      const folder = folderFor(`seam-${W}-wrap`);
-      await freeze(page, true); await sleep(100);
-      await page.evaluate(() => window.__s4.wrap());
-      for (let k = 0; k < N; k++) await tick(page, join(folder, frame(k)));
-      console.log(`[${W}] the wrap: ${N} frames at 1/24 s into ${folder}; after: ${JSON.stringify(await after(page))}`);
-      await freeze(page, false);
-      await page.waitForFunction(() => window.__s4.state().state === 'world', null, { timeout: 20_000 }).catch(() => console.warn('  the wrap did not land'));
-      await sleep(1500);
     } else console.warn(`  unknown sequence ${seq}`);
   }
   await ctx.close();

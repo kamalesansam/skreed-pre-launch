@@ -52,7 +52,6 @@ export const SIGNUP_COPY = Object.freeze({
   /** the live region, once a fill plays */
   added: '{colour} added to your jar.',
   addedFull: '{colour} added to your jar. Your jar is full.',
-  wrapLive: 'Round to the sign-up.',
   /** the form's states: the button while sending, the line under the form */
   sending: 'SENDING...',
   still: 'STILL TRYING...',

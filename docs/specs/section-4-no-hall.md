@@ -165,3 +165,7 @@ Withdrawn, nothing left to cover: **E-S4-portal** (the bubble), **E-S4-grain** a
 4. Two new lines: the section's label "Section 4: the five scenes" and the loading line "Loading the scenes...". Confirm or give your words.
 5. "Previous scene" does nothing at scene 1 now (as "Next scene" at scene 5); scrolling up goes back to the quiz.
 6. On the poster tier the column's stills show the rooms without the product (rule 38); each scene's lines name it. E-S4-38 covered the hall and the bubble only, so this is as built since the scenes came, not an approved exception. Confirm the column as it is, or ask for stills with the product.
+
+## 12. No wrap from the top, and the keys (2026-11-04)
+
+The wrap from scroll 0 onto scene 5 under the cloud (section 2, "The top of the page"; the loading's phase 0; `RoomIsland.wrap`, `__s4.wrap`, `room_wrap`, `wrapLive`) is gone on Sam's word of 2026-11-04: "dont do that, i cant go to the bottom of the site from the top section, remove that trick". With it the seam state, the cloud's warm-up and the lock: the section's states are `approach` and `world`. Out of the scenes the step keys now ride the page between the landing's rests, scene 1 back to the quiz and scene 5 on to section 5 included; in the scenes they are the carousel's as before. The whole change: `docs/specs/scroll-steps.md`.

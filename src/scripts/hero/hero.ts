@@ -261,23 +261,21 @@ export async function startHero(o: StartOptions): Promise<void> {
   life.onKill(() => removeEventListener('pageshow', onShow));
   if (HOOKS) installHooks(ctx, loop, { skyClass: () => ctx.sky.cls });
   // section 4 (section-4-flux.md 5, "Loading", as section-4-no-hall.md 5 has it): its director chunk comes at idle once
-  // the intro ends (phase 0: the cloud's pass readied, so a wrap from the top has its cover), or when the quiz or the
-  // section itself comes into view (phase 1: the carousel's programs and scene 1's still, so the third wipe finds scene 1
-  // drawn); products.bin and scene 1's loop follow once the section is open, the other loops on arrival (section4/director.ts)
+  // the intro ends (the cloud's pass no longer readied with it since the wrap from the top left, 2026-11-04,
+  // docs/specs/scroll-steps.md 2), and its phase 1 when the quiz or the section itself comes into view (the carousel's
+  // programs and scene 1's still, so the third wipe finds scene 1 drawn); products.bin and scene 1's loop follow once the section is open, the other loops on arrival (section4/director.ts)
   let roomImport: Promise<RoomDirector | null> | null = null;
   const loadDirector = () => (roomImport ??= import('./section4/director.ts').then((m) => {
     if (life.dead) return null;
     const room = m.createRoomDirector({
-      renderer, avif: data.avif, reduced, dpr, snapHero: (y) => loop.snap(innerHeight > 0 ? y / innerHeight : 0),
-      // a state change with no gesture (an arrival, a seam's end): the page scroll re-evaluates its capture set now
+      renderer, avif: data.avif, reduced, dpr,
+      // a state change with no gesture (an arrival): the page scroll re-evaluates its capture set now
       onState: () => pageScroll?.notify(),
       // the section's layout read again (the intro ending, the document growing, a resize): its range moved, so the capture set is re-evaluated too; the glue spans below are measured fresh at every decision
       onLayout: () => pageScroll?.notify(),
-      // section 5 (section-5.md 5; C6): the exit seam's trigger and the wrap's landing from the section's layout in the DOM
-      // (.su-body's end and the section's top), and its readiness for the wrap's cover-out (the page's data-ready, C3)
+      // section 5 (section-5.md 5; C6): its body's end and its rest from the section's layout in the DOM (the fourth wipe ends at the rest)
       exitY: () => signup ? signup.exitY() : NaN,
       restY: () => signup ? signup.restY() : NaN,
-      signupReady: () => !signup || signup.ready(),
     });
     ctx.room = room; life.onKill(() => room.dispose());
     room.resize(renderer.domElement.width, renderer.domElement.height);
@@ -286,13 +284,11 @@ export async function startHero(o: StartOptions): Promise<void> {
   // the scenes' phases 1 and 2 (the director falls to the poster column itself if scene 1 cannot be drawn)
   const loadScenes = () => loadDirector().then((room) => room?.load());
   // the quiz gate (docs/specs/quiz-gate.md D1, D2, D5): section#room is hidden and data-locked until the quiz's result or
-  // Skip quiz opens it (scripts/quiz/gate.ts). While locked there is no wrap from the top (canWrap, below) and no glue
-  // span at its seam (docTop reads NaN for an element with no box, below); the director chunk and phase 1 still load
+  // Skip quiz opens it (scripts/quiz/gate.ts). While locked there is no glue span at its seam and no key step's rest in
+  // it (docTop reads NaN for an element with no box, below); the director chunk and phase 1 still load
   // when the quiz comes into view (the stage observer and afterIntro). The unlock's event re-evaluates the page scroll
   // and starts phase 2 (products.bin, scene 1's loop); __skreedScenes tells the quiz's ride whether the scenes are in,
   // and lets it wait for them (at most 1.5 s).
-  const roomEl = document.getElementById('room');
-  const roomLocked = () => !!roomEl?.hasAttribute('data-locked');
   // (section 5 opens with section 4: its layout is read afresh)
   const onUnlock = () => { signup?.invalidate(); pageScroll?.notify(); void loadScenes(); };
   addEventListener('skreed:quiz-unlock', onUnlock);
@@ -304,8 +300,8 @@ export async function startHero(o: StartOptions): Promise<void> {
   const untilScenes = () => new Promise<void>((res) => { const tick = () => { if (scenesSettled()) res(); else requestAnimationFrame(tick); }; tick(); });
   window.__skreedScenes = { get ready() { return !!ctx.room?.settled(); }, load: () => loadScenes().then(untilScenes) };
   life.onKill(() => { window.__skreedScenes = undefined; });
-  // the page scroll (section4/scroll.ts, its own chunk, marker skreed:scroll): the glue over the three seams, the wrap from
-  // the top and the carousel's gestures, from the intro's end; the director is its adapter's other side. One viewport for
+  // the page scroll (section4/scroll.ts, its own chunk, marker skreed:scroll): the glue over the four seams, the carousel's
+  // gestures and the key steps between the page's rests, from the intro's end; the director is its adapter's other side. One viewport for
   // the spans is a probe's 100svh (the track is in svh, the hero's map in innerHeights)
   const probe = document.createElement('div');
   probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:100svh;visibility:hidden;pointer-events:none';
@@ -331,25 +327,31 @@ export async function startHero(o: StartOptions): Promise<void> {
         const vh = innerHeight, one = svh(), quiz = docTop('find'), top = docTop('room'), last = document.documentElement.scrollHeight - vh;
         return [{ start: S2T.PULL * vh, end: S2T.LAND * vh }, { start: Math.min(S2T.W2 * vh, quiz - vh), end: quiz }, { start: top - one, end: top + one }, { start: top + SCENES_END * one, end: Math.min(top + ROOM_HEIGHT * one, last) }].filter((x) => Number.isFinite(x.start) && Number.isFinite(x.end));
       },
+      // the key steps' rests (docs/specs/scroll-steps.md 4; Sam, 2026-11-04: "all the sections will follow this same rule
+      // only for one gesture ... That only gesture is a key"): the hero at the top, the gems at rest with their labels
+      // (S2T.LAND, the first span's end), the quiz (the second span's end), scene 1 (the room's q 1, where the quiz's ride
+      // lands), scene 5 (q 3) and section 5 (the fourth span's end), each rounded and never past the page's last position;
+      // the room's three are NaN while the quiz gate holds it, so a locked page's last rest is the quiz
+      stops: () => {
+        const vh = innerHeight, one = svh(), quiz = docTop('find'), top = docTop('room'), last = document.documentElement.scrollHeight - vh;
+        return [0, S2T.LAND * vh, quiz, top + one, top + SCENES_END * one, top + ROOM_HEIGHT * one].map((y) => Math.round(Math.min(y, last)));
+      },
       room: {
         inRange: () => !!ctx.room?.inRange(), edge: (d) => !!ctx.room?.edge(d), step: (d) => !!ctx.room?.stepScene(d),
-        wrap: () => { void loadDirector().then((r) => r?.wrap()); },
-        canWrap: () => loop.state.introDone && !ctx.room?.lock() && !roomLocked(), lock: () => !!ctx.room?.lock(), busy: () => !!ctx.room?.busy(),
-        carried: () => ctx.room?.carried(),
+        busy: () => !!ctx.room?.busy(), carried: () => ctx.room?.carried(),
       },
     });
     life.onKill(() => pageScroll?.dispose());
   }).catch((e: unknown) => { console.warn('section 4: the page scroll chunk did not load', e); }));
-  const idle = (fn: () => void) => { if ('requestIdleCallback' in window) requestIdleCallback(fn, { timeout: 2000 }); else setTimeout(fn, 2000); };
   let introOver = false;
-  const afterIntro = () => { if (introOver) return; introOver = true; void startScroll(); idle(() => { if (!life.dead) void loadDirector().then((r) => r?.warmCloud()); }); };
+  const idle = (fn: () => void) => { if ('requestIdleCallback' in window) requestIdleCallback(fn, { timeout: 2000 }); else setTimeout(fn, 2000); };
+  const afterIntro = () => { if (introOver) return; introOver = true; void startScroll(); idle(() => { if (!life.dead) void loadDirector(); }); };
   if (HOOKS) {
     const extra = () => ctx.room as unknown as import('./section4/director.ts').RoomHooks | null;
     window.__s4 = {
       state: () => ctx.room?.hooks() ?? null,
       scene: (i) => extra()?.scene(i) ?? false,
       step: (dir) => ctx.room?.stepScene(dir) ?? false,
-      wrap: () => { void loadDirector().then((r) => r?.wrap()); },
       glue: (on) => pageScroll?.glue(on),
       lights: (o) => extra()?.lights(o) ?? null,
       shade: (dark, height, solid) => extra()?.shade(dark, height, solid),

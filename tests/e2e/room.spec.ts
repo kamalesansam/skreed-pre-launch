@@ -8,9 +8,9 @@
 // approach, "Previous scene" disabled at scene 1, "Next scene" at scene 5); one
 // step a gesture through the hooks (the page snapped to the scene's q when it ends, a step during a step swallowed, a
 // position change re-syncing the scene); the fourth wipe onto section 5 from q 3.8 (no exit seam since 2026-11-03: a notch
-// down at section 5's rest runs nothing) and the wrap from the top onto section 5's rest with the scenes at scene 5 under it (room_wrap,
-// section 5's own line); section-4-flux.md AC14's states (a blocked loop route, a rejected play(), products.bin blocked, a lost
-// context in the scenes); a cold first-visit wrap; the glue at section 4's seam with a Tab into the quiz that never
+// down at section 5's rest runs nothing) and no wrap from the top (2026-11-04, docs/specs/scroll-steps.md 2: a wheel burst
+// up and ArrowUp at scroll 0 leave the page at the hero); section-4-flux.md AC14's states (a blocked loop route, a rejected
+// play(), products.bin blocked, a lost context in the scenes); the glue at section 4's seam with a Tab into the quiz that never
 // settles; Ctrl+wheel in range and a one-finger pan at visualViewport.scale 2 that never step; the still3d path under
 // reduced motion; and the poster tier's column at once. The 3D path runs on SwiftShader here (?tier=hero3d), so the
 // island specs drive the section by its hooks (__s4, __skreedRoom) at device pixel ratio 1, skip the intro and turn the
@@ -18,11 +18,11 @@
 import { test, expect, type Page } from '@playwright/test';
 
 type Ev = { name: string; props: Record<string, string | number> };
-type S4 = { state: string; under: string; scene: number; wipeOut: number; restY: number; step: number; busy: boolean; lock: boolean; inRange: boolean; q: number; qRaw: number; hold: { y: number } | null; ready: boolean; failed: boolean; settled: boolean; products: string; video: boolean; loops: { i: number; state: string; in: boolean; refused: boolean; playing: boolean }[]; seam: { kind: string; phase: string } | null; memory: number; layout: { top: number; height: number; intro: boolean } | null };
+type S4 = { state: string; under: string; scene: number; wipeOut: number; restY: number; step: number; busy: boolean; inRange: boolean; q: number; qRaw: number; hold: { y: number } | null; ready: boolean; failed: boolean; settled: boolean; products: string; video: boolean; loops: { i: number; state: string; in: boolean; refused: boolean; playing: boolean }[]; memory: number; layout: { top: number; height: number; intro: boolean } | null };
 const events = (page: Page): Promise<string[]> => page.evaluate(() => ((window as unknown as { __skreedEvents?: Ev[] }).__skreedEvents ?? []).map((e) => e.name));
 const s4 = (page: Page): Promise<S4> => page.evaluate(() => window.__s4!.state() as S4);
 const N = 5, WIPE4_START = 3.8;
-/** section 5's rest, where the wrap lands (section-5.md 2), from the director's hooks */
+/** section 5's rest (section-5.md 2), from the director's hooks */
 const restY = (page: Page) => page.evaluate(() => (window.__s4!.state() as { restY: number }).restY);
 
 async function open3d(page: Page, baseURL: string | undefined): Promise<void> {
@@ -46,31 +46,6 @@ const pageQ = (page: Page) => page.evaluate(() => { const room = document.getEle
 const noHScroll = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
 /** a decoded line's text (the decode's visually hidden copy) */
 const said = (page: Page, sel: string) => page.locator(`${sel} .sr-only`).first().textContent({ timeout: 2_000 }).catch(() => '');
-/**
- * A seam held at full cover: a frame watcher installed first, then the seam started (the exit by the raw scroll across
- * section 5's rest, the wrap by its hook), and the frame clock frozen (__skreedFreeze, hooks builds: the loop's dt goes to 0, so
- * the seam holds where it is while frames still draw) on the first frame at which the exit has made its jump (its phase
- * out, the page at 0 under the cloud) or the wrap has landed (hold or out). The state then, or null after 30 s; release()
- * lets the clock run again.
- */
-function holdAtCover(page: Page, kind: 'exit' | 'wrap'): Promise<S4 | null> {
-  return page.evaluate(({ k }) => new Promise<unknown>((res) => {
-    const t0 = performance.now();
-    const tick = () => {
-      const s = window.__s4!.state() as { seam: { kind: string; phase: string } | null };
-      const full = !!s.seam && s.seam.kind === k && (k === 'exit' ? s.seam.phase === 'out' : s.seam.phase === 'hold' || s.seam.phase === 'out');
-      if (full) { window.__skreedFreeze = true; res(s); return; }
-      if (performance.now() - t0 > 30_000) { res(null); return; }
-      requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-    // the exit runs from section 5's end since 2026-10-26 (section-5.md 2), on a gesture down at its armed rest since
-    // 2026-11-03 (nothing follows the body): a wheel notch down
-    if (k === 'exit') dispatchEvent(new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true }));
-    else window.__s4!.wrap();
-  }), { k: kind }) as Promise<S4 | null>;
-}
-const release = (page: Page) => page.evaluate(() => { window.__skreedFreeze = false; });
 const URBAN_SLATE_CSS = 'rgb(56, 63, 67)';
 /** the quiz on screen, then the scenes' phases settled (scene 1 drawable or failed, products.bin in or failed) */
 async function scenesIn(page: Page): Promise<void> {
@@ -78,7 +53,7 @@ async function scenesIn(page: Page): Promise<void> {
   await page.waitForFunction(() => window.__s4?.ready, null, { timeout: 600_000, polling: 500 });
 }
 
-test('section 4 at 390 x 844: the track, the approach, the pad, the arrival and its hold, the edges, the five scenes by five steps, the hold, no exit from section 5 (2026-11-03), the wrap', async ({ browser, baseURL }) => {
+test('section 4 at 390 x 844: the track, the approach, the pad, the arrival and its hold, the edges, the five scenes by five steps, the hold, no exit from section 5 (2026-11-03), no wrap from the top (2026-11-04)', async ({ browser, baseURL }) => {
   test.setTimeout(1_500_000);
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
@@ -218,33 +193,26 @@ test('section 4 at 390 x 844: the track, the approach, the pad, the arrival and 
   // notch down there runs nothing; the page stays at the section, the logotype Urban Slate over its cream ground
   await page.evaluate(() => { dispatchEvent(new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true })); });
   await page.waitForTimeout(800);
-  expect((await s4(page)).seam).toBeNull();
+  expect((await s4(page)).state).toBe('world');
   expect(Math.abs(await page.evaluate(() => scrollY) - await restY(page))).toBeLessThan(2);
   expect(await events(page)).not.toContain('room_loop');
   await expect(page.locator('.site-logo')).toHaveAttribute('data-tone', 'light');
   await expect(page.locator('.site-logo')).toHaveCSS('color', URBAN_SLATE_CSS);
   await expect(page.locator('#siteNav')).toHaveAttribute('data-tone', 'light');   // the section index follows the logotype, as Back to top did before Home took its place
 
-  // the wrap from the top: the reverse seam onto scene 5 with the followers snapped (the state seam until its lock ends,
-  // the carousel drawn under the cloud from the landing), room_wrap and the wrap's own line
-  const wrapCover = await holdAtCover(page, 'wrap');
-  expect(wrapCover?.seam?.kind).toBe('wrap');
-  // held at full cover over the landing: Urban Slate again, over the cloud that covers scene 5
-  await expect(page.locator('.site-logo')).toHaveAttribute('data-tone', 'light');
-  await expect(page.locator('.site-logo')).toHaveCSS('color', URBAN_SLATE_CSS);
-  await expect.poll(async () => (await s4(page)).under, { timeout: 30_000 }).toBe('world');
-  expect((await s4(page)).state).toBe('seam');
-  expect((await s4(page)).lock).toBe(true);
-  await release(page);
-  await expect.poll(async () => (await s4(page)).state, { timeout: 30_000 }).toBe('world');
-  expect((await s4(page)).scene).toBe(N - 1);
-  await expect(page.locator('.site-logo')).toHaveAttribute('data-tone', 'light', { timeout: 10_000 });   // section 5's ground under the logotype once the cloud has gone
-  // the landing is section 5's rest (section-5.md 2): the body's end at the viewport's bottom, the scenes at scene 5 under it
-  await expect.poll(async () => Math.abs(await page.evaluate(() => scrollY) - await restY(page)), { timeout: 10_000 }).toBeLessThan(2);
-  await expect.poll(() => page.evaluate(() => Math.abs(window.__skreedState!().sb - scrollY / innerHeight)), { timeout: 20_000 }).toBeLessThan(0.05);
-  expect(await events(page)).toContain('room_wrap');
-  await expect(page.locator('.rm-scene[data-i="4"]')).toHaveClass(/is-on/);
-  await expect(page.locator('#suLive')).toHaveText('Round to the sign-up.');
+  // no wrap from the top (2026-11-04, Sam: "i cant go to the bottom of the site from the top section, remove that trick";
+  // docs/specs/scroll-steps.md 2): at scroll 0 a wheel burst up and ArrowUp leave the page at the hero
+  await page.evaluate(() => { scrollTo({ top: 0, behavior: 'instant' }); window.__skreedSnap?.(0); });
+  await page.waitForTimeout(500);
+  await page.evaluate(() => { for (let i = 0; i < 6; i++) dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true, cancelable: true })); });
+  await page.keyboard.press('ArrowUp');
+  await page.waitForTimeout(1500);
+  expect(await page.evaluate(() => scrollY)).toBe(0);
+  expect((await s4(page)).state).toBe('approach');
+  expect(await events(page)).not.toContain('room_wrap');
+  // scene 5 again by the hooks, for the walk back below
+  await expect.poll(() => page.evaluate(() => window.__s4!.scene(4)), { timeout: 30_000 }).toBe(true);
+  await expect.poll(async () => (await s4(page)).scene, { timeout: 10_000 }).toBe(N - 1);
 
   // back through the scenes to scene 1; there ArrowUp is the page's: the section goes back to its approach and a keyboard
   // user's focus waits on the pad
@@ -333,37 +301,6 @@ test('section 4 at 390 x 844, AC14: a blocked loop, a rejected play(), products.
   await expect(page.locator('#rmScenes')).toBeVisible();
   expect(await page.locator('.rm-scene:visible').count()).toBe(N);
   expect(await noHScroll(page)).toBe(true);
-  expect(errors).toEqual([]);
-  await ctx.close();
-});
-
-test('section 4 at 390 x 844: a cold first-visit wrap from the top lands on scene 5 under the cloud, the seam held until its lock ends, the next gesture unlocking the loops', async ({ browser, baseURL }) => {
-  test.setTimeout(900_000);
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
-  const page = await ctx.newPage();
-  const errors: string[] = [];
-  page.on('pageerror', (e) => errors.push(String(e)));
-  await open3d(page, baseURL);
-  // at scroll 0 with the intro over and nothing of the section loaded: the wrap imports the director first, waits for the cloud, then runs
-  expect(await page.evaluate(() => scrollY)).toBe(0);
-  await page.evaluate(() => window.__s4!.wrap());
-  await expect.poll(async () => (await s4(page))?.state ?? null, { timeout: 60_000 }).toBe('seam');
-  // once landed the frame is the carousel at scene 5 under the cloud while the state stays seam through the hold, the cover-out and the lock
-  await expect.poll(async () => (await s4(page)).under, { timeout: 60_000 }).toBe('world');
-  expect((await s4(page)).state).toBe('seam');
-  expect((await s4(page)).lock).toBe(true);
-  await expect.poll(async () => (await s4(page)).state, { timeout: 60_000 }).toBe('world');
-  expect((await s4(page)).scene).toBe(N - 1);
-  await expect(page.locator('#room')).toHaveAttribute('data-scene', '4');
-  await expect.poll(async () => Math.abs(await page.evaluate(() => scrollY) - await restY(page)), { timeout: 10_000 }).toBeLessThan(2);   // section 5's rest (section-5.md 2)
-  await expect.poll(() => page.evaluate(() => Math.abs(window.__skreedState!().sb - scrollY / innerHeight)), { timeout: 20_000 }).toBeLessThan(0.05);
-  expect(await events(page)).toContain('room_wrap');
-  await expect(page.locator('.rm-scene[data-i="4"]')).toHaveClass(/is-on/);
-  expect(await page.evaluate(() => document.getElementById('rmScenes')!.inert)).toBe(false);
-  // the next gesture after a wrap unlocks the loop elements (AC7): no error, and scene 5's loop settles in or failed
-  await page.mouse.click(200, 300);
-  await expect.poll(async () => (await s4(page)).loops[N - 1]?.state ?? '', { timeout: 120_000 }).toMatch(/^(in|failed)$/);
-  await page.waitForFunction(() => window.__s4?.ready, null, { timeout: 300_000, polling: 500 });
   expect(errors).toEqual([]);
   await ctx.close();
 });
@@ -563,7 +500,7 @@ test('section 4 at 390 x 844: a finger dragged from the approach across scene 1 
   await ctx.close();
 });
 
-test('section 4 at 390 x 844 under reduced motion (still3d): no loop elements, the arrival at once, a step as a cut, no exit from section 5 and an instant wrap (AC11)', async ({ browser, baseURL }) => {
+test('section 4 at 390 x 844 under reduced motion (still3d): no loop elements, the arrival at once, a step as a cut, no exit from section 5 (AC11)', async ({ browser, baseURL }) => {
   test.setTimeout(900_000);
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, reducedMotion: 'reduce' });
   const page = await ctx.newPage();
@@ -592,12 +529,6 @@ test('section 4 at 390 x 844 under reduced motion (still3d): no loop elements, t
   await page.waitForTimeout(600);
   expect(await events(page)).not.toContain('room_loop');
   expect((await s4(page)).state).toBe('world');
-  // the wrap is a cut too: world at scene 5 once its lock ends, the page at section 5's rest
-  await page.evaluate(() => window.__s4!.wrap());
-  await expect.poll(async () => (await s4(page)).state, { timeout: 5_000 }).toBe('world');
-  expect((await s4(page)).scene).toBe(N - 1);
-  await expect.poll(async () => Math.abs(await page.evaluate(() => scrollY) - await restY(page)), { timeout: 5_000 }).toBeLessThan(2);
-  expect(await events(page)).toContain('room_wrap');
   expect(errors).toEqual([]);
   await ctx.close();
 });

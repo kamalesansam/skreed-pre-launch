@@ -9,7 +9,7 @@ import { SCENE_COUNT as MAP_SCENE_COUNT } from './room-map.ts';
 /**
  * The copy (section-4-flux.md 3, "Copy"; section-4-no-hall.md 3), in sentence case: the decode prints it in capitals,
  * as section 2 and the quiz do, and the accessible names keep the sentence case through the decode's visually hidden
- * copy. sceneLive, wrapLive and count are patterns for fill().
+ * copy. sceneLive and count are patterns for fill().
  */
 export const ROOM_COPY = Object.freeze({
   aria: 'Section 4: the five scenes',
@@ -27,7 +27,6 @@ export const ROOM_COPY = Object.freeze({
   scenesTitle: 'The five scenes',
   scenesAria: 'Our products, in five rooms',
   sceneLive: '{n} of {N}. {name}. {shade}.',
-  wrapLive: 'Round to the five scenes. {n} of {N}. {name}. {shade}.',
   count: '{n} / {N}',
   clipBlocked: 'Clip blocked',
 });
@@ -205,9 +204,9 @@ export function liveRoomParams(): RoomParams {
 
 /**
  * section#room[data-state] (section-4-no-hall.md 5, "States"): the section before the scenes (the raw q under scene 1's,
- * scene 1 drawn under the third wipe); the scenes; either seam
+ * scene 1 drawn under the third wipe); the scenes. No seam state since the wrap from the top left (2026-11-04)
  */
-export type RoomState = 'approach' | 'world' | 'seam';
+export type RoomState = 'approach' | 'world';
 
 /** What the island hands the walk script every frame (scripts/room/walk.ts): the section's progress and its state. */
 export interface RoomFrame {
@@ -220,7 +219,7 @@ export interface RoomFrame {
   failed: boolean;
   inView: boolean;
   state: RoomState;
-  /** what a seam returns to (the approach after the exit's jump, the scenes after the wrap) */
+  /** the state under the frame (the state itself since no seam runs, 2026-11-04) */
   under: 'approach' | 'world';
   /** the scene at rest (0 to 4); while a step runs, the one it left */
   scene: number;
@@ -231,7 +230,7 @@ export interface RoomFrame {
   loading: boolean;
   /** the visible line where a loop was refused (Tune builds only: clipBlocked), else null */
   note: string | null;
-  /** a seam's cloud cover, 0 to 1 */
+  /** a seam's cloud cover, 0 to 1: always 0 since the wrap left (2026-11-04) */
   cover: number;
   /** the fourth wipe's progress (section-5.md 2): 0 before it, 1 once section 5's frame is whole; the scene's lines wipe out above 0 */
   wipeOut: number;
@@ -245,8 +244,6 @@ export interface RoomIsland {
   snap(q: number): void;
   /** one whole step to the next scene (+1) or the previous (-1); false when refused */
   step(dir: 1 | -1): boolean;
-  /** the reverse seam from scroll 0 onto scene 5; false while another seam runs */
-  wrap(): boolean;
   /** the loops and the cloud's clock run (true) or hold (false): the "Pause motion" control (E-S4-loops) */
   motion(on: boolean): void;
 }

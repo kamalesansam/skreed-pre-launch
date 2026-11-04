@@ -101,7 +101,7 @@ test("(c) the ride's maths: 1200 ms from QUIZ_GATE, the ease equal to easeStanda
   assert.match(read('src/scripts/hero/section4/scroll.ts'), /Math\.abs\(scrollY - wrote\) <= 1\.5/, "the drift test is scroll.ts's own");
 });
 
-test("(d) hero.ts: docTop NaN for an element with no box, canWrap carrying the lock, the unlock's listener and the scenes' hook (which waits until the scenes have settled), the loading kept lock or no lock; director.ts: the layout read null, begin() off and wrap() false while locked", async () => {
+test("(d) hero.ts: docTop NaN for an element with no box, no wrap from the top (2026-11-04), the unlock's listener and the scenes' hook (which waits until the scenes have settled), the loading kept lock or no lock; director.ts: the layout read null and begin() off while locked", async () => {
   const docTopSrc = hero.match(/const docTop = (\(id: string\) => \{ .*? \});/)?.[1];
   assert.ok(docTopSrc, 'docTop found');
   const docTop = new Function('document', 'scrollY', `return ${docTopSrc!.replace('(id: string)', '(id)')};`)({
@@ -111,8 +111,7 @@ test("(d) hero.ts: docTop NaN for an element with no box, canWrap carrying the l
   assert.equal(docTop('find'), 1334.5);
   assert.ok(Number.isNaN(docTop('nothing')));
   assert.match(hero, /\.filter\(\(x\) => Number\.isFinite\(x\.start\) && Number\.isFinite\(x\.end\)\)/, 'the span filter drops it');
-  assert.match(hero, /const roomLocked = \(\) => !!roomEl\?\.hasAttribute\('data-locked'\);/);
-  assert.match(hero, /canWrap: \(\) => loop\.state\.introDone && !ctx\.room\?\.lock\(\) && !roomLocked\(\),/, 'no wrap from the top while locked');
+  assert.doesNotMatch(hero, /canWrap|\.wrap\(|warmCloud/, 'no wrap from the top at all (docs/specs/scroll-steps.md 2)');
   assert.match(hero, /const onUnlock = \(\) => \{ signup\?\.invalidate\(\); pageScroll\?\.notify\(\); void loadScenes\(\); \};\n\s*addEventListener\('skreed:quiz-unlock', onUnlock\);\n\s*life\.onKill\(\(\) => removeEventListener\('skreed:quiz-unlock', onUnlock\)\);/, "the unlock's listener");
   assert.match(hero, /window\.__skreedScenes = \{ get ready\(\) \{ return !!ctx\.room\?\.settled\(\); \}, load: \(\) => loadScenes\(\)\.then\(untilScenes\) \};/, "the scenes' hook the ride waits on (__s4.ready's source), its load settling only once the scenes have");
   // the director's load() starts its phases and returns, so the hook's wait is its own: a frame at a time until scene 1 and
@@ -143,7 +142,7 @@ test("(d) hero.ts: docTop NaN for an element with no box, canWrap carrying the l
   assert.match(director, /const settled = \(\) => \(drawable0\(\) \|\| failed0\(\)\) && \(productsState === 'in' \|\| productsState === 'failed'\);/);
   // amendment 1 (the spec's Built paragraph): the director chunk and phase 1 load as they always did, so the scenes are ready for a press
   assert.match(hero, /if \(e\.isIntersecting && e\.target !== trackEl\) void loadScenes\(\);/, 'the stage observer loads the scenes, lock or no lock');
-  assert.match(hero, /const afterIntro = \(\) => \{ if \(introOver\) return; introOver = true; void startScroll\(\); idle\(\(\) => \{ if \(!life\.dead\) void loadDirector\(\)\.then\(\(r\) => r\?\.warmCloud\(\)\); \}\); \};/, "afterIntro's idle import, lock or no lock");
+  assert.match(hero, /const afterIntro = \(\) => \{ if \(introOver\) return; introOver = true; void startScroll\(\); idle\(\(\) => \{ if \(!life\.dead\) void loadDirector\(\); \}\); \};/, "afterIntro's idle import, lock or no lock");
   assert.doesNotMatch(hero, /roomLocked\(\)\) (?:void )?loadScenes|roomLocked\(\)\) return;\s*idle/, 'no lock check on the loading');
   // the director's layout read: null while locked, the rect otherwise
   const readSrc = director.match(/read: (\(\) => \{ if \(!root \|\| root\.hasAttribute\('data-locked'\)\) return null; .*? \}),/)?.[1];
@@ -153,7 +152,7 @@ test("(d) hero.ts: docTop NaN for an element with no box, canWrap carrying the l
   assert.deepEqual(readOf(false), { top: 15, height: 1580 });
   assert.match(director, /if \(!measured\) \{ inRoom = false; q = qRaw = prevRaw = 0; return; \}/, 'begin() keeps the section off screen while it has no reading');
   assert.match(director, /const locked = \(\) => !!root\?\.hasAttribute\('data-locked'\);/);
-  assert.match(director, /if \(state === 'seam' \|\| seam \|\| locked\(\)\) return false;/, 'wrap() false while locked');
+  assert.doesNotMatch(director, /wrap\(\) \{/, 'no wrap() (2026-11-04)');
   assert.match(director, /if \(state !== 'world' \|\| !measured\) return false;/, 'inRange() waits for a reading, as built');
 });
 
