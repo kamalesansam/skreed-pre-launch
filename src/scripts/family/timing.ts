@@ -25,9 +25,14 @@ export const CUE_STILL_MS = 1500;
 // --ease-turn; a jump of more than one (the beat nav) adds CASE_STEP_MS a screen up to CASE_STEP_MAX_MS. The pause after
 // a ride swallows gestures as the scenes' cooldown does; a page carried into the types by its own scroll is held on the
 // type it entered at until it has been still for CASE_HOLD_STILL_MS, at most CASE_HOLD_MAX_MS (the scenes' arrival hold)
-// 1.4 s and 2.8 s until Sam, 2026-11-04: "the transition effect we have on the case types, it's running too fast, reduce the speed of the transition"
-export const CASE_STEP_MS = 2400;
-export const CASE_STEP_MAX_MS = 4000;
+export const CASE_STEP_MS = 1400;
+export const CASE_STEP_MAX_MS = 2800;
+// a step in two parts (Sam, 2026-11-04: "the rotation speed will stay the same, only the wave effect will slow down", then
+// "just remove the rotation animation for case types, just keep the wave"): the lead, the step's screen up to the
+// hand-over, where nothing turns now (the roll alone eases), over CASE_LEAD_MS; then the wave (the takeover's sweep, the
+// last SWEEP_LEN of the screen, pose.ts) over CASE_SWEEP_MS. A 2.4 s step that slowed the turn too is withdrawn
+export const CASE_LEAD_MS = 500;
+export const CASE_SWEEP_MS = 1500;
 export const CASE_STEP_COOLDOWN_MS = 150;
 export const CASE_HOLD_STILL_MS = 150;
 export const CASE_HOLD_MAX_MS = 1200;

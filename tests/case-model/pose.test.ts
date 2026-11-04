@@ -88,13 +88,12 @@ test('the scroll map: nothing but the chrome on the landing screen, no beat text
   assert.equal(SV.screens, 7);
 });
 
-test('the beat pose: the zoom blends over 1 to 2, the case rises through the four beats with the alternating roll, the argument pose over 5 to 6', () => {
+test('the beat pose: the zoom blends over 1 to 2, the case at one height through the four beats (2026-11-04) with the alternating roll, the argument pose over 5 to 6', () => {
   assert.equal(beatPose(1).k, 0);
   assert.equal(beatPose(2).k, 1);
   assert.equal(+beatPose(2).cy.toFixed(2), -0.96);
-  assert.equal(+beatPose(3).cy.toFixed(2), -0.58);
-  assert.equal(+beatPose(4).cy.toFixed(2), 0.02);
-  assert.equal(+beatPose(5).cy.toFixed(2), 0.6);
+  // every beat at beat 1's height (Sam, 2026-11-04: "make sure it stays in the center"; ciao's -0.58, 0.02, 0.6 until then)
+  for (let sv = 2; sv <= 5.0001; sv += 0.05) assert.equal(+beatPose(sv).cy.toFixed(6), -0.96, `the height at ${sv.toFixed(2)}`);
   assert.equal(+beatPose(3).rz.toFixed(4), 0.0873);
   assert.equal(+beatPose(4).rz.toFixed(4), -0.1745);
   assert.equal(beatPose(5).A, 0);
@@ -102,26 +101,11 @@ test('the beat pose: the zoom blends over 1 to 2, the case rises through the fou
   assert.equal(beatPose(6.5).A, 1);
 });
 
-test('D15: every feature transition is one whole turn about the vertical axis, its back to the camera at the half, and nothing turns between them', () => {
+test('no turn since 2026-11-04 ("just remove the rotation animation for case types, just keep the wave"): the case faces the camera through every hand-over; the hand-overs keep their places', () => {
   assert.deepEqual([TURN_LEN, SWEEP_LEN], [0.4, 0.2]);
-  assert.deepEqual(TURNS.map(turnEnd), [2, 2.8, 3.8, 4.8], 'the turn into Tough ends at its beat, each hand-over\'s a sweep before it');
-  for (const n of TURNS) {
-    const end = turnEnd(n), start = end - TURN_LEN, mid = end - TURN_LEN / 2;
-    assert.equal(beatPose(start - 0.01).yaw, 0, `still before ${n}`);
-    assert.ok(Math.abs(beatPose(mid).yaw - Math.PI) < 1e-9, `the back to the camera at ${mid}: yaw ${beatPose(mid).yaw}`);
-    assert.equal(beatPose(end + 0.001).yaw, 0, `still after the turn into ${n}`);
-    // one way round, never back: the yaw rises through the whole turn
-    for (let i = 0; i < 39; i++) { const t = start + i / 100; assert.ok(beatPose(t + 0.01).yaw >= beatPose(t).yaw, `the turn runs one way at ${t.toFixed(2)}`); }
-    assert.ok(beatPose(end - 0.001).yaw > 1.99 * Math.PI, `a whole turn by ${end}`);
-  }
-  // sampled every 0.01 screen against its own formula
-  for (let sv = 1.5; sv < 5.5; sv += 0.01) {
-    let yaw = 0;
-    for (const n of TURNS) { const e = n === 2 ? 2 : n - 0.2, t = Math.max(0, Math.min(1, (sv - (e - 0.4)) / 0.4)), u = t * t * (3 - 2 * t); if (u > 0 && u < 1) yaw = u * 2 * Math.PI; }
-    assert.equal(beatPose(sv).yaw, yaw, `the turn at ${sv.toFixed(2)}`);
-  }
+  assert.deepEqual(TURNS.map(turnEnd), [2, 2.8, 3.8, 4.8], 'the hand-overs, a sweep before each beat');
+  for (let sv = 0; sv < 7; sv += 0.01) assert.equal(beatPose(sv).yaw, 0, `no yaw at ${sv.toFixed(2)}`);
 });
-
 test('24 D3: the case type each frame asks for, every 0.01 screen: Tough below 2.8 and on the carousel, MagTough from 2.8, Snap from 3.8, Armor from 4.8 through the argument screen', () => {
   assert.deepEqual([...CASE_TYPES], ['tough', 'magtough', 'snap', 'armor']);
   assert.deepEqual([...HANDOVERS], [2.8, 3.8, 4.8]);
@@ -156,6 +140,6 @@ test('the profile light rides with the case (section 24 D13): the zoom lit as ci
     for (let sv = 2; sv <= 5.0001; sv += 0.05) assert.ok(Math.abs((caseY(sv, drift, 0.7) - profileLightOffset(sv, drift)) - (-0.96)) < 1e-12, `from beat 1 at ${sv.toFixed(2)}, drift ${drift}: the case under the light as the Tough at beat 1`);
     assert.ok(Math.abs(profileLightOffset(2 - 1e-9, drift) - profileLightOffset(2, drift)) < 1e-6, 'continuous at beat 1');
   }
-  assert.ok(Math.abs(profileLightOffset(3, 1) - 0.38) < 1e-12 && Math.abs(profileLightOffset(4, 1) - 0.98) < 1e-12 && Math.abs(profileLightOffset(5, 1) - 1.56) < 1e-12, 'phones: beats 2 to 4 lifted by their rise');
+  assert.ok([3, 4, 5].every((sv) => Math.abs(profileLightOffset(sv, 1)) < 1e-12), 'phones: beats 2 to 4 at beat 1\'s height, so no lift (2026-11-04)');
   assert.ok(Math.abs(profileLightOffset(2, CFG.wideDrift) - 0.96 * (1 - CFG.wideDrift)) < 1e-12, 'wide: beat 1 lifted by what the damped drift left');
 });

@@ -157,12 +157,13 @@ export async function createStage(o: StageOptions) {
     };
     // a front set: the matte, the trim (a physical twin of the plain trim, so the band's clearcoat has a path) and the
     // logo now; the gloss pair once the tier is known (glossSet)
-    const frontSet = (tint: number): FrontSet => {
+    // trim: the trim's specular, a plastic's (1), and its colour, the file's accent, unless a type asks otherwise (TRIM_OF)
+    const frontSet = (tint: number, trim: { specular: number; scale: number } = { specular: 1, scale: 1 }): FrontSet => {
       const side = createSideUniforms();
       return {
         side,
         matte: withTakeover(new MeshPhysicalMaterial({ color: 0xffffff, roughness: CAL.matte.roughness, metalness: 0, specularIntensity: CAL.matte.specularIntensity }), run, side),
-        trim: withTakeover(new MeshPhysicalMaterial({ color: new Color(accentColor[0], accentColor[1], accentColor[2]), roughness: CAL.trim.roughness, metalness: 0, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }), run, side),
+        trim: withTakeover(new MeshPhysicalMaterial({ color: new Color(accentColor[0] * trim.scale, accentColor[1] * trim.scale, accentColor[2] * trim.scale), roughness: CAL.trim.roughness, metalness: 0, specularIntensity: trim.specular, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }), run, side),
         logoMatte: withTakeover(new MeshPhysicalMaterial({ color: new Color(tint, tint, tint), roughness: CAL.matte.roughness, metalness: 0, specularIntensity: CAL.matte.specularIntensity, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }), run, side),
         gloss: null, logoGloss: null,
       };
@@ -614,9 +615,14 @@ export async function createStage(o: StageOptions) {
     // a type model at the selected slot (section 24 D1, D2): its parts on its own front set, hidden until it is in front
     // or in a run; the gloss pair once the tier is known
     let tierKnown = false;
+    // the Armor's trim is its whole camera plate, broad and flat and square to the profile light, which read the trim's dark
+    // grey as a light silver there: a darker albedo and the matte's specular keep it the charcoal of Sam's render
+    // (2026-11-04: "the armour case is supposed to look like how it is in the attached image"); the Tough's and the
+    // MagTough's trims (a thin ring and the liner) keep theirs
+    const TRIM_OF: Partial<Record<TypeCase, { specular: number; scale: number }>> = { armor: { specular: CAL.matte.specularIntensity, scale: 0.15 } };
     const tintOf = (parts: readonly CasePart[]) => parts.find((p) => p.name === 'logo')?.tint ?? logoTint;
     const addModel = (type: TypeCase, asset: CaseAsset, ready: boolean) => {
-      const parts = asset.lods[1], set = frontSet(tintOf(parts));
+      const parts = asset.lods[1], set = frontSet(tintOf(parts), TRIM_OF[type]);
       if (tierKnown) glossSet(set, tintOf(parts));
       sets.set(type, set);
       const draws = parts.map((p) => { const m = IM(p.geometry, frontMat(set, p, finish), 1, `${p.name}.${type}`); m.visible = false; return { part: p, mesh: m }; });

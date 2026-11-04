@@ -4,7 +4,7 @@
 // ignored ... A long trackpad swipe still counts as one step, not several"). Between the four types' rests (Tough,
 // MagTough, Snap and Armor at screens 2, 3, 4 and 5, pose.ts CASE_REST) one wheel burst, one swipe or one step key rides
 // the page a whole screen to the next type, its turn and its sweep played by the scroll as before (the stage lags it),
-// on --ease-turn over CASE_STEP_MS; during the ride and its cooldown every gesture is swallowed. At Tough a gesture back
+// with no turn since 2026-11-04: a short lead to the hand-over (CASE_LEAD_MS), then the sweep, the wave (CASE_SWEEP_MS; stepPath); during the ride and its cooldown every gesture is swallowed. At Tough a gesture back
 // and at Armor a gesture on are the page's own, up into the zoom and on to the argument screen. The gestures are section
 // 4's own module (hero/section4/scroll.ts, its burst filter, touch rule and key table), driven through its adapter with
 // twoWay on; this module is the adapter's other side: the rests, the ride, and the arrival's hold, which puts a page that
@@ -14,14 +14,29 @@
 // then shows 3D steps too); a ride is an instant scrollTo under reduced motion. The beat nav rides here too.
 import { createPageScroll, type PageScroll } from '../hero/section4/scroll.ts';
 import { cubicBezier, isScrollKey, nextStop } from '../hero/section4/scroll-math.ts';
-import { CASE_REST, CASE_TYPES } from './three/pose.ts';
-import { CASE_HOLD_MAX_MS, CASE_HOLD_STILL_MS, CASE_STEP_COOLDOWN_MS, CASE_STEP_MAX_MS, CASE_STEP_MS, TURN_EASE } from './timing.ts';
+import { CASE_REST, CASE_TYPES, SWEEP_LEN } from './three/pose.ts';
+import { CASE_HOLD_MAX_MS, CASE_HOLD_STILL_MS, CASE_LEAD_MS, CASE_STEP_COOLDOWN_MS, CASE_STEP_MAX_MS, CASE_STEP_MS, CASE_SWEEP_MS, TURN_EASE } from './timing.ts';
 
 /** the four types' rests in screens, in beat order */
 export const CASE_RESTS: readonly number[] = CASE_TYPES.map((t) => CASE_REST[t]);
 /** a ride's length for a distance in screens: one screen CASE_STEP_MS, more by the screen, at most CASE_STEP_MAX_MS */
 export const caseRideMs = (screens: number): number => Math.round(Math.min(CASE_STEP_MAX_MS, Math.max(1, Math.abs(screens)) * CASE_STEP_MS));
 const easeTurn = cubicBezier(...TURN_EASE);
+/**
+ * A step's path in screens over time: from one rest to the next (a screen), the lead (the screen up to the hand-over,
+ * where nothing turns) over CASE_LEAD_MS and the wave (the SWEEP_LEN of the screen next to the upper rest, the takeover's
+ * sweep) over CASE_SWEEP_MS, each on --ease-turn, the page still a moment at the hand-over where the case faces the
+ * camera. Forward the lead plays first and the wave last; back the wave runs back first, then the lead. A ride of more
+ * than one screen (the beat nav) or from between rests keeps the plain curve. at(t): the position in screens t ms in.
+ */
+export function stepPath(from: number, to: number): { ms: number; at: (t: number) => number } {
+  const d = to - from;
+  if (Math.abs(Math.abs(d) - 1) > 0.02) { const ms = caseRideMs(d); return { ms, at: (t) => from + d * easeTurn(Math.min(1, t / ms)) }; }
+  const L = CASE_LEAD_MS, W = CASE_SWEEP_MS, s = SWEEP_LEN / Math.abs(d);
+  const ms = L + W, k = (t: number, len: number) => easeTurn(Math.min(1, Math.max(0, t / len)));
+  if (d > 0) return { ms, at: (t) => (t < L ? from + d * (1 - s) * k(t, L) : from + d * (1 - s + s * k(t - L, W))) };
+  return { ms, at: (t) => (t < W ? from + d * s * k(t, W) : from + d * (s + (1 - s) * k(t - W, L))) };
+}
 /** the 2 px within which the page is at a rest, as the glue's dead band */
 const DEAD = 2;
 /** a phone's momentum after the finger lifts: a crossing this soon after the release is still the swipe's */
@@ -53,13 +68,13 @@ export function createCaseSteps(o: { reduced: () => boolean }): CaseSteps {
     if (Math.abs(to - from) <= DEAD) return false;
     if (o.reduced()) { rideEnd = now(); scrollTo({ top: to, behavior: 'instant' }); return true; }
     riding = true;
-    const t0 = now(), ms = caseRideMs((to - from) / vh());
+    const t0 = now(), h = vh(), path = stepPath(from / h, to / h);
     const frame = () => {
       raf = 0;
       if (!riding || disposed) return;
       if (!Number.isNaN(wrote) && Math.abs(scrollY - wrote) > 1.5) { endRide(); return; }   // someone else moved the page
-      const p = Math.min(1, (now() - t0) / ms);
-      const y = p >= 1 ? to : from + (to - from) * easeTurn(p);
+      const t = now() - t0, p = t >= path.ms ? 1 : 0;
+      const y = p >= 1 ? to : path.at(t) * h;
       wrote = y;
       scrollTo({ top: y, behavior: 'instant' });
       if (p >= 1) { endRide(); return; }

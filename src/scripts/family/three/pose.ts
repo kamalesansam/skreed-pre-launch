@@ -143,6 +143,8 @@ export function scrollClasses(sv: number): { hudOff: boolean; beatsOn: boolean; 
  * 5 to 6 ciao's argument pose (its row 5000 to 6000: camera at z 8, level, FOV 45; the case at the centre, z -0.5,
  * tipped back 20 degrees and rolled -5, facing the camera; the two carousel spots back at 45 of 50), held over 6 to 7
  * with the pointer's influence and a slow bob. Between beats the values ease with ciao's power1.inOut (a smoothstep).
+ * No turn since 2026-11-04 (Sam: "just remove the rotation animation for case types, just keep the wave"): beatPose's
+ * yaw is 0 and the takeover's sweep alone changes the case; what follows is the turn as it was built.
  * The turn (section 24 D15; Sam, 2026-11-03: "rotate 360 degrees completely, even the backside of the phone should be
  * visible, and after the rotation only comes the transition effect"): over each feature transition the case on screen
  * makes one whole turn about its vertical axis, its back coming round at the half, and no model changes during it (the
@@ -152,7 +154,9 @@ export function scrollClasses(sv: number): { hudOff: boolean; beatsOn: boolean; 
  * (SWEEP_LEN), its progress the stage's scroll (D6).
  */
 export const sm = (t: number): number => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
-export const RZ = [0, -0.1745, 0.0873, -0.1745, 0.0873, 0, 0] as const, CY = [0, -0.96, -0.58, 0.02, 0.6, 0, 0] as const;
+// CY: every beat's case at beat 1's height since Sam, 2026-11-04 ("after going to each case type, the model is moving
+// upwards to the top of the screen, make sure it stays in the center"); ciao's rise to -0.58, 0.02 and 0.6 until then
+export const RZ = [0, -0.1745, 0.0873, -0.1745, 0.0873, 0, 0] as const, CY = [0, -0.96, -0.96, -0.96, -0.96, 0, 0] as const;
 export const TURNS = [2, 3, 4, 5] as const, TURN_LEN = 0.4, SWEEP_LEN = 0.2;
 /** Where the turn into beat n ends: the turn into Tough at its beat, each hand-over's SWEEP_LEN before it, so the sweep follows the turn. */
 export const turnEnd = (n: number): number => (n === TURNS[0] ? n : n - SWEEP_LEN);
@@ -162,9 +166,9 @@ export function beatPose(sv: number): BeatPose {
   const j = Math.max(1, Math.min(6, Math.floor(sv))), t = sm(sv - j);
   const rz = RZ[j - 1] + (RZ[j] - RZ[j - 1]) * t, cy = CY[j - 1] + (CY[j] - CY[j - 1]) * t;
   const A = sm(sv - 5);
-  let yaw = 0;
-  for (const n of TURNS) { const e = turnEnd(n), u = sm((sv - (e - TURN_LEN)) / TURN_LEN); if (u > 0 && u < 1) yaw = u * 2 * Math.PI; }
-  return { k, rz, cy, A, yaw };
+  // no turn since Sam, 2026-11-04 ("just remove the rotation animation for case types, just keep the wave"): the case
+  // faces the camera through every hand-over and the takeover's sweep alone changes it (TURNS keep the hand-overs' places)
+  return { k, rz, cy, A, yaw: 0 };
 }
 
 /**

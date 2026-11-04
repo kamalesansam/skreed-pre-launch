@@ -4,8 +4,8 @@
 // into the types is held on the type it entered at; the beat nav rides; nothing on the grid tier. Driven in a fake window.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CASE_RESTS, caseRideMs, createCaseSteps } from '../../src/scripts/family/steps.ts';
-import { CASE_HOLD_MAX_MS, CASE_HOLD_STILL_MS, CASE_STEP_COOLDOWN_MS, CASE_STEP_MAX_MS, CASE_STEP_MS } from '../../src/scripts/family/timing.ts';
+import { CASE_RESTS, caseRideMs, createCaseSteps, stepPath } from '../../src/scripts/family/steps.ts';
+import { CASE_HOLD_MAX_MS, CASE_HOLD_STILL_MS, CASE_LEAD_MS, CASE_STEP_COOLDOWN_MS, CASE_STEP_MAX_MS, CASE_STEP_MS, CASE_SWEEP_MS } from '../../src/scripts/family/timing.ts';
 
 const VH = 800;
 
@@ -51,12 +51,14 @@ function fakePage(y0: number, classes = ['m3d']) {
 /** the ride's frames run on timers: the clock moved on, then a few frames' worth of real time */
 const frames = () => new Promise((r) => setTimeout(r, 40));
 const at = (i: number) => CASE_RESTS[i] * VH;
+/** the longest one-type ride, either way */
+const RIDE = Math.max(stepPath(2, 3).ms, stepPath(3, 2).ms);
 
-test('the rests and the ride: Tough, MagTough, Snap and Armor at screens 2 to 5; 2.4 s a screen, at most 4 s (slowed on 2026-11-04)', () => {
+test('the rests and the ride: Tough, MagTough, Snap and Armor at screens 2 to 5; 1.4 s a screen, at most 2.8 s', () => {
   assert.deepEqual(CASE_RESTS, [2, 3, 4, 5]);
-  assert.equal(CASE_STEP_MS, 2400); assert.equal(CASE_STEP_MAX_MS, 4000); assert.equal(CASE_STEP_COOLDOWN_MS, 150);
-  assert.equal(caseRideMs(1), 2400); assert.equal(caseRideMs(-1), 2400); assert.equal(caseRideMs(0.3), 2400, 'a part screen rides as one');
-  assert.equal(caseRideMs(2), 4000); assert.equal(caseRideMs(3), 4000);
+  assert.equal(CASE_STEP_MS, 1400); assert.equal(CASE_STEP_MAX_MS, 2800); assert.equal(CASE_STEP_COOLDOWN_MS, 150);
+  assert.equal(caseRideMs(1), 1400); assert.equal(caseRideMs(-1), 1400); assert.equal(caseRideMs(0.3), 1400, 'a part screen rides as one');
+  assert.equal(caseRideMs(2), 2800); assert.equal(caseRideMs(3), 2800);
 });
 
 test('one wheel burst is one type: the ride plays the whole screen, its tail swallowed through the ride and the cooldown; at Tough back and at Armor on are the page\'s', async () => {
@@ -69,17 +71,17 @@ test('one wheel burst is one type: the ride plays the whole screen, its tail swa
     const deltas = [8, 16, 32, 60]; for (let d = 56; d >= 1; d *= 0.9) deltas.push(Math.round(d));
     for (const d of deltas) { if (page.wheel(d)) prevented++; page.tick(20); await frames(); }
     assert.equal(prevented, deltas.length, 'every event of the swipe prevented');
-    page.tick(CASE_STEP_MS); await frames();
+    page.tick(RIDE); await frames();
     assert.equal(page.y, at(1), 'on MagTough, one type on');
     assert.equal(page.wheel(60), true, 'the cooldown or the tail: swallowed');
     assert.equal(page.y, at(1));
     page.tick(400);
     assert.equal(page.wheel(60), true, 'a burst after silence: the next type');
-    page.tick(CASE_STEP_MS + 50); await frames();
+    page.tick(RIDE + 50); await frames();
     assert.equal(page.y, at(2));
     page.tick(400);
     assert.equal(page.wheel(-60), true, 'and back');
-    page.tick(CASE_STEP_MS + 50); await frames();
+    page.tick(RIDE + 50); await frames();
     assert.equal(page.y, at(1));
     page.scroll(at(0)); page.tick(1000);
     assert.equal(page.wheel(-60), false, 'at Tough a wheel back is the page\'s, up into the zoom');
@@ -99,16 +101,16 @@ test('one swipe is one type, and the keys step one type a keydown; at the edges 
     assert.equal(page.touch('touchmove', 480), true, 'up 20 px: one type on');
     assert.equal(page.touch('touchmove', 300), true, 'the rest of the swipe: swallowed');
     page.touch('touchend', 300);
-    page.tick(CASE_STEP_MS + 50); await frames();
+    page.tick(RIDE + 50); await frames();
     assert.equal(page.y, at(2), 'on Snap');
     page.tick(400);
-    assert.equal(page.key('ArrowDown'), true); page.tick(CASE_STEP_MS + 50); await frames();
+    assert.equal(page.key('ArrowDown'), true); page.tick(RIDE + 50); await frames();
     assert.equal(page.y, at(3), 'ArrowDown: on Armor');
     page.tick(400);
     assert.equal(page.key('PageDown'), false, 'PageDown at Armor: the browser\'s');
     assert.equal(page.key(' ', { shiftKey: true }), true, 'Shift+Space: back');
     assert.equal(page.key('ArrowUp'), true, 'a key during the ride: swallowed');
-    page.tick(CASE_STEP_MS + 50); await frames();
+    page.tick(RIDE + 50); await frames();
     assert.equal(page.y, at(2), 'one type back, not two');
     s.dispose();
   } finally { page.restore(); }
@@ -198,7 +200,7 @@ test('the first step key after an arrival lets the hold go and steps at once', a
     assert.equal(page.key('ArrowDown'), true, 'taken');
     assert.equal(s.state().holding, false, 'the hold let go');
     assert.equal(s.state().riding, true, 'and the ride to MagTough began with the same key');
-    page.tick(CASE_STEP_MS + 50); await frames();
+    page.tick(RIDE + 50); await frames();
     assert.equal(page.y, at(1));
     s.dispose();
   } finally { page.restore(); }
@@ -213,7 +215,7 @@ test('a page that loads in swatch grid mode and then shows 3D steps from then on
     page.cls.delete('grid'); page.cls.add('m3d');            // "Show in 3D" (boot.ts, fam:want3d)
     page.scroll(at(0)); page.tick(1000);
     assert.equal(page.key('ArrowDown'), true, '3D now: a step');
-    page.tick(CASE_STEP_MS + 50); await frames();
+    page.tick(RIDE + 50); await frames();
     assert.equal(page.y, at(1));
     s.dispose();
   } finally { page.restore(); }
@@ -230,4 +232,22 @@ test('under reduced motion the beat nav lands on the type pressed, never held ba
     assert.equal(s.state().holding, false);
     s.dispose();
   } finally { page.restore(); }
+});
+
+test('a step is a 0.5 s lead to the hand-over, where the page rests a moment, then the wave over 1.5 s; back the wave first; the beat nav keeps the plain curve', () => {
+  assert.equal(CASE_LEAD_MS, 500); assert.equal(CASE_SWEEP_MS, 1500);
+  const fwd = stepPath(2, 3);
+  assert.equal(fwd.ms, 2000);
+  assert.equal(fwd.at(0), 2);
+  assert.ok(Math.abs(fwd.at(CASE_LEAD_MS) - 2.8) < 1e-9, 'the hand-over at the lead\'s end');
+  assert.ok(Math.abs(fwd.at(fwd.ms) - 3) < 1e-9);
+  assert.ok(fwd.at(CASE_LEAD_MS + 750) > 2.85 && fwd.at(CASE_LEAD_MS + 750) < 2.95, 'half the wave at its half');
+  for (let t = 0; t < fwd.ms; t += 25) assert.ok(fwd.at(t + 25) >= fwd.at(t) - 1e-12, `monotone at ${t}`);
+  const back = stepPath(3, 2);
+  assert.equal(back.ms, 2000);
+  assert.ok(Math.abs(back.at(CASE_SWEEP_MS) - 2.8) < 1e-9, 'the wave back first, over its 1.5 s');
+  assert.ok(Math.abs(back.at(back.ms) - 2) < 1e-9);
+  for (let t = 0; t < back.ms; t += 25) assert.ok(back.at(t + 25) <= back.at(t) + 1e-12, `monotone back at ${t}`);
+  const nav = stepPath(5, 2);
+  assert.equal(nav.ms, 2800); assert.equal(nav.at(0), 5); assert.ok(Math.abs(nav.at(2800) - 2) < 1e-9);
 });
