@@ -10,6 +10,16 @@ body{color:var(--pearl-whisper);font-family:var(--font-ui);margin:0;font-synthes
 .s2lab{position:absolute;left:0;top:0;font:500 13px/1.08 "IBM Plex Mono",ui-monospace,monospace;color:var(--pearl-whisper);white-space:pre;letter-spacing:0;text-transform:none;font-synthesis:none;will-change:transform}.s2lab.r{text-align:right}
 @media (max-aspect-ratio:9/10){.s2lab{font-size:12px}}
 #stage.over-gem{cursor:pointer}
+/* the gems' click hint (section2/hint.ts, E-S2-hint), on every layout: a cursor of our own drawing, its hot spot at the element's origin; a picture of a tap, never a control */
+.s2hint{position:absolute;left:0;top:0;width:0;height:0;opacity:0;transition:opacity .3s var(--ease-standard);will-change:transform,opacity}.s2hint.on{opacity:1}
+.s2hint-pt{position:absolute;left:0;top:0;transform-origin:0 0}
+/* the arrow 15 px wide while it glides, the pointing hand once it is over the gem; each offset so its hot spot is the origin */
+/* #s2labels svg (the leaders' layer) fills the layer, so these carry the id to take the cursor's own box back */
+#s2labels .s2hint svg{position:absolute;inset:auto;display:block;overflow:visible}#s2labels .s2hint .arrow{left:-1.7px;top:-1.2px;width:15px;height:19px}#s2labels .s2hint .hand{left:-5.6px;top:-.8px;width:15px;height:18px;display:none}
+#s2labels .s2hint.over .arrow{display:none}#s2labels .s2hint.over .hand{display:block}
+.s2hint path{fill:var(--pearl-whisper);stroke:var(--urban-slate);stroke-width:1.5;stroke-linejoin:round}.s2hint .seam{fill:none;stroke-linecap:round;stroke-width:1.1}
+.s2hint-ring{position:absolute;left:-10px;top:-10px;width:20px;height:20px;box-sizing:border-box;border:1.5px solid var(--pearl-whisper);border-radius:50%;opacity:0}
+@media (prefers-reduced-motion:reduce){.s2hint{display:none}}
 .copy{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:flex-end;gap:var(--s2);padding:0 calc(var(--inset) + env(safe-area-inset-right,0px)) calc(var(--inset) + env(safe-area-inset-bottom,0px)) calc(var(--inset) + env(safe-area-inset-left,0px));pointer-events:none;will-change:transform,clip-path}   /* side safe areas added for landscape phones (web interface guidelines); 0 elsewhere */
 /* hero: plain and simple, a countdown to launch. The numerals are the dot digits (E-CD-font); the eyebrow and the unit labels are the later sections' face, IBM Plex Mono Medium in capitals (E-chrome-font, 2026-11-02), as the sign-up and the quiz are. Never Poppins. */
 .copy .eyebrow{font-family:var(--font-mono);font-size:.875rem;font-weight:500;text-transform:uppercase;letter-spacing:0;color:var(--pearl-whisper);margin:0;max-width:30ch}   /* Pearl Whisper: the small text sits on pale snow and must hold AA */

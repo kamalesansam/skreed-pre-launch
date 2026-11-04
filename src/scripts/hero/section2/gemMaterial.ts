@@ -3,6 +3,7 @@
 // B x1.03), two inner bounces traced against the gem's own facet planes (up to 32), shade absorption, a luminous core of
 // radius 0.32 at the centre, the Khronos Neutral tone curve. The hover frost (section2/frost.ts) adds its emission here.
 import { BackSide, Color, FrontSide, Matrix3, MeshPhysicalMaterial, Vector2, Vector3, type Texture } from 'three';
+import { injectWave, waveMix, type WaveUniforms } from './wave.ts';
 
 export const GLSL_NOISE = /* glsl */`
   vec3 h33(vec3 p) { p = fract(p * vec3(0.1031, 0.1030, 0.0973)); p += dot(p, p.yxz + 33.33); return fract((p.xxy + p.yxx) * p.zyx); }
@@ -35,15 +36,16 @@ export type GemMaterial = MeshPhysicalMaterial & { userData: { U: GemUniforms; k
 const linArr = (h: string) => { const c = new Color(h); return [c.r, c.g, c.b]; };
 
 /** add our uniforms and code to a MeshPhysicalMaterial */
-function patch(mat: MeshPhysicalMaterial, U: GemUniforms, { vert = '', vmain = '', pars = '', replace = {} as Record<string, string> } = {}): GemMaterial {
+function patch(mat: MeshPhysicalMaterial, U: GemUniforms, wave: WaveUniforms, { vert = '', vmain = '', pars = '', replace = {} as Record<string, string> } = {}): GemMaterial {
   mat.userData.U = U;
   mat.onBeforeCompile = (sh) => {
-    Object.assign(sh.uniforms, U);
+    Object.assign(sh.uniforms, U, wave);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\n varying vec3 vObj; varying vec3 vWPos;\n' + vert)
       .replace('#include <begin_vertex>', '#include <begin_vertex>\n vObj = position; vWPos = (modelMatrix * vec4(position, 1.0)).xyz;\n' + vmain);
     let fs = sh.fragmentShader.replace('#include <common>', '#include <common>\n varying vec3 vObj; varying vec3 vWPos;\n uniform mat4 modelMatrix; uniform mat4 projectionMatrix; uniform mat3 normalMatrix;\n' + GLSL_NOISE + pars);
     for (const [k, v] of Object.entries(replace)) fs = fs.replace(k, v);
     sh.fragmentShader = fs;
+    injectWave(sh);   // the block-to-gem wave (wave.ts, E-S2-wave): the gem is the incoming side
   };
   mat.customProgramCacheKey = () => 'C' + (mat.side === BackSide ? 'b' : 'f') + (mat.userData.kind || '');
   return mat as GemMaterial;
@@ -51,7 +53,7 @@ function patch(mat: MeshPhysicalMaterial, U: GemUniforms, { vert = '', vmain = '
 
 export interface FrostRefs { blackTex: Texture; latTex: Texture; FSCALE: number }
 
-export function matC(shadeHex: string, planes: number[][], envTex: Texture, frost: FrostRefs): GemMaterial {
+export function matC(shadeHex: string, planes: number[][], envTex: Texture, frost: FrostRefs, wave: WaveUniforms): GemMaterial {
   const sh = new Color(shadeHex);
   const ab = new Vector3(-Math.log(Math.max(sh.r, 0.03)), -Math.log(Math.max(sh.g, 0.03)), -Math.log(Math.max(sh.b, 0.03)));
   const P = new Float32Array(32 * 4); planes.slice(0, 32).forEach((p, i) => P.set(p, i * 4));
@@ -96,10 +98,10 @@ export function matC(shadeHex: string, planes: number[][], envTex: Texture, fros
     if (uFrostOn > 0.5) { vec2 fuv = (uRest * vObj).xy / uFrostScale + 0.5; vec2 fg = texture(tFrost, fuv).rg; float lat = texture(tLat, fuv * uLatN).r;
       totalEmissiveRadiance += uFrostGain * (fg.y * uRim + lat * fg.y * 10.0 + lat * fg.x * fg.x); }
   `;
-  return patch(m, U, {
+  return patch(m, U, wave, {
     pars: 'uniform sampler2D tBG; uniform vec2 uRes; uniform float uIor, uNP, uAbsorbK, uCore, uCoreR; uniform vec4 uPlanes[32]; uniform vec3 uAbsorb, uGlow;\n' +
       'uniform sampler2D tFrost, tLat; uniform float uFrostOn, uFrostGain, uLatN, uFrostScale; uniform mat3 uRest; uniform vec3 uRim;\n' +
       'vec2 projUV(vec3 w) { vec4 c = projectionMatrix * viewMatrix * vec4(w, 1.0); return c.xy / c.w * 0.5 + 0.5; }',
-    replace: { '#include <transmission_fragment>': MAIN, '#include <opaque_fragment>': 'gl_FragColor = vec4(neutralTone(max(outgoingLight, 0.0)), 1.0);' },
+    replace: { '#include <transmission_fragment>': MAIN, '#include <opaque_fragment>': `vec3 tkOut = neutralTone(max(outgoingLight, 0.0)); gl_FragColor = vec4(${waveMix('tkOut')}, 1.0);` },
   });
 }
