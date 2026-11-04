@@ -235,12 +235,12 @@ test('under reduced motion the beat nav lands on the type pressed, never held ba
   } finally { page.restore(); }
 });
 
-test('a step: a 0.25 s lead, the wave over 1.5 s with the band at an even pace from the moment it meets the case to the moment it leaves it, a 0.12 s tail; back the same backwards; the beat nav keeps the plain curve', () => {
-  assert.equal(CASE_LEAD_MS, 250); assert.equal(CASE_SWEEP_MS, 1500); assert.equal(CASE_TAIL_MS, 120);
+test('a step: a 0.25 s lead, the wave over 1 s with the band at an even pace from the moment it meets the case to the moment it leaves it, a 0.12 s tail; back the same backwards; the beat nav keeps the plain curve', () => {
+  assert.equal(CASE_LEAD_MS, 250); assert.equal(CASE_SWEEP_MS, 1000); assert.equal(CASE_TAIL_MS, 120);
   const [E0, E1] = WAVE_EDGES;
   assert.ok(Math.abs(E0 - 0.12 / 1.24) < 1e-12 && Math.abs(E1 - 1.12 / 1.24) < 1e-12, 'the band meets the case at p 0 and leaves it at p 1');
   const fwd = stepPath(2, 3), back = stepPath(3, 2);
-  assert.equal(fwd.ms, 1870); assert.equal(back.ms, 1870);
+  assert.equal(fwd.ms, 1370); assert.equal(back.ms, 1370);
   assert.equal(fwd.at(0), 2); assert.ok(Math.abs(fwd.at(fwd.ms) - 3) < 1e-9);
   assert.equal(back.at(0), 3); assert.ok(Math.abs(back.at(back.ms) - 2) < 1e-9);
   const eased = (sv: number) => easeTakeover((sv - 2.8) / 0.2);

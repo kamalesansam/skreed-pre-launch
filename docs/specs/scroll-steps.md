@@ -34,7 +34,7 @@ Left in place, unused: the carousel's cloud pass (`carousel.ts`), the composite'
 `src/scripts/family/steps.ts`, on the 3D tier only (`html.m3d`, read at each decision, so a page that loads in swatch grid mode steps once "Show in 3D" brings the 3D; never in swatch grid mode), with section 4's own gesture module (`section4/scroll.ts`, its burst filter, touch rule and key table) driven through its adapter with `twoWay` on.
 
 - The rests: Tough, MagTough, Snap and Armor at screens 2, 3, 4 and 5 (`pose.ts` `CASE_REST`), where each type faces the camera with its sweep done.
-- Between them one wheel burst (a trackpad's whole swipe with its momentum), one one-finger swipe (decided on the first 12 px) or one step key rides the page a whole screen to the next type: a 0.25 s lead (`CASE_LEAD_MS`, on `--ease-turn`) to where the band meets the case, a little past the hand-over (about 0.858 of the screen), then the wave over 1.5 s (`CASE_SWEEP_MS`) while the band crosses the case (to about 0.942), with the scroll undoing the sweep's own in-out cubic so the band crosses the case at an even pace from the moment it meets the case to the moment it leaves it, and a 0.12 s tail over the sweep's last stretch where the band is off the case (`CASE_TAIL_MS`); the stage follows the scroll tightly while a step rides it. Section 3a has the day's changes to the step.
+- Between them one wheel burst (a trackpad's whole swipe with its momentum), one one-finger swipe (decided on the first 12 px) or one step key rides the page a whole screen to the next type: a 0.25 s lead (`CASE_LEAD_MS`, on `--ease-turn`) to where the band meets the case, a little past the hand-over (about 0.858 of the screen), then the wave over 1 s (`CASE_SWEEP_MS`) while the band crosses the case (to about 0.942), with the scroll undoing the sweep's own in-out cubic so the band crosses the case at an even pace from the moment it meets the case to the moment it leaves it, and a 0.12 s tail over the sweep's last stretch where the band is off the case (`CASE_TAIL_MS`); the stage follows the scroll tightly while a step rides it. Section 3a has the day's changes to the step.
 - During the ride and 150 ms after it (`CASE_STEP_COOLDOWN_MS`) every wheel, swipe and step key is swallowed, a held key's repeat too.
 - At Tough a gesture back, and at Armor a gesture on, is the page's own: up into the zoom, on to the argument screen.
 - The arrival: a page that its own scroll carries into the types (a fling from the zoom, a key's smooth scroll, the argument screen scrolled up) is put back on the type it entered at (Tough from below, Armor from above) and held there against the momentum until it has been still for 150 ms, at most 1.2 s, as section 4's arrival hold does for scene 1; a finger still down defers the hold to its release. Only a scroll the visitor began is held: a wheel or a scrolling key in the last 300 ms, or a finger down or lifted in the last 3 s (a phone's momentum runs on after the release); a link, the beat nav, Home, End and the scrollbar pass. A step key during a hold lets it go and steps at once.
@@ -55,6 +55,8 @@ After the first deploy Sam watched the steps on localhost:
 
 - Then: "increase the speed of the wave a little more, if its 2s rn make it 1.5 or 1" (`CASE_SWEEP_MS` 1500), and "for each case type, the case turns left and right very sharply, smoothen it and end of the turn should look smoother, not like sharp": the roll between two types (ciao's alternating -10 and +5 degrees) had run over the whole screen, so a step's 0.25 s lead played all 15 degrees in a quarter second and stopped dead. It now rides the wave (`pose.ts` `rollShare`): still until the band meets the case, then a smootherstep of the band's place across it, so the case tilts with the wave and comes to rest with no speed. Measured in Chrome at 1280 x 800: the tilt runs over about 1.4 s with the band, about 22 degrees a second at its fastest, 1 to 2 degrees a second in its last tenth; the band crosses in 1.45 s, starting 0.33 s after ArrowDown, and the text still changes at its middle.
 
+- Then "do 1s" of the wave (`CASE_SWEEP_MS` 1000) and "make it 0.7s" of the tilt (`CASE_ROLL_MS` 700, the middle 0.7 s of the wave, still in its first and last 0.15 s). Measured in Chrome at 1280 x 800: the band crosses in 0.95 s from 0.33 s after ArrowDown, the tilt runs about 0.65 s above a hundredth of a degree, and the text changes at the band's middle.
+
 ## 4. The landing page: one key, one section
 
 `section4/scroll.ts` (the page scroll, from the intro's end, the 3D path only) takes the step keys everywhere on the page, not only in the scenes:
@@ -73,7 +75,7 @@ After the first deploy Sam watched the steps on localhost:
 |---|---|---|
 | KEY_RIDE.msPerScreen, minMs, maxMs | 450, 700, 2400 ms | section4/scroll-math.ts |
 | KEY_RIDE.cooldownMs | 150 ms | section4/scroll-math.ts |
-| CASE_LEAD_MS, CASE_SWEEP_MS, CASE_TAIL_MS | 250, 1500, 120 ms | family/timing.ts |
+| CASE_LEAD_MS, CASE_SWEEP_MS, CASE_TAIL_MS, CASE_ROLL_MS | 250, 1000, 120, 700 ms | family/timing.ts |
 | the stage's lag while a step rides (60 a second; 10 otherwise) | | family/three/stage.ts |
 | CASE_STEP_MS, CASE_STEP_MAX_MS (the beat nav's longer rides) | 1400, 2800 ms | family/timing.ts |
 | CASE_STEP_COOLDOWN_MS | 150 ms | family/timing.ts |
@@ -92,13 +94,13 @@ The wrap's removal takes motion away and needs no exception; E-S4-scroll's "at s
 ## 7. Decisions taken (defaults, for Sam to change)
 
 - D1. The landing's rests are one a section: the hero, the gems, the quiz, scene 1, scene 5, section 5. The pull-back's end (where the first glue span starts) is not a rest: ArrowDown on the hero rides straight to the gems.
-- D2. The landing's ride is 450 ms a screen (0.7 to 2.4 s) on --ease-standard; the family's step a 0.25 s lead, the wave over 1.5 s at an even pace and a 0.12 s tail (section 3a), slower than a scene's 0.77 s because the band crosses the case at an even pace over 1.5 s, where the eye can follow it.
+- D2. The landing's ride is 450 ms a screen (0.7 to 2.4 s) on --ease-standard; the family's step a 0.25 s lead, the wave over 1 s at an even pace and a 0.12 s tail (section 3a), slower than a scene's 0.77 s because the band crosses the case at an even pace over 1 s, where the eye can follow it.
 - D3. The family pages' carousel and zoom (screens 0 to 2) and the argument screen keep the native scroll; only the four types step, as asked.
 - D4. On the poster tier and under reduced motion on the landing (no island, no page scroll module) the keys stay the browser's.
 
 ## 8. For Sam
 
 1. Is a key from the hero meant to go straight to the gems (D1), or stop first where the pull-back ends?
-2. The ride lengths (D2): does the hero-to-gems ride (2.2 s at a laptop's height) and the family's wave (1.5 s across the case, starting about 0.3 s after the gesture) feel right?
+2. The ride lengths (D2): does the hero-to-gems ride (2.2 s at a laptop's height) and the family's wave (1 s across the case, starting about 0.3 s after the gesture) feel right?
 3. Should the carousel and the zoom on a family page step too (D3)?
 4. The cloud's code left unused (section 2): take it out in a clean-up?

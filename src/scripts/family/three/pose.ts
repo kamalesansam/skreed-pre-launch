@@ -5,6 +5,7 @@
 // Every value was measured from ciao's module (research/ciao-landing, ciao-3d-params.json, keyframes-desk.json) and
 // re-created here; nothing of ciao's ships.
 import { TAKEOVER, easeTakeover } from '../../../config/takeover.ts';
+import { CASE_ROLL_MS, CASE_SWEEP_MS } from '../timing.ts';
 
 export type Layout = 'phone' | 'wide';
 export const WIDE_MQ = '(min-width: 900px) and (min-height: 600px)';
@@ -178,7 +179,9 @@ export function rollShare(sv: number, j: number): number {
   const raw = (sv - (j + 1 - SWEEP_LEN)) / SWEEP_LEN;
   if (raw <= 0) return 0;
   if (raw >= 1) return 1;
-  return smoother((easeTakeover(raw) - WAVE_EDGES[0]) / (WAVE_EDGES[1] - WAVE_EDGES[0]));
+  // the band's place across the case (0 to 1, even in a step's time), the tilt over the middle CASE_ROLL_MS of the wave
+  const u = (easeTakeover(raw) - WAVE_EDGES[0]) / (WAVE_EDGES[1] - WAVE_EDGES[0]), w = Math.min(1, CASE_ROLL_MS / CASE_SWEEP_MS);
+  return smoother((u - (1 - w) / 2) / w);
 }
 export interface BeatPose { k: number; rz: number; cy: number; A: number; yaw: number }
 export function beatPose(sv: number): BeatPose {

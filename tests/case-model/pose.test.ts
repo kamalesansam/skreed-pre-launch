@@ -159,6 +159,9 @@ test('the roll between two case types rides the wave: still until the band meets
     assert.ok(Math.abs((at(1) - at(1 - h)) / h) < 1e-2, 'no speed as the band leaves it: the end eases in');
     let prev = 0, maxStep = 0;
     for (let i = 1; i <= 100; i++) { const v = at(i / 100); assert.ok(v >= prev - 1e-9, 'one way'); maxStep = Math.max(maxStep, v - prev); prev = v; }
-    assert.ok(maxStep < 0.02, `no jump: the largest step in a hundredth of the wave ${maxStep}`);
+    assert.ok(maxStep < 0.03, `no jump: the largest step in a hundredth of the wave ${maxStep}`);
+    // the tilt over the middle 0.7 s of the 1 s wave ("make it 0.7s"): still in its first and last 0.15
+    assert.ok(at(0.14) < 1e-6 && at(0.86) > 1 - 1e-6, `the tilt inside 0.15 to 0.85 of the wave: ${at(0.14)}, ${at(0.86)}`);
+    assert.ok(at(0.2) > 0 && at(0.8) < 1, 'and moving through it');
   }
 });
