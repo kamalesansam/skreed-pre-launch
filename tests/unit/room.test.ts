@@ -203,12 +203,16 @@ test('AC10, plain text: room.css and Room.astro carry no panel, fill, border but
   assert.match(css, /\.rm-pad:focus-visible::after \{[^}]*inset: 4px; border: 2px solid var\(--urban-slate\)/);
 });
 
-test("E-S4-font: section 2's label type, IBM Plex Mono Medium in capitals, at the quiz's own sizes; the words with the 44 px hit area", () => {
+test("E-S4-font, amended: Questrial in capitals (Sam, 2026-11-04), at the quiz's own sizes; the words with the 44 px hit area", () => {
   const quiz = read('src/styles/quiz.css');
   const qv = (name: string) => quiz.match(new RegExp(`--qz-${name}: ([^;]+);`))?.[1], rv = (name: string) => css.match(new RegExp(`--rm-${name}: ([^;]+);`))?.[1];
   for (const n of ['fs', 'fs-q']) { assert.ok(qv(n)); assert.equal(rv(n), qv(n), `--rm-${n} equals the quiz's --qz-${n}`); }
-  assert.match(css, /--rm-font: "IBM Plex Mono", ui-monospace, monospace;/);
-  assert.match(css, /\.room \{[^}]*font: 500 var\(--rm-fs\) \/ 1\.45 var\(--rm-font\); text-transform: uppercase; letter-spacing: 0;/);
+  assert.match(css, /--rm-font: "Questrial", "Questrial Fallback", sans-serif;/);
+  assert.match(css, /\.room \{[^}]*font: 400 var\(--rm-fs\) \/ 1\.45 var\(--rm-font\); text-transform: uppercase; letter-spacing: 0;/);
+  assert.match(read('src/styles/fonts.css'), /font-family: "Questrial"; font-weight: 400;[^}]*url\(\/fonts\/questrial-400-latin\.woff2\)/);
+  // a proportional face: every line takes the decode's proportional mode, the rolled glyph drawn over the face's own
+  assert.match(read('src/scripts/room/walk.ts'), /el\.dataset\.dc = 'prop'; dec\.prepare\(el\);/);
+  assert.match(css, /\.room \.dc > span\[data-r\]::after \{ content: attr\(data-r\); position: absolute;/);
   assert.match(css, /\.room \.sr-only \{ text-transform: none; \}/, 'assistive technology keeps the sentence case');
   assert.match(css, /\.rm-scene-name \{ font-size: var\(--rm-fs-q\)/);
   // the controls are words: the quiz's link pattern, 44 px to tap; the previous and next words bottom right in the scenes
@@ -316,4 +320,40 @@ test("the composite's cover input (section-4-flux.md 5, X-15): the v11 literal i
   assert.match(loop, /C\.uCover\.value = cover; C\.tCloud\.value = cover > 0 \? plan!\.cloud : null;/);
   assert.doesNotMatch(loop, /rideLoop|inLoop|plan!\.loop/, 'the fourth wipe is retired');
   assert.match(read('src/scripts/hero/post/composite.ts'), /tCloud: \{ value: null as Texture \| null \}, uCover: \{ value: 0 \}/);
+});
+
+test("the two versions of the scenes' backgrounds (Sam, 2026-11-04; docs/specs/section-4-pictures.md): his pictures by default, the loops kept", () => {
+  assert.equal(ROOM.ROOM_BACKDROP_DEFAULT, 'pictures', 'the pictures version is the default');
+  // under Node the build's glob is empty, so no picture is in: every request draws the loops, the old version
+  assert.equal(ROOM.roomBackdrop(''), 'loops');
+  assert.equal(ROOM.roomBackdrop('?scenes=pictures'), 'loops', 'the pictures only where every file is in the build');
+  assert.equal(ROOM.roomBackdrop('?scenes=loops'), 'loops');
+  assert.equal(ROOM.ROOM_LOOPS, true);
+  const cfg = read('src/config/room.ts');
+  assert.match(cfg, /import\.meta\.glob<string>\('\.\.\/assets\/room\/pictures\/\*\.\{avif,webp\}'/, 'the pictures from their own folder');
+  assert.match(cfg, /\/\(\?:\^\|\[\?&\]\)scenes=\(pictures\|loops\)\(\?:&\|\$\)\/\.exec\(search\)/, '?scenes= picks the version for a visit');
+  assert.match(cfg, /\{ loop: '', avif: pictureUrl\(`\$\{id\}-\$\{cls\}\.avif`\), webp: pictureUrl\(`\$\{id\}-\$\{cls\}\.webp`\) \}/, 'the pictures version names no loop');
+  assert.match(read('src/scripts/hero/section4/director.ts'), /const video: VideoPool \| null = ROOM_LOOPS && !reduced && allowed\(\) \? createPool\(N\) : null;/, 'no loop elements in the pictures version');
+  // the twenty encoded files are committed (Sam, 2026-11-04: "yes they're fine"), with the script that makes them
+  assert.doesNotMatch(read('.gitignore'), /room\/pictures/);
+  for (const id of ROOM_SCENES.map((s) => s.id)) for (const cls of ['wide', 'portrait']) for (const f of ['avif', 'webp']) assert.ok(exists(`src/assets/room/pictures/${id}-${cls}.${f}`), `${id}-${cls}.${f}`);
+  assert.ok(exists('scripts/room/prepare-pictures.mjs'));
+  // the pictures' own alts and logotype tones: scripts/room/scene-tone.mjs --pictures on 2026-11-04 measured Urban Slate
+  // at 3.11 to 7.73:1 over the first four (ember's worst 2.93:1, flagged, Pearl's 2.15) and Pearl at 5.08 to 5.72:1 over the green room
+  assert.deepEqual(ROOM.PICTURE_ROWS.map((r) => r.id), ROOM_SCENES.map((s) => s.id));
+  assert.deepEqual(ROOM.PICTURE_ROWS.map((r) => r.toneDark), [true, true, true, true, false]);
+  // the products' shades over the pictures (Sam, 2026-11-04: "use a color from the color ffamily that we have for each of
+  // the cases of the 3d models which will go good with the backround"): catalog shades by id, with the catalog's hex and name
+  assert.deepEqual(ROOM.PICTURE_ROWS.map((r) => r.shade), ['roaring-red-18', 'vivid-violet-14', 'basic-brown-07', 'vivid-violet-06', 'playful-pink-03']);
+  const catalog = new Map(SHADES.map((c) => [c.id, c]));
+  for (const r of ROOM.PICTURE_ROWS) {
+    const c = catalog.get(r.shade);
+    assert.ok(c, r.shade);
+    assert.equal(r.hex.toLowerCase(), c!.hex.toLowerCase(), `${r.id}: the shade's hex is the catalog's`);
+    assert.equal(r.shadeName, c!.name, `${r.id}: the shade's name is the catalog's`);
+    assert.equal(r.family, c!.family.replace(/-/g, ' '), `${r.id}: the family in lower case words`);
+    assert.match(r.keyLight, /^#[0-9a-f]{6}$/, `${r.id}: the key light's tint`);
+    assert.match(r.alt, /^[A-Z][^.]+\.$/, `${r.id}: one sentence`);
+    assert.doesNotMatch(r.alt, /\b(case|wallet|lenskin|airpods|phone)\b/i, `${r.id}: no product in the picture`);
+  }
 });

@@ -1,0 +1,142 @@
+{
+ "size": {
+  "wide": [
+   1920,
+   1000
+  ],
+  "portrait": [
+   1080,
+   1920
+  ]
+ },
+ "lines": {
+  "wide": {
+   "avif": 220000,
+   "webp": 320000
+  },
+  "portrait": {
+   "avif": 200000,
+   "webp": 300000
+  }
+ },
+ "start": {
+  "avif": 80,
+  "webp": 92
+ },
+ "floor": {
+  "avif": 62,
+  "webp": 80
+ },
+ "files": {
+  "cove": {
+   "wide.avif": {
+    "bytes": 42553,
+    "quality": 80,
+    "line": 220000
+   },
+   "wide.webp": {
+    "bytes": 54222,
+    "quality": 92,
+    "line": 320000
+   },
+   "portrait.avif": {
+    "bytes": 39916,
+    "quality": 80,
+    "line": 200000
+   },
+   "portrait.webp": {
+    "bytes": 42548,
+    "quality": 92,
+    "line": 300000
+   }
+  },
+  "grove": {
+   "wide.avif": {
+    "bytes": 29712,
+    "quality": 80,
+    "line": 220000
+   },
+   "wide.webp": {
+    "bytes": 30228,
+    "quality": 92,
+    "line": 320000
+   },
+   "portrait.avif": {
+    "bytes": 32339,
+    "quality": 80,
+    "line": 200000
+   },
+   "portrait.webp": {
+    "bytes": 32462,
+    "quality": 92,
+    "line": 300000
+   }
+  },
+  "ember": {
+   "wide.avif": {
+    "bytes": 47145,
+    "quality": 80,
+    "line": 220000
+   },
+   "wide.webp": {
+    "bytes": 85410,
+    "quality": 92,
+    "line": 320000
+   },
+   "portrait.avif": {
+    "bytes": 46921,
+    "quality": 80,
+    "line": 200000
+   },
+   "portrait.webp": {
+    "bytes": 54772,
+    "quality": 92,
+    "line": 300000
+   }
+  },
+  "palace": {
+   "wide.avif": {
+    "bytes": 26436,
+    "quality": 80,
+    "line": 220000
+   },
+   "wide.webp": {
+    "bytes": 39264,
+    "quality": 92,
+    "line": 320000
+   },
+   "portrait.avif": {
+    "bytes": 47516,
+    "quality": 80,
+    "line": 200000
+   },
+   "portrait.webp": {
+    "bytes": 46138,
+    "quality": 92,
+    "line": 300000
+   }
+  },
+  "dawn": {
+   "wide.avif": {
+    "bytes": 29748,
+    "quality": 80,
+    "line": 220000
+   },
+   "wide.webp": {
+    "bytes": 49372,
+    "quality": 92,
+    "line": 320000
+   },
+   "portrait.avif": {
+    "bytes": 46126,
+    "quality": 80,
+    "line": 200000
+   },
+   "portrait.webp": {
+    "bytes": 45370,
+    "quality": 92,
+    "line": 300000
+   }
+  }
+ }
+}

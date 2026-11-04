@@ -3,22 +3,27 @@
    track with a sticky stage over the hero's fixed canvas, which draws the third wipe from the fog to scene 1 and the
    carousel; the DOM here is what the section needs over it, and all of it is plain text on the scene (Sam, 2026-10-19
    and 2026-10-20: "just plain text on the fog backround with the same animation, no boxes or anything"; "Yes, all of
-   it"): section 2's label type, IBM Plex Mono Medium in capitals, Pearl Whisper, at the quiz's sizes (E-S4-font),
-   decoded in and out by section 3's decode (walk.ts). No panels, no fills, no borders but the focus ring's, no
+   it"): Questrial in capitals since 2026-11-04 (Sam: "change the font over there as well, use any font from this pdf";
+   section 2's label type, IBM Plex Mono Medium, until then), Pearl Whisper, at the quiz's sizes (E-S4-font, amended),
+   decoded in and out by section 3's decode in its proportional mode (walk.ts, the roll drawn over each glyph). No panels, no fills, no borders but the focus ring's, no
    shadows, no blur; the controls are words, underlined as the quiz's links are. The bottom shade under the scene lines
    lives in the carousel's shader, never here (AC10, AC12). On the poster tier (html:not(.hero3d), html.poster, or the
    section's own data-tier=poster after a failed asset) and without JavaScript the scenes' column stands in, on --night. */
 .room {
-  --rm-font: "IBM Plex Mono", ui-monospace, monospace;
+  --rm-font: "Questrial", "Questrial Fallback", sans-serif;
   /* the quiz's type scale (quiz.css --qz-fs and --qz-fs-q; tests/unit/room.test.ts holds the two equal) */
   --rm-fs: clamp(15px, min(calc(0.6rem + 0.95vw), 2.6vh), 22px); --rm-fs-q: clamp(24px, min(calc(1rem + 2.3vw), 5vh), 52px);
   /* the safe area's bottom inset, the place of every line and word along the bottom edge */
   --rm-bottom: calc(var(--inset) + env(safe-area-inset-bottom, 0px));
-  position: relative; z-index: 2; color: var(--pearl-whisper); font: 500 var(--rm-fs) / 1.45 var(--rm-font); text-transform: uppercase; letter-spacing: 0; font-synthesis: none;
+  position: relative; z-index: 2; color: var(--pearl-whisper); font: 400 var(--rm-fs) / 1.45 var(--rm-font); text-transform: uppercase; letter-spacing: 0; font-synthesis: none;
 }
 .room *, .room *::before, .room *::after { box-sizing: border-box; }
 .room .sr-only { text-transform: none; }   /* assistive technology gets the sentence case: Chrome names elements from the rendered text */
 .room .dc { white-space: normal; }
+/* the decode's roll in a proportional face (decode.ts, data-dc="prop", as quiz.css draws it): the face's own glyph keeps its
+   place, unseen, and the rolled glyph is drawn over it, so no line changes width while the glyphs count down */
+.room .dc > span[data-r] { position: relative; color: transparent; }
+.room .dc > span[data-r]::after { content: attr(data-r); position: absolute; top: 0; left: 0; color: var(--pearl-whisper); }
 :where(.room) :where(p, h2, h3, ol) { margin: 0; }
 :where(.room) :where(h2, h3) { font: inherit; }
 /* the track: 4.8 screens in every state (the third wipe, the five scenes at half a screen each, the hold and the fourth

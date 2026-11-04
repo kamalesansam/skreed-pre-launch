@@ -1,0 +1,12 @@
+== SECTION 4 (the scenes' lines in Questrial, Sam 2026-11-04; exception E-S4-font, amended; outside the 120,000 byte cap of the three brand faces)
+fontTools 4.55.3
+source  Questrial-Regular.ttf  184176 bytes  sha256 0ee7f2debabb13773fd38468b31820e11fca202a8f98c4d80b6ffcb796899b6f  googlefonts/questrial v2.000 (OFL 1.1 by its name records 0, 13 and 14), the copy in Sam's label renderer, not fetched
+build.py's build_one: WOFF2, LATIN, FEATS, every name record, no hinting, the notdef outline, the source's head.modified
+file                                         bytes      KB     KiB  sha256
+questrial-400-latin.woff2                    12236    12.2    11.9  b536ded3660ffd81b36d13510b79518388efb78a140e443471fb1267b8f9f712
+line 40,000 bytes: ok (30.6%); written to public/fonts/ and docs/brand/fonts/, byte-identical; the licence questrial-OFL.txt: inter-OFL.txt's OFL 1.1 text under "Copyright 2011 The Questrial Project Authors (https://github.com/googlefonts/questrial)"
+questrial-400-latin.woff2: glyphs 294, upm 1000, x-height 0.500, cap 0.662, useTypo True, typo asc/desc/gap 0.820/-0.210/0.000, digit advances [550], features case,liga,locl,pnum,tnum
+checks: cmap 234 code points, all in LATIN; GSUB case,liga,locl,pnum,tnum; GPOS kern; name IDs 0,1,2,3,4,5,6,7,8,9,11,13,14; italic bits off
+Questrial Fallback 400: size-adjust 98.72%; ascent-override 83.06%; descent-override 21.27%; line-gap-override 0.00%
+clone  /System/Library/Fonts/Supplemental/Arial.ttf, on build.py's SAMPLE (Liberation Sans matches Arial's advance widths by design)
+via python3 -I scripts/fonts/build-questrial.py "<path to Questrial-Regular.ttf>", fontTools and brotli

@@ -114,32 +114,78 @@ let FLUX_FILES: Record<string, string> = {};
 try { FLUX_FILES = import.meta.glob<string>('../assets/room/flux/*', { eager: true, query: '?url', import: 'default' }); } catch { FLUX_FILES = {}; }
 /** the URL of a file in src/assets/room/flux/ by its name, '' where the build did not emit it */
 export const fluxUrl = (name: string): string => Object.entries(FLUX_FILES).find(([k]) => k.endsWith(`/${name}`) || k === name)?.[1] ?? '';
+
+// The two versions of the scenes' backgrounds (docs/specs/section-4-pictures.md; Sam, 2026-11-04: "i want another version
+// of the product pages, where we will be replacing the backround, everything else looks the same ... make sure u keep the
+// old version safely because if i dont like this i might revert back to the older version itself"): 'pictures', his five
+// still backgrounds, one per product, drawn on the planes as each scene's still with no loop; 'loops', the old version,
+// the five looping videos with their first frames as the stills. ROOM_BACKDROP_DEFAULT picks the version; set it to
+// 'loops' to go back. ?scenes=loops or ?scenes=pictures on the address picks one for that visit, so the two can be put
+// side by side on any build. The pictures are committed in src/assets/room/pictures/ (Sam, the same day, asked whether
+// they could go into the public repository: "yes they're fine"), made by scripts/room/prepare-pictures.mjs; a build
+// without them would draw the loops, as under Node.
+export type RoomBackdrop = 'pictures' | 'loops';
+export const ROOM_BACKDROP_DEFAULT: RoomBackdrop = 'pictures';
+let PICTURE_FILES: Record<string, string> = {};
+try { PICTURE_FILES = import.meta.glob<string>('../assets/room/pictures/*.{avif,webp}', { eager: true, query: '?url', import: 'default' }); } catch { PICTURE_FILES = {}; }
+/** the URL of a file in src/assets/room/pictures/ by its name, '' where the build has none */
+const pictureUrl = (name: string): string => Object.entries(PICTURE_FILES).find(([k]) => k.endsWith(`/${name}`) || k === name)?.[1] ?? '';
+/** the version this visit draws: the address's ?scenes= where it names one, else the default; the loops wherever a picture is missing */
+export function roomBackdrop(search: string = typeof location !== 'undefined' ? location.search : ''): RoomBackdrop {
+  const asked = /(?:^|[?&])scenes=(pictures|loops)(?:&|$)/.exec(search)?.[1] as RoomBackdrop | undefined;
+  const want = asked ?? ROOM_BACKDROP_DEFAULT;
+  const ids = ['cove', 'grove', 'ember', 'palace', 'dawn'], have = ids.every((id) => (['wide', 'portrait'] as const).every((c) => pictureUrl(`${id}-${c}.avif`) && pictureUrl(`${id}-${c}.webp`)));
+  return want === 'pictures' && have ? 'pictures' : 'loops';
+}
+export const ROOM_BACKDROP: RoomBackdrop = roomBackdrop();
+/** the loops play in this version (the director makes no loop elements otherwise) */
+export const ROOM_LOOPS = ROOM_BACKDROP === 'loops';
 const files = (id: string): Readonly<Record<SceneClass, SceneFiles>> => {
-  const one = (cls: SceneClass): SceneFiles => Object.freeze({ loop: fluxUrl(`${id}-${cls}.${'mp4'}`), avif: fluxUrl(`${id}-${cls}.avif`), webp: fluxUrl(`${id}-${cls}.webp`) });
+  const one = (cls: SceneClass): SceneFiles => ROOM_LOOPS
+    ? Object.freeze({ loop: fluxUrl(`${id}-${cls}.${'mp4'}`), avif: fluxUrl(`${id}-${cls}.avif`), webp: fluxUrl(`${id}-${cls}.webp`) })
+    : Object.freeze({ loop: '', avif: pictureUrl(`${id}-${cls}.avif`), webp: pictureUrl(`${id}-${cls}.webp`) });
   return Object.freeze({ wide: one('wide'), portrait: one('portrait') });
 };
 /** products.bin's URL (the four meshes, section-4-flux.md 9 X-7) */
 export const PRODUCTS_BIN_URL = fluxUrl('products.bin');
 
-type SceneRow = Omit<RoomScene, 'i' | 'files' | 'basePitch'> & { basePitch?: number };
+/**
+ * What a scene takes in the pictures version in place of the loops' (docs/specs/section-4-pictures.md): the picture's
+ * alt and the logotype's tone over it (scene-tone.mjs --pictures), and the product's shade (Sam, 2026-11-04: "use a color
+ * from the color ffamily that we have for each of the cases of the 3d models which will go good with the backround": a
+ * catalog shade by id that suits the picture) with the key light's tint taken from the picture's own light.
+ */
+export interface PictureLook { readonly alt: string; readonly toneDark: boolean; readonly shade: string; readonly shadeName: string; readonly family: string; readonly hex: string; readonly keyLight: string }
+/** a row: the scene as the loops draw it, and its pictures version's look beside it (the version picks one) */
+type SceneRow = Omit<RoomScene, 'i' | 'files' | 'basePitch'> & { basePitch?: number; picture: PictureLook };
 const SCENE_ROWS: readonly SceneRow[] = [
   { id: 'cove', order: 1, product: 'case', shade: 'vivid-violet-05', shadeName: 'Lilac', family: 'vivid violet', hex: '#c988c8', finish: 'matte', keyLight: '#ffa6c8', baseYaw: 0, toneDark: false,
-    alt: 'A pink rock cove with gold columns under a sunset sky, water rippling across the floor.' },
+    alt: 'A pink rock cove with gold columns under a sunset sky, water rippling across the floor.',
+    picture: { alt: 'A sunlit beige room, window light falling across the wall and the floor, three pebbles by the window.', toneDark: true, shade: 'roaring-red-18', shadeName: 'Terracotta', family: 'roaring red', hex: '#9a3f3d', keyLight: '#ffe2c4' } },
   { id: 'grove', order: 2, product: 'airpods', shade: 'go-green-09', shadeName: 'Sage', family: 'go green', hex: '#96a880', finish: 'gloss', keyLight: '#a8ffe0', baseYaw: 0, basePitch: 0.42, toneDark: false,
-    alt: 'A green forest with a dense rainforest floor, a misty lake and a ring of light.' },
+    alt: 'A green forest with a dense rainforest floor, a misty lake and a ring of light.',
+    picture: { alt: 'A soft pink studio, its pale floor curving away to the wall.', toneDark: true, shade: 'vivid-violet-14', shadeName: 'Mulberry', family: 'vivid violet', hex: '#742665', keyLight: '#ffd6d8' } },
   { id: 'ember', order: 3, product: 'wallet', shade: 'basic-brown-04', shadeName: 'Desert', family: 'basic brown', hex: '#c6a884', finish: 'matte', keyLight: '#ffa171', baseYaw: 0, toneDark: false,
-    alt: 'A red sunset over the sea, a leaning slab and a wet stone floor of flat slabs.' },
+    alt: 'A red sunset over the sea, a leaning slab and a wet stone floor of flat slabs.',
+    picture: { alt: 'A grey studio backdrop, lit in the middle and darker towards its edges.', toneDark: true, shade: 'basic-brown-07', shadeName: 'Cinnamon', family: 'basic brown', hex: '#ba7237', keyLight: '#dfe9f2' } },
   { id: 'palace', order: 4, product: 'lenskin', shade: 'playful-pink-06', shadeName: 'Ballerina', family: 'playful pink', hex: '#efa3af', finish: 'metallic', keyLight: '#ffc9a3', baseYaw: 0.55, basePitch: 0.12, toneDark: false,
-    alt: 'A pink palace with a royal marble floor, statues and lattice screens open to the sea.' },
+    alt: 'A pink palace with a royal marble floor, statues and lattice screens open to the sea.',
+    picture: { alt: 'A pale lilac studio, the wall meeting the floor in a straight line.', toneDark: true, shade: 'vivid-violet-06', shadeName: 'Lavender', family: 'vivid violet', hex: '#986db5', keyLight: '#e4dcff' } },
   { id: 'dawn', order: 5, product: 'airpods-max', shade: 'vivid-violet-04', shadeName: 'Pastel', family: 'vivid violet', hex: '#d7b9ed', finish: 'matte', keyLight: '#cbb0ff', baseYaw: -0.5, basePitch: 0.1, toneDark: false,   // minus: rotation.y turns +x away from the camera, and the Skreed S is on the +x (right) cup
-    alt: 'A lilac dawn through sheer curtains, a starry disc and fog across the floor.' },
+    alt: 'A lilac dawn through sheer curtains, a starry disc and fog across the floor.',
+    picture: { alt: 'An empty sage green room seen straight on, its walls, ceiling and floor in soft light.', toneDark: false, shade: 'playful-pink-03', shadeName: 'Blush', family: 'playful pink', hex: '#f4b6bb', keyLight: '#eef5e0' } },
 ];
 /**
  * The five scenes (section-4-flux.md 3, "The scenes"), in the carousel's order: the room, the product in front with
  * its catalog shade and finish, the key light's tint, the still's alt and the files of both classes. The ids are ours
  * (X-12); the reference's names never reach src/ (scripts/room/guards.mjs).
  */
-export const ROOM_SCENES: readonly RoomScene[] = Object.freeze(SCENE_ROWS.map((r, i) => Object.freeze({ ...r, basePitch: r.basePitch ?? 0, i, files: files(r.id) })));
+export const ROOM_SCENES: readonly RoomScene[] = Object.freeze(SCENE_ROWS.map(({ picture, ...r }, i) => Object.freeze({
+  ...r, basePitch: r.basePitch ?? 0, i, files: files(r.id),
+  ...(ROOM_LOOPS ? {} : picture),
+})));
+/** the pictures version's look per scene, whichever version this visit draws (scene-tone.mjs --pictures checks the tones, room.test.ts the shades) */
+export const PICTURE_ROWS: readonly (PictureLook & { readonly id: RoomScene['id'] })[] = Object.freeze(SCENE_ROWS.map((r) => Object.freeze({ id: r.id, ...r.picture })));
 export const SCENE_COUNT = ROOM_SCENES.length;
 if (SCENE_COUNT !== MAP_SCENE_COUNT) throw new Error('config/room: ROOM_SCENES and room-map.ts disagree on the scene count');
 /** a scene's shade line, "Lilac, vivid violet" (spec 3, "Each scene's four lines") */
