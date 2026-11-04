@@ -16,6 +16,7 @@ import { createArgument } from './argument.ts';
 import { backFade, backTimer } from './back.ts';
 import { landClear } from './cue.ts';
 import { WIDE_MQ, activeBeat, scrollClasses, skeletonPolys, solve, type Dims } from './three/pose.ts';
+import { createCaseSteps } from './steps.ts';
 
 interface PageData { slug: string; name: string; first: number; key: number; has3d: boolean; size3d: string | null; names: string[]; dims: Dims }
 
@@ -340,9 +341,14 @@ function onScroll(): void {
 addEventListener('scroll', onScroll, { passive: true });
 addEventListener('resize', onScroll);
 onScroll();
+// ---- the case types' steps (steps.ts; docs/specs/family-page.md 26; Sam, 2026-11-04): one gesture, one case type, on
+// the 3D tier (steps.ts reads html.m3d at each decision, so "Show in 3D" from swatch grid mode brings them); the beat nav
+// rides there too, and scrolls the beat in as before where the steps are off (swatch grid mode)
+const steps = createCaseSteps({ reduced });
 $('beatnav')?.addEventListener('click', (e) => {
   const b = (e.target as Element).closest('button[data-beat]') as HTMLButtonElement | null;
   if (!b) return;
+  if (H.classList.contains('m3d') && !H.classList.contains('grid')) { steps.go(Number(b.dataset.beat) - 1); return; }   // refused while a ride or its cooldown runs, as any gesture
   document.getElementById(`beat-${b.dataset.beat}`)?.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' });
 });
 
@@ -403,4 +409,4 @@ stateEl.querySelectorAll<HTMLButtonElement>('[data-line] button').forEach((b) =>
 if (H.classList.contains('grid')) track('stage_mode', { mode: 'grid', reason: H.dataset.why ?? '' });
 
 // test and staging builds read the store through this hook; production never defines it
-if (import.meta.env.PUBLIC_HERO_HOOKS === '1') w.__fam = { get: () => ({ sel, finish, shade: nnn(sel), sv }), select: (i: number) => select(i, 'key'), smoke: () => smoke?.stats(), argument: () => ({ shown: argument?.shown(), laid: argument?.laid() }), back: () => ({ since: backSince, shown: backShown }) };
+if (import.meta.env.PUBLIC_HERO_HOOKS === '1') w.__fam = { get: () => ({ sel, finish, shade: nnn(sel), sv }), select: (i: number) => select(i, 'key'), smoke: () => smoke?.stats(), argument: () => ({ shown: argument?.shown(), laid: argument?.laid() }), back: () => ({ since: backSince, shown: backShown }), steps: () => steps.state() };
