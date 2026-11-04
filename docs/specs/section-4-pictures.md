@@ -24,6 +24,24 @@ Every line of section 4 is set in Questrial, in capitals at the same sizes as be
 
 His pictures, by scene: cove (the phone case, Lilac) "for Lilac phonecase", the sunlit beige room; grove (the AirPods case, Sage) "For Airpod case", the pink studio; ember (the MagSafe wallet, Desert) "For Magsafe wallet", the grey studio; palace (the Lenskin, Ballerina) "for lenskin", the lilac studio; dawn (the AirPods Max case, Pastel) "For airpod max", the green room.
 
+### The products' shades over the pictures
+
+Sam, the same day: "use a color from the color ffamily that we have for each of the cases of the 3d models which will go good with the backround". In the pictures version each product wears a catalog shade chosen for its picture, and the key light takes its tint from the picture's own light (`PICTURE_ROWS` in `src/config/room.ts`; the loops version keeps its shades and tints):
+
+| Scene | Picture | Product | Shade (was) | Key light |
+|---|---|---|---|---|
+| 1 cove | the sunlit beige room | phone case, matte | Terracotta, roaring red, `roaring-red-18` (Lilac) | #ffe2c4 |
+| 2 grove | the pink studio | AirPods case, gloss | Mulberry, vivid violet, `vivid-violet-14` (Sage) | #ffd6d8 |
+| 3 ember | the blue-grey studio | MagSafe wallet, matte | Cinnamon, basic brown, `basic-brown-07` (Desert) | #dfe9f2 |
+| 4 palace | the lilac studio | Lenskin, metallic | Lavender, vivid violet, `vivid-violet-06` (Ballerina) | #e4dcff |
+| 5 dawn | the sage green room | AirPods Max case, matte | Blush, playful pink, `playful-pink-03` (Pastel) | #eef5e0 |
+
+Amethyst was tried on the Lenskin first and read electric under the metallic finish, so Lavender, its softer neighbour, took its place. The shade lines under each product name follow the shade.
+
+### The AirPods inside the AirPods case
+
+Sam: "idk why the airpods inside the airpods case dissappeared lol". They are not in the model the site ships: `scripts/room/products.py` cut Apple's charging case and earbuds out on 2026-10-16 under the rule "the case only, never the device", so `airpods.6fe7a22f.glb` holds only the lid, the shell and the Skreed S. E-S4-device (2026-10-26) lets the device back in, and `scripts/room/products-full.py` keeps it, but it needs the AirPods case FBX of 2026-10-16, which is not on this Mac (searched 2026-11-04: Downloads holds only order CSVs for AirPods; section-4-flux.md item 16). With the file in Downloads, `products-full.py airpods`, `pack.mjs` and `products-bin.mjs` bring the earbuds back in both versions.
+
 Everything else is as it was: the carousel's step, the arc, the pinch, the lights going down and up, the product's turn and its cursor tilt, the bottom shade, the lines, the words and the glue. In the pictures version the director makes no video elements, so no loop is fetched.
 
 ### Switching
@@ -53,6 +71,7 @@ Pearl Whisper lines over the pictures with the bottom shade as it is (`scripts/r
 
 ## 4. Still for Sam
 
-1. Whether he likes the pictures version, or wants the loops back (one line).
+1. Whether he likes the pictures version and its five shades, or wants the loops back (one line).
 2. The contrast above: darken the bottom shade, or keep the look.
 3. Whether the pictures may be committed (are they his to publish in a public repository?). Until he says, they stay git-ignored and each building machine runs the prepare script.
+4. The AirPods case FBX of 2026-10-16, so the earbuds come back.

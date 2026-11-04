@@ -341,7 +341,17 @@ test("the two versions of the scenes' backgrounds (Sam, 2026-11-04; docs/specs/s
   // at 3.11 to 7.73:1 over the first four (ember's worst 2.93:1, flagged, Pearl's 2.15) and Pearl at 5.08 to 5.72:1 over the green room
   assert.deepEqual(ROOM.PICTURE_ROWS.map((r) => r.id), ROOM_SCENES.map((s) => s.id));
   assert.deepEqual(ROOM.PICTURE_ROWS.map((r) => r.toneDark), [true, true, true, true, false]);
+  // the products' shades over the pictures (Sam, 2026-11-04: "use a color from the color ffamily that we have for each of
+  // the cases of the 3d models which will go good with the backround"): catalog shades by id, with the catalog's hex and name
+  assert.deepEqual(ROOM.PICTURE_ROWS.map((r) => r.shade), ['roaring-red-18', 'vivid-violet-14', 'basic-brown-07', 'vivid-violet-06', 'playful-pink-03']);
+  const catalog = new Map(SHADES.map((c) => [c.id, c]));
   for (const r of ROOM.PICTURE_ROWS) {
+    const c = catalog.get(r.shade);
+    assert.ok(c, r.shade);
+    assert.equal(r.hex.toLowerCase(), c!.hex.toLowerCase(), `${r.id}: the shade's hex is the catalog's`);
+    assert.equal(r.shadeName, c!.name, `${r.id}: the shade's name is the catalog's`);
+    assert.equal(r.family, c!.family.replace(/-/g, ' '), `${r.id}: the family in lower case words`);
+    assert.match(r.keyLight, /^#[0-9a-f]{6}$/, `${r.id}: the key light's tint`);
     assert.match(r.alt, /^[A-Z][^.]+\.$/, `${r.id}: one sentence`);
     assert.doesNotMatch(r.alt, /\b(case|wallet|lenskin|airpods|phone)\b/i, `${r.id}: no product in the picture`);
   }

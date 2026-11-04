@@ -148,36 +148,43 @@ const files = (id: string): Readonly<Record<SceneClass, SceneFiles>> => {
 /** products.bin's URL (the four meshes, section-4-flux.md 9 X-7) */
 export const PRODUCTS_BIN_URL = fluxUrl('products.bin');
 
-/** a row: the scene with the pictures' own alt and logotype tone beside the loops' (the version picks one of each) */
-type SceneRow = Omit<RoomScene, 'i' | 'files' | 'basePitch'> & { basePitch?: number; pictureAlt: string; pictureToneDark: boolean };
+/**
+ * What a scene takes in the pictures version in place of the loops' (docs/specs/section-4-pictures.md): the picture's
+ * alt and the logotype's tone over it (scene-tone.mjs --pictures), and the product's shade (Sam, 2026-11-04: "use a color
+ * from the color ffamily that we have for each of the cases of the 3d models which will go good with the backround": a
+ * catalog shade by id that suits the picture) with the key light's tint taken from the picture's own light.
+ */
+export interface PictureLook { readonly alt: string; readonly toneDark: boolean; readonly shade: string; readonly shadeName: string; readonly family: string; readonly hex: string; readonly keyLight: string }
+/** a row: the scene as the loops draw it, and its pictures version's look beside it (the version picks one) */
+type SceneRow = Omit<RoomScene, 'i' | 'files' | 'basePitch'> & { basePitch?: number; picture: PictureLook };
 const SCENE_ROWS: readonly SceneRow[] = [
   { id: 'cove', order: 1, product: 'case', shade: 'vivid-violet-05', shadeName: 'Lilac', family: 'vivid violet', hex: '#c988c8', finish: 'matte', keyLight: '#ffa6c8', baseYaw: 0, toneDark: false,
     alt: 'A pink rock cove with gold columns under a sunset sky, water rippling across the floor.',
-    pictureAlt: 'A sunlit beige room, window light falling across the wall and the floor, three pebbles by the window.', pictureToneDark: true },
+    picture: { alt: 'A sunlit beige room, window light falling across the wall and the floor, three pebbles by the window.', toneDark: true, shade: 'roaring-red-18', shadeName: 'Terracotta', family: 'roaring red', hex: '#9a3f3d', keyLight: '#ffe2c4' } },
   { id: 'grove', order: 2, product: 'airpods', shade: 'go-green-09', shadeName: 'Sage', family: 'go green', hex: '#96a880', finish: 'gloss', keyLight: '#a8ffe0', baseYaw: 0, basePitch: 0.42, toneDark: false,
     alt: 'A green forest with a dense rainforest floor, a misty lake and a ring of light.',
-    pictureAlt: 'A soft pink studio, its pale floor curving away to the wall.', pictureToneDark: true },
+    picture: { alt: 'A soft pink studio, its pale floor curving away to the wall.', toneDark: true, shade: 'vivid-violet-14', shadeName: 'Mulberry', family: 'vivid violet', hex: '#742665', keyLight: '#ffd6d8' } },
   { id: 'ember', order: 3, product: 'wallet', shade: 'basic-brown-04', shadeName: 'Desert', family: 'basic brown', hex: '#c6a884', finish: 'matte', keyLight: '#ffa171', baseYaw: 0, toneDark: false,
     alt: 'A red sunset over the sea, a leaning slab and a wet stone floor of flat slabs.',
-    pictureAlt: 'A grey studio backdrop, lit in the middle and darker towards its edges.', pictureToneDark: true },
+    picture: { alt: 'A grey studio backdrop, lit in the middle and darker towards its edges.', toneDark: true, shade: 'basic-brown-07', shadeName: 'Cinnamon', family: 'basic brown', hex: '#ba7237', keyLight: '#dfe9f2' } },
   { id: 'palace', order: 4, product: 'lenskin', shade: 'playful-pink-06', shadeName: 'Ballerina', family: 'playful pink', hex: '#efa3af', finish: 'metallic', keyLight: '#ffc9a3', baseYaw: 0.55, basePitch: 0.12, toneDark: false,
     alt: 'A pink palace with a royal marble floor, statues and lattice screens open to the sea.',
-    pictureAlt: 'A pale lilac studio, the wall meeting the floor in a straight line.', pictureToneDark: true },
+    picture: { alt: 'A pale lilac studio, the wall meeting the floor in a straight line.', toneDark: true, shade: 'vivid-violet-06', shadeName: 'Lavender', family: 'vivid violet', hex: '#986db5', keyLight: '#e4dcff' } },
   { id: 'dawn', order: 5, product: 'airpods-max', shade: 'vivid-violet-04', shadeName: 'Pastel', family: 'vivid violet', hex: '#d7b9ed', finish: 'matte', keyLight: '#cbb0ff', baseYaw: -0.5, basePitch: 0.1, toneDark: false,   // minus: rotation.y turns +x away from the camera, and the Skreed S is on the +x (right) cup
     alt: 'A lilac dawn through sheer curtains, a starry disc and fog across the floor.',
-    pictureAlt: 'An empty sage green room seen straight on, its walls, ceiling and floor in soft light.', pictureToneDark: false },
+    picture: { alt: 'An empty sage green room seen straight on, its walls, ceiling and floor in soft light.', toneDark: false, shade: 'playful-pink-03', shadeName: 'Blush', family: 'playful pink', hex: '#f4b6bb', keyLight: '#eef5e0' } },
 ];
 /**
  * The five scenes (section-4-flux.md 3, "The scenes"), in the carousel's order: the room, the product in front with
  * its catalog shade and finish, the key light's tint, the still's alt and the files of both classes. The ids are ours
  * (X-12); the reference's names never reach src/ (scripts/room/guards.mjs).
  */
-export const ROOM_SCENES: readonly RoomScene[] = Object.freeze(SCENE_ROWS.map(({ pictureAlt, pictureToneDark, ...r }, i) => Object.freeze({
+export const ROOM_SCENES: readonly RoomScene[] = Object.freeze(SCENE_ROWS.map(({ picture, ...r }, i) => Object.freeze({
   ...r, basePitch: r.basePitch ?? 0, i, files: files(r.id),
-  ...(ROOM_LOOPS ? {} : { alt: pictureAlt, toneDark: pictureToneDark }),
+  ...(ROOM_LOOPS ? {} : picture),
 })));
-/** the pictures' alt and logotype tone per scene, whichever version this visit draws (scripts/room/scene-tone.mjs --pictures checks the tones) */
-export const PICTURE_ROWS: readonly { readonly id: RoomScene['id']; readonly alt: string; readonly toneDark: boolean }[] = Object.freeze(SCENE_ROWS.map((r) => Object.freeze({ id: r.id, alt: r.pictureAlt, toneDark: r.pictureToneDark })));
+/** the pictures version's look per scene, whichever version this visit draws (scene-tone.mjs --pictures checks the tones, room.test.ts the shades) */
+export const PICTURE_ROWS: readonly (PictureLook & { readonly id: RoomScene['id'] })[] = Object.freeze(SCENE_ROWS.map((r) => Object.freeze({ id: r.id, ...r.picture })));
 export const SCENE_COUNT = ROOM_SCENES.length;
 if (SCENE_COUNT !== MAP_SCENE_COUNT) throw new Error('config/room: ROOM_SCENES and room-map.ts disagree on the scene count');
 /** a scene's shade line, "Lilac, vivid violet" (spec 3, "Each scene's four lines") */
