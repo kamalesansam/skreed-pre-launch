@@ -16,7 +16,7 @@
 // and touch listeners exist only while the carousel is in range. (3) The key steps (docs/specs/scroll-steps.md 4; Sam,
 // 2026-11-04): out of the carousel's range, or at its edges, ArrowDown, PageDown and Space ride the page to the next of
 // its rests (the hero, the gems, the quiz, scene 1, scene 5, section 5) and ArrowUp, PageUp and Shift+Space to the one
-// before, one rest a keydown, on --ease-standard over a length that grows with the distance (KEY_RIDE), the step keys
+// before, one rest a keydown, on --ease-standard over a length that grows with the distance (KEY_RIDE; the hero's on to the gems 1.4 times as long), the step keys
 // swallowed while it rides and for its cooldown, the ride ended by a wheel, a touch or a press; with no rest that way the
 // key is the browser's. The wheel and the touch stay the page's own out of the carousel. No wrap from the top since
 // 2026-11-04 (Sam: "i cant go to the bottom of the site from the top section, remove that trick"). The adapter is the one
@@ -132,8 +132,9 @@ export function createPageScroll(o: PageScrollOptions): PageScroll {
     };
     frame();
   };
-  /** a key step: the page ridden from where it is to the rest, its length by the distance (KEY_RIDE) */
-  const ride = (from: number, to: number) => { cancelSettle(); riding = true; settle(from, to, keyRideMs(to - from, innerHeight)); };
+  /** a key step: the page ridden from where it is to the rest, its length by the distance (KEY_RIDE), and slower on from
+   *  the hero to the gems (first: KEY_RIDE.firstSlow) */
+  const ride = (from: number, to: number, first = false) => { cancelSettle(); riding = true; settle(from, to, keyRideMs(to - from, innerHeight, first)); };
   /** a ride runs, or its cooldown: the step keys are swallowed */
   const stepping = () => riding || now() - rideEnd < KEY_RIDE.cooldownMs;
 
@@ -282,10 +283,10 @@ export function createPageScroll(o: PageScrollOptions): PageScroll {
         if (!room.edge(d)) { e.preventDefault(); if (!e.repeat) room.step(d); return; }   // one step per keydown
       }
       if (stepping()) { e.preventDefault(); return; }         // a ride or its cooldown: swallowed
-      const y = scrollY, to = o.stops ? nextStop(y, o.stops(), d) : null;
+      const y = scrollY, stops = o.stops?.() ?? [], to = o.stops ? nextStop(y, stops, d) : null;
       if (to !== null) {
         e.preventDefault();
-        if (!e.repeat) ride(y, to);                             // one rest per keydown
+        if (!e.repeat) ride(y, to, d > 0 && to === stops[1]);   // one rest per keydown; the hero's on to the gems the slower
         return;
       }
     }

@@ -192,11 +192,16 @@ export const keyStep = (e: KeyLike): 1 | -1 | null => (e.repeat ? null : keyDir(
 /**
  * A key step's ride from one rest to the next: its length grows with the distance (msPerScreen a screen), between minMs
  * and maxMs, so the long road from the hero to the gems plays its pull-back, wipe and cascade at a pace a visitor can
- * follow; the cooldown after it swallows the step keys, as a carousel step's does.
+ * follow; the cooldown after it swallows the step keys, as a carousel step's does. The ride on from the hero to the gems
+ * is the same scroll played firstSlow times as long (Sam, 2026-11-04: "for the first section to second section alone,
+ * when the down arrow key is pressed, just make sure that its scrolling only but a little slower than the scroll to the
+ * otehr sections, because the transition and everything is in place"): any ride down that ends on the gems, from the
+ * hero or from partway along the road, the factor applied after the clamp (2160 ms becomes 3024 ms at any height; a ride
+ * at the floor 980 ms).
  */
-export const KEY_RIDE = { msPerScreen: 450, minMs: 700, maxMs: 2400, cooldownMs: 150 } as const;
-export const keyRideMs = (px: number, vh: number): number =>
-  Math.round(Math.max(KEY_RIDE.minMs, Math.min(KEY_RIDE.maxMs, (Math.abs(px) / Math.max(1, vh)) * KEY_RIDE.msPerScreen)));
+export const KEY_RIDE = { msPerScreen: 450, minMs: 700, maxMs: 2400, cooldownMs: 150, firstSlow: 1.4 } as const;
+export const keyRideMs = (px: number, vh: number, first = false): number =>
+  Math.round(Math.max(KEY_RIDE.minMs, Math.min(KEY_RIDE.maxMs, (Math.abs(px) / Math.max(1, vh)) * KEY_RIDE.msPerScreen)) * (first ? KEY_RIDE.firstSlow : 1));
 
 /**
  * The rest a step key takes the page to from y: the nearest rest beyond the dead band in the key's direction (a page that

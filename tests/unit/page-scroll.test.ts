@@ -517,10 +517,12 @@ test("scroll.ts: the arrival with no scroll event (the quiz's ride lands on scen
 // ---- the key steps between the page's rests (docs/specs/scroll-steps.md 4; Sam, 2026-11-04)
 
 test('the key ride: 450 ms a screen between 700 ms and 2.4 s, a 150 ms cooldown; the next rest beyond the dead band each way, NaN skipped, none past the ends', () => {
-  assert.deepEqual(KEY_RIDE, { msPerScreen: 450, minMs: 700, maxMs: 2400, cooldownMs: 150 });
+  assert.deepEqual(KEY_RIDE, { msPerScreen: 450, minMs: 700, maxMs: 2400, cooldownMs: 150, firstSlow: 1.4 });
   assert.equal(keyRideMs(844, 844), 700, 'one screen: the floor');
   assert.equal(keyRideMs(-2 * 844, 844), 900, 'either way, by the distance');
   assert.equal(keyRideMs(4.8 * 745, 745), 2160, 'the hero to the gems at 745 high');
+  assert.equal(keyRideMs(4.8 * 745, 745, true), 3024, 'and on from the hero by ArrowDown, 1.4 times as long (Sam, 2026-11-04)');
+  assert.equal(keyRideMs(844, 844, true), 980, 'the slowing after the floor');
   assert.equal(keyRideMs(20 * 844, 844), 2400, 'the ceiling');
   const stops = [0, 3576, 6330, 8018, 9706, NaN];
   assert.equal(nextStop(0, stops, 1), 3576);
@@ -549,6 +551,8 @@ test('scroll.ts: one key one rest; the ride runs on its own clock, the step keys
     assert.equal(page.key('ArrowDown', { repeat: true }), true, 'a held key is swallowed');
     assert.equal(page.key('PageDown'), true, 'and a second key during the ride');
     page.tick(keyRideMs(3576, 844)); await settleFrames();
+    assert.ok(page.y < 3576, `the hero's ride on to the gems the slower: still under way at the other rides' length (${page.y})`);
+    page.tick(keyRideMs(3576, 844, true) - keyRideMs(3576, 844)); await settleFrames();
     assert.equal(page.y, 3576, 'landed on the gems');
     assert.equal(ps.state().riding, false);
     assert.equal(page.key(' '), true, 'Space in the cooldown: swallowed');
