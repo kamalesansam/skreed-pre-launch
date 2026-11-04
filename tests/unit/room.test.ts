@@ -268,11 +268,14 @@ test('the DOM (section-4-flux.md 5, section-4-no-hall.md 5): the pad, the loadin
 
 test('copy: sentence case, no em or en dash, no emoji, no banned words (CLAUDE.md 3, 4, 16, 17); the ids of section 3', () => {
   const lines = [...Object.values(ROOM_COPY), ...ROOM_PRODUCTS.flatMap((p) => [p.name, p.line]), ...ROOM_SCENES.flatMap((s) => [s.alt, s.shadeName, s.family, shadeLine(s)])];
-  assert.doesNotMatch(read('src/config/room.ts'), /\b(seamless|seamlessly|elevate)\b/i, 'room.ts carries none of rule 17\'s words');
+  // Sam's AirPods Max line of 2026-11-04 keeps his "seamless" on his word (an exception to rule 17); every other line carries none of rule 17's words
+  const samLine = productById('airpods-max').line;
+  assert.equal(samLine, 'Durable hard-shell design for AirPods Max, designed for a seamless fit.', 'the AirPods Max line is Sam\'s, word for word');
+  assert.doesNotMatch(read('src/config/room.ts').replace(samLine, ''), /\b(seamless|seamlessly|elevate)\b/i, 'room.ts carries none of rule 17\'s words outside Sam\'s line');
   for (const s of lines) {
     assert.doesNotMatch(s, /[\u2013\u2014]/, s);
     assert.doesNotMatch(s, /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u, s);
-    assert.doesNotMatch(s, /\b(seamless|seamlessly|elevate|unleash|next-level|revolutionary)\b/i, s);
+    assert.doesNotMatch(s, s === samLine ? /\b(seamlessly|elevate|unleash|next-level|revolutionary)\b/i : /\b(seamless|seamlessly|elevate|unleash|next-level|revolutionary)\b/i, s);
     if (s.length > 1) assert.notEqual(s, s.toUpperCase(), `all caps: ${s}`);
   }
   for (const k of ['aria', 'loading', 'still', 'clipBlocked', 'worldAria', 'sceneHintTouch', 'sceneHintWheel', 'sceneHintKeys', 'loadingScene', 'next', 'prev', 'pause', 'play', 'scenesTitle', 'scenesAria', 'sceneLive', 'count']) assert.ok(k in ROOM_COPY, k);

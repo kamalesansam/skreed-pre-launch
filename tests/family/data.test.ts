@@ -111,7 +111,9 @@ test('copy: sentence case strings with no em dash, no emoji, real names; the fou
     assert.doesNotMatch(s, /seamless|elevate|unleash|next-level|revolutionary/i);
   }
   assert.deepEqual(BEATS.map((b) => b.name), ['Tough', 'MagTough', 'Snap', 'Armor']);
-  for (const b of BEATS) { assert.doesNotMatch(b.copy, /\u2014|\u2013|seamless|elevate|unleash/i); assert.ok(b.copy.length > 40 && b.copy.length < 200, b.name); }
+  // Sam's descriptions of 2026-11-04, word for word; MagTough keeps his "seamless" on his word (an exception to rule 17)
+  for (const b of BEATS) { assert.doesNotMatch(b.copy, b.name === 'MagTough' ? /\u2014|\u2013|elevate|unleash/i : /\u2014|\u2013|seamless|elevate|unleash/i); assert.ok(b.copy.length > 40 && b.copy.length < 200, b.name); }
+  assert.equal(BEATS[2].copy, 'Thin, lightweight, and sleek for everyday protection against scratches and minor drops.', 'Snap, Sam\'s words');
   assert.deepEqual(ARGUMENT.rows, ['GO', 'BEYOND BASIC']);
   assert.equal(FAM_COPY.allFamilies, 'All families');
   assert.equal(FAM_COPY.backHome, 'Back to main page');   // round 4 (section 22): Sam's words in sentence case

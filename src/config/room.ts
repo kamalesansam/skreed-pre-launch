@@ -58,8 +58,8 @@ export const ROOM_PRODUCTS: readonly RoomProduct[] = Object.freeze([
   { id: 'wallet', name: 'MagSafe wallet', line: 'Sleek and secure MagSafe-compatible phone wallet for convenient card storage without the bulk. Available in 240 shades. Matte, gloss, metallic matte or metallic gloss.' },
   { id: 'lenskin', name: 'Lenskin', line: "Sleek metal accent for the latest iPhone's camera lens area, designed to personalize your look. Available in a range of contrasting solid shades and patterns. Matte, metallic matte or metallic gloss." },
   { id: 'airpods', name: 'AirPods case', line: 'Durable polycarbonate case with a sleek profile and precise cut-outs for charging. Includes a carabiner ring for easy attachment to bags. Available in 240 shades. Matte or gloss.' },
-  // Sam's AirPods Max model (2026-10-26); the catalog names AirPods Max among the AirPods cases (page 13) and gives it no line of its own, so this one is the range's sentence and the AirPods case page's availability, pending his words (section-4-flux.md 11)
-  { id: 'airpods-max', name: 'AirPods Max case', line: 'Our AirPods case range covers AirPods Max too. Available in 240 shades. Matte or gloss.' },
+  // Sam's AirPods Max model (2026-10-26); the line is his description of 2026-11-04, word for word, rule 17's word kept on his word (CLAUDE.md, the product descriptions)
+  { id: 'airpods-max', name: 'AirPods Max case', line: 'Durable hard-shell design for AirPods Max, designed for a seamless fit.' },
 ]);
 /** a product by id */
 export const productById = (id: ProductId): RoomProduct => ROOM_PRODUCTS.find((p) => p.id === id)!;
