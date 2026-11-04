@@ -157,12 +157,13 @@ export async function createStage(o: StageOptions) {
     };
     // a front set: the matte, the trim (a physical twin of the plain trim, so the band's clearcoat has a path) and the
     // logo now; the gloss pair once the tier is known (glossSet)
-    const frontSet = (tint: number): FrontSet => {
+    // trim: the trim's specular, a plastic's (1), and its colour, the file's accent, unless a type asks otherwise (TRIM_OF)
+    const frontSet = (tint: number, trim: { specular: number; scale: number } = { specular: 1, scale: 1 }): FrontSet => {
       const side = createSideUniforms();
       return {
         side,
         matte: withTakeover(new MeshPhysicalMaterial({ color: 0xffffff, roughness: CAL.matte.roughness, metalness: 0, specularIntensity: CAL.matte.specularIntensity }), run, side),
-        trim: withTakeover(new MeshPhysicalMaterial({ color: new Color(accentColor[0], accentColor[1], accentColor[2]), roughness: CAL.trim.roughness, metalness: 0, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }), run, side),
+        trim: withTakeover(new MeshPhysicalMaterial({ color: new Color(accentColor[0] * trim.scale, accentColor[1] * trim.scale, accentColor[2] * trim.scale), roughness: CAL.trim.roughness, metalness: 0, specularIntensity: trim.specular, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }), run, side),
         logoMatte: withTakeover(new MeshPhysicalMaterial({ color: new Color(tint, tint, tint), roughness: CAL.matte.roughness, metalness: 0, specularIntensity: CAL.matte.specularIntensity, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }), run, side),
         gloss: null, logoGloss: null,
       };
@@ -417,7 +418,7 @@ export async function createStage(o: StageOptions) {
     resize();
 
     // the motion state (one store; the page's HUD follows round(target))
-    const st = { sv: 0, svT: 0, s: 0, target: 0, G: 0, Gt: 1, tilt: { yaw: 0, pitch: 0 }, tiltT: { yaw: 0, pitch: 0 }, turn: null as null | { t0: number; side: 1 | -1 }, drag: null as null | { s0: number; x0: number }, input: 'deeplink' as Input, lastFollow: 0, followT: 0 };
+    const st = { tight: false, sv: 0, svT: 0, s: 0, target: 0, G: 0, Gt: 1, tilt: { yaw: 0, pitch: 0 }, tiltT: { yaw: 0, pitch: 0 }, turn: null as null | { t0: number; side: 1 | -1 }, drag: null as null | { s0: number; x0: number }, input: 'deeplink' as Input, lastFollow: 0, followT: 0 };
     let running = false, visible = true, raf = 0, lastT = 0, tail = 0, live = false, losses = 0, disposed = false, dirty = 0, renders = 0;
     let detail: StageState['detail'] = 'none';
     const frameMs: number[] = [];
@@ -440,7 +441,10 @@ export async function createStage(o: StageOptions) {
         st.tilt.yaw += (st.tiltT.yaw - st.tilt.yaw) * k;
         st.tilt.pitch += (st.tiltT.pitch - st.tilt.pitch) * k;
       }
-      st.sv += (st.svT - st.sv) * (instant() ? 1 : 1 - Math.exp(-10 * dt)); if (Math.abs(st.svT - st.sv) < 1e-3) st.sv = st.svT;
+      // the lag: 10 per second, or 60 while a case type's step rides the scroll (steps.ts: the ride already paces the
+      // wave, and the lag at 10 had held the band back about 0.3 s after the lead; Sam, 2026-11-04: "the wait time for the
+      // wave to happen after scroll trigger is long")
+      st.sv += (st.svT - st.sv) * (instant() ? 1 : 1 - Math.exp(-(st.tight ? 60 : 10) * dt)); if (Math.abs(st.svT - st.sv) < 1e-3) st.sv = st.svT;
       if (!st.drag && Math.abs(st.target - st.s) < 0.0005) st.s = st.target;
       if (Math.abs(st.Gt - st.G) < 0.0005) st.G = st.Gt;
       let turnYaw = 0;
@@ -614,9 +618,14 @@ export async function createStage(o: StageOptions) {
     // a type model at the selected slot (section 24 D1, D2): its parts on its own front set, hidden until it is in front
     // or in a run; the gloss pair once the tier is known
     let tierKnown = false;
+    // the Armor's trim is its whole camera plate, broad and flat and square to the profile light, which read the trim's dark
+    // grey as a light silver there: a darker albedo and the matte's specular keep it the charcoal of Sam's render
+    // (2026-11-04: "the armour case is supposed to look like how it is in the attached image"); the Tough's and the
+    // MagTough's trims (a thin ring and the liner) keep theirs
+    const TRIM_OF: Partial<Record<TypeCase, { specular: number; scale: number }>> = { armor: { specular: CAL.matte.specularIntensity, scale: 0.15 } };
     const tintOf = (parts: readonly CasePart[]) => parts.find((p) => p.name === 'logo')?.tint ?? logoTint;
     const addModel = (type: TypeCase, asset: CaseAsset, ready: boolean) => {
-      const parts = asset.lods[1], set = frontSet(tintOf(parts));
+      const parts = asset.lods[1], set = frontSet(tintOf(parts), TRIM_OF[type]);
       if (tierKnown) glossSet(set, tintOf(parts));
       sets.set(type, set);
       const draws = parts.map((p) => { const m = IM(p.geometry, frontMat(set, p, finish), 1, `${p.name}.${type}`); m.visible = false; return { part: p, mesh: m }; });
@@ -726,7 +735,7 @@ export async function createStage(o: StageOptions) {
       live: () => live && running,
       goTo,
       setTarget: (i: number, instantMove: boolean) => goTo(i, 'key', instantMove),
-      scroll(v: number) { st.svT = Math.max(0, v); kick(); },
+      scroll(v: number, tight = false) { st.svT = Math.max(0, v); st.tight = tight; kick(); },
       snapScroll(v: number) { st.sv = st.svT = Math.max(0, v); dirty++; update(st.s, st.G, null, null); renderNow(); kick(); },
       setFinish(f: Finish) { applyFinish(f); if (!instant()) st.turn = { t0: performance.now(), side: 1 }; kick(); },
       setDetail,

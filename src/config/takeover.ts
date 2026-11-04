@@ -85,3 +85,9 @@ export function easeTakeover(t: number): number {
   const x = Math.min(1, Math.max(0, t));
   return x < 0.5 ? 4 * x * x * x : 1 - (2 - 2 * x) ** 3 / 2;
 }
+
+/** easeTakeover's inverse: the raw progress at which the eased one is e (a family page's step drives the band at an even pace by it) */
+export function easeTakeoverInverse(e: number): number {
+  const y = Math.min(1, Math.max(0, e));
+  return y < 0.5 ? Math.cbrt(y / 4) : 1 - Math.cbrt(2 * (1 - y)) / 2;
+}

@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { CASE_REST, CASE_TYPES, CFG, DIMS_DEFAULT, HANDOVERS, SV, SWEEP_LEN, TURNS, TURN_LEN, activeBeat, beatPose, caseBox, caseTargetAt, poseOf, turnEnd, profileLightOffset, project, scrollClasses, skeletonPolys, solve, xform } from '../../src/scripts/family/three/pose.ts';
+import { CASE_REST, CASE_TYPES, CFG, RZ, WAVE_EDGES, rollShare, DIMS_DEFAULT, HANDOVERS, SV, SWEEP_LEN, TURNS, TURN_LEN, activeBeat, beatPose, caseBox, caseTargetAt, poseOf, turnEnd, profileLightOffset, project, scrollClasses, skeletonPolys, solve, xform } from '../../src/scripts/family/three/pose.ts';
 
 const manifest = JSON.parse(readFileSync(new URL('../../src/data/case-model.json', import.meta.url), 'utf8'));
 const [mw, mh, md] = manifest.sizeMm as number[];
@@ -68,16 +68,18 @@ test('the scroll map: nothing but the chrome on the landing screen, no beat text
   assert.equal(activeBeat(1.5), 'z');
   assert.equal(activeBeat(1.7), '1');
   assert.equal(activeBeat(2.5), '1');
-  // each next type's text at its hand-over, where the sweep starts (section 24 D14): never during the whole turn before it
-  assert.equal(activeBeat(2.79), '1');
-  assert.equal(activeBeat(2.8), '2');
+  // each next type's text at its sweep's half, as the wave's band crosses the case's middle (2026-11-04; at the hand-over before)
+  assert.equal(activeBeat(2.89), '1');
+  assert.equal(activeBeat(2.9), '2');
   assert.equal(activeBeat(3.5), '2');
-  assert.equal(activeBeat(3.79), '2');
-  assert.equal(activeBeat(3.8), '3');
+  assert.equal(activeBeat(3.89), '2');
+  assert.equal(activeBeat(3.9), '3');
   assert.equal(activeBeat(4.5), '3');
-  assert.equal(activeBeat(4.8), '4');
+  assert.equal(activeBeat(4.9), '4');
   assert.equal(activeBeat(5.5), '4');
-  for (let i = 160; i < 560; i++) { const sv = i / 100, want = sv >= 4.8 ? '4' : sv >= 3.8 ? '3' : sv >= 2.8 ? '2' : '1'; assert.equal(activeBeat(sv), want, `sv ${sv}`); }
+  for (let i = 160; i < 560; i++) { const sv = i / 100, want = sv >= 4.9 ? '4' : sv >= 3.9 ? '3' : sv >= 2.9 ? '2' : '1'; assert.equal(activeBeat(sv), want, `sv ${sv}`); }
+  // reduced motion: the stage changes the case at the hand-over with no sweep, so the text changes there too
+  assert.equal(activeBeat(2.79, true), '1'); assert.equal(activeBeat(2.8, true), '2'); assert.equal(activeBeat(3.8, true), '3'); assert.equal(activeBeat(4.8, true), '4');
   assert.equal(activeBeat(5.7), 'none');
   assert.equal(activeBeat(7), 'none');
   const rest = scrollClasses(0);
@@ -88,13 +90,12 @@ test('the scroll map: nothing but the chrome on the landing screen, no beat text
   assert.equal(SV.screens, 7);
 });
 
-test('the beat pose: the zoom blends over 1 to 2, the case rises through the four beats with the alternating roll, the argument pose over 5 to 6', () => {
+test('the beat pose: the zoom blends over 1 to 2, the case at one height through the four beats (2026-11-04) with the alternating roll, the argument pose over 5 to 6', () => {
   assert.equal(beatPose(1).k, 0);
   assert.equal(beatPose(2).k, 1);
   assert.equal(+beatPose(2).cy.toFixed(2), -0.96);
-  assert.equal(+beatPose(3).cy.toFixed(2), -0.58);
-  assert.equal(+beatPose(4).cy.toFixed(2), 0.02);
-  assert.equal(+beatPose(5).cy.toFixed(2), 0.6);
+  // every beat at beat 1's height (Sam, 2026-11-04: "make sure it stays in the center"; ciao's -0.58, 0.02, 0.6 until then)
+  for (let sv = 2; sv <= 5.0001; sv += 0.05) assert.equal(+beatPose(sv).cy.toFixed(6), -0.96, `the height at ${sv.toFixed(2)}`);
   assert.equal(+beatPose(3).rz.toFixed(4), 0.0873);
   assert.equal(+beatPose(4).rz.toFixed(4), -0.1745);
   assert.equal(beatPose(5).A, 0);
@@ -102,26 +103,11 @@ test('the beat pose: the zoom blends over 1 to 2, the case rises through the fou
   assert.equal(beatPose(6.5).A, 1);
 });
 
-test('D15: every feature transition is one whole turn about the vertical axis, its back to the camera at the half, and nothing turns between them', () => {
+test('no turn since 2026-11-04 ("just remove the rotation animation for case types, just keep the wave"): the case faces the camera through every hand-over; the hand-overs keep their places', () => {
   assert.deepEqual([TURN_LEN, SWEEP_LEN], [0.4, 0.2]);
-  assert.deepEqual(TURNS.map(turnEnd), [2, 2.8, 3.8, 4.8], 'the turn into Tough ends at its beat, each hand-over\'s a sweep before it');
-  for (const n of TURNS) {
-    const end = turnEnd(n), start = end - TURN_LEN, mid = end - TURN_LEN / 2;
-    assert.equal(beatPose(start - 0.01).yaw, 0, `still before ${n}`);
-    assert.ok(Math.abs(beatPose(mid).yaw - Math.PI) < 1e-9, `the back to the camera at ${mid}: yaw ${beatPose(mid).yaw}`);
-    assert.equal(beatPose(end + 0.001).yaw, 0, `still after the turn into ${n}`);
-    // one way round, never back: the yaw rises through the whole turn
-    for (let i = 0; i < 39; i++) { const t = start + i / 100; assert.ok(beatPose(t + 0.01).yaw >= beatPose(t).yaw, `the turn runs one way at ${t.toFixed(2)}`); }
-    assert.ok(beatPose(end - 0.001).yaw > 1.99 * Math.PI, `a whole turn by ${end}`);
-  }
-  // sampled every 0.01 screen against its own formula
-  for (let sv = 1.5; sv < 5.5; sv += 0.01) {
-    let yaw = 0;
-    for (const n of TURNS) { const e = n === 2 ? 2 : n - 0.2, t = Math.max(0, Math.min(1, (sv - (e - 0.4)) / 0.4)), u = t * t * (3 - 2 * t); if (u > 0 && u < 1) yaw = u * 2 * Math.PI; }
-    assert.equal(beatPose(sv).yaw, yaw, `the turn at ${sv.toFixed(2)}`);
-  }
+  assert.deepEqual(TURNS.map(turnEnd), [2, 2.8, 3.8, 4.8], 'the hand-overs, a sweep before each beat');
+  for (let sv = 0; sv < 7; sv += 0.01) assert.equal(beatPose(sv).yaw, 0, `no yaw at ${sv.toFixed(2)}`);
 });
-
 test('24 D3: the case type each frame asks for, every 0.01 screen: Tough below 2.8 and on the carousel, MagTough from 2.8, Snap from 3.8, Armor from 4.8 through the argument screen', () => {
   assert.deepEqual([...CASE_TYPES], ['tough', 'magtough', 'snap', 'armor']);
   assert.deepEqual([...HANDOVERS], [2.8, 3.8, 4.8]);
@@ -156,6 +142,26 @@ test('the profile light rides with the case (section 24 D13): the zoom lit as ci
     for (let sv = 2; sv <= 5.0001; sv += 0.05) assert.ok(Math.abs((caseY(sv, drift, 0.7) - profileLightOffset(sv, drift)) - (-0.96)) < 1e-12, `from beat 1 at ${sv.toFixed(2)}, drift ${drift}: the case under the light as the Tough at beat 1`);
     assert.ok(Math.abs(profileLightOffset(2 - 1e-9, drift) - profileLightOffset(2, drift)) < 1e-6, 'continuous at beat 1');
   }
-  assert.ok(Math.abs(profileLightOffset(3, 1) - 0.38) < 1e-12 && Math.abs(profileLightOffset(4, 1) - 0.98) < 1e-12 && Math.abs(profileLightOffset(5, 1) - 1.56) < 1e-12, 'phones: beats 2 to 4 lifted by their rise');
+  assert.ok([3, 4, 5].every((sv) => Math.abs(profileLightOffset(sv, 1)) < 1e-12), 'phones: beats 2 to 4 at beat 1\'s height, so no lift (2026-11-04)');
   assert.ok(Math.abs(profileLightOffset(2, CFG.wideDrift) - 0.96 * (1 - CFG.wideDrift)) < 1e-12, 'wide: beat 1 lifted by what the damped drift left');
+});
+
+test('the roll between two case types rides the wave: still until the band meets the case, a smootherstep of the band\'s place across it, settled once it has left (2026-11-04: "smoothen it and end of the turn should look smoother")', () => {
+  const [E0, E1] = WAVE_EDGES;
+  for (const j of [2, 3, 4]) {
+    for (let sv = j; sv <= j + 0.8 + 1e-9; sv += 0.05) assert.equal(rollShare(sv, j), 0, `no roll before the wave at ${sv.toFixed(2)}`);
+    assert.equal(beatPose(j + 0.5).rz, RZ[j - 1], `the previous type's roll mid-screen at ${j + 0.5}`);
+    assert.equal(rollShare(j + 1, j), 1);
+    // in the wave's time (the band's eased place linear in time) the roll's speed is zero at both ends and smooth between
+    const at = (u: number) => { const e = E0 + (E1 - E0) * u; let lo = 0, hi = 1; for (let k = 0; k < 60; k++) { const m = (lo + hi) / 2; const x = m < 0.5 ? 4 * m ** 3 : 1 - (2 - 2 * m) ** 3 / 2; if (x < e) lo = m; else hi = m; } return rollShare(j + 0.8 + 0.2 * (lo + hi) / 2, j); };
+    const h = 1e-4;
+    assert.ok(Math.abs((at(h) - at(0)) / h) < 1e-2, 'no speed as the band meets the case');
+    assert.ok(Math.abs((at(1) - at(1 - h)) / h) < 1e-2, 'no speed as the band leaves it: the end eases in');
+    let prev = 0, maxStep = 0;
+    for (let i = 1; i <= 100; i++) { const v = at(i / 100); assert.ok(v >= prev - 1e-9, 'one way'); maxStep = Math.max(maxStep, v - prev); prev = v; }
+    assert.ok(maxStep < 0.03, `no jump: the largest step in a hundredth of the wave ${maxStep}`);
+    // the tilt over the middle 0.7 s of the 1 s wave ("make it 0.7s"): still in its first and last 0.15
+    assert.ok(at(0.14) < 1e-6 && at(0.86) > 1 - 1e-6, `the tilt inside 0.15 to 0.85 of the wave: ${at(0.14)}, ${at(0.86)}`);
+    assert.ok(at(0.2) > 0 && at(0.8) < 1, 'and moving through it');
+  }
 });

@@ -106,7 +106,7 @@ export async function mountIsland(host: HTMLElement, onLive: () => void): Promis
   const onScrolled = (sv: number) => { if (sv > TYPES_FROM) void loadTypes(); };
   offs.push(on('fam:select', ({ i, instant }) => S.setTarget(i, instant)));
   offs.push(on('fam:finish', ({ finish: f }) => S.setFinish(f)));
-  offs.push(on('fam:scroll', ({ sv }) => { S.scroll(sv); onScrolled(sv); }));
+  offs.push(on('fam:scroll', ({ sv, tight }) => { S.scroll(sv, tight); onScrolled(sv); }));
   // a page that opens past the carousel (a reload or a link deep in the page): the stage starts where the page is and
   // the type models load at once (D2)
   const sv0 = innerHeight > 0 ? scrollY / innerHeight : 0;

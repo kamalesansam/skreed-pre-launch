@@ -27,6 +27,22 @@ export const CUE_STILL_MS = 1500;
 // type it entered at until it has been still for CASE_HOLD_STILL_MS, at most CASE_HOLD_MAX_MS (the scenes' arrival hold)
 export const CASE_STEP_MS = 1400;
 export const CASE_STEP_MAX_MS = 2800;
+// a step in two parts (Sam, 2026-11-04: "the rotation speed will stay the same, only the wave effect will slow down", then
+// "just remove the rotation animation for case types, just keep the wave"): the lead, the step's screen up to the
+// hand-over, where nothing turns now (the roll alone eases), over CASE_LEAD_MS; then the wave (the takeover's sweep, the
+// last SWEEP_LEN of the screen, pose.ts) over CASE_SWEEP_MS. A 2.4 s step that slowed the turn too is withdrawn
+// then (Sam, the same day: "the wait time for the wave to happen after scroll trigger is long, but the wave effect
+// happening is really fast"): the lead 0.25 s, and the wave 2 s with the band at an even pace across the case (the
+// sweep's own in-out cubic undone, steps.ts stepPath), where an eased ride on an eased sweep had crossed it in about 0.4 s
+export const CASE_LEAD_MS = 250;
+// 1 s since the same day's "increase the speed of the wave a little more, if its 2s rn make it 1.5 or 1", then "do 1s"
+export const CASE_SWEEP_MS = 1000;
+// the case's tilt between two types (ciao's -10 and +5 degree roll) runs this long in the middle of the wave (Sam, the
+// same day: "make it 0.7s"), on a smootherstep (pose.ts rollShare)
+export const CASE_ROLL_MS = 700;
+// the sweep's first stretch, where the band is not yet on the case (its boundary from -0.12 to 1.12 of the case,
+// TAKEOVER.pFrom and pTo), passes in the lead and its last in CASE_TAIL_MS, so the wave shows as soon as the lead ends
+export const CASE_TAIL_MS = 120;
 export const CASE_STEP_COOLDOWN_MS = 150;
 export const CASE_HOLD_STILL_MS = 150;
 export const CASE_HOLD_MAX_MS = 1200;

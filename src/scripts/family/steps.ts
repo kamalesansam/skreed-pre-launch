@@ -4,7 +4,7 @@
 // ignored ... A long trackpad swipe still counts as one step, not several"). Between the four types' rests (Tough,
 // MagTough, Snap and Armor at screens 2, 3, 4 and 5, pose.ts CASE_REST) one wheel burst, one swipe or one step key rides
 // the page a whole screen to the next type, its turn and its sweep played by the scroll as before (the stage lags it),
-// on --ease-turn over CASE_STEP_MS; during the ride and its cooldown every gesture is swallowed. At Tough a gesture back
+// with no turn since 2026-11-04: a short lead to the hand-over (CASE_LEAD_MS), then the sweep, the wave (CASE_SWEEP_MS; stepPath); during the ride and its cooldown every gesture is swallowed. At Tough a gesture back
 // and at Armor a gesture on are the page's own, up into the zoom and on to the argument screen. The gestures are section
 // 4's own module (hero/section4/scroll.ts, its burst filter, touch rule and key table), driven through its adapter with
 // twoWay on; this module is the adapter's other side: the rests, the ride, and the arrival's hold, which puts a page that
@@ -14,14 +14,41 @@
 // then shows 3D steps too); a ride is an instant scrollTo under reduced motion. The beat nav rides here too.
 import { createPageScroll, type PageScroll } from '../hero/section4/scroll.ts';
 import { cubicBezier, isScrollKey, nextStop } from '../hero/section4/scroll-math.ts';
-import { CASE_REST, CASE_TYPES } from './three/pose.ts';
-import { CASE_HOLD_MAX_MS, CASE_HOLD_STILL_MS, CASE_STEP_COOLDOWN_MS, CASE_STEP_MAX_MS, CASE_STEP_MS, TURN_EASE } from './timing.ts';
+import { easeTakeoverInverse } from '../../config/takeover.ts';
+import { CASE_REST, CASE_TYPES, SWEEP_LEN, WAVE_EDGES } from './three/pose.ts';
+export { WAVE_EDGES } from './three/pose.ts';
+import { CASE_HOLD_MAX_MS, CASE_HOLD_STILL_MS, CASE_LEAD_MS, CASE_TAIL_MS, CASE_STEP_COOLDOWN_MS, CASE_STEP_MAX_MS, CASE_STEP_MS, CASE_SWEEP_MS, TURN_EASE } from './timing.ts';
 
 /** the four types' rests in screens, in beat order */
 export const CASE_RESTS: readonly number[] = CASE_TYPES.map((t) => CASE_REST[t]);
 /** a ride's length for a distance in screens: one screen CASE_STEP_MS, more by the screen, at most CASE_STEP_MAX_MS */
 export const caseRideMs = (screens: number): number => Math.round(Math.min(CASE_STEP_MAX_MS, Math.max(1, Math.abs(screens)) * CASE_STEP_MS));
 const easeTurn = cubicBezier(...TURN_EASE);
+/**
+ * A step's path in screens over time: from one rest to the next (a screen), the lead over CASE_LEAD_MS on --ease-turn
+ * (the screen up to where the band meets the case, a little past the hand-over), the wave over CASE_SWEEP_MS while the
+ * band crosses the case (the scroll undoing the sweep's own in-out cubic, easeTakeoverInverse, so its pace is even), and
+ * the tail over CASE_TAIL_MS to the rest, the band past the case. Forward the lead plays first and the wave last; back the wave runs back
+ * first, then the lead. A ride of more than one screen (the beat nav) or from between rests keeps the plain curve.
+ * at(t): the position in screens t ms in.
+ */
+export function stepPath(from: number, to: number): { ms: number; at: (t: number) => number } {
+  const d = to - from;
+  if (Math.abs(Math.abs(d) - 1) > 0.02) { const ms = caseRideMs(d); return { ms, at: (t) => from + d * easeTurn(Math.min(1, t / ms)) }; }
+  const L = CASE_LEAD_MS, W = CASE_SWEEP_MS, T = CASE_TAIL_MS, s = SWEEP_LEN / Math.abs(d);
+  const ms = L + W + T, k = (t: number, len: number) => easeTurn(Math.min(1, Math.max(0, t / len)));
+  // in the screen's own direction (0 the lower rest, 1 the upper): the hand-over, where the band meets the case, where it
+  // leaves it; the wave's eased progress runs evenly from E0 to E1 over W
+  const E0 = WAVE_EDGES[0], E1 = WAVE_EDGES[1];
+  const lo = Math.min(from, to), H = 1 - s, A0 = H + s * easeTakeoverInverse(E0), A1 = H + s * easeTakeoverInverse(E1);
+  const waveAt = (u: number) => H + s * easeTakeoverInverse(E0 + (E1 - E0) * Math.min(1, Math.max(0, u)));
+  const lerp = (a: number, b: number, e: number) => a + (b - a) * e;
+  // f(t): the place in the screen (0 lower rest to 1 upper) t ms into a forward step; a step back runs it backwards in time
+  const f = (t: number) => (t < L ? lerp(0, A0, k(t, L)) : t < L + W ? waveAt((t - L) / W) : lerp(A1, 1, k(t - L - W, T)));
+  // scaled by the step's real length, so a step from a few pixels off a rest (a resize, a scrollbar drag) starts where the
+  // page is, ends on its rest and sweeps at the real hand-over (the review of 2026-11-04)
+  return { ms, at: (t) => lo + Math.abs(d) * (d > 0 ? f(t) : f(ms - t)) };
+}
 /** the 2 px within which the page is at a rest, as the glue's dead band */
 const DEAD = 2;
 /** a phone's momentum after the finger lifts: a crossing this soon after the release is still the swipe's */
@@ -53,13 +80,13 @@ export function createCaseSteps(o: { reduced: () => boolean }): CaseSteps {
     if (Math.abs(to - from) <= DEAD) return false;
     if (o.reduced()) { rideEnd = now(); scrollTo({ top: to, behavior: 'instant' }); return true; }
     riding = true;
-    const t0 = now(), ms = caseRideMs((to - from) / vh());
+    const t0 = now(), h = vh(), path = stepPath(from / h, to / h);
     const frame = () => {
       raf = 0;
       if (!riding || disposed) return;
       if (!Number.isNaN(wrote) && Math.abs(scrollY - wrote) > 1.5) { endRide(); return; }   // someone else moved the page
-      const p = Math.min(1, (now() - t0) / ms);
-      const y = p >= 1 ? to : from + (to - from) * easeTurn(p);
+      const t = now() - t0, p = t >= path.ms ? 1 : 0;
+      const y = p >= 1 ? to : path.at(t) * h;
       wrote = y;
       scrollTo({ top: y, behavior: 'instant' });
       if (p >= 1) { endRide(); return; }
@@ -104,11 +131,12 @@ export function createCaseSteps(o: { reduced: () => boolean }): CaseSteps {
   // ---- the arrival: the page's own scroll from a visitor's input (a wheel or a scrolling key in the last 300 ms, a finger
   // down or lifted in the last MOMENTUM_MS, whose momentum runs on after it; never a link, the beat nav, Home, End or the
   // scrollbar), crossing into the types past Tough from below or past Armor from above
-  let lastInput = -Infinity, lastFinger = -Infinity, prevY = scrollY;
+  let lastInput = -Infinity, lastFinger = -Infinity, prevY = scrollY, jumpUntil = -Infinity;
   const onScroll = () => {
     const y = scrollY, was = prevY;
     prevY = y;
     if (disposed || riding || hold || pending || !on()) return;
+    if (now() < jumpUntil) return;                              // a jump of the page's own (Back to top): never held
     if (now() - rideEnd < 200) return;                          // a ride's own landing (an instant one under reduced motion)
     if (now() - lastInput > 300 && fingers === 0 && now() - lastFinger > MOMENTUM_MS) return;
     const first = px(0), last = px(CASE_RESTS.length - 1);
@@ -117,8 +145,10 @@ export function createCaseSteps(o: { reduced: () => boolean }): CaseSteps {
   };
   const onInput = (e: Event) => {
     if (e.type === 'keydown') { const k = (e as KeyboardEvent).key; if (!isScrollKey(k) || k === 'Home' || k === 'End') return; }
-    lastInput = now();
+    lastInput = now(); jumpUntil = -Infinity;                   // the visitor's own input ends a jump's pass
   };
+  /** Back to top's jump (shell/to-top.ts, the event skreed:jump): the tap or the key that pressed it is not the visitor's scroll, so its smooth scroll passes the types, at most 2 s or until the visitor's next input (the review of 2026-11-04: a phone's tap was taken for a swipe and the scroll held on Armor) */
+  const onJump = () => { endHold(); lastInput = lastFinger = -Infinity; jumpUntil = now() + 2000; };
 
   // the listeners first, before the page scroll's: a key or a wheel that lets the hold go does so before it is judged as a gesture
   const onLost = () => { fingers = 0; if (pending) { const p = pending; pending = null; startHold(p.y, p.dir); } };
@@ -127,7 +157,7 @@ export function createCaseSteps(o: { reduced: () => boolean }): CaseSteps {
     ['wheel', onInput, { passive: true }], ['touchmove', onInput, { passive: true }], ['keydown', onInput, { passive: true }],
     ['touchstart', onFingers as EventListener, { passive: true }], ['touchend', onFingers as EventListener, { passive: true }], ['touchcancel', onFingers as EventListener, { passive: true }],
     ['touchstart', letGo, { passive: true }], ['pointerdown', letGo, { passive: true }], ['keydown', letGo, { passive: true }], ['wheel', letGo, { passive: true }],
-    ['blur', onLost, {}], ['pagehide', onLost, {}],
+    ['blur', onLost, {}], ['pagehide', onLost, {}], ['skreed:jump', onJump, {}],
   ];
   for (const [n, f, opt] of listeners) addEventListener(n, f, opt);
 

@@ -23,6 +23,8 @@ import { matC, type GemMaterial } from './gemMaterial.ts';
 import { createFrost, FSCALE, type FrostSlot } from './frost.ts';
 import { createLabels, type Label, type LabelStone } from './labels.ts';
 import type { Section2Scene } from './types.ts';
+import { createHint } from './hint.ts';
+import { createWaveUniforms, injectWave, inWave, placeWave, waveMix, WAVE_L, waveP, type WaveUniforms } from './wave.ts';
 
 /** the ten families in catalog order: id, name, and the hero block that holds the family's key shade (section-2.md 3) */
 export const FAM_ID: readonly string[] = keys.map((k) => k.family);
@@ -30,6 +32,8 @@ export const FAM_NAME: readonly string[] = keys.map((k) => k.familyName);
 
 interface Stone extends LabelStone {
   fam: string; shade: string; hex: string; geo: GemGeometry; mats: { B: GemMaterial }; s: number; sig: number; w: number; side: number; tumble: V3; blk: Mesh<BufferGeometry, MeshStandardMaterial>;
+  /** the wave's values for the block (outgoing) and the gem (incoming), and the two shapes' own radii */
+  wave: { blk: WaveUniforms; gem: WaveUniforms }; blkR: number; gemR: number;
 }
 interface Plexus { st: Stone; pts: { th: number; rad: number; y0: number; w: number; vy: number }[]; links: [number, number][]; obj: LineSegments; on: boolean; t0: number }
 
@@ -90,7 +94,8 @@ export function createGems(o: GemsOptions): Section2Scene {
     if (active >= 0) { const st = stones[active]; labels.setOn(st.labs.cta, false, now); plexusOff(st, now); }
     active = j; activeBy = by;
     if (j >= 0) { const st = stones[j];
-      st.labs.cta.side = labels.sideFor(stones, st, st.labs.cta);
+      // on a phone the column leaves no room beside the name, so the name gives way to the CTA on its own side (update())
+      st.labs.cta.side = vp.PHONE ? (/l$/.test(st.labs.title.side ?? 'r') ? 'l' : 'r') : labels.sideFor(stones, st, st.labs.cta);
       labels.setOn(st.labs.cta, true, now); if (!vp.PHONE && !REDUCE) plexusOn(st, now); }
   }
 
@@ -168,14 +173,30 @@ export function createGems(o: GemsOptions): Section2Scene {
     if ((h ? h.st : null) !== hoverSt) { hoverSt = h ? h.st : null; o.canvas.classList.toggle('over-gem', !!hoverSt);
       if (!touch) { if (hoverSt) setActive(stones.indexOf(hoverSt), 'pointer'); else if (activeBy === 'pointer') setActive(-1, ''); } }
   }
+  function splat(h: { st: Stone; point: V3 }, now: number) { const P: FrostSlot = frost.slotFor(h.st, now); P.cur = frost.chartUV(h.st, h.point); P.prevStep = P.cur.clone(); P.force = now + 350; P.last = now; P.lastMove = now; P.hitT = now; }
   function onDown(e: PointerEvent) {
     if (!ready || !live) return;
-    const now = nowMs();
-    if (e.pointerType === 'touch') { const h = pick(e.clientX, e.clientY);
-      if (h) { const P: FrostSlot = frost.slotFor(h.st, now); P.cur = frost.chartUV(h.st, h.point); P.prevStep = P.cur.clone(); P.force = now + 350; P.last = now; P.lastMove = now; P.hitT = now; } }
+    const now = nowMs(), h = pick(e.clientX, e.clientY);
+    press = h ? { j: h.st.j, x: e.clientX, y: e.clientY, t: now } : null;
+    if (e.pointerType === 'touch' && h) splat(h, now);
   }
-  const lift = (e: PointerEvent) => { if (e.pointerType === 'touch') { par.tx = 0; par.ty = 0; if (hoverSt) { const P = frost.pool.find((p) => p.st === hoverSt); if (P) { P.over = false; P.lastMove = nowMs(); } hoverSt = null; } } };
-  const out = (e: PointerEvent) => { if (!e.relatedTarget) { par.tx = 0; par.ty = 0; } };
+  // the visitor's own tap on a gem (a press and a lift on it, under 10 px and 600 ms apart, so a swipe that starts on a
+  // gem to scroll is not one): the hint has done its work (hint.ts)
+  let press: { j: number; x: number; y: number; t: number } | null = null;
+  function tapped(e: PointerEvent) {
+    const p = press; press = null;
+    if (!p || e.type !== 'pointerup' || nowMs() - p.t > 600 || Math.hypot(e.clientX - p.x, e.clientY - p.y) > 10) return;
+    const h = pick(e.clientX, e.clientY); if (h && h.st.j === p.j) hint?.dismiss();
+  }
+  // the click hint (hint.ts, E-S2-hint), on phones and laptops alike since 2026-11-04: its press answers as a finger's,
+  // its frost and the gem's CTA (and on a laptop the plexus, as a hover)
+  let hint: ReturnType<typeof createHint> | null = null;
+  function hintTap(j: number, x: number, y: number) { const h = pick(x, y); if (h && h.st.j === j) splat(h, nowMs()); setActive(j, 'hint'); }
+  function hintRelease(j: number) { if (active === j && activeBy === 'hint') setActive(-1, ''); }
+  const lift = (e: PointerEvent) => { if (ready && live) tapped(e); else press = null; if (e.pointerType === 'touch') { par.tx = 0; par.ty = 0; if (hoverSt) { const P = frost.pool.find((p) => p.st === hoverSt); if (P) { P.over = false; P.lastMove = nowMs(); } hoverSt = null; } } };
+  // the pointer leaving the window lets go of the gem under it, so a gem is never left hovered (and the hint never held back) by a pointer that is gone
+  const out = (e: PointerEvent) => { if (!e.relatedTarget) { par.tx = 0; par.ty = 0;
+    if (hoverSt) { const P = frost.pool.find((p) => p.st === hoverSt); if (P) { P.over = false; P.lastMove = nowMs(); } hoverSt = null; o.canvas.classList.remove('over-gem'); if (activeBy === 'pointer') setActive(-1, ''); } } };
   addEventListener('pointermove', onMove, { passive: true });
   addEventListener('pointerdown', onDown, { passive: true });
   addEventListener('pointerup', lift, { passive: true }); addEventListener('pointercancel', lift, { passive: true });
@@ -196,7 +217,10 @@ export function createGems(o: GemsOptions): Section2Scene {
       const d = 3 * x1 * (1 - t) ** 2 + 6 * (x2 - x1) * t * (1 - t) + 3 * (1 - x2) * t * t; if (Math.abs(d) < 1e-6) break; t = Math.min(1, Math.max(0, t - a / d)); }
     return 3 * y1 * t * (1 - t) ** 2 + 3 * y2 * t * t * (1 - t) + t ** 3; };
   const flightEase = bez(0.42, 0, 0.12, 1);
-  const Lof = (S: number) => Math.max(0, Math.min(1, (S - CAS0) / FLY));   // one flight progress for the ten (no stagger since 2026-11-02)
+  // one flight progress for the ten (no stagger since 2026-11-02); the flight's last three quarters of a pixel count as
+  // landed, because the page scrolls by whole pixels and S2T.LAND x the viewport rounds up to half a pixel short of it
+  // (4,051 of 4,051.2 px at 390 x 844, 1,022 of 1,022.4 at 568 x 213), which held the gems' links off at their own rest
+  const Lof = (S: number) => { const L = (S - CAS0) / FLY; return L >= 1 - 0.75 / (FLY * Math.max(100, innerHeight)) ? 1 : Math.max(0, L); };
   let S = 0;
   // the flying copy of each hero block: the same triangles as the hero's block (taken from the logo geometry), matte black,
   // its family's shade rising in its edges as it nears the change
@@ -228,31 +252,38 @@ export function createGems(o: GemsOptions): Section2Scene {
     P1.copy(P0).addScaledVector(dir, 0.18 * D).addScaledVector(perp, side * 0.38 * D).add(new V3(0, 0.12 * D, 0.30 * D));   // lift, swing out to one side
     P2.copy(p1).add(new V3(0, 0.30 * D, 0.28 * D)).addScaledVector(perp, -side * 0.12 * D);                                  // come in from above and in front
     const pos = cubic(P0, P1, P2, p1, e, new V3());
-    // the block: tumbles as it goes, its edges warming to its shade, then folds into a point of light
+    // the block: tumbles as it goes, its edges warming to its shade, and turns into its resting pose as it settles; the
+    // gem shares its pose and its size, so the wave (wave.ts, E-S2-wave) turns the block into the gem in place, neither
+    // ever shrinking to a point (Sam, 2026-11-04: "have the same block and use the wave effect transition them into the
+    // stones, instead of making them small and enlarging"); the size goes from the block's in the logo to the gem's at
+    // rest over the whole flight
     const spin = 4 * e * (1 - e);
     tmpE.set(st.tumble.x * spin, st.tumble.y * spin + st.tumble.y * 0.6 * e, st.tumble.z * spin);
     const qb = Q0.clone().multiply(tmpQ2.setFromEuler(tmpE));
-    const bs = (1 - sm(0.42, 0.62, L)) * S0.x;
-    st.blk.visible = bs > 1e-4 && !REDUCE; st.blk.position.copy(pos); st.blk.quaternion.copy(qb); st.blk.scale.setScalar(Math.max(1e-4, bs));
-    st.blk.material.emissiveIntensity = 0.7 * sm(0.18, 0.55, L) * (1 - sm(0.55, 0.62, L));   // a warm-up, never a flat sticker
-    // the gem: grows out of that light and turns into its resting pose as it settles
-    const gs = sm(0.50, 0.78, L);
-    st.group.visible = gs > 1e-4; st.group.scale.setScalar(Math.max(1e-4, gs));
     const a = REDUCE ? 0 : 0.1 * sm(0.85, 1, L);
     const wob = new Euler(a * st.sig * Math.sin(st.w * t + KW[0] * st.s), a * st.sig * Math.sin(st.w * t + KW[1] * st.s), a * st.sig * Math.sin(st.w * t + KW[2] * st.s));
     const qRest = qPar.clone().multiply(new Quaternion().setFromEuler(wob)).multiply(st.rest);
-    st.group.quaternion.copy(qb).slerp(qRest, sm(0.45, 1, e));
+    const q = qb.slerp(qRest, sm(0.45, 1, e));
+    const size = st.blkR * S0.x + (st.gemR - st.blkR * S0.x) * sm(0.1, 0.95, L);   // the bounding radius both shapes share, in the world
+    const blkOn = L < WAVE_L.to, gemOn = L > WAVE_L.from, sweep = inWave(L), p = waveP(L);
+    st.blk.visible = blkOn; st.blk.position.copy(pos); st.blk.quaternion.copy(q); st.blk.scale.setScalar(size / st.blkR);
+    st.blk.material.emissiveIntensity = 0.7 * sm(0.18, 0.55, L);   // a warm-up, never a flat sticker
+    st.group.visible = gemOn; st.group.scale.setScalar(size / st.gemR);
+    st.group.quaternion.copy(q);
     st.group.position.copy(pos); st.group.updateMatrixWorld(true);
     st.mats.B.userData.U.uCore.value = 1.5 * sm(0.5, 0.85, L);
+    placeWave(st.wave.blk, sweep, p, pos, size, st.blkR, camera, W(), H());
+    placeWave(st.wave.gem, sweep, p, pos, size, st.gemR, camera, W(), H());
   }
+  const waveOff = (st: Stone) => { st.wave.blk.uTkOn.value = 0; st.wave.gem.uTkOn.value = 0; };
   function placeStone(st: Stone, t: number) {
     if (REDUCE) {                                   // reduced motion: no flight; the block goes and the gem is at its slot
-      const on = st.L >= 0.5; st.blk.visible = false; st.group.visible = on; st.group.scale.setScalar(1);
+      const on = st.L >= 0.5; st.blk.visible = false; st.group.visible = on; waveOff(st); st.group.scale.setScalar(1);
       st.group.quaternion.copy(st.rest); st.group.position.copy(st.base); st.group.updateMatrixWorld(true); st.mats.B.userData.U.uCore.value = 1.5; return;
     }
-    if (st.L <= 0) { st.blk.visible = false; st.group.visible = false; return; }
+    if (st.L <= 0) { st.blk.visible = false; st.group.visible = false; waveOff(st); return; }
     if (st.L < 1) { flyPose(st, t); return; }
-    st.blk.visible = false; st.group.visible = true; st.group.scale.setScalar(1); st.mats.B.userData.U.uCore.value = 1.5;
+    waveOff(st); st.blk.visible = false; st.group.visible = true; st.group.scale.setScalar(1); st.mats.B.userData.U.uCore.value = 1.5;
     const a = 0.1;
     const e = new Euler(a * st.sig * Math.sin(st.w * t + KW[0] * st.s), a * st.sig * Math.sin(st.w * t + KW[1] * st.s), a * st.sig * Math.sin(st.w * t + KW[2] * st.s));
     st.group.quaternion.copy(qPar).multiply(new Quaternion().setFromEuler(e)).multiply(st.rest);
@@ -289,19 +320,30 @@ export function createGems(o: GemsOptions): Section2Scene {
         const s = r(), sig = s >= 0.5 ? 1 : -1, w = 0.3 * (1 + 0.1 * (2 * r() - 1));
         const rr = rng(700 + j * 13); const side = rr() < 0.5 ? -1 : 1;
         const tumble = new V3((rr() < 0.5 ? -1 : 1) * 2.5, (rr() < 0.5 ? -1 : 1) * 3.0, (rr() < 0.5 ? -1 : 1) * 1.2);
-        const blk = new Mesh(blockGeometryFromLogo(blockOf[j]), new MeshStandardMaterial({ color: 0x0b0b0d, roughness: 0.42, metalness: 0, envMap: envTex, envMapIntensity: 0.55,
-          emissive: new Color(hex), emissiveIntensity: 0 }));
+        const wave = { blk: createWaveUniforms(1, FAM_ID[j]), gem: createWaveUniforms(-1, FAM_ID[j]) };
+        const blkMat = new MeshStandardMaterial({ color: 0x0b0b0d, roughness: 0.42, metalness: 0, envMap: envTex, envMapIntensity: 0.55,
+          emissive: new Color(hex), emissiveIntensity: 0 });
+        // the block is the wave's outgoing side (wave.ts): the field, its discard and the band over its final colour
+        blkMat.onBeforeCompile = (sh) => { Object.assign(sh.uniforms, wave.blk); injectWave(sh);
+          sh.fragmentShader = sh.fragmentShader.replace('#include <opaque_fragment>', `outgoingLight = ${waveMix('outgoingLight')};\n#include <opaque_fragment>`); };
+        blkMat.customProgramCacheKey = () => 's2-block-wave-1';
+        const blk = new Mesh(blockGeometryFromLogo(blockOf[j]), blkMat);
         blk.visible = false; scene.add(blk);
-        const mats = { B: matC(hex, geo.userData.planes, envTex, frostRefs) }; mesh.material = mats.B;
-        const st = { j, fam: FAM_NAME[j], shade, hex, group, mesh, geo, mats, L: 0, rest, s, sig, w, side, tumble, blk } as unknown as Stone;
+        blk.geometry.computeBoundingSphere(); geo.computeBoundingSphere();
+        const mats = { B: matC(hex, geo.userData.planes, envTex, frostRefs, wave.gem) }; mesh.material = mats.B;
+        const st = { j, fam: FAM_NAME[j], shade, hex, group, mesh, geo, mats, L: 0, rest, s, sig, w, side, tumble, blk, wave,
+          blkR: blk.geometry.boundingSphere!.radius, gemR: geo.boundingSphere!.radius } as unknown as Stone;
         group.visible = false; stones.push(st);
         await new Promise((res) => setTimeout(res, 0));
       }
       passes.makeTargets(W(), H()); placeBases(); labels.build(stones); layoutFinal();
+      if (labLayer && !REDUCE) hint = createHint({ layer: labLayer, tap: hintTap, release: hintRelease,
+        centre: (j) => { const st = stones[j]; if (!st || st.L < 1) return null; const b = labels.gemBox(st); return [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2]; },
+        onGem: (x, y) => !!pick(x, y) });
       for (const st of stones) { const U2 = st.mats.B.userData.U; U2.uRest.value.setFromMatrix4(new Matrix4().makeRotationFromQuaternion(st.rest)); U2.uLatN.value = latticeScale(st); }
       // the family links (family-page.md 2.2): the canvas click rule and the keyboard's way in
       if (nav) offRock = installRockNav({ canvas: o.canvas, nav, pick: (x, y) => { const h = pick(x, y); return h ? h.st.j : null; }, active: () => ready && live > 0 && w2 < 0.3,
-        onFocusGem: (j) => { if (api.snapTo) api.snapTo(S2T.LAND); setActive(j, 'focus'); }, setCursor: (on) => o.canvas.classList.toggle('over-gem', on) });
+        onFocusGem: (j) => { hint?.dismiss(); if (api.snapTo) api.snapTo(S2T.LAND); setActive(j, 'focus'); }, setCursor: (on) => o.canvas.classList.toggle('over-gem', on) });
       // first draw of every program off screen, so the first flight costs no compile
       for (const st of stones) { st.group.visible = true; st.blk.visible = true; }
       const pc = renderer.getClearColor(new Color()), pa = renderer.getClearAlpha();
@@ -341,7 +383,7 @@ export function createGems(o: GemsOptions): Section2Scene {
     updateParallax(dt); poseAll(t);
     const show = tp1 > 0.5 && tp2 < 0.25;
     for (const st of stones) { const landed = st.L >= (REDUCE ? 0.6 : 0.92);
-      labels.setOn(st.labs.title, show && landed, now); }
+      labels.setOn(st.labs.title, show && landed && !(vp.PHONE && active === st.j), now); }
     if (labLayer) labLayer.style.visibility = live ? 'visible' : 'hidden';
     const linksOn = tp1 >= 1 && tp2 < 0.3;
     for (const st of stones) { const on = linksOn && st.L >= 1; if (!on && active === stones.indexOf(st)) setActive(-1, ''); }
@@ -349,6 +391,8 @@ export function createGems(o: GemsOptions): Section2Scene {
     frost.step(now, dt); labels.update(stones, now, bg.uniforms, DPR);
     if (nav) placeLinkBoxes(nav, stones.map((st) => { if (!(linksOn && st.L >= 1)) return null; const b = labels.gemBox(st); return { x: b[0], y: b[1], w: b[2] - b[0], h: b[3] - b[1] }; }));
     updatePlexus(now, t);
+    // a mouse resting on a gem shows that gem's own CTA: the hint waits until it leaves, and never takes the CTA from under it
+    hint?.step(now, linksOn && !hoverSt && stones.every((st) => st.L >= 1) && document.visibilityState === 'visible', S, vp.cssH);
     bg.uniforms.uScroll.value = 2.15 + 0.3 * (S - S2T.W1END);
     writeHues(bg.uniforms, hueFrame(t, REDUCE), 1);   // the fog's shade hues (E-fog-hue), on the clock section 3's ground shares
   }
@@ -381,10 +425,10 @@ export function createGems(o: GemsOptions): Section2Scene {
     hidden: (i, Sv) => { if (!ready || blockOf.indexOf(i) < 0) return false; const L = Lof(Sv); return REDUCE ? L >= 0.5 : L > 0; },
     logoLeft: () => !ready || stones.some((st) => (REDUCE ? st.L < 0.5 : st.L <= 0)),
     snapTo: null,
-    hooks: o.hooks ? () => ({ ready, failed, live, S, L: stones.map((s) => +s.L.toFixed(3)), active, labels: stones.map((s) => (s.labs ? !s.labs.title.hidden : null)) }) : undefined,
+    hooks: o.hooks ? () => ({ ready, failed, live, S, L: stones.map((s) => +s.L.toFixed(3)), active, activeBy, hint: hint ? hint.running : null, labels: stones.map((s) => (s.labs ? !s.labs.title.hidden : null)) }) : undefined,
     dispose() {
       removeEventListener('pointermove', onMove); removeEventListener('pointerdown', onDown); removeEventListener('pointerup', lift); removeEventListener('pointercancel', lift); removeEventListener('pointerout', out);
-      offRock?.(); if (nav) clearLinkBoxes(nav);
+      offRock?.(); if (nav) clearLinkBoxes(nav); hint?.dispose();
       labels.clear(stones); if (labLayer) labLayer.style.removeProperty('visibility');
       o.canvas.classList.remove('over-gem');
       for (const st of stones) { st.geo.dispose(); st.mats.B.dispose(); st.blk.geometry.dispose(); st.blk.material.dispose(); }
