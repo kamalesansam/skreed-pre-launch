@@ -1,6 +1,7 @@
 // AC5: the scroll cue (round 3: ciao's side icon re-created, hero.md 14) and the corner logotype, on the poster path and the loader state.
 // The 3D-path parts (tone light at tp 1, the cue during the wipe, the intro at the loader's cut) wait for step 6.
 import { test, expect, type Page } from '@playwright/test';
+import { HONOUR_REDUCED_MOTION } from '../../src/config/hero.ts';
 import { servePrototype, PROTO11_URL } from '../harness/prototype.ts';
 import { recordBursts, bursts } from '../harness/bursts.ts';
 import { boxStats, contrast, luminanceOfHex, type Box } from '../harness/pixels.ts';
@@ -74,10 +75,10 @@ test('AC5.2 cue visibility: scroll past 8 px, nothing below, while loading, redu
   await expect(p2.locator('html')).toHaveClass(/\bloading\b/);
   expect(await p2.locator('#cue').evaluate((e) => [getComputedStyle(e).opacity, getComputedStyle(e).visibility])).toEqual(['0', 'hidden']);
   await p2.close();
-  // reduced motion: still, the three chevrons shown
+  // reduced motion: the chevrons keep their animation since 2026-11-04 (E-3D-only)
   const p3 = await browser.newPage({ baseURL, reducedMotion: 'reduce' });
   await p3.goto('/');
-  expect(await p3.locator('#cue .chev-top').evaluate((e) => [getComputedStyle(e).animationName, getComputedStyle(e).transform, getComputedStyle(e).opacity])).toEqual(['none', 'none', '1']);
+  expect(await p3.locator('#cue .chev-top').evaluate((e) => getComputedStyle(e).animationName)).not.toBe('none');
   await p3.close();
 });
 
@@ -138,10 +139,11 @@ test('AC5.4 a click on the logotype scrolls to the top: smooth, or instant under
   expect(await page.evaluate(() => scrollY)).toBeGreaterThan(0);   // smooth: still travelling right after the click
   await page.waitForFunction(() => scrollY === 0);
   expect(page.url()).toMatch(/\?tier=poster$/);                      // intercepted: no navigation
-  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.emulateMedia({ reducedMotion: 'reduce' });   // smooth under Reduce motion too since 2026-11-04 (E-3D-only)
   await page.evaluate(() => scrollTo(0, 300));
   await page.locator('#siteLogo').click();
-  expect(await page.evaluate(() => scrollY)).toBe(0);
+  expect(await page.evaluate(() => scrollY)).toBeGreaterThan(0);
+  await page.waitForFunction(() => scrollY === 0);
 });
 
 // Glitch timing runs on Playwright's fake clock: it drives performance.now() and requestAnimationFrame, so the burst
@@ -280,6 +282,7 @@ test('AC5.8 the countdown glitch (E-CD-glitch): four pairs of 15 slabs, one burs
 });
 
 test('AC5.7 reduced motion: no burst at all, and turning it on after load stops new bursts', async ({ browser, baseURL }) => {
+  test.skip(!HONOUR_REDUCED_MOTION, 'Reduce motion is not honoured since 2026-11-04 (E-3D-only, docs/specs/3d-only.md)');
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
   await recordBursts(ctx);
   const page = await ctx.newPage();

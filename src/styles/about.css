@@ -61,7 +61,6 @@ body { font-family: var(--font-about); font-weight: 400; }
 @media (min-width: 1024px) { .site-logo svg { width: 136px; } }
 @media (hover: hover) { .site-logo:hover { transform: translateY(-1px); } }
 .site-logo:active { transform: scale(0.98); }
-@media (prefers-reduced-motion: reduce) { .site-logo { transition: none; } .site-logo:hover, .site-logo:active { transform: none; } }
 
 /* the way back (2026-11-03: "there's no navigation helper to go back to the site"): "Back to main page" at the top right,
    centred on the wordmark's row as the landing page's section index is, and set as its words are (Work Sans Light in
@@ -76,7 +75,6 @@ body { font-family: var(--font-about); font-weight: 400; }
 .ab-home:active { transform: scale(0.98); }
 .ab-home:focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }
 .ab-home:focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
-@media (prefers-reduced-motion: reduce) { .ab-home { transition: none; } .ab-home:hover, .ab-home:active { transform: none; } }
 
 /* the page box: the gutters, the room under the wordmark and the foot; the column at the left gutter, as the reference
    sets its text, capped at the measure */

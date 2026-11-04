@@ -6,33 +6,56 @@ import { statSync, readdirSync } from 'node:fs';
 
 const ISLAND = /three|hero\.|pieces|\.bin|sky\.|ground|boot|lightmap|\/models\/|director\.|world\.|garden|travel-|-depth\.|\.mp4/;   // section 4: its 3D chunk (the director), products.bin and the scenes' loops are the island's too, as the hall's model and lightmap were until 2026-11-02 (not the walk script or the scenes' stills: the poster tier uses them)
 
-const GATE_CASES: Record<string, (ctx: BrowserContext) => Promise<void>> = {
+// Since 2026-11-04 (E-3D-only, docs/specs/3d-only.md: "make sure the real site loads on any machine or any phone or any
+// browser, dont have this fallback") the Gate's only way off the 3D is a browser that cannot draw it, and that browser gets
+// the site note's one line over the poster page, with no island bytes. Data saver, 2G, little memory and Reduce motion get the 3D.
+const NOGL_CASES: Record<string, (ctx: BrowserContext) => Promise<void>> = {
   'WebGL2RenderingContext deleted': (ctx) => ctx.addInitScript(() => { delete (window as unknown as Record<string, unknown>).WebGL2RenderingContext; }),
   'DecompressionStream deleted': (ctx) => ctx.addInitScript(() => { delete (window as unknown as Record<string, unknown>).DecompressionStream; }),
+};
+const THREE_D_CASES: Record<string, (ctx: BrowserContext) => Promise<void>> = {
   'saveData true': (ctx) => ctx.addInitScript(() => { Object.defineProperty(navigator, 'connection', { value: { saveData: true, effectiveType: '4g' }, configurable: true }); }),
   'effectiveType 2g': (ctx) => ctx.addInitScript(() => { Object.defineProperty(navigator, 'connection', { value: { saveData: false, effectiveType: '2g' }, configurable: true }); }),
   'deviceMemory 2': (ctx) => ctx.addInitScript(() => { Object.defineProperty(navigator, 'deviceMemory', { value: 2, configurable: true }); }),
 };
 
-for (const [name, setup] of Object.entries(GATE_CASES)) {
-  test(`AC8.1 and AC8.3 Gate: ${name} lands on the poster and requests no island bytes`, async ({ browser, baseURL }) => {
+for (const [name, setup] of Object.entries(NOGL_CASES)) {
+  test(`E-3D-only Gate: ${name} shows the site note's unsupported line and requests no island bytes`, async ({ browser, baseURL }) => {
     const ctx = await browser.newContext();
     await setup(ctx);
     const reqs: string[] = [];
     ctx.on('request', (r) => reqs.push(r.url()));
     const page = await ctx.newPage();
     await page.goto(baseURL!);
-    await expect(page.locator('html')).toHaveClass('js poster');
-    await expect(page.locator('#posterImg')).toBeVisible();
+    await expect(page.locator('html')).toHaveClass('js poster nogl');
+    await expect(page.locator('html')).toHaveAttribute('data-note', 'unsupported');
+    await expect(page.locator('#siteNote .sn-unsupported')).toBeVisible();
+    await expect(page.locator('#siteNote .sn-failed')).toBeHidden();
     expect(await page.locator('#intro').evaluate((e) => getComputedStyle(e).display)).toBe('none');
     expect(reqs.filter((u) => ISLAND.test(new URL(u).pathname))).toEqual([]);
     await ctx.close();
   });
 }
 
+for (const [name, setup] of Object.entries(THREE_D_CASES)) {
+  test(`E-3D-only Gate: ${name} gets the 3D path`, async ({ browser, baseURL }) => {
+    const ctx = await browser.newContext();
+    await setup(ctx);
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      document.addEventListener('readystatechange', () => {
+        if (document.readyState === 'interactive') (window as unknown as { __gateClasses: string }).__gateClasses = document.documentElement.className;
+      });
+    });
+    await page.goto(baseURL!);
+    expect(await page.evaluate(() => (window as unknown as { __gateClasses: string }).__gateClasses)).toBe('js hero3d loading');
+    await ctx.close();
+  });
+}
+
 test('the Gate picks hero3d with WebGL2 and DecompressionStream and no data saver (headless defaults)', async ({ page }) => {
   // the Gate's own decision, read when parsing ends (readyState 'interactive' comes before any module script runs);
-  // boot.ts then finds SwiftShader and moves the page to the poster (spec D3)
+  // since 2026-11-04 boot.ts keeps the 3D path on SwiftShader too (E-3D-only)
   await page.addInitScript(() => {
     document.addEventListener('readystatechange', () => {
       if (document.readyState === 'interactive') (window as unknown as { __gateClasses: string }).__gateClasses = document.documentElement.className;
@@ -42,7 +65,7 @@ test('the Gate picks hero3d with WebGL2 and DecompressionStream and no data save
   expect(await page.evaluate(() => (window as unknown as { __gateClasses: string }).__gateClasses)).toBe('js hero3d loading');
 });
 
-test('AC8.1 (test build, no override): boot.ts finds the software renderer and lands on the poster with no island bytes', async ({ browser, baseURL }) => {
+test('AC8.1 (test and staging builds only, E-3D-only): boot.ts finds the software renderer and lands on the poster with no island bytes; production runs the 3D there', async ({ browser, baseURL }) => {
   test.skip(process.env.SKREED_GL === 'gpu', 'needs the software renderer: on a GPU boot.ts keeps the 3D path (tests/harness/browser.ts)');
   const ctx = await browser.newContext();
   const reqs: string[] = [];
@@ -59,17 +82,18 @@ test('AC8.1 (test build, no override): boot.ts finds the software renderer and l
   await ctx.close();
 });
 
-test('AC7 reduced motion: poster tier, no loader, no seconds, still cue, no island bytes', async ({ browser, baseURL }) => {
+test('E-3D-only reduced motion: the Gate picks the 3D path, and the full motion (seconds, cue animation)', async ({ browser, baseURL }) => {
   const ctx = await browser.newContext({ reducedMotion: 'reduce' });
-  const reqs: string[] = [];
-  ctx.on('request', (r) => reqs.push(r.url()));
   const page = await ctx.newPage();
+  await page.addInitScript(() => {
+    document.addEventListener('readystatechange', () => {
+      if (document.readyState === 'interactive') (window as unknown as { __gateClasses: string }).__gateClasses = document.documentElement.className;
+    });
+  });
   await page.goto(baseURL!);
-  await expect(page.locator('html')).toHaveClass('js poster');
-  expect(await page.locator('#intro').evaluate((e) => getComputedStyle(e).display)).toBe('none');
-  expect(await page.locator('#count .sec').evaluate((e) => getComputedStyle(e).display)).toBe('none');
-  expect(await page.locator('#cue .chev-top').evaluate((e) => getComputedStyle(e).animationName)).toBe('none');
-  expect(reqs.filter((u) => ISLAND.test(new URL(u).pathname))).toEqual([]);
+  expect(await page.evaluate(() => (window as unknown as { __gateClasses: string }).__gateClasses)).toBe('js hero3d loading');
+  expect(await page.locator('#count .sec').evaluate((e) => getComputedStyle(e).display)).not.toBe('none');
+  expect(await page.locator('#cue .chev-top').evaluate((e) => getComputedStyle(e).animationName)).not.toBe('none');
   await ctx.close();
 });
 

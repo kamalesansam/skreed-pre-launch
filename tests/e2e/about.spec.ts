@@ -172,14 +172,11 @@ test('AC6 visible at rest; the wordmark\'s lift and press, and none under reduce
   const rm = await browser.newContext({ viewport: LAPTOP, reducedMotion: 'reduce' });
   const p2 = await rm.newPage();
   await p2.goto(url); await p2.evaluate(() => document.fonts.ready);
-  const l2 = p2.locator('a.site-logo');
-  expect(await l2.evaluate((e) => getComputedStyle(e).transitionDuration)).toBe('0s');
+  const l2 = p2.locator('a.site-logo');   // the same lift and press under Reduce motion since 2026-11-04 (E-3D-only)
+  expect(await l2.evaluate((e) => getComputedStyle(e).transitionDuration)).not.toBe('0s');
   await l2.hover();
   await p2.waitForTimeout(250);
-  expect(await l2.evaluate((e) => getComputedStyle(e).transform)).toBe('none');
-  await p2.mouse.down();
-  await p2.waitForTimeout(250);
-  expect(await l2.evaluate((e) => getComputedStyle(e).transform)).toBe('none');
+  expect(await l2.evaluate((e) => getComputedStyle(e).transform)).not.toBe('none');
   await p2.mouse.move(LAPTOP.width - 20, LAPTOP.height - 20);
   await p2.mouse.up();
   await rm.close();

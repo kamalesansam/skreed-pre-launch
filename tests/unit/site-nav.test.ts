@@ -98,7 +98,7 @@ test('the drawer: a transparent full-screen layer, its 75 percent light panel sl
   assert.match(css, /\.snav-in \{ position: absolute; inset: 0 0 0 auto; width: 75%;/);
   assert.match(css, /background: var\(--pearl-whisper\); color: var\(--urban-slate\);/);
   assert.match(css, /transform: translateX\(100%\); transition: transform var\(--dur-card\) var\(--ease-standard\)/);
-  assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{ \.snav-a, \.snav-sheet, \.snav-in, \.snav-rows a span \{ transition: none; \}/);
+  assert.doesNotMatch(css, /prefers-reduced-motion/, 'the full motion for every visitor since 2026-11-04 (E-3D-only)');
   assert.match(css, /\.snav-sheet:not\(:popover-open\) \{ pointer-events: none; \}/, 'sliding out, the layer lets taps through at once');
   // no popover in the browser: the drawer hidden, the five words (the four sections and About) in a row under the logotype on phones, Menu gone
   const fallback = css.slice(css.indexOf('@supports not selector(:popover-open)'));

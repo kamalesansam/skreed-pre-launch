@@ -42,6 +42,7 @@ import { STEP } from './carousel-math.ts';
 import { allowed, create as createPool, type VideoPool } from './video.ts';
 import { fetchProductsBin } from './products-bin.ts';
 import { watchLayout } from './layout.ts';
+import { failHard } from '../../shell/note.ts';
 
 export interface RoomStepIn { t: number; dt: number;
   /** section 3's fog ground, the third wipe's near side (the 'fade' hand-off mixes from it) */
@@ -180,8 +181,8 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   const locked = () => !!root?.hasAttribute('data-locked');
   const say = (detail: string) => window.dispatchEvent(new CustomEvent('skreed:room-state', { detail }));
   const sayScene = (i: number) => window.dispatchEvent(new CustomEvent('skreed:room-scene', { detail: { i } }));
-  /** scene 1 cannot be drawn: the stills and the column stand in, the island stops drawing the section */
-  const toPoster = () => { if (root) root.dataset.tier = 'poster'; };
+  /** scene 1 cannot be drawn: a reload or the site note (shell/note.ts), never the poster column (Sam, 2026-11-04, E-3D-only) */
+  const toPoster = () => { console.warn('section 4: scene 1 cannot be drawn'); failHard(); };
   const params = (): RoomParams => liveRoomParams();
   const screenPx = () => height / ROOM_HEIGHT;
   /** the document y of the section's position q */

@@ -9,6 +9,7 @@ import WordmarkSprite from '../components/shell/WordmarkSprite.astro';
 import Loader from '../components/shell/Loader.astro';
 import SiteLogo from '../components/shell/SiteLogo.astro';
 import SiteNav from '../components/shell/SiteNav.astro';
+import SiteNote from '../components/shell/SiteNote.astro';
 import HeroStage from '../components/hero/HeroStage.astro';
 import HeroPoster from '../components/hero/HeroPoster.astro';
 import HeroPosterPreload from '../components/hero/HeroPosterPreload.astro';
@@ -42,6 +43,7 @@ const Tune = import.meta.env.PUBLIC_TUNE === '1' ? (await import('../components/
   <Gate slot="head-first" />
   <HeroPosterPreload slot="head" />
   <script slot="head" type="application/ld+json" is:inline set:html={ld}></script>
+  <SiteNote />
   <HeroStage>
     <HeroPoster slot="poster" />
     <WordmarkSprite slot="sprite" />

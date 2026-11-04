@@ -129,7 +129,7 @@ test('the family page\'s markup and CSS: two lines, the first screen\'s with the
   assert.ok(css.includes('html.cue-tight .cuetext.is-land { display: none; }'), 'the first screen line stands down where it would meet the front case');
   assert.ok(css.includes('white-space: normal; max-width: 9ch; text-align: right; line-height: 1.2; }'), 'the story line in two lines on phones, SCROLL TO over SEE MORE, in the dark corner (D6)');
   assert.ok(css.includes('.cuetext.is-story { bottom: calc(var(--inset) + var(--sab)); white-space: nowrap; max-width: none; line-height: 1; }'), 'one line on the wide layout');
-  assert.match(css, /\.press, [^}]*\.scrollcue, \.cuetext \{ transition: none; \}/, 'instant under reduced motion');
+  assert.doesNotMatch(css, /prefers-reduced-motion/, 'the full motion for every visitor since 2026-11-04 (E-3D-only): no instant branch');
   assert.match(css, /@media \(max-height: 499px\) \{[^\n]*\.cuetext\.is-land \{ display: none; \}/, 'no first-screen line on a short screen');
   const page = read('src/scripts/family/page.ts');
   assert.match(page, /H\.removeAttribute\('data-still'\);\n  clearTimeout\(stillT\);\n  stillT = window\.setTimeout\(\(\) => H\.setAttribute\('data-still', ''\), CUE_STILL_MS\);/);

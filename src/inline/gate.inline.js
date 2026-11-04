@@ -2,13 +2,13 @@
 (function () {
   var H = document.documentElement, c = H.classList; c.add('js');
   var t = window.__skreedTierOverride ? window.__skreedTierOverride() : '';
-  if (!t) {
-    var n = navigator, k = n.connection || {}, rm = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    t = !('WebGL2RenderingContext' in window) || !('DecompressionStream' in window) || k.saveData === true ||
-        CFG.slowTypes.indexOf(k.effectiveType) >= 0 || (n.deviceMemory !== undefined && n.deviceMemory <= CFG.minMemory) ||
-        (rm && CFG.reducedTier === 'poster') ? 'poster' : rm ? 'still3d' : 'hero3d';
-  }
-  if (t === 'poster') c.add('poster'); else { c.add('hero3d', 'loading'); if (t === 'still3d') c.add('still3d'); }
+  /* every visitor gets the 3D site (Sam, 2026-11-04, E-3D-only: "make sure the real site loads on any machine or any phone
+     or any browser, dont have this fallback"): data saver, a slow connection, little memory and Reduce motion no longer pick
+     the poster. A browser that cannot draw it at all (no WebGL2 or no DecompressionStream) gets the site note's one line
+     (SiteNote.astro) over the poster page, which is never shown; the poster tier stays only as the test builds' ?tier=poster */
+  if (!t) t = !('WebGL2RenderingContext' in window) || !('DecompressionStream' in window) ? 'nogl' : 'hero3d';
+  if (t === 'nogl') { c.add('poster', 'nogl'); H.setAttribute('data-note', 'unsupported'); }
+  else if (t === 'poster') c.add('poster'); else { c.add('hero3d', 'loading'); if (t === 'still3d') c.add('still3d'); }
   /* a cross-document view transition into this page that the browser skips (the family pages' way back, family-page.md 22) rejects
      its promises (ready, finished, and updateCallbackDone, seen in the console after the first two were handled) with AbortError;
      handled here, so the rejection never reaches boot.ts's guard as unhandled */

@@ -33,7 +33,7 @@ for (const [name, c] of Object.entries(CASES)) {
     const res = await page.goto(new URL('/' + c.query, baseURL).href);
     expect(res!.headers()['content-security-policy']).toBeTruthy();
     await page.waitForTimeout(2500);   // past the glitch intro and the loader's first passes
-    if (name.startsWith('loader')) { await page.evaluate(() => window.__skreedLoader!.fail('')); await page.waitForTimeout(500); }
+    if (name.startsWith('loader')) { await page.evaluate(() => window.__skreedLoader!.fail()); await page.waitForTimeout(500); }
     await page.locator('#siteLogo').hover({ force: true }).catch(() => {});
     await page.waitForTimeout(400);
     expect(await cspViolations(page)).toEqual([]);

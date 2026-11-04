@@ -5,7 +5,15 @@ export const COPY_LD = {
   aria: 'Loading Skreed',
   slow: 'Slow connection',
   still: 'Still loading',
-  offline: 'You are offline. The countdown still runs.',
+  offline: 'You are offline. Skreed loads when you are back online.',
+} as const;
+
+/** The site note (SiteNote.astro; E-3D-only, Sam 2026-11-04): the one screen that stands in for the 3D site where it cannot run. */
+export const COPY_NOTE = {
+  unsupported: 'This browser cannot show Skreed. Open it in Chrome, Safari, Firefox or Edge.',
+  failed: 'Skreed did not load.',
+  offline: 'You are offline. Skreed loads when you are back online.',
+  again: 'Try again',
 } as const;
 
 export const COPY = {

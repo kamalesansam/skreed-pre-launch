@@ -71,15 +71,18 @@ export const DPR_CAP = { touch: 1.25, fine: 1.5 } as const;
 export type Tier = 'poster' | 'still3d' | 'hero3d';
 
 /**
- * What prefers-reduced-motion gets (hero spec D2). 'poster' is the default and downloads no island; 'still3d' is the
- * prototype's own frozen 3D. Pending Sam's choice; the default ships until he decides.
+ * Whether the site honours the visitor's Reduce motion setting. false since 2026-11-04 (Sam: "make sure the real site loads
+ * on any machine or any phone or any browser, dont have this fallback ... make sure to force load or run only the actual
+ * version of the site", and asked what Reduce motion should get, "Exactly the full motion"; E-3D-only): every visitor gets the
+ * full motion, so the scripts' reduced paths never run (motion.ts). Until then reduced motion got the poster (hero spec D2).
  */
-export const REDUCED_MOTION_TIER: 'poster' | 'still3d' = 'poster';
+export const HONOUR_REDUCED_MOTION = false;
 
-/** The head Gate's rules (architecture 8), serialised into the inline script as CFG. */
-export const GATE = { reducedTier: REDUCED_MOTION_TIER, minMemory: 2, slowTypes: ['slow-2g', '2g'] } as const;
+/** The head Gate's rules (architecture 8), serialised into the inline script as CFG. Since 2026-11-04 (E-3D-only) the Gate
+ * picks the 3D for every browser that can draw it, so it needs none. */
+export const GATE = {} as const;
 
-/** A WebGL renderer string that names a software rasteriser sends boot.ts to the poster (spec D3). */
+/** A WebGL renderer string that names a software rasteriser: the poster in test and staging builds only (boot.ts, E-3D-only). */
 export const SOFTWARE_GL = /SwiftShader|llvmpipe|softpipe|Software|Basic Render/i;
 
 /** The poster's aspect classes (architecture 4.5): wide is aspect 0.9 or more, portrait is the complement. */

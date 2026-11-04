@@ -49,8 +49,10 @@ test('AC10.4 behind the loader (3D path while loading) nothing is focusable but 
   for (const keep of ['intro', 'stage']) expect(inert).not.toContain(keep);
   await page.keyboard.press('Tab');
   expect(await page.evaluate(() => document.activeElement?.id || document.activeElement?.tagName)).not.toBe('siteLogo');
-  // the loader's poster state (a soft failure) releases inert
-  await page.evaluate(() => window.__skreedLoader!.fail(''));
-  await expect(page.locator('html')).toHaveClass(/\bposter\b/);
+  // the loader's fail (the Gate's module error) after its one reload of the visit is the site note (E-3D-only), and releases inert
+  await page.evaluate(() => { sessionStorage.setItem('skreed-3d-retry', '1'); window.__skreedLoader!.fail(); });
+  await expect(page.locator('html')).toHaveClass(/\bnogl\b/);
+  await expect(page.locator('html')).toHaveAttribute('data-note', 'failed');
+  await expect(page.locator('#siteNote .sn-again')).toBeVisible();
   expect(await page.evaluate(() => document.querySelectorAll('[inert]').length)).toBe(0);
 });

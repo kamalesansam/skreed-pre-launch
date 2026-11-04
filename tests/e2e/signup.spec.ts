@@ -130,14 +130,14 @@ test('section 5 at 390 x 844: the fill waits for the page to be visible (300 ms 
   await press(page, 'youtube'); await press(page, 'facebook');
   await expect.poll(() => filled(page).then((x) => x.map((e) => e.state)), { timeout: 6_000 }).toEqual(['i', 'iy', 'iyf']);
   await ctx.close();
-  // reduced motion: the state set at once, the event at once
+  // reduced motion: the same fill as everyone since 2026-11-04 (E-3D-only), not at once
   const ctx2 = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, reducedMotion: 'reduce' });
   const page2 = await ctx2.newPage();
   await open(page2, baseURL);
   const t0 = await page2.evaluate(() => performance.now());
   await press(page2, 'facebook');
-  await expect.poll(() => filled(page2).then((x) => x.length), { timeout: 2_000 }).toBe(1);
-  expect((await filled(page2))[0].t - t0).toBeLessThan(400);
+  await expect.poll(() => filled(page2).then((x) => x.length), { timeout: 6_000 }).toBe(1);
+  expect((await filled(page2))[0].t - t0).toBeGreaterThan(400);
   expect(await state(page2)).toBe('f');
   await ctx2.close();
 });

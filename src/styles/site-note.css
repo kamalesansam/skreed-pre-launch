@@ -1,0 +1,11 @@
+/* The site note (SiteNote.astro, E-3D-only): hidden unless html.nogl; then one screen on --night over the whole page, the
+   wordmark and the one line of its data-note in Pearl Whisper, Open Sans, and the page under it neither seen nor scrolled */
+.site-note { display: none; }
+html.nogl, html.nogl body { overflow: hidden; }
+html.nogl .site-note { position: fixed; inset: 0; z-index: 2147483647; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s5);
+  padding: 0 calc(var(--inset) + env(safe-area-inset-right, 0px)) 0 calc(var(--inset) + env(safe-area-inset-left, 0px)); background: var(--night); color: var(--pearl-whisper); text-align: center; }
+.sn-mark { width: clamp(120px, 30vw, 200px); height: auto; color: var(--pearl-whisper); }
+.sn-line { display: none; margin: 0; max-width: 34ch; font-family: var(--font-ui); font-size: 1rem; font-weight: 400; line-height: 1.5; }
+html[data-note="unsupported"] .sn-unsupported, html[data-note="failed"] .sn-failed, html[data-note="offline"] .sn-offline { display: block; }
+.sn-again { color: inherit; font-weight: 600; text-decoration-line: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
+@media (hover: hover) { .sn-again:hover { text-decoration-thickness: 2px; } }

@@ -42,16 +42,15 @@ test.describe('AC3.10 behind the loader', () => {
     expect(await page.evaluate(() => document.activeElement?.id)).toBe('siteLogo');
   });
 
-  test('after a soft poster (offline before ready) no element is inert', async ({ page, context }) => {
-    // fail('') is the Gate's module load-error path, a hard failure once boot.ts runs (architecture 7.3); the loader's own
-    // offline rule is the quick soft poster
+  test('offline before ready the loader stays up with the offline line, never the poster (E-3D-only)', async ({ page, context }) => {
+    // the loader had a soft poster for offline and stalls until 2026-11-04; now it says so and keeps waiting
     await page.goto('/?tier=hero3d');
     await expect(page.locator('html')).toHaveClass(/loading/);
     await context.setOffline(true);
-    await expect(page.locator('html')).toHaveClass(/poster/);
-    await expect(page.locator('#intro')).toHaveClass(/po/);
-    expect(await page.locator('#ldSt').textContent()).toBe('You are offline. The countdown still runs.');
-    expect(await page.locator('[inert]').count()).toBe(0);
+    await expect(page.locator('#ldSt')).toHaveText('You are offline. Skreed loads when you are back online.');
+    await expect(page.locator('html')).toHaveClass(/\bhero3d\b/);
+    expect(await page.locator('html').getAttribute('class')).not.toMatch(/\bposter\b/);
+    expect((await inertReport(page)).missing).toEqual([]);
     await context.setOffline(false);
   });
 

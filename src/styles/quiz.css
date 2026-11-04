@@ -76,7 +76,6 @@ html:not(.js) .qz-begin { display: none; }   /* without JavaScript the noscript 
 .qz-rv-line { font-size: var(--qz-fs-q); line-height: 1.25; }
 .qz-bar { position: relative; height: 1px; margin-top: var(--s2); background: var(--urban-slate); }
 .qz-bar-fill { position: absolute; left: 0; top: -1px; width: 100%; height: 3px; background: var(--pearl-whisper); transform: scaleX(0); transform-origin: left center; }
-@media (prefers-reduced-motion: reduce) { .qz-bar-fill { transform: none; opacity: 0; } }   /* no transform under reduced motion (AC9): the full line brightens a quarter at a time instead (deck.ts) */
 
 /* the result (Sam, 2026-11-02, with his reference: "for the results page, first of all it should fit inside one screen,
    after the results, there should be no scrolling, ad make it look something like this for the results ... dynamic to all
@@ -186,7 +185,7 @@ svg.qz-smear { aspect-ratio: var(--qz-paint-ar); }   /* our own stroke takes the
 /* Send: Urban Slate with its words in Pearl Whisper, Work Sans Light in capitals, darker under a mouse (rule 14: a colour
    change on the standard ease) */
 .qz-send { min-height: 48px; padding: 0 var(--s4); border: 0; border-radius: 0; background: var(--urban-slate); color: var(--pearl-whisper); font: 300 max(14px, calc(var(--qz-fs-offer) * var(--qz-rs, 1))) / 1 var(--qz-f-label); text-transform: inherit; letter-spacing: 0; white-space: nowrap; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-@media (prefers-reduced-motion: no-preference) { .qz-send { transition: background-color var(--dur-press) var(--ease-standard); } }
+.qz-send { transition: background-color var(--dur-press) var(--ease-standard); }
 @media (hover: hover) { .qz-send:hover:not([aria-disabled="true"]) { background: var(--night); } }
 .qz-send[aria-disabled="true"] { cursor: default; }
 @media (max-width: 399px) { .qz-input { padding: 0 var(--s2); } .qz-send { padding: 0 var(--s3); } }   /* under 400 px the placeholder needs the room: "Your email address" is 142.4 px at 16 px, and a 170 px field less 2 x 16 px cut it short at 360 x 780 (review iteration 4) */

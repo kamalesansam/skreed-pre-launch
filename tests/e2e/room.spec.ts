@@ -16,6 +16,7 @@
 // island specs drive the section by its hooks (__s4, __skreedRoom) at device pixel ratio 1, skip the intro and turn the
 // glue off (?glue=0: every q is set by scrollTo) except the glue's own case.
 import { test, expect, type Page } from '@playwright/test';
+import { HONOUR_REDUCED_MOTION } from '../../src/config/hero.ts';
 
 type Ev = { name: string; props: Record<string, string | number> };
 type S4 = { backdrop?: 'pictures' | 'loops'; state: string; under: string; scene: number; wipeOut: number; restY: number; step: number; busy: boolean; inRange: boolean; q: number; qRaw: number; hold: { y: number } | null; ready: boolean; failed: boolean; settled: boolean; products: string; video: boolean; loops: { i: number; state: string; in: boolean; refused: boolean; playing: boolean }[]; memory: number; layout: { top: number; height: number; intro: boolean } | null };
@@ -297,11 +298,12 @@ test('section 4 at 390 x 844, AC14: a blocked loop, a rejected play(), products.
   await expect(page.locator('.rm-scene[data-i="2"] .rm-scene-more')).toBeHidden({ timeout: 10_000 });
   await expect(page.locator('.rm-scene[data-i="2"] .rm-scene-name .dc')).toBeVisible();
   expect(await page.evaluate(() => [...document.querySelectorAll('video')].filter((v) => !v.paused).length)).toBe(0);
-  // the context lost in the scenes: the hero's hard poster path and the section's poster layout, the scenes in a column
-  await page.evaluate(() => window.__skreedLoseContext!());
-  await expect.poll(() => page.evaluate(() => document.documentElement.classList.contains('poster')), { timeout: 20_000 }).toBe(true);
-  await expect(page.locator('#rmScenes')).toBeVisible();
-  expect(await page.locator('.rm-scene:visible').count()).toBe(N);
+  // the context lost in the scenes: since 2026-11-04 (E-3D-only) a reload once a visit, then the site note, never the
+  // poster column; the visit's reload is spent here, so the note shows
+  await page.evaluate(() => { sessionStorage.setItem('skreed-3d-retry', '1'); window.__skreedLoseContext!(); });
+  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.note), { timeout: 20_000 }).toBe('failed');
+  await expect(page.locator('#siteNote .sn-again')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.classList.contains('poster'))).toBe(false);
   expect(await noHScroll(page)).toBe(true);
   expect(errors).toEqual([]);
   await ctx.close();
@@ -503,6 +505,7 @@ test('section 4 at 390 x 844: a finger dragged from the approach across scene 1 
 });
 
 test('section 4 at 390 x 844 under reduced motion (still3d): no loop elements, the arrival at once, a step as a cut, no exit from section 5 (AC11)', async ({ browser, baseURL }) => {
+  test.skip(!HONOUR_REDUCED_MOTION, 'Reduce motion is not honoured since 2026-11-04 (E-3D-only, docs/specs/3d-only.md)');
   test.setTimeout(900_000);
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, reducedMotion: 'reduce' });
   const page = await ctx.newPage();
