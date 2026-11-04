@@ -58,8 +58,8 @@ interface Window {
   /** section 5 (section-5.md 5): the island's side of the bridge, installed with its jar chunk, and the frame it hands the DOM script each step */
   __skreedSignup?: import('./config/signup.ts').SignupIsland;
   __skreedSignupFrame?: (f: import('./config/signup.ts').SignupFrame) => void;
-  /** hooks builds: section 4's state, a scene at rest, one step, the wrap, the glue on or off, the lights and the shade (section-4-flux.md 5, "Build modes") */
-  __s4?: { state(): unknown; scene(i: number): boolean; step(dir: 1 | -1): boolean; wrap(): void; glue(on: boolean): void; lights(o: Partial<import('./scripts/hero/section4/carousel.ts').LightSetting>): import('./scripts/hero/section4/carousel.ts').LightSetting | null; shade(dark: number, height?: number, solid?: number): void; readonly ready: boolean };
+  /** hooks builds: section 4's state, a scene at rest, one step, the glue on or off, the lights and the shade (section-4-flux.md 5, "Build modes") */
+  __s4?: { state(): unknown; scene(i: number): boolean; step(dir: 1 | -1): boolean; glue(on: boolean): void; lights(o: Partial<import('./scripts/hero/section4/carousel.ts').LightSetting>): import('./scripts/hero/section4/carousel.ts').LightSetting | null; shade(dark: number, height?: number, solid?: number): void; readonly ready: boolean };
   // test hooks (test and staging builds only; hero-architecture.md 10)
   __skreedFreeze?: boolean;
   /** hooks builds: while frozen, the next frame advances the clock by this many seconds once, then clears it (the flash check's step capture, one frame at a time) */

@@ -193,7 +193,7 @@ test('the script (C3, C4, C5): the fill by clip-path, the visibility gate, the e
   assert.doesNotMatch(dom, /__skreedSignup\b|data-pouring|dataset\.pouring|createDecoder|stillFiles/, 'nothing of the island\'s jar');
   // the island's word on a change (hero/loop.ts): the body under a seam's cloud with the cover, back at rest
   assert.match(dom, /window\.__skreedSignupFrame = \(f\) => \{/);
-  assert.match(dom, /addEventListener\('skreed:room-state'/, 'the wrap announcement');
+  assert.doesNotMatch(dom, /skreed:room-state|wrapLive/, 'no wrap onto the section from the top (2026-11-04)');
   assert.match(dom, /if \(window\.__skreedLogo\?\.setTone\) window\.__skreedLogo\.setTone\(on\);/, 'the logotype turns Urban Slate over the cream ground on the poster tier, through the logotype\'s own setTone');
   assert.match(dom, /setTone\(r\.top < mid && r\.bottom > mid\)/, 'while the section\'s ground is under the logotype\'s middle');
   assert.match(dom, /if \(on === \(logo\.dataset\.tone === 'light'\)\) return;/, 'the tone read from the logotype, never from a stale flag');

@@ -669,11 +669,11 @@ test('the three modules import three, RoomEnvironment and products-bin.ts alone,
   assert.doesNotMatch(readFileSync(new URL('carousel-math.ts', dir), 'utf8'), /^import /m, 'carousel-math.ts imports nothing');
 });
 
-test("one frame source (X-15, section-4-no-hall.md 5): the carousel's frame in every state, under a seam's cloud too; the third wipe waits for scene 1 in the approach only, so a wrap that lands first shows dawn whole", () => {
+test("one frame source (X-15, section-4-no-hall.md 5): the carousel's frame in every state; the third wipe waits for scene 1 in the approach only", () => {
   const director = readFileSync(new URL('../../src/scripts/hero/section4/director.ts', import.meta.url), 'utf8');
   assert.match(director, /const showable = state !== 'approach' \|\| first;/, 'scene 1 gates the approach alone');
-  assert.match(director, /revealAt = qRaw > 0\.02 && !reduced && !seam && scene\(\) === 0 \? f\.t : -1;/, 'the late reveal plays only for scene 1, never over a wrap\'s landing');
+  assert.match(director, /revealAt = qRaw > 0\.02 && !reduced && scene\(\) === 0 \? f\.t : -1;/, 'the late reveal plays only for scene 1');
   assert.match(director, /if \(state === 'approach' && inRoom && qRaw >= at && drawable0\(\) && !lay\.layout\?\.intro\) \{/, 'the arrival waits for scene 1 to be drawable, so the scenes never open on a black frame');
-  assert.match(director, /const want = on \|\| !!seam;/, "the carousel draws while the section is on screen or a seam's cloud needs it");
+  assert.match(director, /if \(on !== drawn\) \{ drawn = on; syncMotion\(\); \}/, 'the carousel draws while the section is on screen (no seam since the wrap left, 2026-11-04)');
   assert.doesNotMatch(director, /frameSource|drawHall|seamDraws/, 'no other frame to choose');
 });

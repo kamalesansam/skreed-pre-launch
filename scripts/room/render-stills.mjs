@@ -10,7 +10,7 @@
 // The frames, each by a named hook: the approach inside the third wipe (q 0.5); scene 1 at rest on arrival (q 1); each
 // other scene at rest with its four lines (__s4.scene); a mid-step frame of each class (__s4.step, shot about a third
 // of the way in); the hold past scene 5; the exit seam's cover (the raw scroll across 3.8, shot during the cover-in)
-// and the first frame after the jump; the wrap from the top onto scene 5 (__s4.wrap) at full cover and at rest; and the
+// and the first frame after the jump (no wrap from the top since 2026-11-04); and the
 // poster tier's column (?tier=poster: each scene on its screen). SKREED_GL=swiftshader runs WebGL on SwiftShader (the
 // test harness's flags) when the GPU path is not available; on a Mac the GPU path is Metal, elsewhere the platform's own.
 import { mkdirSync } from 'node:fs';
@@ -98,12 +98,6 @@ for (const setup of Object.keys(SETUPS)) {
   await scene(page, SCENES - 1);
   await go(page, 3.5, 1200); await shot(page, f('hold'));
   await go(page, WIPE4_START + 0.5, 600); await shot(page, f('wipe4-half'));
-  // the wrap from the top: full cover over the hero, then scene 5 at rest with the wrap's line
-  await page.evaluate(() => window.__s4.wrap());
-  await page.waitForFunction(() => { const s = window.__s4.state(); return s.seam && (s.seam.phase === 'hold' || s.seam.phase === 'out'); }, null, { timeout: 10_000 }).catch(() => console.warn('  the wrap did not reach full cover'));
-  await shot(page, f('wrap-cover'));
-  await page.waitForFunction(() => window.__s4.state().state === 'world', null, { timeout: 20_000 }).catch(() => console.warn('  the wrap did not land'));
-  await page.waitForTimeout(2600); await shot(page, f('wrap-scene-5'));
   console.log(`[${setup}] state at the end: ${JSON.stringify(await state(page).then((s) => ({ state: s.state, scene: s.scene, memory: s.memory })))}`);
   await ctx.close();
   // the poster tier's column: each scene on its own screen from the section's top

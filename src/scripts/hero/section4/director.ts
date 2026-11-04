@@ -1,7 +1,7 @@
 // Section 4's director (docs/specs/section-4-flux.md 2, 4 and 5 for the scenes; docs/specs/section-4-no-hall.md since
-// 2026-11-02, when the hall, the door and the bubble left): the section's state (approach, world, seam), its progress q
+// 2026-11-02, when the hall, the door and the bubble left): the section's state (approach, world), its progress q
 // in screens of its own height through two followers, the third wipe from the fog straight to scene 1, the five scenes
-// on the carousel (carousel.ts) with their loops (video.ts), the arrival's hold, the two seams and the hooks.
+// on the carousel (carousel.ts) with their loops (video.ts), the arrival's hold and the hooks.
 // - The approach: under scene 1's q the carousel draws scene 1 at rest and the composite's third wipe (q 0 to 1) takes
 //   the quiz's fog away to it. The wipe waits for scene 1 to be drawable (its still or its loop); if it becomes so while
 //   the section is on screen, the wipe plays in over a second.
@@ -19,17 +19,14 @@
 //   scrollbar) re-syncs the scene. A gesture at either edge (back at scene 1, on at scene 5) is the page's.
 // - No exit seam (2026-11-03, Sam: "remove the loop"): the page ends at section 5. The fourth wipe (docs/specs/section-5.md 2)
 //   from q 3.8 over one screen: the composite cuts from the scenes onto section 5's ground, the first wipe's cut; this
-//   director reports its progress (wipeOut) and the frame holds still under it. The reverse seam (the wrap, from scroll
-//   0): cover in over the hero, the page set to section 5's rest (restY) with the hero's followers snapped and the
-//   carousel at scene 5 under it (so the scroll back up runs the cut onto dawn), full cover held until section 5 is ready
-//   (its data-ready), cover out over section 5, the lock; the state is seam throughout and becomes world when the lock
-//   ends. Under reduced motion it is a cut. Every state change is reported to the wiring (onState), which re-evaluates
-//   the page scroll's capture set.
-// - Loading runs in phases, one compile, upload or decode a frame: the cloud's pass at idle (warmCloud, phase 0); when
-//   the quiz or the section nears (load, phase 1) the carousel's programs and scene 1's still; once the section is open
-//   (phase 2) products.bin and scene 1's loop, with the loop elements' unlock armed for the visitor's next gesture (no
-//   press gives iOS one now); on arrival the other loops one at a time, 2 to 5, each still before its loop; after a wrap
-//   5 first, then 4, 3, 2, 1.
+//   director reports its progress (wipeOut) and the frame holds still under it. No wrap from the top either
+//   (2026-11-04, Sam: "i cant go to the bottom of the site from the top section, remove that trick";
+//   docs/specs/scroll-steps.md 2): the cloud's cover, its seam and the state seam left with it. Every state change is
+//   reported to the wiring (onState), which re-evaluates the page scroll's capture set.
+// - Loading runs in phases, one compile, upload or decode a frame: when the quiz or the section nears (load, phase 1)
+//   the carousel's programs and scene 1's still; once the section is open (phase 2) products.bin and scene 1's loop,
+//   with the loop elements' unlock armed for the visitor's next gesture (no press gives iOS one now); on arrival the
+//   other loops one at a time, 2 to 5, each still before its loop.
 // The section's layout is cached (layout.ts: its document top and height, re-read when html's class changes, when the
 // document, the quiz or the section changes size, and on resize; a reading taken under the intro's layout is replaced
 // once the intro ends), so a frame reads only scrollY and never forces layout under the quiz. The DOM side
@@ -41,7 +38,7 @@ import { createScrollFollower } from '../scroll/scrollMap.ts';
 import { clamp01 } from '../util/math.ts';
 import { createTransition, type TransitionPass } from './transition.ts';
 import { createCarousel, type Carousel, type CarouselTune, type LightSetting, type SceneDef } from './carousel.ts';
-import { STEP, cloudCover } from './carousel-math.ts';
+import { STEP } from './carousel-math.ts';
 import { allowed, create as createPool, type VideoPool } from './video.ts';
 import { fetchProductsBin } from './products-bin.ts';
 import { watchLayout } from './layout.ts';
@@ -62,10 +59,10 @@ export interface RoomPlan {
   wipeOut: number;
   /** the fog ground is still on screen (the third wipe, or the fade, has not finished) */
   groundNeeded: boolean;
-  /** a seam's cloud cover, 0 to 1: above 0 the composite blends cloud (premultiplied) over its result */
+  /** a seam's cloud cover, 0 to 1, and its texture: always 0 and null since the wrap left (2026-11-04); the composite's blend stays for a seam to come */
   cover: number;
   cloud: Texture | null;
-  /** the logotype (and the section index, which copies its tone) over the section: the front scene's own tone (ROOM_SCENES toneDark, measured on the stills); Urban Slate while a seam's cloud covers half the frame or more, whatever is under it */
+  /** the logotype (and the section index, which copies its tone) over the section: the front scene's own tone (ROOM_SCENES toneDark, measured on the stills) */
   toneDark: boolean;
 }
 
@@ -75,7 +72,7 @@ export interface RoomDirector {
   settled(): boolean;
   /** before the hero's part of the frame: the section's progress */
   begin(ratio: number): void;
-  /** the scene work of the frame: update, render the carousel and a seam's cloud; the plan for the composite */
+  /** the scene work of the frame: update and render the carousel; the plan for the composite */
   step(f: RoomStepIn): RoomPlan;
   /**
    * the page jumped by other means (the section index, a family page's Back to top restoring section 1): every clock
@@ -86,8 +83,6 @@ export interface RoomDirector {
   resize(w: number, h: number): void;
   /** phase 1 when the quiz or the section nears (the carousel's programs, scene 1's still), and phase 2 once the section is open (products.bin, scene 1's loop); called again by the quiz's unlock */
   load(): Promise<void>;
-  /** phase 0: the cloud's pass and target, at idle once the intro ends, so a wrap from the top has its cover */
-  warmCloud(): Promise<void>;
   // the adapter for scroll.ts (section-4-flux.md 5, "Capture, by state and position")
   /** the raw position within 2 px of [q 1, q 3] in world */
   inRange(): boolean;
@@ -97,9 +92,6 @@ export interface RoomDirector {
   stepScene(dir: 1 | -1): boolean;
   /** a forward wheel event the page cannot cancel (scroll.ts): the page held on the scene's q while they come, the arrival's hold renewed or begun there */
   carried(): void;
-  wrap(): boolean;
-  /** a seam (cover-in, cover-out and the 400 ms after) is running: gestures are swallowed */
-  lock(): boolean;
   /** a step runs or its 150 ms cooldown */
   busy(): boolean;
   hooks(): Record<string, unknown>;
@@ -110,18 +102,14 @@ export interface DirectorOptions {
   renderer: WebGLRenderer; avif: boolean; reduced: boolean;
   /** the canvas's pixel ratio (the cloud's target is capped at 1.5) */
   dpr: number;
-  /** the hero's own followers to the page's position in document px (the exit's jump to 0, the wrap's landing) */
-  snapHero(y: number): void;
-  /** every state change, as it happens (an arrival or a seam's end changes the state with no gesture, so the page scroll re-evaluates its capture set from here) */
+  /** every state change, as it happens (an arrival changes the state with no gesture, so the page scroll re-evaluates its capture set from here) */
   onState?(state: RoomState): void;
   /** every reading of the section's layout (the intro ending, the document growing, a resize): the page scroll re-evaluates its range from here */
   onLayout?(): void;
   /** section 5 (section-5.md 5): the exit seam's trigger in document px (its body's end at the viewport's bottom; NaN before section 5 has a reading) */
   exitY(): number;
-  /** where the wrap lands, document px (section 5's rest; NaN before a reading, when the wrap lands on scene 5's own position) */
+  /** section 5's rest, document px (NaN before a reading): the fourth wipe ends there when it comes first */
   restY(): number;
-  /** section 5 is ready: the page has decoded its jar pictures and fonts, data-ready="1" (the wrap's full cover waits on it, at most 1.5 s) */
-  signupReady(): boolean;
 }
 
 /** the review hooks beyond hooks() (hero.ts installs them as window.__s4 in hooks builds) */
@@ -134,20 +122,16 @@ export interface RoomHooks {
   shade(dark: number, height?: number, solid?: number): void;
 }
 
-/** the exit seam and the reverse seam (the wrap), by phase (section-4-flux.md 4, the motion table) */
-type SeamKind = 'exit' | 'wrap';
-type SeamPhase = 'wait' | 'in' | 'hold' | 'out' | 'lock';
-interface Seam { kind: SeamKind; phase: SeamPhase; t0: number; holdY: number }
 type LoopState = 'idle' | 'fetching' | 'in' | 'failed';
 
-const N = SCENE_COUNT, SEAM = { inS: STEP.seamInMs / 1000, outS: STEP.seamOutMs / 1000, lockS: 0.4, waitS: 1.5, holdS: 1.5 };
+const N = SCENE_COUNT;
 /** the arrival's hold (section-4-no-hall.md 2 and D3): over once the page has not run past scene 1 for stillS, at most maxS after the start or the carrying wheel's latest event */
 const HOLD = { stillS: 0.15, maxS: 1.2 };
 /** E-S4-loops is pending: the "Pause motion" control (walk.ts) shows only once Sam declines it (the director sets data-pause) */
 const LOOPS_DECLINED = false;
 const TIMEOUT_MS = 20_000;
 const HOOKS = import.meta.env.PUBLIC_HERO_HOOKS === '1';
-/** the visitor's next gesture unlocks the loop elements (spec 5, "Video policy"; AC7): from the section's opening, and again after a wrap */
+/** the visitor's next gesture unlocks the loop elements (spec 5, "Video policy"; AC7): from the section's opening */
 const UNLOCK_EVENTS = ['pointerup', 'touchend', 'keydown'] as const;
 /** what ends the arrival's hold at once (an upward wheel only: a downward one is captured for a step, or is the input that carried the page in, which renews the hold; a held key's repeat is that input too, never a new key) */
 const LET_GO_EVENTS = ['touchstart', 'pointerdown', 'keydown', 'wheel'] as const;
@@ -204,10 +188,10 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   const yAt = (qq: number) => Math.round(top + qq * screenPx());
 
   // the per-frame values
-  let q = 0, qRaw = 0, prevRaw = 0, seenRaw = false, inRoom = false, jumped = false, revealAt = -1, wasReady = false, drawn = false, lastT = 0, lastWipeOut = 0;
-  // the seam, the step under way (from and to), the motion control
-  let seam: Seam | null = null, stepFrom = -1, stepTo = -1, motionOn = true, cloudReady = false;
-  // the one-shot unlock of the loop elements, armed from the section's opening and after a wrap
+  let q = 0, qRaw = 0, prevRaw = 0, seenRaw = false, inRoom = false, jumped = false, revealAt = -1, wasReady = false, drawn = false, lastWipeOut = 0;
+  // the step under way (from and to), the motion control
+  let stepFrom = -1, stepTo = -1, motionOn = true;
+  // the one-shot unlock of the loop elements, armed from the section's opening
   let unlockOff: (() => void) | null = null;
   // the arrival's hold (its y, its start and its last snap on the frame clock, and whether a wheel event of the input that
   // carried the page in came since the last frame), a hold waiting for a finger's release and the y it takes there, the
@@ -238,7 +222,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   const refreshTune = (P: RoomParams) => { tuneObj.stepMs = P.stepMs; tuneObj.sweepDeg = P.sweepDeg; tuneObj.sweepDegPortrait = P.sweepDegPortrait; tuneObj.fovStep = P.fovStep; tuneObj.fovReturnAt = P.fovReturnAt; tuneObj.lightStart = P.lightStart; tuneObj.lightSoft = P.lightSoft; tuneObj.lightBoost = P.lightBoost; tuneObj.keyLightMs = P.keyLightMs; };
   const scenes: SceneDef[] = ROOM_SCENES.map((s, i) => ({ id: s.id, keyLight: s.keyLight, baseYaw: s.baseYaw, basePitch: s.basePitch, product: s.product, shade: s.hex, finish: s.finish, still: () => loadStill(i), loop: video ? i : null }));
   const carousel: Carousel = createCarousel({ renderer, scenes, video, cls, reduced, tune: () => tuneObj, dpr: o.dpr });
-  /** the carousel's loops and cloud clock run only while it draws (the section on screen, or a seam's cloud) and the control allows */
+  /** the carousel's loops run only while it draws (the section on screen) and the control allows */
   const syncMotion = () => carousel.motion(motionOn && drawn);
   const setState = (s: RoomState) => { state = s; if (root) { root.dataset.state = s; if (s !== 'world') delete root.dataset.scene; } syncMotion(); measure(); o.onState?.(s); };
   /** the step under way is over or abandoned */
@@ -249,7 +233,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   const sceneAt = (qq: number) => Math.max(0, Math.min(N - 1, Math.round((qq - WORLD_START) / ROOM_SCREENS.step)));
   /** the front scene's tone for the logotype (the front switches at eased 0.75 of a step, where the lights change over) */
   const sceneTone = () => ROOM_SCENES[carousel.front()]?.toneDark ?? false;
-  /** scene i's still or loop has settled (a step may start toward it; the wrap's cover may lift); a failed still counts, so a step is never refused for good */
+  /** scene i's still or loop has settled (a step may start toward it); a failed still counts, so a step is never refused for good */
   const resident = (i: number): boolean => stillDone[i] || (!!video && video.in(i));
   /** scene 1 can be drawn: its still decoded or its loop in (the third wipe waits for it) */
   const drawable0 = (): boolean => stillOk[0] || (!!video && video.in(0));
@@ -272,9 +256,9 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   }
   /** the loops in order, one at a time, each after its still where one is on its way (spec 5, "Loading", phases 3 and 5) */
   const queueLoops = (order: readonly number[]) => { for (const i of order) loopChain = loopChain.then(() => stillJob[i] ?? null).then(() => fetchLoop(i)).catch(() => {}); };
-  /** phase 1 (the quiz or the section nears): the cloud, the carousel's programs and environment, scene 1's still alone (a visitor who never finishes the quiz pays for no more) */
-  const warmUp = () => (phase1 ??= (async () => { void api.warmCloud(); carousel.prepare(0, false); await carousel.warm(); })());
-  /** phase 2 (the section open, or a wrap): products.bin, the first scene's loop (scene 1; scene 5 after a wrap-first visit) and its neighbour's still (a step waits on it), the loop elements' unlock armed */
+  /** phase 1 (the quiz or the section nears): the carousel's programs and environment, scene 1's still alone (a visitor who never finishes the quiz pays for no more) */
+  const warmUp = () => (phase1 ??= (async () => { carousel.prepare(0, false); await carousel.warm(); })());
+  /** phase 2 (the section open): products.bin, the first scene's loop and its neighbour's still (a step waits on it), the loop elements' unlock armed */
   function openScenes(first = 0) {
     if (phase2 || disposed) return;
     phase2 = true;
@@ -288,9 +272,9 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
     queueLoops([first]);
     armUnlock();
   }
-  /** every scene's loop after arrival at scene i, the nearest first (2, 3, 4, 5 from scene 1; 5, 4, 3, 2, 1 after a wrap; outward either way from any other) */
+  /** every scene's loop after arrival at scene i, the nearest first (2, 3, 4, 5 from scene 1; outward either way from any other) */
   const loadRest = (i: number) => { openScenes(i); queueLoops(Array.from({ length: N }, (_, k) => k).sort((a, b) => Math.abs(a - i) - Math.abs(b - i) || b - a)); };
-  /** the loop elements are unlocked on the visitor's next gesture (no press gives iOS one: the section's opening and every wrap arm it) */
+  /** the loop elements are unlocked on the visitor's next gesture (no press gives iOS one: the section's opening arms it) */
   function armUnlock() {
     unlockOff?.();
     if (!video) return;
@@ -377,66 +361,16 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   const holding = () => !!hold || pendingHold || holdAt !== null;
 
   // ---- the resets
-  /** the top of the page (the exit's jump, the section index's Home): every clock stops, the next lap arrives at scene 1 again */
-  function resetLap(fromSeam: boolean) {
+  /** the top of the page (the section index's Home): every clock stops, the next lap arrives at scene 1 again */
+  function resetLap() {
     jumped = true;
     follow.snap(0); q = 0; qRaw = prevRaw = 0; revealAt = -1;
     endHold(); holdAt = null; clearStep();
     under = 'approach';
-    if (!fromSeam) { seam = null; carousel.seam(null, 0); setState('approach'); }
+    setState('approach');
     setScene(0, true);
     syncMotion();
     say('jump');
-  }
-
-  // ---- the seam (section-4-flux.md 4: the wrap from scroll 0; a cut under reduced motion). No exit seam since 2026-11-03
-  // (Sam: "remove the loop, i dont want the sign up page to scroll back to section 1"): the page ends at section 5
-  /**
-   * The wrap lands under full cover: the page at scene 5's position with the hero's followers snapped, the carousel at
-   * scene 5 drawn under the cloud. The state stays seam through the hold, the cover-out and the 400 ms lock (the lock's
-   * end makes it world and sets data-scene), so no gesture reaches the page and the exit's trigger stays armed off.
-   */
-  function landWrap() {
-    under = 'world';
-    setScene(N - 1, true);
-    // the page at section 5's rest (section-5.md 2, "The wrap from the top"), the section's followers at that position in
-    // its own screens (past its track); scene 5's own position when section 5 has no reading yet
-    current();
-    const rest = o.restY();
-    let y: number;
-    if (Number.isFinite(rest)) { y = Math.round(rest); scrollTo({ top: y, behavior: 'instant' }); const qq = (y - top) / screenPx(); follow.snap(qq); q = qq; qRaw = prevRaw = qq; }
-    else y = snap(sceneQ(N - 1));
-    o.snapHero(y);
-    syncMotion();
-    armUnlock();
-    loadRest(N - 1);
-  }
-  function seamFrame(t: number, s: Seam): number {
-    const e = t - s.t0;
-    switch (s.phase) {
-      case 'wait':   // the wrap before the cloud's pass is compiled, at most 1.5 s
-        if (cloudReady || e >= SEAM.waitS) { s.phase = 'in'; s.t0 = t; carousel.seam('in', 0); }
-        return 0;
-      case 'in': {
-        const k = clamp01(e / SEAM.inS);
-        carousel.seam('in', k);
-        if (k >= 1) { landWrap(); s.phase = 'hold'; s.t0 = t; }
-        return cloudCover('in', k);
-      }
-      case 'hold':   // full cover until section 5 is ready (its data-ready), at most 1.5 s more
-        carousel.seam('in', 1);
-        if (o.signupReady() || e >= SEAM.holdS) { s.phase = 'out'; s.t0 = t; say('wrap'); }
-        return 1;
-      case 'out': {
-        const k = clamp01(e / SEAM.outS);
-        carousel.seam('out', k);
-        if (k >= 1) { s.phase = 'lock'; s.t0 = t; carousel.seam(null, 0); return 0; }
-        return cloudCover('out', k);
-      }
-      case 'lock':
-        if (e >= SEAM.lockS) { seam = null; setState(under); if (under === 'world' && root) root.dataset.scene = String(scene()); }
-        return 0;
-    }
   }
 
   // ---- the product's look, the reference's cursor tilt (section-4-flux.md 4; X-14 as amended, E-S4-hover): a mouse or
@@ -454,7 +388,6 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   const island: RoomIsland = {
     snap,
     step: (dir) => api.stepScene(dir),
-    wrap: () => api.wrap(),
     motion(on) { motionOn = on; syncMotion(); },
   };
   window.__skreedRoom = island;
@@ -478,7 +411,6 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
     },
     step(f) {
       const P = params();
-      lastT = f.t;
       refreshTune(P);
       if (root && LOOPS_DECLINED && root.dataset.pause !== '1') root.dataset.pause = '1';
       // the poster tier (or a fall to it): nothing drawn, and no loop left playing under the column
@@ -486,7 +418,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       const eps = 2 / screenPx();
       // the hold and the arrival first: a page carried past scene 1 from above is put back on it before the frame reads
       // the position
-      if (!seam) { holdFrame(f.t); arrival(f.t, eps); }
+      holdFrame(f.t); arrival(f.t, eps);
       prevRaw = qRaw;
       // the fourth wipe (section-5.md 2): from q 3.8 over one screen, on the raw position; no exit seam follows it
       // (2026-11-03). It ends at section 5's rest when that comes first (a phone's viewport taller than 100svh once its
@@ -500,10 +432,8 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
         wipeOut = qRaw >= end - eps ? 1 : clamp01((qRaw - WIPE4_START) / (end - WIPE4_START));
       }
       lastWipeOut = wipeOut;
-      // a seam first: its phase sets the carousel's cloud for this frame's draw, and may change the state (the exit's jump, the wrap's landing)
-      const cover = seam ? seamFrame(f.t, seam) : 0;
       // in world: the re-sync from the page's position (the scrollbar; never under a hold), and the step's end snap
-      if (state === 'world' && !seam) {
+      if (state === 'world') {
         if (!carousel.busy() && stepTo < 0 && !holding() && qRaw >= WORLD_START - eps && qRaw <= SCENES_END + eps) {
           const want = sceneAt(qRaw);
           if (want !== scene()) { setScene(want); sayScene(want); }
@@ -516,28 +446,23 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
         }
       }
       // the approach waits for scene 1 (if it becomes drawable while the section is in view, at scene 1, the wipe plays in
-      // over a second, the arrival with it); in the scenes and under a seam the front scene shows as it is (a wrap that
-      // lands before scene 1 is in shows dawn whole)
+      // over a second, the arrival with it); in the scenes the front scene shows as it is
       const first = drawable0();
-      if (first && !wasReady) { wasReady = true; revealAt = qRaw > 0.02 && !reduced && !seam && scene() === 0 ? f.t : -1; }
+      if (first && !wasReady) { wasReady = true; revealAt = qRaw > 0.02 && !reduced && scene() === 0 ? f.t : -1; }
       const showable = state !== 'approach' || first;
       const clock = revealAt >= 0 ? clamp01((f.t - revealAt) / 1.0) : 1;
       const wipeIn = showable ? Math.min(clamp01(q / ROOM_SCREENS.wipe), clock) : 0;
       // the cut done, section 4's frame is off (its carousel and loops idle under section 5): the ground is the island's alone
       const on = showable && inRoom && qRaw > 0 && wipeOut < 1;
-      // the carousel draws, and its loops run, while the section is on or a seam's cloud needs it
-      const want = on || !!seam;
-      if (want !== drawn) { drawn = want; syncMotion(); }
+      // the carousel draws, and its loops run, while the section is on
+      if (on !== drawn) { drawn = on; syncMotion(); }
       let tex: Texture | null = null, toneDark = false;
       if (drawn) {
         const live = state === 'world';
         carousel.look(live ? lookX : 0, live ? lookY : 0, live && aimed);
         carousel.update(f.t, f.dt, curW, curH); tex = carousel.out; toneDark = sceneTone();
       }
-      // a seam's cloud at half cover or more (Pearl Whisper where it is thickest): Urban Slate over it, whatever is under
-      // it, the scenes or the hero after the exit's jump (the frame applies the plan's tone under any cover, loop.ts)
-      toneDark ||= cover >= 0.5;
-      // and from half the fourth wipe, over section 5's cream ground
+      // Urban Slate from half the fourth wipe, over section 5's cream ground
       toneDark ||= wipeOut >= 0.5;
 
       // the hand-off from the fog (Tune: handoff): 0 the composite's ice-shard cut, 1 a cut at half the screen, 2 a fade
@@ -553,13 +478,13 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
         scene: sc, stepping, stepTo: stepping ? stepTo : -1,
         loading: !!video && state === 'world' && (loopState[sc] === 'idle' || loopState[sc] === 'fetching'),
         note: import.meta.env.PUBLIC_TUNE === '1' && !!video && video.refused(sc) ? 'refused' : null,
-        cover, wipeOut, jumped,
+        cover: 0, wipeOut, jumped,
       } satisfies RoomFrame);
       jumped = false;
-      return { on: on && !!tex, tex: on ? tex : null, wipeIn: wipe, wipeOut, groundNeeded, cover, cloud: cover > 0 ? carousel.cloud : null, toneDark };
+      return { on: on && !!tex, tex: on ? tex : null, wipeIn: wipe, wipeOut, groundNeeded, cover: 0, cloud: null, toneDark };
     },
     reset(y) {
-      resetLap(false);
+      resetLap();
       if (y === undefined) return;
       current();
       // locked behind the quiz gate the section has no box and no reading yet (top 0, height 1): nothing to land on, and a
@@ -573,7 +498,6 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       if (!clsFixed) cls = w < h ? 'portrait' : 'wide';   // the loop class until the first fetch began (X-10)
     },
     load() { const p = warmUp(); if (!locked()) openScenes(0); return p; },
-    warmCloud() { return carousel.warmCloud().then(() => { cloudReady = true; }); },
     inRange() {
       if (state !== 'world' || !measured) return false;
       current();
@@ -582,12 +506,12 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
     },
     edge(dir) { const i = scene(); return dir > 0 ? i >= N - 1 : i <= 0; },
     carried() {
-      if (state !== 'world' || seam || stepTo >= 0) return;
+      if (state !== 'world' || stepTo >= 0) return;
       if (hold) hold.renew = true;
       else if (holdAt === null && !pendingHold) { current(); holdAt = yAt(sceneQ(scene())); }
     },
     stepScene(dir) {
-      if (state !== 'world' || seam || stepTo >= 0) return false;
+      if (state !== 'world' || stepTo >= 0) return false;
       const from = scene();
       if (!carousel.requestStep(dir)) return false;
       endHold(); holdAt = null;
@@ -596,26 +520,15 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
       window.dispatchEvent(new CustomEvent('skreed:room-step', { detail: { from, to: stepTo } }));
       return true;
     },
-    wrap() {
-      if (state === 'seam' || seam || locked()) return false;   // never over a section locked behind the quiz (quiz-gate.md D5)
-      endHold(); holdAt = null;
-      void warmUp(); void api.warmCloud();
-      if (reduced) { landWrap(); seam = { kind: 'wrap', phase: 'lock', t0: lastT, holdY: 0 }; setState('seam'); say('seam'); say('wrap'); return true; }
-      seam = { kind: 'wrap', phase: cloudReady ? 'in' : 'wait', t0: lastT, holdY: 0 };
-      setState('seam'); say('seam');
-      if (seam.phase === 'in') carousel.seam('in', 0);
-      return true;
-    },
-    lock: () => state === 'seam',
     busy: () => carousel.busy(),
     hooks() {
       if (!HOOKS) return {};   // hooks builds only: folded away in production
       return {
-        state, under, scene: scene(), step: +carousel.step().toFixed(3), front: carousel.front(), busy: carousel.busy(), lock: api.lock(), inRange: api.inRange(),
-        seam: seam ? { kind: seam.kind, phase: seam.phase } : null, q: +q.toFixed(3), qRaw: +qRaw.toFixed(3), screens: ROOM_SCREENS,
+        state, under, scene: scene(), step: +carousel.step().toFixed(3), front: carousel.front(), busy: carousel.busy(), inRange: api.inRange(),
+        q: +q.toFixed(3), qRaw: +qRaw.toFixed(3), screens: ROOM_SCREENS,
         hold: hold ? { y: hold.y } : null, ready: drawable0(), failed: failed0(), settled: settled(),
         products: productsState, loops: loopState.map((s, i) => ({ i, state: s, in: !!video && video.in(i), refused: !!video && video.refused(i), playing: !!video && video.playing(i) })),
-        stills: stillDone.map((d, i) => ({ i, settled: d, ok: stillOk[i], loading: !!stillJob[i] })), cls, video: !!video, cloudReady, memory: carousel.memory(),
+        stills: stillDone.map((d, i) => ({ i, settled: d, ok: stillOk[i], loading: !!stillJob[i] })), cls, video: !!video, memory: carousel.memory(),
         sceneQ: Array.from({ length: N }, (_, i) => sceneQ(i)), wipe4Start: WIPE4_START, wipeOut: +lastWipeOut.toFixed(3), restY: o.restY(),
         layout: lay.layout ? { ...lay.layout } : null, product: carousel.place(),
       };
@@ -633,7 +546,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
   // the review and test hooks (spec 5; hooks builds only, folded away in production): a scene at rest, the lights, the shade
   if (HOOKS) Object.assign(api, {
     scene(i: number) {
-      if (i < 0 || i >= N || seam) return false;
+      if (i < 0 || i >= N) return false;
       endHold(); holdAt = null; clearStep();
       if (state !== 'world') { setState('world'); under = 'world'; }
       setScene(i, true); snap(sceneQ(i)); sayScene(i); loadRest(i);

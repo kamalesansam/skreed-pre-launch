@@ -47,7 +47,7 @@ test('the scroll map (section-4-no-hall.md 5; section-5.md 5): the third wipe, t
   assert.match(director, /const end = Number\.isFinite\(rest\) \? Math\.max\(WIPE4_START \+ ROOM_SCREENS\.out \/ 2, Math\.min\(nominal, \(rest - top\) \/ screenPx\(\)\)\) : nominal;/, 'the fourth wipe from WIPE4_START over one screen, or to section 5\'s rest when that comes first (a phone\'s taller viewport, 2026-11-03)');
   assert.match(director, /wipeOut = qRaw >= end - eps \? 1 : clamp01\(\(qRaw - WIPE4_START\) \/ \(end - WIPE4_START\)\);/, 'done within 2 px of its end (2026-11-03)');
   assert.match(director, /const on = showable && inRoom && qRaw > 0 && wipeOut < 1;/, 'section 4\'s frame off once the cut is done: the ground the island\'s alone at section 5\'s rest');
-  assert.match(director, /if \(o\.signupReady\(\) \|\| e >= SEAM\.holdS\)/, 'the wrap holds for the readiness of section 5 (its data-ready)');
+  assert.doesNotMatch(director, /signupReady|landWrap|seamFrame|wrap\(\) \{|warmCloud/, 'no wrap from the top since 2026-11-04 (docs/specs/scroll-steps.md 2): no seam, no cloud, no landing on section 5');
 });
 
 test('the five scenes (section-4-flux.md 3): the rooms in order, the products, the catalog shades by id, the finishes, the key lights, the alts, the files', () => {
@@ -80,16 +80,15 @@ test('the five scenes (section-4-flux.md 3): the rooms in order, the products, t
   assert.match(director, /const sceneTone = \(\) => ROOM_SCENES\[carousel\.front\(\)\]\?\.toneDark \?\? false;/, 'the director takes the front scene\'s tone');
   assert.match(director, /tex = carousel\.out; toneDark = sceneTone\(\);/, 'over the scenes, from the third wipe on');
   assert.doesNotMatch(director, /toneDark = true;/, 'never Urban Slate by state alone');
-  // under a seam's cloud (Pearl Whisper where it is thickest) the logotype and the control turn Urban Slate from half cover,
-  // and the frame applies the plan's tone under any cover, after the exit's jump too (the checker's finding on D5's first fix)
-  assert.match(director, /toneDark \|\|= cover >= 0\.5;/, 'Urban Slate from half cover');
+  // no seam's cloud since the wrap left (2026-11-04): the plan's cover is 0; the frame still applies the plan's tone under
+  // any cover, should a seam come back
+  assert.match(director, /groundNeeded, cover: 0, cloud: null, toneDark \};/, 'no cover');
   assert.match(director, /toneDark \|\|= wipeOut >= 0\.5;/, 'and from half the fourth wipe, over section 5\'s fog (section-5.md 4)');
   assert.match(read('src/scripts/hero/loop.ts'), /if \(plan && \(cover > 0 \|\| \(roomOn && plan\.wipeIn >= 0\.5\)\)\) window\.__skreedLogo\?\.setTone\(plan\.toneDark\);/, "the plan's tone applied under any cover");
   assert.deepEqual(SCENE_SIZE, { wide: { width: 1280, height: 666 }, portrait: { width: 720, height: 1280 } });
   assert.equal(shadeLine(ROOM_SCENES[0]), 'Lilac, vivid violet');
   assert.equal(fill(ROOM_COPY.count, { n: 2, N: 5 }), '2 / 5');
   assert.equal(fill(ROOM_COPY.sceneLive, { n: 1, N: 5, name: 'Phone case', shade: 'Lilac, vivid violet' }), '1 of 5. Phone case. Lilac, vivid violet.');
-  assert.equal(fill(ROOM_COPY.wrapLive, { n: 5, N: 5, name: 'Phone case', shade: 'Pastel, vivid violet' }), 'Round to the five scenes. 5 of 5. Phone case. Pastel, vivid violet.');
   // the encoded files are in the repo (fcd9f9e): the ten loops, the twenty stills and products.bin
   for (const s of ROOM_SCENES) for (const cls of ['wide', 'portrait']) for (const ext of ['mp' + '4', 'avif', 'webp']) assert.ok(exists(`src/assets/room/flux/${s.id}-${cls}.${ext}`), `${s.id}-${cls}.${ext}`);
   assert.ok(exists('src/assets/room/flux/products.bin'));
@@ -128,7 +127,7 @@ test("straight into the scenes (section-4-no-hall.md 2 and D3): the arrival at s
   assert.match(director, /if \(e\.type === 'keydown' && \(e as KeyboardEvent\)\.repeat\) \{ if \(hold\) hold\.renew = true; return; \}/, "a held key's repeat is the key that carried the page in, never the new key that lets go: it renews the hold (AC3)");
   assert.match(director, /if \(e\.type === 'wheel' && \(e as WheelEvent\)\.deltaY >= 0\) \{ if \(hold\) hold\.renew = true; return; \}/, 'a downward wheel during the hold renews it: the input that carried the page in');
   assert.match(director, /if \(hold\.renew\) \{ hold\.renew = false; hold\.t0 = t; \}\n\s*if \(t - hold\.last >= HOLD\.stillS \|\| t - hold\.t0 >= HOLD\.maxS\) endHold\(\);/, "maxS counted from the carrying wheel's latest event");
-  assert.match(director, /if \(!seam\) \{ holdFrame\(f\.t\); arrival\(f\.t, eps\); \}\n\s*prevRaw = qRaw;\n\s*\/\/ the fourth wipe/, "the hold and the arrival before the frame's position is read for the fourth wipe (no exit trigger since 2026-11-03)");
+  assert.match(director, /holdFrame\(f\.t\); arrival\(f\.t, eps\);\n\s*prevRaw = qRaw;\n\s*\/\/ the fourth wipe/, "the hold and the arrival before the frame's position is read for the fourth wipe (no exit trigger since 2026-11-03)");
   assert.match(director, /edge\(dir\) \{ const i = scene\(\); return dir > 0 \? i >= N - 1 : i <= 0; \}/, "both edges are the page's");
   assert.doesNotMatch(scroll, /room\.back\(\)|kind === 'back'/, 'no way back');
   assert.match(walk, /edge\(prevB, i <= 0\); edge\(nextB, i >= N - 1\);/, '"Previous scene" disabled at scene 1, "Next scene" at scene 5');
@@ -145,11 +144,11 @@ test("straight into the scenes (section-4-no-hall.md 2 and D3): the arrival at s
   assert.match(director, /queueLoops\(Array\.from\(\{ length: N \}, \(_, k\) => k\)\.sort\(\(a, b\) => Math\.abs\(a - i\) - Math\.abs\(b - i\) \|\| b - a\)\)/, 'every loop queued, the nearest first');
   assert.match(director, /stillChain = stillChain\.catch\(\(\) => null\)\.then\(\(\) => decodeStill\(url, ac\.signal\)\)/, 'a still that timed out on a slow network never fails the stills queued after it');
   // a wheel burst running as the capture attaches in range is the page's (the fling's tail never steps)
-  assert.match(scroll, /inherited = room\.inRange\(\) && quiet <= BURST\.carriedMs;/);
-  assert.match(scroll, /if \(!e\.cancelable && e\.deltaY > 0 && !e\.ctrlKey && room\.inRange\(\) && !room\.edge\(1\)\) \{ burstFeed\(burst, e\.deltaY, now\(\), true\); burstConsume\(burst\); room\.carried\(\); return; \}/, 'a latched forward gesture never steps');
-  assert.match(director, /carried\(\) \{\n\s*if \(state !== 'world' \|\| seam \|\| stepTo >= 0\) return;\n\s*if \(hold\) hold\.renew = true;\n\s*else if \(holdAt === null && !pendingHold\) \{ current\(\); holdAt = yAt\(sceneQ\(scene\(\)\)\); \}/, "and the page is held on the scene's q while it comes");
-  assert.match(scroll, /if \(e\.deltaY > 0 && !e\.ctrlKey && now\(\) - burst\.last <= BURST\.carriedMs\)/);
-  assert.match(scroll, /inherited = false;\n\s*if \(e\.deltaY < 0\) burstReset\(burst\);/, "a wheel event against the carried input begins a burst of its own: at scene 1 it is the page's at once (AC4)");
+  assert.match(scroll, /inherited = room\.inRange\(\) && quiet <= BURST\.carriedMs \? \(o\.twoWay \? lastDir : 1\) : 0;/, 'forward for the scenes, entered from above alone');
+  assert.match(scroll, /if \(!e\.cancelable && !e\.ctrlKey && wd !== 0 && \(wd > 0 \|\| o\.twoWay\) && room\.inRange\(\) && !room\.edge\(wd\)\) \{ burstFeed\(burst, e\.deltaY, now\(\), true\); burstConsume\(burst\); room\.carried\(wd\); return; \}/, 'a latched forward gesture never steps');
+  assert.match(director, /carried\(\) \{\n\s*if \(state !== 'world' \|\| stepTo >= 0\) return;\n\s*if \(hold\) hold\.renew = true;\n\s*else if \(holdAt === null && !pendingHold\) \{ current\(\); holdAt = yAt\(sceneQ\(scene\(\)\)\); \}/, "and the page is held on the scene's q while it comes");
+  assert.match(scroll, /if \(wd === inherited && !e\.ctrlKey && now\(\) - burst\.last <= BURST\.carriedMs\)/);
+  assert.match(scroll, /const against = wd === -inherited;\n\s*inherited = 0;\n\s*if \(against\) burstReset\(burst\);/, "a wheel event against the carried input begins a burst of its own: at scene 1 it is the page's at once (AC4)");
   // the poster tier shows the column at once, by no state
   assert.match(css, /:is\(html:not\(\.hero3d\), html\.poster\) \.rm-scenes, \.room\[data-tier="poster"\] \.rm-scenes, html:not\(\.js\) \.rm-scenes-static \{ display: grid; \}/);
   assert.doesNotMatch(css, /data-state="world"\] \.rm-scenes/, 'the column waits for no press');
@@ -272,7 +271,7 @@ test('copy: sentence case, no em or en dash, no emoji, no banned words (CLAUDE.m
     assert.doesNotMatch(s, /\b(seamless|seamlessly|elevate|unleash|next-level|revolutionary)\b/i, s);
     if (s.length > 1) assert.notEqual(s, s.toUpperCase(), `all caps: ${s}`);
   }
-  for (const k of ['aria', 'loading', 'still', 'clipBlocked', 'worldAria', 'sceneHintTouch', 'sceneHintWheel', 'sceneHintKeys', 'loadingScene', 'next', 'prev', 'pause', 'play', 'scenesTitle', 'scenesAria', 'sceneLive', 'wrapLive', 'count']) assert.ok(k in ROOM_COPY, k);
+  for (const k of ['aria', 'loading', 'still', 'clipBlocked', 'worldAria', 'sceneHintTouch', 'sceneHintWheel', 'sceneHintKeys', 'loadingScene', 'next', 'prev', 'pause', 'play', 'scenesTitle', 'scenesAria', 'sceneLive', 'count']) assert.ok(k in ROOM_COPY, k);
   for (const k of ['landHintTouch', 'landHintKeys', 'loadingLand', 'landsTitle', 'landsAria', 'landLive', 'stageAria', 'hintTouch', 'hintKeys', 'enter', 'key', 'loadingRoom', 'skip', 'stillHallAlt', 'noscript']) assert.ok(!(k in ROOM_COPY), `${k} is dropped`);
   assert.equal(ROOM_COPY.aria, 'Section 4: the five scenes');
   assert.equal(ROOM_COPY.loading, 'Loading the scenes...');
@@ -301,9 +300,9 @@ test("the world's modules, assets, data, scripts and tests are gone (X-11); the 
   const director = read('src/scripts/hero/section4/director.ts');
   for (const m of ['skreed:room', '__skreedRoom', '__skreedRoomFrame']) assert.ok(director.includes(m), `the director carries the marker ${m}`);
   assert.doesNotMatch(director, /world\.ts|travel|garden|ROOM_LANDS|landQ/, 'nothing of the lands in the director');
-  for (const st of ["'approach'", "'world'", "'seam'"]) assert.ok(director.includes(`setState(${st})`), `the director enters ${st}`);
-  for (const st of ["'hall'", "'entering'", "'back'"]) assert.ok(!director.includes(`setState(${st})`), `no ${st} state`);
-  assert.match(read('src/config/room.ts'), /export type RoomState = 'approach' \| 'world' \| 'seam';/);
+  for (const st of ["'approach'", "'world'"]) assert.ok(director.includes(`setState(${st})`), `the director enters ${st}`);
+  for (const st of ["'hall'", "'entering'", "'back'", "'seam'"]) assert.ok(!director.includes(`setState(${st})`), `no ${st} state`);
+  assert.match(read('src/config/room.ts'), /export type RoomState = 'approach' \| 'world';/, 'no seam state since the wrap left (2026-11-04)');
 });
 
 test("the composite's cover input (section-4-flux.md 5, X-15): the v11 literal is the prototype's, its cover variant blends the cloud, the island draws with it", () => {

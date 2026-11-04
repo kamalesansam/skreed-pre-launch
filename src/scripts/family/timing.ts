@@ -20,3 +20,13 @@ export const BACK_OUT_MS = 200;                              // its fade out (--
 // (src/config/cue.ts), written here so swatch grid mode's module pulls in no chunk it shares with the hero's island
 // (tests/unit/scroll-cue.test.ts keeps the two equal)
 export const CUE_STILL_MS = 1500;
+// the case types' steps (docs/specs/family-page.md 26, docs/specs/scroll-steps.md 3; Sam, 2026-11-04): one gesture, one
+// case type. The ride from one type's rest to the next, a screen of scroll, carries its whole turn and its sweep on
+// --ease-turn; a jump of more than one (the beat nav) adds CASE_STEP_MS a screen up to CASE_STEP_MAX_MS. The pause after
+// a ride swallows gestures as the scenes' cooldown does; a page carried into the types by its own scroll is held on the
+// type it entered at until it has been still for CASE_HOLD_STILL_MS, at most CASE_HOLD_MAX_MS (the scenes' arrival hold)
+export const CASE_STEP_MS = 1400;
+export const CASE_STEP_MAX_MS = 2800;
+export const CASE_STEP_COOLDOWN_MS = 150;
+export const CASE_HOLD_STILL_MS = 150;
+export const CASE_HOLD_MAX_MS = 1200;

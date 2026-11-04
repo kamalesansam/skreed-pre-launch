@@ -9,8 +9,8 @@
 // (from the old state's seam, below which the two renders agree, so nothing jumps; 900 ms a quarter, 1400 ms a half,
 // ease-out; presses during a fill queue; at once under reduced motion; on load the remembered state at once). The next states' renders are fetched once the section is near. Also: the email form (the
 // quiz's gift form: validation on blur and submit, sending, the error line, the offline queue sent on `online`, a
-// duplicate read as success, the done line with "Not you?"), data-ready (C3), the events (C4), the hooks (C5) and the wrap
-// announcement. No loop from the section's end since 2026-11-03 (Sam: "remove the loop"). Strings from config/signup.ts.
+// duplicate read as success, the done line with "Not you?"), data-ready (C3), the events (C4) and the hooks (C5). No loop
+// from the section's end since 2026-11-03 (Sam: "remove the loop"), and no wrap onto it from the top since 2026-11-04. Strings from config/signup.ts.
 import { FILL_GATE, FOLLOW_COUNT, SIGNUP_COPY as C, SIGNUP_FOLLOWS, SIGNUP_KEYS, addedLine, fillMs, jarById, pressFollow, revealSpan, stateOf, yoursAlt } from '../../config/signup.ts';
 import { SIZES, STATE_SRCS, STATE_TOPS, type Srcs } from './jar-srcs.ts';
 import { clearMask } from './cut.ts';
@@ -222,7 +222,7 @@ export function mountSignup(root: HTMLElement): void {
 
   // ---- the logotype over the section on the poster tier: Urban Slate while the section's cream ground is under the
   // logotype's middle, as the island sets it on the 3D path from the ground's tone (hero/loop.ts), and Pearl Whisper again
-  // once the section has left it (a scroll back to the scenes, the wrap to the top). Two rect reads per frame while the
+  // once the section has left it (a scroll back to the scenes). Two rect reads per frame while the
   // page scrolls, on the poster tier alone; the tone is read from the logotype itself, so another writer's word (the
   // island's setTone, a reset) is never contradicted by a stale flag (the band's clearance was the threshold until
   // 2026-11-03, 23 to 33 px of scroll before the ground reached the logotype)
@@ -241,8 +241,7 @@ export function mountSignup(root: HTMLElement): void {
     readTone();
   }
 
-  // ---- the wrap's landing, the view
-  addEventListener('skreed:room-state', (e) => { if ((e as CustomEvent<string>).detail === 'wrap') announce(C.wrapLive); });
+  // ---- the view
   if ('IntersectionObserver' in window) {
     let viewed = false;
     new IntersectionObserver((es) => { if (!viewed && es.some((x) => x.isIntersecting)) { viewed = true; track('signup_view'); } }, { rootMargin: '0px 0px -50% 0px' }).observe(root);
