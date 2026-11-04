@@ -285,21 +285,10 @@ export async function startHero(o: StartOptions): Promise<void> {
   }).catch((e: unknown) => { console.warn('section 4: the section chunk did not load; the stills stand in', e); document.getElementById('room')?.setAttribute('data-tier', 'poster'); return null; }));
   // the scenes' phases 1 and 2 (the director falls to the poster column itself if scene 1 cannot be drawn)
   const loadScenes = () => loadDirector().then((room) => room?.load());
-  // the quiz gate (docs/specs/quiz-gate.md D1, D2, D5): section#room is hidden and data-locked until the quiz's result or
-  // Skip quiz opens it (scripts/quiz/gate.ts). While locked there is no wrap from the top (canWrap, below) and no glue
-  // span at its seam (docTop reads NaN for an element with no box, below); the director chunk and phase 1 still load
-  // when the quiz comes into view (the stage observer and afterIntro). The unlock's event re-evaluates the page scroll
-  // and starts phase 2 (products.bin, scene 1's loop); __skreedScenes tells the quiz's ride whether the scenes are in,
-  // and lets it wait for them (at most 1.5 s).
-  const roomEl = document.getElementById('room');
-  const roomLocked = () => !!roomEl?.hasAttribute('data-locked');
-  // (section 5 opens with section 4: its layout is read afresh)
-  const onUnlock = () => { signup?.invalidate(); pageScroll?.notify(); void loadScenes(); };
-  addEventListener('skreed:quiz-unlock', onUnlock);
-  life.onKill(() => removeEventListener('skreed:quiz-unlock', onUnlock));
-  // the director's load() starts its phases and returns, and it always has by the time the quiz's ride asks (the stage
-  // observer, then the unlock's listener), so the hook waits a frame at a time until scene 1 and products.bin have
-  // settled, or the director is gone; the ride races this against its 1.5 s (quiz-gate.md, amendment 2)
+  // __skreedScenes tells the section index's Products and gift whether the scenes are in, and lets them wait (at most
+  // 1.5 s). Nothing is locked behind the quiz since 2026-11-04 (Sam: "unlock everything, let all the sections work as
+  // normal"): the scenes load when the section nears (the stage observer). The director's load() starts its phases and
+  // returns, so the hook waits a frame at a time until scene 1 and products.bin have settled, or the director is gone
   const scenesSettled = () => life.dead || !ctx.room || ctx.room.settled();
   const untilScenes = () => new Promise<void>((res) => { const tick = () => { if (scenesSettled()) res(); else requestAnimationFrame(tick); }; tick(); });
   window.__skreedScenes = { get ready() { return !!ctx.room?.settled(); }, load: () => loadScenes().then(untilScenes) };
@@ -334,7 +323,7 @@ export async function startHero(o: StartOptions): Promise<void> {
       room: {
         inRange: () => !!ctx.room?.inRange(), edge: (d) => !!ctx.room?.edge(d), step: (d) => !!ctx.room?.stepScene(d),
         wrap: () => { void loadDirector().then((r) => r?.wrap()); },
-        canWrap: () => loop.state.introDone && !ctx.room?.lock() && !roomLocked(), lock: () => !!ctx.room?.lock(), busy: () => !!ctx.room?.busy(),
+        canWrap: () => loop.state.introDone && !ctx.room?.lock(), lock: () => !!ctx.room?.lock(), busy: () => !!ctx.room?.busy(),
         carried: () => ctx.room?.carried(),
       },
     });

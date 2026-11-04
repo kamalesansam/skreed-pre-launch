@@ -1,7 +1,7 @@
 // The section index (docs/specs/navbar.md AC2 to AC9; src/components/shell/SiteNav.astro, src/scripts/shell/site-nav.ts):
 // at the top right on the logotype's row at every breakpoint, clear of it, 44 px hits, no horizontal scroll; Menu and
 // its light drawer from the right under 768 px; each section in place by a press on the poster tier, with aria-current
-// following and a second press during a jump honoured; Products always listed, opening the quiz gate as Skip quiz does;
+// following and a second press during a jump honoured; Products always listed, nothing locked behind the quiz;
 // on the 3D path a keyboard press on Products leaves focus in section 4 (its pad, which the arrival at scene 1 moves on
 // to scene 1's name); plain fragment links without JavaScript.
 // About, the page link (navbar.md D7, AC11), is last in the bar and the drawer and leaves for /about/ with no veil, the
@@ -26,7 +26,7 @@ for (const width of [360, 390, 430, 768, 1024, 1280]) {
       const inset = parseFloat(getComputedStyle(document.getElementById('siteLogo')!).left);
       return { items, logo: box(document.getElementById('siteLogo')!), inset, sw: document.documentElement.scrollWidth, vw: innerWidth };
     });
-    expect(g.items.map((i) => i.t)).toEqual(width < 768 ? ['Menu'] : ['Home', 'Families', 'Quiz', 'Products', 'About']);   // Products with the gate still locked; About, the page link, last
+    expect(g.items.map((i) => i.t)).toEqual(width < 768 ? ['Menu'] : ['Home', 'Families', 'Quiz', 'Products', 'About']);   // About, the page link, last
     expect(g.sw).toBeLessThanOrEqual(g.vw);
     const last = g.items[g.items.length - 1];
     expect(Math.abs(last.r - (g.vw - g.inset + 12))).toBeLessThan(1);   // the last word's text ends on --inset, its hit padded past it
@@ -182,26 +182,19 @@ test('a second press during a jump is honoured: the page ends on the section pre
   await veilDown(page);
 });
 
-test('Products while the quiz gate holds section 4: the press opens it as Skip quiz does and lands on its top', async ({ page, baseURL }) => {
+test('Products on the poster tier: section 4 is open at rest (no quiz gate since 2026-11-04), and the press lands on its top', async ({ page, baseURL }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(new URL('/?tier=poster', baseURL).href);
-  const room = () => page.evaluate(() => { const r = document.getElementById('room')!; return { hidden: r.hasAttribute('hidden'), locked: r.hasAttribute('data-locked'), open: r.dataset.open ?? null }; });
-  expect(await room()).toEqual({ hidden: true, locked: true, open: null });
-  const heard = page.evaluate(() => new Promise<string>((r) => addEventListener('skreed:quiz-unlock', (e) => r((e as CustomEvent<{ by: string }>).detail.by), { once: true })));
+  const room = () => page.evaluate(() => { const r = document.getElementById('room')!; return { hidden: r.hasAttribute('hidden'), locked: r.hasAttribute('data-locked') }; });
+  expect(await room()).toEqual({ hidden: false, locked: false });
   await page.locator('#siteNav .snav-list a[data-sec="room"]').click();
-  expect(await heard).toBe('nav');
-  await expect.poll(room).toEqual({ hidden: false, locked: false, open: 'nav' });
   await expect.poll(async () => page.evaluate(() => scrollY)).toBe(Math.round(await docTop(page, 'room')));
   await expect(page.locator('#siteNav .snav-list a[data-sec="room"]')).toHaveAttribute('aria-current', 'location');
-  expect(await page.evaluate(() => sessionStorage.getItem('skreed:quiz-done'))).toBe('1');   // open for the rest of the visit
-  expect((await events(page)).filter(([n]) => n === 'room_unlock')).toEqual([['room_unlock', { by: 'nav' }]]);
+  expect((await events(page)).filter(([n]) => n === 'room_unlock'), 'nothing to unlock').toEqual([]);
   await veilDown(page);
-  await page.locator('#siteNav .snav-list a[data-sec="room"]').click();   // open now: a second press only jumps
-  await veilDown(page);
-  expect((await events(page)).filter(([n]) => n === 'room_unlock')).toHaveLength(1);
 });
 
-/** the 3D path on SwiftShader (?tier=hero3d), booted as room.spec.ts's open3d does, the intro skipped by its hook; the gate as the URL leaves it */
+/** the 3D path on SwiftShader (?tier=hero3d), booted as room.spec.ts's open3d does, the intro skipped by its hook */
 async function boot3d(page: Page, baseURL: string | undefined, query: string): Promise<void> {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(new URL(`/?tier=hero3d${query}`, baseURL).href);
@@ -211,30 +204,12 @@ async function boot3d(page: Page, baseURL: string | undefined, query: string): P
 }
 const roomQ = (page: Page) => page.evaluate(() => (window.__s4?.state() as { q?: number } | null)?.q ?? null);
 
-test('the 3D path, gate locked: a jump to the quiz leaves section 4\'s followers alone, so Skip quiz\'s ride still plays the third wipe', async ({ page, baseURL }) => {
-  test.setTimeout(900_000);
-  await boot3d(page, baseURL, '');
-  await page.waitForFunction(() => window.__s4?.state() != null, null, { timeout: 120_000, polling: 500 });   // the director is in (it loads at idle after the intro)
-  await page.locator('#siteNav .snav-list a[data-sec="quiz"]').click();
-  await expect(page.locator('#toTopVeil')).toBeHidden({ timeout: 20_000 });
-  expect(await page.evaluate(() => document.getElementById('room')!.hasAttribute('data-locked'))).toBe(true);
-  await page.locator('#qzSkip').click();
-  // through the ride and after it: q climbs from 0 to scene 1's q 1 and never past it (a landing measured against the
-  // locked section's missing box put it thousands of screens deep, which drew the scenes at once and ran through them)
-  let most = 0;
-  for (let i = 0; i < 40; i++) { const q = await roomQ(page); if (q !== null) most = Math.max(most, q); await page.waitForTimeout(100); }
-  expect(most).toBeLessThan(1.05);
-  await expect.poll(() => roomQ(page), { timeout: 20_000 }).toBeGreaterThan(0.95);
-});
-
-test('the 3D path, gate locked: a keyboard press on Products opens it, lands on scene 1 fully in, and leaves focus in the section, on the pad or on scene 1 by name', async ({ page, baseURL }) => {
+test('the 3D path, scenes cold: a keyboard press on Products lands on scene 1 fully in, and leaves focus in the section, on the pad or on scene 1 by name', async ({ page, baseURL }) => {
   test.setTimeout(900_000);
   await boot3d(page, baseURL, '');
   await page.locator('#siteNav .snav-list a[data-sec="room"]').focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('#toTopVeil')).toBeHidden({ timeout: 30_000 });
-  expect(await page.evaluate(() => document.getElementById('room')!.dataset.open)).toBe('nav');
-  expect(await page.evaluate(() => sessionStorage.getItem('skreed:quiz-done'))).toBe('1');
   const q = await roomQ(page);
   expect(Math.abs((q ?? -1) - 1)).toBeLessThan(0.02);
   await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? ''), { timeout: 20_000 }).toMatch(/^(rmPad|rmName-cove)$/);

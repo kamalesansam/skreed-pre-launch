@@ -10,25 +10,15 @@
 // from the section's top; without JavaScript the same from the noscript copy. scripts/room/walk.ts drives it (lazy,
 // when the section nears). No style attributes (the CSP has no style-src-attr): positions are set through the CSSOM.
 import { ROOM_COPY as R, ROOM_SCENES, SCENE_COUNT, SCENE_SIZE, fill, productById, shadeLine } from '../../config/room.ts';
-import { QUIZ_GATE } from '../../config/quiz.ts';
-import gate from '../../inline/room-gate.inline.js?raw';
-import gateHooks from '../../inline/room-gate.hooks.inline.js?raw';
-import { inlineScript } from '../shell/inlineScript.ts';
 import '../../styles/room.css';
 
 const N = SCENE_COUNT;
-// The quiz gate (docs/specs/quiz-gate.md D1, D2; Sam, 2026-10-26): the section is rendered hidden and data-locked, so the
-// page ends at the quiz until the result shows or Skip quiz is pressed (scripts/quiz/gate.ts opens it), and a visit that
-// opened it already (the flag in sessionStorage) opens it again through the inline step right after the section, before
-// anything below the quiz can paint; assembled as the head Gate's script is (inlineScript.ts, the key prepended), with
-// the ?room=open override concatenated into test and staging builds only (PUBLIC_HERO_HOOKS '1'). scripts/csp.mjs
-// hashes the emitted string after the build. Without JavaScript nothing is locked (room.css shows the section).
-const hooks = import.meta.env.PUBLIC_HERO_HOOKS === '1';
-const gateCode = inlineScript('room-gate.js', { KEY: QUIZ_GATE.key }, hooks ? gateHooks : '', gate);
+// The section is open at rest: the quiz gate that held it behind the quiz (docs/specs/quiz-gate.md) left on 2026-11-04
+// (Sam, 2026-11-04: "unlock everything, let all the sections work as normal, no need to lock anything, remove the skip quiz button also").
 const P = SCENE_SIZE.portrait, Wd = SCENE_SIZE.wide;
 const scenes = ROOM_SCENES.map((s) => ({ ...s, name: productById(s.product).name, line: productById(s.product).line, shadeText: shadeLine(s), count: fill(R.count, { n: s.order, N }) }));
 ---
-<section class="room" id="room" aria-label={R.aria} data-state="approach" hidden data-locked>
+<section class="room" id="room" aria-label={R.aria} data-state="approach">
   <div class="rm-track">
     <div class="rm-stage" id="rmStage">
       <div class="rm-pad" id="rmPad" tabindex="0" role="group" aria-label={R.worldAria}></div>
@@ -81,14 +71,10 @@ const scenes = ROOM_SCENES.map((s) => ({ ...s, name: productById(s.product).name
     </div>
   </div>
 </section>
-<script is:inline set:html={gateCode}></script>
 <script>
-  import { track } from '../../scripts/quiz/track.ts';
   // the walk script comes once the section is within a screen, or at once when the stage is focused or touched first
   const root = document.getElementById('room');
   if (root) {
-    // the visit's unlock (quiz-gate.md D8): the inline step above opened the section from the visit's flag before this ran
-    if (root.dataset.open === 'visit') track('room_unlock', { by: 'visit' });
     let p: Promise<unknown> | null = null;
     const start = () => (p ??= import('../../scripts/room/walk.ts').then((m) => m.mountRoom(root)));
     if ('IntersectionObserver' in window) {

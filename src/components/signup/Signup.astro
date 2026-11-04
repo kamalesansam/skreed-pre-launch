@@ -13,16 +13,8 @@
 import { SIGNUP_COPY as C, SIGNUP_FOLLOWS, followAria } from '../../config/signup.ts';
 import { PRIVACY, PRIVACY_LINK } from '../../config/legal.ts';
 import { JARS, SIZES, STATE_SRCS } from '../../scripts/signup/jar-srcs.ts';
-import { QUIZ_GATE } from '../../config/quiz.ts';
-import gate from '../../inline/signup-gate.inline.js?raw';
-import { inlineScript } from '../shell/inlineScript.ts';
 import '../../styles/signup.css';
-// The quiz gate (docs/specs/quiz-gate.md D1, D2; section-5.md 12): the section is rendered hidden and data-locked with
-// section 4, which it follows in the page, so a locked page still ends at the quiz; its inline step right after the markup
-// opens it for a visit that has opened the room (the flag in sessionStorage, or the ?room=open override of hooks builds,
-// which the room's step has already written), and gate.ts's unlock opens it with the room. Without JavaScript nothing is
-// locked (signup.css). scripts/csp.mjs hashes the emitted step after the build.
-const gateCode = inlineScript('signup-gate.js', { KEY: QUIZ_GATE.key }, gate);
+// The section is open at rest, as section 4 is: the quiz gate left on 2026-11-04 (Sam, 2026-11-04: "unlock everything, let all the sections work as normal, no need to lock anything, remove the skip quiz button also").
 
 // the form needs its Worker (quiz.md D7, the gift's rule): on in dev, test and staging builds, off in production until
 // PUBLIC_LEADS is set to on (folded at build time)
@@ -43,7 +35,7 @@ const showcase = SIGNUP_FOLLOWS.map((j) => ({ ...j, aria: followAria(j), pic: ST
 const yours = STATE_SRCS['0'] ?? null;
 ---
 <style is:inline set:html={frameCss}></style>
-<section class="signup" id="signup" aria-label={C.aria} data-state="rest" hidden data-locked>
+<section class="signup" id="signup" aria-label={C.aria} data-state="rest">
   <div class={LEADS ? 'su-body' : 'su-body su-noform'} id="suBody">
     <div class="su-top">
       <h2 class="su-h"><span>{C.h1}</span> <span>{C.h2}</span></h2>
@@ -127,7 +119,6 @@ const yours = STATE_SRCS['0'] ?? null;
     <p class="sr-only" id="suLive" aria-live="polite"></p>
   </div>
 </section>
-<script is:inline set:html={gateCode}></script>
 <script>
   // the section's script comes once the section is within a screen, or at once on a focus or a press inside it
   const root = document.getElementById('signup');

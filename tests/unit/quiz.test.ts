@@ -125,9 +125,8 @@ test('copy: sentence case headings, no em or en dash, no emoji, no banned words,
     assert.equal(h[0], h[0].toUpperCase(), h);
   }
   for (const q of QUIZ_QUESTIONS) assert.doesNotMatch(q.q, /\d/, `a digit in a question: ${q.q}`);
-  // the gate's control (quiz-gate.md 3): Sam's "rskip quiz" in sentence case, read into the rules above with the rest of QUIZ_COPY
-  assert.equal(QUIZ_COPY.skip, 'Skip quiz');
-  assert.ok(allStrings().includes(QUIZ_COPY.skip));
+  // Skip quiz left with the quiz gate on 2026-11-04 (Sam: "remove the skip quiz button also")
+  assert.ok(!('skip' in QUIZ_COPY));
   // the offer is Sam's reference of 2026-11-02 word for word, its middle in bold (E-S3-result)
   assert.equal(`${QUIZ_COPY.offerLead} ${QUIZ_COPY.offerStrong} ${QUIZ_COPY.offerTail}`, 'Get an exclusive launch discount on any Skreed product in your signature shade or any other shade you love!');
   assert.equal(QUIZ_COPY.send, 'Send my code');
