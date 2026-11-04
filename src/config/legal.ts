@@ -23,13 +23,14 @@ export interface LegalPage {
 const EMAIL = SITE_COPY.org.email;
 const mail: Run = { text: EMAIL, href: `mailto:${EMAIL}` };
 const UPDATED = ['Updated 3 November 2026.', '2026-11-03'] as const;
+const PRIVACY_UPDATED = ['Updated 4 November 2026.', '2026-11-04'] as const;   // the Under 18 section left (Sam, 2026-11-04)
 
 export const PRIVACY: LegalPage = {
   path: '/privacy/',
   title: 'Privacy notice. Skreed',
   description: 'What skreed.shop collects, why, who handles it for us, and how to see, change or remove it.',
   h1: 'Privacy notice',
-  updated: UPDATED,
+  updated: PRIVACY_UPDATED,
   intro: ['This notice covers skreed.shop, our page before the Skreed store opens on 19 November 2026. It says what we collect, why we collect it, who handles it for us, and how you can see, change or remove it. We wrote it for India’s Digital Personal Data Protection Act, 2023.'],
   sections: [
     { h: 'Who we are', blocks: [
@@ -70,9 +71,6 @@ export const PRIVACY: LegalPage = {
     ] },
     { h: 'Questions and complaints', blocks: [
       ['Write to ', mail, ' with “Privacy” in the subject, and we will answer you by email. If we do not resolve your complaint, you can take it to the Data Protection Board of India.'],
-    ] },
-    { h: 'Under 18', blocks: [
-      ['The forms are for people aged 18 or over. If you are under 18, please do not send them.'],
     ] },
     { h: 'Other sites', blocks: [
       ['The jars open Facebook, YouTube and Instagram in a new tab. Their own privacy policies apply there.'],

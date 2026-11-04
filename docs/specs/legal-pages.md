@@ -61,7 +61,7 @@ A cookie notice (G17: the site sets no cookies, so none is needed while that hol
 1. The legal entity: the pages say "Skreed, Hyderabad, Telangana, India". DPDP notices normally name the company that holds the data (the data fiduciary) and its registered address. What is the company's legal name and address?
 2. The grievance contact: the pages send privacy questions and complaints to collab@skreed.in. Is that the right address, and should a named person be given (DPDP Rules expect a contact able to answer for the processing)?
 3. Retention: "until you ask us to remove it, or until we no longer need it for the launch, whichever comes first" is a proposed default. A fixed period (for example, deletion a set number of months after launch) is clearer.
-4. Under 18: the notice asks under-18s not to send the forms, because DPDP needs verifiable parental consent for children. Keep that, or change how the forms handle it?
+4. Done (2026-11-04, removed). Under 18: the notice asked under-18s not to send the forms, because DPDP needs verifiable parental consent for children. Sam, 2026-11-04: "remove the under 18 part in the privacy notice page"; the section left the notice and the forms are unchanged, so nothing now asks a visitor's age or a parent's consent.
 5. Where the data is stored: Hostinger's and Zoho's data centres are not stated. If either is outside India, the notice should say so.
 6. "If a change affects how we use your email, we tell you by email first": a promise; keep it?
 7. The terms' launch offers: the terms say only that each offer's details come with it at launch. The discounts section 5 names ("5% OFF" to "UP TO 20% OFF") are its open question in `docs/specs/section-5-picture.md` 14; the terms should match whatever Sam decides there.
