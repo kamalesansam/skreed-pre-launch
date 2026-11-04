@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { CASE_REST, CASE_TYPES, CFG, DIMS_DEFAULT, HANDOVERS, SV, SWEEP_LEN, TURNS, TURN_LEN, activeBeat, beatPose, caseBox, caseTargetAt, poseOf, turnEnd, profileLightOffset, project, scrollClasses, skeletonPolys, solve, xform } from '../../src/scripts/family/three/pose.ts';
+import { CASE_REST, CASE_TYPES, CFG, RZ, WAVE_EDGES, rollShare, DIMS_DEFAULT, HANDOVERS, SV, SWEEP_LEN, TURNS, TURN_LEN, activeBeat, beatPose, caseBox, caseTargetAt, poseOf, turnEnd, profileLightOffset, project, scrollClasses, skeletonPolys, solve, xform } from '../../src/scripts/family/three/pose.ts';
 
 const manifest = JSON.parse(readFileSync(new URL('../../src/data/case-model.json', import.meta.url), 'utf8'));
 const [mw, mh, md] = manifest.sizeMm as number[];
@@ -144,4 +144,21 @@ test('the profile light rides with the case (section 24 D13): the zoom lit as ci
   }
   assert.ok([3, 4, 5].every((sv) => Math.abs(profileLightOffset(sv, 1)) < 1e-12), 'phones: beats 2 to 4 at beat 1\'s height, so no lift (2026-11-04)');
   assert.ok(Math.abs(profileLightOffset(2, CFG.wideDrift) - 0.96 * (1 - CFG.wideDrift)) < 1e-12, 'wide: beat 1 lifted by what the damped drift left');
+});
+
+test('the roll between two case types rides the wave: still until the band meets the case, a smootherstep of the band\'s place across it, settled once it has left (2026-11-04: "smoothen it and end of the turn should look smoother")', () => {
+  const [E0, E1] = WAVE_EDGES;
+  for (const j of [2, 3, 4]) {
+    for (let sv = j; sv <= j + 0.8 + 1e-9; sv += 0.05) assert.equal(rollShare(sv, j), 0, `no roll before the wave at ${sv.toFixed(2)}`);
+    assert.equal(beatPose(j + 0.5).rz, RZ[j - 1], `the previous type's roll mid-screen at ${j + 0.5}`);
+    assert.equal(rollShare(j + 1, j), 1);
+    // in the wave's time (the band's eased place linear in time) the roll's speed is zero at both ends and smooth between
+    const at = (u: number) => { const e = E0 + (E1 - E0) * u; let lo = 0, hi = 1; for (let k = 0; k < 60; k++) { const m = (lo + hi) / 2; const x = m < 0.5 ? 4 * m ** 3 : 1 - (2 - 2 * m) ** 3 / 2; if (x < e) lo = m; else hi = m; } return rollShare(j + 0.8 + 0.2 * (lo + hi) / 2, j); };
+    const h = 1e-4;
+    assert.ok(Math.abs((at(h) - at(0)) / h) < 1e-2, 'no speed as the band meets the case');
+    assert.ok(Math.abs((at(1) - at(1 - h)) / h) < 1e-2, 'no speed as the band leaves it: the end eases in');
+    let prev = 0, maxStep = 0;
+    for (let i = 1; i <= 100; i++) { const v = at(i / 100); assert.ok(v >= prev - 1e-9, 'one way'); maxStep = Math.max(maxStep, v - prev); prev = v; }
+    assert.ok(maxStep < 0.02, `no jump: the largest step in a hundredth of the wave ${maxStep}`);
+  }
 });

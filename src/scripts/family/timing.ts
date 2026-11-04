@@ -35,7 +35,8 @@ export const CASE_STEP_MAX_MS = 2800;
 // happening is really fast"): the lead 0.25 s, and the wave 2 s with the band at an even pace across the case (the
 // sweep's own in-out cubic undone, steps.ts stepPath), where an eased ride on an eased sweep had crossed it in about 0.4 s
 export const CASE_LEAD_MS = 250;
-export const CASE_SWEEP_MS = 2000;
+// 1.5 s since the same day's "increase the speed of the wave a little more, if its 2s rn make it 1.5 or 1"
+export const CASE_SWEEP_MS = 1500;
 // the sweep's first stretch, where the band is not yet on the case (its boundary from -0.12 to 1.12 of the case,
 // TAKEOVER.pFrom and pTo), passes in the lead and its last in CASE_TAIL_MS, so the wave shows as soon as the lead ends
 export const CASE_TAIL_MS = 120;

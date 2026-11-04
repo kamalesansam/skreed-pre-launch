@@ -14,8 +14,9 @@
 // then shows 3D steps too); a ride is an instant scrollTo under reduced motion. The beat nav rides here too.
 import { createPageScroll, type PageScroll } from '../hero/section4/scroll.ts';
 import { cubicBezier, isScrollKey, nextStop } from '../hero/section4/scroll-math.ts';
-import { TAKEOVER, easeTakeoverInverse } from '../../config/takeover.ts';
-import { CASE_REST, CASE_TYPES, SWEEP_LEN } from './three/pose.ts';
+import { easeTakeoverInverse } from '../../config/takeover.ts';
+import { CASE_REST, CASE_TYPES, SWEEP_LEN, WAVE_EDGES } from './three/pose.ts';
+export { WAVE_EDGES } from './three/pose.ts';
 import { CASE_HOLD_MAX_MS, CASE_HOLD_STILL_MS, CASE_LEAD_MS, CASE_TAIL_MS, CASE_STEP_COOLDOWN_MS, CASE_STEP_MAX_MS, CASE_STEP_MS, CASE_SWEEP_MS, TURN_EASE } from './timing.ts';
 
 /** the four types' rests in screens, in beat order */
@@ -48,8 +49,6 @@ export function stepPath(from: number, to: number): { ms: number; at: (t: number
   // page is, ends on its rest and sweeps at the real hand-over (the review of 2026-11-04)
   return { ms, at: (t) => lo + Math.abs(d) * (d > 0 ? f(t) : f(ms - t)) };
 }
-/** the wave's eased progress where the band meets the case and where it has left it (its boundary at 0 and 1 of the case) */
-export const WAVE_EDGES: readonly [number, number] = [(0 - TAKEOVER.pFrom) / (TAKEOVER.pTo - TAKEOVER.pFrom), (1 - TAKEOVER.pFrom) / (TAKEOVER.pTo - TAKEOVER.pFrom)];
 /** the 2 px within which the page is at a rest, as the glue's dead band */
 const DEAD = 2;
 /** a phone's momentum after the finger lifts: a crossing this soon after the release is still the swipe's */

@@ -4,6 +4,7 @@
 // skeleton in Poster.astro), the page module (the skeleton at runtime, the scroll map) and the stage (the poses).
 // Every value was measured from ciao's module (research/ciao-landing, ciao-3d-params.json, keyframes-desk.json) and
 // re-created here; nothing of ciao's ships.
+import { TAKEOVER, easeTakeover } from '../../../config/takeover.ts';
 
 export type Layout = 'phone' | 'wide';
 export const WIDE_MQ = '(min-width: 900px) and (min-height: 600px)';
@@ -163,11 +164,29 @@ export const RZ = [0, -0.1745, 0.0873, -0.1745, 0.0873, 0, 0] as const, CY = [0,
 export const TURNS = [2, 3, 4, 5] as const, TURN_LEN = 0.4, SWEEP_LEN = 0.2;
 /** Where the turn into beat n ends: the turn into Tough at its beat, each hand-over's SWEEP_LEN before it, so the sweep follows the turn. */
 export const turnEnd = (n: number): number => (n === TURNS[0] ? n : n - SWEEP_LEN);
+/** the sweep's eased progress (the band's place across the case, takeover.ts) where the band meets the case and where it has left it */
+export const WAVE_EDGES: readonly [number, number] = [(0 - TAKEOVER.pFrom) / (TAKEOVER.pTo - TAKEOVER.pFrom), (1 - TAKEOVER.pFrom) / (TAKEOVER.pTo - TAKEOVER.pFrom)];
+/** smootherstep: no speed and no acceleration at either end */
+const smoother = (x: number): number => { x = Math.max(0, Math.min(1, x)); return x * x * x * (x * (6 * x - 15) + 10); };
+/**
+ * The roll's share between two case types at sv: while the wave's band crosses the case, on a smootherstep of the band's
+ * place, so the case tilts with the wave and settles without a jolt (Sam, 2026-11-04: "the case turns left and right
+ * very sharply, smoothen it and end of the turn should look smoother"); over the whole screen until then, which a step's
+ * quick lead to the hand-over played in a quarter second.
+ */
+export function rollShare(sv: number, j: number): number {
+  const raw = (sv - (j + 1 - SWEEP_LEN)) / SWEEP_LEN;
+  if (raw <= 0) return 0;
+  if (raw >= 1) return 1;
+  return smoother((easeTakeover(raw) - WAVE_EDGES[0]) / (WAVE_EDGES[1] - WAVE_EDGES[0]));
+}
 export interface BeatPose { k: number; rz: number; cy: number; A: number; yaw: number }
 export function beatPose(sv: number): BeatPose {
   const k = sm(sv - 1);
   const j = Math.max(1, Math.min(6, Math.floor(sv))), t = sm(sv - j);
-  const rz = RZ[j - 1] + (RZ[j] - RZ[j - 1]) * t, cy = CY[j - 1] + (CY[j] - CY[j - 1]) * t;
+  // between two case types (screens 2 to 5) the roll rides the wave; into Tough (the zoom) and out of Armor (the argument) the screen's smoothstep as before
+  const tr = j >= 2 && j <= 4 ? rollShare(sv, j) : t;
+  const rz = RZ[j - 1] + (RZ[j] - RZ[j - 1]) * tr, cy = CY[j - 1] + (CY[j] - CY[j - 1]) * t;
   const A = sm(sv - 5);
   // no turn since Sam, 2026-11-04 ("just remove the rotation animation for case types, just keep the wave"): the case
   // faces the camera through every hand-over and the takeover's sweep alone changes it (TURNS keep the hand-overs' places)
