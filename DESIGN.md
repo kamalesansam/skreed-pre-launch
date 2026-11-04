@@ -15,7 +15,7 @@ If this file and a source disagree, the source wins and this file is fixed.
 
 - **The idea.** Skreed reads like a paint brand that happens to make phone cases. The product is the colour: 240 shades, 24 per family, ten families. The site's own chrome stays quiet: off-white and charcoal, one orange accent, three typefaces with one job each. The colour on screen comes from the shades themselves, shown as real swatches and real product, never as decoration.
 - **Pages.** Pearl Whisper (#F7F6F3) pages alternate with Urban Slate (#383F43) bands, as in the 2026-27 catalog. Circle swatches sit in a 6 x 4 grid per family. Photography is soft lifestyle on neutral backdrops.
-- **The hero.** The one exception to the flat pages, on purpose. Night (#050506) over a moonlit, igloo-style snowfield with a faint Milky Way and low fog. The SKRD mark stands as ten matte black blocks, each holding one family's shade as a glow inside its cut faces. The chrome is a corner logotype, a countdown to 15 November 2026 and a scroll cue. Scrolling pulls the camera back, then an ice-shard wipe opens the next section.
+- **The hero.** The one exception to the flat pages, on purpose. Night (#050506) over a moonlit, igloo-style snowfield with a faint Milky Way and low fog. The SKRD mark stands as ten matte black blocks, each holding one family's shade as a glow inside its cut faces. The chrome is a corner logotype, a countdown to 19 November 2026 and a scroll cue. Scrolling pulls the camera back, then an ice-shard wipe opens the next section.
 - **Density.** Low. One idea per screen. Short sentences, first person, active voice, sensory colour words. Tagline: "Tech Essentials That Go Beyond Basic." Line: "colour is personal."
 - **Mood words.** Confident, minimal, design-led, quiet, precise. Never hype, never discount.
 
@@ -324,7 +324,7 @@ Sam, 2026-10-19: "add a back to top button throughout the site which navigates b
 - **Semantics.** `role="timer"`, `aria-label="Time until launch"`.
 - **First tick.** The numerals stay hidden until the first tick, which runs in the same task.
 - **At zero.** The eyebrow reads "Skreed is live. skreed.com", with "skreed.com" a real link: Pearl Whisper, underlined, `pointer-events: auto`, a hit box at least 44 px tall, the two-tone focus ring. The numerals are not displayed (`.count[hidden]{display:none}`).
-- **No JavaScript.** One line, "Launching 15 November 2026", with the date in a `<time>`; the eyebrow and the numerals are not displayed.
+- **No JavaScript.** One line, "Launching 19 November 2026", with the date in a `<time>`; the eyebrow and the numerals are not displayed.
 - **Reduced motion.** The seconds group is hidden and the glitch never runs.
 
 ### Scroll cue (hero)

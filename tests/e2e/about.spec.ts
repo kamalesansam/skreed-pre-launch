@@ -106,7 +106,7 @@ test('AC4 the words on the page are section 3\'s, element by element; the title,
   expect(await text('main em')).toEqual(['that’s the one']);
   expect(await page.locator('main em').evaluate((e) => e.nextSibling?.textContent)).toBe('.');
   expect(await page.locator('main time').getAttribute('datetime')).toBe(LAUNCH_ISO);
-  expect(await text('main time')).toEqual(['November 15']);
+  expect(await text('main time')).toEqual(['November 19']);
   await expect(page).toHaveTitle(C.title);
   expect(await page.locator('meta[name="description"]').getAttribute('content')).toBe(C.description);
 });

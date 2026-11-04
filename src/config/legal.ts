@@ -30,7 +30,7 @@ export const PRIVACY: LegalPage = {
   description: 'What skreed.shop collects, why, who handles it for us, and how to see, change or remove it.',
   h1: 'Privacy notice',
   updated: UPDATED,
-  intro: ['This notice covers skreed.shop, our page before the Skreed store opens on 15 November 2026. It says what we collect, why we collect it, who handles it for us, and how you can see, change or remove it. We wrote it for India’s Digital Personal Data Protection Act, 2023.'],
+  intro: ['This notice covers skreed.shop, our page before the Skreed store opens on 19 November 2026. It says what we collect, why we collect it, who handles it for us, and how you can see, change or remove it. We wrote it for India’s Digital Personal Data Protection Act, 2023.'],
   sections: [
     { h: 'Who we are', blocks: [
       ['Skreed, Hyderabad, Telangana, India. Write to us at ', mail, '.'],
@@ -89,7 +89,7 @@ export const TERMS: LegalPage = {
   description: 'The terms for using skreed.shop, our page before the Skreed store opens.',
   h1: 'Terms of use',
   updated: UPDATED,
-  intro: ['These terms cover your use of skreed.shop, our page before the Skreed store opens on 15 November 2026. By using the site you agree to them.'],
+  intro: ['These terms cover your use of skreed.shop, our page before the Skreed store opens on 19 November 2026. By using the site you agree to them.'],
   sections: [
     { h: 'Nothing is sold here', blocks: [
       ['The site shows our products, shades and case types. It takes no orders and no payments, and shows no prices. Products, shades and the launch date may change before the store opens.'],

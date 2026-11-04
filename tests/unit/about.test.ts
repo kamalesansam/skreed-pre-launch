@@ -28,9 +28,9 @@ const EXPECTED = {
   p4: `And now we${R}re bringing it all to India.`,
   p5: ['Welcome to Skreed. We hope you find something here that makes you stop scrolling for a second and think, ', `that${R}s the one`, '.'],
   sign: 'Your perfect shade.',
-  launch: ['Launching ', `November${NBSP}15`, '.'],
+  launch: ['Launching ', `November${NBSP}19`, '.'],
   title: 'About Skreed',
-  description: `Skreed started with a simple idea: colour is personal. And now we${R}re bringing it all to India. Launching November 15.`,
+  description: `Skreed started with a simple idea: colour is personal. And now we${R}re bringing it all to India. Launching November 19.`,
 };
 const strings = (): string[] => Object.values(C).flatMap((v) => (typeof v === 'string' ? [v] : [...v]));
 
@@ -38,7 +38,7 @@ test('the copy is section 3, character for character', () => {
   assert.deepEqual(JSON.parse(JSON.stringify(C)), EXPECTED);
   for (const w of [`We${R}ve`, `That${R}s`]) assert.ok(C.p2.includes(w), w);
   assert.ok(C.p4.includes(`we${R}re`)); assert.equal(C.p5[1], `that${R}s the one`); assert.ok(C.description.includes(`we${R}re`));
-  assert.equal(C.launch.join(''), `Launching November${NBSP}15.`);
+  assert.equal(C.launch.join(''), `Launching November${NBSP}19.`);
   // the description is three of the copy's own sentences, in order, with a plain space before "15"
   assert.equal(C.description, `${C.p1} ${C.p4} ${C.launch.join('').replace(NBSP, ' ')}`);
 });
