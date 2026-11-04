@@ -2,7 +2,7 @@
 // the jar's state from any press order (a repeat adds nothing), the fill's reveal from jars.json's surfaces and its
 // lengths, the ground held equal between the page and the island's config, the three follow columns as links to new
 // tabs and the star column as none, the two font files and their @font-face rules, no IBM Plex Mono or decode on any
-// line, the jars' renders read by name, the script's events and hooks, and the quiz gate's lock.
+// line, the jars' renders read by name, the script's events and hooks, and no lock behind the quiz (2026-11-04).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
@@ -204,14 +204,11 @@ test('the script (C3, C4, C5): the fill by clip-path, the visibility gate, the e
   assert.match(css, /\.su-body \{[^}]*min-height: 100svh;/);
 });
 
-test('(8) the lock (quiz-gate.md D9): section 5 rendered hidden and data-locked with section 4, its inline step after the markup from QUIZ_GATE.key, opened by the same unlock, and the no-JS rule', () => {
-  const inline = read('src/inline/signup-gate.inline.js'), gate = read('src/scripts/quiz/gate.ts');
-  assert.match(astro, /<section class="signup" id="signup" aria-label=\{C\.aria\} data-state="rest" hidden data-locked>/, 'rendered locked on every tier');
-  assert.match(astro, /const gateCode = inlineScript\('signup-gate\.js', \{ KEY: QUIZ_GATE\.key \}, gate\);/, 'the step assembled from the key, no hooks part of its own');
-  assert.match(astro, /<\/section>\n<script is:inline set:html=\{gateCode\}><\/script>/, 'the step right after the section');
-  assert.match(inline, /if \(v === '1' \|\| o\) \{ s\.removeAttribute\('hidden'\); s\.removeAttribute\('data-locked'\); s\.setAttribute\('data-open', 'visit'\); \}/, 'opened for a visit that opened the room');
-  assert.match(gate, /const s = document\.getElementById\('signup'\);\n\s*if \(s\) \{ s\.removeAttribute\('hidden'\); s\.removeAttribute\('data-locked'\); s\.dataset\.open = by; \}\n\s*flag\(\);/, 'the unlock opens section 5 with the room');
-  assert.match(css, /html:not\(\.js\) \.signup\[data-locked\] \{ display: block; \}/, 'without JavaScript nothing is locked');
+test('(8) no lock (2026-11-04: Sam, "unlock everything, let all the sections work as normal"): section 5 rendered open, no inline gate step, no no-JS rule', () => {
+  assert.match(astro, /<section class="signup" id="signup" aria-label=\{C\.aria\} data-state="rest">/, 'rendered open on every tier');
+  assert.doesNotMatch(astro, /gateCode|signup-gate|QUIZ_GATE|data-locked/);
+  assert.doesNotMatch(css, /data-locked/);
+  assert.doesNotMatch(dom, /data-locked|skreed:quiz-unlock/);
   assert.doesNotMatch(css, /\.signup \{[^}]*display:/, 'signup.css sets no display on .signup itself');
   assert.ok(jarById('facebook'));
 });

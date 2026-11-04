@@ -67,8 +67,6 @@ const shade = (id: string) => {
       <h2 class="qz-h" data-dc><span class="sr-only">{Q.h}</span><span aria-hidden="true">{Q.h}</span></h2>
       <p class="qz-sub" data-dc><span class="sr-only">{Q.sub}</span><span aria-hidden="true">{Q.sub}</span></p>
       <button type="button" class="qz-link qz-begin" id="qzBegin" data-label={Q.begin} data-loading={Q.loading} data-dc><span class="sr-only">{Q.begin}</span><span aria-hidden="true">{Q.begin}</span></button>
-      {/* the way past the quiz (quiz-gate.md D3): section 4 is locked behind the quiz until the result or this press; split at build as Begin is, and hidden without JavaScript, where nothing is locked */}
-      <button type="button" class="qz-link qz-skip" id="qzSkip" data-label={Q.skip} data-loading={Q.loading} data-dc><span class="sr-only">{Q.skip}</span><span aria-hidden="true">{Q.skip}</span></button>
       <noscript><p class="qz-noscript"><span class="sr-only">{Q.noscriptLead}</span><span aria-hidden="true">{Q.noscriptLead}</span><a href="/#families" aria-label={Q.noscriptLink}>{Q.noscriptLink}</a><span class="sr-only">{Q.noscriptTail}</span><span aria-hidden="true">{Q.noscriptTail}</span></p></noscript>
     </div>
     <div class="qz-deck" id="qzDeck" hidden>
@@ -84,7 +82,6 @@ const shade = (id: string) => {
             </div>
             <div class="qz-foot">
               {i > 0 && <button type="button" class="qz-link qz-back" data-dc>{Q.back}</button>}
-              <button type="button" class="qz-link qz-skip" data-dc>{Q.skip}</button>
             </div>
             {c.visual && c.answers.some((a) => picture(`q${i}-${a.persona}`)) && (
               <div class="qz-pics" aria-hidden="true">
@@ -186,14 +183,14 @@ const shade = (id: string) => {
   <p class="sr-only" id="qzLive" aria-live="polite"></p>
 </section>
 <script>
-  // the loader: the chunk comes once the section is within a screen, or at once when "Click to begin" or "Skip quiz" is
-  // pressed first. Any press on either before the chunk has mounted (whether or not the import is already in flight)
-  // shows "Loading..." on that button and is replayed by mountQuiz through data-pending; a press on the other button
-  // while one is pending does nothing; once mounted, deck.ts owns both.
+  // the loader: the chunk comes once the section is within a screen, or at once when "Click to begin" is pressed first.
+  // A press before the chunk has mounted (whether or not the import is already in flight) shows "Loading..." on the
+  // button and is replayed by mountQuiz through data-pending; once mounted, deck.ts owns it. (Skip quiz left on
+  // 2026-11-04 with the quiz gate: Sam, "unlock everything, let all the sections work as normal ... remove the skip quiz button also".)
   const root = document.getElementById('find');
-  const begin = document.getElementById('qzBegin') as HTMLButtonElement | null, skip = document.getElementById('qzSkip') as HTMLButtonElement | null;
-  if (root && begin && skip) {
-    const buttons = [begin, skip];
+  const begin = document.getElementById('qzBegin') as HTMLButtonElement | null;
+  if (root && begin) {
+    const buttons = [begin];
     let p: Promise<unknown> | null = null, mounted = false, retry = '';
     // a label in two copies, as the server drew it: sentence case for assistive technology, capitals on screen
     const say = (b: HTMLButtonElement, t: string) => { const a = document.createElement('span'), c = document.createElement('span'); a.className = 'sr-only'; a.textContent = t; c.setAttribute('aria-hidden', 'true'); c.textContent = t; b.replaceChildren(a, c); };

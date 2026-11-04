@@ -229,12 +229,16 @@
     --frame: calc(100vw - 2 * var(--inset));
     --text-w: calc(0.4 * var(--frame));
     --ujx: calc(0.55 * var(--frame) / 880);
-    --ujy: calc((100svh - var(--top) - var(--bot) - 24px) / 820);
+    /* the height's bound counts the form as it mounts (2026-11-04): the first-name pill above the email's (form.ts) and
+       the consent line under it had made the body 53 to 77 px taller than the screen on laptops, so at the page's end the
+       section rose under the section index ("in the signup page, when i go to the end of the site, it's clashing with the
+       navbar"); 820 became 930 picture px, and the floors' bound below 152 px became 240, measured on skreed.shop at
+       eleven landscape sizes from 1000 x 548 to 2560 x 1440, every one fitting (1280 x 500, under the floors, 44 px over) */
+    --ujy: calc((100svh - var(--top) - var(--bot) - 24px) / 930);
     /* under about 640 px of height the text's floors (15 px lines, the 44 px pill, 6 px gaps) stop shrinking with --u and
        the body outgrew the screen (2026-11-03: 8 px over at 1366 x 600, 27 at 1100 x 520), so a second height bound
-       takes over there, from the measured slope (the body 629 px per unit of --u, plus 138 px of floors, and 14 px spare:
-       the slope steepens under 540 px, where 1280 x 500 still runs 9 px over) */
-    --ujy2: calc((100svh - var(--top) - var(--bot) - 152px) / 629);
+       takes over there, from the measured slope (the body 629 px per unit of --u, plus the floors and some spare) */
+    --ujy2: calc((100svh - var(--top) - var(--bot) - 240px) / 629);
     --u: max(0.3px, min(var(--ujx), var(--ujy), var(--ujy2), 1.15px));
     grid-template-columns: minmax(0, 40fr) minmax(0, 56fr);
     column-gap: 4%;
@@ -272,8 +276,3 @@
 
 /* nothing follows the body and nothing loops from it (2026-11-03): the page ends at the section's rest on every tier;
    without JavaScript the text stands and the links work */
-
-/* the quiz gate (docs/specs/quiz-gate.md D1, D9): with JavaScript the section is rendered hidden and data-locked with
-   section 4 until the quiz's result or Skip quiz opens both (the inline step after the markup, gate.ts); without
-   JavaScript nothing is locked, as for the room */
-html:not(.js) .signup[data-locked] { display: block; }

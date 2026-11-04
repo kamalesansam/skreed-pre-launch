@@ -130,7 +130,7 @@ test('the type scale: quiz.css sets the two sizes as clamp() tokens once, with n
 
 test('the frame\'s room and the side safe areas (the review of 2026-11-02): the band is measured for the stage where it rests, above the section\'s top only where the island draws the fog, each show path fits its card\'s frame just before the picture comes, and the stage and the gift pad their sides with the safe areas', () => {
   const deck = read('src/scripts/quiz/deck.ts');
-  // the page's length can change with no resize (section 4 opening by Skip quiz): the mouse and pen's pointerenter,
+  // the page's length can change with no resize (a section below laying out late): the mouse and pen's pointerenter,
   // keyboard focus and a finger's pointerdown each fit the frame again, then show
   assert.equal(deck.split('fitPic(card, ctl, false); void ctl.show(key);').length - 1, 3, 'the three show paths fit, then show');
   assert.match(deck, /opt\.addEventListener\('pointerenter', \(e\) => \{ if \(e\.pointerType !== 'touch' && live\(\)\) \{ fitPic\(card, ctl, false\); void ctl\.show\(key\); \} \}\);/);

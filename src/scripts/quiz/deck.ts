@@ -10,7 +10,6 @@
 import { QUIZ_COPY as Q, QUIZ_LEAD_ENDPOINT, QUIZ_QUESTIONS, QUIZ_REVEAL_MS, pickShade, scoreQuiz, type PersonaId } from '../../config/quiz.ts';
 import { reducedMQ } from '../motion.ts';
 import { createDecoder } from './decode.ts';
-import { ride, riding, unlock } from './gate.ts';
 import { createPictures, type Pictures } from './picture.ts';
 import { track } from './track.ts';
 import { LEAD_CODE_COPY as K, codeLine, waitLine, wrongLine } from '../../config/lead-code.ts';
@@ -35,7 +34,7 @@ export function mountQuiz(root: HTMLElement): void {
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T | null;
   // the section's own markup (Quiz.astro): missing means a broken build, so it throws rather than mounting half a quiz
   const must = <T extends HTMLElement>(id: string): T => { const el = $<T>(id); if (!el) throw new Error(`quiz: #${id} missing`); return el; };
-  const intro = must('qzIntro'), begin = must<HTMLButtonElement>('qzBegin'), skip = must<HTMLButtonElement>('qzSkip'), deck = must('qzDeck'), cardsEl = must('qzCards');
+  const intro = must('qzIntro'), begin = must<HTMLButtonElement>('qzBegin'), deck = must('qzDeck'), cardsEl = must('qzCards');
   const results = must('qzResults'), live = must('qzLive'), gift = $('qzGift'), form = $<HTMLFormElement>('qzForm');
   const reveal = $('qzReveal'), barFill = $('qzBarFill');
   const cards = [...cardsEl.querySelectorAll<HTMLDivElement>('.qz-card')];
@@ -74,7 +73,7 @@ export function mountQuiz(root: HTMLElement): void {
     const end = top - rest + BAND;
     return island() ? end : Math.max(end, top);
   };
-  /** one card's frame. A phone held upright has no room beside the question: the frame takes the open space above the deck, under the band, at most 40% of the screen; none under 96 px. A phone held sideways: the grid row the answers leave it, none under 96 px. The page's length can change with no resize (section 4 opening by Skip quiz), so each show path below fits its card's frame again just before the picture comes (2026-11-02) */
+  /** one card's frame. A phone held upright has no room beside the question: the frame takes the open space above the deck, under the band, at most 40% of the screen; none under 96 px. A phone held sideways: the grid row the answers leave it, none under 96 px. The page's length can change with no resize (a section below laying out late), so each show path below fits its card's frame again just before the picture comes (2026-11-02) */
   function fitPic(card: HTMLDivElement, ctl: Pictures, always = true) {
     const frame = card.querySelector<HTMLElement>('.qz-pics')!;
     const state = () => `${frame.style.getPropertyValue('--qz-pic-h')} ${frame.hasAttribute('data-none')}`, was = state();
@@ -182,7 +181,7 @@ export function mountQuiz(root: HTMLElement): void {
   // ---- the intro is visible at rest, as the server drew it (rule 12: no reveal on scroll); its text is split into glyphs
   // as it stands, so the first press wipes it out as section 2's labels go
   const introEls = items(intro);
-  dc.prepare(begin, Q.begin, true); dc.prepare(skip, Q.skip, true);   // each given its config string: after a press before mount its copy reads "Loading..."
+  dc.prepare(begin, Q.begin, true);   // given its config string: after a press before mount its copy reads "Loading..."
   for (const el of introEls) dc.prepare(el, undefined, true);
 
   // ---- the deck: one question on screen (focusable, role group), the rest hidden in the same grid cell
@@ -295,7 +294,6 @@ export function mountQuiz(root: HTMLElement): void {
     for (const m of shown.querySelectorAll<HTMLElement>('.qz-mini')) m.hidden = m.dataset.shade === shade;
     delete root.dataset.gift;
     results.hidden = false; if (gift) gift.hidden = false; setState('result');
-    unlock('result');   // section 4 opens under the result and the gift (quiz-gate.md D2); the unlock moves nothing (the result's own scroll to the section's top, below, is quiz.md D47's)
     track('quiz_complete', { persona: p.id, shade, others: others.join(',') });
     fitResult();
     restoreGift();
@@ -341,15 +339,6 @@ export function mountQuiz(root: HTMLElement): void {
     root.scrollIntoView({ block: 'start', behavior: reduced() ? 'instant' : 'smooth' });   // the section's top, so the deck sits where the intro stood
   }
 
-  /** Skip quiz (quiz-gate.md D3, D4): taken when Back's press would be (not during a change of screen, not inside the
-   *  guard) and not while a ride runs; section 4 opens and the page rides to scene 1; the quiz itself stays as it is */
-  async function skipQuiz(control: HTMLButtonElement, q: number) {
-    if (busy || early() || riding() || state !== (q ? 'quiz' : 'intro')) return;
-    track('quiz_skip', { q });
-    unlock('skip');
-    await ride(control, { reduced: reduced(), keyboard: control.matches(':focus-visible'), label: (t) => dc.set(control, t ?? Q.skip), announce });
-  }
-
   // ---- input: a tap, click, Enter or Space on an answer commits it; Up and Down move between the answers; Back
   let touchPic: HTMLButtonElement | null = null;
   for (const card of cards) {
@@ -369,8 +358,6 @@ export function mountQuiz(root: HTMLElement): void {
     }
     for (const opt of opts) opt.addEventListener('click', () => { if (card.classList.contains('is-top')) void commit(opt); });
     card.querySelector('.qz-back')?.addEventListener('click', () => { void back(); });
-    const skipHere = card.querySelector<HTMLButtonElement>('.qz-skip');
-    skipHere?.addEventListener('click', () => { if (card.classList.contains('is-top')) void skipQuiz(skipHere, Number(card.dataset.i) + 1); });
     card.addEventListener('keydown', (e) => {
       if (!card.classList.contains('is-top') || (e.key !== 'ArrowDown' && e.key !== 'ArrowUp')) return;
       e.preventDefault();
@@ -384,10 +371,6 @@ export function mountQuiz(root: HTMLElement): void {
   begin.removeAttribute('aria-disabled'); begin.removeAttribute('aria-busy');
   begin.addEventListener('click', () => { void beginQuiz(); });
   if (begin.dataset.pending === '1') { delete begin.dataset.pending; void beginQuiz(); }
-  // ---- and Skip quiz on the intro, the same way (a press before this chunk arrived rides now)
-  skip.removeAttribute('aria-disabled'); skip.removeAttribute('aria-busy');
-  skip.addEventListener('click', () => { void skipQuiz(skip, 0); });
-  if (skip.dataset.pending === '1') { delete skip.dataset.pending; void skipQuiz(skip, 0); }
   for (const b of results.querySelectorAll<HTMLButtonElement>('.qz-retry')) b.addEventListener('click', () => { void retry(); });
 
   // ---- the gift form (quiz.md 5: validation on blur and submit, sending, error, offline queue, duplicate, success);

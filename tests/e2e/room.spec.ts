@@ -101,7 +101,7 @@ test('section 4 at 390 x 844: the track, the approach, the pad, the arrival and 
   expect(await pageQ(page)).toBeCloseTo(0.5, 1);
   // a Tab from the quiz's last control onto the pad: the page to scene 1, the focus on to scene 1's name
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
-  await page.focus('#qzSkip');
+  await page.focus('#qzBegin');
   for (let i = 0; i < 6 && !(await page.evaluate(() => { const a = document.activeElement; return !!a && (a.id === 'rmPad' || a.classList.contains('rm-scene-name')); })); i++) await page.keyboard.press('Tab');
   await expect.poll(async () => (await s4(page)).state, { timeout: 20_000 }).toBe('world');
   await expect.poll(() => pageQ(page), { timeout: 10_000 }).toBeCloseTo(1, 1);

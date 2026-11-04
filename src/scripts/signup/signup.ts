@@ -168,10 +168,9 @@ export function mountSignup(root: HTMLElement): void {
     a.addEventListener('click', () => { follow(a.dataset.id ?? ''); });   // the link opens its page as a link does (a new tab)
   }
 
-  // ---- data-ready (C3): jar 4's render, the three showcase jars and the section's fonts decoded, or 4 s after the unlock
+  // ---- data-ready (C3): jar 4's render, the three showcase jars and the section's fonts decoded, or 4 s after the mount
   const ready = () => { if (root.dataset.ready !== '1') root.dataset.ready = '1'; };
-  if (root.hasAttribute('data-locked')) addEventListener('skreed:quiz-unlock', () => { setTimeout(ready, READY_MS); }, { once: true });
-  else setTimeout(ready, READY_MS);
+  setTimeout(ready, READY_MS);
   const imgs = [cur?.querySelector('img'), ...root.querySelectorAll<HTMLImageElement>('a.su-follow img')].filter((i): i is HTMLImageElement => !!i);
   const faces = 'fonts' in document ? ['300 16px Inter', '400 16px Inter', '700 16px Inter', '400 16px Jost'].map((f) => document.fonts.load(f).catch(() => [])) : [];
   void Promise.all([...imgs.map((i) => i.decode().catch(() => undefined)), ...faces]).then(ready);

@@ -3,17 +3,16 @@
 // on a section into Back to top's jump: the --night veil in over 250 ms, the page in place at the section's rest position
 // (the hero's own jump when the island runs, its followers snapped and section 4 reset; a plain instant scroll on the
 // poster tier), the veil lifted; no scroll through the sections between. Home is the jump Back to top made here.
-// Products is always listed (2026-11-02: "its okay add products as well no problem"): pressed while the quiz gate holds
-// section 4, it opens it as Skip quiz does (gate.ts unlock); on the 3D path it waits under the veil for the scenes, at
-// most 1.5 s, as Skip quiz's ride does, so the landing shows scene 1 drawn (the hall until 2026-11-02). Reduced motion:
+// Products is always listed (2026-11-02: "its okay add products as well no problem"); on the 3D path a press waits under
+// the veil for the scenes, at most 1.5 s, so the landing shows scene 1 drawn (the hall until 2026-11-02). Nothing is
+// locked behind the quiz since 2026-11-04 (Sam: "unlock everything, let all the sections work as normal"). Reduced motion:
 // the cut with no veil. A
 // keyboard press moves focus into the section it opened. Where the browser has no popover (the drawer's CSS falls back
 // to the words in a row), nothing here touches the popover API. About, the page the index links to (data-page, no
 // data-sec; navbar.md D7), is left to the browser: no veil and no jump, only a plain press tracked as the sections' are
 // (a modifier press opens a new tab, untracked, as theirs is). The drawer is closed as the page leaves (pagehide), so a
 // landing page restored from the back-forward cache comes back without it; a restore that still finds it open closes it.
-// The gift at the end (2026-11-03) jumps to section 5, the sign-up, opening it as Products opens section 4 while the quiz
-// gate holds both; it carries the logotype's glitch with a shorter idle wait (GIFT_EVERY), and its bounce is CSS.
+// The gift at the end (2026-11-03) jumps to section 5, the sign-up, waiting for the scenes as Products does; it carries the logotype's glitch with a shorter idle wait (GIFT_EVERY), and its bounce is CSS.
 import { track } from '../quiz/track.ts';
 import { veiled } from './veil.ts';
 import { restY, sectionAt, type JumpId, type PageMap } from './nav-map.ts';
@@ -24,7 +23,7 @@ const nav = document.getElementById('siteNav');
 const sheet = document.getElementById('site-sections');
 const logo = document.getElementById('siteLogo');
 const html = document.documentElement;
-/** on the 3D path a press on Products waits for the scenes at most this long (gate.ts SCENES_WAIT_MS) */
+/** on the 3D path a press on Products or the gift waits for the scenes at most this long */
 const SCENES_WAIT_MS = 1500;
 /** the popover API: without it `:popover-open` is not a selector, and matches() would throw on it */
 const POPOVER = 'hidePopover' in HTMLElement.prototype;
@@ -106,28 +105,8 @@ if (nav) {
     addEventListener('pageshow', (e) => { if (e.persisted && open()) sheet.hidePopover(); });
   }
 
-  /**
-   * Section 4 opened by Products while the quiz gate holds it, as gate.ts's unlock() opens it for Skip quiz: hidden and
-   * data-locked go, data-open says "nav", the visit's flag is written (its key from config/quiz.ts, through the bar's
-   * data-gate-key, so the quiz's config stays in its own chunk), room_unlock is tracked and the hero hears
-   * skreed:quiz-unlock (it loads the scenes). True when this call opened it. Keep in step with gate.ts unlock().
-   */
-  const unlock = (): boolean => {
-    if (!room?.hasAttribute('data-locked')) return false;
-    room.removeAttribute('hidden'); room.removeAttribute('data-locked'); room.dataset.open = 'nav';
-    // section 5 (section#signup), locked with the room since it follows it in the page, opens in the same press, as gate.ts unlock() opens it (2026-11-03)
-    const signup = document.getElementById('signup');
-    if (signup) { signup.removeAttribute('hidden'); signup.removeAttribute('data-locked'); signup.dataset.open = 'nav'; }
-    const key = nav.dataset.gateKey;
-    if (key) { try { sessionStorage.setItem(key, '1'); } catch { /* no storage: the attributes, once removed, stay removed for the page's life */ } }
-    track('room_unlock', { by: 'nav' });
-    dispatchEvent(new CustomEvent('skreed:quiz-unlock', { detail: { by: 'nav' } }));
-    return true;
-  };
   const frame = () => new Promise<void>((r) => { requestAnimationFrame(() => r()); });
   const wait = (ms: number) => new Promise<void>((r) => { setTimeout(r, ms); });
-  /** Skip quiz's ride over (data-ride goes when it lands or is ended; its wait for the scenes included, at most 2.7 s) */
-  const rideOver = () => new Promise<void>((r) => { const tick = () => (room?.hasAttribute('data-ride') ? requestAnimationFrame(tick) : r()); tick(); });
 
   /** the section at once: section 1 by the hero's own jump (Back to top's), the rest by the island's jump to y, or a plain instant scroll */
   const jump = (id: JumpId) => {
@@ -170,24 +149,19 @@ if (nav) {
       e.preventDefault();
       const keyboard = focusVisible(a);
       if (open()) sheet!.hidePopover();
-      // Skip quiz's ride is taking the page to section 4: the press runs once the ride has landed or been ended (a touch
-      // on the index ends it), so it is neither lost nor undone by the ride's next frame
-      if (room?.hasAttribute('data-ride')) await rideOver();
       track('nav', { to: id });
       void veiled(async () => {
-        // Products: section 4 opened if the gate holds it; on the 3D path the scenes load from the unlock (or from this
-        // press where they have not started) and the page waits for them under the veil, so the landing shows scene 1
-        // drawn and its reveal is not played again after the lift; then a frame for the shown section's layout
+        // Products: on the 3D path the scenes load from this press where they have not started, and the page waits for
+        // them under the veil, so the landing shows scene 1 drawn and its reveal is not played again after the lift
         // The gift (section 5) waits the same way: section 4's director measures its section once the scenes load, and
         // a jump to the page's end before that left the hero reading the page as at its top (the countdown over section 5)
         if (id === 'room' || id === 'signup') {
-          const opened = unlock(), scenes = window.__skreedScenes;
+          const scenes = window.__skreedScenes;
           if (island() && scenes && !scenes.ready) {
             a.setAttribute('aria-busy', 'true');
             await Promise.race([scenes.load(), wait(SCENES_WAIT_MS)]);
             a.removeAttribute('aria-busy');
           }
-          if (opened) await frame();
         }
         jump(id);
         mark();

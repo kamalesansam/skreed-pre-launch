@@ -231,8 +231,8 @@ test("E-S4-font: section 2's label type, IBM Plex Mono Medium in capitals, at th
 });
 
 test('the DOM (section-4-flux.md 5, section-4-no-hall.md 5): the pad, the loading line, the scenes list, the words, the pause control, the live region, noscript', () => {
-  // rendered hidden and data-locked behind the quiz until the result or Skip quiz (quiz-gate.md D1; tests/unit/quiz-gate.test.ts has the gate)
-  assert.match(astro, /<section class="room" id="room" aria-label=\{R\.aria\} data-state="approach" hidden data-locked>/);
+  // open at rest: the quiz gate that held it hidden and data-locked left on 2026-11-04 (Sam: "unlock everything")
+  assert.match(astro, /<section class="room" id="room" aria-label=\{R\.aria\} data-state="approach">/);
   assert.match(astro, /<div class="rm-pad" id="rmPad" tabindex="0" role="group" aria-label=\{R\.worldAria\}><\/div>/, "the pad, the section's first tab stop");
   assert.match(astro, /<p class="rm-line rm-loading" id="rmLoading" role="status" hidden>/);
   assert.match(astro, /<p class="rm-scene-line">\{s\.line\}<\/p>\s*\{\/\*[^*]*\*\/\}\s*\{s\.i === 0 && <p class="rm-scene-hint" id="rmSceneHint" hidden>\{R\.sceneHintTouch\}<\/p>\}\s*<p class="rm-scene-count">\{s\.count\}<\/p>\s*<p class="rm-scene-more" aria-hidden="true" hidden><\/p>/, 'the scene hint a row of scene 1\'s lines above the count (the words share the count\'s row at 390), the loading line under it');

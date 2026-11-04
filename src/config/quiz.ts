@@ -15,8 +15,6 @@ export const QUIZ_COPY = {
   hAlt: 'Overwhelmed by 240 shades? Let’s fix that.',
   sub: 'Grab a coffee, sit back and get comfortable. Answer a few questions and we’ll match you to your perfect Skreed shade.',
   begin: 'Click to begin',   // Sam, 2026-10-29: "rename it to click to begin, since we're not swiping anything" ("Swipe to begin" until then)
-  /** the way past the quiz without taking it (quiz-gate.md D3; Sam, 2026-10-26: "a button which says, rskip quiz", his slip for the "skip quiz" of the same sentence) */
-  skip: 'Skip quiz',
   loading: 'Loading...',
   noscriptLead: 'The quiz needs JavaScript. Browse the ',
   noscriptLink: 'ten families',
@@ -198,11 +196,3 @@ export function luminance(hex: string): number {
 
 /** The lead endpoint contract (quiz.md 5): the Worker arrives with the lead infrastructure. */
 export const QUIZ_LEAD_ENDPOINT = '/api/quiz-lead';
-
-/**
- * The quiz gate (docs/specs/quiz-gate.md 3 and 5; Sam, 2026-10-26: "it shouldnt scroll past the quiz untill someone
- * takes the quiz, section 4 should be locked"): the visit's flag in sessionStorage, read by Room.astro's inline step at
- * build and written by the quiz's chunk (scripts/quiz/gate.ts), and the ride's length in ms, the press on Skip quiz to
- * scene 1 fully in (the hall until 2026-11-02, docs/specs/section-4-no-hall.md).
- */
-export const QUIZ_GATE = { key: 'skreed:quiz-done', rideMs: 1200 } as const;

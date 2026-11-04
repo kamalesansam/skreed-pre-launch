@@ -1,15 +1,12 @@
 // The section index (docs/specs/navbar.md AC4, AC5, AC10): (a) nav-map.ts's rest positions and the section on screen,
 // on the 3D path against the hero's scroll map (S2T) and on the poster tier against the page's tops; (b) its fragment
 // links name the landing page's real ids, and the drawer sits inside the bar's nav; (c) Products is always listed and
-// opens the quiz gate as Skip quiz does (the gate's key from config/quiz.ts, room_unlock, skreed:quiz-unlock); (d) the
-// drawer's look; (e) the copy rules.
+// nothing is locked behind the quiz (2026-11-04: Sam, "unlock everything"); (d) the drawer's look; (e) the copy rules.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { S2T } from '../../src/config/hero.ts';
 import { COPY } from '../../src/config/copy.ts';
-import { QUIZ_GATE } from '../../src/config/quiz.ts';
-import { rideTarget } from '../../src/scripts/quiz/gate.ts';
 import { restY, sectionAt, SECTION_IDS, type PageMap } from '../../src/scripts/shell/nav-map.ts';
 
 const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -18,12 +15,11 @@ const vh = 800;
 const island: PageMap = { island: true, roomStill: false, vh, families: 6000, familiesH: 300, quiz: 6000, room: 7600, stage: 800, max: 40000 };
 const poster: PageMap = { island: false, roomStill: false, vh, families: 800, familiesH: 300, quiz: 1100, room: 2900, stage: 800, max: 6000 };
 
-test('the 3D path: each section rests where the hero, the glue and Skip quiz put it', () => {
+test('the 3D path: each section rests where the hero and the glue put it', () => {
   assert.equal(restY('top', island), 0);
   assert.equal(restY('families', island), Math.round(S2T.LAND * vh));
   assert.equal(restY('quiz', island), island.quiz);
   assert.equal(restY('room', island), island.room + island.stage);   // q 1, scene 1 fully in
-  assert.equal(restY('room', island), rideTarget({ top: island.room, one: island.stage, poster: false, max: island.max }), 'Skip quiz\'s own landing');
   assert.equal(restY('room', { ...island, roomStill: true }), island.room);   // section 4 on its stills rests at its top
 });
 
@@ -32,10 +28,9 @@ test('the poster tier: the top, nav#families centred, the quiz and section 4 at 
   assert.equal(restY('families', poster), Math.round(800 + 150 - 400));
   assert.equal(restY('quiz', poster), 1100);
   assert.equal(restY('room', poster), 2900);
-  assert.equal(restY('room', poster), rideTarget({ top: poster.room, one: poster.stage, poster: true, max: poster.max }), 'Skip quiz\'s own landing');
 });
 
-test('rest positions are clamped to the page and never NaN (section 4 locked has no box)', () => {
+test('rest positions are clamped to the page and never NaN (a section with no box)', () => {
   assert.equal(restY('room', { ...island, room: NaN }), 0);
   assert.equal(restY('room', { ...island, max: 7500 }), 7500);   // q 1 would be 7800 on this fixture
   assert.equal(restY('families', { ...poster, families: 0, familiesH: 100 }), 0);
@@ -54,7 +49,7 @@ test('the 3D path: the section on screen changes at the middle of each seam', ()
   assert.equal(sectionAt(island.quiz, island), 'quiz');
   assert.equal(sectionAt(island.room - 1, island), 'quiz');
   assert.equal(sectionAt(island.room, island), 'room');
-  assert.equal(sectionAt(island.room + 5 * vh, { ...island, room: NaN }), 'quiz');   // locked: the page ends at the quiz
+  assert.equal(sectionAt(island.room + 5 * vh, { ...island, room: NaN }), 'quiz');   // no box for section 4: the page ends at the quiz
   for (const id of SECTION_IDS) assert.equal(sectionAt(restY(id, island), island), id, `${id} rests inside itself`);
 });
 
@@ -72,7 +67,8 @@ test('the fragment links name the landing page\'s ids, in page order, in the bar
   assert.match(nav, /top: '#top', families: '#families', quiz: '#find', room: '#room'/);
   assert.match(read('src/components/family/FamilyLinksNav.astro'), /<nav id="families"/);
   assert.match(read('src/components/quiz/Quiz.astro'), /<section class="quiz" id="find"/);
-  assert.match(read('src/components/room/Room.astro'), /<section class="room" id="room"[^>]* hidden data-locked/);
+  assert.match(read('src/components/room/Room.astro'), /<section class="room" id="room"/);
+  assert.doesNotMatch(read('src/components/room/Room.astro'), /\bhidden data-locked\b/, 'open at rest since 2026-11-04');
   assert.equal((nav.match(/items\.map/g) ?? []).length, 2);
   assert.equal((nav.match(/pages\.map/g) ?? []).length, 2, 'About, a page link, after the sections in the bar and in the drawer');
   assert.match(nav, /const pages = \[\{ id: 'about', href: '\/about\/', label: N\.pages\.about \}\];/);
@@ -84,17 +80,13 @@ test('the fragment links name the landing page\'s ids, in page order, in the bar
   assert.ok(index.indexOf('<SiteLogo slot="logo" />') < index.indexOf('<SiteNav slot="logo" />'), 'next after the logotype in the tab order');
 });
 
-test('Products is always listed and opens the quiz gate as Skip quiz does', () => {
+test('Products is always listed and nothing is locked behind the quiz (2026-11-04)', () => {
   const nav = read('src/components/shell/SiteNav.astro'), css = read('src/styles/site-nav.css'), js = read('src/scripts/shell/site-nav.ts');
-  assert.doesNotMatch(css, /#room\[data-locked\]/, 'no rule hides Products while the gate holds section 4');
-  assert.match(nav, /data-gate-key=\{QUIZ_GATE\.key\}/);
-  assert.match(read('src/scripts/quiz/gate.ts'), /sessionStorage\.setItem\(QUIZ_GATE\.key, '1'\)/, 'the flag Skip quiz writes, under the same key');
-  assert.equal(QUIZ_GATE.key, 'skreed:quiz-done');
-  assert.match(js, /room\.removeAttribute\('hidden'\); room\.removeAttribute\('data-locked'\); room\.dataset\.open = 'nav';/);
-  assert.match(js, /track\('room_unlock', \{ by: 'nav' \}\)/);
-  assert.match(js, /dispatchEvent\(new CustomEvent\('skreed:quiz-unlock'/);
+  assert.doesNotMatch(css, /#room\[data-locked\]/, 'no rule hides Products');
+  assert.doesNotMatch(nav, /data-gate-key/);
+  assert.doesNotMatch(js, /data-locked|skreed:quiz-unlock|room_unlock|gateKey/, 'no unlock left in the index');
   assert.match(js, /SCENES_WAIT_MS = 1500/);
-  assert.match(js, /window\.__skreedScenes/, 'Products waits on the scenes, as Skip quiz\'s ride does');
+  assert.match(js, /window\.__skreedScenes/, 'Products waits on the scenes');
   // the landing inside section 4 snaps its followers only once the section has a reading (none while the gate hides it)
   assert.match(read('src/scripts/hero/section4/director.ts'), /reset\(y\) \{\n\s+resetLap\(\);\n\s+if \(y === undefined\) return;\n\s+current\(\);\n(?:\s+\/\/[^\n]*\n)*\s+if \(!measured\) return;\n\s+const qq = \(y - top\) \/ screenPx\(\);/);
   assert.doesNotMatch(js, /^import[^\n]*config\/quiz/m, 'the quiz\'s config stays out of the index\'s chunk');
