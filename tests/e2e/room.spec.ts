@@ -189,7 +189,7 @@ test('section 4 at 390 x 844: the track, the approach, the pad, the arrival and 
   // and the three follow links (D6)
   await expect(page.locator('#signup')).toHaveAttribute('data-ground', 'island');
   await expect.poll(() => page.evaluate(() => (window.__skreedGround!.state() as { mode: string }).mode)).toBe('whole');
-  for (const href of ['https://www.facebook.com/skreedofficial', 'https://www.youtube.com/@skreedofficial', 'https://www.instagram.com/skreedofficial']) await expect(page.locator(`#signup a[href^="${href}"]`)).toHaveCount(1);
+  for (const href of ['https://www.facebook.com/skreedofficial', 'https://www.youtube.com/@skreedofficial', 'https://www.instagram.com/skreedindia']) await expect(page.locator(`#signup a[href^="${href}"]`)).toHaveCount(1);
   expect((await s4(page)).state).toBe('world');
   // no exit seam from section 5's end since 2026-11-03 (Sam: "remove the loop"): the guard still arms at the rest, and a
   // notch down there runs nothing; the page stays at the section, the logotype Urban Slate over its cream ground

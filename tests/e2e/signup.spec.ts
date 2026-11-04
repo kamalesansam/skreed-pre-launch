@@ -54,7 +54,7 @@ for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
     expect(f.overlap).toBeLessThanOrEqual(0.5);
     expect(Math.abs(f.bodyH - f.vh)).toBeLessThanOrEqual(1);
     // the three follow columns and the star column
-    for (const [id, href, name] of [['facebook', 'https://www.facebook.com/skreedofficial', 'Follow Skreed on Facebook, 5% off (opens in a new tab)'], ['youtube', 'https://www.youtube.com/@skreedofficial', 'Subscribe to Skreed on YouTube, 5% off (opens in a new tab)'], ['instagram', 'https://www.instagram.com/skreedofficial', 'Follow Skreed on Instagram, 10% off (opens in a new tab)']]) {
+    for (const [id, href, name] of [['facebook', 'https://www.facebook.com/skreedofficial', 'Follow Skreed on Facebook, 5% off (opens in a new tab)'], ['youtube', 'https://www.youtube.com/@skreedofficial', 'Subscribe to Skreed on YouTube, 5% off (opens in a new tab)'], ['instagram', 'https://www.instagram.com/skreedindia', 'Follow Skreed on Instagram, 10% off (opens in a new tab)']]) {
       const a = page.locator(`a.su-follow[data-id="${id}"]`);
       await expect(a).toHaveAttribute('href', href);
       await expect(a).toHaveAttribute('target', '_blank');
