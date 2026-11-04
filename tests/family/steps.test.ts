@@ -52,11 +52,11 @@ function fakePage(y0: number, classes = ['m3d']) {
 const frames = () => new Promise((r) => setTimeout(r, 40));
 const at = (i: number) => CASE_RESTS[i] * VH;
 
-test('the rests and the ride: Tough, MagTough, Snap and Armor at screens 2 to 5; 1.4 s a screen, at most 2.8 s', () => {
+test('the rests and the ride: Tough, MagTough, Snap and Armor at screens 2 to 5; 2.4 s a screen, at most 4 s (slowed on 2026-11-04)', () => {
   assert.deepEqual(CASE_RESTS, [2, 3, 4, 5]);
-  assert.equal(CASE_STEP_MS, 1400); assert.equal(CASE_STEP_MAX_MS, 2800); assert.equal(CASE_STEP_COOLDOWN_MS, 150);
-  assert.equal(caseRideMs(1), 1400); assert.equal(caseRideMs(-1), 1400); assert.equal(caseRideMs(0.3), 1400, 'a part screen rides as one');
-  assert.equal(caseRideMs(2), 2800); assert.equal(caseRideMs(3), 2800);
+  assert.equal(CASE_STEP_MS, 2400); assert.equal(CASE_STEP_MAX_MS, 4000); assert.equal(CASE_STEP_COOLDOWN_MS, 150);
+  assert.equal(caseRideMs(1), 2400); assert.equal(caseRideMs(-1), 2400); assert.equal(caseRideMs(0.3), 2400, 'a part screen rides as one');
+  assert.equal(caseRideMs(2), 4000); assert.equal(caseRideMs(3), 4000);
 });
 
 test('one wheel burst is one type: the ride plays the whole screen, its tail swallowed through the ride and the cooldown; at Tough back and at Armor on are the page\'s', async () => {
@@ -135,7 +135,7 @@ test('a page its own scroll carries past Tough from the zoom is put back on Toug
     // the beat nav: a ride to Tough
     page.tick(1000);
     assert.equal(s.go(0), true);
-    page.tick(2800 + 50); await frames();
+    page.tick(CASE_STEP_MAX_MS + 50); await frames();
     assert.equal(page.y, at(0));
     // Back to top: a scroll no wheel, finger or scrolling key began crosses the types and is never held
     page.tick(1000);
