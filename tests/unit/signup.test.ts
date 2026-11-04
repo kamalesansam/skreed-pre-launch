@@ -55,7 +55,7 @@ test('the copy, verbatim from the picture top to bottom: the curly apostrophe ev
 
 test('the follows (D6): the three addresses, Facebook a quarter of blue, YouTube a quarter of red, Instagram a half of the mixed lot, each column one link to a new tab named for assistive technology, the star column no link', () => {
   assert.deepEqual(SIGNUP_JARS.map((j) => j.id), ['facebook', 'youtube', 'instagram']);
-  assert.deepEqual(SIGNUP_FOLLOWS.map((j) => j.url), ['https://www.facebook.com/skreedofficial', 'https://www.youtube.com/@skreedofficial', 'https://www.instagram.com/skreedofficial']);
+  assert.deepEqual(SIGNUP_FOLLOWS.map((j) => j.url), ['https://www.facebook.com/skreedofficial', 'https://www.youtube.com/@skreedofficial', 'https://www.instagram.com/skreedindia']);
   assert.deepEqual(SIGNUP_FOLLOWS.map((j) => [j.letter, j.worth, j.colour]), [['f', 1, 'Blue'], ['y', 1, 'Red'], ['i', 2, 'Pink and purple']]);
   assert.equal(FOLLOW_COUNT, 3); assert.equal(WORTH_TOTAL, 4);
   assert.deepEqual(SIGNUP_FOLLOWS.map(followAria), ['Follow Skreed on Facebook, 5% off (opens in a new tab)', 'Subscribe to Skreed on YouTube, 5% off (opens in a new tab)', 'Follow Skreed on Instagram, 10% off (opens in a new tab)']);

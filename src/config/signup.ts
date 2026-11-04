@@ -99,12 +99,13 @@ export interface SignupJar {
  * The follows, in the picture's order. The addresses are the store's own, read from the footer of https://www.skreed.com/
  * on 2026-10-26, in the form of Sam's brief of 2026-11-02 ("it should take them to our Facebook page"). Facebook fills
  * a quarter of blue, YouTube a quarter of red (Sam: "on top of the 25% blue"), Instagram a half of the pink and purple
- * mixed lot (Sam: "It's one mixed lot").
+ * mixed lot (Sam: "It's one mixed lot"). Instagram is the India page, not the store's own (Sam, 2026-11-04: "make sure the
+ * instagram jar link points to skreed india page, not the skreed official page").
  */
 export const SIGNUP_JARS: readonly SignupJar[] = Object.freeze([
   { id: 'facebook', letter: 'f', platform: 'Facebook', verb: 'follow', url: 'https://www.facebook.com/skreedofficial', worth: 1, label: '5% OFF', colour: 'Blue', families: ['blissful-blue'], familyNames: 'Blissful Blue' },
   { id: 'youtube', letter: 'y', platform: 'YouTube', verb: 'subscribe', url: 'https://www.youtube.com/@skreedofficial', worth: 1, label: '5% OFF', colour: 'Red', families: ['roaring-red'], familyNames: 'Roaring Red' },
-  { id: 'instagram', letter: 'i', platform: 'Instagram', verb: 'follow', url: 'https://www.instagram.com/skreedofficial', worth: 2, label: '10% OFF', colour: 'Pink and purple', families: ['playful-pink', 'vivid-violet'], familyNames: 'Playful Pink and Vivid Violet' },
+  { id: 'instagram', letter: 'i', platform: 'Instagram', verb: 'follow', url: 'https://www.instagram.com/skreedindia', worth: 2, label: '10% OFF', colour: 'Pink and purple', families: ['playful-pink', 'vivid-violet'], familyNames: 'Playful Pink and Vivid Violet' },
 ]);
 /** the platforms with an address: the follows rendered */
 export const SIGNUP_FOLLOWS: readonly SignupJar[] = SIGNUP_JARS.filter((j) => j.url !== '' && j.worth > 0);
