@@ -102,9 +102,12 @@ html[data-qz-ground] .site-logo[data-tone="light"], html[data-qz-ground] .to-top
 .qz-results { display: grid; }
 /* the result's labels (the eyebrow, the family line, the finish, the personality, the links) are Work Sans Light in the
    section's capitals; the name, the words and the chips set their own faces below */
-.qz-result { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "head smear" "text text"; gap: calc(var(--s4) * var(--qz-rs, 1)) var(--s3); align-items: center; font: 300 max(12px, calc(var(--qz-fs-label) * 0.6 * var(--qz-rs, 1))) / 1.3 var(--qz-f-label); letter-spacing: 0; }
+/* one row on every screen (Sam, 2026-11-04, D54): the name, the paint, the words, and the chips with the links in a
+   fourth column, as a phone held sideways had it since 2026-11-02, "same as how it looks on desktop, but smaller" on a
+   phone held upright */
+.qz-result { display: grid; grid-template-columns: minmax(0, 0.95fr) auto minmax(0, 1.3fr) minmax(0, 0.85fr); grid-template-rows: auto auto minmax(0, 1fr); grid-template-areas: "head smear persona more" "head smear text more" "head smear palette more"; gap: calc(var(--s2) * var(--qz-rs, 1)) clamp(10px, 2.6vw, 40px); align-items: start; font: 300 max(12px, calc(var(--qz-fs-label) * 0.6 * var(--qz-rs, 1))) / 1.3 var(--qz-f-label); letter-spacing: 0; }
 .qz-result[hidden] { display: none; }
-.qz-r-head { grid-area: head; display: grid; gap: calc(var(--s1) * var(--qz-rs, 1)); justify-items: start; min-width: 0; }
+.qz-r-head { grid-area: head; align-self: center; display: grid; gap: calc(var(--s1) * var(--qz-rs, 1)); justify-items: start; min-width: 0; }
 .qz-eyebrow { font-size: max(12px, calc(var(--qz-fs-label) * var(--qz-rs, 1))); line-height: 1.1; letter-spacing: -0.02em; }
 /* the name: Anton in capitals drawn at 80% of its width, as Sam's design sets it (his E measures 0.77 of Anton's in width
    and in stem; the letters' shapes match Anton's narrowed, 2026-11-02), one line, over one hard offset of itself in the
@@ -114,26 +117,28 @@ html[data-qz-ground] .site-logo[data-tone="light"], html[data-qz-ground] .to-top
 .qz-fam { font-variant-numeric: tabular-nums; }
 /* the paint: Sam's swatch (rub.webp), its outline filled with the drawn shade and its relief set over that fill with
    hard-light, so each of the 240 shades is the same paint; deck.ts points the mask at the image */
-.qz-smear { --qz-paint-ar: 0.41026; grid-area: smear; display: block; width: calc(clamp(56px, 18vw, 120px) * var(--qz-rs, 1)); height: auto; }   /* --qz-paint-ar: width over height, the swatch's 256 x 624 for both paints (deck.ts writes the image's own on .qz-rub) */
+.qz-smear { --qz-paint-ar: 0.41026; grid-area: smear; align-self: center; display: block; width: calc(clamp(44px, 8vw, 80px) * var(--qz-rs, 1)); height: auto; }   /* --qz-paint-ar: width over height, the swatch's 256 x 624 for both paints (deck.ts writes the image's own on .qz-rub) */
 svg.qz-smear { aspect-ratio: var(--qz-paint-ar); }   /* our own stroke takes the swatch's box, its 200 x 600 drawing centred in it (the SVG's own ratio is ignored), so a build without the swatch fits the screen wherever one with it does: at its own 1 to 3 the stroke stood 47 px taller than the swatch at 683 x 657 and pushed the longest result past one screen (2026-11-02) */
 .qz-rub { --qz-paint-ar: 0.41026; position: relative; isolation: isolate; aspect-ratio: var(--qz-paint-ar); }   /* the swatch's 256 x 624; deck.ts writes the image's own */
 .qz-rub-col { position: absolute; inset: 0; background: var(--qz-shade); -webkit-mask: var(--qz-rub) center / 100% 100% no-repeat; mask: var(--qz-rub) center / 100% 100% no-repeat; }
 .qz-rub-img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; mix-blend-mode: hard-light; }
-.qz-rtext { grid-area: text; display: grid; gap: calc(var(--s2) * var(--qz-rs, 1)); justify-items: start; min-width: 0; }   /* one gap carries the rhythm; no per-line margins (rule 15) */
-.qz-persona { font-size: max(12px, calc(var(--qz-fs-label) * 0.72 * var(--qz-rs, 1))); letter-spacing: -0.02em; }
+.qz-rtext { display: contents; }   /* the personality, the words and the colour profile take the third column's rows, so the grid's one row gap carries the rhythm; no per-line margins (rule 15) */
+.qz-text { grid-area: text; }
+.qz-palette { grid-area: palette; }
+.qz-persona { grid-area: persona; font-size: max(12px, calc(var(--qz-fs-label) * 0.72 * var(--qz-rs, 1))); letter-spacing: -0.02em; }
 /* the words: Poppins 400, Sam's sentence case */
 .qz-text, .qz-palette { max-width: 62ch; font: 400 max(12px, calc(var(--qz-fs-rt) * var(--qz-rs, 1))) / 1.35 var(--qz-f-text); text-transform: none; }
-.qz-r-more { display: grid; gap: calc(var(--s3) * var(--qz-rs, 1)); justify-items: start; padding-top: calc(var(--s2) * var(--qz-rs, 1)); }   /* the chips and the links: under the words, or their own column on a phone held sideways */
+.qz-r-more { grid-area: more; align-self: center; display: grid; gap: calc(var(--s3) * var(--qz-rs, 1)); justify-items: start; min-width: 0; }   /* the chips and the links: their own column */
 .qz-also { display: flex; flex-wrap: wrap; gap: calc(var(--s0) * var(--qz-rs, 1)); margin: 0; padding: 0; list-style: none; }
 /* a chip: the shade's own colour (deck.ts paints it), rounded as the reference's, its name read upward in Poppins italic in
    whichever ink reads better on it (chipInk: --night or Pearl Whisper); a chip grows to its name, and the row to its tallest */
-.qz-mini { --qz-ink: var(--night); display: flex; align-items: flex-end; justify-content: center; width: calc(clamp(40px, 12vw, 64px) * var(--qz-rs, 1)); min-height: calc(clamp(88px, 24vw, 140px) * var(--qz-rs, 1)); padding: calc(var(--s2) * var(--qz-rs, 1)) 0; border-radius: calc(var(--s1) * var(--qz-rs, 1)); color: var(--qz-ink); font: italic 400 max(12px, calc(var(--qz-fs-rt) * 0.9 * var(--qz-rs, 1))) / 1 var(--qz-f-text); text-transform: none; }
+.qz-mini { --qz-ink: var(--night); display: flex; align-items: flex-end; justify-content: center; width: calc(32px * var(--qz-rs, 1)); min-height: calc(88px * var(--qz-rs, 1)); padding: calc(var(--s2) * var(--qz-rs, 1)) 0; border-radius: calc(var(--s1) * var(--qz-rs, 1)); color: var(--qz-ink); font: italic 400 max(12px, calc(var(--qz-fs-rt) * 0.9 * var(--qz-rs, 1))) / 1 var(--qz-f-text); text-transform: none; }
 .qz-mini[data-ink="pearl"] { --qz-ink: var(--pearl-whisper); }
 .qz-mini[data-rim] { border: 1px solid var(--pearl-whisper); }   /* a chip under 1.5:1 against the ground (chipRim) takes the night swatches' hairline */
 .qz-mini[hidden] { display: none; }
 .qz-mini-name { display: block; writing-mode: vertical-rl; writing-mode: sideways-lr; white-space: nowrap; }   /* read upward with no transform (sideways-lr; top to bottom where a browser lacks it) */
 .quiz :is(.qz-shade, .qz-mini-name) .dc { white-space: nowrap; }   /* the decoded row keeps a name on one line ("Pale Violet", "Pale Grey"), as deck.ts measures it */
-.qz-actions { display: flex; flex-wrap: wrap; gap: 0 var(--s4); }
+.qz-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 0 var(--s4); }
 /* the decode's roll in a proportional face (decode.ts, data-dc="prop"): the face's own glyph keeps its place, unseen, and
    the rolled glyph is drawn over it, so no line changes width while the glyphs count down ("the text animation of the
    site intact", Sam, 2026-11-02); at rest the row is plain text again */
@@ -233,6 +238,9 @@ svg.qz-smear { aspect-ratio: var(--qz-paint-ar); }   /* our own stroke takes the
   .qz-card > .qz-opts { grid-area: 1 / 2 / span 4 / 3; }
   .qz-card > .qz-foot { grid-area: 4 / 1; }
   .qz-pics { position: relative; bottom: auto; left: auto; right: auto; grid-area: 3 / 1; height: auto; }
+  /* the offer in its own turn: 36 px over --inset clears the logotype's row on a screen this short, and a step under it,
+     so the offer fits 390 px (it stood 16 px over at --qz-rs 0.7 with the 56 px band and --s3 under it) */
+  .quiz[data-state="result"][data-swap][data-gift="open"] .qz-gift { padding-top: calc(var(--inset) + 36px + env(safe-area-inset-top, 0px)); padding-bottom: calc(var(--s1) + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* laptops: the text takes most of the screen; the question's picture stands beside it */
@@ -245,34 +253,24 @@ svg.qz-smear { aspect-ratio: var(--qz-paint-ar); }   /* our own stroke takes the
   .qz-pics { position: relative; bottom: auto; left: auto; right: auto; grid-column: 2; grid-row: 1 / span 4; align-self: start; height: auto; aspect-ratio: 4 / 5; }
 }
 
-/* the result on a phone held sideways (640 px wide or more, under 600 px tall): the name, the paint, the words, and the
-   chips with the links in four columns; no room for the offer beside them, so the two take the screen in turn (the swap,
-   above) */
-@media (min-width: 640px) and (max-height: 599px) {
-  .qz-result { grid-template-columns: minmax(0, 0.95fr) auto minmax(0, 1.3fr) minmax(0, 0.85fr); grid-template-rows: auto auto minmax(0, 1fr); grid-template-areas: "head smear persona more" "head smear text more" "head smear palette more"; gap: calc(var(--s2) * var(--qz-rs, 1)) clamp(16px, 2.6vw, 28px); align-items: start; }
-  .qz-r-head, .qz-smear { align-self: center; }
-  .qz-rtext { display: contents; }   /* the words take the third column and the chips and the links a fourth, so no column runs past the screen */
-  .qz-persona { grid-area: persona; }
-  .qz-text { grid-area: text; }
-  .qz-palette { grid-area: palette; }
-  .qz-r-more { grid-area: more; align-self: center; padding-top: 0; }
-  .qz-smear { width: calc(clamp(44px, 8vw, 80px) * var(--qz-rs, 1)); }
-  .qz-mini { width: calc(32px * var(--qz-rs, 1)); min-height: calc(88px * var(--qz-rs, 1)); }
-  .qz-actions { flex-direction: column; align-items: flex-start; }
+/* the result's row (above) sized to the screen (D54): on a phone held upright smaller, the words and the chips' names in
+   the smallest type the screen allows (12 px at the least, CHECKLIST A3), the paint and the chips narrowed so the four
+   columns share 360 px; from 640 px wide within 960 px, as a phone held sideways had it; on a laptop within 80% of the
+   width, the paint and the chips grown with it. The offer stays a band under the row wherever both fit one screen, and
+   takes the screen in turn with the result where they do not (data-swap, deck.ts) */
+@media (max-width: 639px) {
+  .qz-results { max-width: none; --qz-fs-rt: clamp(12px, 3.3vw, 15px); --qz-fs-label: clamp(12px, 3.6vw, 16px); }
+  .qz-smear { width: calc(clamp(32px, 10vw, 56px) * var(--qz-rs, 1)); }
+  .qz-mini { width: calc(24px * var(--qz-rs, 1)); min-height: calc(64px * var(--qz-rs, 1)); }
 }
+@media (min-width: 640px) { .qz-results { max-width: 960px; } }
 
-/* the result on a laptop: Sam's reference's placement (his 2000 x 1125 design measured: the name's column 34%, a gap of
-   5%, the paint 13%, a gap of 8%, the words 40% of the width between the gutters; "Your shade is" and the personality at
-   the top of their columns, the name 30% of the screen's height, the paint 12% of its width, the chips 3.8% wide and 15%
-   of the height; the offer a band along the bottom with its line at 1.8% of the width and the field and Send 58% wide) */
+/* a laptop: the row within 80% of the width; the offer's band keeps the measures of Sam's reference (his 2000 x 1125
+   design: its line at 1.8% of the width, the field and Send 58% wide and 9% of the height) */
 @media (min-width: 900px) and (min-height: 600px) {
-  .qz-results { max-width: none; width: 100%; }
-  .qz-result { grid-template-columns: minmax(0, 34fr) minmax(0, 5fr) minmax(0, 13fr) minmax(0, 8fr) minmax(0, 40fr); grid-template-areas: "head . smear . text"; column-gap: 0; align-items: start; }
-  /* the paint fills its column up to the reference's height, 55.5% of the screen (624 of its 1125 px), times the fit: on
-     a screen wider than 16:9 (1366 x 657) the column alone would draw it two thirds of the screen tall and push the
-     offer out of the screen */
-  .qz-smear { width: min(100%, calc(55.5svh * var(--qz-paint-ar) * var(--qz-rs, 1))); justify-self: center; }
-  .qz-mini { width: calc(3.8vw * var(--qz-rs, 1)); min-height: calc(14.7vh * var(--qz-rs, 1)); }
+  .qz-results { max-width: max(960px, 80vw); }
+  .qz-smear { width: calc(clamp(64px, 6.5vw, 150px) * var(--qz-rs, 1)); }
+  .qz-mini { width: calc(clamp(32px, 2.6vw, 56px) * var(--qz-rs, 1)); min-height: calc(clamp(88px, 8vw, 180px) * var(--qz-rs, 1)); }
   .qz-gift { padding-top: calc(3.4vh * var(--qz-rs, 1)); padding-bottom: calc(2.6vh * var(--qz-rs, 1) + env(safe-area-inset-bottom, 0px)); }
   .qz-gift-in { max-width: min(94vw, 1840px); gap: calc(3.6vh * var(--qz-rs, 1)); }
   .qz-offer { max-width: none; }   /* Sam's line on one line, as his reference sets it, where it fits */
