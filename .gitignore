@@ -19,6 +19,9 @@ scripts/room/out/
 src/assets/quiz/pics/
 # the quiz result's paint swatch, taken from Sam's Canva reference (a Canva element): out of the public repository until he confirms the licence (scripts/quiz/prepare-rub.mjs)
 src/assets/quiz/rub/
+# section 4's pictures, the new version's backgrounds (Sam's upload of 2026-11-04): never in the public repository
+# (scripts/room/prepare-pictures.mjs makes them on the build machine; a build without them draws the loops)
+src/assets/room/pictures/
 # every build written elsewhere with astro build --outDir (dist-s3, dist-s3t and the like): each holds the pictures above
 /dist*/
 # review frames that show those licensed pictures (scripts/quiz/frames.mjs writes them here)

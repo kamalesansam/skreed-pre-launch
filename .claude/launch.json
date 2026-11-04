@@ -36,6 +36,12 @@
       "runtimeExecutable": "/bin/bash",
       "runtimeArgs": ["-lc", "PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=0 PUBLIC_STAGING=0 PUBLIC_FAMILY_3D=on exec npx astro dev --host 127.0.0.1 --port 4332"],
       "port": 4332
+    },
+    {
+      "name": "astro-dev-mac-pictures",
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": ["-lc", "PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=0 PUBLIC_STAGING=0 PUBLIC_FAMILY_3D=on exec npx astro dev --host 127.0.0.1 --port 4336"],
+      "port": 4336
     }
   ]
 }

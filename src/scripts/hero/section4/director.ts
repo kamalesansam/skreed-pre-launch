@@ -33,7 +33,7 @@
 // (scripts/room/walk.ts) gets one frame object per step through window.__skreedRoomFrame and drives the scene through
 // window.__skreedRoom.
 import { LinearFilter, NoColorSpace, Texture, type WebGLRenderer } from 'three';
-import { PRODUCTS_BIN_URL, ROOM_HEIGHT, ROOM_SCENES, ROOM_SCREENS, SCENE_COUNT, SCENES_END, WIPE4_START, WORLD_START, liveRoomParams, sceneQ, type RoomFrame, type RoomIsland, type RoomParams, type RoomState, type SceneClass } from '../../../config/room.ts';
+import { PRODUCTS_BIN_URL, ROOM_BACKDROP, ROOM_HEIGHT, ROOM_LOOPS, ROOM_SCENES, ROOM_SCREENS, SCENE_COUNT, SCENES_END, WIPE4_START, WORLD_START, liveRoomParams, sceneQ, type RoomFrame, type RoomIsland, type RoomParams, type RoomState, type SceneClass } from '../../../config/room.ts';
 import { createScrollFollower } from '../scroll/scrollMap.ts';
 import { clamp01 } from '../util/math.ts';
 import { createTransition, type TransitionPass } from './transition.ts';
@@ -202,7 +202,8 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
 
   // ---- the loop class, the loop elements, the stills and the carousel
   let cls: SceneClass = 'wide', clsFixed = false;
-  const video: VideoPool | null = !reduced && allowed() ? createPool(N) : null;
+  // the pictures version (Sam's still backgrounds, 2026-11-04, config/room.ts ROOM_BACKDROP) has no loops: the stills alone
+  const video: VideoPool | null = ROOM_LOOPS && !reduced && allowed() ? createPool(N) : null;
   const loopState: LoopState[] = Array.from({ length: N }, () => 'idle');
   const stillJob: (Promise<unknown> | null)[] = Array.from({ length: N }, () => null), stillDone: boolean[] = Array.from({ length: N }, () => false), stillOk: boolean[] = Array.from({ length: N }, () => false);
   let stillChain: Promise<unknown> = Promise.resolve(), loopChain: Promise<unknown> = Promise.resolve();
@@ -528,7 +529,7 @@ export function createRoomDirector(o: DirectorOptions): RoomDirector & Partial<R
         q: +q.toFixed(3), qRaw: +qRaw.toFixed(3), screens: ROOM_SCREENS,
         hold: hold ? { y: hold.y } : null, ready: drawable0(), failed: failed0(), settled: settled(),
         products: productsState, loops: loopState.map((s, i) => ({ i, state: s, in: !!video && video.in(i), refused: !!video && video.refused(i), playing: !!video && video.playing(i) })),
-        stills: stillDone.map((d, i) => ({ i, settled: d, ok: stillOk[i], loading: !!stillJob[i] })), cls, video: !!video, memory: carousel.memory(),
+        stills: stillDone.map((d, i) => ({ i, settled: d, ok: stillOk[i], loading: !!stillJob[i] })), cls, video: !!video, backdrop: ROOM_BACKDROP, memory: carousel.memory(),
         sceneQ: Array.from({ length: N }, (_, i) => sceneQ(i)), wipe4Start: WIPE4_START, wipeOut: +lastWipeOut.toFixed(3), restY: o.restY(),
         layout: lay.layout ? { ...lay.layout } : null, product: carousel.place(),
       };

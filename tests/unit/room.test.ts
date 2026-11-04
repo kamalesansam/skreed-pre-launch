@@ -321,3 +321,28 @@ test("the composite's cover input (section-4-flux.md 5, X-15): the v11 literal i
   assert.doesNotMatch(loop, /rideLoop|inLoop|plan!\.loop/, 'the fourth wipe is retired');
   assert.match(read('src/scripts/hero/post/composite.ts'), /tCloud: \{ value: null as Texture \| null \}, uCover: \{ value: 0 \}/);
 });
+
+test("the two versions of the scenes' backgrounds (Sam, 2026-11-04; docs/specs/section-4-pictures.md): his pictures by default, the loops kept", () => {
+  assert.equal(ROOM.ROOM_BACKDROP_DEFAULT, 'pictures', 'the pictures version is the default');
+  // under Node the build's glob is empty, so no picture is in: every request draws the loops, the old version
+  assert.equal(ROOM.roomBackdrop(''), 'loops');
+  assert.equal(ROOM.roomBackdrop('?scenes=pictures'), 'loops', 'the pictures only where every file is in the build');
+  assert.equal(ROOM.roomBackdrop('?scenes=loops'), 'loops');
+  assert.equal(ROOM.ROOM_LOOPS, true);
+  const cfg = read('src/config/room.ts');
+  assert.match(cfg, /import\.meta\.glob<string>\('\.\.\/assets\/room\/pictures\/\*\.\{avif,webp\}'/, 'the pictures from their own folder');
+  assert.match(cfg, /\/\(\?:\^\|\[\?&\]\)scenes=\(pictures\|loops\)\(\?:&\|\$\)\/\.exec\(search\)/, '?scenes= picks the version for a visit');
+  assert.match(cfg, /\{ loop: '', avif: pictureUrl\(`\$\{id\}-\$\{cls\}\.avif`\), webp: pictureUrl\(`\$\{id\}-\$\{cls\}\.webp`\) \}/, 'the pictures version names no loop');
+  assert.match(read('src/scripts/hero/section4/director.ts'), /const video: VideoPool \| null = ROOM_LOOPS && !reduced && allowed\(\) \? createPool\(N\) : null;/, 'no loop elements in the pictures version');
+  // his upload stays out of the public repository; the script that makes the files is committed
+  assert.match(read('.gitignore'), /^src\/assets\/room\/pictures\/$/m);
+  assert.ok(exists('scripts/room/prepare-pictures.mjs'));
+  // the pictures' own alts and logotype tones: scripts/room/scene-tone.mjs --pictures on 2026-11-04 measured Urban Slate
+  // at 3.11 to 7.73:1 over the first four (ember's worst 2.93:1, flagged, Pearl's 2.15) and Pearl at 5.08 to 5.72:1 over the green room
+  assert.deepEqual(ROOM.PICTURE_ROWS.map((r) => r.id), ROOM_SCENES.map((s) => s.id));
+  assert.deepEqual(ROOM.PICTURE_ROWS.map((r) => r.toneDark), [true, true, true, true, false]);
+  for (const r of ROOM.PICTURE_ROWS) {
+    assert.match(r.alt, /^[A-Z][^.]+\.$/, `${r.id}: one sentence`);
+    assert.doesNotMatch(r.alt, /\b(case|wallet|lenskin|airpods|phone)\b/i, `${r.id}: no product in the picture`);
+  }
+});

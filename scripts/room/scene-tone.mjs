@@ -10,15 +10,19 @@
 // colour with the higher worst ratio, flagged. The picks go into ROOM_SCENES (config/room.ts, toneDark) by hand and
 // tests/unit/room.test.ts holds them to this script's table. No server is needed:
 //   node scripts/room/scene-tone.mjs [--json <file>]
+// With --pictures it measures the new version's backgrounds (src/assets/room/pictures/, made by prepare-pictures.mjs,
+// docs/specs/section-4-pictures.md) and checks PICTURE_ROWS' toneDark instead of ROOM_SCENES'.
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { ROOM_SCENES } from '../../src/config/room.ts';
+import { PICTURE_ROWS, ROOM_SCENES } from '../../src/config/room.ts';
 import { SHADE } from '../../src/scripts/hero/section4/carousel.ts';
 import { STEP } from '../../src/scripts/hero/section4/carousel-math.ts';
 
 const args = process.argv.slice(2);
-const ji = args.indexOf('--json'), jsonOut = ji >= 0 ? args[ji + 1] : null;
+const ji = args.indexOf('--json'), jsonOut = ji >= 0 ? args[ji + 1] : null, pictures = args.includes('--pictures');
+const dir = pictures ? 'pictures' : 'flux';
+const picked = (sc) => (pictures ? PICTURE_ROWS.find((r) => r.id === sc.id).toneDark : sc.toneDark);
 const lin = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
 const lum = (r, g, b) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
 const PEARL = lum(0xf7, 0xf6, 0xf3), SLATE = lum(0x38, 0x3f, 0x43);
@@ -54,7 +58,7 @@ const rows = [], picks = {};
 for (const sc of ROOM_SCENES) {
   const readings = [];
   for (const v of VIEWS) {
-    const frame = await drawn(fileURLToPath(new URL(`../../src/assets/room/flux/${sc.id}-${v.cls}.webp`, import.meta.url)), v.w, v.h);   // a file path on every platform (a URL's pathname reads /C:/... on Windows)
+    const frame = await drawn(fileURLToPath(new URL(`../../src/assets/room/${dir}/${sc.id}-${v.cls}.webp`, import.meta.url)), v.w, v.h);   // a file path on every platform (a URL's pathname reads /C:/... on Windows)
     for (const [name, box] of Object.entries(v.boxes)) {
       const L = medianLum(frame, box);
       readings.push({ view: `${v.w}x${v.h}`, box: name, luminance: +L.toFixed(4), pearl: +ratio(PEARL, L).toFixed(2), slate: +ratio(SLATE, L).toFixed(2) });
@@ -75,7 +79,7 @@ for (const r of rows) {
   const cell = (view, box) => { const x = r.readings.find((q) => q.view === view && q.box === box); return `${x.pearl} / ${x.slate}`; };
   console.log(`| ${r.scene} ${r.id} | ${cell('390x844', 'logotype')} | ${cell('390x844', 'control')} | ${cell('1280x800', 'logotype')} | ${cell('1280x800', 'control')} | ${r.toneDark ? 'Urban Slate' : 'Pearl Whisper'}${r.flagged ? ' (flagged)' : ''} |`);
 }
-const mismatch = ROOM_SCENES.filter((sc) => sc.toneDark !== picks[sc.id]);
-console.log(`\nROOM_SCENES: ${mismatch.length ? 'toneDark differs from the picks for ' + mismatch.map((s) => s.id).join(', ') : 'toneDark matches the picks'}`);
+const mismatch = ROOM_SCENES.filter((sc) => picked(sc) !== picks[sc.id]);
+console.log(`\n${pictures ? 'PICTURE_ROWS' : 'ROOM_SCENES'}: ${mismatch.length ? 'toneDark differs from the picks for ' + mismatch.map((s) => s.id).join(', ') : 'toneDark matches the picks'}`);
 if (jsonOut) writeFileSync(jsonOut, JSON.stringify({ views: VIEWS, rows }, null, 1) + '\n');
 process.exit(mismatch.length ? 1 : 0);

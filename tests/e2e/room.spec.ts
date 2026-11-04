@@ -18,15 +18,17 @@
 import { test, expect, type Page } from '@playwright/test';
 
 type Ev = { name: string; props: Record<string, string | number> };
-type S4 = { state: string; under: string; scene: number; wipeOut: number; restY: number; step: number; busy: boolean; inRange: boolean; q: number; qRaw: number; hold: { y: number } | null; ready: boolean; failed: boolean; settled: boolean; products: string; video: boolean; loops: { i: number; state: string; in: boolean; refused: boolean; playing: boolean }[]; memory: number; layout: { top: number; height: number; intro: boolean } | null };
+type S4 = { backdrop?: 'pictures' | 'loops'; state: string; under: string; scene: number; wipeOut: number; restY: number; step: number; busy: boolean; inRange: boolean; q: number; qRaw: number; hold: { y: number } | null; ready: boolean; failed: boolean; settled: boolean; products: string; video: boolean; loops: { i: number; state: string; in: boolean; refused: boolean; playing: boolean }[]; memory: number; layout: { top: number; height: number; intro: boolean } | null };
 const events = (page: Page): Promise<string[]> => page.evaluate(() => ((window as unknown as { __skreedEvents?: Ev[] }).__skreedEvents ?? []).map((e) => e.name));
 const s4 = (page: Page): Promise<S4> => page.evaluate(() => window.__s4!.state() as S4);
 const N = 5, WIPE4_START = 3.8;
 /** section 5's rest (section-5.md 2), from the director's hooks */
 const restY = (page: Page) => page.evaluate(() => (window.__s4!.state() as { restY: number }).restY);
 
-async function open3d(page: Page, baseURL: string | undefined): Promise<void> {
-  await page.goto(new URL('/?tier=hero3d&glue=0&room=open', baseURL).href);
+/** the 3D path with the intro skipped; the loops version unless asked (the suite was written for the loops, and a build
+ *  from git has no pictures, docs/specs/section-4-pictures.md), so every row reads the same in every build */
+async function open3d(page: Page, baseURL: string | undefined, scenes: 'loops' | 'pictures' = 'loops'): Promise<void> {
+  await page.goto(new URL(`/?tier=hero3d&glue=0&room=open&scenes=${scenes}`, baseURL).href);
   await page.waitForFunction(() => window.__heroStarted && !!window.__skreedIntro, null, { timeout: 540_000, polling: 500 });
   await page.evaluate(() => (window.__skreedIntro as unknown as { skip(): void }).skip());
   await page.waitForFunction(() => !document.documentElement.classList.contains('loading'), null, { timeout: 300_000, polling: 500 });
@@ -310,7 +312,7 @@ test('section 4 at 390 x 844: the glue at section 4\'s seam settles a visitor\'s
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   // the glue on: no ?glue=0 here
-  await page.goto(new URL('/?tier=hero3d&room=open', baseURL).href);
+  await page.goto(new URL('/?tier=hero3d&room=open&scenes=loops', baseURL).href);
   await page.waitForFunction(() => window.__heroStarted && !!window.__skreedIntro, null, { timeout: 540_000, polling: 500 });
   await page.evaluate(() => (window.__skreedIntro as unknown as { skip(): void }).skip());
   await page.waitForFunction(() => !document.documentElement.classList.contains('loading'), null, { timeout: 300_000, polling: 500 });
@@ -346,7 +348,7 @@ test('section 4 to 5 at 390 x 844: the fourth wipe shows no box of section 5\'s 
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   // the glue on: no ?glue=0 here
-  await page.goto(new URL('/?tier=hero3d&room=open', baseURL).href);
+  await page.goto(new URL('/?tier=hero3d&room=open&scenes=loops', baseURL).href);
   await page.waitForFunction(() => window.__heroStarted && !!window.__skreedIntro, null, { timeout: 540_000, polling: 500 });
   await page.evaluate(() => (window.__skreedIntro as unknown as { skip(): void }).skip());
   await page.waitForFunction(() => !document.documentElement.classList.contains('loading'), null, { timeout: 300_000, polling: 500 });
@@ -627,5 +629,35 @@ test('section 4 at 1280 x 800: a backward wheel at scene 1 right after the fling
     expect(up[0], `${what}: the first backward event is the page's`).toBe(0);
     expect(await pageQ(page), `${what}: above scene 1`).toBeLessThan(1);
   }
+  await ctx.close();
+});
+
+test('section 4 at 1280 x 800, the pictures version (Sam, 2026-11-04): his stills on the planes, no loop element or video fetched, the logotype by PICTURE_ROWS, the lines in Questrial', async ({ browser, baseURL }) => {
+  test.setTimeout(900_000);
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
+  const page = await ctx.newPage();
+  const errors: string[] = [], media: string[] = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  page.on('request', (r) => { if (/\.mp4(\?|$)/.test(r.url())) media.push(r.url()); });
+  await open3d(page, baseURL, 'pictures');
+  await scenesIn(page);
+  test.skip((await s4(page)).backdrop !== 'pictures', 'this build has no pictures (scripts/room/prepare-pictures.mjs): it draws the loops');
+  expect((await s4(page)).video).toBe(false);
+  await goQ(page, 1);
+  await expect.poll(async () => (await s4(page)).state, { timeout: 15_000 }).toBe('world');
+  const tones: string[] = [];
+  for (let to = 0; to < N; to++) {
+    if (to) { await expect.poll(() => page.evaluate(() => window.__s4!.step(1)), { timeout: 30_000 }).toBe(true); await expect.poll(async () => (await s4(page)).scene, { timeout: 30_000 }).toBe(to); }
+    await expect.poll(async () => (await s4(page)).busy, { timeout: 10_000 }).toBe(false);
+    await page.waitForTimeout(1500);
+    tones.push(await page.evaluate(() => getComputedStyle(document.querySelector('.site-logo')!).color));
+  }
+  // Urban Slate over the four light pictures, Pearl Whisper over the green room (scene-tone.mjs --pictures)
+  expect(tones.map((c) => c === URBAN_SLATE_CSS)).toEqual([true, true, true, true, false]);
+  expect(await page.evaluate(() => getComputedStyle(document.querySelector('.rm-scene-name')!).fontFamily)).toMatch(/^Questrial/);
+  expect(await page.evaluate(() => document.fonts.check('400 16px Questrial'))).toBe(true);
+  expect(await page.evaluate(() => document.querySelectorAll('video').length)).toBe(0);
+  expect(media).toEqual([]);
+  expect(errors).toEqual([]);
   await ctx.close();
 });
