@@ -61,13 +61,13 @@ test('the gem: the wave inside its own patch, after its refraction, with the gem
   assert.equal(sh.fragmentShader.split('#include <common>').length, 2);
 });
 
-test('the hint: two short tours of three different gems, inside the ten, a rest first', () => {
-  assert.equal(HINT.tours.length, 2);
+test('the hint: tours of three different gems taken in turn, round and round, with no visit flag to end it', () => {
+  assert.ok(HINT.tours.length >= 2);
   const seen = new Set<number>();
   for (const t of HINT.tours) { assert.equal(t.length, 3); for (const j of t) { assert.ok(j >= 0 && j < 10); assert.ok(!seen.has(j)); seen.add(j); } }
-  assert.ok(HINT.restMs >= 1000);
-  const one = HINT.moveMs + HINT.pressMs + HINT.holdMs;
-  assert.ok(one * 6 + HINT.pauseMs < 25000, 'the whole run is over in under 25 s');
+  assert.ok(HINT.restMs >= 1000, 'a rest first, so a scroll never runs into it');
+  assert.ok(HINT.pauseMs <= 2000, 'between tours the cursor stands still only a moment, never leaving (Sam: "it shouldnt dissappear later")');
+  assert.equal('key' in HINT, false, 'nothing turns it off for the visit');
 });
 
 test('the seed is the family takeover\'s own hash, so the two pages draw one kind of boundary', async () => {
