@@ -14,8 +14,9 @@
 // then shows 3D steps too); a ride is an instant scrollTo under reduced motion. The beat nav rides here too.
 import { createPageScroll, type PageScroll } from '../hero/section4/scroll.ts';
 import { cubicBezier, isScrollKey, nextStop } from '../hero/section4/scroll-math.ts';
+import { TAKEOVER, easeTakeoverInverse } from '../../config/takeover.ts';
 import { CASE_REST, CASE_TYPES, SWEEP_LEN } from './three/pose.ts';
-import { CASE_HOLD_MAX_MS, CASE_HOLD_STILL_MS, CASE_LEAD_MS, CASE_STEP_COOLDOWN_MS, CASE_STEP_MAX_MS, CASE_STEP_MS, CASE_SWEEP_MS, TURN_EASE } from './timing.ts';
+import { CASE_HOLD_MAX_MS, CASE_HOLD_STILL_MS, CASE_LEAD_MS, CASE_TAIL_MS, CASE_STEP_COOLDOWN_MS, CASE_STEP_MAX_MS, CASE_STEP_MS, CASE_SWEEP_MS, TURN_EASE } from './timing.ts';
 
 /** the four types' rests in screens, in beat order */
 export const CASE_RESTS: readonly number[] = CASE_TYPES.map((t) => CASE_REST[t]);
@@ -23,20 +24,32 @@ export const CASE_RESTS: readonly number[] = CASE_TYPES.map((t) => CASE_REST[t])
 export const caseRideMs = (screens: number): number => Math.round(Math.min(CASE_STEP_MAX_MS, Math.max(1, Math.abs(screens)) * CASE_STEP_MS));
 const easeTurn = cubicBezier(...TURN_EASE);
 /**
- * A step's path in screens over time: from one rest to the next (a screen), the lead (the screen up to the hand-over,
- * where nothing turns) over CASE_LEAD_MS and the wave (the SWEEP_LEN of the screen next to the upper rest, the takeover's
- * sweep) over CASE_SWEEP_MS, each on --ease-turn, the page still a moment at the hand-over where the case faces the
- * camera. Forward the lead plays first and the wave last; back the wave runs back first, then the lead. A ride of more
- * than one screen (the beat nav) or from between rests keeps the plain curve. at(t): the position in screens t ms in.
+ * A step's path in screens over time: from one rest to the next (a screen), the lead over CASE_LEAD_MS on --ease-turn
+ * (the screen up to where the band meets the case, a little past the hand-over), the wave over CASE_SWEEP_MS while the
+ * band crosses the case (the scroll undoing the sweep's own in-out cubic, easeTakeoverInverse, so its pace is even), and
+ * the tail over CASE_TAIL_MS to the rest, the band past the case. Forward the lead plays first and the wave last; back the wave runs back
+ * first, then the lead. A ride of more than one screen (the beat nav) or from between rests keeps the plain curve.
+ * at(t): the position in screens t ms in.
  */
 export function stepPath(from: number, to: number): { ms: number; at: (t: number) => number } {
   const d = to - from;
   if (Math.abs(Math.abs(d) - 1) > 0.02) { const ms = caseRideMs(d); return { ms, at: (t) => from + d * easeTurn(Math.min(1, t / ms)) }; }
-  const L = CASE_LEAD_MS, W = CASE_SWEEP_MS, s = SWEEP_LEN / Math.abs(d);
-  const ms = L + W, k = (t: number, len: number) => easeTurn(Math.min(1, Math.max(0, t / len)));
-  if (d > 0) return { ms, at: (t) => (t < L ? from + d * (1 - s) * k(t, L) : from + d * (1 - s + s * k(t - L, W))) };
-  return { ms, at: (t) => (t < W ? from + d * s * k(t, W) : from + d * (s + (1 - s) * k(t - W, L))) };
+  const L = CASE_LEAD_MS, W = CASE_SWEEP_MS, T = CASE_TAIL_MS, s = SWEEP_LEN / Math.abs(d);
+  const ms = L + W + T, k = (t: number, len: number) => easeTurn(Math.min(1, Math.max(0, t / len)));
+  // in the screen's own direction (0 the lower rest, 1 the upper): the hand-over, where the band meets the case, where it
+  // leaves it; the wave's eased progress runs evenly from E0 to E1 over W
+  const E0 = WAVE_EDGES[0], E1 = WAVE_EDGES[1];
+  const lo = Math.min(from, to), H = 1 - s, A0 = H + s * easeTakeoverInverse(E0), A1 = H + s * easeTakeoverInverse(E1);
+  const waveAt = (u: number) => H + s * easeTakeoverInverse(E0 + (E1 - E0) * Math.min(1, Math.max(0, u)));
+  const lerp = (a: number, b: number, e: number) => a + (b - a) * e;
+  // f(t): the place in the screen (0 lower rest to 1 upper) t ms into a forward step; a step back runs it backwards in time
+  const f = (t: number) => (t < L ? lerp(0, A0, k(t, L)) : t < L + W ? waveAt((t - L) / W) : lerp(A1, 1, k(t - L - W, T)));
+  // scaled by the step's real length, so a step from a few pixels off a rest (a resize, a scrollbar drag) starts where the
+  // page is, ends on its rest and sweeps at the real hand-over (the review of 2026-11-04)
+  return { ms, at: (t) => lo + Math.abs(d) * (d > 0 ? f(t) : f(ms - t)) };
 }
+/** the wave's eased progress where the band meets the case and where it has left it (its boundary at 0 and 1 of the case) */
+export const WAVE_EDGES: readonly [number, number] = [(0 - TAKEOVER.pFrom) / (TAKEOVER.pTo - TAKEOVER.pFrom), (1 - TAKEOVER.pFrom) / (TAKEOVER.pTo - TAKEOVER.pFrom)];
 /** the 2 px within which the page is at a rest, as the glue's dead band */
 const DEAD = 2;
 /** a phone's momentum after the finger lifts: a crossing this soon after the release is still the swipe's */

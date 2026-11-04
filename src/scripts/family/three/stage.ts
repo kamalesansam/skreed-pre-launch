@@ -418,7 +418,7 @@ export async function createStage(o: StageOptions) {
     resize();
 
     // the motion state (one store; the page's HUD follows round(target))
-    const st = { sv: 0, svT: 0, s: 0, target: 0, G: 0, Gt: 1, tilt: { yaw: 0, pitch: 0 }, tiltT: { yaw: 0, pitch: 0 }, turn: null as null | { t0: number; side: 1 | -1 }, drag: null as null | { s0: number; x0: number }, input: 'deeplink' as Input, lastFollow: 0, followT: 0 };
+    const st = { tight: false, sv: 0, svT: 0, s: 0, target: 0, G: 0, Gt: 1, tilt: { yaw: 0, pitch: 0 }, tiltT: { yaw: 0, pitch: 0 }, turn: null as null | { t0: number; side: 1 | -1 }, drag: null as null | { s0: number; x0: number }, input: 'deeplink' as Input, lastFollow: 0, followT: 0 };
     let running = false, visible = true, raf = 0, lastT = 0, tail = 0, live = false, losses = 0, disposed = false, dirty = 0, renders = 0;
     let detail: StageState['detail'] = 'none';
     const frameMs: number[] = [];
@@ -441,7 +441,10 @@ export async function createStage(o: StageOptions) {
         st.tilt.yaw += (st.tiltT.yaw - st.tilt.yaw) * k;
         st.tilt.pitch += (st.tiltT.pitch - st.tilt.pitch) * k;
       }
-      st.sv += (st.svT - st.sv) * (instant() ? 1 : 1 - Math.exp(-10 * dt)); if (Math.abs(st.svT - st.sv) < 1e-3) st.sv = st.svT;
+      // the lag: 10 per second, or 60 while a case type's step rides the scroll (steps.ts: the ride already paces the
+      // wave, and the lag at 10 had held the band back about 0.3 s after the lead; Sam, 2026-11-04: "the wait time for the
+      // wave to happen after scroll trigger is long")
+      st.sv += (st.svT - st.sv) * (instant() ? 1 : 1 - Math.exp(-(st.tight ? 60 : 10) * dt)); if (Math.abs(st.svT - st.sv) < 1e-3) st.sv = st.svT;
       if (!st.drag && Math.abs(st.target - st.s) < 0.0005) st.s = st.target;
       if (Math.abs(st.Gt - st.G) < 0.0005) st.G = st.Gt;
       let turnYaw = 0;
@@ -732,7 +735,7 @@ export async function createStage(o: StageOptions) {
       live: () => live && running,
       goTo,
       setTarget: (i: number, instantMove: boolean) => goTo(i, 'key', instantMove),
-      scroll(v: number) { st.svT = Math.max(0, v); kick(); },
+      scroll(v: number, tight = false) { st.svT = Math.max(0, v); st.tight = tight; kick(); },
       snapScroll(v: number) { st.sv = st.svT = Math.max(0, v); dirty++; update(st.s, st.G, null, null); renderNow(); kick(); },
       setFinish(f: Finish) { applyFinish(f); if (!instant()) st.turn = { t0: performance.now(), side: 1 }; kick(); },
       setDetail,

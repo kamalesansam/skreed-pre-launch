@@ -4,8 +4,9 @@
 // into the types is held on the type it entered at; the beat nav rides; nothing on the grid tier. Driven in a fake window.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CASE_RESTS, caseRideMs, createCaseSteps, stepPath } from '../../src/scripts/family/steps.ts';
-import { CASE_HOLD_MAX_MS, CASE_HOLD_STILL_MS, CASE_LEAD_MS, CASE_STEP_COOLDOWN_MS, CASE_STEP_MAX_MS, CASE_STEP_MS, CASE_SWEEP_MS } from '../../src/scripts/family/timing.ts';
+import { CASE_RESTS, WAVE_EDGES, caseRideMs, createCaseSteps, stepPath } from '../../src/scripts/family/steps.ts';
+import { easeTakeover, easeTakeoverInverse } from '../../src/config/takeover.ts';
+import { CASE_HOLD_MAX_MS, CASE_HOLD_STILL_MS, CASE_LEAD_MS, CASE_TAIL_MS, CASE_STEP_COOLDOWN_MS, CASE_STEP_MAX_MS, CASE_STEP_MS, CASE_SWEEP_MS } from '../../src/scripts/family/timing.ts';
 
 const VH = 800;
 
@@ -234,20 +235,41 @@ test('under reduced motion the beat nav lands on the type pressed, never held ba
   } finally { page.restore(); }
 });
 
-test('a step is a 0.5 s lead to the hand-over, where the page rests a moment, then the wave over 1.5 s; back the wave first; the beat nav keeps the plain curve', () => {
-  assert.equal(CASE_LEAD_MS, 500); assert.equal(CASE_SWEEP_MS, 1500);
-  const fwd = stepPath(2, 3);
-  assert.equal(fwd.ms, 2000);
-  assert.equal(fwd.at(0), 2);
-  assert.ok(Math.abs(fwd.at(CASE_LEAD_MS) - 2.8) < 1e-9, 'the hand-over at the lead\'s end');
-  assert.ok(Math.abs(fwd.at(fwd.ms) - 3) < 1e-9);
-  assert.ok(fwd.at(CASE_LEAD_MS + 750) > 2.85 && fwd.at(CASE_LEAD_MS + 750) < 2.95, 'half the wave at its half');
-  for (let t = 0; t < fwd.ms; t += 25) assert.ok(fwd.at(t + 25) >= fwd.at(t) - 1e-12, `monotone at ${t}`);
-  const back = stepPath(3, 2);
-  assert.equal(back.ms, 2000);
-  assert.ok(Math.abs(back.at(CASE_SWEEP_MS) - 2.8) < 1e-9, 'the wave back first, over its 1.5 s');
-  assert.ok(Math.abs(back.at(back.ms) - 2) < 1e-9);
-  for (let t = 0; t < back.ms; t += 25) assert.ok(back.at(t + 25) <= back.at(t) + 1e-12, `monotone back at ${t}`);
+test('a step: a 0.25 s lead, the wave over 2 s with the band at an even pace from the moment it meets the case to the moment it leaves it, a 0.12 s tail; back the same backwards; the beat nav keeps the plain curve', () => {
+  assert.equal(CASE_LEAD_MS, 250); assert.equal(CASE_SWEEP_MS, 2000); assert.equal(CASE_TAIL_MS, 120);
+  const [E0, E1] = WAVE_EDGES;
+  assert.ok(Math.abs(E0 - 0.12 / 1.24) < 1e-12 && Math.abs(E1 - 1.12 / 1.24) < 1e-12, 'the band meets the case at p 0 and leaves it at p 1');
+  const fwd = stepPath(2, 3), back = stepPath(3, 2);
+  assert.equal(fwd.ms, 2370); assert.equal(back.ms, 2370);
+  assert.equal(fwd.at(0), 2); assert.ok(Math.abs(fwd.at(fwd.ms) - 3) < 1e-9);
+  assert.equal(back.at(0), 3); assert.ok(Math.abs(back.at(back.ms) - 2) < 1e-9);
+  const eased = (sv: number) => easeTakeover((sv - 2.8) / 0.2);
+  // forward: the band at the case's edge as the lead ends, then even in time to the far edge as the wave ends
+  for (let u = 0; u <= 1.0001; u += 0.05) {
+    const want = E0 + (E1 - E0) * Math.min(1, u);
+    assert.ok(Math.abs(eased(fwd.at(CASE_LEAD_MS + u * CASE_SWEEP_MS)) - want) < 1e-6, `forward at ${u.toFixed(2)}`);
+    assert.ok(Math.abs(eased(back.at(CASE_TAIL_MS + u * CASE_SWEEP_MS)) - (E1 - (E1 - E0) * Math.min(1, u))) < 1e-6, `back at ${u.toFixed(2)}`);
+  }
+  for (let t = 0; t < fwd.ms; t += 10) { assert.ok(fwd.at(t + 10) >= fwd.at(t) - 1e-12, `monotone at ${t}`); assert.ok(back.at(t + 10) <= back.at(t) + 1e-12, `monotone back at ${t}`); }
+  // the text changes at the wave's half (2.9), both ways
+  assert.ok(Math.abs(fwd.at(CASE_LEAD_MS + CASE_SWEEP_MS / 2) - 2.9) < 1e-9);
+  assert.ok(Math.abs(back.at(CASE_TAIL_MS + CASE_SWEEP_MS / 2) - 2.9) < 1e-9);
   const nav = stepPath(5, 2);
   assert.equal(nav.ms, 2800); assert.equal(nav.at(0), 5); assert.ok(Math.abs(nav.at(2800) - 2) < 1e-9);
+});
+test('easeTakeoverInverse undoes the sweep\'s in-out cubic over 0 to 1', () => {
+  for (let i = 0; i <= 200; i++) { const x = i / 200; assert.ok(Math.abs(easeTakeoverInverse(easeTakeover(x)) - x) < 1e-9, `${x}`); }
+  assert.equal(easeTakeoverInverse(-1), 0); assert.equal(easeTakeoverInverse(2), 1);
+});
+
+test('a step from a few pixels off a rest (a resize, a scrollbar drag) starts where the page is, never overshoots, ends on its rest and sweeps at the real hand-over', () => {
+  for (const [from, to] of [[2.01, 3], [1.99, 3], [2.985, 2], [3.015, 2], [4.99, 4]] as const) {
+    const p = stepPath(from, to), hi = Math.max(from, to), lo = Math.min(from, to);
+    assert.ok(Math.abs(p.at(0) - from) < 1e-9, `${from} to ${to}: starts at ${p.at(0)}`);
+    assert.ok(Math.abs(p.at(p.ms) - to) < 1e-9, `${from} to ${to}: ends at ${p.at(p.ms)}`);
+    for (let t = 0; t <= p.ms; t += 5) { const y = p.at(t); assert.ok(y >= lo - 1e-9 && y <= hi + 1e-9, `${from} to ${to} at ${t}: ${y} inside [${lo}, ${hi}]`); }
+    // the wave's half at the real sweep's half, 0.1 screen under the upper rest
+    const half = to > from ? p.at(CASE_LEAD_MS + CASE_SWEEP_MS / 2) : p.at(CASE_TAIL_MS + CASE_SWEEP_MS / 2);
+    assert.ok(Math.abs(half - (hi - 0.1)) < 1e-9, `${from} to ${to}: the band's middle at ${half}`);
+  }
 });

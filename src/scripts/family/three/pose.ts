@@ -119,17 +119,20 @@ export function skeletonPolys(W: number, H: number, cls: Layout, dims: Dims = DI
  * In screens of scroll: 0 to 1 the carousel, 1 to 2 the zoom (no text), 2 to 6 the four case types, 6 to 7 ciao's
  * argument screen. The HUD leaves at 0.5; the tint runs 1.1 to 5.6; the beats' text and nav 1.6 to 5.6; the argument
  * from 5.6. Nothing but the family's name shows on the first screen (D9); Tough and its description come with beat 1.
- * Each next type's text comes in at its hand-over (2.8, 3.8, 4.8), where the sweep to it starts, so the name never runs
- * ahead of the case on screen through its whole turn (section 24 D14; Sam, 2026-11-03; 2.6, 3.6 and 4.6 until then).
+ * Each next type's text comes in at its sweep's half (2.9, 3.9, 4.9), as the wave's band crosses the case's middle (Sam,
+ * 2026-11-04, with the turn gone; at the hand-overs 2.8, 3.8 and 4.8 from 2026-11-03, and 2.6, 3.6 and 4.6 before).
  */
 export const SV = { hudOff: 0.5, tintOn: 1.1, beatsOn: 1.6, beatsOff: 5.6, argOn: 5.6, screens: 7 } as const;
 export type Beat = 'none' | 'z' | '1' | '2' | '3' | '4';
-export function activeBeat(sv: number): Beat {
+/** instant: the stage changes the case at the hand-over with no sweep (reduced motion), so the text does too */
+export function activeBeat(sv: number, instant = false): Beat {
   if (sv <= 0.6) return 'none';
   if (sv < SV.beatsOn) return 'z';
   if (sv >= SV.beatsOff) return 'none';
+  // each next type's text at its sweep's half, where the wave's band crosses the middle of the case (Sam, 2026-11-04: "the
+  // title and text of each case type is not synced with the wave"); at the hand-over, the turn's end, until then
   let n = 1;
-  for (const t of TURNS.slice(1)) if (sv >= turnEnd(t)) n++;
+  for (const t of TURNS.slice(1)) if (sv >= turnEnd(t) + (instant ? 0 : SWEEP_LEN / 2)) n++;
   return String(n) as Beat;
 }
 export function scrollClasses(sv: number): { hudOff: boolean; beatsOn: boolean; tintOn: boolean; argOn: boolean } {

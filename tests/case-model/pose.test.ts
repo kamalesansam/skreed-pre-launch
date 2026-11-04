@@ -68,16 +68,18 @@ test('the scroll map: nothing but the chrome on the landing screen, no beat text
   assert.equal(activeBeat(1.5), 'z');
   assert.equal(activeBeat(1.7), '1');
   assert.equal(activeBeat(2.5), '1');
-  // each next type's text at its hand-over, where the sweep starts (section 24 D14): never during the whole turn before it
-  assert.equal(activeBeat(2.79), '1');
-  assert.equal(activeBeat(2.8), '2');
+  // each next type's text at its sweep's half, as the wave's band crosses the case's middle (2026-11-04; at the hand-over before)
+  assert.equal(activeBeat(2.89), '1');
+  assert.equal(activeBeat(2.9), '2');
   assert.equal(activeBeat(3.5), '2');
-  assert.equal(activeBeat(3.79), '2');
-  assert.equal(activeBeat(3.8), '3');
+  assert.equal(activeBeat(3.89), '2');
+  assert.equal(activeBeat(3.9), '3');
   assert.equal(activeBeat(4.5), '3');
-  assert.equal(activeBeat(4.8), '4');
+  assert.equal(activeBeat(4.9), '4');
   assert.equal(activeBeat(5.5), '4');
-  for (let i = 160; i < 560; i++) { const sv = i / 100, want = sv >= 4.8 ? '4' : sv >= 3.8 ? '3' : sv >= 2.8 ? '2' : '1'; assert.equal(activeBeat(sv), want, `sv ${sv}`); }
+  for (let i = 160; i < 560; i++) { const sv = i / 100, want = sv >= 4.9 ? '4' : sv >= 3.9 ? '3' : sv >= 2.9 ? '2' : '1'; assert.equal(activeBeat(sv), want, `sv ${sv}`); }
+  // reduced motion: the stage changes the case at the hand-over with no sweep, so the text changes there too
+  assert.equal(activeBeat(2.79, true), '1'); assert.equal(activeBeat(2.8, true), '2'); assert.equal(activeBeat(3.8, true), '3'); assert.equal(activeBeat(4.8, true), '4');
   assert.equal(activeBeat(5.7), 'none');
   assert.equal(activeBeat(7), 'none');
   const rest = scrollClasses(0);

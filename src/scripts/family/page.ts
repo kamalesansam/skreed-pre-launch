@@ -261,6 +261,8 @@ const argSvg = $('arg-svg') as unknown as SVGSVGElement | null, argClip = docume
 const argument = argSvg && argClip && argBlur && smoke ? createArgument(argSvg, argClip, argBlur, smoke, reduced, (e, p) => track(e as 'argument_shown', p)) : null;
 const beatEls = document.querySelectorAll<HTMLElement>('.beat'), navBtns = document.querySelectorAll<HTMLButtonElement>('.beatnav button');
 let sv = 0;
+/** a case type's step rides the scroll (steps.ts, made below): the stage follows it tightly then */
+let riding = (): boolean => false;
 
 // ---- the argument screen's way out (section 22, exception E-F5): "Back to main page", a link to /#families, hidden
 // until the argument screen has been on for 2.5 s, then faded in by opacity over 400 ms; faded out over 200 ms and hidden
@@ -333,10 +335,10 @@ function onScroll(): void {
   H.classList.toggle('arg-on', c.argOn);
   argument?.show(c.argOn);
   backCheck();
-  const active = activeBeat(sv);
+  const active = activeBeat(sv, H.classList.contains('still3d') || reduced());
   beatEls.forEach((b) => b.classList.toggle('on', b.dataset.beat === active));
   navBtns.forEach((b) => b.setAttribute('aria-current', b.dataset.beat === active ? 'true' : 'false'));
-  emit('fam:scroll', { sv });
+  emit('fam:scroll', { sv, tight: riding() });
 }
 addEventListener('scroll', onScroll, { passive: true });
 addEventListener('resize', onScroll);
@@ -345,6 +347,7 @@ onScroll();
 // the 3D tier (steps.ts reads html.m3d at each decision, so "Show in 3D" from swatch grid mode brings them); the beat nav
 // rides there too, and scrolls the beat in as before where the steps are off (swatch grid mode)
 const steps = createCaseSteps({ reduced });
+riding = () => steps.state().riding;
 $('beatnav')?.addEventListener('click', (e) => {
   const b = (e.target as Element).closest('button[data-beat]') as HTMLButtonElement | null;
   if (!b) return;
