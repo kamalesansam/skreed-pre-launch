@@ -88,6 +88,7 @@
 // its line focused, and "Back to your shade" swaps back to the name; and the page carries data-qz-ground while the
 // ground lies under the logotype's band.
 import { test, expect, type Locator, type Page } from '@playwright/test';
+import { HONOUR_REDUCED_MOTION } from '../../src/config/hero.ts';
 import { S2T } from '../../src/config/hero.ts';
 import { QUIZ_COPY as Q, QUIZ_PERSONAS, QUIZ_QUESTIONS, QUIZ_REVEAL_MS, luminance, pickShade, scoreQuiz, shadeHref, type Persona, type PersonaId } from '../../src/config/quiz.ts';
 import { PRIVACY_LINK } from '../../src/config/legal.ts';
@@ -976,6 +977,7 @@ test('AC5 the guard, an answer pressed 100 ms after its question was put on scre
 });
 
 test('AC5 and AC9 the guard under reduced motion is 150 ms: an answer pressed 100 ms after its question was put on screen is dropped (not marked, not taken); one pressed 200 ms after, inside the 350 ms of full motion, is marked at the press and taken', async ({ browser, baseURL }) => {
+  test.skip(!HONOUR_REDUCED_MOTION, 'Reduce motion is not honoured since 2026-11-04 (E-3D-only, docs/specs/3d-only.md)');
   const ctx = await browser.newContext({ reducedMotion: 'reduce' });
   const page = await ctx.newPage();
   await openQuiz(page, baseURL);
@@ -1847,6 +1849,7 @@ test('AC8 the gift form: blur with a value validates and an empty submit shows b
 });
 
 test('AC9 reduced motion: no transform anywhere (the name\'s static narrowing aside, the same in every frame) and no animation but opacity; Begin, a commit and the result are 0.2 s fades (each line\'s glyphs one opacity, staggered as the decode is) in which no glyph ever shows a character other than its final one, the result\'s proportional lines carrying no rolled glyph at all; the answer taken goes with no hold; the result\'s ground, paint and chips fade in over 200 ms; the quiz still works', async ({ browser, baseURL }) => {
+  test.skip(!HONOUR_REDUCED_MOTION, 'Reduce motion is not honoured since 2026-11-04 (E-3D-only, docs/specs/3d-only.md)');
   const ctx = await browser.newContext({ reducedMotion: 'reduce' });
   const page = await ctx.newPage();
   await pin(page, 0.01);
@@ -3098,6 +3101,7 @@ test('Pictures load with their question: none with the intro; question 1 on scre
 });
 
 test('Pictures under reduced motion: the answer under the pointer fades its picture in over 0.2 s, every strip at one opacity and on its own slice at every step, with no transform; leaving fades it out over 0.2 s the same way', async ({ browser, baseURL }) => {
+  test.skip(!HONOUR_REDUCED_MOTION, 'Reduce motion is not honoured since 2026-11-04 (E-3D-only, docs/specs/3d-only.md)');
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
   const page = await ctx.newPage();
   const a = QUIZ_QUESTIONS[0].answers[4].persona;

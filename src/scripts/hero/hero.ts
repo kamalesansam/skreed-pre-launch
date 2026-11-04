@@ -47,7 +47,7 @@ import type { HeroContext, HeroUniforms, SkyState } from './types.ts';
 export interface StartOptions {
   data: HeroData;
   life: Life;
-  /** the test override forced the 3D tier: no failIfMajorPerformanceCaveat (SwiftShader runs the harness) */
+  /** the test override forced the 3D tier (the boot skipped its context check) */
   forced: boolean;
   texturePath: TexturePath;
   els: RideEls;
@@ -255,7 +255,7 @@ export async function startHero(o: StartOptions): Promise<void> {
     requestAnimationFrame(settle);
   }
   // restored from the back-forward cache with its context gone (iOS can return a cached page that way): the hero's one
-  // answer to a lost context is the poster page (boot.ts, no restore attempt), reached through onHardFail
+  // answer to a lost context is a reload or the site note (boot.ts hardFail, no restore attempt), reached through onHardFail
   const onShow = (e: PageTransitionEvent) => { if (e.persisted && renderer.getContext().isContextLost()) o.onHardFail('webglcontextlost after restore'); };
   addEventListener('pageshow', onShow);
   life.onKill(() => removeEventListener('pageshow', onShow));
@@ -280,8 +280,8 @@ export async function startHero(o: StartOptions): Promise<void> {
     ctx.room = room; life.onKill(() => room.dispose());
     room.resize(renderer.domElement.width, renderer.domElement.height);
     return room;
-  }).catch((e: unknown) => { console.warn('section 4: the section chunk did not load; the stills stand in', e); document.getElementById('room')?.setAttribute('data-tier', 'poster'); return null; }));
-  // the scenes' phases 1 and 2 (the director falls to the poster column itself if scene 1 cannot be drawn)
+  }).catch((e: unknown) => { console.warn('section 4: the section chunk did not load', e); o.onHardFail('section 4 chunk', e); return null; }));
+  // the scenes' phases 1 and 2 (the director fails hard itself if scene 1 cannot be drawn: a reload or the site note, never the poster column, E-3D-only)
   const loadScenes = () => loadDirector().then((room) => room?.load());
   // __skreedScenes tells the section index's Products and gift whether the scenes are in, and lets them wait (at most
   // 1.5 s). Nothing is locked behind the quiz since 2026-11-04 (Sam: "unlock everything, let all the sections work as

@@ -9,14 +9,14 @@ interface ImportMetaEnv {
   readonly PUBLIC_LEADS?: string;
 }
 
-interface SkreedLoaderState { phase: string; mode: string; p: number; tl: number; n: number; ready: boolean; note: string; next: string | undefined }
+interface SkreedLoaderState { phase: string; p: number; tl: number; n: number; ready: boolean; note: string; next: string | undefined }
 
 interface SkreedLoader {
   setProgress(v: number): void;
   ready(): void;
   cut(): void;
   skip(): void;
-  fail(msg: string): void;
+  fail(): void;
   seek(t: number): void;
   state(): SkreedLoaderState;
   abort(): void;
@@ -27,7 +27,6 @@ interface Window {
   SKREED_POSE?: { cam: readonly number[]; tgt: readonly number[]; fov: number; lw: number; z: number };
   __skreedLoaderReport?: (milestone: string) => void;
   __skreedLoader?: SkreedLoader;
-  __skreedOnPoster?: (kind: 'stall' | 'offline' | 'fail', msg: string) => void;
   __introDone?: () => void;
   __heroStarted?: boolean;
   __skreedLogo?: import('./scripts/logotype/glitch.ts').LogoGlitch;

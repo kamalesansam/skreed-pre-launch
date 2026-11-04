@@ -223,20 +223,8 @@ test.describe('the landing in the pin, 3D path', () => {
   });
 });
 
-test('the offline soft poster: the words at the top, hidden from 8 px, never pinned over the page', async ({ page, context }) => {
-  await page.goto('/?tier=hero3d');
-  await expect(page.locator('html')).toHaveClass(/loading/);
-  await context.setOffline(true);
-  await expect(page.locator('html')).toHaveClass(/poster/);
-  await expect(page.locator('#intro')).toHaveClass(/po/);
-  await settled(page, true, 10_000);
-  await page.evaluate(() => scrollTo(0, 9));
-  await settled(page, false, 5_000);
-  await page.evaluate(() => scrollTo(0, document.scrollingElement!.scrollHeight));
-  await page.waitForTimeout(1_700);   // past the 1.5 s rest: a pin over the soft poster's page would have shown by now (ride.ts treats html.poster as the lock)
-  await settled(page, false, 5_000);
-  await context.setOffline(false);
-});
+// the offline soft poster's row left on 2026-11-04 with the soft poster itself (E-3D-only): offline the loader stays up
+// with its line (loader.spec.ts), and the page never turns into the poster
 
 
 test('the family page in swatch grid mode, one screen: no words and no columns', async ({ page }) => {

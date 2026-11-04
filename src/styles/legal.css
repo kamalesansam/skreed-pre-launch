@@ -47,7 +47,6 @@ body { font-family: var(--font-ui); font-weight: 400; }
 .lg-foot { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); padding-top: var(--s4); border-top: 1px solid var(--urban-slate); }
 .lg-foot a { display: inline-flex; align-items: center; min-height: 44px; font-size: var(--fs-legal); font-weight: 600; }
 
-@media (prefers-reduced-motion: reduce) { .site-logo { transition: none; } .site-logo:hover, .site-logo:active { transform: none; } }
 
 /* the unsubscribe page (docs/specs/legal-pages.md D6): the primary button in Ember Luxe, square (rule 39), as the 404's */
 .lg-unsub { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s3); }
@@ -62,4 +61,3 @@ body { font-family: var(--font-ui); font-weight: 400; }
 .lg-btn:focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
 .lg-msg { min-height: 1.45em; font-size: var(--fs-legal); }
 .lg-intro:focus { outline: none; }
-@media (prefers-reduced-motion: reduce) { .lg-btn { transition: none; } .lg-btn:hover, .lg-btn:active { transform: none; } }

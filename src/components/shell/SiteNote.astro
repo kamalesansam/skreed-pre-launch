@@ -1,0 +1,17 @@
+---
+// The site note (E-3D-only, Sam 2026-11-04: "make sure the real site loads on any machine or any phone or any browser, dont
+// have this fallback, ppl will think this is our acrtual site"): one screen with the wordmark and one line, over everything,
+// shown only on html.nogl. The Gate (landing) and the family head script set it with data-note "unsupported" where the
+// browser has no WebGL2; scripts/shell/note.ts sets "failed" or "offline" when the 3D did not load after its retry. The
+// poster page and swatch grid mode under it are never seen. "Try again" is a plain link to this page, so it works even
+// when the scripts did not load. Needs WordmarkSprite on the page.
+import { COPY_NOTE as C } from '../../config/copy.ts';
+import '../../styles/site-note.css';
+const here = Astro.url.pathname;
+---
+<div class="site-note" id="siteNote" role="alert">
+  <svg class="sn-mark" viewBox="0 0 1209.46 292.9" role="img" aria-label="Skreed" focusable="false"><use href="#skreed-wordmark"/></svg>
+  <p class="sn-line sn-unsupported">{C.unsupported}</p>
+  <p class="sn-line sn-failed">{C.failed} <a class="sn-again" href={here}>{C.again}</a></p>
+  <p class="sn-line sn-offline">{C.offline}</p>
+</div>

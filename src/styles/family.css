@@ -64,7 +64,6 @@ ol { padding: 0; list-style: none; }
 .site-logo:focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 6px; }
 .site-logo:focus-visible::before { content: ""; position: absolute; inset: -4px; border: 2px solid var(--urban-slate); }
 @media (min-width: 1024px) { .site-logo svg { width: 136px; } }
-@media (prefers-reduced-motion: reduce) { .site-logo .logo-tiles { display: none !important; } .site-logo svg { opacity: 1 !important; } }
 .allfam { position: fixed; top: calc(var(--inset) + var(--sat) + var(--mark-h) / 2 - var(--hit) / 2); right: calc(var(--inset) + env(safe-area-inset-right, 0px) - var(--s2)); z-index: 6;
   min-height: var(--hit); padding: 0 var(--s2); display: inline-flex; align-items: center; font-family: var(--font-mono); font-size: var(--fs-label); font-weight: 500; line-height: 1; text-transform: uppercase; letter-spacing: 0; white-space: nowrap; color: var(--pearl-whisper); }   /* the later sections' face in capitals (E-chrome-font, 2026-11-02) */
 /* the argument screen's way out (section 22, E-F5; its place on phones, section 23): "Back to main page", a link to
@@ -295,9 +294,3 @@ html:not(.m3d) .intro { display: none; }
 @media (max-height: 499px) { .grid-slot { position: static; display: none; min-height: calc(4 * var(--hit) + 3 * var(--s1) + var(--s5)); padding: calc(var(--chrome-top) + 72px) 0 calc(192px + var(--sab)); } html:not(.m3d) .grid-slot { display: grid; } .cuetext.is-land { display: none; } }   /* no room between the case and the scrubber: the first screen keeps the columns alone */
 
 @view-transition { navigation: auto; }
-@media (prefers-reduced-motion: reduce) {
-  @view-transition { navigation: none; }
-  .press, .gsw .dot, .scrub .mark, .finish button, .beat-txt > * > span, .below, .beatnav, #tint, .fade, .arg, .scrollcue, .cuetext { transition: none; }
-  .st3d canvas { transition: none; }
-  .chev { animation: none; opacity: 1; transform: none; }
-}

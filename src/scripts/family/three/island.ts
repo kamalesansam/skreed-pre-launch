@@ -12,6 +12,8 @@ import { loadSupplierAsset, typeEntries, type CaseManifest } from './case-glb.ts
 import MANIFEST from '../../../data/case-model.json' with { type: 'json' };
 import { WIDE_MQ, type CaseType } from './pose.ts';
 import type { Finish } from '../bus.ts';
+import { reducedMQ } from '../../motion.ts';
+import { failHard } from '../../shell/note.ts';
 
 interface PageData { slug: string; first: number; key: number }
 const yieldToMain = () => new Promise<void>((r) => setTimeout(r, 0));
@@ -45,7 +47,9 @@ export async function mountIsland(host: HTMLElement, onLive: () => void): Promis
   const sel = Number(H.dataset.shade) - D.first;
   const finish: Finish = H.dataset.finish === 'gloss' ? 'gloss' : 'matte';
   const q = new URLSearchParams(location.search);
-  const force = HOOKS && q.get('render') === 'force';
+  // a software renderer and a slow frame run the 3D in production since 2026-11-04 (E-3D-only); test and staging builds keep
+  // the harness's SwiftShader out unless ?render=force, as the browser suites were written against it
+  const force = !HOOKS || q.get('render') === 'force';
   const forcedTier = HOOKS && (q.get('tier') === 'high' || q.get('tier') === 'low') ? (q.get('tier') as Tier) : undefined;
   const ac = new AbortController();
   report('import');
@@ -64,14 +68,14 @@ export async function mountIsland(host: HTMLElement, onLive: () => void): Promis
   try {
     stage = await createStage({
       host, canvas, tough, shades, selected: Number.isInteger(sel) && sel >= 0 && sel < 24 ? sel : D.key, finish,
-      still: H.classList.contains('still3d') || matchMedia('(prefers-reduced-motion: reduce)').matches,
+      still: H.classList.contains('still3d') || reducedMQ.matches,
       force, tier: forcedTier, aces: HOOKS && q.get('tm') === '1', hold: HOOKS && q.get('pose') === 'poster',
       layout: () => (mqWide.matches ? 'wide' : 'phone'), fine: () => mqFine.matches, coarse: () => mqCoarse.matches,
       report,
       onPick: (i, input, dragging) => emit('fam:pick', { i, input, dragging }),
       onTurn: (side) => emit('fam:turn', { side }),
       onLive,
-      onLost: () => { dispose(); emit('fam:grid', { reason: 'context', message: '' }); },
+      onLost: () => { dispose(); failHard(); },   // a reload or the site note, never the grid (E-3D-only)
     });
   } catch (e) {
     canvas.remove();

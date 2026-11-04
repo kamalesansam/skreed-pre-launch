@@ -19,7 +19,6 @@ body{color:var(--pearl-whisper);font-family:var(--font-ui);margin:0;font-synthes
 #s2labels .s2hint.over .arrow{display:none}#s2labels .s2hint.over .hand{display:block}
 .s2hint path{fill:var(--pearl-whisper);stroke:var(--urban-slate);stroke-width:1.5;stroke-linejoin:round}.s2hint .seam{fill:none;stroke-linecap:round;stroke-width:1.1}
 .s2hint-ring{position:absolute;left:-10px;top:-10px;width:20px;height:20px;box-sizing:border-box;border:1.5px solid var(--pearl-whisper);border-radius:50%;opacity:0}
-@media (prefers-reduced-motion:reduce){.s2hint{display:none}}
 .copy{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:flex-end;gap:var(--s2);padding:0 calc(var(--inset) + env(safe-area-inset-right,0px)) calc(var(--inset) + env(safe-area-inset-bottom,0px)) calc(var(--inset) + env(safe-area-inset-left,0px));pointer-events:none;will-change:transform,clip-path}   /* side safe areas added for landscape phones (web interface guidelines); 0 elsewhere */
 /* hero: plain and simple, a countdown to launch. The numerals are the dot digits (E-CD-font); the eyebrow and the unit labels are the later sections' face, IBM Plex Mono Medium in capitals (E-chrome-font, 2026-11-02), as the sign-up and the quiz are. Never Poppins. */
 .copy .eyebrow{font-family:var(--font-mono);font-size:.875rem;font-weight:500;text-transform:uppercase;letter-spacing:0;color:var(--pearl-whisper);margin:0;max-width:30ch}   /* Pearl Whisper: the small text sits on pale snow and must hold AA */
@@ -29,7 +28,6 @@ body{color:var(--pearl-whisper);font-family:var(--font-ui);margin:0;font-synthes
 .count .n{display:block;height:clamp(2.5rem,10.5vw,4rem);width:auto;overflow:visible;color:var(--pearl-whisper)}   /* the dot digits (E-CD-font): two always, 17.5 by 13 dots a pair, so nothing jumps when a value drops below 10; overflow for the glitch's kicks */
 .count .l{font-family:var(--font-mono);font-weight:500;font-size:.875rem;text-transform:uppercase;letter-spacing:0;color:var(--pearl-whisper)}
 .count:not([data-ready]) .n{visibility:hidden}   /* no false value before the first tick */
-@media (prefers-reduced-motion:reduce){.count .sec{display:none}.count .gl-tiles{display:none!important}.count .n{opacity:1!important}}   /* a digit changing every second is motion too; no glitch */
 @media (max-width:1100px){.copy{padding-bottom:calc(var(--inset) + 84px + env(safe-area-inset-bottom,0px))}}   /* up to 1100 px the countdown reaches the middle, so it lifts by the cue's height (73 px) and 11 px, and the cue sits under it; its words take the bottom right corner (Sam, 2026-11-03) */
 /* the scroll cue, ciao's side icon re-created (measured, docs/specs/hero.md 12.3): three chevrons of five dots drawn top down, held, wiped top down, 2.5 s a cycle;
    17.5 x 73 px. One, at the bottom centre on --inset (Sam, 2026-10-20: "put only one in the middle", the two side ones clashed with the countdown): from
@@ -60,7 +58,6 @@ body{color:var(--pearl-whisper);font-family:var(--font-ui);margin:0;font-synthes
 @keyframes cue-top{0%{opacity:0;transform:translateY(100px) scale(0);animation-timing-function:cubic-bezier(.333,1,.667,1)}24%{opacity:1;transform:none;animation-timing-function:linear}52%{opacity:1;transform:none;animation-timing-function:cubic-bezier(.333,0,.667,0)}68%{opacity:0;transform:none;animation-timing-function:linear}100%{opacity:0;transform:none}}
 @keyframes cue-mid{0%{opacity:0;transform:scale(0);animation-timing-function:linear}8%{opacity:0;transform:scale(0);animation-timing-function:cubic-bezier(.333,1,.667,1)}32%{opacity:1;transform:none;animation-timing-function:linear}62%{opacity:1;transform:none;animation-timing-function:cubic-bezier(.333,0,.667,0)}78%{opacity:0;transform:none;animation-timing-function:linear}100%{opacity:0;transform:none}}
 @keyframes cue-bottom{0%{opacity:0;transform:translateY(-100px) scale(0);animation-timing-function:linear}16%{opacity:0;transform:translateY(-100px) scale(0);animation-timing-function:cubic-bezier(.333,1,.667,1)}40%{opacity:1;transform:none;animation-timing-function:linear}72%{opacity:1;transform:none;animation-timing-function:cubic-bezier(.333,0,.667,0)}88%{opacity:0;transform:none;animation-timing-function:linear}100%{opacity:0;transform:none}}
-@media (prefers-reduced-motion:reduce){.chev{animation:none;opacity:1;transform:none}}
 .labels{position:fixed;inset:0;pointer-events:none;z-index:1}
 .lab{position:absolute;left:0;top:0;font-family:var(--font-ui);font-weight:600;font-size:12px;line-height:1;letter-spacing:.04em;font-variant-numeric:tabular-nums;color:var(--pearl-whisper);will-change:transform,opacity;display:flex;align-items:center;gap:6px}
 .lab i{display:block;width:3px;height:3px;background:var(--pearl-whisper)}
@@ -70,7 +67,6 @@ body{color:var(--pearl-whisper);font-family:var(--font-ui);margin:0;font-synthes
 .site-logo svg{display:block;width:96px;height:auto;overflow:visible}
 .site-logo:focus-visible{outline:2px solid var(--ember-luxe);outline-offset:6px}
 @media (min-width:1024px){.site-logo svg{width:136px}}
-@media (prefers-reduced-motion:reduce){.site-logo .logo-tiles{display:none!important}.site-logo svg{opacity:1!important}}
 :focus-visible{outline:2px solid var(--ember-luxe);outline-offset:2px}
 /*LOADER-CSS*/
 html.loading,html.loading body{overflow:hidden}

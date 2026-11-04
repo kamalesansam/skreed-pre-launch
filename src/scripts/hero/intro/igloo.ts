@@ -46,7 +46,7 @@ export interface IglooOptions { reduced: boolean; touch: boolean; dpr: number; m
 
 export function createIglooIntro(o: IglooOptions): IntroDirector {
   const { reduced: reduce, dpr: DPR } = o;
-  const HT = document.documentElement, LD = () => window.__skreedLoader, posterNow = () => !!(LD() && LD()!.state().mode === 'poster');
+  const HT = document.documentElement, LD = () => window.__skreedLoader, posterNow = () => HT.classList.contains('nogl');   // the loader has no poster state since 2026-11-04 (E-3D-only): only the site note ends the shot early
   // the intro is skipped (end state at once) for reduced motion, a return visit, ?intro=0 and deep links, as igloo skips it for a project link
   const SKIP = reduce || !!o.skip || new URLSearchParams(location.search).get('intro') === '0' || !!location.hash;
   const fontsP = Promise.race([document.fonts.load('400 24px "Open Sans"'), new Promise((r) => setTimeout(r, 3000))]).catch(() => 0);   // the number atlas

@@ -12,9 +12,9 @@ import { headCfg } from '../../src/scripts/family/head.ts';
 import { FAMILIES } from '../../src/scripts/family/data.ts';
 
 const SRC = readFileSync(new URL('../../src/scripts/family/head.inline.js', import.meta.url), 'utf8');
-const build = (has3d: boolean) => inlineScript('family-head.js', { CFG: headCfg(has3d) }, SRC);
+const build = (has3d: boolean, hooks = false) => inlineScript('family-head.js', { CFG: headCfg(has3d, hooks) }, SRC);
 
-interface Env { url?: string; slug?: string; has3d?: boolean; webgl2?: boolean; saveData?: boolean; effectiveType?: string; deviceMemory?: number; reduced?: boolean }
+interface Env { url?: string; slug?: string; has3d?: boolean; hooks?: boolean; webgl2?: boolean; saveData?: boolean; effectiveType?: string; deviceMemory?: number; reduced?: boolean }
 function run(env: Env) {
   const slug = env.slug ?? 'blissful-blue';
   const fam = FAMILIES.find((f) => f.slug === slug)!;
@@ -37,7 +37,7 @@ function run(env: Env) {
   };
   if (env.webgl2 !== false) ctx.WebGL2RenderingContext = function WebGL2RenderingContext() {};
   ctx.window = ctx;
-  vm.runInNewContext(build(env.has3d ?? false), ctx);
+  vm.runInNewContext(build(env.has3d ?? false, env.hooks ?? false), ctx);
   return { attrs, classes, calls };
 }
 
@@ -105,27 +105,26 @@ test('mode: an off build is always swatch grid mode, and never the loader', () =
   assert.equal(r.attrs.get('data-why'), 'off');
 });
 
-test('?mode=grid is the one way to ask for the grid (D7): grid mode, data-why query, no loader, the query kept', () => {
-  const r = run({ has3d: true, url: 'https://skreed.shop/shades/blissful-blue/?mode=grid' });
+test('?mode=grid asks for the grid in test and staging builds only (D7, E-3D-only): grid mode, data-why query, no loader, the query kept', () => {
+  const prod = run({ has3d: true, url: 'https://skreed.shop/shades/blissful-blue/?mode=grid' });
+  assert.ok(prod.classes.has('m3d') && !prod.classes.has('grid'), 'production ignores it');
+  const r = run({ has3d: true, hooks: true, url: 'https://skreed.shop/shades/blissful-blue/?mode=grid' });
   assert.ok(r.classes.has('grid'));
   assert.ok(!r.classes.has('m3d') && !r.classes.has('loading'));
   assert.equal(r.attrs.get('data-why'), 'query');
   assert.equal(r.calls.replaceState, undefined);
 });
 
-test('mode in a 3D build: the hero gate signals send the page to swatch grid mode, otherwise 3D', () => {
-  const cases: [Env, string][] = [
-    [{ webgl2: false }, 'webgl'], [{ saveData: true }, 'savedata'], [{ effectiveType: '2g' }, 'slow'], [{ effectiveType: 'slow-2g' }, 'slow'],
-    [{ deviceMemory: 2 }, 'memory'], [{ deviceMemory: 1 }, 'memory'], [{ reduced: true }, 'reduced'],
-  ];
-  for (const [env, why] of cases) {
+test('mode in a 3D build (E-3D-only, 2026-11-04): data saver, 2G, little memory and Reduce motion all get the 3D; no WebGL2 is the site note over the grid', () => {
+  const three: Env[] = [{ saveData: true }, { effectiveType: '2g' }, { effectiveType: 'slow-2g' }, { deviceMemory: 2 }, { deviceMemory: 1 }, { reduced: true }, { deviceMemory: 4 }];
+  for (const env of three) {
     const r = run({ ...env, has3d: true });
-    assert.ok(r.classes.has('grid'), why);
-    assert.equal(r.attrs.get('data-why'), why);
+    assert.ok(r.classes.has('m3d') && r.classes.has('loading'), JSON.stringify(env));
+    assert.ok(!r.classes.has('grid') && !r.classes.has('still3d'), JSON.stringify(env));
   }
-  const ok = run({ has3d: true, deviceMemory: 4 });
-  assert.ok(ok.classes.has('m3d'));
-  assert.ok(ok.classes.has('loading'), 'the loader covers the page from first paint in 3D mode (section 20)');
-  assert.ok(!ok.classes.has('grid'));
-  for (const [env] of cases) assert.ok(!run({ ...env, has3d: true }).classes.has('loading'), 'grid mode never shows the loader');
+  const none = run({ has3d: true, webgl2: false });
+  assert.ok(none.classes.has('grid') && none.classes.has('nogl'));
+  assert.equal(none.attrs.get('data-why'), 'webgl');
+  assert.equal(none.attrs.get('data-note'), 'unsupported');
+  assert.ok(!none.classes.has('loading'), 'the note never shows the loader');
 });

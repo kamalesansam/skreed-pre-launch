@@ -1,5 +1,6 @@
 // AC4: the countdown, on the poster path (build step 4). The 3D-path parts (contrast on the canvas) wait for step 6.
 import { test, expect, type Page } from '@playwright/test';
+import { HONOUR_REDUCED_MOTION } from '../../src/config/hero.ts';
 import { boxStats, contrast, luminanceOfHex, type Box } from '../harness/pixels.ts';
 import { PEARL_WHISPER, URBAN_SLATE, EMBER_LUXE } from '../../src/config/tokens.ts';
 import { pauseClockAt } from '../harness/settle.ts';
@@ -112,6 +113,7 @@ test('AC4.4 independence: runs with WebGL2 removed and with every module script 
 });
 
 test('AC4.5 reduced motion hides the seconds group', async ({ page }) => {
+  test.skip(!HONOUR_REDUCED_MOTION, 'Reduce motion is not honoured since 2026-11-04 (E-3D-only, docs/specs/3d-only.md)');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   expect(await page.locator('#count .sec').evaluate((e) => getComputedStyle(e).display)).toBe('none');

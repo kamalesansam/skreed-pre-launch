@@ -24,4 +24,3 @@
 }
 .to-top-veil { position: fixed; inset: 0; z-index: 5; background: var(--night); pointer-events: none; }
 .to-top-veil[hidden] { display: none; }
-@media (prefers-reduced-motion: reduce) { .to-top { transition: none; } .to-top:hover, .to-top:active { transform: none; } }

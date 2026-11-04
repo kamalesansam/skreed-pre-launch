@@ -1,93 +1,69 @@
-// The 3D path's entry (hero-architecture.md 7 and 8; spec D3, D11, D19). In order: the context check (a null or
-// software WebGL2 context goes to the poster before any island byte), the poster's decode (the island never competes
-// with the LCP bytes), the class by aspect and AVIF support from the poster's chosen source, then the data prefetch and
-// the hero chunk in parallel. Every failure lands here: soft ones (the loader's own stall and offline rules) recover on
-// frame2 unless the visitor scrolls; hard ones are terminal (toPoster).
+// The 3D path's entry (hero-architecture.md 7 and 8; spec D3, D11, D19). In order: the context check (no WebGL2 context at
+// all is the site note's "unsupported"; a software renderer runs the 3D since 2026-11-04), the poster's decode (the island
+// never competes with the LCP bytes), the class by aspect and AVIF support from the poster's chosen source, then the data
+// prefetch and the hero chunk in parallel. Every hard failure lands in hardFail: the island stops and the page reloads once
+// or shows the site note (shell/note.ts), never the poster page (Sam, 2026-11-04, E-3D-only: "dont have this fallback").
 // No three.js import: the boot chunk stays small, and the island loads only on the 3D tier.
 import { PORTRAIT_ASPECT, SOFTWARE_GL, TEXTURE_PATH } from '../config/hero.ts';
-import { COPY_LD } from '../config/copy.ts';
 import { createLife, isAbortError, IslandDead } from './hero/bridge/life.ts';
 import { prefetchHeroData, dataPromises } from './hero/data/assets.ts';
-import { resetRiders, type RideEls } from './hero/scroll/reset.ts';
+import type { RideEls } from './hero/scroll/reset.ts';
+import { failHard, loadedOk, showNote } from './shell/note.ts';
 
 const H = document.documentElement;
 const life = createLife();
 const $ = (id: string) => document.getElementById(id);
 const els: RideEls = { heroCopy: $('heroCopy'), cue: $('cue'), labels: $('labels'), siteLogo: $('siteLogo'), more: $('cueText') };
-// a return visit's soft poster (stall, offline) has centred nav#families (onSoftPoster): a hard turn after it keeps the visitor's
-// place; a hard fall that never passed there (the Gate's module load-error fail, a lost context, a failed fetch) centres them itself
-let softCentred = false;
 
-/** A hardware WebGL2 context (architecture 8): SwiftShader passes failIfMajorPerformanceCaveat, so the renderer string decides. */
-function hardwareGL(): boolean {
-  const gl = document.createElement('canvas').getContext('webgl2', { failIfMajorPerformanceCaveat: true });
-  if (!gl) return false;                                       // --disable-3d-apis, blocklisted GPUs, caveat
+/** The WebGL2 context (architecture 8): 'none', 'software' (SwiftShader, llvmpipe) or 'ok'. Production runs the 3D on a
+ * software renderer since 2026-11-04 (E-3D-only: slow beats a page that is not the site). */
+function glKind(): 'none' | 'software' | 'ok' {
+  const gl = document.createElement('canvas').getContext('webgl2');
+  if (!gl) return 'none';                                      // --disable-3d-apis, blocklisted GPUs
   const ext = gl.getExtension('WEBGL_debug_renderer_info');
   const name = String(gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER));
   gl.getExtension('WEBGL_lose_context')?.loseContext();
-  return !SOFTWARE_GL.test(name);
+  return SOFTWARE_GL.test(name) ? 'software' : 'ok';
 }
 
-/** The hard poster path (architecture 7.3), terminal. */
-function toPoster(reason: string, err?: unknown): void {
-  if (life.dead) return;
-  life.kill(reason);                                            // 1. loop, observer, listeners, renderer and its context
-  const L = window.__skreedLoader;                              // 2. the loader, in any phase
-  if (L) {
-    const s = L.state();
-    if (!navigator.onLine && s.phase === 'load' && s.mode !== 'poster') L.fail(COPY_LD.offline);
-    else if (!(s.mode === 'poster' && s.note)) L.abort();
-  }
-  const track = $('track'), before = track ? track.offsetHeight : 0, y = scrollY;   // 3. the page becomes the poster page
+/** Test and staging builds only (PUBLIC_HERO_HOOKS '1'): the harness's SwiftShader still lands on the poster page, as the
+ * browser suites were written against it (?tier=hero3d runs the 3D there); a production build never comes here. Before any
+ * island byte, so there is nothing of the island to undo. */
+function posterForTests(): void {
+  life.kill('software renderer (test build)');
+  window.__skreedLoader?.abort();
   H.classList.remove('loading', 'still3d', 'intro', 'uh1', 'uh2', 'uh3', 'uh4');
-  if (H.classList.contains('hero3d')) H.classList.replace('hero3d', 'poster'); else H.classList.add('poster');
-  resetRiders(els);                                             // 4. ride styles, tone, labels (section 2 and the intro reset in their disposers)
-  for (const e of document.querySelectorAll('[inert]')) e.removeAttribute('inert');   // 5.
-  const after = track ? track.offsetHeight : 0;                 // 6. keep what the visitor was reading in place
-  const fam = !softCentred && location.hash === '#families' ? $('families') : null;   // a return visit that fell to the poster (family-page.md 2.2): the families centred, as links.ts does off the 3D path, unless a soft poster centred them already and the visitor may have moved since
-  if (fam) fam.scrollIntoView({ block: 'center', behavior: 'instant' });
-  else if (y < before - innerHeight) scrollTo({ top: 0, behavior: 'instant' });
-  else scrollTo({ top: y - (before - after), behavior: 'instant' });
-  dispatchEvent(new Event('scroll'));                           // 7. the inline cue check recomputes the cue
-  if (err === undefined) console.warn('[hero] ' + reason); else console.warn('[hero] ' + reason, err);   // 8.
+  H.classList.replace('hero3d', 'poster');
+  for (const e of document.querySelectorAll('[inert]')) e.removeAttribute('inert');
+  scrollTo({ top: 0, behavior: 'instant' });
+  dispatchEvent(new Event('scroll'));
+  console.warn('[hero] no hardware WebGL2');
 }
 
-/** The loader went to its poster state on its own (stall, offline) or through fail (architecture 7.3, soft poster). */
-function onSoftPoster(kind: 'stall' | 'offline' | 'fail'): void {
-  if (kind === 'fail') { if (!life.dead) toPoster('module-load-error'); return; }
+/** A hard failure (architecture 7.3): the island, its loop and its context stop, then a reload or the site note. */
+function hardFail(reason: string, err?: unknown): void {
   if (life.dead) return;
-  resetRiders(els);
-  // a return visit (family-page.md 13 step 3; the loader's decision, #intro.ret) sat deep in the page by design, at the
-  // fragment's scroll or at section 2's rest, and the track has just collapsed to one screen under it: the poster page is
-  // centred on the families, as toPoster does, and the scroll rule is measured from there, so neither the collapse nor the
-  // centring counts as the visitor's scroll. The island keeps loading; on frame2 the recovery lifts and hero.ts's
-  // life.onRecover hook puts section 2 in place. Only the visitor moves the poster page, and a real failure still ends it
-  const ret = !!document.getElementById('intro')?.classList.contains('ret');
-  if (ret) { $('families')?.scrollIntoView({ block: 'center', behavior: 'instant' }); softCentred = true; }
-  const base = ret ? scrollY : 0;
-  const onScroll = () => { if (Math.abs(scrollY - base) > 8) toPoster('soft-then-scrolled'); };
-  addEventListener('scroll', onScroll, { passive: true });
-  const off = () => removeEventListener('scroll', onScroll);
-  life.onRecover(off); life.onKill(off);
+  life.kill(reason);
+  if (err === undefined) console.warn('[hero] ' + reason); else console.warn('[hero] ' + reason, err);
+  failHard();
 }
 
 async function boot(): Promise<void> {
-  window.__skreedOnPoster = (kind) => onSoftPoster(kind);
   if (import.meta.env.PUBLIC_HERO_HOOKS === '1') Object.defineProperty(window, '__skreedDead', { configurable: true, get: () => life.dead });
-  const L = window.__skreedLoader;
-  if (L && L.state().mode === 'poster') onSoftPoster(L.state().note ? 'offline' : 'stall');   // offline before this script ran
 
   // the test and staging override (?tier=hero3d|still3d) skips the context check, so the SwiftShader harness runs 3D
   const forced = import.meta.env.PUBLIC_HERO_HOOKS === '1' && !!window.__skreedTierOverride?.();
-  if (!forced && !hardwareGL()) { toPoster('no hardware WebGL2'); return; }
+  const gl = forced ? 'ok' : glKind();
+  if (gl === 'none') { life.kill('no WebGL2'); showNote('unsupported'); return; }
+  if (gl === 'software' && import.meta.env.PUBLIC_HERO_HOOKS === '1') { posterForTests(); return; }
 
   const canvas = $('stage') as HTMLCanvasElement | null;
-  const onLost = () => toPoster('webglcontextlost');   // no restore attempt
+  const onLost = () => hardFail('webglcontextlost');   // no restore attempt: a reload
   canvas?.addEventListener('webglcontextlost', onLost);
-  const onError = (e: ErrorEvent) => { if (!window.__heroStarted) toPoster('error before start', e.error ?? e.message); };
+  const onError = (e: ErrorEvent) => { if (!window.__heroStarted) hardFail('error before start', e.error ?? e.message); };
   // a skipped cross-document view transition into this page (a family page's "Back to main page" or wordmark, Back to top on a
   // cache miss) rejects its promises with AbortError "Transition was skipped": the browser's own, never the island's failure
-  const onRejection = (e: PromiseRejectionEvent) => { if (isAbortError(e.reason)) return; if (!window.__heroStarted && !(e.reason instanceof IslandDead)) toPoster('unhandled rejection before start', e.reason); };
+  const onRejection = (e: PromiseRejectionEvent) => { if (isAbortError(e.reason)) return; if (!window.__heroStarted && !(e.reason instanceof IslandDead)) hardFail('unhandled rejection before start', e.reason); };
   addEventListener('error', onError); addEventListener('unhandledrejection', onRejection);
   life.onKill(() => { removeEventListener('error', onError); removeEventListener('unhandledrejection', onRejection); });
 
@@ -97,18 +73,19 @@ async function boot(): Promise<void> {
   const avif = /\.avif(?:[?#]|$)/.test(img?.currentSrc ?? '');
   const cls = innerWidth / innerHeight < PORTRAIT_ASPECT ? 'portrait' : 'wide';
   const data = prefetchHeroData(cls, avif);
-  for (const p of dataPromises(data)) p.catch((e) => toPoster('data', e));
+  for (const p of dataPromises(data)) p.catch((e) => hardFail('data', e));
 
   let mod: typeof import('./hero/hero.ts');
-  try { mod = await import('./hero/hero.ts'); } catch (e) { toPoster('import', e); return; }
+  try { mod = await import('./hero/hero.ts'); } catch (e) { hardFail('import', e); return; }
   if (life.dead) return;
   let texturePath = TEXTURE_PATH;
   if (import.meta.env.PUBLIC_HERO_HOOKS === '1') { const q = new URLSearchParams(location.search).get('texpath'); if (q === 'image' || q === 'bitmap') texturePath = q; }
   try {
-    await mod.startHero({ data, life, forced, texturePath, els, onHardFail: toPoster });
+    await mod.startHero({ data, life, forced, texturePath, els, onHardFail: hardFail });
+    loadedOk();
   } catch (e) {
     if (e instanceof IslandDead) return;
-    toPoster('start', e);
+    hardFail('start', e);
   }
 }
 

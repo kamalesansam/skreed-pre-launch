@@ -86,4 +86,3 @@ html.uh1 .snav { visibility: hidden; opacity: 0; }
     .snav-menu { display: none; }
   }
 }
-@media (prefers-reduced-motion: reduce) { .snav-a, .snav-sheet, .snav-in, .snav-rows a span { transition: none; } .snav-a:hover, .snav-a:active, .snav-rows a:active span { transform: none; } .snav-gift svg { animation: none; } }

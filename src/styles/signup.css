@@ -269,10 +269,6 @@
   .su-row { grid-area: row; grid-template-columns: repeat(4, calc(220 * var(--u))); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .su-icon, .su-send { transition: none; }
-  .su-follow:hover .su-icon, .su-send:active { transform: none; }
-}
 
 /* nothing follows the body and nothing loops from it (2026-11-03): the page ends at the section's rest on every tier;
    without JavaScript the text stands and the links work */

@@ -50,7 +50,7 @@ export interface VideoEnvironment { saveData?: boolean; effectiveType?: string; 
 function environment(): VideoEnvironment {
   if (typeof navigator === 'undefined') return {};
   const n = navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string }; deviceMemory?: number };
-  return { saveData: n.connection?.saveData, effectiveType: n.connection?.effectiveType, deviceMemory: n.deviceMemory, reduced: typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches };
+  return { saveData: n.connection?.saveData, effectiveType: n.connection?.effectiveType, deviceMemory: n.deviceMemory, reduced: false };   // Reduce motion is not honoured since 2026-11-04 (HONOUR_REDUCED_MOTION in config/hero.ts, E-3D-only)
 }
 /** where loops may play (E-S4-video): never under reduced motion, Save-Data, on 2g or slow-2g, or at deviceMemory 2 or less; stills then */
 export function allowed(e: VideoEnvironment = environment()): boolean {
