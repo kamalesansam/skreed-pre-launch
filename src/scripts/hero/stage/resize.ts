@@ -15,7 +15,6 @@ export function createResize(ctx: HeroContext & { lastW?: number }): () => void 
     ctx.renderer.setSize(w, h, false);
     ctx.composerA.c.setSize(w, h);
     cameras();
-    ctx.fogGround.resize(ctx.renderer.domElement.width, ctx.renderer.domElement.height);   // device pixels, as section 2's targets
     ctx.room?.resize(ctx.renderer.domElement.width, ctx.renderer.domElement.height);   // section 4: the carousel, the fade hand-off, and the section's cached layout
     ctx.signup?.invalidate();   // section 5: its layout read afresh on the next frame (the ground's one texel needs no resize)
     ctx.mask.resize(w, h, ctx.dpr);

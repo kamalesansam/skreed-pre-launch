@@ -31,7 +31,7 @@ export const COPY = {
     noscriptDatetime: '2026-11-19T00:00+05:30',
   },
   /** the cue's words: over the chevrons on phones, in the bottom right corner on laptops (docs/specs/scroll-cue.md; the brief of 2026-11-02) */
-  cue: { label: 'Scroll to see more' },
+  cue: { label: 'Scroll down to see more' },   // "Scroll down" since 2026-11-06 (the site review of 2026-11-05: "Add 'Scroll down to see more' wherever there are arrows, so it's more clear that one has to keep scrolling")
   /** section 2's labels (section-2.md 3): igloo's three slots, carrying our facts, uppercase (E-S2-font) */
   s2: { count: '24 SHADES', click: 'CLICK TO EXPLORE', tap: 'TAP TO EXPLORE', aria: 'Colour families' },
   logo: { aria: 'Skreed, home' },

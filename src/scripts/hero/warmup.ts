@@ -34,7 +34,6 @@ export async function warmUp(ctx: HeroContext, resize: () => void, gate: StallGa
     renderer.setRenderTarget(null); await renderer.compileAsync(composite.scene, composite.camera); life.check();
     renderer.setSize(8, 8, false); composerA.c.setSize(8, 8); composerA.save.renderTarget.setSize(8, 8);
     composerA.c.render(0); await step(('c' + ++k) as Milestone);
-    fogGround.resize(8, 8); fogGround.render();   // section 3's ground: its program links here, not at the second wipe
     const C = composite.C;
     C.tA.value = composerA.c.readBuffer.texture; C.tB.value = fogGround.out; renderer.setRenderTarget(null);
     C.uProgress.value = 0.5; renderer.render(composite.scene, composite.camera); C.uProgress.value = 0; renderer.render(composite.scene, composite.camera);

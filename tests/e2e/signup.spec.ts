@@ -182,3 +182,64 @@ test('section 5 at 390 x 844: the form\'s states against a stub (empty, invalid,
   await expect(page.locator('#suDone')).toHaveText('Done. Your colours are saved to sam@example.com.', { timeout: 10_000 });
   await ctx.close();
 });
+
+for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
+  test(`section 5 at ${vp.width} x ${vp.height}: the Followed ticks (2026-11-06): one under each follow column, named per platform, a tick fills jar 4 and one taken off drains it (the rest keep their order), the ticks remembered for the visit, a press on a column counts no follow`, async ({ browser, baseURL }) => {
+    test.setTimeout(240_000);
+    const ctx = await browser.newContext({ viewport: vp, deviceScaleFactor: 1 });
+    const page = await ctx.newPage();
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(String(e)));
+    await open(page, baseURL);
+    const f = await fit(page);
+    expect(f.overflowX).toBe(false);
+    expect(Math.abs(f.bodyH - f.vh), 'one screen with the ticks').toBeLessThanOrEqual(1);
+    // the three ticks under the first three columns (the fourth cell empty), each inside its column's width, 44 px of hit
+    const cols = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>('.su-row > .su-col')].map((c) => { const r = c.getBoundingClientRect(); return { l: r.left, r: r.right, b: r.bottom }; }));
+    const ticks = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>('.su-tick')].map((t) => { const r = t.getBoundingClientRect(), i = t.querySelector('input')!, cs = getComputedStyle(t, '::after'); return { id: t.dataset.id, l: r.left, r: r.right, t: r.top, b: r.bottom, h: r.height, hit: r.height - parseFloat(cs.top) * 2, name: i.getAttribute('aria-label'), word: t.textContent!.trim(), checked: i.checked }; }));
+    expect(ticks.map((t) => [t.id, t.name, t.word, t.checked])).toEqual([['facebook', 'I follow Skreed on Facebook', 'Followed', false], ['youtube', 'I follow Skreed on YouTube', 'Followed', false], ['instagram', 'I follow Skreed on Instagram', 'Followed', false]]);
+    for (const [k, t] of ticks.entries()) {
+      expect(t.l, `${t.id}: inside its column`).toBeGreaterThanOrEqual(cols[k].l - 0.5);
+      expect(t.r).toBeLessThanOrEqual(cols[k].r + 0.5);
+      expect(t.t, 'under the column').toBeGreaterThanOrEqual(cols[k].b - 0.5);
+      expect(t.hit, 'a 44 px hit box').toBeGreaterThanOrEqual(44);
+    }
+    // a press on a column opens its page and fills nothing
+    const [tab] = await Promise.all([ctx.waitForEvent('page'), page.locator('a.su-follow[data-id="youtube"]').click()]);
+    await tab.close();
+    await page.waitForTimeout(1600);
+    expect(await state(page)).toBe('0');
+    expect(await page.locator('#suTick-youtube').isChecked()).toBe(false);
+    // Facebook ticked, then Instagram: blue, then the mixed lot on top
+    await page.locator('label.su-tick[data-id="facebook"]').click();
+    await expect.poll(() => filled(page).then((x) => x.map((e) => e.state)), { timeout: 5_000 }).toEqual(['f']);
+    await page.locator('label.su-tick[data-id="instagram"]').click();
+    await expect.poll(() => filled(page).then((x) => x.map((e) => e.state)), { timeout: 6_000 }).toEqual(['f', 'fi']);
+    await expect(page.locator('#suYours')).toHaveAttribute('aria-label', 'Your jar, three quarters full, from the bottom: blue, then pink and purple.');
+    expect(await page.evaluate(() => sessionStorage.getItem('skreed:signup-follows'))).toBe('["facebook","instagram"]');
+    // Facebook's tick off: the blue drains and the pink and purple stay (the render of 'i'), announced; the state and the memory follow
+    await page.locator('label.su-tick[data-id="facebook"]').click();
+    await expect.poll(() => filled(page).then((x) => x.map((e) => e.state)), { timeout: 5_000 }).toEqual(['f', 'fi', 'i']);
+    expect(await state(page)).toBe('i');
+    await expect(page.locator('#suYours')).toHaveAttribute('aria-label', 'Your jar, half full, from the bottom: pink and purple.');
+    await expect(page.locator('#suLive')).toHaveText('Blue taken out of your jar.');
+    expect(await page.evaluate(() => sessionStorage.getItem('skreed:signup-follows'))).toBe('["instagram"]');
+    expect(await page.evaluate(() => [...document.querySelectorAll<HTMLInputElement>('.su-tick-box')].map((i) => i.checked))).toEqual([false, false, true]);
+    // the last tick off: the jar empty again, as it began
+    await page.locator('label.su-tick[data-id="instagram"]').click();
+    await expect.poll(() => state(page), { timeout: 6_000 }).toBe('0');
+    await expect(page.locator('#suYours')).toHaveAttribute('aria-label', 'Your jar, empty.');
+    expect(await page.evaluate(() => sessionStorage.getItem('skreed:signup-follows'))).toBe('[]');
+    // a reload in the visit: the ticks as remembered
+    await page.locator('label.su-tick[data-id="youtube"]').click();
+    await expect.poll(() => state(page), { timeout: 5_000 }).toBe('y');
+    await page.reload();
+    await page.waitForFunction(() => !document.getElementById('signup')?.hidden, null, { timeout: 30_000 });
+    await page.evaluate(() => { const el = document.getElementById('signup')!; scrollTo({ top: el.getBoundingClientRect().top + scrollY, behavior: 'instant' }); });
+    await hooks(page);
+    expect(await state(page)).toBe('y');
+    expect(await page.evaluate(() => [...document.querySelectorAll<HTMLInputElement>('.su-tick-box')].map((i) => i.checked))).toEqual([false, true, false]);
+    expect(errors).toEqual([]);
+    await ctx.close();
+  });
+}

@@ -449,7 +449,7 @@ async function expectResult(page: Page, r: Drawn): Promise<void> {
   // shown the consent in capitals and the fine print as written. Send is left out: its words are the form's state
   if (await page.locator('#qzGift').count() && !(await swapped(page))) {
     const gift = page.locator('#qzGift'), giftLines: [string, string, boolean][] = [['.qz-offer > span:first-child', Q.offerLead, false], ['.qz-offer > strong', Q.offerStrong, false], ['.qz-offer > span:last-child', Q.offerTail, false], ['.qz-toresult', Q.toResult, true]];
-    if (await gift.locator('.qz-fields').isVisible()) giftLines.push(['.qz-check > span:last-child', Q.consent, true], ['.qz-fine > span', Q.fine, false], ['.qz-privacy', PRIVACY_LINK, false]);
+    if (await gift.locator('.qz-fields').isVisible()) giftLines.push(['.qz-check > span:last-child', Q.consent, false], ['.qz-fine > span', Q.fine, false], ['.qz-privacy', PRIVACY_LINK, false]);   // the consent as written since 2026-11-06 (Poppins 700, Jyotika's "bigger and in bold")
     for (const [sel, text, caps] of giftLines) expect(await atRest(gift.locator(sel)), `the offer's ${sel}: one text node at rest, Sam's words in his case, ${caps ? 'drawn in capitals' : 'drawn as written'}`).toEqual(settledLine(text, caps));
   }
 }
@@ -1327,12 +1327,14 @@ const boxed = (page: Page): Promise<string[]> => page.evaluate(({ CLEAR, URBAN_S
     if (!p && e.matches('.qz-ground')) return fillOf(tone('--qz-deep') ?? NIGHT);
     if (!p && e.matches('.qz-rub-col')) return fillOf(shade ? SHADE_RGB[shade] ?? `the catalog's ${shade}` : CLEAR);
     if (e.id === 'qzGift' && p !== '::before') return fillOf(tone('--qz-band') ?? CLEAR);   // its ::after runs the band's fill on under the section where a phone browser's bars have gone
-    if (!p && e.id === 'qzEmail') return e.getAttribute('aria-invalid') === 'true' ? fillOf(PEARL, '0px 0px 3px 0px', `solid ${URBAN_SLATE}`) : fillOf(PEARL);
-    if (!p && e.id === 'qzSend') return fillOf(e.matches(':hover') && e.getAttribute('aria-disabled') !== 'true' ? NIGHT : URBAN_SLATE);
+    if (!p && (e.id === 'qzEmail' || e.id === 'qzName' || e.id === 'qzCode')) return e.getAttribute('aria-invalid') === 'true' ? fillOf(PEARL, '0px 0px 3px 0px', `solid ${URBAN_SLATE}`) : fillOf(PEARL);   // the first name and the code fields (2026-11-03) as the email's
+    if (!p && (e.id === 'qzSend' || e.id === 'qzConfirm')) return fillOf(e.matches(':hover') && e.getAttribute('aria-disabled') !== 'true' ? NIGHT : URBAN_SLATE);   // Confirm (2026-11-03) as Send
     if (!p && e.matches('.qz-mini')) return e.hasAttribute('data-rim') ? fillOf(SHADE_RGB[e.dataset.shade ?? ''], '1px 1px 1px 1px', `solid ${PEARL}`) : fillOf(SHADE_RGB[e.dataset.shade ?? '']);
     // the reveal's hairline in Urban Slate and the line that fills it in Pearl Whisper (D50): lines, not boxes
     if (!p && e.matches('.qz-bar')) return fillOf(URBAN_SLATE);
     if (!p && e.matches('.qz-bar-fill')) return fillOf(PEARL);
+    // the consent's error box over the tick (2026-11-06): the field's Pearl Whisper, no border, hidden until it has words
+    if (!p && e.matches('.qz-pop')) return fillOf(PEARL);
     const fill = cs.backgroundColor !== CLEAR || cs.backgroundImage !== 'none';
     return fill || !none ? `${what}: ${cs.backgroundColor} ${cs.backgroundImage} ${border}` : '';
   })).filter(Boolean);
@@ -1382,7 +1384,7 @@ function typeScale(w: number, h: number): Sizes {
  *  12 px (CHECKLIST A3): the shade's name in Anton 400 capitals at the size deck.ts fits it to its column (--qz-name-fs;
  *  64 px on a result never shown); in Work Sans 300 capitals the eyebrow at the result's label step at -0.02 em, the
  *  personality at 0.72 of it at -0.02 em, the family line, the finish and the links at 0.6 of it, and the band's own lines
- *  (the consent and its tick, the errors, the status line, the done line, Not you, Back to your shade) at 0.5 of it; in
+ *  (the errors, the status line, the done line, Not you, Back to your shade) at 0.5 of it; in
  *  Poppins 400 as written the profile, the colour profile and "We also recommend:" at the words' step, and the chips'
  *  names in its italic at 0.9 of it in their chip's ink (data-ink: --night or Pearl Whisper); the offer's line in Poppins
  *  400 as written, its middle at 700, at the offer's step and 13 px at the least; Send in Work Sans 300 capitals at the
@@ -1394,10 +1396,10 @@ const offType = async (page: Page, sizes: Sizes): Promise<string[]> => {
     for (const e of document.querySelectorAll('#find *')) if ([...e.childNodes].some((n) => n.nodeType === Node.TEXT_NODE && n.textContent!.trim())) els.add(e);
     return {
       rs: parseFloat(getComputedStyle(document.getElementById('find')!).getPropertyValue('--qz-rs')) || 1,
-      lines: [...els].filter((e) => !e.closest('.sr-only, .dc > span, #qzEmail, noscript')).map((e) => {
+      lines: [...els].filter((e) => !e.closest('.sr-only, .dc > span, #qzEmail, #qzName, #qzCode, noscript')).map((e) => {   // the first-name and code fields (2026-11-03) are read with the email field's row, not here
         const cs = getComputedStyle(e), name = e.closest<HTMLElement>('.qz-shade'), chip = e.closest<HTMLElement>('.qz-mini');
         const role = name ? 'name' : e.closest('.qz-h, .qz-q, .qz-rv-line') ? 'step' : e.closest('.qz-eyebrow') ? 'eyebrow' : e.closest('.qz-persona') ? 'persona' : e.closest('.qz-text, .qz-palette') ? 'words' : chip ? 'chip'
-          : e.closest('.qz-result') ? 'result' : e.closest('.qz-offer') ? 'offer' : e.closest('.qz-fine') ? 'fine' : e.closest('#qzSend') ? 'send' : e.closest('#qzGift') ? 'band' : 'label';
+          : e.closest('.qz-result') ? 'result' : e.closest('.qz-offer') ? 'offer' : e.closest('.qz-fine') ? 'fine' : e.closest('#qzSend, #qzConfirm') ? 'send' : e.closest('.qz-check') ? 'consent' : e.closest('.qz-pop') ? 'pop' : e.closest('#qzGift') ? 'band' : 'label';   // Confirm (2026-11-03) is set as Send is
         return {
           what: `${e.tagName.toLowerCase()}${e.id ? `#${e.id}` : ''}${[...e.classList].map((c) => `.${c}`).join('')}`, role, bold: !!e.closest('.qz-offer strong'), ink: chip?.dataset.ink ?? '',
           fit: name ? parseFloat(name.style.getPropertyValue('--qz-name-fs')) || 64 : 0,
@@ -1422,6 +1424,8 @@ const offType = async (page: Page, sizes: Sizes): Promise<string[]> => {
       : l.role === 'offer' ? { ...poppins, weight: l.bold ? '700' : '400', size: at(sizes.offer, 13) }
       : l.role === 'fine' ? { ...poppins, size: 12 }
       : l.role === 'send' ? { ...work, size: at(sizes.offer, 14) }
+      : l.role === 'consent' ? { ...poppins, weight: '700', size: at(sizes.rlabel * 0.62, 14) }   // the tick and its words, bigger and bold since 2026-11-06 (Jyotika, 2026-11-05)
+      : l.role === 'pop' ? { ...poppins, weight: '700', color: URBAN_SLATE, size: at(sizes.rlabel * 0.62, 14) }   // the consent's error box, Urban Slate words on the field's Pearl Whisper
       : l.role === 'band' ? { ...work, size: at(sizes.rlabel * 0.5) }
       : { ...mono, size: sizes.label };
     const ok = l.family === want.family && l.weight === want.weight && l.style === want.style && l.transform === want.transform && Math.abs(l.spacing - want.spacing) <= 0.01 && l.color === want.color && Math.abs(l.size - want.size) <= 0.01;
@@ -1487,7 +1491,8 @@ test('AC1 and AC7 no boxes but the result\'s own: no fill, border or shadow on a
   // done line and Not you (200)
   await page.locator('#qzSend').click();
   await expect(said(page.locator('#qzErrEmail'))).toHaveText(Q.errEmail);
-  await expect(said(page.locator('#qzErrConsent'))).toHaveText(Q.errConsent);
+  await expect(page.locator('#qzErrConsent'), 'the consent\'s error, a box over the tick written as it is (2026-11-06)').toHaveText(Q.errConsent);
+  await expect(page.locator('#qzErrConsent')).toBeVisible();
   await check('the field errors');
   await page.locator('#qzEmail').fill(EMAIL); await tick(page); await page.locator('#qzSend').click();
   await expect(said(page.locator('#qzMsg'))).toHaveText(Q.errSend);
@@ -1695,12 +1700,12 @@ test('AC10 the fonts: the quiz\'s mono in one family of two files split by unico
   const lines: [string, RegExp][] = [
     ...([['.qz-eyebrow', WORK], ['.qz-shade', ANTON], ['.qz-fam', WORK], ['.qz-finish', WORK], ['.qz-persona', WORK], ['.qz-text', POPPINS], ['.qz-palette > span:not(.qz-also-h)', POPPINS], ['.qz-also-h', POPPINS],
       ['.qz-mini:not([hidden]) .qz-mini-name', ITALIC], ['.qz-see', WORK], ['.qz-retry', WORK]] as [string, RegExp][]).map(([s, f]): [string, RegExp] => [`.qz-result:not([hidden]) ${s}`, f]),
-    ['.qz-offer > span:first-child', POPPINS], ['.qz-offer > strong', BOLD], ['.qz-offer > span:last-child', POPPINS], ['#qzSend', WORK], ['.qz-check > span:last-child', WORK], ['.qz-fine', POPPINS],
+    ['.qz-offer > span:first-child', POPPINS], ['.qz-offer > strong', BOLD], ['.qz-offer > span:last-child', POPPINS], ['#qzSend', WORK], ['.qz-check > span:last-child', BOLD], ['.qz-fine > span:first-child', POPPINS],   // the consent in Poppins 700 since 2026-11-06; the fine print's words are its first span since the privacy link joined it (2026-11-03)
   ];
   const found = await page.evaluate((sels) => sels.map((sel, n) => { const row = document.querySelector<HTMLElement>(`${sel} > .dc`); const plain = !!row && row.childNodes.length === 1 && row.firstChild!.nodeType === Node.TEXT_NODE; if (plain) row.dataset.qzProbe = String(n); return plain; }), lines.map(([s]) => s));
   expect(found, 'each line drawn, plain text at rest').toEqual(lines.map(() => true));
   const faceOf = Object.fromEntries((await drawnWith(lines.length)).map((f, n) => [lines[n][0].replace('.qz-result:not([hidden]) ', ''), f.map((x) => `${x.family} [${x.ps}]${x.web ? ' (web font)' : ''}`)]));
-  expect(faceOf, 'the name in Anton, the words, the offer and the fine print in Poppins (the bold in its 700), the chips\' names in its italic, the labels, the links, Send and the consent in Work Sans Light').toEqual(Object.fromEntries(lines.map(([s, f]) => [s.replace('.qz-result:not([hidden]) ', ''), [expect.stringMatching(f)]])));
+  expect(faceOf, 'the name in Anton, the words, the offer and the fine print in Poppins (the bold in its 700), the chips\' names in its italic, the labels, the links and Send in Work Sans Light, the consent in Poppins 700 (2026-11-06)').toEqual(Object.fromEntries(lines.map(([s, f]) => [s.replace('.qz-result:not([hidden]) ', ''), [expect.stringMatching(f)]])));
   // every character the quiz draws: its copy upper-cased as drawn (the no-JS line, the counts, the family lines, the
   // done line included) and the email as typed (the field keeps its case), less the capitals file's space, digits and A-Z;
   // the result's and the offer's lines, in Sam's design's faces since 2026-11-02, are in it too, which the Plex covers all
@@ -1799,7 +1804,7 @@ test('AC8 the gift form: blur with a value validates and an empty submit shows b
   // so both errors after the empty submit come from the submit (an empty field is not validated on blur)
   await email.fill(''); await send.click();
   await expect(said(errEmail)).toHaveText(Q.errEmail);
-  await expect(said(page.locator('#qzErrConsent'))).toHaveText(Q.errConsent);
+  await expect(page.locator('#qzErrConsent')).toHaveText(Q.errConsent);   // the box over the tick, written as it is (2026-11-06)
   expect(await copies(errEmail), 'the error drawn in capitals at once, through the decoder').toEqual({ sr: Q.errEmail, row: Q.errEmail.toUpperCase(), faded: 0 });
   await expect(email).toHaveAttribute('aria-invalid', 'true');
   await expect(consent).toHaveAttribute('aria-invalid', 'true');
@@ -2073,7 +2078,7 @@ test('AC8 Try again clears the form\'s lines and frees the form: a 500\'s line u
   await email.fill('nope'); await page.locator('.qz-check').click(); await expect(consent).not.toBeChecked();
   await send.click();
   await expect(said(errEmail)).toHaveText(Q.errEmail);
-  await expect(said(errConsent)).toHaveText(Q.errConsent);
+  await expect(errConsent).toHaveText(Q.errConsent);   // the box over the tick, written as it is (2026-11-06)
   await expect(said(msg), 'the send error still under Send').toHaveText(Q.errSend);
   await expect(email).toHaveAttribute('aria-invalid', 'true');
   await expect(consent).toHaveAttribute('aria-invalid', 'true');
@@ -2156,7 +2161,7 @@ test('AC8 the form\'s errors reach assistive technology: Enter in the email fiel
   await consent.focus();
   n = (await heard(page)).length;
   await page.locator('#qzForm').evaluate((f) => { (f as HTMLFormElement).requestSubmit(); });
-  await expect(said(errConsent)).toHaveText(Q.errConsent);
+  await expect(errConsent).toHaveText(Q.errConsent);   // the box over the tick, written as it is (2026-11-06)
   await expect(consent).toHaveAttribute('aria-invalid', 'true');
   await expect(errEmail).toHaveText('');
   await expect(email).toHaveAttribute('aria-invalid', 'false');
@@ -2231,7 +2236,7 @@ test('AC1 assistive technology gets Sam\'s sentence case: the browser\'s accessi
   // written (the three runs of the offer each its own text)
   await cased('the result and the live region', [Q.eyebrow, r.name, r.p.name, r.p.profile, r.p.palette, Q.also, Q.see, Q.retry, Q.offerLead, Q.offerStrong, Q.offerTail, Q.email, Q.consent, Q.send, Q.fine, heard]);
   await page.locator('#qzSend').click();
-  await expect(said(page.locator('#qzErrConsent'))).toHaveText(Q.errConsent);
+  await expect(page.locator('#qzErrConsent')).toHaveText(Q.errConsent);   // the box over the tick, written as it is (2026-11-06)
   await cased('the field errors', [Q.errEmail, Q.errConsent]);
   await page.locator('#qzEmail').fill(EMAIL); await tick(page); await page.locator('#qzSend').click();
   await expect(said(page.locator('#qzMsg'))).toHaveText(Q.errSend);

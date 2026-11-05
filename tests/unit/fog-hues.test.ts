@@ -86,8 +86,10 @@ test('one clock for both instances: the same t advances it once, dt is capped at
 test('both instances write the hues from the shared clock, and no build gate remains', () => {
   assert.match(read('src/scripts/hero/section2/background.ts'), /uHueAmt: \{ value: 0 \}/);
   assert.match(read('src/scripts/hero/section2/gems.ts'), /writeHues\(bg\.uniforms, hueFrame\(t, REDUCE\), 1\);/);
+  // section 3's ground draws no fog since 2026-11-06 (one flat texel of QUIZ_GROUND; E-S3-bg withdrawn on the site review of
+  // 2026-11-05), so the hues have one instance, section 2's; the ground reads nothing from the DOM and carries no fog code
   const ground = read('src/scripts/hero/section3/ground.ts');
-  assert.match(ground, /writeHues\(U, hueFrame\(t, reduced\), 1\);/);   // at full strength under the quiz's result too (Sam, 2026-10-29: "keep it on")
-  assert.doesNotMatch(ground, /dataset\.state|getElementById|toGrey|1 - grey/, 'the ground reads nothing from the DOM: no fade to grey under the result');
+  assert.doesNotMatch(ground, /writeHues|hueFrame|createBackground|ShaderMaterial/, 'no fog pass under the quiz');
+  assert.doesNotMatch(ground, /dataset\.state|getElementById|toGrey|1 - grey/, 'the ground reads nothing from the DOM');
   for (const f of ['src/scripts/hero/section3/ground.ts', 'src/env.d.ts', 'package.json']) assert.doesNotMatch(read(f), /PUBLIC_FOG_HUES/, `${f} has no build gate`);
 });

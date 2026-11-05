@@ -26,7 +26,7 @@ import { createStones } from './world/stones.ts';
 import { bakeWindTexture } from './world/wind.ts';
 import { createFogCards, createFogUniforms, placeFogCards, type FogUniforms } from './world/fog.ts';
 import { createCameraRig } from './camera/rig.ts';
-import { createFogGround } from './section3/ground.ts';
+import { createQuizGround } from './section3/ground.ts';
 import { createGems } from './section2/gems.ts';
 import { makeHeroComposer } from './post/composer.ts';
 import { makeScrollTexture } from './post/wipeTexture.ts';
@@ -167,7 +167,7 @@ export async function startHero(o: StartOptions): Promise<void> {
 
   // 13. section 3's ground (the last wipe's far side: the fog alone, quiz.md 5) and section 2, the gems (built after the
   // intro, one stone per frame)
-  const fogGround = createFogGround(renderer, reduced);
+  const fogGround = createQuizGround();
   life.onKill(() => fogGround.dispose());
   const section2 = createGems({ renderer, reduced, touch, dpr, logo, U, blocks, camA, canvas, hooks: HOOKS });
   life.onKill(() => section2.dispose());

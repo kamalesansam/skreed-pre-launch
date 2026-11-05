@@ -390,7 +390,7 @@ export function mountQuiz(root: HTMLElement): void {
   const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
   // the form's own lines go through the decoder too (set: at once, no animation), so each has its sentence-case copy for
   // assistive technology beside the capitals on screen
-  const setErr = (el: HTMLElement, input: HTMLInputElement, text: string) => { dc.set(el, text); input.setAttribute('aria-invalid', text ? 'true' : 'false'); refit(); };   // the line keeps its height (quiz.css), so a message never moves the controls under it; a longer one is fitted again
+  const setErr = (el: HTMLElement, input: HTMLInputElement, text: string) => { if (el.classList.contains('qz-pop')) { el.textContent = text; el.hidden = !text; } else dc.set(el, text); input.setAttribute('aria-invalid', text ? 'true' : 'false'); refit(); };   // the line keeps its height (quiz.css), so a message never moves the controls under it; a longer one is fitted again. The consent's box (.qz-pop, 2026-11-06) is written as it is, at once and as written (a popup, not a decoded line; role="alert" reads it), with no reserved line: it comes with its words and goes without them, and the band is fitted again each way
   const validName = () => { const ok = nameOk(name.value); setErr(errName, name, ok ? '' : K.errName); return ok; };
   name.addEventListener('blur', () => { if (name.value) validName(); });
   const validEmail = () => { const ok = EMAIL.test(email.value.trim()); setErr(errEmail, email, ok ? '' : Q.errEmail); return ok; };

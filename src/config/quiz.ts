@@ -54,9 +54,11 @@ export const QUIZ_COPY = {
   send: 'Send my code',
   sending: 'Sending...',
   trying: 'Still trying...',
-  fine: 'One email about your shade, one when we launch. Unsubscribe any time.',
+  /** the fine print before the privacy notice: Jyotika's words of 2026-11-05 (three emails are planned: the shade's, the eve of the launch, the launch day) */
+  fine: 'No spam, just the good stuff. Unsubscribe anytime.',
   errEmail: 'That doesn’t look like an email address.',
-  errConsent: 'Tick the box so we can email you.',
+  /** the consent's error, a box over the tick since 2026-11-06 (Jyotika, 2026-11-05: "add an error popup that says 'Please check the box below to proceed' in case someone misses it and clicks on 'Send my code'") */
+  errConsent: 'Please check the box below to proceed.',
   errSend: 'That didn’t go through. Try again.',
   dup: 'You’re already on the list. Check your inbox.',
   offline: 'You’re offline. We’ll send it when you’re back.',

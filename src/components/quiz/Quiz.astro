@@ -154,8 +154,11 @@ const shade = (id: string) => {
             <button type="submit" class="qz-send" id="qzSend" data-dc="prop">{Q.send}</button>
           </div>
           <p class="qz-err" id="qzErrEmail"></p>
+          {/* the consent's error over the tick, a box (Jyotika, 2026-11-05: "add an error popup that says 'Please check the
+              box below to proceed'"); the tick bigger and bold the same day ("The checkbox at the bottom is too small to
+              read. It should be a little bigger and in bold.") */}
+          <p class="qz-pop" id="qzErrConsent" role="alert" hidden></p>
           <label class="qz-check"><input type="checkbox" id="qzConsent" name="consent" required aria-describedby="qzErrConsent"><span class="qz-tick" aria-hidden="true"></span><span data-dc="prop">{Q.consent}</span></label>
-          <p class="qz-err" id="qzErrConsent"></p>
           <p class="qz-msg" id="qzMsg" role="status"></p>
           <p class="qz-fine"><span data-dc="prop">{Q.fine}</span>{' '}<a class="qz-privacy" href={PRIVACY.path} data-dc="prop">{PRIVACY_LINK}</a></p>
         </div>

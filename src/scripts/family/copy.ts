@@ -13,7 +13,7 @@ export const FAM_COPY = {
   families: 'Families',
   allFamilies: 'All families',
   backHome: 'Back to main page',   // the argument screen's way out (round 4, section 22, Sam's words in sentence case)
-  scrollMore: 'Scroll to see more',   // the cue's words (docs/specs/family-page.md 25, docs/specs/scroll-cue.md; the brief of 2026-11-02)
+  scrollMore: 'Scroll down to see more',   // the cue's words (docs/specs/family-page.md 25, docs/specs/scroll-cue.md; the brief of 2026-11-02; "Scroll down" since 2026-11-06, the site review of 2026-11-05)
   stage: (family: string, shade: string) => `24 ${family} cases in a row. ${shade} is in front.`,
   prev: 'Previous shade',
   next: 'Next shade',

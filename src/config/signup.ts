@@ -56,6 +56,12 @@ export const SIGNUP_COPY = Object.freeze({
   sending: 'SENDING...',
   still: 'STILL TRYING...',
   errEmail: 'That doesn’t look like an email address.',
+  /** the Followed tick under each follow column (the site review of 2026-11-05: "Add a checkbox directly below each of the first three
+   *  jars, labelled Followed. When checked, the fourth jar should visually fill up. When unchecked, it should return to its
+   *  original unfilled state."): its one word, its accessible name per platform, and the live region's words as a layer leaves */
+  followed: 'Followed',
+  followedAria: 'I follow Skreed on {platform}',
+  removed: '{colour} taken out of your jar.',
   /** the consent tick under the field (DPDP Act; Sam, 2026-11-03: "yeah add that"), the quiz's words */
   consent: 'I’m happy to hear from Skreed by email.',
   errConsent: 'Tick the box so we can email you.',
@@ -132,8 +138,10 @@ export const stateOf = (order: readonly string[]): string => {
 };
 /** the previous name of stateOf (the island's stills were keyed by it) */
 export const stillKey = stateOf;
-/** the follows after a press: a platform already pressed adds nothing */
+/** the follows after a press (a tick since 2026-11-06): a platform already in adds nothing */
 export const pressFollow = (order: readonly string[], id: string): readonly string[] => (!jarById(id) || order.includes(id) ? order : [...order, id]);
+/** the follows after a tick is taken off (2026-11-06): the platform leaves the order, the rest keep theirs; one not in it changes nothing */
+export const releaseFollow = (order: readonly string[], id: string): readonly string[] => (order.includes(id) ? order.filter((x) => x !== id) : order);
 /** the level in words, by quarters */
 export function levelWord(level: number): string {
   const q = Math.round(level * 4);
@@ -147,6 +155,10 @@ export function yoursAlt(order: readonly string[]): string {
 }
 /** the live region's words for a follow's fill, the jar full or not */
 export const addedLine = (id: string, full: boolean): string => fill(full ? SIGNUP_COPY.addedFull : SIGNUP_COPY.added, { colour: jarById(id)?.colour ?? '' });
+/** the live region's words as a follow's layer leaves (a tick taken off) */
+export const removedLine = (id: string): string => fill(SIGNUP_COPY.removed, { colour: jarById(id)?.colour ?? '' });
+/** the accessible name of a follow column's Followed tick */
+export const followedAria = (j: SignupJar): string => fill(SIGNUP_COPY.followedAria, { platform: j.platform });
 
 /** the fill's reveal (D6): 900 ms for a quarter, 1400 ms for a half */
 export const FILL_MS = Object.freeze({ quarter: 900, half: 1400 });
@@ -174,10 +186,28 @@ export const JARS_DEFAULT: JarsManifest = /* @__PURE__ */ Object.freeze({ frame:
  */
 export function revealSpan(m: Pick<JarsManifest, 'states'>, from: string, to: string): { from: number; to: number } | null {
   const a = m.states[from]?.seam ?? m.states[from]?.top, b = m.states[to]?.top;
+  return span(a, b);
+}
+/**
+ * The reverse, a tick taken off (2026-11-06): the edge falls from the shown state's surface top to the seam of the base
+ * the two states share (their longest common prefix in press order; '0', the floor, when they share none), in percent of
+ * the frame's height, the lower state shown above the edge and the old one below it (signup.ts). Below the base's seam
+ * every state built on the base is pixel-identical to it, so once the edge is there the lower render can stand whole;
+ * above the shown state's top both renders are the empty glass, so the edge starts there with nothing to see. null when
+ * either is unknown (the state is then set at once).
+ */
+export function drainSpan(m: Pick<JarsManifest, 'states'>, from: string, to: string): { from: number; to: number } | null {
+  let k = 0;
+  while (k < from.length && k < to.length && from[k] === to[k] && from !== '0') k++;
+  const base = k ? from.slice(0, k) : '0';
+  const a = m.states[from]?.top, b = m.states[base]?.seam ?? m.states[base]?.top;
+  return span(a, b);
+}
+const span = (a: number | undefined, b: number | undefined): { from: number; to: number } | null => {
   if (typeof a !== 'number' || typeof b !== 'number' || !Number.isFinite(a) || !Number.isFinite(b)) return null;
   const pct = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 10000) / 100;
   return { from: pct(a), to: pct(b) };
-}
+};
 
 /** the storage keys (sessionStorage, the visit only; try and catch everywhere): the follows pressed, in order, and the queued lead */
 export const SIGNUP_KEYS = Object.freeze({ follows: 'skreed:signup-follows', queue: 'skreed:signup-queue' });

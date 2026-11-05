@@ -24,7 +24,7 @@ let lastY = Number.NaN, restSince = 0, offSince = 0, quizBelow: boolean | null =
 const isLocked = () => H.classList.contains('loading') || H.classList.contains('intro') || H.classList.contains('poster');
 const findBelow = () => (quizBelow ??= (document.getElementById('find')?.getBoundingClientRect().top ?? Infinity) >= innerHeight - 2);
 const docBelow = () => (pageBelow ??= document.documentElement.scrollHeight > innerHeight + CUE.top);
-function cueWords(m: HTMLElement, cue: HTMLElement | null, tp: number, s2ready: boolean): void {
+function cueWords(m: HTMLElement, cue: HTMLElement | null, tp: number, s2ready: boolean, light: boolean): void {
   const y = scrollY, now = performance.now(), locked = isLocked();
   if (y !== lastY || locked) { lastY = y; restSince = now; quizBelow = null; pageBelow = null; }
   const on = cueWordsOn({ y, vh: innerHeight, restMs: now - restSince, tp, s2ready, cueOff: !!cue?.classList.contains('is-off'), locked, quizBelow: findBelow, pageBelow: docBelow });
@@ -34,12 +34,15 @@ function cueWords(m: HTMLElement, cue: HTMLElement | null, tp: number, s2ready: 
   // column, never moving while they show (D10); the rest outlasts the fade, so they cannot come back at the top before that
   if (on && y > CUE.top && m.dataset.at !== 'pin') m.dataset.at = 'pin';
   else if (!on && y <= CUE.top && m.dataset.at && now - offSince >= CUE.fadeMs) delete m.dataset.at;
-  const light = tp > 0.5;   // the logotype's tone: Urban Slate over the fog
+  // the logotype's tone: Urban Slate over the fog (the words show before the second wipe, so never over the quiz's night)
   if (light !== (m.dataset.tone === 'light')) { if (light) m.dataset.tone = 'light'; else delete m.dataset.tone; }
 }
 
-export function rideCopy(els: RideEls, tp: number, asp: number, s2ready = false): void {
-  window.__skreedLogo?.setTone(tp > 0.5);
+/** `light`: the frame's ground wants the dark tone (Urban Slate) on the logotype and the cue's words: past half the first
+ *  wipe, over section 2's fog, by default; the loop also says no over the quiz's night ground (past half the second wipe,
+ *  since 2026-11-06) and yes again over section 5's cream */
+export function rideCopy(els: RideEls, tp: number, asp: number, s2ready = false, light = tp > 0.5): void {
+  window.__skreedLogo?.setTone(light);
   const c = els.heroCopy;
   if (c) {
     // v11: once section 2 is up the hero layer holds still in the first wipe (Sam: nothing flies up)
@@ -48,5 +51,5 @@ export function rideCopy(els: RideEls, tp: number, asp: number, s2ready = false)
     c.style.visibility = tp >= 1 ? 'hidden' : 'visible';
   }
   if (tp > 0) els.cue?.classList.add('is-off');   // the plain script hides it on scroll; this covers the wipe
-  if (els.more) cueWords(els.more, els.cue, tp, s2ready);
+  if (els.more) cueWords(els.more, els.cue, tp, s2ready, light);
 }
