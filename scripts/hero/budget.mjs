@@ -278,10 +278,11 @@ let markup5 = '';
 if (at5 >= 0) { const re = /<\/?section\b[^>]*>/g; re.lastIndex = at5; let d = 0; for (let m; (m = re.exec(html));) { d += m[0][1] === '/' ? -1 : 1; if (!d) { markup5 = html.slice(at5, re.lastIndex); break; } } }
 const css5Path = join(ROOT, 'src/styles/signup.css');
 const css5 = existsSync(css5Path) ? readFileSync(css5Path, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').replace(/\s*([{};,>])\s*/g, '$1').replace(/;}/g, '}') : '';
-// 5.5 KB since 2026-11-03 (section-5-picture.md 9, 16.6 and 18): the picture's page carries the four inline marks, the joined
-// field and button, the pictures' sources and jar 4's two layers; 5.0 KB measured on 2026-11-03 (45 B under the 5 KB line set
-// from the measure of 2026-11-02; 4 KB was the old page's)
-line("the first view: section 5's markup and signup.css (gzip)", gzipSync(markup5 + css5, { level: 9 }).length, 5.5, { note: `markup ${markup5.length} B, signup.css about ${css5.length} B` });
+// 6 KB since 2026-11-06 (section-5-picture.md 22): the Followed ticks' three labels and their rules took the page from 5,568 B
+// to 5,782 B against the 5.5 KB line of 2026-11-03 (section-5-picture.md 9, 16.6 and 18: the picture's page with the four inline
+// marks, the joined field and button, the pictures' sources and jar 4's two layers; 5.0 KB measured on 2026-11-03, 45 B under
+// the 5 KB line set from the measure of 2026-11-02; 4 KB was the old page's)
+line("the first view: section 5's markup and signup.css (gzip)", gzipSync(markup5 + css5, { level: 9 }).length, 6, { note: `markup ${markup5.length} B, signup.css about ${css5.length} B` });
 
 console.log(`\nsections 4 and 5 (section-4-flux.md 6, section-5.md 6; the ${BUILD}; scripts at gzip, everything else as stored; KB = 1024 B)`);
 const PENDING = 'over, pending Sam';
