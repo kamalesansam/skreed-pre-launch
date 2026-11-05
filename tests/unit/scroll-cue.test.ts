@@ -85,7 +85,7 @@ test('the pin: the quiz is read last, only when everything else holds (one layou
 
 test('copy: the brief\'s words on both pages, sentence case, no end stop, no dash, no emoji, no buzzword, no arrow', () => {
   for (const s of [COPY.cue.label, FAM_COPY.scrollMore]) {
-    assert.equal(s, 'Scroll to see more');
+    assert.equal(s, 'Scroll down to see more');   // "Scroll down" since 2026-11-06 (the site review of 2026-11-05)
     assert.doesNotMatch(s, /\u2014|\u2013|\p{Extended_Pictographic}|[\u2190-\u21ff]|[.!]$/u);
     assert.doesNotMatch(s, /seamless|elevate|unleash|next-level|revolutionary/i);
   }
@@ -126,8 +126,8 @@ test('the family page\'s markup and CSS: two lines, the first screen\'s with the
   assert.match(show, /html\.m3d:not\(\.loading\):not\(\.hud-off\):not\(\[data-scrolled\]\) \.cuetext\.is-land/);
   assert.match(show, /html\.m3d:not\(\.loading\):not\(\.hud-off\)\[data-still\] \.cuetext\.is-land/);
   assert.ok(show.endsWith('html.m3d:not(.loading).hud-off[data-still]:not(.arg-on) .cuetext.is-story'), 'the story line: at rest, after the loader, never on the argument screen');
-  assert.ok(css.includes('html.cue-tight .cuetext.is-land { display: none; }'), 'the first screen line stands down where it would meet the front case');
-  assert.ok(css.includes('white-space: normal; max-width: 9ch; text-align: right; line-height: 1.2; }'), 'the story line in two lines on phones, SCROLL TO over SEE MORE, in the dark corner (D6)');
+  assert.ok(css.includes('html.cue-tight .cuetext.is-land { left: auto; right: calc(4% + 18.25px + env(safe-area-inset-right, 0px)); transform: none; white-space: normal; max-width: 8ch; font-size: 11px; line-height: 1.2; text-align: right; }'), 'where the case reaches the line the words keep to the arrows, beside the right column in three short lines (2026-11-06)');
+  assert.ok(css.includes('white-space: normal; max-width: 11ch; text-align: right; line-height: 1.2; }'), 'the story line in two lines on phones, SCROLL DOWN over TO SEE MORE, in the dark corner (D6)');
   assert.ok(css.includes('.cuetext.is-story { bottom: calc(var(--inset) + var(--sab)); white-space: nowrap; max-width: none; line-height: 1; }'), 'one line on the wide layout');
   assert.doesNotMatch(css, /prefers-reduced-motion/, 'the full motion for every visitor since 2026-11-04 (E-3D-only): no instant branch');
   assert.match(css, /@media \(max-height: 499px\) \{[^\n]*\.cuetext\.is-land \{ display: none; \}/, 'no first-screen line on a short screen');

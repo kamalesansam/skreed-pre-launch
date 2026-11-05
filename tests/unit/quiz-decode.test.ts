@@ -62,7 +62,7 @@ test('no boxes outside the result: no panel, no fill, no shadow, the controls ar
   // ground as the result scrolls away (D53)
   for (const m of css.matchAll(/([^{}]+)\{[^{}]*?\bbackground(?:-color)?:\s*([^;}]+)/g)) {
     if (/^(none|transparent)$/.test(m[2].trim())) continue;
-    assert.match(m[1].trim(), /^(\.qz-ground|\.qz-gift|\.qz-gift::after|\.qz-rub-col|\.qz-input|\.qz-send|\.qz-send:hover:not\(\[aria-disabled="true"\]\)|\.qz-bar|\.qz-bar-fill|\.quiz\[data-fade\] \.qz-gift::before)$/, `a fill in quiz.css: ${m[1].trim()} ${m[2]}`);
+    assert.match(m[1].trim(), /^(\.qz-ground|\.qz-gift|\.qz-gift::after|\.qz-rub-col|\.qz-input|\.qz-send|\.qz-send:hover:not\(\[aria-disabled="true"\]\)|\.qz-bar|\.qz-bar-fill|\.qz-pop|\.quiz\[data-fade\] \.qz-gift::before)$/, `a fill in quiz.css: ${m[1].trim()} ${m[2]}`);   // .qz-pop: the consent's error box over the tick, the field's Pearl Whisper (Jyotika, 2026-11-05)
   }
   // shadows: the shade name's one hard offset (the reference's darker copy behind the letters) and nothing else
   // (the decode's roll in a proportional face draws the rolled glyph over the face's own: the name's layer goes with it)

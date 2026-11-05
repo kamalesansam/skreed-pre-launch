@@ -41,14 +41,14 @@ const settled = (page: Page, want: boolean, timeout = 60_000, label = '') => pag
 
 test.describe('the landing at the top, poster tier', () => {
   for (const [w, h] of [[360, 780], [390, 844], [430, 932], [768, 1024], [1024, 768], [1100, 800], [1280, 800]]) {
-    test(`${w} x ${h}: "Scroll to see more" in Plex Mono capitals, in the bottom right corner (small under 768 px), in the gutters`, async ({ browser }) => {
+    test(`${w} x ${h}: "Scroll down to see more" in Plex Mono capitals, in the bottom right corner (small under 768 px), in the gutters`, async ({ browser }) => {
       const ctx = await browser.newContext({ viewport: { width: w, height: h } });
       const page = await ctx.newPage();
       await page.goto('/?tier=poster');
       await page.evaluate(() => document.fonts.ready);
       await settled(page, true);
       const g = await geometry(page);
-      expect(g.label).toBe('Scroll to see more');
+      expect(g.label).toBe('Scroll down to see more');   // "Scroll down" since 2026-11-06 (the site review of 2026-11-05)
       expect(g.hidden).toBe('true');
       expect(g.pe).toBe('none');
       expect(g.style).toMatchObject({ family: 'IBM Plex Mono', weight: '500', size: w < 768 ? '11px' : '14px', color: PEARL, transform: 'uppercase', style: 'normal', opacity: '1', visibility: 'visible' });

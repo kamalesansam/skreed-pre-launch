@@ -42,7 +42,7 @@ for (const [name, setup] of [['390', PHONE], ['1280', WIDE], ['1024x768', TABLET
     await open3d(page);
     await settled(page, '.cuetext.is-land', true);
     const top = await scene(page, '.cuetext.is-land');
-    expect(top.label).toBe('Scroll to see more');
+    expect(top.label).toBe('Scroll down to see more');   // "Scroll down" since 2026-11-06
     expect(top.style).toMatchObject({ family: 'IBM Plex Mono', weight: '500', size: '14px', color: PEARL });
     expect(Math.abs((top.words.l + top.words.r) / 2 - top.vw / 2), 'centred').toBeLessThan(1);
     if (setup.viewport.width < 900) {
@@ -86,7 +86,7 @@ const frontCase = (page: Page) => page.evaluate(() => {
 });
 
 for (const [w, h, shown] of [[360, 780, true], [430, 932, true], [375, 667, true], [768, 1024, true], [375, 553, false]] as const) {
-  test(`${w} x ${h}: the first screen's words ${shown ? 'clear the front case by 4 px or more' : 'stand down, the case reaching their line; the columns stay'}`, async ({ browser }) => {
+  test(`${w} x ${h}: the first screen's words ${shown ? 'clear the front case by 4 px or more' : 'keep to the arrows, beside the right column in three short lines, the case reaching their line (2026-11-06); the columns stay'}`, async ({ browser }) => {
     test.setTimeout(300_000);
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
     const page = await ctx.newPage();
@@ -103,7 +103,16 @@ for (const [w, h, shown] of [[360, 780, true], [430, 932, true], [375, 667, true
       expect(top.words.l).toBeGreaterThanOrEqual(16);
       expect(w - top.words.r).toBeGreaterThanOrEqual(16);
     } else {
-      expect(await page.locator('.cuetext.is-land').evaluate((e) => getComputedStyle(e).display)).toBe('none');
+      // the words beside the right column in three lines at 11 px, right-aligned 6 px off it, their bottom on the columns' line,
+      // clear of the front case and the controls (since 2026-11-06, the site review of 2026-11-05: the words wherever there are arrows)
+      await settled(page, '.cuetext.is-land', true);
+      const top = await scene(page, '.cuetext.is-land');
+      expect(await page.locator('.cuetext.is-land').evaluate((e) => [getComputedStyle(e).fontSize, Math.round(e.getBoundingClientRect().height)]), 'three lines at 11 px').toEqual(['11px', 40]);
+      expect(Math.abs(top.el.b - top.cue.b), 'on the columns\' bottom line').toBeLessThan(2);
+      for (const o of top.others) expect(meets(top.words, o.box), `clear of ${o.id}`).toBe(false);
+      expect(top.el.r, 'right-aligned off the right column').toBeLessThanOrEqual(top.cue2.l - 5);
+      expect(top.el.r, 'and close to it').toBeGreaterThanOrEqual(top.cue2.l - 8);
+      expect(top.el.l - fc!.r, 'clear of the front case').toBeGreaterThanOrEqual(2);
       // the columns show after their own 0.5 s visibility delay once the loader lifts (family.css's one transition for both ways)
       await page.waitForFunction(() => getComputedStyle(document.getElementById('cue')!).visibility === 'visible', null, { timeout: 5_000 });
     }

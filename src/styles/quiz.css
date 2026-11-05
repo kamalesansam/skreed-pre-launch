@@ -195,7 +195,13 @@ svg.qz-smear { aspect-ratio: var(--qz-paint-ar); }   /* our own stroke takes the
 .qz-privacy:focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }   /* 12 px, CHECKLIST A3's least */
 /* the consent tick is text too: the box itself stays in the tree for the keyboard and assistive technology, unseen, and
    the row shows [ ] or [X] in the same type */
-.qz-check { display: grid; grid-template-columns: auto auto; gap: var(--s2); align-items: baseline; align-content: center; min-height: 44px; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }   /* the tick on the words' first line (the words take two lines on a phone; centred, it floated between them), the row's words centred in its 44 px */
+.qz-check { display: grid; grid-template-columns: auto auto; gap: var(--s2); align-items: baseline; align-content: center; min-height: 44px; font: 700 max(14px, calc(var(--qz-fs-label) * 0.62 * var(--qz-rs, 1))) / 1.3 var(--qz-f-text); text-transform: none; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }   /* the tick on the words' first line (the words take two lines on a phone; centred, it floated between them), the row's words centred in its 44 px. Bigger and bold since 2026-11-06, in Poppins 700 as written, the band's one bold face (Jyotika, 2026-11-05: "The checkbox at the bottom is too small to read. It should be a little bigger and in bold."); Work Sans Light capitals at half the label size before */
+/* the consent's error, a box over the tick (Jyotika, 2026-11-05: "add an error popup that says 'Please check the box
+   below to proceed' in case someone misses it and clicks on 'Send my code'"): the field's Pearl Whisper with Urban Slate
+   words in Poppins 700, shown on a Send with the box unticked, gone once it is ticked (deck.ts); a line is never reserved
+   for it, so the band is fitted again as it comes and goes (refit) */
+.qz-pop { max-width: 100%; margin: 0 0 calc(var(--s1) * var(--qz-rs, 1)); padding: 0.45em 0.9em; background: var(--pearl-whisper); color: var(--urban-slate); font: 700 max(14px, calc(var(--qz-fs-label) * 0.62 * var(--qz-rs, 1))) / 1.3 var(--qz-f-text); text-transform: none; letter-spacing: 0; text-align: center; }
+.qz-pop[hidden] { display: none; }
 .qz-check input { position: absolute; width: 1px; height: 1px; margin: 0; opacity: 0; }
 .qz-tick { white-space: pre; }
 .qz-tick::before { content: "[ ]"; }

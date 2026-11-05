@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { FILL_GATE, FILL_MS, FOLLOW_COUNT, JARS_DEFAULT, SIGNUP_COPY as C, SIGNUP_FOLLOWS, SIGNUP_JARS, SIGNUP_KEYS, SIGNUP_LEAD_ENDPOINT, SIGNUP_STATES, WORTH_TOTAL, addedLine, fill, fillMs, followAria, jarById, pressFollow, revealSpan, stateOf, yoursAlt, yoursLevel, type JarsManifest } from '../../src/config/signup.ts';
+import { FILL_GATE, FILL_MS, FOLLOW_COUNT, JARS_DEFAULT, SIGNUP_COPY as C, SIGNUP_FOLLOWS, SIGNUP_JARS, SIGNUP_KEYS, SIGNUP_LEAD_ENDPOINT, SIGNUP_STATES, WORTH_TOTAL, addedLine, drainSpan, fill, fillMs, followAria, followedAria, jarById, pressFollow, releaseFollow, removedLine, revealSpan, stateOf, yoursAlt, yoursLevel, type JarsManifest } from '../../src/config/signup.ts';
 import { SIGNUP_GROUND } from '../../src/config/signup-ground.ts';
 
 const root = new URL('../../', import.meta.url);
@@ -179,8 +179,12 @@ test('the jars (C2): read by name with import.meta.glob, each state only with al
 });
 
 test('the script (C3, C4, C5): the fill by clip-path, the visibility gate, the events, data-ready, the hooks behind the constant, nothing of the island\'s jar', () => {
-  assert.match(dom, /nxt\.animate\(\[\{ clipPath: `inset\(\$\{span\.from\}% 0 0 0\)` \}, \{ clipPath: `inset\(\$\{span\.to\}% 0 0 0\)` \}\], \{ duration: ms, easing: 'ease-out', fill: 'forwards' \}\)/);
-  assert.match(dom, /const under = cur\.animate\(\[\{ clipPath: `inset\(0 0 calc\(\$\{100 - span\.from\}% - 1px\) 0\)` \}, \{ clipPath: `inset\(0 0 calc\(\$\{100 - span\.to\}% - 1px\) 0\)` \}\], \{ duration: ms, easing: 'ease-out', fill: 'forwards' \}\);/, 'the old layer clipped to the complement on the same clock, 1 px past the edge, so no pixel composites twice and no hairline of ground shows');
+  // the incoming layer's clip and the old one's complement, up for a tick and down for one taken off (2026-11-06), on the same clock
+  assert.match(dom, /const inc = \(e: number\) => \(down \? `inset\(0 0 \$\{100 - e\}% 0\)` : `inset\(\$\{e\}% 0 0 0\)`\);/);
+  assert.match(dom, /const old = \(e: number\) => \(down \? `inset\(calc\(\$\{e\}% - 1px\) 0 0 0\)` : `inset\(0 0 calc\(\$\{100 - e\}% - 1px\) 0\)`\);/, 'the old layer clipped to the complement, 1 px past the edge, so no pixel composites twice and no hairline of ground shows');
+  assert.match(dom, /anim = nxt\.animate\(\[\{ clipPath: inc\(span\.from\) \}, \{ clipPath: inc\(span\.to\) \}\], \{ duration: ms, easing: 'ease-out', fill: 'forwards' \}\);/);
+  assert.match(dom, /const under = cur\.animate\(\[\{ clipPath: old\(span\.from\) \}, \{ clipPath: old\(span\.to\) \}\], \{ duration: ms, easing: 'ease-out', fill: 'forwards' \}\);/);
+  assert.match(dom, /const span = down \? drainSpan\(tops, shown, state\) : revealSpan\(tops, shown, state\)/);
   assert.match(dom, /under\.cancel\(\);\n\s+if \(end === 'cancelled'\) return;/, 'both clips gone at the reveal\'s end, on a reset too');
   assert.match(dom, /const tops = \{ states: STATE_TOPS \};/, 'the reveal reads the renders\' tops and seams as jars.json gives them');
   assert.match(dom, /reducedMQ\.matches \|\| !span \? 0 : fillMs\(id\)/, 'at once under reduced motion');
@@ -211,4 +215,38 @@ test('(8) no lock (2026-11-04: Sam, "unlock everything, let all the sections wor
   assert.doesNotMatch(dom, /data-locked|skreed:quiz-unlock/);
   assert.doesNotMatch(css, /\.signup \{[^}]*display:/, 'signup.css sets no display on .signup itself');
   assert.ok(jarById('facebook'));
+});
+
+test('the Followed ticks (2026-11-06; the site review of 2026-11-05: "a checkbox directly below each of the first three jars, labelled Followed"): one under each follow column in the row\'s second line, named per platform, the follow is the tick and not the press, a tick taken off drains the layer by the reverse reveal from the shown surface to the shared base\'s seam', () => {
+  assert.equal(C.followed, 'Followed');
+  assert.deepEqual(SIGNUP_FOLLOWS.map(followedAria), ['I follow Skreed on Facebook', 'I follow Skreed on YouTube', 'I follow Skreed on Instagram']);
+  assert.equal(removedLine('youtube'), 'Red taken out of your jar.');
+  for (const s of [C.followed, C.followedAria, C.removed]) assert.doesNotMatch(s, /\u2014|\u2013|\p{Extended_Pictographic}/u, s);
+  // the markup: the ticks after the four columns, so the row's grid places them on its second line under the first three
+  assert.match(astro, /<label class="su-tick" data-id=\{j\.id\}><input type="checkbox" class="su-tick-box" id=\{`suTick-\$\{j\.id\}`\} data-id=\{j\.id\} aria-label=\{j\.tickAria\}><span aria-hidden="true">\{C\.followed\}<\/span><\/label>/);
+  assert.ok(astro.indexOf('<label class="su-tick"') > astro.indexOf('<div class="su-col su-yours"'), 'the ticks come after the star column');
+  assert.match(css, /\.su-tick \{ position: relative; grid-row: 2;/);
+  assert.match(css, /\.su-tick::after \{ content: ""; position: absolute; inset: -13px -4px; \}/, 'a 44 px hit box on a short line (the line is its word on 1.2 and 2 px of padding each way, about 20 px)');
+  // the order: a tick adds at the end, one taken off leaves the rest in their order, one not in changes nothing
+  const a = pressFollow([], 'facebook'), b = pressFollow(a, 'youtube'), c = pressFollow(b, 'instagram');
+  assert.deepEqual([...releaseFollow(c, 'youtube')], ['facebook', 'instagram']);
+  assert.equal(releaseFollow(c, 'myspace'), c);
+  assert.equal(releaseFollow(a, 'youtube'), a);
+  assert.deepEqual([...releaseFollow(a, 'facebook')], []);
+  assert.equal(stateOf(releaseFollow(c, 'youtube')), 'fi');
+  // the drain's span: the edge falls from the shown top to the shared base's seam (the floor's when nothing is shared)
+  const m: Pick<JarsManifest, 'states'> = { states: { '0': { top: 1, seam: 1 }, f: { top: 0.5729, seam: 0.7063 }, y: { top: 0.5958, seam: 0.7063 }, fy: { top: 0.4229, seam: 0.5208 }, fi: { top: 0.1938, seam: 0.3333 }, fyi: { top: 0.0396, seam: 0.0396 } } };
+  assert.deepEqual(drainSpan(m, 'fy', 'f'), { from: 42.29, to: 70.63 }, 'the last tick off: from the red\'s top down to the blue\'s seam');
+  assert.deepEqual(drainSpan(m, 'f', '0'), { from: 57.29, to: 100 }, 'the one tick off: down to the floor');
+  assert.deepEqual(drainSpan(m, 'fyi', 'fi'), { from: 3.96, to: 70.63 }, 'a middle tick off: from the top down to the shared base, blue');
+  assert.deepEqual(drainSpan(m, 'fy', 'y'), { from: 42.29, to: 100 }, 'no shared base: down to the floor');
+  assert.equal(drainSpan(m, 'x', '0'), null, 'an unknown shown state: at once (an unknown target never reaches the span: it has no render to set)');
+  const j = manifest();
+  if (j) for (const s of SIGNUP_STATES) for (const t of SIGNUP_STATES) { const d = drainSpan(j, s, t); if (d) assert.ok(d.from <= d.to, `${s} to ${t}: the edge falls`); }
+  // the script: the ticks drive the follows, the link press only tracks, the hooks tick and release
+  assert.match(dom, /for \(const t of ticks\) t\.addEventListener\('change', \(\) => \{ if \(t\.checked\) follow\(t\.dataset\.id \?\? ''\); else unfollow\(t\.dataset\.id \?\? ''\); \}\);/);
+  assert.match(dom, /a\.addEventListener\('click', \(\) => \{ track\('follow_click', \{ platform: a\.dataset\.id \?\? '' \}\); \}\);/, 'a press on a column opens its page and counts no follow');
+  assert.doesNotMatch(dom, /a\.addEventListener\('click', \(\) => \{ follow\(/);
+  assert.match(dom, /release: \(id\) => \{ unfollow\(id\); \},/);
+  assert.match(dom, /enqueue\(id, stateOf\(follows\), true\);/, 'a tick taken off queues a drain');
 });

@@ -93,7 +93,6 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
     // F12; past the second wipe section 2 keeps updating for half a second (its labels fade out over 0.2 s and the hover is dropped), then rests under the quiz
     if (tp2 < 1) s2Rest = -1; else if (s2Rest < 0) s2Rest = t;
     if (S2 && (s2Rest < 0 || t - s2Rest < 0.5)) S2.update(hb, tp, tp2, t, dt);
-    fogGround.update(hb, t);
     if (ctx.moon.visible) updateFogLogoRect(ctx.FOG, camA, logo.position.y, renderer);   // F13
 
     // section 4 (section-4-flux.md 5, section-4-no-hall.md 5, section4/director.ts): the carousel into its own target, and
@@ -105,18 +104,17 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
     // held (the composite skips its draw while the canvas already shows the ground with no cloud over it)
     const G = ctx.signup, s5in = !!G && G.inView(), s5 = G ? groundMode({ inView: s5in, roomOn, wipeOut }) : 'off';
 
-    // F14: hero, then section 2 (its own targets), then section 3's ground (the fog alone); the composite wipes hero to
-    // section 2, then section 2 to the ground, which stays the whole frame under section 3 (quiz.md 5)
+    // F14: hero, then section 2 (its own targets); the composite wipes hero to section 2, then section 2 to section 3's
+    // ground (one flat texel since 2026-11-06, section3/ground.ts: no pass of its own), which stays the whole frame under section 3 (quiz.md 5)
     if (!iv.hold) {
-      const s2on = !!S2 && S2.ready && tp > 0 && tp2 < 1, keep = s2on && tp2 <= 0 && S2!.logoLeft(), groundOn = (tp2 > 0 || (tp > 0 && !(S2 && S2.ready))) && !(roomOn && !plan!.groundNeeded) && s5 !== 'whole';
+      const s2on = !!S2 && S2.ready && tp > 0 && tp2 < 1, keep = s2on && tp2 <= 0 && S2!.logoLeft();
       ctx.moon.visible = tp < 1;   // once the first wipe has covered the scene only the logo is seen: the ground and sky are skipped
       if (tp < 1 || keep) composerA.c.render(dt);
       if (s2on) S2!.render();
-      if (groundOn) fogGround.render();
       if (keep && uMask) { const pc = renderer.getClearColor(_cc), pa = renderer.getClearAlpha(); renderer.setClearColor(0x000000, 1); uMask.value = 1;
         renderer.setRenderTarget(mask.rt); renderer.render(logo as unknown as Scene, camA); uMask.value = 0; renderer.setClearColor(pc, pa); }
       const groundTex = fogGround.out;
-      if (tp2 > 0) { C.tA.value = S2!.out; C.tB.value = groundTex; C.uProgress.value = tp2; C.uParA.value = 0; }   // section 2 holds still under the cut, as the hero does in the first wipe; the same fog is on both sides
+      if (tp2 > 0) { C.tA.value = S2!.out; C.tB.value = groundTex; C.uProgress.value = tp2; C.uParA.value = 0; }   // section 2 holds still under the cut, as the hero does in the first wipe; the quiz's flat ground is the far side
       else { C.tA.value = composerA.c.readBuffer.texture; C.tB.value = s2on ? S2!.out : groundTex; C.uProgress.value = tp; C.uParA.value = s2on ? 0 : 1; }
       if (roomOn) {
         const rt = plan!.tex;
@@ -154,7 +152,10 @@ export function createLoop(ctx: HeroContext, pointer: Pointer, labels: Labels, i
     // the page's side, when it listens (scripts/signup/signup.ts): the ground under it, a seam's cloud and the cut, on a change
     const sf = window.__skreedSignupFrame, on5 = s5 !== 'off';
     if (sf && (on5 !== sent.on || cover !== sent.cover || wipeOut !== sent.wipe)) { sent.on = on5; sent.cover = cover; sent.wipe = wipeOut; sf({ on: on5, cover, wipe: wipeOut, pour: null }); }
-    rideCopy(els, tp, innerWidth / innerHeight, !!S2 && S2.ready);               // F16
+    // the logotype's tone with the ride: Urban Slate over section 2's fog (past half the first wipe) and over section 5's
+    // cream ground, Pearl Whisper again over the quiz's night ground (past half the second wipe, since 2026-11-06); the
+    // scenes' own tone is written below
+    rideCopy(els, tp, innerWidth / innerHeight, !!S2 && S2.ready, tp > 0.5 && (tp2 < 0.5 || s5 !== 'off'));   // F16
     // the logotype over the section (after the ride's own write, so this one stands): the front scene's tone over the
     // scenes, Urban Slate under a seam's cloud, after the exit's jump too, when the section is off and the cloud thins
     // over the hero at rest

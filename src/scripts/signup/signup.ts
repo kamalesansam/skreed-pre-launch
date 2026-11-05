@@ -1,17 +1,21 @@
 // Section 5's DOM side, as Sam's picture of 2026-11-02 (his words: "If someone clicks on the Facebook symbol, it should
 // take them to our Facebook page. If they follow it, the fourth jar should fill up 25% with blue ... After that if they
 // click on the YouTube symbol ... the fourth jar should fill up 25% with red (on top of the 25% blue)"). The follows: a
-// press on a follow column lets the link open the platform's page in a new tab and, in the same press, counts the
-// follow (the honour system: no site can check a follow), remembered for the visit in sessionStorage as the ordered ids;
-// a platform already pressed opens its page again and adds nothing. The visitor's jar (jar 4) then fills where the
-// visitor can see it: 500 ms after the press if the page is still visible, else 300 ms after it is visible again, the
-// next state's render laid over the current one and revealed upward with clip-path from the old surface to the new
-// (from the old state's seam, below which the two renders agree, so nothing jumps; 900 ms a quarter, 1400 ms a half,
-// ease-out; presses during a fill queue; at once under reduced motion; on load the remembered state at once). The next states' renders are fetched once the section is near. Also: the email form (the
+// press on a follow column lets the link open the platform's page in a new tab; the follow itself is the visitor's word,
+// the Followed tick under the column (since 2026-11-06, the site review of 2026-11-05: "When checked, the fourth jar should
+// visually fill up. When unchecked, it should return to its original unfilled state."; until then the press counted as
+// the follow, the honour system either way: no site can check one), remembered for the visit in sessionStorage as the
+// ordered ids; a tick already in adds nothing. The visitor's jar (jar 4) then fills where the visitor can see it: 500 ms
+// after the tick if the page is still visible, else 300 ms after it is visible again, the next state's render laid over
+// the current one and revealed upward with clip-path from the old surface to the new (from the old state's seam, below
+// which the two renders agree, so nothing jumps; 900 ms a quarter, 1400 ms a half, ease-out; ticks during a fill queue;
+// at once under reduced motion; on load the remembered state at once). A tick taken off drains the same way in reverse:
+// the edge falls from the shown surface to the seam of the base the two states share, the lower render above it (drainSpan).
+// The next states' renders are fetched once the section is near. Also: the email form (the
 // quiz's gift form: validation on blur and submit, sending, the error line, the offline queue sent on `online`, a
 // duplicate read as success, the done line with "Not you?"), data-ready (C3), the events (C4) and the hooks (C5). No loop
 // from the section's end since 2026-11-03 (Sam: "remove the loop"), and no wrap onto it from the top since 2026-11-04. Strings from config/signup.ts.
-import { FILL_GATE, FOLLOW_COUNT, SIGNUP_COPY as C, SIGNUP_FOLLOWS, SIGNUP_KEYS, addedLine, fillMs, jarById, pressFollow, revealSpan, stateOf, yoursAlt } from '../../config/signup.ts';
+import { FILL_GATE, FOLLOW_COUNT, SIGNUP_COPY as C, SIGNUP_FOLLOWS, SIGNUP_KEYS, addedLine, drainSpan, fillMs, jarById, pressFollow, releaseFollow, removedLine, revealSpan, stateOf, yoursAlt } from '../../config/signup.ts';
 import { SIZES, STATE_SRCS, STATE_TOPS, type Srcs } from './jar-srcs.ts';
 import { clearMask } from './cut.ts';
 import { reducedMQ } from '../motion.ts';
@@ -20,8 +24,8 @@ import { track } from '../quiz/track.ts';
 type FollowId = 'facebook' | 'youtube' | 'instagram';
 declare global {
   interface Window {
-    /** test and staging builds only (PUBLIC_HERO_HOOKS): the jar's shown state, a follow counted without opening a tab, a fresh visit */
-    __skreedSignupHooks?: { state(): string; press(id: FollowId): void; reset(): void };
+    /** test and staging builds only (PUBLIC_HERO_HOOKS): the jar's shown state, a follow ticked or its tick taken off from script, a fresh visit */
+    __skreedSignupHooks?: { state(): string; press(id: FollowId): void; release(id: FollowId): void; reset(): void };
   }
 }
 
@@ -90,6 +94,7 @@ export function mountSignup(root: HTMLElement): void {
       const target = stateOf(follows), want = new Set<string>();
       for (let k = shown === '0' ? 1 : shown.length + 1; k <= target.length; k++) want.add(target.slice(0, k));
       for (const j of SIGNUP_FOLLOWS) if (!target.includes(j.letter)) want.add(target === '0' ? j.letter : target + j.letter);
+      for (const id of idsOf(target)) want.add(stateOf(idsOf(target).filter((x) => x !== id)));   // and one tick fewer (a tick taken off)
       for (const st of want) {
         const s = data.states[st];
         if (!s || fetched.has(st)) continue;
@@ -103,7 +108,7 @@ export function mountSignup(root: HTMLElement): void {
   }
   preload();
 
-  // ---- the fill: one job per follow, in press order, each from the shown state to the next
+  // ---- the fill: one job per tick, in order, each from the shown state to the next (up for a tick, down for one taken off)
   let gen = 0, anim: Animation | null = null, chain: Promise<void> = Promise.resolve();
   /** the visitor can see it: 500 ms after the press if the page is visible then, else 300 ms after it is visible again */
   async function gate(at: number) {
@@ -111,22 +116,25 @@ export function mountSignup(root: HTMLElement): void {
     if (wait > 0) await sleep(wait);
     while (document.visibilityState !== 'visible') { await whenVisible(); await sleep(FILL_GATE.afterVisible); }
   }
-  /** the incoming render revealed upward over the current one, from the shown state's surface to the new state's */
-  async function play(state: string, id: string, g: number) {
-    announce(addedLine(id, idsOf(state).length >= FOLLOW_COUNT));
+  /** the incoming render revealed upward over the current one, from the shown state's surface to the new state's; or,
+   *  for a tick taken off (`down`), the lower render revealed downward from the shown surface to the shared base's seam */
+  async function play(state: string, id: string, g: number, down = false) {
+    announce(down ? removedLine(id) : addedLine(id, idsOf(state).length >= FOLLOW_COUNT));
     const img = setPic(nxt, state);
     if (!img || !cur || !nxt) { showState(state); return; }
     try { await Promise.resolve(); await img.decode(); } catch { /* shown as it loads */ }
     if (g !== gen) return;
-    const span = revealSpan(tops, shown, state), ms = reducedMQ.matches || !span ? 0 : fillMs(id);
+    const span = down ? drainSpan(tops, shown, state) : revealSpan(tops, shown, state), ms = reducedMQ.matches || !span ? 0 : fillMs(id);
     nxt.hidden = false;
     if (ms > 0 && span) {
       // the two layers never draw one pixel both (the renders' soft rims and shadows would composite twice, up to 37 of 255
       // darker, and pop back when the old layer is hidden; 2026-11-03): the incoming layer shows the rows below the rising
-      // edge, the old one the rows above it, each clip the other's complement on the same clock
-      anim = nxt.animate([{ clipPath: `inset(${span.from}% 0 0 0)` }, { clipPath: `inset(${span.to}% 0 0 0)` }], { duration: ms, easing: 'ease-out', fill: 'forwards' });
-      // (the old layer's clip reaches 1 px past the edge, so the two clips' soft edges never let the ground through as a hairline)
-      const under = cur.animate([{ clipPath: `inset(0 0 calc(${100 - span.from}% - 1px) 0)` }, { clipPath: `inset(0 0 calc(${100 - span.to}% - 1px) 0)` }], { duration: ms, easing: 'ease-out', fill: 'forwards' });
+      // edge (above the falling one on a drain), the old one the rest, each clip the other's complement on the same clock;
+      // the old layer's clip reaches 1 px past the edge, so the two clips' soft edges never let the ground through as a hairline
+      const inc = (e: number) => (down ? `inset(0 0 ${100 - e}% 0)` : `inset(${e}% 0 0 0)`);
+      const old = (e: number) => (down ? `inset(calc(${e}% - 1px) 0 0 0)` : `inset(0 0 calc(${100 - e}% - 1px) 0)`);
+      anim = nxt.animate([{ clipPath: inc(span.from) }, { clipPath: inc(span.to) }], { duration: ms, easing: 'ease-out', fill: 'forwards' });
+      const under = cur.animate([{ clipPath: old(span.from) }, { clipPath: old(span.to) }], { duration: ms, easing: 'ease-out', fill: 'forwards' });
       // the reveal's end: the animation's own word, or its duration and a frame more where the browser's animation clock
       // does not run (a throttled tab, a software-rendered page), so the layer stands as the new state either way
       const end = await Promise.race([anim.finished.then(() => 'finished', () => 'cancelled'), sleep(ms + 100).then(() => 'timer')]);
@@ -140,32 +148,48 @@ export function mountSignup(root: HTMLElement): void {
     [cur, nxt] = [nxt, cur];
     showState(state);
   }
-  function enqueue(id: string, state: string) {
+  function enqueue(id: string, state: string, down = false) {
     const at = performance.now(), g = gen;
     chain = chain.then(async () => {
       if (g !== gen) return;
       if (!reducedMQ.matches) await gate(at);
       if (g !== gen) return;
-      await play(state, id, g);
+      await play(state, id, g, down);
       if (g !== gen) return;
       window.dispatchEvent(new CustomEvent('skreed:signup-filled', { detail: { state } }));
       preload();
     }).catch(() => {});
   }
-  /** a follow counted (a press on a column, or the hooks): remembered, announced to the page, its fill queued */
+  // the Followed ticks (Signup.astro, one under each follow column): the remembered follows on load, and the visitor's word from then on
+  const ticks = [...root.querySelectorAll<HTMLInputElement>('input.su-tick-box')];
+  const syncTicks = () => { for (const t of ticks) t.checked = follows.includes(t.dataset.id ?? ''); };
+  syncTicks();
+  /** a follow ticked (the tick, or the hooks): remembered, announced to the page, its fill queued */
   function follow(id: string) {
     if (!jarById(id)) return;
-    track('follow_click', { platform: id });
     const next = pressFollow(follows, id);
-    if (next === follows) return;   // already pressed: its page opens again, nothing is added
-    follows = [...next]; writeFollows(follows);
+    if (next === follows) { syncTicks(); return; }   // already in: nothing is added
+    follows = [...next]; writeFollows(follows); syncTicks();
+    track('follow_tick', { platform: id });
     if (follows.length >= FOLLOW_COUNT) track('jar_full');
     window.dispatchEvent(new CustomEvent('skreed:signup', { detail: { id, follows: [...follows] } }));
     preload();
     enqueue(id, stateOf(follows));
   }
+  /** a tick taken off: forgotten, announced, its layer drained (the rest keep their order) */
+  function unfollow(id: string) {
+    if (!jarById(id)) return;
+    const next = releaseFollow(follows, id);
+    if (next === follows) { syncTicks(); return; }   // not in: nothing changes
+    follows = [...next]; writeFollows(follows); syncTicks();
+    track('follow_untick', { platform: id });
+    window.dispatchEvent(new CustomEvent('skreed:signup', { detail: { id, follows: [...follows] } }));
+    preload();
+    enqueue(id, stateOf(follows), true);
+  }
+  for (const t of ticks) t.addEventListener('change', () => { if (t.checked) follow(t.dataset.id ?? ''); else unfollow(t.dataset.id ?? ''); });
   for (const a of root.querySelectorAll<HTMLAnchorElement>('a.su-follow')) {
-    a.addEventListener('click', () => { follow(a.dataset.id ?? ''); });   // the link opens its page as a link does (a new tab)
+    a.addEventListener('click', () => { track('follow_click', { platform: a.dataset.id ?? '' }); });   // the link opens its page as a link does (a new tab); the follow is the tick's
   }
 
   // ---- data-ready (C3): jar 4's render, the three showcase jars and the section's fonts decoded, or 4 s after the mount
@@ -180,9 +204,11 @@ export function mountSignup(root: HTMLElement): void {
     window.__skreedSignupHooks = {
       state: () => shown,
       press: (id) => { follow(id); },
+      release: (id) => { unfollow(id); },
       reset: () => {
         gen++; anim?.cancel(); anim = null; chain = Promise.resolve();
         follows = []; try { sessionStorage.removeItem(SIGNUP_KEYS.follows); } catch { /* no storage */ }
+        syncTicks();
         if (nxt) nxt.hidden = true;
         setPic(cur, '0'); showState('0');
       },

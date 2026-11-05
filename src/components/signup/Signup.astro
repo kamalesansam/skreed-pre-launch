@@ -7,10 +7,10 @@
 // follow), the icons and the worth labels, the form's heading between two hairlines, its grey lines, the joined field and
 // button (rendered only with PUBLIC_LEADS on) and the footer; then one empty screen for the exit seam's trigger. The jars
 // are builder C's renders (src/assets/signup/jars/), the icons our own inline drawings. The markup is complete without
-// JavaScript (the links work); scripts/signup/signup.ts, loaded once the section is within a screen, counts the follows,
-// fills the visitor's jar, drives the form. No style attributes (the CSP has no
+// JavaScript (the links work; the Followed ticks under the three follow columns, 2026-11-06, wait for it); scripts/signup/signup.ts, loaded once the section is within a screen, counts the follows from the ticks,
+// fills and drains the visitor's jar, drives the form. No style attributes (the CSP has no
 // style-src-attr): the jars' frame numbers ride an inline style block, which scripts/csp.mjs hashes.
-import { SIGNUP_COPY as C, SIGNUP_FOLLOWS, followAria } from '../../config/signup.ts';
+import { SIGNUP_COPY as C, SIGNUP_FOLLOWS, followAria, followedAria } from '../../config/signup.ts';
 import { PRIVACY, PRIVACY_LINK } from '../../config/legal.ts';
 import { JARS, SIZES, STATE_SRCS } from '../../scripts/signup/jar-srcs.ts';
 import '../../styles/signup.css';
@@ -31,7 +31,7 @@ const M = JARS;
 const r4 = (v: number) => Math.round(v * 10000) / 10000;
 const frameCss = `#signup{--jx:${r4(M.jar.x1 - M.jar.x0)};--jc:${r4((M.jar.x0 + M.jar.x1) / 2)};--jy0:${r4(M.jar.y0)};--jy1:${r4(M.jar.y1)};--jfa:${r4(M.frame.h / M.frame.w)}}`;
 const W1 = Math.round(M.frame.w / 2), H1 = Math.round(M.frame.h / 2);
-const showcase = SIGNUP_FOLLOWS.map((j) => ({ ...j, aria: followAria(j), pic: STATE_SRCS[j.letter] ?? null }));
+const showcase = SIGNUP_FOLLOWS.map((j) => ({ ...j, aria: followAria(j), tickAria: followedAria(j), pic: STATE_SRCS[j.letter] ?? null }));
 const yours = STATE_SRCS['0'] ?? null;
 ---
 <style is:inline set:html={frameCss}></style>
@@ -90,6 +90,13 @@ const yours = STATE_SRCS['0'] ?? null;
         </span>
         <span class="su-worth"><span>{C.starLead}</span> <span>{C.starWorth}</span></span>
       </div>
+      {/* the Followed tick under each follow column, the row's second line (the site review of 2026-11-05: "Add a checkbox directly below
+          each of the first three jars, labelled Followed. When checked, the fourth jar should visually fill up. When
+          unchecked, it should return to its original unfilled state."): the visitor's word for a follow since then, where
+          a press on the column had counted as one; signup.ts fills and drains jar 4 from it and remembers it for the visit */}
+      {showcase.map((j) => (
+        <label class="su-tick" data-id={j.id}><input type="checkbox" class="su-tick-box" id={`suTick-${j.id}`} data-id={j.id} aria-label={j.tickAria}><span aria-hidden="true">{C.followed}</span></label>
+      ))}
     </div>
     {LEADS && (
       <div class="su-got">

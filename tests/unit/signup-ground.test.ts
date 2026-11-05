@@ -196,7 +196,7 @@ test('the mark (C3): data-ground="island" set and removed on a change only, remo
 test('the wiring: the loop cuts onto the texel and rests on it, renders no fog under section 5, holds the draw, marks the section and takes the mark off when it stops; hero.ts makes the ground and disposes it; the director draws no carousel off screen at rest', () => {
   const loop = read('src/scripts/hero/loop.ts');
   assert.match(loop, /const G = ctx\.signup, s5in = !!G && G\.inView\(\), s5 = G \? groundMode\(\{ inView: s5in, roomOn, wipeOut \}\) : 'off';/);
-  assert.match(loop, /&& !\(roomOn && !plan!\.groundNeeded\) && s5 !== 'whole';/, 'no fog rendered while the ground is the whole frame');
+  assert.doesNotMatch(loop, /fogGround\.(render|update|resize)\(/, 'section 3\'s ground has no pass of its own since 2026-11-06 (one flat texel), so nothing is drawn for it while section 5\'s ground is the whole frame');
   assert.match(loop, /if \(roomOn && wipeOut > 0\) \{ C\.tA\.value = plan!\.tex; C\.tB\.value = G \? G\.tex : groundTex; C\.uProgress\.value = wipeOut; C\.uParA\.value = 0; \}/, 'the fourth wipe\'s far side is the texel');
   assert.match(loop, /else if \(s5 === 'whole'\) \{ C\.tA\.value = G!\.tex; C\.tB\.value = G!\.tex; C\.uProgress\.value = 0; C\.uParA\.value = 0; \}/, 'the rest: the texel copied');
   assert.match(loop, /if \(G && !probe && holds\(\{ mode: s5, cover, drawnAt: flatAt, size \}\)\) G\.stats\.held\+\+;/, 'held: no draw');
