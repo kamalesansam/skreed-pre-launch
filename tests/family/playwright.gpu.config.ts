@@ -6,7 +6,11 @@
 // ?render=force lands in swatch grid mode" (case3d.spec.ts), skips itself here: the gate finds a real GPU by design.
 //   npm run build (PUBLIC_FAMILY_3D=on, hooks on), npx wrangler dev --port 8795 --assets ./dist, then
 //   BASE_URL=http://127.0.0.1:8795/ npx playwright test -c tests/family/playwright.gpu.config.ts --workers 1
+// The landing rows are parked here as they are in playwright.config.ts, from its one list (docs/specs/redesign.md D17): the
+// family pages run the same on either renderer, and the way in and the way back through the old landing have no page on
+// this branch on either. A renderer changes nothing about that, so the two configs never hold two lists.
 import { defineConfig } from '@playwright/test';
+import { LANDING_ROWS } from './playwright.config.ts';
 
 export default defineConfig({
   testDir: 'specs',
@@ -15,6 +19,7 @@ export default defineConfig({
   workers: 1,
   reporter: [['list']],
   outputDir: '../../test-results/family-gpu',
+  grepInvert: LANDING_ROWS,
   use: {
     baseURL: process.env.BASE_URL || 'http://127.0.0.1:8790/',
     channel: 'chrome',

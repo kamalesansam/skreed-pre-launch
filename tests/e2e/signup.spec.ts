@@ -25,6 +25,18 @@ async function open(page: Page, baseURL: string | undefined, extra = '') {
   await page.evaluate(() => { const el = document.getElementById('signup')!; scrollTo({ top: el.getBoundingClientRect().top + scrollY, behavior: 'instant' }); });
   await hooks(page);
   await page.waitForFunction(() => document.getElementById('signup')?.dataset.ready === '1', null, { timeout: 10_000 });
+  // (2026-11-09, docs/specs/redesign.md D18 and E-RD-motion) on the redesigned landing the section closes the page and
+  // arrives once, as the scroll above brings it on screen: its headline, label, columns, ticks and form rise into place
+  // (scripts/redesign/jars.ts), and none of them carries a transform or an opacity of its own at rest. The rows read the
+  // section's boxes, so they wait for the motion kit to have run (html.rd-live) and for every part it moves to stand at
+  // rest. Without this wait the Followed ticks row at 390 x 844 failed 2 runs in 7 the same day, a tick read 12 px up
+  // inside its column while the column was still rising. Nothing of the old page is asked for: on a page that is not the
+  // redesign (no main.rd) open() is as it was
+  if (await page.locator('main.rd').count()) {
+    await page.waitForFunction(() => document.documentElement.classList.contains('rd-live'), null, { timeout: 30_000 });
+    await page.waitForFunction(() => [...document.querySelectorAll('#signup :is(.su-h > span, .su-sub, .su-every, .su-col, .su-tick, .su-got, .su-form, .su-keep)')]
+      .every((e) => { const s = getComputedStyle(e); return s.transform === 'none' && s.opacity === '1'; }), null, { timeout: 15_000 });
+  }
 }
 /** every line of the section inside the viewport under the clearance, no two boxes overlapping (the laptop lays the
  * headline beside the jars since 2026-11-02, so the check is pairwise, not down the DOM's order), no horizontal scroll */

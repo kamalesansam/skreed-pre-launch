@@ -1,0 +1,85 @@
+---
+// The hero, section "top" (docs/specs/redesign.md sections 3 to 6, D15, D16 and D19; Sam, 2026-11-09, with his "Skreed
+// Pre-Launch" design: "checkout the pdf, and build the exact same thing"): the PDF's first screen. The photograph
+// "hero" under its flat black veil, the page's one h1 in the PDF's three lines, and the cue at the foot.
+// The h1 is read as one phrase (aria-label); its drawing is hidden from assistive technology. The letters are cut at
+// build so the entrance has its handles: lines 1 and 2 by RdSplit, in the headline's own face, Inter 500, and line 3,
+// DIFFERENT, written here in RdSplit's shape because it carries the glitch layer beside its letters.
+// Line 3 (D19, item 1, and D20; Sam, 2026-11-09: "the font should look normal when not glitching, only when it glitches
+// it should have that distorted effect", then "use that same font which was think and different for the word DIFFERENT,
+// which was there earlier, just without the distorted part"): at rest Rubik Black, the thick letters Rubik Glitch is
+// cut from, and nothing else. Over them lies an <svg> that draws nothing until the logotype's glitch
+// (scripts/logotype/glitch.ts, handed the <svg> by scripts/redesign/hero.ts) fills its empty .gl-tiles group with slabs
+// for the length of a burst. The slabs draw the Rubik Glitch word, the PDF's own face for this line, whose letters stand
+// exactly on the plain ones (the two faces share their advances); until that face has arrived, and for good if it never
+// does, they draw the plain letters themselves (hero.ts fetches the face after the first paint and swaps the two <text>s
+// by their display attribute, which every <use> of the group follows). The engine asks for a .gl-base to hide during a
+// burst and show after it: an empty group here, because the word's rest state is the HTML line under the layer.
+// The entrance is CSS alone (src/styles/rd-hero.css), so the first paint never waits for a script; the scroll motion
+// is GSAP's, added by hero.ts once the kit has loaded. Nothing here is hidden without them.
+// The cue is the old landing's (components/hero/ScrollCue.astro: three chevrons of five dots, and the words of
+// E-cue-text), drawn again here with its cycle (D19, item 2; rd-hero.css); hero.ts hides it once the page has scrolled
+// 8 px.
+import '../../styles/rd-hero.css';
+import RdPicture from './RdPicture.astro';
+import RdSplit from './RdSplit.astro';
+import { RD_HEADLINES, RD_GLITCH_WORD, RD_COPY } from '../../config/redesign.ts';
+import { COPY } from '../../config/copy.ts';
+
+const h = RD_HEADLINES.hero;
+const g = RD_GLITCH_WORD;
+const chars = [...g.text];
+// RdSplit numbers the letters and the words of lines 1 and 2 from 0; line 3 carries on from them
+const letters = h.lines.flat().reduce((n, seg) => n + seg.t.replace(/\s/g, '').length, 0);
+const words = h.lines.flat().reduce((n, seg) => n + seg.t.split(/\s+/).filter(Boolean).length, 0);
+
+// The glitch layer's box, in thousandths of the word's em: from where the torn D's edge starts, left of the word's
+// origin, to where the torn T's ends, and the capitals' height with an edge above and below, so the outer slabs clip no
+// letter's edge. Both drawings start at the word's origin and stand on one baseline, at one tracking, so every letter of
+// the torn word lies on its plain one and every row of slabs cuts through letters.
+const U = 1000;
+const EDGE = 20;
+const gaps = chars.length - 1;
+const tenth = (v: number) => Math.round(v * 10) / 10;
+const origin = tenth(-g.torn.lsb * U);
+const track = tenth(g.track * U);
+const gw = tenth((g.advance + gaps * g.track - g.torn.lsb - g.torn.rsb) * U);
+const cap = tenth(g.cap * U);
+const gh = cap + 2 * EDGE;
+const baseline = EDGE + cap;
+// rd-hero.css cannot read the config, so the build stops if the two part: the stylesheet staggers the 29 letters of
+// the three lines (data-i 0 to 28), sizes the word by the ratio of its size to the headline's and sets the layer
+// 0.04em left of the word's origin, 5.711em wide and 0.74em tall, 0.72em of it above the baseline and 0.02em under
+if (letters + chars.length !== 29) throw new Error(`the hero's three lines have ${letters + chars.length} letters: rd-hero.css staggers 29`);
+if (origin !== 40 || gw !== 5711 || gh !== 740 || baseline !== 720) throw new Error(`the hero's glitch layer is ${gw} by ${gh}, ${origin} left of the word, its baseline ${baseline} down: rd-hero.css sets it 5.711em by 0.74em, 0.04em left of the word, 0.72em above the baseline`);
+if (g.size !== 117.25 || h.size !== 110.26 || g.track !== -0.03) throw new Error('the hero word\'s size or tracking has moved: rd-hero.css sets the word at 117.25 / 110.26 of the headline, tracked -0.03em');
+
+// the cue's three chevrons, top to bottom: five dots each, the outer ones fainter (the old cue's drawing, 35 by 146, its
+// numbers as components/hero/ScrollCue.astro has them: each chevron's three rows of dots, outermost to the point)
+const CHEVRONS = [{ at: 'top', y: [2.4, 9.1, 15.7] }, { at: 'mid', y: [66.4, 73, 79.7] }, { at: 'bottom', y: [130.3, 137, 143.7] }];
+const DOTS = [
+  { x: 2.4, row: 0, o: 0.3 },
+  { x: 10, row: 1, o: 0.6 },
+  { x: 17.5, row: 2, o: 1 },
+  { x: 25, row: 1, o: 0.6 },
+  { x: 32.6, row: 0, o: 0.3 },
+];
+---
+<section class="rd-sec rd-band rd-hero" id="top" data-tone="dark" data-band="hero">
+  <div class="rd-band-pic"><RdPicture name="hero" alt={RD_COPY.hero.alt} sizes="(max-aspect-ratio: 5/6) 120vh, 100vw" eager /></div>
+  <div class="rd-wrap rd-hero-wrap">
+    <h1 class="rd-hero-h" aria-label={h.say}>
+      <span class="rd-h" data-h="hero">
+        <RdSplit lines={h.lines} />
+        <span class="rd-hero-word" aria-hidden="true"><span class="rd-ln" data-li={h.lines.length}><span class="rd-ln-in"><span class="rd-w" data-wi={words}>{chars.map((c, i) => <span class="rd-c" data-i={letters + i}>{c}</span>)}</span></span></span><span class="rd-hero-over"><svg class="rd-hero-glitch" viewBox={`0 0 ${gw} ${gh}`} aria-hidden="true" focusable="false"><defs><g id="rd-different"><text class="rd-hero-g" data-g="plain" x={origin} y={baseline} font-family="Rubik, Arial, sans-serif" font-weight="900" font-size={U} letter-spacing={track} fill="currentColor">{g.text}</text><text class="rd-hero-g" data-g="face" display="none" x={origin} y={baseline} font-family="Rubik Glitch, Arial, sans-serif" font-weight="400" font-size={U} letter-spacing={track} fill="currentColor">{g.text}</text></g></defs><g class="gl-base"></g><g class="gl-tiles" display="none"></g></svg></span></span>
+      </span>
+    </h1>
+  </div>
+  <div class="rd-hero-cue" aria-hidden="true">
+    <p class="rd-hero-cue-text">{COPY.cue.label}</p>
+    <svg class="rd-hero-cue-chev" viewBox="0 0 35 146" aria-hidden="true" focusable="false">{CHEVRONS.map((c) => <g class={`rd-hero-chev rd-hero-chev--${c.at}`}>{DOTS.map((d) => <circle cx={d.x} cy={c.y[d.row]} r="2.4" fill="currentColor" fill-opacity={d.o} />)}</g>)}</svg>
+  </div>
+</section>
+<script>
+  import '../../scripts/redesign/hero.ts';
+</script>

@@ -15,6 +15,8 @@ import { LAUNCH_ISO } from '../../src/config/site.ts';
 
 const PATH = '/about/';
 const FONT = '/fonts/inter-400-700-latin.woff2';
+/** "Back to main page" is in Work Sans Light, the section index's face (E-NAV-font, 2026-11-04), from the quiz result's file */
+const NAV_FONT = '/fonts/work-sans-300-latin.woff2';
 const DIST = resolve(process.env.SKREED_DIST || 'dist');
 const PHONE = { width: 390, height: 844 }, LAPTOP = { width: 1280, height: 800 };
 const SLATE = 'rgb(56, 63, 67)', PEARL = 'rgb(247, 246, 243)', EMBER = 'rgb(255, 153, 0)';
@@ -35,7 +37,7 @@ async function open(page: Page, viewport = PHONE) {
   await page.evaluate(() => document.fonts.ready);
 }
 
-test.describe('AC2 Inter from the one self-hosted file, no other face, nothing italic', () => {
+test.describe('AC2 Inter from the one self-hosted file for the page\'s text, Work Sans for "Back to main page" alone (E-NAV-font), no other face, nothing italic', () => {
   for (const vp of [PHONE, LAPTOP]) {
     test(`cold load at ${vp.width} x ${vp.height}`, async ({ browser, baseURL }) => {
       const ctx = await browser.newContext({ viewport: vp });
@@ -49,16 +51,19 @@ test.describe('AC2 Inter from the one self-hosted file, no other face, nothing i
       const origin = new URL(baseURL!).origin;
       expect(reqs.filter((r) => new URL(r.url).origin !== origin), 'nothing leaves the origin').toEqual([]);
       const fonts = reqs.filter((r) => new URL(r.url).pathname.startsWith('/fonts/'));
-      expect(fonts.map((r) => [new URL(r.url).pathname, r.status])).toEqual([[FONT, 200]]);
+      expect(fonts.map((r) => [new URL(r.url).pathname, r.status]).sort(), 'Inter, and Work Sans for Back to main page').toEqual([[FONT, 200], [NAV_FONT, 200]]);
       expect(await page.locator('link[rel="preload"][as="font"]').evaluateAll((ls) => ls.map((l) => (l as HTMLLinkElement).href))).toEqual([new URL(FONT, baseURL).href]);
       // the faces: Inter loaded, every face of the site's own set left unloaded
       const faces = await page.evaluate(() => [...document.fonts].map((f) => ({ family: f.family.replace(/^"|"$/g, ''), weight: f.weight, style: f.style, status: f.status })));
-      expect(faces.filter((f) => f.family === 'Inter')).toEqual([{ family: 'Inter', weight: '400 700', style: 'normal', status: 'loaded' }]);
+      // two Inter faces are declared: the page's own (400 to 700, about.css), loaded, and section 5's (100 to 900 in fonts.css,
+      // on every page since the picture of 2026-11-02), which nothing here uses
+            expect(faces.filter((f) => f.family === 'Inter').sort((a, b) => a.weight.localeCompare(b.weight))).toEqual([{ family: 'Inter', weight: '100 900', style: 'normal', status: 'unloaded' }, { family: 'Inter', weight: '400 700', style: 'normal', status: 'loaded' }]);
       // the site's own faces (the brand's, the quiz's, the result's) all unloaded: Inter is the one face the page loads
       const brand = faces.filter((f) => ['Poppins', 'Open Sans', 'Source Serif 4', 'IBM Plex Mono'].includes(f.family));
       expect(brand.length).toBeGreaterThanOrEqual(6);
       for (const f of brand) expect(f.status, `${f.family} ${f.weight}`).toBe('unloaded');
-      expect(faces.filter((f) => f.status !== 'unloaded').map((f) => f.family)).toEqual(['Inter']);
+      // the "Inter Fallback" faces are local() metric matches (about.css): loaded means used while Inter arrived, never a file fetched
+            expect(faces.filter((f) => f.status !== 'unloaded' && f.family !== 'Inter Fallback').map((f) => f.family).sort(), 'Inter for the text, Work Sans for Back to main page').toEqual(['Inter', 'Work Sans']);
       // the face actually drawn, run by run: the DevTools protocol's platform fonts for each element's own text
       const cdp = await ctx.newCDPSession(page);
       await cdp.send('DOM.enable'); await cdp.send('CSS.enable');
@@ -345,7 +350,7 @@ test('AC9 the head, the JSON-LD, the sitemap, the redirect, caching and the CSP'
     { '@type': 'ListItem', position: 2, name: 'About Skreed', item: 'https://skreed.shop/about/' }] });
   expect(ld['@graph']).toHaveLength(3);
   // links: https or same-origin paths only; no storage touched; no CSP violation on load or on the first Tab
-  expect(await page.locator('a[href]').evaluateAll((as) => as.map((a) => a.getAttribute('href')))).toEqual(['/']);
+  expect(await page.locator('a[href]').evaluateAll((as) => as.map((a) => a.getAttribute('href'))), 'the wordmark and Back to main page, both home (E-About-home)').toEqual(['/', '/']);
   await page.keyboard.press('Tab');
   await page.waitForTimeout(200);
   expect(await cspViolations(page)).toEqual([]);
@@ -355,6 +360,7 @@ test('AC9 the head, the JSON-LD, the sitemap, the redirect, caching and the CSP'
   const sm = await (await request.get('/sitemap.xml')).text();
   const locs = [...sm.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
   expect(locs.slice(0, 2)).toEqual(['https://skreed.shop/', 'https://skreed.shop/about/']);
-  expect(locs).toHaveLength(12);
+  // fifteen since the redesign (docs/specs/redesign.md D1: "The sitemap gains /jars/"): the landing, About, the jars, the two legal pages and the ten family pages
+  expect(locs).toHaveLength(15);
   expect(await (await request.get('/robots.txt')).text()).toContain('Sitemap: https://skreed.shop/sitemap.xml');
 });

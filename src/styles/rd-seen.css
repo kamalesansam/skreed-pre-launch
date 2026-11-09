@@ -1,0 +1,102 @@
+/* Seen, section "seen" of the redesigned landing page (docs/specs/redesign.md D10, D19 item 3 and sections 4 to 6):
+   two bold lines and three fans of case cut-outs on the PDF's warm white. Imported by
+   src/components/redesign/Seen.astro alone.
+   Everything here is the scene at rest, which is the scene at its end: the fans open as the last frame of the
+   designer's clip has them. scripts/redesign/seen.ts closes them and plays them open with the scroll while the stage
+   is held, and without it nothing is missing.
+   Sam, 2026-11-09, of the first build, which stood as the PDF's frame does (a frame from the middle of the clip, the
+   back cases part faded and 12.8, 58.4 and 97.6u out): "in the end of the scroll the phone cases are supposed to be
+   fully visible, not translucent, and they're all in equal spaces". So, on every layout:
+   - every case is opaque, at rest and all the way through the scrub; no rule here and no tween sets an opacity on one;
+   - in each fan the three back cases stand one, two and three steps to the right of the front case, the same step in
+     all three fans (--rd-seen-step);
+   - the three fans are alike, and the ground is shared out evenly: on the wide layout the space at the left edge, the
+     two between the fans and the one at the right edge are equal; on a phone, where the row is wider than the screen,
+     the two spaces between the fans are.
+   The numbers. From the PDF's frame at 1281 px (1.25 px a unit): a case 169.4 by 334u with its top at 110.4u, the
+   lines' boxes at 34.1u and 489.3u. From the clip's last frame, 2000 px to the page's width: the front case 324 px
+   wide, the cases' right edges 78 to 97 px apart, and 68, 58, 70 and 72 px of ground beside and between the fans, so a
+   fan is 577 px, 295.7u of the page. With the case at 169.4u that is a step of 42.1u: 42u is taken, a quarter of a
+   case's width to the nearest unit, which makes a fan 295.4u and leaves 34.575u for each of the four spaces of the
+   1024.5u page (the clip's 67 px of 2000 are 34.3u).
+   Phone first; the wide layout from 720 px. Transform is the only thing the script moves on a case. */
+
+.rd-seen {
+  /* one unit of the PDF in this scene: on a phone 2.6 times the size at which the three fans would fit the width, so a
+     fan is three quarters of the screen and the row over two screens (the spec's 2.1 left the scene small in a tall
+     screen); a short screen holds a case to 46% of its height */
+  --rd-seen-k: min(calc(2.6 * 100vw / 1024.5), calc(46svh / 334));
+  /* in units: a case's width, and the step from each case to the one behind it (the script reads these two) */
+  --rd-seen-cu: 169.4;
+  --rd-seen-step: 42;
+  /* a fan, from the front case's left edge to the last one's right, and the space the three leave when the page's
+     1024.5 units are shared out evenly, four spaces to three fans: 295.4 and 34.575 */
+  --rd-seen-fan: calc(var(--rd-seen-cu) + 3 * var(--rd-seen-step));
+  --rd-seen-gap: calc((1024.5 - 3 * var(--rd-seen-fan)) / 4);
+  /* the two steps of a phone's pan, which the script counts from 0 to 1 */
+  --p1: 0; --p2: 0;
+}
+
+/* the pin is here, not in the script: the stage is one screen, sticky at the top of a section that is taller than it
+   by the scroll the scene plays over, 1.7 screens on a phone and 1.2 on a laptop (the spec's "about 1.2 screens"; a
+   phone's row also has to cross the screen). So the page has its full length from the first paint, and nothing under
+   the scene moves when the script arrives. Only with scripts (html.js, set in the head): without them there is
+   nothing to play, and the section is the one screen */
+html.js .rd-seen { min-height: 270vh; min-height: 270svh; }
+.rd-seen-stage { position: sticky; top: 0; display: grid; align-content: center; height: 100vh; height: 100svh; overflow: hidden; overflow: clip; }
+.rd-seen-scene { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: clamp(16px, 3.4svh, 34px); padding-block: min(72px, 9svh) min(48px, 6svh); }
+
+.rd-seen-line { font-family: var(--rd-display); font-weight: 700; font-size: clamp(18px, min(7.2vw, 5.2svh), 34px); line-height: 1.2; letter-spacing: 0.017em;
+  text-align: center; color: var(--rd-ink); padding-inline: var(--inset); }
+/* the second line at rest is the PDF's grey; its words are masks the script raises them through, each carrying a black
+   copy of itself that the script fades in over the grey */
+.rd-seen-second { color: var(--rd-mute); }
+.rd-seen-w { display: inline-block; vertical-align: bottom; padding: 0.14em 0.04em 0.26em; margin: -0.14em -0.04em -0.26em; overflow: hidden; overflow: clip; }
+.rd-seen-w-in { display: inline-block; position: relative; will-change: transform; }
+.rd-seen-w-ink { position: absolute; inset: 0; color: var(--rd-ink); opacity: 0; -webkit-user-select: none; user-select: none; }
+
+/* phones: the row is wider than the screen. With no script it scrolls sideways, a fan to a stop; once the script pans
+   it with the scroll (data-pan) it is clipped and no longer scrolls by itself */
+.rd-seen-view { width: 100%; min-width: 0; padding-block: 10px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
+.rd-seen-view::-webkit-scrollbar { display: none; }
+.rd-seen[data-pan] .rd-seen-view { overflow: hidden; overflow: clip; scroll-snap-type: none; }
+/* the row: the three fans with the same space between them, and room at each end for the first and the last to stand
+   in the middle of the screen. The pan: a step is from one fan's middle to the next one's, a fan and a space, the same
+   both times now that the fans are alike; the row shifts left by the steps taken, in the scene's unit, so it is right
+   at every width */
+.rd-seen-row { position: relative; display: flex; width: max-content; gap: calc(var(--rd-seen-gap) * var(--rd-seen-k)); padding-inline: calc(50vw - var(--rd-seen-fan) / 2 * var(--rd-seen-k)); will-change: transform;
+  transform: translate3d(calc((var(--p1) + var(--p2)) * (var(--rd-seen-fan) + var(--rd-seen-gap)) * -1 * var(--rd-seen-k)), 0, 0); }
+
+/* a fan: the front case gives it its height and stands on top, at its left; the three behind it stand to its right,
+   each a step further than the one before and under it, so a strip of each shows, three strips of one width. Every
+   cut-out is solid and none is given an opacity */
+.rd-seen-fan { position: relative; flex: none; width: calc(var(--rd-seen-fan) * var(--rd-seen-k)); isolation: isolate; scroll-snap-align: center; }
+.rd-seen-case { display: block; width: calc(var(--rd-seen-cu) * var(--rd-seen-k)); }
+.rd-seen-case img { width: 100%; height: auto; }
+.rd-seen-case--1 { position: relative; z-index: 4; }
+.rd-seen-case--2, .rd-seen-case--3, .rd-seen-case--4 { position: absolute; top: 0; transform-origin: 50% 100%; will-change: transform; }
+.rd-seen-case--2 { left: calc(var(--rd-seen-step) * var(--rd-seen-k)); z-index: 3; }
+.rd-seen-case--3 { left: calc(2 * var(--rd-seen-step) * var(--rd-seen-k)); z-index: 2; }
+.rd-seen-case--4 { left: calc(3 * var(--rd-seen-step) * var(--rd-seen-k)); z-index: 1; }
+
+/* wide: the PDF's frame, 1024.5 by 576u, for the heights: the lines and the cases' tops at their measured places. The
+   unit also gives way to the screen's height, so the whole scene is inside one screen while it is held, however short
+   the window, and its first line stays under the logotype's and the index's row (--rd-seen-clear, the foot of that
+   row): the frame is centred where the screen is tall enough for that, and otherwise stands as low as it must (the
+   stage's top padding) and as small.
+   Across, the three fans share the page out evenly, the page being the window up to the 1600 px every section of this
+   page stops at: whatever the three fans leave is cut in four, one part at the left edge, one between each two fans,
+   one at the right edge. At the full unit that is the 34.575u above, the fronts at 34.6, 364.6 and 694.6u; where a
+   short window makes the cases smaller the four spaces grow, and stay equal (held to the frame's own 1024.5 units
+   there, the three would stand close together with wide ground at both sides) */
+@media (min-width: 720px) {
+  .rd-seen { --rd-seen-clear: calc(var(--inset) + 38px); --rd-seen-k: min(var(--rd-u), calc((100svh - var(--rd-seen-clear)) / 541.9)); }
+  html.js .rd-seen { min-height: 220vh; min-height: 220svh; }
+  /* the line's box is 34.1u under the frame's top: 2 x (clear - 34.1k) + 576k - 100svh puts it at the row's foot */
+  .rd-seen-stage { padding-top: max(0px, calc(2 * var(--rd-seen-clear) + 507.8 * var(--rd-seen-k) - 100svh)); }
+  .rd-seen-scene { display: block; position: relative; width: min(100%, var(--rd-frame)); height: calc(576 * var(--rd-seen-k)); margin-inline: auto; padding: 0; }
+  .rd-seen-line { position: absolute; inset-inline: 0; top: calc(34.1 * var(--rd-seen-k)); padding: 0; font-size: clamp(22px, calc(40 * var(--rd-seen-k)), 62px); }
+  .rd-seen-second { top: calc(489.3 * var(--rd-seen-k)); }
+  .rd-seen-view { position: absolute; inset: 0; padding: 0; overflow: visible; scroll-snap-type: none; }
+  .rd-seen-row { position: absolute; inset: calc(110.4 * var(--rd-seen-k)) 0 auto; justify-content: space-evenly; gap: 0; width: auto; padding: 0; transform: none; }
+}

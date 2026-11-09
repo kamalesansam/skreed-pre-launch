@@ -1,0 +1,29 @@
+---
+// MATCH ESSENTIALS, section "match" (docs/specs/redesign.md sections 3 to 6, the "match" rows; Sam, 2026-11-09, with
+// his "Skreed Pre-Launch" design: "checkout the pdf, and build the exact same thing"). A photograph band under the
+// PDF's flat black veil (redesign.css's .rd-band, data-band="match") and the two words in Skreed Wide, set as the PDF
+// sets them: MATCH above and to the left, ESSENTIALS a line lower and to the right, the H's right leg standing on the
+// first E's back (src/styles/rd-match.css holds the measures).
+// The two words are one heading: the h2 carries the phrase as its name and the drawing is hidden from assistive
+// technology. Each word is cut into letters here, at build, so the scroll motion has its handles without a script
+// re-flowing the text (spec D16): scripts/redesign/match.ts brings MATCH in from the left and ESSENTIALS from the
+// right as the band crosses the screen. Without that script the words stand where the PDF has them.
+import '../../styles/rd-match.css';
+import RdPicture from './RdPicture.astro';
+import { RD_COPY } from '../../config/redesign.ts';
+
+const m = RD_COPY.match;
+const words = [
+  { key: 'a', letters: [...m.first] },
+  { key: 'b', letters: [...m.second] },
+];
+---
+<section class="rd-sec rd-band rd-match" id="match" data-tone="dark" data-band="match">
+  <RdPicture name="match" alt={m.alt} sizes="100vw" class="rd-band-pic" imgClass="rd-match-img" />
+  <div class="rd-wrap rd-match-wrap">
+    <h2 class="rd-match-h" aria-label={m.say}>{words.map((w) => <span class={`rd-match-w rd-match-w--${w.key}`} aria-hidden="true">{w.letters.map((c, i) => <span class="rd-match-c" data-i={i}>{c}</span>)}</span>)}</h2>
+  </div>
+</section>
+<script>
+  import '../../scripts/redesign/match.ts';
+</script>

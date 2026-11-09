@@ -1,0 +1,998 @@
+{
+ "hero": {
+  "width": 1639,
+  "height": 1639,
+  "widths": [
+   640,
+   1024,
+   1639
+  ],
+  "alpha": false,
+  "bytes": {
+   "640": {
+    "avif": 11139,
+    "webp": 14614
+   },
+   "1024": {
+    "avif": 21897,
+    "webp": 27876
+   },
+   "1639": {
+    "avif": 44593,
+    "webp": 54822
+   }
+  }
+ },
+ "glimpse-band": {
+  "width": 1600,
+  "height": 1600,
+  "widths": [
+   640,
+   1024,
+   1600
+  ],
+  "alpha": false,
+  "bytes": {
+   "640": {
+    "avif": 28051,
+    "webp": 43220
+   },
+   "1024": {
+    "avif": 56314,
+    "webp": 94186
+   },
+   "1600": {
+    "avif": 105116,
+    "webp": 186018
+   }
+  }
+ },
+ "match": {
+  "width": 1639,
+  "height": 1639,
+  "widths": [
+   640,
+   1024,
+   1639
+  ],
+  "alpha": false,
+  "bytes": {
+   "640": {
+    "avif": 13430,
+    "webp": 16530
+   },
+   "1024": {
+    "avif": 28527,
+    "webp": 35086
+   },
+   "1639": {
+    "avif": 54076,
+    "webp": 66726
+   }
+  }
+ },
+ "proof": {
+  "width": 1639,
+  "height": 1639,
+  "widths": [
+   640,
+   1024,
+   1639
+  ],
+  "alpha": false,
+  "bytes": {
+   "640": {
+    "avif": 11300,
+    "webp": 14416
+   },
+   "1024": {
+    "avif": 22531,
+    "webp": 28224
+   },
+   "1639": {
+    "avif": 44226,
+    "webp": 52864
+   }
+  }
+ },
+ "tile-monochrome": {
+  "width": 864,
+  "height": 864,
+  "widths": [
+   480,
+   864
+  ],
+  "alpha": false,
+  "bytes": {
+   "480": {
+    "avif": 3851,
+    "webp": 4982
+   },
+   "864": {
+    "avif": 7344,
+    "webp": 10260
+   }
+  }
+ },
+ "tile-lifestyle": {
+  "width": 1000,
+  "height": 500,
+  "widths": [
+   480,
+   1000
+  ],
+  "alpha": false,
+  "bytes": {
+   "480": {
+    "avif": 5097,
+    "webp": 6580
+   },
+   "1000": {
+    "avif": 13399,
+    "webp": 16384
+   }
+  }
+ },
+ "tile-peppy": {
+  "width": 864,
+  "height": 864,
+  "widths": [
+   480,
+   864
+  ],
+  "alpha": false,
+  "bytes": {
+   "480": {
+    "avif": 20502,
+    "webp": 34502
+   },
+   "864": {
+    "avif": 55241,
+    "webp": 90742
+   }
+  }
+ },
+ "tile-pastel": {
+  "width": 769,
+  "height": 512,
+  "widths": [
+   480,
+   769
+  ],
+  "alpha": false,
+  "bytes": {
+   "480": {
+    "avif": 6783,
+    "webp": 7828
+   },
+   "769": {
+    "avif": 13588,
+    "webp": 16180
+   }
+  }
+ },
+ "tile-corporate": {
+  "width": 648,
+  "height": 648,
+  "widths": [
+   480,
+   648
+  ],
+  "alpha": false,
+  "bytes": {
+   "480": {
+    "avif": 8834,
+    "webp": 9450
+   },
+   "648": {
+    "avif": 15318,
+    "webp": 16316
+   }
+  }
+ },
+ "product-case": {
+  "width": 311,
+  "height": 431,
+  "widths": [
+   311
+  ],
+  "alpha": false,
+  "bytes": {
+   "311": {
+    "avif": 2621,
+    "webp": 2986
+   }
+  }
+ },
+ "product-airpods": {
+  "width": 260,
+  "height": 303,
+  "widths": [
+   260
+  ],
+  "alpha": false,
+  "bytes": {
+   "260": {
+    "avif": 1651,
+    "webp": 1710
+   }
+  }
+ },
+ "product-lenskin": {
+  "width": 386,
+  "height": 419,
+  "widths": [
+   386
+  ],
+  "alpha": false,
+  "bytes": {
+   "386": {
+    "avif": 5518,
+    "webp": 6940
+   }
+  }
+ },
+ "product-magsocket": {
+  "width": 589,
+  "height": 687,
+  "widths": [
+   589
+  ],
+  "alpha": false,
+  "bytes": {
+   "589": {
+    "avif": 3500,
+    "webp": 4232
+   }
+  }
+ },
+ "product-wallet": {
+  "width": 515,
+  "height": 713,
+  "widths": [
+   515
+  ],
+  "alpha": false,
+  "bytes": {
+   "515": {
+    "avif": 1872,
+    "webp": 1972
+   }
+  }
+ },
+ "case-grey-1": {
+  "width": 433,
+  "height": 854,
+  "widths": [
+   217,
+   433
+  ],
+  "alpha": true,
+  "bytes": {
+   "217": {
+    "avif": 3958,
+    "webp": 5594
+   },
+   "433": {
+    "avif": 7985,
+    "webp": 14182
+   }
+  }
+ },
+ "case-grey-2": {
+  "width": 433,
+  "height": 854,
+  "widths": [
+   217,
+   433
+  ],
+  "alpha": true,
+  "bytes": {
+   "217": {
+    "avif": 4153,
+    "webp": 5834
+   },
+   "433": {
+    "avif": 8483,
+    "webp": 14714
+   }
+  }
+ },
+ "case-grey-3": {
+  "width": 433,
+  "height": 854,
+  "widths": [
+   217,
+   433
+  ],
+  "alpha": true,
+  "bytes": {
+   "217": {
+    "avif": 4523,
+    "webp": 6112
+   },
+   "433": {
+    "avif": 8760,
+    "webp": 15264
+   }
+  }
+ },
+ "case-grey-4": {
+  "width": 433,
+  "height": 854,
+  "widths": [
+   217,
+   433
+  ],
+  "alpha": true,
+  "bytes": {
+   "217": {
+    "avif": 4460,
+    "webp": 6028
+   },
+   "433": {
+    "avif": 8643,
+    "webp": 14542
+   }
+  }
+ },
+ "case-blue-1": {
+  "width": 433,
+  "height": 854,
+  "widths": [
+   217,
+   433
+  ],
+  "alpha": true,
+  "bytes": {
+   "217": {
+    "avif": 4674,
+    "webp": 6294
+   },
+   "433": {
+    "avif": 8976,
+    "webp": 15604
+   }
+  }
+ },
+ "case-blue-2": {
+  "width": 433,
+  "height": 854,
+  "widths": [
+   217,
+   433
+  ],
+  "alpha": true,
+  "bytes": {
+   "217": {
+    "avif": 4926,
+    "webp": 6412
+   },
+   "433": {
+    "avif": 9444,
+    "webp": 16058
+   }
+  }
+ },
+ "case-blue-3": {
+  "width": 433,
+  "height": 854,
+  "widths": [
+   217,
+   433
+  ],
+  "alpha": true,
+  "bytes": {
+   "217": {
+    "avif": 4808,
+    "webp": 6320
+   },
+   "433": {
+    "avif": 9327,
+    "webp": 15594
+   }
+  }
+ },
+ "case-blue-4": {
+  "width": 433,
+  "height": 854,
+  "widths": [
+   217,
+   433
+  ],
+  "alpha": true,
+  "bytes": {
+   "217": {
+    "avif": 5056,
+    "webp": 6654
+   },
+   "433": {
+    "avif": 9539,
+    "webp": 15778
+   }
+  }
+ },
+ "case-brown-1": {
+  "width": 433,
+  "height": 854,
+  "widths": [
+   217,
+   433
+  ],
+  "alpha": true,
+  "bytes": {
+   "217": {
+    "avif": 4726,
+    "webp": 6300
+   },
+   "433": {
+    "avif": 8936,
+    "webp": 15570
+   }
+  }
+ },
+ "case-brown-2": {
+  "width": 433,
+  "height": 854,
+  "widths": [
+   217,
+   433
+  ],
+  "alpha": true,
+  "bytes": {
+   "217": {
+    "avif": 4755,
+    "webp": 6350
+   },
+   "433": {
+    "avif": 9141,
+    "webp": 15530
+   }
+  }
+ },
+ "case-brown-3": {
+  "width": 433,
+  "height": 854,
+  "widths": [
+   217,
+   433
+  ],
+  "alpha": true,
+  "bytes": {
+   "217": {
+    "avif": 4719,
+    "webp": 6402
+   },
+   "433": {
+    "avif": 8926,
+    "webp": 15604
+   }
+  }
+ },
+ "case-brown-4": {
+  "width": 433,
+  "height": 854,
+  "widths": [
+   217,
+   433
+  ],
+  "alpha": true,
+  "bytes": {
+   "217": {
+    "avif": 4836,
+    "webp": 6300
+   },
+   "433": {
+    "avif": 9127,
+    "webp": 15128
+   }
+  }
+ },
+ "picker-blissful-blue-22": {
+  "width": 1560,
+  "height": 1500,
+  "widths": [
+   520,
+   1040,
+   1560
+  ],
+  "alpha": true,
+  "bytes": {
+   "520": {
+    "avif": 10187,
+    "webp": 14800
+   },
+   "1040": {
+    "avif": 20637,
+    "webp": 34152
+   },
+   "1560": {
+    "avif": 22678,
+    "webp": 45914
+   }
+  },
+  "shade": "blissful-blue-22",
+  "name": "Navy",
+  "hex": "#023a5d"
+ },
+ "picker-blissful-blue-03": {
+  "width": 1560,
+  "height": 1500,
+  "widths": [
+   520,
+   1040,
+   1560
+  ],
+  "alpha": true,
+  "bytes": {
+   "520": {
+    "avif": 10206,
+    "webp": 14146
+   },
+   "1040": {
+    "avif": 20670,
+    "webp": 33706
+   },
+   "1560": {
+    "avif": 22954,
+    "webp": 45210
+   }
+  },
+  "shade": "blissful-blue-03",
+  "name": "Powder",
+  "hex": "#89d6e0"
+ },
+ "picker-go-green-19": {
+  "width": 1560,
+  "height": 1500,
+  "widths": [
+   520,
+   1040,
+   1560
+  ],
+  "alpha": true,
+  "bytes": {
+   "520": {
+    "avif": 10146,
+    "webp": 14300
+   },
+   "1040": {
+    "avif": 20562,
+    "webp": 34300
+   },
+   "1560": {
+    "avif": 22336,
+    "webp": 44622
+   }
+  },
+  "shade": "go-green-19",
+  "name": "Teal",
+  "hex": "#619799"
+ },
+ "picker-go-green-05": {
+  "width": 1560,
+  "height": 1500,
+  "widths": [
+   520,
+   1040,
+   1560
+  ],
+  "alpha": true,
+  "bytes": {
+   "520": {
+    "avif": 9848,
+    "webp": 13882
+   },
+   "1040": {
+    "avif": 19859,
+    "webp": 33128
+   },
+   "1560": {
+    "avif": 21439,
+    "webp": 44138
+   }
+  },
+  "shade": "go-green-05",
+  "name": "Mint",
+  "hex": "#74bca8"
+ },
+ "picker-go-green-09": {
+  "width": 1560,
+  "height": 1500,
+  "widths": [
+   520,
+   1040,
+   1560
+  ],
+  "alpha": true,
+  "bytes": {
+   "520": {
+    "avif": 9886,
+    "webp": 13878
+   },
+   "1040": {
+    "avif": 20264,
+    "webp": 32586
+   },
+   "1560": {
+    "avif": 22265,
+    "webp": 43876
+   }
+  },
+  "shade": "go-green-09",
+  "name": "Sage",
+  "hex": "#a5cc93"
+ },
+ "swatch-frosty-white": {
+  "width": 384,
+  "height": 384,
+  "widths": [
+   128,
+   256,
+   384
+  ],
+  "alpha": true,
+  "bytes": {
+   "128": {
+    "avif": 3625,
+    "webp": 5036
+   },
+   "256": {
+    "avif": 7574,
+    "webp": 11740
+   },
+   "384": {
+    "avif": 5373,
+    "webp": 11252
+   }
+  },
+  "shade": "frosty-white-22",
+  "name": "Antique",
+  "hex": "#ecdfcc",
+  "family": "frosty-white",
+  "source": "pdf",
+  "order": 1
+ },
+ "swatch-playful-pink": {
+  "width": 384,
+  "height": 384,
+  "widths": [
+   128,
+   256,
+   384
+  ],
+  "alpha": true,
+  "bytes": {
+   "128": {
+    "avif": 3622,
+    "webp": 5220
+   },
+   "256": {
+    "avif": 9082,
+    "webp": 12208
+   },
+   "384": {
+    "avif": 5528,
+    "webp": 11464
+   }
+  },
+  "shade": "playful-pink-06",
+  "name": "Ballerina",
+  "hex": "#d7a1ae",
+  "family": "playful-pink",
+  "source": "pdf",
+  "order": 2
+ },
+ "swatch-stormy-grey": {
+  "width": 384,
+  "height": 384,
+  "widths": [
+   128,
+   256,
+   384
+  ],
+  "alpha": true,
+  "bytes": {
+   "128": {
+    "avif": 2947,
+    "webp": 4550
+   },
+   "256": {
+    "avif": 7115,
+    "webp": 10712
+   },
+   "384": {
+    "avif": 5567,
+    "webp": 11624
+   }
+  },
+  "shade": "stormy-grey-04",
+  "name": "Harbor",
+  "hex": "#a4a4a4",
+  "family": "stormy-grey",
+  "source": "pdf",
+  "order": 3
+ },
+ "swatch-basic-brown": {
+  "width": 384,
+  "height": 384,
+  "widths": [
+   128,
+   256,
+   384
+  ],
+  "alpha": true,
+  "bytes": {
+   "128": {
+    "avif": 3752,
+    "webp": 5236
+   },
+   "256": {
+    "avif": 7572,
+    "webp": 11910
+   },
+   "384": {
+    "avif": 5292,
+    "webp": 11288
+   }
+  },
+  "shade": "basic-brown-03",
+  "name": "Beige",
+  "hex": "#e5d8ad",
+  "family": "basic-brown",
+  "source": "pdf",
+  "order": 4
+ },
+ "swatch-blissful-blue": {
+  "width": 384,
+  "height": 384,
+  "widths": [
+   128,
+   256,
+   384
+  ],
+  "alpha": true,
+  "bytes": {
+   "128": {
+    "avif": 3430,
+    "webp": 5026
+   },
+   "256": {
+    "avif": 7171,
+    "webp": 11734
+   },
+   "384": {
+    "avif": 5407,
+    "webp": 11252
+   }
+  },
+  "shade": "blissful-blue-03",
+  "name": "Powder",
+  "hex": "#b9c9ca",
+  "family": "blissful-blue",
+  "source": "pdf",
+  "order": 5
+ },
+ "swatch-vivid-violet": {
+  "width": 384,
+  "height": 384,
+  "widths": [
+   128,
+   256,
+   384
+  ],
+  "alpha": true,
+  "bytes": {
+   "128": {
+    "avif": 3487,
+    "webp": 4694
+   },
+   "256": {
+    "avif": 7012,
+    "webp": 11304
+   },
+   "384": {
+    "avif": 5370,
+    "webp": 11272
+   }
+  },
+  "shade": "vivid-violet-01",
+  "name": "Light Violet",
+  "hex": "#e0e5e9",
+  "family": "vivid-violet",
+  "source": "pdf",
+  "order": 6
+ },
+ "swatch-mellow-yellow": {
+  "width": 384,
+  "height": 384,
+  "widths": [
+   128,
+   256,
+   384
+  ],
+  "alpha": true,
+  "bytes": {
+   "128": {
+    "avif": 3784,
+    "webp": 5076
+   },
+   "256": {
+    "avif": 7992,
+    "webp": 12618
+   },
+   "384": {
+    "avif": 5439,
+    "webp": 12250
+   }
+  },
+  "shade": "mellow-yellow-04",
+  "name": "Pastel",
+  "hex": "#f5eda5",
+  "family": "mellow-yellow",
+  "source": "tinted",
+  "order": 7
+ },
+ "swatch-blushing-coral": {
+  "width": 384,
+  "height": 384,
+  "widths": [
+   128,
+   256,
+   384
+  ],
+  "alpha": true,
+  "bytes": {
+   "128": {
+    "avif": 4057,
+    "webp": 5322
+   },
+   "256": {
+    "avif": 8000,
+    "webp": 12648
+   },
+   "384": {
+    "avif": 5469,
+    "webp": 12242
+   }
+  },
+  "shade": "blushing-coral-01",
+  "name": "Bellini",
+  "hex": "#ffb98a",
+  "family": "blushing-coral",
+  "source": "tinted",
+  "order": 8
+ },
+ "swatch-go-green": {
+  "width": 384,
+  "height": 384,
+  "widths": [
+   128,
+   256,
+   384
+  ],
+  "alpha": true,
+  "bytes": {
+   "128": {
+    "avif": 3534,
+    "webp": 5434
+   },
+   "256": {
+    "avif": 7184,
+    "webp": 12022
+   },
+   "384": {
+    "avif": 5259,
+    "webp": 11730
+   }
+  },
+  "shade": "go-green-09",
+  "name": "Sage",
+  "hex": "#96a880",
+  "family": "go-green",
+  "source": "tinted",
+  "order": 9
+ },
+ "swatch-roaring-red": {
+  "width": 384,
+  "height": 384,
+  "widths": [
+   128,
+   256,
+   384
+  ],
+  "alpha": true,
+  "bytes": {
+   "128": {
+    "avif": 3723,
+    "webp": 5340
+   },
+   "256": {
+    "avif": 7407,
+    "webp": 11922
+   },
+   "384": {
+    "avif": 5215,
+    "webp": 11440
+   }
+  },
+  "shade": "roaring-red-01",
+  "name": "Pastel",
+  "hex": "#fe6c6b",
+  "family": "roaring-red",
+  "source": "tinted",
+  "order": 10
+ },
+ "blob-grey": {
+  "width": 480,
+  "height": 496,
+  "widths": [
+   160,
+   320,
+   480
+  ],
+  "alpha": true,
+  "bytes": {
+   "160": {
+    "avif": 4179,
+    "webp": 5536
+   },
+   "320": {
+    "avif": 11159,
+    "webp": 15056
+   },
+   "480": {
+    "avif": 17233,
+    "webp": 17990
+   }
+  }
+ },
+ "blob-blue": {
+  "width": 480,
+  "height": 496,
+  "widths": [
+   160,
+   320,
+   480
+  ],
+  "alpha": true,
+  "bytes": {
+   "160": {
+    "avif": 4179,
+    "webp": 5556
+   },
+   "320": {
+    "avif": 11177,
+    "webp": 15070
+   },
+   "480": {
+    "avif": 17253,
+    "webp": 18008
+   }
+  }
+ },
+ "blob-brown": {
+  "width": 480,
+  "height": 496,
+  "widths": [
+   160,
+   320,
+   480
+  ],
+  "alpha": true,
+  "bytes": {
+   "160": {
+    "avif": 4179,
+    "webp": 5554
+   },
+   "320": {
+    "avif": 11222,
+    "webp": 15074
+   },
+   "480": {
+    "avif": 17256,
+    "webp": 18006
+   }
+  }
+ }
+}

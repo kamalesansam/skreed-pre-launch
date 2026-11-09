@@ -1,0 +1,48 @@
+---
+// Seen, section "seen" (docs/specs/redesign.md D10, the first of the three clips, D19 item 3 and sections 3 to 6; Sam,
+// 2026-11-09, of the clips his PDF holds one frame of: "Live animations"): "what you’ve seen so far" over three fans of
+// cases, the greys, the blues and the browns, and "is about to change" under them. The twelve cut-outs are real
+// pictures, all of one outline and all solid: each fan is a figure whose front case carries the fan's description,
+// the three behind it being its repeats.
+// At rest, with no script and before GSAP, the fans stand open as the clip's last frame has them and both lines are
+// there, the second in the PDF's grey: in each fan the front case on top at the left and the three behind it one, two
+// and three equal steps to its right, every case opaque, the three fans sharing the page out evenly (Sam, 2026-11-09,
+// of the first build, which stood as the PDF's mid-clip frame: "in the end of the scroll the phone cases are supposed
+// to be fully visible, not translucent, and they're all in equal spaces"). The order in the markup is the stacking,
+// front case first.
+// The stylesheet holds the scene on screen (a sticky stage, rd-seen.css) and scripts/redesign/seen.ts plays it with
+// the scroll: the fans open case by case, then the second line comes up word by word and turns black. For that the
+// second line is cut into words here, each with a black copy over the grey one (the turn is that copy's opacity,
+// never a colour tween); the phrase itself is read from the hidden span, the cut words are not.
+// On a phone the fans are a row wider than the screen: the scrub pans it, and without a script it scrolls sideways.
+import '../../styles/rd-seen.css';
+import RdPicture from './RdPicture.astro';
+import { RD_COPY } from '../../config/redesign.ts';
+
+const c = RD_COPY.seen;
+const words = c.second.split(' ');
+// a case is 169.4u wide on a laptop (a 1024.5th of the page a unit, the page capped at 1600 px) and 2.6 times that on a phone
+const sizes = '(max-width: 719px) 43vw, min(16.6vw, 265px)';
+---
+<section class="rd-sec rd-seen" id="seen" data-tone="light" data-ground="paper">
+  <div class="rd-seen-stage">
+    <div class="rd-seen-scene">
+      <p class="rd-seen-line rd-seen-first">{c.first}</p>
+      <div class="rd-seen-view">
+        <div class="rd-seen-row">
+          {c.fans.map((fan) => (
+            <figure class="rd-seen-fan" data-fan={fan.id}>
+              {[1, 2, 3, 4].map((n) => (
+                <RdPicture name={`case-${fan.id}-${n}`} alt={n === 1 ? fan.alt : ''} sizes={sizes} class={`rd-seen-case rd-seen-case--${n}`} />
+              ))}
+            </figure>
+          ))}
+        </div>
+      </div>
+      <p class="rd-seen-line rd-seen-second"><span class="sr-only">{c.second}</span><span class="rd-seen-words" aria-hidden="true">{words.map((w, i) => <>{i > 0 && ' '}<span class="rd-seen-w"><span class="rd-seen-w-in">{w}<span class="rd-seen-w-ink">{w}</span></span></span></>)}</span></p>
+    </div>
+  </div>
+</section>
+<script>
+  import '../../scripts/redesign/seen.ts';
+</script>

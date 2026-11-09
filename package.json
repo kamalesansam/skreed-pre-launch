@@ -7,7 +7,7 @@
   "engines": {
     "node": ">=22.12.0"
   },
-  "//build-modes": "Section 4 ships one build in every mode (docs/specs/section-4-flux.md 5, Build modes): the five scene loops and their stills, with media-src 'self' written by csp.mjs for build, build:test and build:staging alike (E-S4-video as amended). build:test adds the hooks (__s4), build:staging the hooks and Tune. build and build:staging then run budget.mjs (section 6's lines and AC8's formats) and the post-build guard (exactly the ten loops, no land, park or garden asset, media-src 'self'). This note sits outside scripts so that npm run cannot run it.",
+  "//build-modes": "The site ships one build in every mode (docs/specs/section-4-flux.md 5, Build modes): csp.mjs writes media-src 'self' for build, build:test and build:staging alike (E-S4-video as amended). build:test adds the hooks, build:staging the hooks and Tune. build and build:staging then run budget.mjs and the post-build guard, and both follow the page (docs/specs/redesign.md D17). A landing page that mounts section 4 is held to section 6's lines and AC8's formats and ships exactly the ten scene loops. The redesigned landing, which mounts none, ships no video and nothing of the scenes, the lands or the hall, and is held to its own lines (critical JS, the total over every chunk it can reach, the first screen's picture, the first view with its four preloaded fonts, each of its four display faces), its formats, no id said twice, one sign-up form at most and no picture that no page names. Section 5's lines are read on every page that mounts it, the landing page and /jars/. This note sits outside scripts so that npm run cannot run it.",
   "scripts": {
     "dev": "PUBLIC_HERO_HOOKS=1 PUBLIC_TUNE=1 PUBLIC_STAGING=0 PUBLIC_FAMILY_3D=on astro dev",
     "build": "PUBLIC_HERO_HOOKS=0 PUBLIC_TUNE=0 PUBLIC_STAGING=0 PUBLIC_FAMILY_3D=on astro build && node scripts/csp.mjs && node scripts/hero/budget.mjs dist --mode build && node scripts/room/guards.mjs --post-build --mode build",
@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "astro": "7.3.8",
+    "gsap": "3.15.1",
     "three": "0.165.0"
   },
   "devDependencies": {

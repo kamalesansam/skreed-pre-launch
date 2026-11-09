@@ -1,0 +1,87 @@
+/* Launch: the countdown on the PDF's blank white slide (docs/specs/redesign.md D13, section 4's row "launch", section 5
+   for the phone; D19, item 9, for the colons). The countdown's own rules, taken from shell.css (.count, .eyebrow, the link at zero) and set for this
+   slide: black on white instead of Pearl Whisper on night, centred instead of bottom left, the dot digits large. The
+   class names are the old hero's because its script, its glitch and its tests look for them; every rule is held under
+   .rd-launch, and this page does not load shell.css. Phone first; the wide slide from 720 px.
+   The digits are E-CD-font's dot pairs (two always, 17.5 by 13 dots, so nothing jumps under 10); the eyebrow and the
+   unit labels are IBM Plex Mono Medium in capitals (E-chrome-font). No wrapper clips: the glitch's kicks and its
+   ghosts reach past a pair's own box (overflow visible on .n, none hidden above it). */
+
+.rd-launch { --rd-launch-fs: clamp(0.875rem, 0.5rem + 0.625vw, 1rem); --rd-launch-fs-line: clamp(1.125rem, 0.6rem + 2.2vw, 2rem);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(1.25rem, 3.4vw, 3rem);
+  min-height: 100vh; min-height: 100svh; padding: var(--s5) calc(var(--inset) + env(safe-area-inset-right, 0px)) var(--s5) calc(var(--inset) + env(safe-area-inset-left, 0px));
+  color: var(--rd-ink); text-align: center; }
+
+.rd-launch .eyebrow { font-family: var(--font-mono); font-weight: 500; font-size: var(--rd-launch-fs); line-height: 1.4; text-transform: uppercase; letter-spacing: 0; color: var(--rd-ink); }
+
+/* the PDF's COMING SOON mark, in the place of the old eyebrow's words (D20; Sam, 2026-11-09: "take that coming soon and
+   put it in the place of "launch in""): the PDF's size on a wide screen, 194.5u wide, black on the white slide. Its bar
+   and its knob move by transform only (scripts/redesign/launch.ts). The rail is the bar at a third of its strength, under
+   the fill, so the mark keeps its mass and its two even lines while the bar is still loading; once the fill is whole
+   the rail is covered. At zero the script writes the live line over the mark */
+.rd-launch-mark { display: block; width: min(56vw, 18rem); height: auto; overflow: visible; color: var(--rd-ink); fill: currentColor; }
+.rd-launch-rail { fill-opacity: 0.32; }
+
+/* four pairs and, since D19, a colon between each pair and the next (Sam, 2026-11-09: "add dots for the countdown
+   timer"), in one row between the gutters. The row is laid out in the digits' own dots (config/countdown-digits.ts): a
+   pair is 17.5 dots wide and a colon's box 6, the whole space between two pairs, with the colon's two columns of dots
+   in the middle of it and 2 dots clear at each side, a stroke's width, so the columns of dots run on in whole dots
+   from the digit at its left to the digit at its right. Four pairs and three colons make 88 dots (4 x 17.5 + 3 x 6):
+   one dot is an 88th of the row (--rd-launch-dot), and every width here is a share of the row, never of the screen,
+   so neither a scrollbar nor a notch can push the digits past the gutters. The row is as wide as the gutters allow
+   and the digits are 13 of its 88 dots tall. The colons take 18 dots of the row where the three gaps took about 9, so
+   the digits are smaller than they were without them: at 390 px 58.5 px tall then, 52.9 by these rules and 52 by the
+   whole pixels below; at 360 px 56, 48.5 and 47.5; at 430 px 64.5, 58.8 and 57.9; at 1280 px 192, 175.9 and 175.3.
+   The wide slide's cap is the digits at 12rem, a row of 12rem x 88 / 13, reached from about 1400 px. Every item
+   starts at the row's top, so a colon, which has no label under it, stands in the digits' rows. A label wider than its
+   pair (under about 332 px) overhangs it evenly and moves nothing. */
+.rd-launch .count { --rd-launch-dot: calc(100% / 88); display: flex; justify-content: center; align-items: flex-start; width: 100%; max-width: calc(12rem * 88 / 13); font-family: var(--font-ui); font-variant-numeric: tabular-nums; color: var(--rd-ink); }
+.rd-launch .count[hidden] { display: none; }   /* at zero the numerals go, and the colons with them */
+.rd-launch .count > div { display: flex; flex: none; flex-direction: column; align-items: center; gap: var(--s2); width: calc(17.5 * var(--rd-launch-dot)); }
+.rd-launch .count .n { display: block; flex: none; width: 100%; height: auto; aspect-ratio: 17.5 / 13; overflow: visible; color: var(--rd-ink); }
+/* the colon: the digits' dots in the digits' rows (its bitmap is the config's COLON, its path the inline script's, the
+   one that draws the digits), black as they are, and still: it does not blink, and the glitch, which is put on the
+   four groups, never reaches it (a kick is clipped half a dot past its pair, and the marks stand 2 dots off). A group
+   is a div and a colon an svg, so nothing that asks the row for its groups is handed a colon. Its box has the shape
+   of its drawing, 6 dots by 13 (the viewBox Launch.astro writes), so it is as tall as a pair */
+.rd-launch .count .colon { display: block; flex: none; width: calc(6 * var(--rd-launch-dot)); height: auto; aspect-ratio: 6 / 13; overflow: visible; color: var(--rd-ink); }
+.rd-launch .count .l { font-family: var(--font-mono); font-weight: 500; font-size: var(--rd-launch-fs); line-height: 1.2; text-transform: uppercase; letter-spacing: 0; color: var(--rd-ink); }
+.rd-launch .count:not([data-ready]) :is(.n, .colon) { visibility: hidden; }   /* no false value before the first tick, and no colon standing alone */
+/* whole pixels, where the browser can count them (round() and container units; without them the rules above stand as
+   they are). A browser paints each SVG from the nearest whole pixel, so boxes that begin at different fractions of a
+   pixel are moved by different amounts: laid out in shares of the row, a colon was painted with as much as a pixel
+   and a quarter more at one side than at the other (7.6 and 8.4 px clear at 390 px wide, 25.25 and 26.5 at 1280). Here a
+   pair is a whole number of pixels wide and so is a colon's box, so every box of the row begins at the same fraction
+   and they all move as one: a colon's marks, which the SVG centres in its box, are painted with the same space at
+   each side. The dot is a 17.5th of the pair; the colon's box is rounded up from its 6 dots, the spare part of a
+   pixel being air at its two sides, and its height is the pair's, so its dots are the digits' own. The 3 px held back
+   are the three boxes' rounding, and the row stands centred in what is left over, at most 4 px in from each gutter.
+   At 390 px a pair is 70 px, the dot 4 px and a colon's box 24 px; at 1280 px a pair is 236 px and a colon's box 81. */
+@supports (width: round(down, 1cqi, 1px)) {
+  .rd-launch .count { container-type: inline-size; }
+  .rd-launch .count > * { --rd-launch-pair: round(down, calc((100cqi - 3px) * 17.5 / 88), 1px); }
+  .rd-launch .count > div { width: var(--rd-launch-pair); }
+  .rd-launch .count :is(.n, .colon) { height: calc(var(--rd-launch-pair) * 13 / 17.5); aspect-ratio: auto; }
+  .rd-launch .count .colon { width: round(up, calc(var(--rd-launch-pair) * 6 / 17.5), 1px); }
+}
+
+/* no JavaScript: the mark, and the date in one line instead of empty numeral boxes */
+html:not(.js) .rd-launch #count { display: none; }
+.rd-launch noscript .eyebrow { font-size: var(--rd-launch-fs-line); }
+
+/* at zero the eyebrow is the live line with its link to the store: the slide's one line, so it is set larger. The link's
+   hit box is 44 px at the least (a line box of 25 px or more, plus 2 x 13); its focus is the two-tone ring, the Urban
+   Slate line inside the Ember Luxe outline, which alone is 2:1 on white */
+.rd-launch:has(.count[hidden]) .eyebrow { font-size: var(--rd-launch-fs-line); }
+.rd-launch .eyebrow a { position: relative; color: inherit; text-decoration: underline; text-decoration-thickness: 0.08em; text-underline-offset: 0.22em; }
+.rd-launch .eyebrow a::after { content: ""; position: absolute; inset: -13px -8px; }
+.rd-launch .eyebrow a:focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 4px; }
+.rd-launch .eyebrow a:focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); }
+
+/* wide: the PDF's slide, 715u tall and never less than the screen; the digits up to 12rem tall (the row's own cap),
+   their labels a little lower */
+@media (min-width: 720px) {
+  .rd-launch { min-height: max(100vh, calc(715 * var(--rd-u))); min-height: max(100svh, calc(715 * var(--rd-u))); }
+  .rd-launch .count > div { gap: clamp(0.75rem, 1.6vw, 1.5rem); }
+  .rd-launch-mark { width: calc(194.5 * var(--rd-u)); }
+}

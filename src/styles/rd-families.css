@@ -1,0 +1,100 @@
+/* Families, section "families" of the redesigned landing page (docs/specs/redesign.md D10 and sections 4 to 6): the
+   three paint blobs, the grey line, the headline and the ten family swatches, on white. Imported by
+   src/components/redesign/Families.astro alone. The section at rest is complete; scripts/redesign/families.ts adds
+   the motion (the blobs stamp in, the letters fall, the swatches pop) and nothing here waits for it.
+   The wide layout is the PDF's page measured at 1281 px (1.25 px a unit), from the section's top: the blobs' pictures
+   101.05u across and 104.42u tall (the PDF's paths, 99.59 by 102.94, with a clear margin), their tops at 96.45u and
+   their middles at 259.1, 517.2 and 775.6u; the grey line's box at 268u; the headline's at 343.8u; the swatches on a
+   76.2u pitch, their middles at 711.8u; the section 868u tall.
+   Spacing is gap on flex columns and padding on the wrap (rule 15). Phone first; the wide layout from 720 px. */
+
+.rd-families { --rd-families-bw: min(22vw, 112px); }
+.rd-families-wrap { display: flex; flex-direction: column; gap: 44px; padding: 76px var(--inset) 84px; }
+.rd-families-say { display: flex; flex-direction: column; gap: 40px; }
+.rd-families-text { display: flex; flex-direction: column; gap: 14px; }
+
+/* the three blobs: the colours "you've seen so far", the PDF's own pictures (its fills and its brush, in their alpha),
+   each with its word in the script face, level, where the PDF lays its own: white at 0.34, which is what the strokes of
+   the PDF's words read over each of the three fills, a touch left of the picture's middle and on its baseline. The two
+   turns are about the middle of the brush's outline, a circle fitted to it, so the disc turns in its place */
+.rd-families-blobs { display: flex; justify-content: space-around; }
+.rd-families-blob { position: relative; display: block; flex: none; width: var(--rd-families-bw); }
+.rd-families-brush { display: block; transform-origin: 49.3% 48.7%; }
+.rd-families-brush-img { display: block; width: 100%; height: auto; }
+.rd-families-stamp { display: block; transform-origin: 49.3% 48.7%; will-change: transform; }
+.rd-families-word { position: absolute; left: 46%; top: 51.7%; transform: translate(-50%, -54%); padding: 0.3em 0.4em; font-family: var(--rd-script); font-size: calc(var(--rd-families-bw) * 0.228); line-height: 1;
+  white-space: nowrap; color: color-mix(in srgb, var(--rd-white) 34%, transparent); pointer-events: none; }
+
+/* the grey line: the PDF's grey at a size AA allows it (24 px at the least, large text at 3.36:1) */
+.rd-families-lead { font-family: var(--rd-display); font-weight: 400; font-size: clamp(24px, calc(34.1 * var(--rd-u)), 52px); line-height: 1.2; letter-spacing: 0.003em; color: var(--rd-mute); text-wrap: balance; }
+
+/* the headline's lines as flex items, so the split text's negative margins add up between lines instead of collapsing
+   into one (redesign.css sets each line's mask padding and takes it back by margin) and the pitch is the PDF's 0.806 */
+.rd-families .rd-split { display: flex; flex-direction: column; align-items: flex-start; }
+
+/* the ten swatches: two rows of five on a phone. A link is its whole cell, the picture and the words under it. A
+   picture is a square of clear margin round its brush, about five sixths of its width, with the body's middle at the
+   square's middle, so the pop, the breath and the hover all turn about the disc, and the disc's own margin is the room
+   above it and between it and its name. On a phone the square fills its cell, up to the 78 px that draw a disc of 64 */
+.rd-families-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px 0; }
+.rd-families-cell { display: block; }
+.rd-families-sw { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 44px; padding-block: 0 4px; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+.rd-families-pop { display: block; width: min(100%, 78px); will-change: transform; }
+.rd-families-pic { display: block; }
+.rd-families-img { width: 100%; height: auto; transition: transform 0.5s var(--rd-ease-out); }
+
+/* hover and focus: the disc grows and turns a little, and its words come; a press sets it back down. A control's own
+   states (rule 48), so a link's alone. The palest swatches are 1.2 to 1.4:1 on white, as the PDF draws them, so the
+   change that can be seen is the words, black at 21:1, and round a focused link the ring of .rd-ring, whose Urban
+   Slate line is 10.7:1 on white where Ember Luxe alone is 2.1:1 */
+@media (hover: hover) { a.rd-families-sw:hover .rd-families-img { transform: scale(1.08) rotate(-9deg); } }
+a.rd-families-sw:focus-visible .rd-families-img { transform: scale(1.08) rotate(-9deg); }
+a.rd-families-sw:active .rd-families-img { transform: scale(0.96); transition-duration: 0.12s; }
+
+/* the words: the family's name over the gems' count line. On a phone the name is always there, a word to a line, and
+   the count comes for the swatch in focus or last pressed, in room kept for it */
+.rd-families-label { display: block; font-family: var(--rd-display); font-size: 12px; line-height: 1.25; letter-spacing: 0.02em; text-transform: uppercase; text-align: center; color: var(--rd-ink); }
+.rd-families-name { display: block; font-weight: 600; }
+.rd-families-nw { display: block; }
+.rd-families-count { display: block; font-weight: 400; white-space: nowrap; opacity: 0; transition: opacity 0.25s var(--rd-ease-out); }
+.rd-families-sw:focus-visible .rd-families-count, .rd-families-sw:active .rd-families-count, .rd-families-sw[data-on] .rd-families-count { opacity: 1; }
+@media (hover: hover) { .rd-families-sw:hover .rd-families-count { opacity: 1; } }
+
+/* wide: the PDF's page */
+@media (min-width: 720px) {
+  .rd-families { --rd-families-bw: calc(101.05 * var(--rd-u)); }
+  .rd-families-wrap { gap: calc(69.8 * var(--rd-u)); padding: calc(96.45 * var(--rd-u)) calc(120.9 * var(--rd-u)) calc(117.8 * var(--rd-u)); }
+  .rd-families-say { gap: calc(67.1 * var(--rd-u)); }
+  .rd-families-text { gap: calc(34.9 * var(--rd-u)); }
+  .rd-families-blobs { justify-content: flex-start; gap: calc(157.2 * var(--rd-u)); padding-inline-start: calc(87.67 * var(--rd-u)); }
+  .rd-families-lead { white-space: nowrap; }
+  /* the pictures against the PDF's own crop, by least squares over the six: each square 76.7u across (its brush about
+     63u wide and 65u tall), a little over its 76.2u cell and centred on it, its middle at 711.8u from the section's top;
+     their middles in x 157.3 to 539.0u, which the row's cells meet from 119.6u, 1.3u left of the headline's edge */
+  .rd-families-row { grid-template-columns: repeat(10, calc(76.2 * var(--rd-u))); gap: 0; translate: calc(-1.3 * var(--rd-u)) 0; }
+  .rd-families-sw { gap: 0; min-height: 0; padding-block: calc(4.7 * var(--rd-u)) 0; }
+  .rd-families-pop { width: calc(76.7 * var(--rd-u)); }
+  /* the words hang under the picture, one line each, clear of the focus ring, and come on hover, on keyboard focus and
+     for the swatch last pressed */
+  .rd-families-label { position: absolute; left: 50%; top: calc(100% + 10px); transform: translate(-50%, -6px); font-size: clamp(12px, calc(9.6 * var(--rd-u)), 13px); line-height: 1.35; letter-spacing: 0.06em; white-space: nowrap; opacity: 0; pointer-events: none;
+    transition: opacity 0.2s var(--rd-ease-out), transform 0.4s var(--rd-ease-out); }
+  .rd-families-nw { display: inline; }
+  .rd-families-count { opacity: 1; }
+  .rd-families-sw:focus-visible .rd-families-label, .rd-families-sw[data-on] .rd-families-label { opacity: 1; transform: translate(-50%, 0); }
+}
+@media (min-width: 720px) and (hover: hover) {
+  a.rd-families-sw:hover .rd-families-label { opacity: 1; transform: translate(-50%, 0); }
+}
+/* a build with no family pages (PUBLIC_FAMILY_PAGES=off, Families.astro): no link, nothing to hover or focus, so on a
+   wide screen too the name stands under its picture, in the flow, a word to a line, at a size that keeps two long
+   words apart in the narrowest cells */
+@media (min-width: 720px) {
+  span.rd-families-sw .rd-families-label { position: static; transform: none; font-size: clamp(11px, 1.55vw, 13px); letter-spacing: 0; white-space: normal; opacity: 1; }
+  span.rd-families-sw .rd-families-nw { display: block; }
+}
+
+/* the way into a family page: this page opts into the cross-document view transition the family pages opt into
+   (family.css; docs/specs/family-page.md 2.2, R14), as the old landing's ten links did (family-links.css), and
+   families.ts keeps it to links into /shades/ (installViewTransitionScope). Without it the browser aborts the family
+   pages' transition on the way back here and says so in the console */
+@view-transition { navigation: auto; }

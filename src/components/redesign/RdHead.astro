@@ -1,0 +1,9 @@
+---
+// First in <head> on the redesigned landing page (docs/specs/redesign.md D3): the class the quiz, the section index's
+// drawer and the countdown look for, set before any CSS applies. The old landing's Gate did this while it picked a
+// tier; this page has no tiers. And the Gate's guard for the way back from a family page (inline/gate.inline.js): the
+// swatches' stylesheet opts this page into cross-document view transitions, and a transition the browser skips rejects
+// three promises nobody else holds, so they are held here, where no deferred module can miss the event.
+// scripts/csp.mjs hashes the script after the build.
+---
+<script is:inline>document.documentElement.classList.add('js');addEventListener('pagereveal',function(e){var v=e.viewTransition;if(v){v.ready.catch(function(){});v.finished.catch(function(){});v.updateCallbackDone.catch(function(){});}});</script>

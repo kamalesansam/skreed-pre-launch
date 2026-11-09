@@ -1,0 +1,20 @@
+== THE REDESIGN (four display faces cut to their letters, Sam 2026-11-09; exception E-RD-font; outside the 120,000 byte cap of the three brand faces)
+fontTools 4.55.3; sources google/fonts@9710da1 (the commit build.py pins), OFL 1.1
+source  Rubik[wght].ttf  359804 bytes  sha256 1b3a7437ba2af80e465e773ed60c5036d1ba6ace492d89046dbcf18fb31e4e88
+rubik-900-caps.woff2               2676 bytes   2.7 KB  sha256 18a5d3373645956c35e9da067673b5c6cf4cea9e6f683afeb500b98e58a72e34
+  glyphs 28, upm 1000, cap 0.700, x-height 0.520, typo asc/desc 0.935/-0.250, hhea asc/desc 0.935/-0.250, features kern, names {1: 'Rubik Black', 4: 'Rubik Black', 6: 'Rubik-Black'}
+  advances, in em: DIFFERENT 5.8700; licence rubik-OFL.txt
+source  RubikGlitch-Regular.ttf  407304 bytes  sha256 260245012483d56956269100ebece747aa95b4b67e5a9411a81a36e91f55e653
+rubik-glitch-400-caps.woff2       12080 bytes  12.1 KB  sha256 e0505a793b6a8340bf4d61b844a01fb0d62de67edaf217fc0b05d28e73aaebdd
+  glyphs 28, upm 1000, cap 0.700, x-height 0.520, typo asc/desc 0.935/-0.250, hhea asc/desc 0.935/-0.250, features kern, names {1: 'Rubik Glitch', 4: 'Rubik Glitch Regular', 6: 'RubikGlitch-Regular'}
+  advances, in em: DIFFERENT 5.8700; licence rubik-glitch-OFL.txt
+source  KronaOne-Regular.ttf  35168 bytes  sha256 273463916f96a4707e697e3013d955cde8154b4e6d635a55132e7a12f276534c
+skreed-wide-400-caps.woff2         2248 bytes   2.2 KB  sha256 cb24377ee40d6bf688af086fcb83739498e14076f173e8375a0ca3fe0ef281d5
+  glyphs 28, upm 2048, cap 0.763, x-height 0.576, typo asc/desc 0.991/-0.259, hhea asc/desc 0.991/-0.259, features kern, names {1: 'Skreed Wide', 4: 'Skreed Wide Regular', 6: 'SkreedWide-Regular'}, renamed to "Skreed Wide" (the licence reserves the original's names)
+  advances, in em: MATCH 4.7441, ESSENTIALS 8.4897; licence krona-one-OFL.txt
+source  WindSong-Regular.ttf  267192 bytes  sha256 44bea4f8cdb818e9df6eef5334c63915acb7f1877b239debb373277d16b0aac2
+windsong-400-lower.woff2          10568 bytes  10.6 KB  sha256 37ac11dbddfc364017cea0eaf9b100984aea14b9a65d4bf52bd41eeca871bb37
+  glyphs 69, upm 1000, cap 0.705, x-height 0.268, typo asc/desc 0.890/-0.515, hhea asc/desc 0.890/-0.515, features kern,liga,calt, names {1: 'WindSong', 4: 'WindSong Regular', 6: 'WindSong-Regular'}
+  advances, in em: grey 1.7340, blue 1.9580, brown 2.7210; licence windsong-OFL.txt
+4 files, 27572 bytes (27.6 KB); written to public/fonts/ and docs/brand/fonts/, byte-identical
+via python3 -I scripts/fonts/build-redesign.py, fontTools and brotli

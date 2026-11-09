@@ -26,3 +26,9 @@ export const DIGITS: readonly string[] = [
   ['.######.', '########', '##....##', '##....##', '##....##', '.######.', '.######.', '##....##', '##....##', '##....##', '##....##', '########', '.######.'],
   ['.######.', '########', '##....##', '##....##', '##....##', '##....##', '########', '.#######', '......##', '......##', '##....##', '########', '.######.'],
 ].map((rows) => rows.join('/'));
+
+/** The colon that stands between one pair and the next on the redesigned landing page (Sam, 2026-11-09: "add dots for
+ *  the countdown timer"; docs/specs/redesign.md D19, item 9), in the digits' own grid and notation: 13 rows of 2 cells,
+ *  # for a dot. Two marks, each two dots wide and two tall, as heavy as a digit's stroke, in rows 3 to 4 and 8 to 9:
+ *  the 13 rows read 3 clear, 2 set, 3 clear, 2 set, 3 clear, so the marks stand evenly about the digits' middle row. */
+export const COLON = ['..', '..', '..', '##', '##', '..', '..', '..', '##', '##', '..', '..', '..'].join('/');

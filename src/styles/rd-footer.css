@@ -1,0 +1,45 @@
+/* The footer (docs/specs/redesign.md D14): small and quiet on --night in Pearl Whisper, Inter 400 at 14 to 15 px. The
+   footer stands outside main.rd, so it carries its own resets. Phone first: one column, the wordmark and the tagline,
+   a hairline, then the pages, the three social links and the contact, each link a 44 px target no wider than its
+   words. From 720 px the top is a row and the rest is a row that wraps where it must; from 1024 px it is one row of
+   three, the pages at the left, the social links in the middle, the contact at the right. Links take an underline on
+   hover and on focus; focus is the page's Ember Luxe outline, which reads on night without a second line. Spacing is
+   gap on flex and grid boxes and padding on the page box. No motion. */
+
+.rd-footer { --rd-footer-soft: color-mix(in srgb, var(--pearl-whisper) 72%, var(--night)); --rd-footer-line: color-mix(in srgb, var(--pearl-whisper) 18%, var(--night));
+  background: var(--night); color: var(--pearl-whisper); font-family: var(--rd-display); font-weight: 400; font-size: clamp(0.875rem, 0.82rem + 0.14vw, 0.9375rem); line-height: 1.5; font-optical-sizing: auto; }
+.rd-footer, .rd-footer *, .rd-footer *::before, .rd-footer *::after { box-sizing: border-box; }
+.rd-footer :where(p, ul, address) { margin: 0; padding: 0; }
+.rd-footer :where(ul) { list-style: none; }
+.rd-footer :where(address) { font-style: normal; }
+
+.rd-footer-in { display: flex; flex-direction: column; gap: var(--s4); width: min(100%, var(--rd-frame)); margin-inline: auto;
+  padding: var(--s5) calc(var(--inset) + env(safe-area-inset-right, 0px)) calc(var(--s5) + env(safe-area-inset-bottom, 0px)) calc(var(--inset) + env(safe-area-inset-left, 0px)); }
+
+.rd-footer-top { display: flex; flex-direction: column; gap: var(--s3); }
+.rd-footer-logo { display: block; width: 120px; height: auto; fill: currentColor; }
+.rd-footer-tag { color: var(--rd-footer-soft); }
+
+.rd-footer-row { display: flex; flex-direction: column; gap: var(--s1); padding-top: var(--s3); border-top: 1px solid var(--rd-footer-line); }
+.rd-footer-list { display: flex; flex-wrap: wrap; gap: 0 var(--s4); }
+.rd-footer-contact { display: flex; flex-direction: column; align-items: flex-start; }
+.rd-footer-place { display: flex; align-items: center; min-height: 44px; color: var(--rd-footer-soft); white-space: nowrap; }
+
+/* a link: a 44 px target, its words underlined on hover and on focus */
+.rd-footer-a { display: inline-flex; align-items: center; gap: var(--s1); min-width: 44px; min-height: 44px; color: inherit; text-decoration: none; text-underline-offset: 0.28em; text-decoration-thickness: 1px; -webkit-tap-highlight-color: transparent; }
+.rd-footer-a:hover, .rd-footer-a:focus-visible { text-decoration: underline; }
+
+/* the three marks, our own drawings, in the text's colour */
+.rd-footer-mark { flex: none; display: block; width: 20px; height: 20px; fill: currentColor; }
+.rd-footer-mark--line { fill: none; stroke: currentColor; stroke-width: 1.9; }
+.rd-footer-mark--line .rd-footer-dot { fill: currentColor; stroke: none; }
+
+@media (min-width: 720px) {
+  .rd-footer-top { flex-direction: row; align-items: center; justify-content: space-between; gap: var(--s5); }
+  .rd-footer-row { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 var(--s5); }
+  .rd-footer-contact { flex-direction: row; align-items: center; gap: 0 var(--s4); }
+}
+@media (min-width: 1024px) {
+  .rd-footer-row { display: grid; grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr); }
+  .rd-footer-contact { justify-self: end; }
+}

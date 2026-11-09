@@ -1,0 +1,20 @@
+---
+// One picture of the redesign (docs/specs/redesign.md D9): AVIF with its WebP twin at the encoded widths, the size in
+// the markup so nothing moves when it arrives, lazy unless it is in the first screen. No style attribute (the CSP):
+// the place and the crop are the caller's classes.
+import { rdPicture } from './pictures.ts';
+interface Props {
+  /** its name in src/assets/redesign/index.json */
+  name: string;
+  alt: string;
+  /** the sizes attribute: how wide the picture is drawn */
+  sizes: string;
+  /** true for the first screen's picture: loaded at once and at high priority */
+  eager?: boolean;
+  class?: string;
+  imgClass?: string;
+}
+const { name, alt, sizes, eager = false, class: cls, imgClass } = Astro.props;
+const p = rdPicture(name);
+---
+<picture class={cls}><source type="image/avif" srcset={p.avif} sizes={sizes} /><source type="image/webp" srcset={p.webp} sizes={sizes} /><img class={imgClass} src={p.src} alt={alt} width={p.width} height={p.height} loading={eager ? 'eager' : 'lazy'} decoding={eager ? 'sync' : 'async'} fetchpriority={eager ? 'high' : undefined} /></picture>

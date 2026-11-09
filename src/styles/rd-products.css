@@ -1,0 +1,117 @@
+/* #products, "WE’RE NOT JUST A PHONE CASE BRAND." (docs/specs/redesign.md sections 4, 5 and 6; exceptions E-RD-design,
+   E-RD-font and E-RD-motion). The headline, three paragraphs of Questrial, and the five products: each a framed
+   picture with its label under it, and its description as a white panel that rises over the picture from the frame's
+   foot (Sam, 2026-11-09: "have the description of each product as a hover effect for each of the photo").
+   Loaded by src/components/redesign/Products.astro alone. Tokens are redesign.css's; spacing is gap on flex boxes and
+   padding on the section. Phone first: under 720 px the five stand in one row that scrolls sideways inside itself
+   with snap; from 720 px the row is the PDF's, measured in u.
+   The panel never leaves the page: it is moved below its clip (.rd-products-pane, a box over the frame that is at
+   least the frame's height and grows past the frame's foot, over the label, where the frame is too small for the
+   text), so the description is always in the accessibility tree. It is up while the button is pressed open
+   (aria-expanded), while the button has keyboard focus, and under the pointer where the device hovers; .rd-products-shut
+   (scripts/redesign/products.ts) lowers it after Escape or a closing press until the pointer or the focus has left.
+   Hover and press here are a control's states, each one transform with its own easing (rules 14 and 48). */
+
+.rd-products { --rd-products-pad: var(--inset); --rd-products-fs-desc: 0.9375rem; padding-block: 72px 64px; }
+.rd-products-wrap { display: flex; flex-direction: column; gap: 36px; }
+.rd-products-head { display: flex; flex-direction: column; gap: 28px; padding-inline: var(--rd-products-pad); }
+
+/* the headline's three lines as flex items: redesign.css gives each line (.rd-ln) padding for its mask and takes it
+   back with negative margins, and as plain blocks the margins of neighbouring lines collapse into one (the lines stand
+   0.926em apart, not the PDF's 0.806em) and each line runs 0.08em past the frame's right edge. Flex items keep their
+   margins and are only as wide as their words */
+.rd-products-h .rd-split { display: flex; flex-direction: column; align-items: flex-start; }
+
+/* the sage words wait under a black copy of themselves (built by the script once the motion kit is here, never
+   before), which a slanted edge clips away from left to right: the clip is the animated value, so no gradient text.
+   --rd-products-sw is the edge's place from the word's left */
+.rd-products-h .rd-acc { position: relative; }
+.rd-products-ink { position: absolute; top: 0; left: 0; white-space: nowrap; color: var(--rd-ink); pointer-events: none;
+  clip-path: polygon(calc(var(--rd-products-sw, -100vw) + 0.09em) -30%, 200vw -30%, 200vw 130%, calc(var(--rd-products-sw, -100vw) - 0.09em) 130%); }
+
+.rd-products-body { display: flex; flex-direction: column; gap: 1.5em; font-family: var(--rd-text); font-size: var(--rd-fs-body); line-height: 1.5; color: var(--rd-body); }
+/* a paragraph cut into its lines for the entrance (the script, for about a second; then the plain text is put back) */
+.rd-products-bl { display: block; overflow: hidden; overflow: clip; white-space: nowrap; }
+.rd-products-bl-in { display: inline-block; will-change: transform; }
+
+/* the row: five items, each 78% of the page's width and never wider than the pictures can bear (38% from 560 px,
+   two to a screen), so the next one always shows at the right edge; it starts and ends at the gutters. The 8 px of
+   block padding give the focus ring room inside the scroller's clip (the gaps around the row are 8 px short for it) */
+.rd-products-range { display: flex; flex-direction: column; gap: 16px; }
+.rd-products-row { --rd-products-iw: min(78vw, 21.25rem); display: flex; align-items: flex-start; gap: 12px; padding: 8px var(--rd-products-pad);
+  overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding-inline: var(--rd-products-pad); scrollbar-width: thin; scrollbar-color: var(--rd-mute) transparent; }
+.rd-products-item { --rd-products-fh: calc(var(--rd-products-iw) * 1.25); position: relative; flex: 0 0 var(--rd-products-iw); scroll-snap-align: start; }
+
+/* the button: the label first in the markup, the picture drawn above it. The 3 px under the label keep the focus
+   ring off its letters (the wide layout takes them back from the section's foot) */
+.rd-products-btn { display: flex; flex-direction: column-reverse; gap: 10px; width: 100%; padding-bottom: 3px; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.rd-products-frame { display: block; width: 100%; height: var(--rd-products-fh); }
+.rd-products-pic { display: block; width: 100%; height: 100%; }
+.rd-products-frame img { transition: transform 0.7s var(--rd-ease-inout); }
+.rd-products-item[data-p="lenskin"] { --rd-products-liftk: 0; }
+/* the two cut-outs stand whole on their white; the three photographs fill the frame */
+.rd-products-item:is([data-p="magsocket"], [data-p="wallet"]) .rd-products-frame img { object-fit: contain; }
+.rd-products-cap { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.rd-products-label { font-family: var(--rd-display); font-weight: 400; font-size: max(var(--rd-fs-label), 0.9375rem); line-height: 1.2; letter-spacing: 0.03em; color: var(--rd-body); }
+.rd-products-plus { flex: none; display: block; width: 16px; height: 16px; color: var(--rd-ink); transition: transform 0.5s var(--rd-ease-out); }
+
+/* the clip over the frame, and the panel in it */
+.rd-products-pane { position: absolute; top: 0; right: 0; left: 0; z-index: 1; display: flex; flex-direction: column; justify-content: flex-end; min-height: var(--rd-products-fh); overflow: hidden; overflow: clip; pointer-events: none; }
+.rd-products-desc { padding: 12px; background: var(--rd-white); border: var(--rd-rule) solid var(--rd-ink); color: var(--rd-body); font-family: var(--rd-text); font-size: var(--rd-products-fs-desc); line-height: 1.4; cursor: pointer;
+  transform: translateY(calc(100% + 2px)); transition: transform 0.45s var(--rd-ease-inout); }
+
+/* up: pressed open, or in keyboard focus. The picture eases to 1.06 and rides up by half the panel's height
+   (--rd-products-lift, measured by the script; none before it runs), so what the panel leaves of the frame still
+   shows the product's middle. The Lenskin's picture stays where it is: its subject is the lens at the top */
+.rd-products-btn:is([aria-expanded="true"], .rd-products-item:not(.rd-products-shut) > :focus-visible) ~ .rd-products-pane > .rd-products-desc { transform: none; pointer-events: auto; transition: transform 0.65s var(--rd-ease-out); }
+.rd-products-btn:is([aria-expanded="true"], .rd-products-item:not(.rd-products-shut) > :focus-visible) .rd-products-frame img { transform: translateY(calc(var(--rd-products-lift, 0px) * var(--rd-products-liftk, -1))) scale(1.06); transition: transform 0.9s var(--rd-ease-out); }
+.rd-products-btn[aria-expanded="true"] .rd-products-plus { transform: rotate(135deg); }
+/* up: under the pointer, where the device hovers */
+@media (hover: hover) {
+  .rd-products-item:not(.rd-products-shut):hover > .rd-products-pane > .rd-products-desc { transform: none; pointer-events: auto; transition: transform 0.65s var(--rd-ease-out); }
+  .rd-products-item:not(.rd-products-shut):hover .rd-products-frame img { transform: translateY(calc(var(--rd-products-lift, 0px) * var(--rd-products-liftk, -1))) scale(1.06); transition: transform 0.9s var(--rd-ease-out); }
+}
+
+/* where the row stands: a hairline with a mark that travels as the row is scrolled (the script moves it). It stands
+   in for the scrollbar where a finger scrolls the row; where a mouse does, the row keeps its own thin scrollbar,
+   which can be dragged, and the line stays away */
+.rd-products-track { display: none; position: relative; align-self: center; width: calc(100% - 2 * var(--rd-products-pad)); height: 3px; }
+@media (hover: none) {
+  .rd-products-row { scrollbar-width: none; }
+  .rd-products-row::-webkit-scrollbar { display: none; }
+  .rd-products-track { display: block; }
+}
+.rd-products-track::before { content: ""; position: absolute; top: 1px; right: 0; left: 0; height: 1px; background: var(--rd-mute); }
+.rd-products-thumb { position: absolute; top: 0; left: 0; width: 20%; height: 3px; background: var(--rd-ink); will-change: transform; }
+
+/* without scripts: no panel and nothing to press; each description is printed under its label */
+html:not(.js) .rd-products-btn { cursor: default; }
+html:not(.js) .rd-products-plus, html:not(.js) .rd-products-track { display: none; }
+html:not(.js) .rd-products-pane { position: static; min-height: 0; overflow: visible; pointer-events: auto; padding-top: 8px; }
+html:not(.js) .rd-products-desc { padding: 0; border: 0; background: none; cursor: auto; transform: none; }
+
+@media (min-width: 560px) and (max-width: 719px) {
+  .rd-products-row { --rd-products-iw: 38vw; }
+}
+
+/* wide: the PDF's page. Every length is the PDF's in u (spec section 4); the paddings and gaps are set so the
+   headline's baselines, the body's and the frames' rules fall where the PDF draws them */
+@media (min-width: 720px) {
+  .rd-products { --rd-products-fs-desc: clamp(13px, calc(11.6 * var(--rd-u)), 17px); padding-block: calc(119 * var(--rd-u)) calc(43.2 * var(--rd-u) - 3px); }
+  .rd-products-wrap { gap: calc(107.7 * var(--rd-u)); }
+  .rd-products-head { gap: calc(78 * var(--rd-u)); padding-inline: calc(100 * var(--rd-u)) 0; }
+  .rd-products-body { max-width: calc(795 * var(--rd-u)); }
+  .rd-products-row { gap: calc(17.05 * var(--rd-u)); padding: 0 calc(17.8 * var(--rd-u)); overflow: visible; scroll-snap-type: none; }
+  .rd-products-item { --rd-products-fh: calc(var(--rd-products-hu) * var(--rd-u)); flex-basis: calc(var(--rd-products-wu) * var(--rd-u)); }
+  .rd-products-item:is([data-p="case"], [data-p="wallet"]) { --rd-products-wu: 195.3; --rd-products-hu: 270.3; }
+  .rd-products-item:is([data-p="airpods"], [data-p="magsocket"]) { --rd-products-wu: 172.4; --rd-products-hu: 201.1; }
+  .rd-products-item[data-p="lenskin"] { --rd-products-wu: 185.3; --rd-products-hu: 201.1; }
+  .rd-products-btn { gap: calc(7 * var(--rd-u)); }
+  .rd-products-label { font-size: var(--rd-fs-label); white-space: nowrap; }
+  .rd-products-plus, .rd-products-track { display: none; }
+}
+/* between 720 and 820 px the three middle frames are narrower than 140 px and their panels reach well past the
+   labels: the section keeps room for them under the row */
+@media (min-width: 720px) and (max-width: 819px) {
+  .rd-products { padding-bottom: calc(43.2 * var(--rd-u) + 61px); }
+}

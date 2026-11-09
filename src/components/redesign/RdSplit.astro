@@ -1,0 +1,20 @@
+---
+// A headline cut into lines, words and letters at build (docs/specs/redesign.md D16), so the motion has its handles
+// without a script re-flowing the text and without a style attribute. The PDF's line breaks are the lines. Each line
+// is a mask (.rd-ln) around its content (.rd-ln-in); a word (.rd-w) never breaks; a letter (.rd-c) is an inline
+// block. The caller's heading carries the phrase as aria-label; this tree is hidden from assistive technology.
+// data-i numbers the letters across the whole headline, data-wi the words, data-li the lines, for the staggers.
+import type { RdSeg } from '../../config/redesign.ts';
+interface Props { lines: readonly (readonly RdSeg[])[]; /** "words" keeps each word whole */ by?: 'chars' | 'words' }
+const { lines, by = 'chars' } = Astro.props;
+let ci = 0, wi = 0;
+const tree = lines.map((segs, li) => ({
+  li,
+  words: segs.flatMap((seg) => {
+    // a segment may open or close with a space: the space belongs between words, never inside one
+    const parts = seg.t.split(/(\s+)/).filter((p) => p !== '');
+    return parts.map((p) => (/^\s+$/.test(p) ? { space: true as const } : { space: false as const, accent: seg.accent, wi: wi++, chars: [...p].map((c) => ({ c, i: ci++ })) }));
+  }),
+}));
+---
+<span class="rd-split" aria-hidden="true">{tree.map((ln) => <span class="rd-ln" data-li={ln.li}><span class="rd-ln-in">{ln.words.map((w) => w.space ? ' ' : <span class:list={['rd-w', w.accent && `rd-acc rd-acc--${w.accent}`]} data-wi={w.wi}>{by === 'chars' ? w.chars.map((ch) => <span class="rd-c" data-i={ch.i}>{ch.c}</span>) : w.chars.map((ch) => ch.c).join('')}</span>)}</span></span>)}</span>

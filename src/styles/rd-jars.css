@@ -1,0 +1,8 @@
+/* The jars on the landing page (docs/specs/redesign.md D18; Sam, 2026-11-09: "put the jars in the last of the main page
+   as well"). The section is the current site's section 5 under its own stylesheet (signup.css), which this file does
+   not restate: here is only what this page's body would otherwise change in it. The redesign's body smooths its type
+   and asks for legibility over speed; the section was drawn, and approved, on pages that left both to the browser, so
+   its light headline keeps the weight it was approved at. The page's cap on a picture's width is not the jars': their
+   frames are wider than their columns and overlap, as built. Imported by Jars.astro alone. */
+.rd-jarsec { display: block; -webkit-font-smoothing: auto; text-rendering: auto; }
+.rd-jarsec img { max-width: none; }

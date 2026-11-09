@@ -5,10 +5,22 @@
 //    in the text of public/ and src/ (the measurements and the evidence live in docs/, which do not ship). Runs in npm run
 //    test:unit.
 // 2. The build (docs/specs/section-4-flux.md 5 "Build modes", AC7, AC8; post-build, run by npm run build and
-//    build:staging after scripts/csp.mjs): every build ships exactly the ten scene loops, named
-//    (cove|grove|ember|palace|dawn)-(wide|portrait).<hash>.mp4; any other .mp4, any land, park or garden asset, and
-//    any asset of the hall (docs/specs/section-4-no-hall.md AC1), fails it in every mode, and dist/_headers must carry
-//    media-src 'self'.
+//    build:staging after scripts/csp.mjs): a build whose landing page mounts section 4 ships exactly the ten scene
+//    loops, named (cove|grove|ember|palace|dawn)-(wide|portrait).<hash>.mp4; any other .mp4, any land, park or garden
+//    asset, and any asset of the hall (docs/specs/section-4-no-hall.md AC1), fails it in every mode, and dist/_headers
+//    must carry media-src 'self'.
+//    Changed 2026-11-09 (docs/specs/redesign.md D17 and criterion 9): the rule follows the page. Until then every
+//    build had to ship the ten loops; the redesigned landing page mounts no section 4 (the old landing's code stays on
+//    disk, unmounted, D2), so a build whose dist/index.html has no <section id="room"> must ship no .mp4 at all, no
+//    scene still or picture, no products.bin, and no land, park, garden, clip or hall asset. Nothing is loosened for a
+//    page that does mount the section: there the ten loops are asked for exactly as before. media-src 'self' is asked
+//    of every build, with or without the section (scripts/csp.mjs writes it in every mode).
+//    Added the same day, as the page changed under its own review (spec D18, D19 and D20), for a landing page that is the
+//    redesign (main.rd) and the jars' own page: no id said twice in a built page (criterion 4); one sign-up form at most,
+//    the jars' #suForm (D19: "remove that signup section"; the quiz's offer #qzForm is the quiz's, kept as built by D11);
+//    and no picture in the build that no page names. pictures.ts's glob ships every file of the git-ignored
+//    src/assets/redesign/, so a picture that has left the page (the sign-up's photograph, D19) would otherwise stay in
+//    every build from a machine that still has its file, with nothing to show for it.
 // Each exits 1 with every hit.
 //   node scripts/room/guards.mjs                                              the references, in public/ and src/
 //   node scripts/room/guards.mjs --post-build [--dist <dir>] [--mode build|test|staging]
@@ -40,6 +52,35 @@ export const LOOP_NAME = /^(cove|grove|ember|palace|dawn)-(wide|portrait)\.[A-Za
 export const isLandAsset = (name) => /^(?:land-|park[.-]|garden-|clip-)/.test(name) && !/\.(?:js|map)$/.test(name);
 /** an asset of the hall (its model, lightmap and stills), gone since 2026-11-02 (section-4-no-hall.md AC1); the archive branch keeps them */
 export const isHallAsset = (name) => /^hall[.-]/.test(name) && !/\.(?:js|map)$/.test(name);
+/** the landing page mounts section 4: the built page carries its element, <section id="room"> (src/components/room/Room.astro) */
+export const mountsRoom = (html) => /<section\b[^>]*\bid="room"/.test(html);
+/** a scene's still or picture, in any image format (the same stems as the loops); section 4's alone */
+export const isSceneAsset = (name) => /^(?:cove|grove|ember|palace|dawn)-(?:wide|portrait)\.[A-Za-z0-9_-]+\.(?:avif|webp|jpe?g|png|gif)$/i.test(name);
+/** section 4's product models, products.<hash>.bin */
+export const isProductsBin = (name) => /^products\.[A-Za-z0-9_-]+\.bin$/.test(name);
+/** the landing page is the redesign: main.rd in the built page (src/pages/index.astro) */
+export const isRedesign = (html) => /<main\b[^>]*\bclass="(?:[^"]*\s)?rd(?:\s[^"]*)?"/.test(html);
+/** a built page's markup, the text of its scripts and styles taken out: what a browser parses into elements */
+const markupOf = (html) => html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '');
+/** every id a built page says more than once */
+export function idsSaidTwice(html) {
+  const seen = new Set(), twice = new Set();
+  for (const m of markupOf(html).matchAll(/<[a-z][^<>]*?\sid="([^"]+)"/gi)) (seen.has(m[1]) ? twice : seen).add(m[1]);
+  return [...twice];
+}
+/** the forms of a built page, by id ('' for one with none) */
+export const formIds = (html) => [...markupOf(html).matchAll(/<form\b[^>]*>/gi)].map((m) => m[0].match(/\sid="([^"]*)"/)?.[1] ?? '');
+/** the quiz's own offer (components/quiz/Quiz.astro, behind PUBLIC_LEADS): the quiz is kept as built (docs/specs/redesign.md D11) */
+const QUIZ_FORM = 'qzForm';
+/** the page's sign-up, section 5's (components/signup/Signup.astro, behind PUBLIC_LEADS) */
+const SIGNUP_FORM = 'suForm';
+/** the pictures in dist/_astro whose names no page, script or stylesheet of the build says */
+function unnamedPictures(dist) {
+  const named = new Set();
+  for (const p of walk(dist)) if (/\.(?:html|js|css)$/i.test(p)) for (const m of readFileSync(p, 'utf8').matchAll(/[\w.-]+\.(?:avif|webp)\b/gi)) named.add(m[0]);
+  const astro = join(dist, '_astro');
+  return existsSync(astro) ? [...walk(astro)].filter((p) => /\.(?:avif|webp)$/i.test(p) && !named.has(basename(p))) : [];
+}
 
 const flag = (argv, name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : undefined; };
 /**
@@ -71,21 +112,40 @@ export function scan(roots = ['public', 'src']) {
   return hits;
 }
 
-/** the post-build guard on a built dist (the module comment, 2): any file the build may not ship, a loop missing, and a media-src that is not 'self' */
+/**
+ * the post-build guard on a built dist (the module comment, 2). With section 4 on the landing page: any file the build
+ * may not ship, a loop missing, and a media-src that is not 'self'. Without it (2026-11-09, docs/specs/redesign.md D17):
+ * any video at all and anything of the scenes, and the same media-src.
+ */
 export function postBuild(dist, { mode }) {
   const hits = [], loops = new Set();
   if (!existsSync(join(dist, 'index.html'))) return [`${dist}: no index.html (build first)`];
+  const landing = readFileSync(join(dist, 'index.html'), 'utf8');
+  const room = mountsRoom(landing);
   for (const p of walk(dist)) {
     const name = basename(p), at = relative(dist, p);
     if (/\.mp4$/i.test(name)) {
       const m = LOOP_NAME.exec(name);
-      if (!m) hits.push(`${at}: a video that is not one of the ten scene loops ((cove|grove|ember|palace|dawn)-(wide|portrait).<hash>.mp4)`);
+      if (!room) hits.push(`${at}: a video in a build whose landing page mounts no section 4 (docs/specs/redesign.md D17: no .mp4 at all)`);
+      else if (!m) hits.push(`${at}: a video that is not one of the ten scene loops ((cove|grove|ember|palace|dawn)-(wide|portrait).<hash>.mp4)`);
       else loops.add(`${m[1]}-${m[2]}`);
     }
+    if (!room && isSceneAsset(name)) hits.push(`${at}: a still or picture of section 4's scenes in a build whose landing page mounts no section 4 (docs/specs/redesign.md D17)`);
+    if (!room && isProductsBin(name)) hits.push(`${at}: section 4's product models in a build whose landing page mounts no section 4 (docs/specs/redesign.md D17)`);
     if (isLandAsset(name)) hits.push(`${at}: an asset of the lands, the park, the garden or the clips, which left with part two (X-11)`);
     if (isHallAsset(name)) hits.push(`${at}: an asset of the hall, which left on 2026-11-02 (section-4-no-hall.md AC1)`);
   }
-  for (const id of SCENE_IDS) for (const cls of CLASSES) if (!loops.has(`${id}-${cls}`)) hits.push(`no loop ${id}-${cls}.<hash>.mp4 in the ${MODE_NAMES[mode]} (every build ships the ten)`);
+  if (room) for (const id of SCENE_IDS) for (const cls of CLASSES) if (!loops.has(`${id}-${cls}`)) hits.push(`no loop ${id}-${cls}.<hash>.mp4 in the ${MODE_NAMES[mode]} (a build with section 4 on the landing page ships the ten)`);
+  // the redesigned landing and the jars' own page (the module comment, 2)
+  if (isRedesign(landing)) {
+    const jars = join(dist, 'jars', 'index.html');
+    for (const [at, html] of [['index.html', landing], ...(existsSync(jars) ? [['jars/index.html', readFileSync(jars, 'utf8')]] : [])]) {
+      for (const id of idsSaidTwice(html)) hits.push(`${at}: the id "${id}" is said twice (docs/specs/redesign.md criterion 4)`);
+      const signup = formIds(html).filter((id) => id !== QUIZ_FORM);
+      if (signup.length > 1 || (signup.length === 1 && signup[0] !== SIGNUP_FORM)) hits.push(`${at}: its sign-up forms are ${signup.map((id) => `#${id || '(no id)'}`).join(', ')}; the page has one, #${SIGNUP_FORM} (docs/specs/redesign.md D19)`);
+    }
+    for (const p of unnamedPictures(dist)) hits.push(`${relative(dist, p)}: a picture no page of this build names (pictures.ts ships every file of src/assets/redesign/: delete what has left the page and run scripts/redesign/encode-pictures.mjs)`);
+  }
   const headers = existsSync(join(dist, '_headers')) ? readFileSync(join(dist, '_headers'), 'utf8') : '';
   const csp = headers.split('\n').find((l) => /^\s+Content-Security-Policy(?:-Report-Only)?:/.test(l));
   const media = csp?.match(/media-src ([^;]+)/)?.[1].trim();
@@ -101,7 +161,10 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     const dist = resolve(flag(process.argv, '--dist') ?? 'dist');
     const hits = postBuild(dist, { mode });
     if (hits.length) { console.error(`section 4 build guard (${MODE_NAMES[mode]}): ${hits.length} hit(s)\n${hits.join('\n')}`); process.exit(1); }
-    console.log(`section 4 build guard (${MODE_NAMES[mode]}): the ten loops and nothing else, media-src 'self'`);
+    const landing = readFileSync(join(dist, 'index.html'), 'utf8');
+    console.log(mountsRoom(landing) ? `section 4 build guard (${MODE_NAMES[mode]}): the ten loops and nothing else, media-src 'self'`
+      : `section 4 build guard (${MODE_NAMES[mode]}): no section 4 on the landing page, so no video and nothing of the scenes, the lands or the hall; media-src 'self'`);
+    if (isRedesign(landing)) console.log(`redesign build guard (${MODE_NAMES[mode]}): no id said twice, one sign-up form at most, no picture that no page names`);
   } else {
     const hits = scan();
     if (hits.length) { console.error(`section 4 guard: ${hits.length} hit(s)\n${hits.join('\n')}`); process.exit(1); }

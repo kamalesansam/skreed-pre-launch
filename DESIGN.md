@@ -930,3 +930,64 @@ No library. The island's own loop drives the shaders and the carousel: the third
 - **Quiz.** The decode is a 0.2 s fade with no roll; an answer picture fades in or out over 0.2 s with no roll and no scale; the answer taken does not hold, a finger's answer on a visual question included; the guard on a new question is 150 ms; the swatches fade in over 200 ms; "Not quite? Try again" scrolls back at once; "Skip quiz" rides in one instant jump to its target a frame after the press (`docs/specs/quiz-gate.md` 4).
 - **Section 4.** Reduced motion sends the visitor to the poster tier by default (`REDUCED_MOTION_TIER` `poster`): the column of the five scenes at once, no video, no carousel, no glue; the loop the 300 ms fade through `--night`. Under `still3d` (a test and Tune tier) the island reads the setting once at boot: the third wipe by the scroll with no late reveal clock, the arrival at once, no video (each plane its still), a step a cut with a 300 ms cross-fade between the two stills (the field of view and the lights untouched, the product swapped and the key light set at once), no look; the seams, the wrap, the hold and the glue instant, the cloud's time held at 0. The text fades over 0.2 s with no roll; the decode reads the setting live.
 - **Later sections** wrap all GSAP in `gsap.matchMedia()`, and `src/scripts/motion.ts` stays the one source of the flag.
+
+## 11. The redesigned landing page (`main.rd`; `docs/specs/redesign.md`, E-RD-design, E-RD-font, E-RD-motion)
+
+Sam's "Skreed Pre-Launch" design, page 1, built as a long page of ordinary sections with no WebGL ("checkout the pdf, and build the exact same thing"). It applies to `/` and to nothing else: `/about/`, the family pages, the quiz and its result, and the jars keep their own sections above. Where this chapter and the spec disagree, the spec wins and this chapter is fixed.
+
+### The unit
+
+`--rd-u` is `min(100vw, 1600px) / 1024.5`, a 1024.5th of the page's width capped at a 1600 px frame, and every size in the PDF is in it. Full-bleed bands stay full width beyond 1600 px; text columns centre in the frame (`.rd-wrap`). Under 720 px wide the phone layout applies, with headlines scaled per headline by `--hk` so each is as large as the width allows, and nothing under 12 px.
+
+### Grounds and inks (`src/styles/redesign.css`)
+
+| Token | Value | Role |
+|---|---|---|
+| `--rd-white` | #FFFFFF | most sections, the countdown's slide |
+| `--rd-paper` | #FEFEFA | the PDF's warm white, under "what you've seen so far" |
+| `--pearl-whisper` | #F7F6F3 | under the picker |
+| `--night` | #050506 | under the quiz and the footer |
+| `--rd-ink` | #000000 | headlines, the countdown, the frames' rules |
+| `--rd-body` | #3A3A3A | body copy |
+| `--rd-mute` | #8C8C8C | the grey line (the PDF's #999999, moved to 3.36:1 on white) |
+| `--rd-on-photo`, `--rd-on-photo-soft` | #FFFFFF, #EFEBE5 | text and rules over photographs |
+| `--rd-sage`, `--rd-blue`, `--rd-lavender` | #A4BD97, #5E97AF, #D0A5FA | the three accent words, and the quiz's pill and ring |
+
+Photographs sit under a flat black veil at the PDF's measured strength: 0.6 for the hero, the glimpse band and MATCH ESSENTIALS, 0.45 for the three framed lines. The jars keep their own ground, #F2EAE1.
+
+The picker's five dots wear the PDF's own colours under catalog names (spec D21): Navy #023A5D, Powder #89D6E0, Teal #619799, Mint #74BCA8, Sage #A5CC93. The ten swatches and three blobs are pictures, the PDF's own brush, never fills.
+
+### Type (`src/config/redesign.ts`, `scripts/fonts/manifest-redesign.txt`)
+
+| Where | Face | Notes |
+|---|---|---|
+| Headlines | Inter 500, capitals | the PDF's size, line pitch and line breaks; tracked per headline so each line's width is within 3% of the PDF's share of the page; `font-kerning: none` |
+| Labels, the two bold lines | Inter 400 and 700 | "what you've seen so far" is Inter 700 at 40u |
+| Body copy | Questrial 400 | 30u on 45u, floor 17 px |
+| DIFFERENT at rest | Rubik 900 | `rubik-900-caps.woff2`, preloaded; 117.25u, -0.03em |
+| DIFFERENT inside a burst | Rubik Glitch 400 | `rubik-glitch-400-caps.woff2`, fetched after the first paint; the same advances letter for letter |
+| MATCH ESSENTIALS | Skreed Wide | Krona One cut to capitals and renamed |
+| grey, blue, brown | WindSong 400 | white at 0.34 over the blobs, hidden from assistive technology |
+| The picker's line | Poppins 400 italic | from the quiz result's file |
+| The countdown | dot digits, Plex Mono labels | as E-CD-font and E-chrome-font |
+| The section index | Work Sans 300 | as E-NAV-font |
+
+### Components
+
+- **Headline** (`RdSplit.astro`). Split into lines, words and letters at build, never in the browser, so nothing re-flows and the CSP's ban on style attributes holds. The heading carries the whole phrase as its `aria-label`; the letters are hidden from the tree.
+- **Frames.** 1.5 px rules (`--rd-rule`), black on white, #EFEBE5 over photographs, square.
+- **Cue.** "Scroll down to see more" over three chevrons on the old cue's 2.5 s cycle, gone once the page has scrolled 8 px.
+- **Fans** (`#seen`). Twelve opaque cut-outs in a CSS sticky stage held for about 1.2 screens (1.7 on a phone), a step of 42u, a fan 295.4u wide, four equal spaces of 34.6u.
+- **Swatches** (`#families`). Ten pictures 76.7u square on a 76.2u pitch, two rows of five on a phone, each one link to its family page on the shade it stands for.
+- **Picker** (`#glimpse`). A radio group of five equal discs, 51.5u on a 31.57u pitch (71.75 px on 44 px on a phone), the later over the earlier always, nothing changing in the row when one is chosen. A pointer over a disc changes the shade with nothing pressed; a tap, a click and the arrow keys do too. The disc itself is the hit area.
+- **Product tile** (`#products`). A framed picture whose description rises over it on hover, focus and tap; on a phone a row that scrolls sideways with snap, the page's one sideways scroller.
+- **Chip** (`#everyone`). A white plate 190.6 by 42.8u with the label in Questrial capitals, centred on its tile.
+- **Quiz way in** (`#quiz`). A framed box with "Let's find it", a lavender pill behind part of the words and a ring with an arrow. It opens `#quizHost` on `--night`; the quiz inside is unchanged.
+- **Countdown** (`#launch`). The COMING SOON mark, our drawing of the PDF's, in the place of the eyebrow; the dot digits in black with a colon of the digits' own dots between the pairs, on whole pixels; the unit labels under each pair.
+- **Footer.** On `--night`: the tagline, Privacy, Terms, About, three social marks of our own drawing, the contact address, the place.
+
+### Motion (`src/scripts/redesign/`)
+
+GSAP 3.15.1 and ScrollTrigger only, fetched by `import()` after first paint, every tween inside one `gsap.matchMedia()` (`motion.ts`). No scroll is captured or eased and there is no ScrollTrigger pin: wheel, touch and keys stay the browser's. An element takes a hidden start state only from GSAP and only once GSAP has loaded; one already on screen at that moment is left alone; with scripts off, or the chunk blocked, the page stands complete. The hero's entrance is CSS and starts with the first paint.
+
+Every headline has an entrance of its own (spec section 6): the hero's letters rise from masks; line two of `#seen` comes up word by word; the families' letters fall in a wave and POSSIBLE. lands with an overshoot; the glimpse lines slide in behind a mask; PHONE CASE and SOMETHING take their colour by a clipped sweep; MATCH and ESSENTIALS travel in from opposite sides; OVER drops in letter by letter and settles a degree off. Every photograph has parallax, and clip-path reveals open the tiles. The colour sweeps, the tile reveals and the picker's circular reveal animate `clip-path`, as E-C3b does; everything else is transform and opacity.

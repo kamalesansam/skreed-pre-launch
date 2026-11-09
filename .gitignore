@@ -38,3 +38,9 @@ __pycache__/
 
 # Sam's quiz wallpapers, his upload: never in the public repository (scripts/quiz/prepare-wallpapers.mjs)
 /server/wallpapers/
+
+# the redesign's pictures, cut from Sam's "Skreed Pre-Launch" PDF (scripts/redesign/extract-pdf.py, then
+# encode-pictures.mjs). The encoded set in src/assets/redesign/ is tracked since 2026-11-10 on his word (asked
+# whether they may go into the public repository: "Commit them"), so main builds the live site from a fresh clone.
+# The PDF and the masters stay out.
+assets-src/redesign/
