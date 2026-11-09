@@ -625,16 +625,19 @@ test('the four display faces (D7, D20, E-RD-font): each file under its line, the
   for (const f of [...preload.matchAll(/'([^']+)'/g)].map((m) => m[1])) assert.ok(has(`public${f}`), `${f} is in public/`);
 });
 
-test('the pictures stay out of git and the jars have their page (D9, D1): .gitignore holds the two folders, nothing of them is tracked, the sitemap and the headers list /jars/', () => {
+test('the PDF and its masters stay out of git, the encoded pictures are tracked, and the jars have their page (D9, D1): .gitignore holds the masters, the sitemap and the headers list /jars/', () => {
   const ignore = read('.gitignore').split('\n').map((l) => l.trim());
-  for (const dir of ['assets-src/redesign/', 'src/assets/redesign/']) assert.ok(ignore.includes(dir), `.gitignore lists ${dir}`);
-  // criterion 11: nothing of the design's PDF, the masters or the encoded pictures is tracked (asked of git where this
-  // is a checkout with git to ask; the catalog's PDF in docs/brand is another file, and tracked)
+  assert.ok(ignore.includes('assets-src/redesign/'), '.gitignore lists assets-src/redesign/');
+  // the encoded pictures are tracked since 2026-11-10 on Sam's word ("Commit them"), so a fresh clone builds the page
+  assert.ok(!ignore.includes('src/assets/redesign/'), 'the encoded pictures are no longer ignored');
+  // criterion 11, as amended: nothing of the design's PDF or the masters is tracked (asked of git where this is a
+  // checkout with git to ask; the catalog's PDF in docs/brand is another file, and tracked)
   const git = spawnSync('git', ['ls-files'], { cwd: fileURLToPath(root), encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   if (git.status === 0) {
     const tracked = git.stdout.split('\n').filter(Boolean);
     assert.ok(tracked.includes('package.json'), 'git answered with the repository\'s files');
-    assert.deepEqual(tracked.filter((f) => /^(?:assets-src|src\/assets)\/redesign\//.test(f) || /pre[ _-]?launch[^/]*\.pdf$/i.test(f)), [], 'git tracks none of the pictures and not the design\'s PDF');
+    assert.deepEqual(tracked.filter((f) => /^assets-src\/redesign\//.test(f) || /pre[ _-]?launch[^/]*\.pdf$/i.test(f)), [], 'git tracks none of the masters and not the design\'s PDF');
+    assert.ok(tracked.some((f) => /^src\/assets\/redesign\/[^/]+\.avif$/.test(f)), 'git tracks the encoded pictures');
   }
   // the pictures are reached through pictures.ts alone, which says how to make them where they are missing
   const pictures = read('src/components/redesign/pictures.ts');
