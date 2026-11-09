@@ -62,10 +62,12 @@ test('the launch line is LAUNCH_ISO\'s date, and the page gives the <time> that 
   assert.match(read('src/pages/about.astro'), /<time datetime=\{LAUNCH_ISO\}>\{c\.launch\[1\]\}<\/time>/);
 });
 
-test('the sitemap lists the landing, then /about/, then the two legal pages (docs/specs/legal-pages.md AC1), then the ten family pages', async () => {
+// (2026-11-09, docs/specs/redesign.md D1: "The sitemap gains /jars/") the jars are a page of their own since the
+// redesign, listed after /about/; the rest of the order is as it was
+test('the sitemap lists the landing, then /about/, then /jars/ (docs/specs/redesign.md D1), then the two legal pages (docs/specs/legal-pages.md AC1), then the ten family pages', async () => {
   const res = await GET({} as never);
   const locs = [...(await res.text()).matchAll(/<loc>([^<]+)<\/loc>/g)].map((x) => x[1]);
-  assert.deepEqual(locs, ['https://skreed.shop/', 'https://skreed.shop/about/', 'https://skreed.shop/privacy/', 'https://skreed.shop/terms/', ...FAMILIES.map((f) => `https://skreed.shop/shades/${f.slug}/`)]);
+  assert.deepEqual(locs, ['https://skreed.shop/', 'https://skreed.shop/about/', 'https://skreed.shop/jars/', 'https://skreed.shop/privacy/', 'https://skreed.shop/terms/', ...FAMILIES.map((f) => `https://skreed.shop/shades/${f.slug}/`)]);
 });
 
 test('about.astro: no script but the JSON-LD block and SiteLogo\'s (its glitch and the way back, 2026-11-03), no client: directive, no style attribute', () => {
@@ -112,16 +114,33 @@ test('about.css: Inter and its fallbacks only, swap, LATIN, nothing italic, the 
   assert.doesNotMatch(read('src/pages/about.astro'), /#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(|color-mix\(|--shade-|<img\b|<picture\b|<canvas\b|<video\b/i);
 });
 
-test('under src/, Inter is named only by about.css, the page\'s preload and comments in about.ts, and by section 5\'s three files (its own Inter under E-S5-picture, 2026-11-02; a separate variable file)', () => {
+// (2026-11-09, docs/specs/redesign.md D7 and E-RD-font) the redesigned landing page is set in Inter too: the PDF's
+// Neue Montreal and Helvetica, by Sam's "Free look-alikes" ("Inter and Questrial, already in the repo, stand in for
+// Neue Montreal and Helvetica"). Until that day the list below was the six files alone. It still is, for every file
+// that is not the redesigned landing's own; of those, the ones that ask for the face in code are held to an exact
+// list of one (the tokens in redesign.css, which every section takes it through), and the rest may name it in a
+// comment, as about.ts does. Until D20 the list had a second name, Hero.astro, whose SVG word asked for Inter as its
+// fallback: the word is Rubik Black since then ("use that same font ... just without the distorted part"), and what
+// that row held of the hero it now holds the other way, none at all.
+test('under src/, Inter is named only by about.css, the page\'s preload and comments in about.ts, by section 5\'s three files (its own Inter under E-S5-picture, 2026-11-02; a separate variable file), and by the redesigned landing\'s own files (E-RD-font, 2026-11-09)', () => {
   const walk = (dir: URL): URL[] => readdirSync(dir).flatMap((n) => { const u = new URL(n, dir); return statSync(u).isDirectory() ? walk(new URL(`${n}/`, dir)) : [u]; });
   const hits = walk(new URL('src/', root)).filter((u) => /\.(ts|js|mjs|astro|css|json|svg|md|txt|html)$/.test(u.pathname))
     .filter((u) => /\bInter\b|inter-400-700/.test(readFileSync(u, 'utf8'))).map((u) => u.href.slice(root.href.length)).sort();
+  /** the redesigned landing's own files: its page, its components, its scripts, its stylesheets and its config */
+  const redesign = (f: string) => /^src\/(?:pages\/index\.astro$|components\/redesign\/|scripts\/redesign\/|styles\/redesign\.css$|styles\/rd-[a-z-]+\.css$|config\/redesign\.ts$)/.test(f);
   // section 5 (the sign-up) names Inter as well, in its stylesheet's token, the shared fonts.css @font-face group and its script's font load (docs/specs/section-5-picture.md D3; added 2026-11-03 at the merge of the two landings) (the section index, briefly in it on 2026-11-03, is in Work Sans Light, E-NAV-font)
-  assert.deepEqual(hits, ['src/config/about.ts', 'src/pages/about.astro', 'src/scripts/signup/signup.ts', 'src/styles/about.css', 'src/styles/fonts.css', 'src/styles/signup.css']);
+  assert.deepEqual(hits.filter((f) => !redesign(f)), ['src/config/about.ts', 'src/pages/about.astro', 'src/scripts/signup/signup.ts', 'src/styles/about.css', 'src/styles/fonts.css', 'src/styles/signup.css']);
+  // the redesign's own: in code (comments off), the face is asked for in one place and no second
+  const code = (f: string) => read(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/<!--[\s\S]*?-->/g, '');
+  assert.deepEqual(hits.filter(redesign).filter((f) => /\bInter\b|inter-400-700/.test(code(f))), ['src/styles/redesign.css']);
+  assert.match(read('src/styles/redesign.css'), /^\s*--rd-display: "Inter", "Open Sans Fallback", Arial, sans-serif;$/m, 'the headline token');
+  assert.equal((code('src/components/redesign/Hero.astro').match(/\bInter\b/g) ?? []).length, 0, 'the hero asks for no Inter in code: its SVG word falls back to Arial since D20');
+  // and the redesign never fetches the About page's file: its Inter is the variable file fonts.css declares
+  for (const f of hits.filter(redesign)) assert.doesNotMatch(read(f), /inter-400-700/, f);
   const page = read('src/pages/about.astro').split('\n').filter((l) => /\bInter\b|inter-400-700/.test(l));
   assert.equal(page.length, 1); assert.match(page[0], /preloadFonts=/);
-  const code = read('src/config/about.ts').replace(/\/\*\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
-  assert.doesNotMatch(code, /\bInter\b|inter-400-700/);
+  const aboutCode = read('src/config/about.ts').replace(/\/\*\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  assert.doesNotMatch(aboutCode, /\bInter\b|inter-400-700/);
 });
 
 test('no unfinished-work markers or placeholder text in the new files', () => {

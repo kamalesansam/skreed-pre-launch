@@ -1,0 +1,93 @@
+/* The quiz's way in on the redesigned landing page, and the host the quiz opens in (docs/specs/redesign.md D11 and the
+   "quiz CTA" rows of sections 4 to 6; Sam, 2026-11-09: "checkout the pdf, and build the exact same thing"). The PDF's
+   box: a 1.5 px black frame 17.6u in from the page's sides holding "DON’T BE / OVERWHELMED." (OVER in the PDF's
+   lavender), the paragraph in Questrial, and "Let’s find it" at the lower right with the lavender pill behind its
+   second part and a ring with an arrow. Imported by src/components/redesign/QuizCta.astro alone.
+   Phone first (spec section 5: the frame 16 px in, the CTA under the text, left-aligned); the wide layout from 720 px
+   follows the PDF's measures in u. Spacing is gap on grids and padding on the boxes, never a margin between elements
+   (the two negative margins below take a padding back out of the layout; they space nothing). Flat colour and 1.5 px
+   rules only, no effect laid over them; nothing here hides what only the script shows (scripts/redesign/quiz.ts gives
+   every entrance its start).
+   Exceptions E-RD-design (the lavender, the pill and the ring, a box with no product) and E-RD-font cover it. */
+
+/* on a phone the frame starts under the fixed logotype's row (its inset is the frame's own, so at the section's rest
+   the mark would sit on the frame's corner), 16 px in on the other three sides */
+.rd-quiz-wrap { padding: calc(var(--inset) + 44px) var(--inset) var(--inset); }
+
+/* the frame: four lines, one a side (QuizCta.astro), each a border on an empty box so it lands on the screen's pixels
+   as a border does; the script draws the top and the two sides with the scroll and the foot once. Its contents sit in
+   their own box (-in), which on screens wider than the page's 1600 px frame stays that frame's column while the lines
+   stay 17.6u from the screen's sides, as the PDF's box spans its page */
+.rd-quiz-box { position: relative; display: grid; }
+.rd-quiz-in { display: grid; grid-template-rows: auto 1fr; gap: 30px; min-width: 0; padding: 38px 18px 30px; }
+.rd-quiz-side { position: absolute; pointer-events: none; }
+.rd-quiz-side[data-side="top"] { top: 0; left: 0; right: 0; border-top: var(--rd-rule) solid var(--rd-ink); transform-origin: 0 50%; }
+.rd-quiz-side[data-side="bottom"] { bottom: 0; left: 0; right: 0; border-top: var(--rd-rule) solid var(--rd-ink); transform-origin: 0 50%; }
+.rd-quiz-side[data-side="left"] { top: 0; bottom: 0; left: 0; border-left: var(--rd-rule) solid var(--rd-ink); transform-origin: 50% 0; }
+.rd-quiz-side[data-side="right"] { top: 0; bottom: 0; right: 0; border-left: var(--rd-rule) solid var(--rd-ink); transform-origin: 50% 0; }
+
+.rd-quiz-copy { display: grid; gap: 24px; min-width: 0; }
+.rd-quiz-h { color: var(--rd-ink); }
+/* the two lines one line pitch apart: as blocks, the negative margins the foundation gives a line (they take its mask's
+   padding back out) would collapse between the lines and leave the second 0.12em low; as grid items they do not */
+.rd-quiz-h .rd-split { display: grid; }
+/* WHELMED. rises from behind its own foot while OVER, beside it on the line, falls in from above unclipped: the word
+   is the mask (the script marks it), padded as the foundation pads a line and aligned by its top, so the mask moves
+   nothing whether the browser clips by overflow: clip or by hidden */
+.rd-quiz-h .rd-w[data-mask] { overflow: hidden; overflow: clip; vertical-align: top; padding: 0.12em 0.08em 0.16em 0; margin: -0.12em -0.08em -0.16em 0; }
+/* OVER's letters turn about their own middle as they fall and where they rest (a letter's box is the line's, whose
+   middle is the capitals' middle within a hair) */
+.rd-quiz-h .rd-acc--lavender .rd-c { transform-origin: 50% 50%; }
+.rd-quiz-body { max-width: calc(850 * var(--rd-u)); font-family: var(--rd-text); font-size: var(--rd-fs-body-s); line-height: 1.5; color: var(--rd-ink); }
+
+/* "Let’s find it": the display face at 400, the PDF's 0.04em tracking; the pill is the second part's own box (its
+   padding is the pill's reach round the words), the ring follows it. The button's left padding, taken back by its
+   margin, is the room the pill slides into on hover, so the L stays on the paragraph's edge and the focus ring holds
+   the whole pill; the 4 px at its right keep the ring's line clear of the focus ring's (the wide box's padding gives
+   them back) */
+.rd-quiz-cta { --rd-quiz-reach: 0.3em; justify-self: start; align-self: end; display: inline-flex; align-items: center; min-height: 44px; padding: 0.1em 4px 0.1em var(--rd-quiz-reach); margin-left: calc(-1 * var(--rd-quiz-reach)); border-radius: 999px; font-family: var(--rd-display); font-weight: 400; font-size: clamp(28px, 8.2vw, 36px); line-height: 1; letter-spacing: 0.04em; color: var(--rd-ink); white-space: nowrap; -webkit-tap-highlight-color: transparent; transition: transform 150ms var(--ease-standard); }
+.rd-quiz-cta:active { transform: scale(0.98); }
+.rd-quiz-cta-label { position: relative; isolation: isolate; display: inline-flex; align-items: baseline; }
+.rd-quiz-cta-plain, .rd-quiz-cta-pill { position: relative; display: block; padding-block: 0.085em 0.125em; }
+.rd-quiz-cta-pill { padding-right: 0.3em; }
+/* the pill at rest: a rounded window (-bg) with the lavender inside it (-fill), so the script can wipe the fill in
+   from the left without bending the round ends */
+.rd-quiz-cta-bg { position: absolute; inset: 0 0 0 0.02em; z-index: -1; border-radius: 999px; overflow: hidden; overflow: clip; }
+.rd-quiz-cta-fill { position: absolute; inset: 0; border-radius: inherit; background: var(--rd-lavender); }
+/* the pill on hover and focus: a second window over the first part of the label, reaching under the pill's round end;
+   its lavender waits outside it to the right and slides out to the label's left end, so the pill widens to the whole
+   label with its end round all the way (a transform, on the house ease; never a fade) */
+.rd-quiz-cta-ext { position: absolute; top: 0; bottom: 0; left: calc(-1 * var(--rd-quiz-reach)); right: -0.7em; z-index: -1; border-radius: 999px 0 0 999px; overflow: hidden; overflow: clip; }
+.rd-quiz-cta-ext .rd-quiz-cta-fill { transform: translateX(101%); transition: transform 520ms var(--rd-ease-out); }
+/* the ring: 54u across to the label's 45u, its line the PDF's 3 px at 1280; the arrow is our own drawing. On hover
+   and focus the arrow moves 4.8 of the drawing's 54 units, which is 6 px at the PDF's size and in step with the ring
+   at every other (a transform on a part of the drawing is counted in its units) */
+.rd-quiz-cta-ring { flex: none; display: block; width: 1.2em; height: 1.2em; }
+.rd-quiz-cta-ring svg { display: block; width: 100%; height: 100%; overflow: visible; fill: none; stroke: var(--rd-lavender); stroke-linecap: round; stroke-linejoin: round; }
+.rd-quiz-cta-loop { stroke-width: 2.4; }
+.rd-quiz-cta-arrow { stroke-width: 1.8; transition: transform 520ms var(--rd-ease-out); }
+.rd-quiz-cta:focus-visible .rd-quiz-cta-ext .rd-quiz-cta-fill { transform: none; }
+.rd-quiz-cta:focus-visible .rd-quiz-cta-arrow { transform: translateX(4.8px); }
+@media (hover: hover) {
+  .rd-quiz-cta:hover .rd-quiz-cta-ext .rd-quiz-cta-fill { transform: none; }
+  .rd-quiz-cta:hover .rd-quiz-cta-arrow { transform: translateX(4.8px); }
+}
+
+/* the quiz's host: the night ground the quiz was built on, shown when "Let’s find it" is pressed. The quiz inherits
+   here what the old landing's body gave it (Pearl Whisper, the UI face, the browser's own smoothing and text
+   rendering), not this page's body, so every line of it is drawn as it was. Without JavaScript the button is gone
+   and the host is open, so the quiz's own noscript line stands in it */
+.rd-quizhost { position: relative; background: var(--night); color: var(--pearl-whisper); font-family: var(--font-ui); -webkit-font-smoothing: auto; text-rendering: auto; }
+.rd-quizhost img { max-width: none; }   /* the page's own cap on pictures: not the quiz's (its pictures size themselves) */
+html:not(.js) .rd-quizhost[hidden] { display: block; }
+html:not(.js) .rd-quiz-cta { display: none; }
+
+/* the wide layout: the PDF's box, measured in u from its page 1 */
+@media (min-width: 720px) {
+  .rd-quiz-wrap { padding: calc(19.5 * var(--rd-u)) calc(17.6 * var(--rd-u)) calc(19.9 * var(--rd-u)); }
+  .rd-quiz-box { min-height: calc(600.6 * var(--rd-u)); }
+  .rd-quiz-in { justify-self: center; width: min(100%, calc(var(--rd-frame) - 35.2 * var(--rd-u))); gap: calc(40 * var(--rd-u)); padding: calc(64.1 * var(--rd-u)) calc(61.6 * var(--rd-u) - 4px) calc(61.2 * var(--rd-u)) calc(50.2 * var(--rd-u)); }
+  .rd-quiz-copy { gap: calc(41.8 * var(--rd-u)); align-content: start; }
+  .rd-quiz-body { line-height: 1.473; }
+  .rd-quiz-cta { justify-self: end; font-size: calc(45 * var(--rd-u)); }
+}

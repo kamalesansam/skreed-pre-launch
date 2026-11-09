@@ -1,0 +1,46 @@
+---
+// THERE’S SOMETHING FOR EVERYONE, section "everyone" (docs/specs/redesign.md sections 3 to 6, the "everyone" rows;
+// Sam, 2026-11-09, with his "Skreed Pre-Launch" design: "checkout the pdf, and build the exact same thing"). The
+// headline in the PDF's two lines, centred, SOMETHING in the PDF's blue, over the PDF's five tiles: a narrow and a
+// wide one, then three. Each tile is a figure: a photograph in the PDF's 1.5 px frame and its label on a white chip
+// centred over it, the label being the figure's caption. The tiles are pictures, not controls: nothing here is a
+// link or a button, and nothing answers a pointer.
+// The headline is read as one phrase (aria-label); RdSplit's drawing of it is hidden from assistive technology and
+// keeps each word whole, the handle for the entrance (scripts/redesign/everyone.ts: the words rise, SOMETHING takes
+// its blue, each tile opens from its centre line, its picture rides a little slower than the page). Without that
+// script the section stands complete, as the PDF has it.
+import '../../styles/rd-everyone.css';
+import RdPicture from './RdPicture.astro';
+import RdSplit from './RdSplit.astro';
+import { RD_HEADLINES, RD_COPY } from '../../config/redesign.ts';
+
+const h = RD_HEADLINES.everyone;
+const tiles = RD_COPY.everyone.tiles;
+// how wide each picture is drawn (the sizes attribute): its tile's share of the PDF's page from 720 px, the frame's
+// 1600 px cap, and the phone's one column. Two pictures are wider than their frames need, so they are drawn wider
+// than the tile: the lifestyle scene on a phone (a 2:1 picture in a 4:3 frame) and the pastel one (3:2 in a frame
+// nearly as tall), which also fills the spare height its parallax travels
+const SIZES: Record<(typeof tiles)[number]['id'], string> = {
+  monochrome: '(min-width: 1600px) 512px, (min-width: 720px) 32vw, 100vw',
+  lifestyle: '(min-width: 1600px) 1003px, (min-width: 720px) 63vw, 170vw',
+  peppy: '(min-width: 1600px) 512px, (min-width: 720px) 32vw, 100vw',
+  pastel: '(min-width: 1600px) 592px, (min-width: 720px) 37vw, 120vw',
+  corporate: '(min-width: 1600px) 491px, (min-width: 720px) 31vw, 100vw',
+};
+---
+<section class="rd-sec rd-everyone" id="everyone" data-tone="light" data-ground="white">
+  <div class="rd-wrap rd-everyone-wrap">
+    <h2 class="rd-h rd-everyone-h" data-h="everyone" aria-label={h.say}><RdSplit lines={h.lines} by="words" /></h2>
+    <div class="rd-everyone-grid">
+      {tiles.map((t) => (
+        <figure class="rd-frame rd-everyone-tile" data-tile={t.id}>
+          <RdPicture name={t.picture} alt={t.alt} sizes={SIZES[t.id]} class="rd-everyone-pic" />
+          <figcaption class="rd-everyone-chip">{t.label}</figcaption>
+        </figure>
+      ))}
+    </div>
+  </div>
+</section>
+<script>
+  import '../../scripts/redesign/everyone.ts';
+</script>

@@ -9,6 +9,8 @@
   Cache-Control: public, max-age=0, s-maxage=60
 /about/
   Cache-Control: public, max-age=0, s-maxage=60
+/jars/
+  Cache-Control: public, max-age=0, s-maxage=60
 /shades/*
   Cache-Control: public, max-age=0, s-maxage=60
 /_astro/*

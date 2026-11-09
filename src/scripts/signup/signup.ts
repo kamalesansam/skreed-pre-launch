@@ -253,7 +253,10 @@ export function mountSignup(root: HTMLElement): void {
   // island's setTone, a reset) is never contradicted by a stale flag (the band's clearance was the threshold until
   // 2026-11-03, 23 to 33 px of scroll before the ground reached the logotype)
   const logo = document.querySelector<HTMLElement>('a.site-logo');
-  if (logo) {
+  // (2026-11-09, docs/specs/redesign.md D18) not where the section sits inside a part that says its own ground with
+  // data-tone, as it does at the end of the redesigned landing page: there the page's own reader has the logotype
+  // (scripts/redesign/tone.ts), and a second writer here would turn it Pearl Whisper over every light section above
+  if (logo && !root.closest('[data-tone]')) {
     let pending = false;
     const setTone = (on: boolean) => {
       if (on === (logo.dataset.tone === 'light')) return;

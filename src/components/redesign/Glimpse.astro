@@ -1,0 +1,81 @@
+---
+// The shade picker and "THIS IS JUST A GLIMPSE." (docs/specs/redesign.md D10, third clip, D19, item 5, and the rows
+// "glimpse" and "glimpse band" of sections 4 to 7). The PDF holds one frame of a Canva clip in which a cursor rests on
+// a colour dot and the two products are in that dot's shade; Sam, 2026-11-09, chose "Live animations", so the clip is
+// rebuilt here: five dots, a radio group of real radio inputs (the browser's own arrow keys move and select, Tab enters
+// and leaves once, and no key listener of ours prevents anything), the phone case and the AirPods case as one picture
+// per shade, stacked in one stage, the shade's line and its name. The shown picture carries the alt text and the other
+// four an empty one, so only the shade on screen is in the accessibility tree; the script moves the alt with the shade.
+// A pointer over a dot is enough to change the shade (Sam, the same day, of the first build: "instead of clicking,
+// make the color change happen just with hover, no need for click"); a tap, a click and the arrow keys still do, being
+// the radios' own. The markup is the same for all of them: the script listens, nothing here says how.
+//
+// Without scripts the page shows the shade the frame shows (RD_COPY.glimpse.start), its line and its name: the dots,
+// the other four pictures and the demo's cursor carry the hidden attribute, which scripts/redesign/glimpse.ts lifts.
+// The line and the name on screen are drawn for the eye (they swap and re-letter), so they are hidden from assistive
+// technology and the same two strings sit in a polite live region, which says a change once.
+//
+// The band follows the section as its own block (data-tone dark, so the logotype and the section index read it by
+// itself): the photograph under the PDF's veil and the headline, split by RdSplit, its phrase on the h2 as aria-label.
+//
+// Every word is the config's; the shades' names are the catalog's (shades.gen.ts, by id). The script reads what it
+// needs from data attributes, so no copy and no catalog reach the browser as code. No style attribute (the CSP): the
+// dots take their colour from a data attribute rule in src/styles/rd-glimpse.css. That colour is the PDF's own and no
+// catalog hex (Sam, 2026-11-09: "it looks different on the site, use the same ones"; the config says why), and it is
+// said in three places, so the build stops here unless they agree: the config's row, the stylesheet's rule and the
+// picture's own record, which the pipeline writes as it paints the products to stand to that dot.
+// The demo's cursor is our own drawing, one path whose first point is its tip, and nothing else: it passes over the
+// dots and presses none.
+import '../../styles/rd-glimpse.css';
+import sheet from '../../styles/rd-glimpse.css?raw';
+import RdPicture from './RdPicture.astro';
+import RdSplit from './RdSplit.astro';
+import { rdPicture } from './pictures.ts';
+import { RD_COPY, RD_HEADLINES } from '../../config/redesign.ts';
+import { SHADES } from '../../config/shades.gen.ts';
+
+const g = RD_COPY.glimpse;
+const shades = g.shades.map((s) => {
+  const shade = SHADES.find((x) => x.id === s.id);
+  if (!shade) throw new Error(`the picker's shade ${s.id} is not in the catalog`);
+  if (!sheet.includes(`.rd-glimpse-dot[data-shade="${s.id}"] { color: ${s.dot}; }`)) throw new Error(`RD_COPY.glimpse.shades: ${s.id}'s dot is ${s.dot}, and rd-glimpse.css has no rule that says so`);
+  const painted = rdPicture(`picker-${s.id}`).entry.hex;
+  if (painted?.toLowerCase() !== s.dot.toLowerCase()) throw new Error(`RD_COPY.glimpse.shades: ${s.id}'s dot is ${s.dot}, and its picture was painted for ${painted}; run scripts/redesign/extract-pdf.py or change the row`);
+  return { id: s.id, name: shade.name, line: s.line, alt: g.alt.replace('{shade}', shade.name) };
+});
+const first = shades.find((s) => s.id === g.start);
+if (!first) throw new Error(`the picker opens on ${g.start}, which is not one of its shades`);
+// how wide the products' picture is drawn: 86% of a phone's width, 416u of the 1024.5u page on a wide screen
+const sizes = '(max-width: 719px) 86vw, (max-width: 1600px) 40.6vw, 650px';
+---
+<section class="rd-sec rd-glimpse" id="glimpse" data-tone="light" data-ground="pearl">
+  <div class="rd-wrap rd-glimpse-box" data-shade={first.id}>
+    <div class="rd-glimpse-top">
+      <div class="rd-glimpse-dots" role="radiogroup" aria-label={g.aria} hidden>
+        {shades.map((s) => (
+          <label class="rd-glimpse-dot" data-shade={s.id} data-name={s.name} data-line={s.line}><input class="rd-glimpse-radio" type="radio" name="rd-glimpse-shade" value={s.id} checked={s.id === first.id} /><span class="rd-glimpse-disc" aria-hidden="true"></span><span class="sr-only">{s.name}</span></label>
+        ))}
+      </div>
+      <p class="rd-glimpse-line" aria-hidden="true"><span class="rd-glimpse-line-in">{first.line}</span></p>
+    </div>
+    <div class="sr-only" aria-live="polite" aria-atomic="true" data-say><p data-say-name>{first.name}</p><p data-say-line>{first.line}</p></div>
+    <div class="rd-glimpse-stage">
+      <div class="rd-glimpse-pics">
+        {shades.map((s) => (
+          <div class="rd-glimpse-pic" data-shade={s.id} data-alt={s.alt} data-on={s.id === first.id ? '' : undefined} hidden={s.id !== first.id}><RdPicture name={`picker-${s.id}`} alt={s.id === first.id ? s.alt : ''} sizes={sizes} imgClass="rd-glimpse-img" /></div>
+        ))}
+      </div>
+    </div>
+    <p class="rd-glimpse-name" aria-hidden="true">{[...first.name].map((c) => <span class="rd-glimpse-ch">{c}</span>)}</p>
+    <span class="rd-glimpse-cursor" aria-hidden="true" hidden><svg class="rd-glimpse-arrow" viewBox="0 0 18 31" aria-hidden="true" focusable="false"><path d="M0 0v24l5.6-5.1 4.6 11.5 3.8-1.6-4.5-11.3h7.9z" /></svg></span>
+  </div>
+</section>
+<div class="rd-band rd-glimpse-band" data-band="glimpse" data-tone="dark">
+  <RdPicture name="glimpse-band" alt={g.bandAlt} sizes="100vw" class="rd-band-pic" />
+  <div class="rd-wrap rd-glimpse-frame">
+    <h2 class="rd-h rd-glimpse-h" data-h="glimpse" aria-label={RD_HEADLINES.glimpse.say}><RdSplit lines={RD_HEADLINES.glimpse.lines} /></h2>
+  </div>
+</div>
+<script>
+  import '../../scripts/redesign/glimpse.ts';
+</script>

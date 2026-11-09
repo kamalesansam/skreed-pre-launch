@@ -1,0 +1,23 @@
+---
+// The jars, the landing page's last section (docs/specs/redesign.md D18; Sam, 2026-11-09, after the first report read
+// "the footer" of his brief as the jars at the old page's end: "put the jars in the last of the main page as well").
+// The PDF's page 2, which is the current site's section 5 exactly as built: Signup.astro with signup.css and
+// scripts/signup/, its markup and rules as they are (docs/specs/section-5-picture.md). So the three follow columns and
+// their links, the Followed ticks filling and draining the visitor's jar, the form behind PUBLIC_LEADS and the last
+// line are here as they are on /jars/, which stays a page of its own and is still what the section index's gift opens.
+// Around it only what this page needs of it: a part that says its ground is light, so the logotype and the index turn
+// Urban Slate over the cream (scripts/redesign/tone.ts reads every part's data-tone, and the section's own writer of
+// the logotype's tone stands down inside such a part), and the type rendering of the pages it was drawn on
+// (rd-jars.css). It is the page's one sign-up: the PDF's two steps, which stood above the countdown, left the page the
+// same day (D19: "remove that signup section"), so the section keeps its id, signup, and its form is the only one here.
+// Its entrance is scripts/redesign/jars.ts (E-RD-motion); without that file, and with no script at all, the section is
+// complete.
+import '../../styles/rd-jars.css';
+import Signup from '../signup/Signup.astro';
+---
+<div class="rd-jarsec" data-tone="light">
+  <Signup />
+</div>
+<script>
+  import '../../scripts/redesign/jars.ts';
+</script>

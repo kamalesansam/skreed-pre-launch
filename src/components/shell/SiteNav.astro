@@ -1,29 +1,40 @@
 ---
 // The section index (docs/specs/navbar.md; 2026-11-02: "we need to add a navbar, which is locked, so it's easier for ppl
-// to navigate"), the landing page only: the four sections in page order, fixed at the top right on the logotype's row,
-// then the one page the index links to, About (docs/specs/about.md, its brief: "just add it in the navbar"): a plain
-// link to /about/, last in the bar and in the drawer, with data-page and no data-sec, so site-nav.ts never jumps or marks
-// it current and a press leaves the page as any link does (navbar.md D7). From 768 px the words in a row; on phones one
-// word, Menu, opening a light drawer from the right, 75 percent of the screen ("make it come from the side, and just
-// 75 % OF THE SCREEN from the side"), with the family switcher's layout (the popover attribute; Escape native, and a tap
-// beside the panel closes it through site-nav.ts, which also keeps that tap from the page). The drawer sits inside the
-// nav, so the index is one landmark. No fill, no box: the words on the scene as the logotype is (site-nav.css). Home is
-// Back to top's jump, so the landing page draws no Back to top (BackToTop.astro). Plain fragment links, so the index
-// works without JavaScript on the poster layout; with it, scripts/shell/site-nav.ts jumps in place under the --night
-// veil and marks the section on screen. Products is always listed ("its okay add products as well no problem"; nothing is
-// locked behind the quiz since 2026-11-04). In the logo slot, after the
-// logotype: a flat child of body after the loader, and next in the tab order. Last, after Menu, the gift (2026-11-03:
-// "Add this gift bootstrap icon as the last item in the navbar which has keeps bouncing playfully in its own position and
-// has that same glitch effect as the logo, but glitches more often, which basically navigates to the sign up section"):
-// a fragment link to section 5 at every width, the icon drawn from a symbol so site-nav.ts can put the logotype's glitch
-// on it (GIFT_TARGET, GIFT_EVERY), its bounce in site-nav.css. The icon is Bootstrap Icons' "gift" as the owner gave it
+// to navigate"), the landing page only, kept as it was on the redesigned page (docs/specs/redesign.md D4; Sam,
+// 2026-11-09: "keep the logo and navbar intact"): the same words in the same order, the same drawer, the same veil, the
+// same stylesheet. Only what the entries point at is the new page's: Home the hero (#top), Families the ten swatches
+// (#families), Quiz its way in (#quiz), Products the range (#products), each the first part its entry covers
+// (SECTION_GROUPS, scripts/shell/nav-map.ts). Then the one page the words link to, About (docs/specs/about.md, its
+// brief: "just add it in the navbar"): a plain link to /about/, last in the bar and in the drawer, with data-page and no
+// data-sec, so site-nav.ts never jumps or marks it current and a press leaves the page as any link does (navbar.md D7).
+// From 768 px the words in a row; on phones one word, Menu, opening a light drawer from the right, 75 percent of the
+// screen ("make it come from the side, and just 75 % OF THE SCREEN from the side"), with the family switcher's layout
+// (the popover attribute; Escape native, and a tap beside the panel closes it through site-nav.ts, which also keeps that
+// tap from the page). The drawer sits inside the bar's landmark, so the index is one landmark. No fill, no box: the
+// words on the page as the logotype is (site-nav.css). Home is Back to top's jump, so the landing page draws no Back to
+// top (BackToTop.astro). Plain fragment links, so the index works without JavaScript; with it, scripts/shell/site-nav.ts
+// jumps in place under the --night veil and marks the entry on screen. After the logotype in the page, and next in the
+// tab order. Last, after Menu, the gift (2026-11-03: "Add this gift bootstrap icon as the last item in the navbar which
+// has keeps bouncing playfully in its own position and has that same glitch effect as the logo, but glitches more
+// often, which basically navigates to the sign up section"): since the redesign a page link as About is, to /jars/, the
+// jars on a page of their own (spec D1: the owner's "Both"), at every width, with data-page and no data-sec, so it is
+// never jumped to or marked current; the icon drawn from a symbol so site-nav.ts can put the logotype's glitch on it
+// (GIFT_TARGET, GIFT_EVERY), its bounce in site-nav.css. The icon is Bootstrap Icons' "gift" as the owner gave it
 // (Copyright (c) 2019-2024 The Bootstrap Authors, MIT License, https://github.com/twbs/icons/blob/main/LICENSE).
 import { COPY } from '../../config/copy.ts';
-import { SECTION_IDS, type SectionId } from '../../scripts/shell/nav-map.ts';
+import { RD_IDS } from '../../config/redesign.ts';
+import { SECTION_GROUPS, SECTION_IDS, type SectionId } from '../../scripts/shell/nav-map.ts';
 import '../../styles/site-nav.css';
 
 const N = COPY.nav;
-const HREF: Record<SectionId, string> = { top: '#top', families: '#families', quiz: '#find', room: '#room' };
+const HREF: Record<SectionId, string> = { top: '#top', families: '#families', quiz: '#quiz', room: '#products' };
+// each fragment is the first part its entry covers, so the link without a script and the jump with one land on the same
+// place; and every part an entry covers is a section of the page (RD_IDS) or the quiz's host, so a section renamed
+// there fails the build here and not the mark in the browser
+for (const id of SECTION_IDS) {
+  if (HREF[id] !== `#${SECTION_GROUPS[id][0]}`) throw new Error(`the index's ${id} link does not point at the first part it covers`);
+  for (const part of SECTION_GROUPS[id]) if (part !== 'quizHost' && !(RD_IDS as readonly string[]).includes(part)) throw new Error(`the index's ${id} entry covers "${part}", which is no section of the page`);
+}
 /** Bootstrap Icons' gift (MIT, above), 16 by 16 */
 const GIFT_D = 'M3 2.5a2.5 2.5 0 0 1 5 0 2.5 2.5 0 0 1 5 0v.006c0 .07 0 .27-.038.494H15a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 14.5V7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h2.038A3 3 0 0 1 3 2.506zm1.068.5H7v-.5a1.5 1.5 0 1 0-3 0c0 .085.002.274.045.43zM9 3h2.932l.023-.07c.043-.156.045-.345.045-.43a1.5 1.5 0 0 0-3 0zM1 4v2h6V4zm8 0v2h6V4zm5 3H9v8h4.5a.5.5 0 0 0 .5-.5zm-7 8V7H2v7.5a.5.5 0 0 0 .5.5z';
 const items = SECTION_IDS.map((id) => ({ id, href: HREF[id], label: N.items[id] }));
@@ -36,7 +47,7 @@ const pages = [{ id: 'about', href: '/about/', label: N.pages.about }];
     {pages.map((p) => <li><a class="snav-a" href={p.href} data-page={p.id}>{p.label}</a></li>)}
   </ol>
   <button class="snav-a snav-menu" type="button" popovertarget="site-sections">{N.menu}</button>
-  <a class="snav-a snav-gift" id="snavGift" href="#signup" data-sec="signup" aria-label={N.gift}><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><defs><symbol id="skreed-gift" viewBox="0 0 16 16"><path fill="currentColor" d={GIFT_D}/></symbol></defs><use class="gl-base" href="#skreed-gift"/><g class="gl-tiles" display="none"></g></svg></a>
+  <a class="snav-a snav-gift" id="snavGift" href="/jars/" data-page="jars" aria-label={N.gift}><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><defs><symbol id="skreed-gift" viewBox="0 0 16 16"><path fill="currentColor" d={GIFT_D}/></symbol></defs><use class="gl-base" href="#skreed-gift"/><g class="gl-tiles" display="none"></g></svg></a>
   <div id="site-sections" class="snav-sheet" popover>
     <div class="snav-in">
       <div class="snav-head"><p class="snav-h">{N.aria}</p><button class="snav-a snav-close" type="button" popovertarget="site-sections" popovertargetaction="hide">{N.close}</button></div>

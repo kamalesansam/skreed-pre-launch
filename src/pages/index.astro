@@ -1,32 +1,38 @@
 ---
-// / : the hero (docs/specs/hero.md), then in the after-track slot section 3, the quiz (docs/specs/quiz.md), section 4,
-// the entrance and the five scenes (docs/specs/section-4-flux.md), and section 5, the sign-up (docs/specs/section-5.md);
-// dev and staging builds add the Tune panel.
+// / : the redesigned landing page (docs/specs/redesign.md; Sam, 2026-11-09, with his "Skreed Pre-Launch" design:
+// "checkout the pdf, and build the exact same thing, but keep the logo and navbar intact"). A long page of ordinary
+// sections in the PDF's order, each a component of its own, with the kept chrome over it: the logotype with its glitch,
+// the section index, and the veil its jumps happen under. No Gate, no loader, no WebGL: the hero island, the gems and
+// the five scenes are not imported here, so the build carries none of them (the site with them is the ref
+// archive/site-before-redesign-2026-11-09). The jars close the page, as they closed the old one (D18; Sam, 2026-11-09:
+// "put the jars in the last of the main page as well"), and are a page of their own too (/jars/); they are the page's
+// one sign-up since the PDF's two steps left it the same day (D19: "remove that signup section"). About is its own page
+// (/about/).
 import Base from '../layouts/Base.astro';
-import '../styles/shell.css';
-import Gate from '../components/shell/Gate.astro';
+import '../styles/redesign.css';
+import RdHead from '../components/redesign/RdHead.astro';
 import WordmarkSprite from '../components/shell/WordmarkSprite.astro';
-import Loader from '../components/shell/Loader.astro';
 import SiteLogo from '../components/shell/SiteLogo.astro';
 import SiteNav from '../components/shell/SiteNav.astro';
-import SiteNote from '../components/shell/SiteNote.astro';
-import HeroStage from '../components/hero/HeroStage.astro';
-import HeroPoster from '../components/hero/HeroPoster.astro';
-import HeroPosterPreload from '../components/hero/HeroPosterPreload.astro';
-import Countdown from '../components/hero/Countdown.astro';
-import ScrollCue from '../components/hero/ScrollCue.astro';
-import Section2Layers from '../components/hero/Section2Layers.astro';
-import FamilyLinks from '../components/family/FamilyLinks.astro';
-import Quiz from '../components/quiz/Quiz.astro';
-import Room from '../components/room/Room.astro';
-import Signup from '../components/signup/Signup.astro';
 import BackToTop from '../components/shell/BackToTop.astro';
+import Hero from '../components/redesign/Hero.astro';
+import Seen from '../components/redesign/Seen.astro';
+import Families from '../components/redesign/Families.astro';
+import Glimpse from '../components/redesign/Glimpse.astro';
+import Products from '../components/redesign/Products.astro';
+import Match from '../components/redesign/Match.astro';
+import Everyone from '../components/redesign/Everyone.astro';
+import QuizCta from '../components/redesign/QuizCta.astro';
+import Proof from '../components/redesign/Proof.astro';
+import Launch from '../components/redesign/Launch.astro';
+import Jars from '../components/redesign/Jars.astro';
+import Footer from '../components/redesign/Footer.astro';
+import { rdPicture } from '../components/redesign/pictures.ts';
 import { COPY } from '../config/copy.ts';
 import { NIGHT } from '../config/tokens.ts';
 import { SITE_URL } from '../config/site.ts';
 import { SITE_COPY } from '../scripts/family/site-copy.ts';
-// The dev-only component is imported only when its flag is set, so production carries neither its markup nor its
-// scripts and styles (Astro bundles the scripts of every imported component, rendered or not).
+
 // the landing's place in the site as structured data: the Organization node the family and About pages share, and the site
 const o = SITE_COPY.org;
 const ld = JSON.stringify({
@@ -37,28 +43,33 @@ const ld = JSON.stringify({
     { '@type': 'WebSite', '@id': `${SITE_URL}/#site`, url: `${SITE_URL}/`, name: o.name, description: COPY.page.description, inLanguage: 'en-IN', publisher: { '@id': `${SITE_URL}/#org` } },
   ],
 }).replace(/</g, '\\u003c');
-const Tune = import.meta.env.PUBLIC_TUNE === '1' ? (await import('../components/dev/Tune.astro')).default : null;
+// the first screen's picture, fetched with the HTML: the same srcset and sizes as the hero's <img>
+const hero = rdPicture('hero');
 ---
-<Base title={COPY.page.title} description={COPY.page.description} path="/" preloadFonts={['/fonts/open-sans-400-600-latin.woff2', '/fonts/ibm-plex-mono-500-caps.woff2']} themeColor={NIGHT}>
-  <Gate slot="head-first" />
-  <HeroPosterPreload slot="head" />
+<Base title={COPY.page.title} description={COPY.page.description} path="/" preloadFonts={['/fonts/inter-opsz-wght-latin.woff2', '/fonts/rubik-900-caps.woff2', '/fonts/work-sans-300-latin.woff2', '/fonts/ibm-plex-mono-500-caps.woff2']} themeColor={NIGHT}>
+  <RdHead slot="head-first" />
+  <link slot="head" rel="preload" as="image" type="image/avif" imagesrcset={hero.avif} imagesizes="(max-aspect-ratio: 5/6) 120vh, 100vw" fetchpriority="high" />
   <script slot="head" type="application/ld+json" is:inline set:html={ld}></script>
-  <SiteNote />
-  <HeroStage>
-    <HeroPoster slot="poster" />
-    <WordmarkSprite slot="sprite" />
-    <Loader slot="loader" />
-    <SiteLogo slot="logo" />
-    <SiteNav slot="logo" />
-    <Countdown slot="copy" />
-    <ScrollCue slot="cue" part="cue" />
-    <Section2Layers slot="riders" />
-    <FamilyLinks slot="riders" />
-    <BackToTop slot="riders" page="home" />
-    <Quiz slot="after-track" />
-    <Room slot="after-track" />
-    <Signup slot="after-track" />
-    {Tune && <Tune slot="dev" />}
-    <ScrollCue slot="last" part="script" />
-  </HeroStage>
+  <WordmarkSprite />
+  <SiteLogo />
+  <SiteNav />
+  <BackToTop page="home" />
+  <main class="rd" id="main">
+    <Hero />
+    <Seen />
+    <Families />
+    <Glimpse />
+    <Products />
+    <Match />
+    <Everyone />
+    <QuizCta />
+    <Proof />
+    <Launch />
+    <Jars />
+  </main>
+  <Footer />
 </Base>
+<script>
+  import '../scripts/redesign/motion.ts';
+  import '../scripts/redesign/tone.ts';
+</script>

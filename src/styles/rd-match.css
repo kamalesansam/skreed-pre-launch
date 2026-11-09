@@ -1,0 +1,76 @@
+/* MATCH ESSENTIALS, section "match" (docs/specs/redesign.md sections 4, 5 and 6, the "match" rows; exceptions
+   E-RD-design, E-RD-font and E-RD-motion). The photograph band is redesign.css's (.rd-band, data-band="match": the
+   picture, its crop and the flat black veil); this file sizes the band and sets the two words. Imported by
+   src/components/redesign/Match.astro alone. Phone first; the wide layout from 720 px is the PDF's, measured in u.
+   Nothing here hides what only the script shows: scripts/redesign/match.ts moves the letters, and without it they
+   stand as set below.
+
+   The words are Skreed Wide (Krona One cut to capitals, the stand-in for the PDF's Monument Extended), placed by the
+   face's own measures, in em, so the lock-up holds at every width (scripts/fonts/manifest-redesign.txt and the glyphs
+   of public/fonts/skreed-wide-400-caps.woff2; the file carries no kerning):
+     capitals 0.7632 em tall; the baseline 0.8662 em under the top of a line of 1;
+     the M's left side bearing 0.1089 em, the E's 0.1084 em;
+     from MATCH's start to the left edge of its H's right stem 4.4804 em (M 1.0820, A 0.9121, T 0.8315, C 0.9175, then
+     the stem at 0.7373 of the H); a stem is 0.155 em wide, the H's and the E's alike;
+     ESSENTIALS is 8.3192 em of ink, from its E's stem to the edge of its last S.
+   The PDF's lock-up, measured on its page drawn 1281 px wide: MATCH's ink from 43.5u to 399.1u on a baseline at
+   339.9u; ESSENTIALS' ink from 387.5u to 984.5u, its capitals' top at 340.7u; so the H's right stem stands exactly
+   over the first E's stem with a hairline of the photograph between them. */
+
+.rd-match {
+  --rd-match-cap: 0.7632em;
+  --rd-match-base: 0.8662em;
+  --rd-match-bear-m: 0.1089em;
+  --rd-match-bear-e: 0.1084em;
+  --rd-match-stem: 4.4804em;
+  /* a phone: the words stack at the foot left, flush, sized so ESSENTIALS' ink runs from gutter to gutter; the gap
+     between MATCH's baseline and the capitals under it is a tenth of an em. 4:5, and never taller than the screen
+     (the first height is for a browser without the small viewport unit, which would otherwise leave the band none) */
+  --rd-match-size: calc((100vw - 2 * var(--inset)) / 8.3192);
+  --rd-match-gap: 0.1em;
+  --rd-match-track-a: 0em;
+  --rd-match-track-b: 0em;
+  height: 125vw;
+  height: min(125vw, 100svh);
+}
+/* the veil: the PDF shows this photograph at two fifths over black (a least-squares fit of its page against the
+   picture, the rows of the white words left out, gives 0.406; the band's mean over the picture's reads 0.46 only
+   because the mean counts the white words), so the veil is 0.6 where redesign.css has 0.54. The three classes outrank
+   the foundation's rule whatever the order the two files arrive in */
+.rd-sec.rd-band.rd-match { --veil: 0.6; }
+.rd-match-wrap { height: 100%; }
+
+/* the heading: a line of 1 per word, so every offset is the face's own measure. On a phone ESSENTIALS' baseline
+   sits --s5 above the band's foot, the glimpse band's distance */
+.rd-match-h { position: absolute; left: var(--inset); bottom: calc(var(--s5) - 1em + var(--rd-match-base)); font-family: var(--rd-wide); font-weight: 400; font-size: var(--rd-match-size); line-height: 1; font-kerning: none; white-space: nowrap; color: var(--rd-on-photo); }
+/* a word's box hugs its letters (the script measures it) and starts its ink on the heading's left edge: the first
+   letter's side bearing is taken back out */
+.rd-match-w { display: block; width: max-content; }
+.rd-match-w--a { margin-left: calc(-1 * var(--rd-match-bear-m)); letter-spacing: var(--rd-match-track-a); }
+/* the face leaves the C more room before the H than it gives the other pairs: three hundredths of an em go from
+   after the C to after the M, the A and the T, a hundredth each, so the gaps even out and the H stays where it was */
+.rd-match-w--a .rd-match-c { letter-spacing: calc(var(--rd-match-track-a) + 0.01em); }
+.rd-match-w--a .rd-match-c:nth-child(4) { letter-spacing: calc(var(--rd-match-track-a) - 0.03em); }
+/* the second word's capitals start --rd-match-gap under the first word's baseline (the negative margin takes the
+   line's spare height back out of the layout; it spaces nothing) */
+.rd-match-w--b { margin-top: calc(var(--rd-match-cap) + var(--rd-match-gap) - 1em); margin-left: calc(-1 * var(--rd-match-bear-e)); letter-spacing: var(--rd-match-track-b); }
+.rd-match-c { display: inline-block; }
+
+@media (min-width: 720px) {
+  /* the PDF's band, 1024.5 by 610.5, and its words at 72u. Krona One sets MATCH narrower than Monument Extended does
+     (4.53 em of ink against the PDF's 4.94) and ESSENTIALS as wide, so each word is tracked towards the PDF's width:
+     MATCH by 0.07 em to 346u of ink (the PDF's is 356u), ESSENTIALS by 0.0102 em to 606u (597u). That sets the
+     lock-up's two ends on the PDF's, 44u and 984.5u, and its join at 379u, 9u left of the PDF's. The hairline is
+     2 px at the least, so it stays a clean line of the photograph on every screen */
+  .rd-match {
+    --rd-match-size: calc(72 * var(--rd-u));
+    --rd-match-gap: max(2px, calc(1.5 * var(--rd-u)));
+    --rd-match-track-a: 0.07em;
+    --rd-match-track-b: 0.0102em;
+    height: calc(610.5 * var(--rd-u));
+  }
+  /* MATCH: its ink from 43.8u, its baseline at the PDF's 339.9u */
+  .rd-match-h { left: calc(43.8 * var(--rd-u)); top: calc(339.9 * var(--rd-u) - var(--rd-match-base)); bottom: auto; }
+  /* ESSENTIALS: its E's stem where the H's right stem is, its capitals a hairline under MATCH's baseline */
+  .rd-match-w--b { position: absolute; top: calc(var(--rd-match-cap) + var(--rd-match-gap)); left: calc(var(--rd-match-stem) - var(--rd-match-bear-m) + 4 * var(--rd-match-track-a)); margin-top: 0; }
+}

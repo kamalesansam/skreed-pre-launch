@@ -1,0 +1,54 @@
+---
+// The footer (docs/specs/redesign.md D14; flagged for Sam in section 12, item 1: the site had none on any branch). A
+// small, quiet close on --night after the white countdown slide: the wordmark (the page's sprite, drawn once more) and
+// the tagline; then the three pages, the three places Skreed is followed, the contact address and the place. Every word
+// is config's: RD_COPY.footer for the tagline, the pages and the place, SIGNUP_JARS for the three platforms and their
+// addresses (the jars' own, so a change there moves both; never typed here), SITE_COPY.org for the address the family
+// and About pages also give. The three marks are our own drawings in currentColor, as the jars' marks are ours: a disc
+// with the f cut out of its foot, a rounded plate with the play triangle cut out, a rounded square with a ring and a
+// dot. A social link opens a new tab and says so in its name. No motion. Outside <main>, so its rules reset what
+// main.rd resets for the sections: src/styles/rd-footer.css.
+import '../../styles/rd-footer.css';
+import { RD_COPY } from '../../config/redesign.ts';
+import { SIGNUP_JARS, fill } from '../../config/signup.ts';
+import { SITE_COPY } from '../../scripts/family/site-copy.ts';
+
+const F = RD_COPY.footer;
+const social = SIGNUP_JARS.filter((j) => j.url !== '').map((j) => ({ id: j.id, name: j.platform, href: j.url, aria: fill(F.social, { platform: j.platform }) + F.newTab }));
+const email = SITE_COPY.org.email;
+---
+<footer class="rd-footer" data-tone="dark" aria-label={F.aria}>
+  <div class="rd-footer-in">
+    <div class="rd-footer-top">
+      <svg class="rd-footer-logo" viewBox="0 0 1209.46 292.9" aria-hidden="true" focusable="false"><use href="#skreed-wordmark" /></svg>
+      <p class="rd-footer-tag">{F.tagline}</p>
+    </div>
+    <div class="rd-footer-row">
+      <ul class="rd-footer-list" role="list">
+        {F.links.map((l) => <li><a class="rd-footer-a" href={l.href}>{l.label}</a></li>)}
+      </ul>
+      <ul class="rd-footer-list rd-footer-social" role="list">
+        {social.map((s) => (
+          <li>
+            <a class="rd-footer-a" href={s.href} target="_blank" rel="noopener" aria-label={s.aria}>
+              {s.id === 'facebook' && (
+                <svg class="rd-footer-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M13.4 22.91V13.1h2.5l.4-2.7h-2.9V9.4c0-.9.5-1.5 1.5-1.5h1.5V5.2h-1.8c-2.4 0-4 1.5-4 4v1.2H8.3v2.7h2.3v9.81A11 11 0 1 1 13.4 22.91Z" /></svg>
+              )}
+              {s.id === 'youtube' && (
+                <svg class="rd-footer-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill-rule="evenodd" d="M6 4.5h12A4.5 4.5 0 0 1 22.5 9v6a4.5 4.5 0 0 1-4.5 4.5H6A4.5 4.5 0 0 1 1.5 15V9A4.5 4.5 0 0 1 6 4.5ZM9.8 8.4v7.2L16 12Z" /></svg>
+              )}
+              {s.id === 'instagram' && (
+                <svg class="rd-footer-mark rd-footer-mark--line" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="5.2" /><circle cx="12" cy="12" r="4.3" /><circle class="rd-footer-dot" cx="17.1" cy="6.9" r="1.25" /></svg>
+              )}
+              <span>{s.name}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <address class="rd-footer-contact">
+        <a class="rd-footer-a" href={`mailto:${email}`}>{email}</a>
+        <span class="rd-footer-place">{F.place}</span>
+      </address>
+    </div>
+  </div>
+</footer>

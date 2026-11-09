@@ -1,0 +1,72 @@
+/* THERE’S SOMETHING FOR EVERYONE, section "everyone" (docs/specs/redesign.md sections 4, 5 and 6, the "everyone"
+   rows; exceptions E-RD-design, E-RD-font and E-RD-motion). The headline, centred, and the PDF's five tiles: framed
+   photographs, each with its label on a white chip at its centre. Imported by src/components/redesign/Everyone.astro
+   alone. Tokens are redesign.css's; spacing is gap on the column and the grid and padding on the section.
+   Phone first: one column of 4:3 tiles; from 720 px the PDF's grid, measured in u.
+   Nothing here hides what only the script shows: the clip and the sweep below rest fully open, and
+   scripts/redesign/everyone.ts gives each entrance its start. */
+
+/* the two values the entrances animate, registered so they tween as percentages and never reach the children */
+@property --rd-ev-clip { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --rd-ev-sweep { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+
+.rd-everyone { padding-block: 72px 64px; }
+.rd-everyone-wrap { display: flex; flex-direction: column; gap: 32px; padding-inline: var(--inset); }
+
+/* the headline: the PDF's two lines, centred. The lines stack as flex items, so the negative margins that make each
+   one a mask do not collapse into one another and the lines stand the PDF's 0.85 em apart. A line's last letter
+   carries the tracking too; the padding gives it back, so it is the ink that is centred and not the box */
+.rd-h.rd-everyone-h { color: var(--rd-ink); text-align: center; }
+.rd-everyone-h .rd-split { display: flex; flex-direction: column; }
+.rd-everyone-h .rd-ln-in { padding-right: calc(-1 * var(--track)); }
+/* SOMETHING takes its blue: while the script's copy of the word is in place the word itself is black, and the copy,
+   in the PDF's blue, is shown from the left as far as the sweep has gone (the clip is the animated value, so there
+   is no gradient text). The script takes the copy away when the sweep is done and the word is the plain blue again */
+.rd-everyone-h .rd-acc.is-inked { position: relative; color: var(--rd-ink); }
+.rd-everyone-tint { --rd-ev-sweep: 0%; position: absolute; top: 0; left: 0; color: var(--rd-blue); white-space: nowrap; pointer-events: none; clip-path: inset(-20% var(--rd-ev-sweep) -20% -5%); }
+
+/* the tiles */
+.rd-everyone-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s2); }
+/* a tile: the frame (redesign.css's .rd-frame, the 1.5 px rule), its picture and its chip in one cell.
+   --rd-ev-spare is how far the picture's box stands out above and below the frame: the room the picture travels as
+   the tile crosses the screen (the script), so it rides a little slower than the page. --rd-ev-x and --rd-ev-y are
+   the crop. The ground is the picture's own mean, behind it while it loads and if it fails. The clip is the tile's
+   entrance: it opens from the vertical centre line outward and rests at 0%, which hides nothing */
+.rd-frame.rd-everyone-tile { --rd-ev-clip: 0%; --rd-ev-spare: 8%; --rd-ev-x: 50%; --rd-ev-y: 50%; display: grid; place-items: center; aspect-ratio: 4 / 3; background: var(--rd-ev-ground, var(--rd-white));
+  clip-path: inset(0 var(--rd-ev-clip) 0 var(--rd-ev-clip)); }
+.rd-everyone-pic { position: absolute; inset: calc(-1 * var(--rd-ev-spare)) 0; display: block; will-change: transform; }
+.rd-everyone-pic img { object-position: var(--rd-ev-x) var(--rd-ev-y); }
+/* the crops. The three square pictures are taller than their frames, and the PDF's crop says how far each box may
+   stand out: under the frame's foot it hides 6.5% of the frame's height of the two blue cases' picture and 8% of
+   the red case's, and over the frame's top 8% of the pocket's. A box that stands out by just that, its picture set
+   against that edge, shows the PDF's crop at the middle of its travel and never cuts deeper into a case than a
+   hair. The other two have nothing hidden to travel through (the PDF shows the wide one down to its foot and the
+   pastel one from top to foot), so their boxes stand out less and they pay for it: the wide one sits 4% of the
+   frame lower than in the PDF, the pastel one is drawn 8% larger */
+.rd-everyone-tile[data-tile="monochrome"] { --rd-ev-ground: #CCD6D4; --rd-ev-spare: 6.5%; --rd-ev-y: 100%; }
+.rd-everyone-tile[data-tile="lifestyle"] { --rd-ev-ground: #D9CFCE; --rd-ev-spare: 5%; --rd-ev-x: 65%; }
+.rd-everyone-tile[data-tile="peppy"] { --rd-ev-ground: #6D7075; --rd-ev-y: 0%; }
+.rd-everyone-tile[data-tile="pastel"] { --rd-ev-ground: #C4B8B3; --rd-ev-spare: 4%; }
+.rd-everyone-tile[data-tile="corporate"] { --rd-ev-ground: #381E16; --rd-ev-y: 100%; }
+
+/* the chip: the PDF's plate, white at 0.89 (measured on its page against the pictures under it), 190.6 by 42.8u
+   around a 14u label, kept in the label's own em so it holds its shape at every size (13.614 by 3.057 em; 36 px
+   tall at the least). The label is Questrial in capitals, tracked 0.12 em. The left padding is the tracking that
+   follows the last letter and the top padding the PDF's own drop, so the ink sits where the PDF has it */
+.rd-everyone-chip { position: relative; display: grid; place-items: center; width: 13.614em; max-width: calc(100% - 2 * var(--s3)); min-height: max(36px, var(--rd-ev-chip-h, 3.057em)); padding: 0.17em 0 0 0.12em;
+  background: rgb(255 255 255 / 0.89); color: var(--rd-ink); font-family: var(--rd-text); font-size: var(--rd-fs-chip); line-height: 1.2; letter-spacing: 0.12em; text-align: center; white-space: nowrap; }
+
+@media (min-width: 720px) {
+  /* the PDF's section, 1024.5 by 827.2: the headline's first baseline at 157.5u, the frames from 260.2u, 50.4u
+     of white under them */
+  .rd-everyone { padding-block: calc(92 * var(--rd-u)) calc(50.4 * var(--rd-u)); }
+  .rd-everyone-wrap { gap: calc(27.1 * var(--rd-u)); padding-inline: calc(20.8 * var(--rd-u)); }
+  /* the PDF's frames: one of 327.7u, then two of 314.4u (the wide one spans both), 13.2u between; rows of 265.6u and
+     233.7u, 17.3u between */
+  .rd-everyone-grid { grid-template-columns: 327.7fr 314.4fr 314.4fr; grid-template-rows: calc(265.6 * var(--rd-u)) calc(233.7 * var(--rd-u)); column-gap: calc(13.2 * var(--rd-u)); row-gap: calc(17.3 * var(--rd-u)); }
+  .rd-frame.rd-everyone-tile { aspect-ratio: auto; }
+  /* the wide one fills its frame's width here, so its crop is a matter of height: set on its foot, as the PDF has it */
+  .rd-everyone-tile[data-tile="lifestyle"] { --rd-ev-x: 50%; --rd-ev-y: 100%; grid-column: span 2; }
+  /* the second row's chips are 39.8u tall in the PDF */
+  .rd-everyone-tile:nth-child(n + 3) { --rd-ev-chip-h: 2.843em; }
+}

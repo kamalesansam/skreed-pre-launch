@@ -1,0 +1,50 @@
+---
+// #products: "WE’RE NOT JUST A PHONE CASE BRAND." with its three paragraphs and the five product pictures
+// (docs/specs/redesign.md sections 3 to 6; Sam, 2026-11-09: "in the page where it's like we're not just a phone case
+// brand, have the description of each product as a hover effect for each of the photo"). Each product is a list item
+// holding one button, the framed picture with its label under it, and that product's description as a panel that
+// rises over the picture from the frame's foot on hover, on keyboard focus and on a press (styles/rd-products.css,
+// scripts/redesign/products.ts). The description is always in the accessibility tree: the panel is moved out of
+// sight by a transform inside a clip, never taken out of the page, and without scripts it is printed under its
+// label. Inside the button the label comes before the picture, so the button's name opens with the words on screen;
+// the stylesheet draws the picture above it. Every string and picture name is src/config/redesign.ts's; no style
+// attribute anywhere (the CSP): sizes are the stylesheet's, by data-p. The one thing added to the copy is a <wbr>
+// after each slash of the case types, so the first paragraph may break where the PDF breaks it ("MagTough/", then
+// "Armor/Ultra)"); the words themselves are untouched.
+import '../../styles/rd-products.css';
+import RdPicture from './RdPicture.astro';
+import RdSplit from './RdSplit.astro';
+import { RD_COPY, RD_HEADLINES } from '../../config/redesign.ts';
+
+const h = RD_HEADLINES.products;
+const c = RD_COPY.products;
+const descId = (id: string) => `rd-products-d-${id}`;
+---
+<section class="rd-sec rd-products" id="products" data-tone="light" data-ground="white">
+  <div class="rd-wrap rd-products-wrap">
+    <div class="rd-products-head">
+      <h2 class="rd-h rd-products-h" data-h="products" aria-label={h.say}><RdSplit lines={h.lines} /></h2>
+      <div class="rd-products-body">{c.body.map((p) => <p>{p.split('/').map((part, i, all) => <>{part}{i < all.length - 1 && <>/<wbr /></>}</>)}</p>)}</div>
+    </div>
+    <div class="rd-products-range">
+      <ul class="rd-products-row" role="list" aria-label={c.aria}>
+        {c.items.map((it) => (
+          <li class="rd-products-item" data-p={it.id}>
+            <button class="rd-products-btn rd-ring" type="button" aria-expanded="false" aria-controls={descId(it.id)} aria-describedby={descId(it.id)}>
+              <span class="rd-products-cap">
+                <span class="rd-products-label">{it.label}</span>
+                <svg class="rd-products-plus" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M8 1.5v13M1.5 8h13" fill="none" stroke="currentColor" stroke-width="1.5" /></svg>
+              </span>
+              <span class="rd-frame rd-products-frame"><RdPicture name={it.picture} alt={it.alt} sizes="(min-width: 720px) 20vw, 78vw" class="rd-products-pic" /></span>
+            </button>
+            <div class="rd-products-pane"><p class="rd-products-desc" id={descId(it.id)}>{it.text}</p></div>
+          </li>
+        ))}
+      </ul>
+      <div class="rd-products-track" aria-hidden="true"><span class="rd-products-thumb"></span></div>
+    </div>
+  </div>
+</section>
+<script>
+  import '../../scripts/redesign/products.ts';
+</script>

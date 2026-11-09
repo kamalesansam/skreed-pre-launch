@@ -1,7 +1,18 @@
+// The way back to the landing page, read from the sources, since no browser runs here.
+// Since the redesign (docs/specs/redesign.md D2, D3, D10 and section 6; 2026-11-09) the landing page mounts no Gate, no
+// loader and no island, so nothing of ours runs on the way back: a family page's "Back to main page" and the browser's
+// Back land on /#families by the browser alone, restored from its back-forward cache where it kept the page
+// (E-way-back) and loaded with the fragment's own scroll to section#families where it did not. The first row below
+// holds that, and is new.
+// The six rows after it are what this file was written for, as they were: the old landing's return path on the 3D path
+// (family-page.md 2.2, 13, 22, 23 and 27). Its source stays on disk, unmounted and unedited (D2: one revert or a branch
+// switch brings that page back), the family pages still mount its loader, and every assertion in the six still holds;
+// so none was dropped, and each row is named for what it reads. The site they describe runs at the ref
+// archive/site-before-redesign-2026-11-09. Their story, as this header told it until that day:
 // Section 13 step 3 (docs/specs/family-page.md 2.2 and 13; built with round 4, section 22, as D4's dependency; the loader
-// in full since round 5, section 23): the landing's return path on the 3D path, read from the sources, since no browser
-// runs here. Back from a family page, or /#families: the inline loader runs as on a first visit (the wordmark, the count,
-// the fill at the load's pace, the status lines and the stall rule) but schedules its exit only once the island has
+// in full since round 5, section 23): the old landing's return path on the 3D path. Back from a family page, or
+// /#families: the inline loader runs as on a first visit (the wordmark, the count, the fill at the load's pace, the
+// status lines and the stall rule) but schedules its exit only once the island has
 // called its ready(); the hero skips its intro, snaps the page and its scroll followers to section 2's rest (S2T.LAND,
 // 14.5 screens, which also undoes the browser's own scroll to nav#families), calls ready() once frame2 is in and the gems
 // are built, and snaps a third time at the lift (life.onRecover, run by __introDone), so the loader's fade opens on the
@@ -11,20 +22,59 @@
 // Round 5, iteration 3 (the review of 2026-10-28): links.ts, the poster path's half of the return, reads Back to top's flag
 // before it centres, holds the centring to the load event and stops at the visitor's first input. Iteration 4 (the same
 // day): on the poster tier proper the loader never ran, so links.ts itself sets manual scroll restoration when it decides
-// to centre, or the browser puts the old place back after the load event (the third and fourth of the seven tests,
-// named "iteration 3 (round 5)" and "iteration 4 (round 5)").
+// to centre, or the browser puts the old place back after the load event (the two rows named "iteration 3 (round 5)"
+// and "iteration 4 (round 5)").
 // The prototype parity of the loader is tests/unit/inline-loader.test.ts; the browser row is specs/back.spec.ts.
 //   node --test tests/family/*.test.ts
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { posix } from 'node:path';
 import { S2T } from '../../src/config/hero.ts';
+import { RD_IDS } from '../../src/config/redesign.ts';
 import { isAbortError, IslandDead } from '../../src/scripts/hero/bridge/life.ts';
 
 const root = new URL('../../', import.meta.url);
 const read = (p: string) => readFileSync(new URL(p, root), 'utf8');
+/** every file under a folder, as paths from the repository's root */
+const walk = (dir: string): string[] => readdirSync(new URL(dir, root)).flatMap((n) => (statSync(new URL(`${dir}${n}`, root)).isDirectory() ? walk(`${dir}${n}/`) : [`${dir}${n}`]));
+/** what a source file imports, statically or by import(): a relative specifier as a path from the repository's root, a package by its name */
+const importsOf = (file: string): string[] => [...read(file).matchAll(/(?:^|[\s;])import\s*(?:[^'"()]*?\sfrom\s*)?\(?\s*['"]([^'"]+)['"]/g)].map((m) => m[1].replace(/\?.*$/, '')).map((spec) => (spec.startsWith('.') ? posix.normalize(posix.join(posix.dirname(file), spec)) : spec));
 
-test('the loader: RET from the two conditions of isReturnVisit(), on html.hero3d only; the ret class hides nothing; on a return visit the loader lifts as soon as the island gives its ready() (2026-11-04, family-page.md 27: "make the going back wait time quicker")', () => {
+// ---- the redesigned landing (docs/specs/redesign.md; 2026-11-09) ----
+
+test('the redesigned landing: the way back lands on /#families with no loader and no code of ours in the way; the fragment is a section of the page, a swatch leaves it in the history, and nothing keeps the page out of the back-forward cache', () => {
+  // nothing to run on arrival: no Gate, no loader, no island, and not the old poster path's ten links (links.ts centred them itself)
+  const imports = importsOf('src/pages/index.astro');
+  assert.ok(imports.includes('src/components/redesign/Families.astro'), 'the page\'s imports are read, as paths from the root');
+  for (const gone of ['Gate', 'Loader', 'HeroStage', 'FamilyLinks', 'FamilyLinksNav']) assert.ok(!imports.some((p) => p.endsWith(`/${gone}.astro`)), `index.astro imports ${gone}.astro`);
+  // the fragment the family pages link to is the ten swatches' section, the one element of the page with that id
+  assert.ok((RD_IDS as readonly string[]).includes('families'));
+  const families = read('src/components/redesign/Families.astro');
+  assert.equal((families.match(/\bid="families"/g) ?? []).length, 1);
+  assert.match(families, /<section\b[^>]*\bid="families"/);
+  for (const p of walk('src/components/redesign/').filter((f) => f.endsWith('.astro') && !f.endsWith('/Families.astro'))) assert.doesNotMatch(read(p), /\bid="families"/, `${p} carries the id too`);
+  // a family page's link (back.test.ts holds its markup): to /#families, marked for the way back through the history,
+  // which is installed off the landing page only
+  assert.match(read('src/pages/shades/[family].astro'), /<a class="fam-back ring2 press" id="famBack" href="\/#families" data-home hidden>/);
+  assert.match(read('src/scripts/shell/back-home.ts'), /^if \(location\.pathname !== '\/'\) \{$/m);
+  // a swatch leaves /#families in the history before it goes, the gems' own way, so the browser's Back returns to the section
+  assert.match(read('src/scripts/redesign/families.ts'), /^\s*followRock\(l, 'rock_grid'\);$/m);
+  assert.match(read('src/scripts/family/rock-links.ts'), /history\.replaceState\(history\.state, '', '#families'\);\n\s*location\.assign\(link\.href\);/);
+  // the browser's own scroll is left to it: scroll restoration is set to manual by the loader and by the old poster
+  // path's links.ts alone, and the redesigned landing mounts neither
+  const src = walk('src/').filter((f) => /\.(?:ts|js|mjs|astro)$/.test(f));
+  assert.deepEqual(src.filter((f) => /scrollRestoration/.test(read(f))), ['src/inline/loader.inline.js', 'src/scripts/family/links.ts']);
+  // and nothing holds a page out of the back-forward cache (E-way-back): no unload or beforeunload handler anywhere, no no-store
+  for (const f of src) assert.doesNotMatch(read(f), /['"`](?:unload|beforeunload)['"`]|\bon(?:before)?unload\b/, f);
+  assert.doesNotMatch(read('public/_headers'), /no-store/);
+  // a page restored from the cache keeps its scroll but not its triggers' places: the motion measures them again
+  assert.match(read('src/scripts/redesign/motion.ts'), /addEventListener\('pageshow', \(e\) => \{ if \(e\.persisted\) refresh\(\); \}\);/);
+});
+
+// ---- the old landing's return path, its source kept on disk (docs/specs/redesign.md D2), and the loader the family pages share ----
+
+test('the loader the family pages still mount, with the old landing\'s return rule in it: RET from the two conditions of isReturnVisit(), on html.hero3d only; the ret class hides nothing; on a return visit the loader lifts as soon as the island gives its ready() (2026-11-04, family-page.md 27: "make the going back wait time quicker")', () => {
   const loader = read('src/inline/loader.inline.js');
   assert.doesNotMatch(loader, /skreed:to-top|\bTT\b/, 'no Back to top flag: a family page\'s Back to top stays on its own page since 2026-11-04');
   const ret = loader.match(/^var RET=(.*);if\(RET\)intro\.classList\.add\('ret'\);$/m)?.[1] ?? '';
@@ -46,7 +96,7 @@ test('the loader: RET from the two conditions of isReturnVisit(), on html.hero3d
   assert.match(toTop, /scrollTo\(\{ top: 0, behavior: reducedMQ\.matches \? 'instant' : 'smooth' \}\)/, 'the page\'s own top, smoothly, at once under reduced motion');
   assert.match(read('src/components/shell/BackToTop.astro'), /<a class="to-top" id="toTop" href="#" data-page=\{page\} hidden>/, 'a link to the page\'s own top without JavaScript');
 });
-test('the hero: the intro skipped, the page and both followers snapped to S2T.LAND under the loader, the island\'s ready() once frame2 is in and the gems are built (never skip or cut), the third snap at the lift, the context checked on a restore; the loader\'s decision read, not made again', () => {
+test('the old landing\'s hero (kept on disk, mounted by no page since 2026-11-09): the intro skipped, the page and both followers snapped to S2T.LAND under the loader, the island\'s ready() once frame2 is in and the gems are built (never skip or cut), the third snap at the lift, the context checked on a restore; the loader\'s decision read, not made again', () => {
   assert.equal(S2T.LAND, 4.8);   // 14.5 until 2026-11-02, when the hero's scroll was halved and the stagger went (section-2.md 14); 4.55 that day, 4.8 since the wipes went back to one screen (2026-11-03, section-2.md 15)
   const hero = read('src/scripts/hero/hero.ts');
   const loader = read('src/inline/loader.inline.js');
@@ -72,7 +122,7 @@ test('the hero: the intro skipped, the page and both followers snapped to S2T.LA
   assert.match(read('src/scripts/family/links.ts'), /const centre = \(\) => \{ if \(!document\.documentElement\.classList\.contains\('hero3d'\)\) nav\.scrollIntoView\(\{ block: 'center', behavior: 'instant' \}\); \};/);
 });
 
-test('iteration 3 (round 5): links.ts holds the centring from its module to the load event and stops for good at the visitor\'s first input (Back to top\'s way home and its flag left on 2026-11-04)', () => {
+test('the old landing\'s poster path, iteration 3 (round 5): links.ts holds the centring from its module to the load event and stops for good at the visitor\'s first input (Back to top\'s way home and its flag left on 2026-11-04)', () => {
   const links = read('src/scripts/family/links.ts');
   assert.doesNotMatch(links, /skreed:to-top|toTop/, 'no Back to top flag since 2026-11-04');
   assert.match(links, /if \(isReturnVisit\(\)\) \{/, 'a return visit alone decides');
@@ -86,7 +136,7 @@ test('iteration 3 (round 5): links.ts holds the centring from its module to the 
   assert.equal((links.match(/scrollIntoView/g) ?? []).length, 1, 'one centring call, in centre()');
 });
 
-test('iteration 4 (round 5): on the poster tier proper the loader never ran, so links.ts sets history.scrollRestoration to manual itself when it decides to centre (a return visit, the flag not set, off the 3D path), before the load event; never on a first visit, on Back to top\'s way home or on the 3D path', () => {
+test('the old landing\'s poster path, iteration 4 (round 5): on the poster tier proper the loader never ran, so links.ts sets history.scrollRestoration to manual itself when it decides to centre (a return visit, the flag not set, off the 3D path), before the load event; never on a first visit, on Back to top\'s way home or on the 3D path', () => {
   const links = read('src/scripts/family/links.ts');
   const loader = read('src/inline/loader.inline.js');
   const gate = read('src/inline/gate.inline.js');
@@ -104,7 +154,7 @@ test('iteration 4 (round 5): on the poster tier proper the loader never ran, so 
   assert.doesNotMatch(links, /keeps manual scroll restoration \(the loader\)/, 'iteration 3\'s premise, which held on the 3D path only, is gone');
 });
 
-test('item 1: a skipped cross-document view transition is never a hero failure: isAbortError, boot.ts\'s rejection guard returns early on it, and the Gate handles the transition\'s ready and finished', () => {
+test('the old landing, item 1: a skipped cross-document view transition is never a hero failure: isAbortError, boot.ts\'s rejection guard returns early on it, and the Gate handles the transition\'s ready and finished', () => {
   assert.equal(isAbortError(new DOMException('Transition was skipped', 'AbortError')), true);
   assert.equal(isAbortError(new DOMException('gone', 'NotFoundError')), false);
   assert.equal(isAbortError(new Error('AbortError')), false, 'a plain Error with that text is not one');
@@ -118,7 +168,7 @@ test('item 1: a skipped cross-document view transition is never a hero failure: 
   assert.ok(gate.indexOf("addEventListener('pagereveal'") < gate.indexOf("addEventListener('error'"), 'before the module error guard');
 });
 
-test('since 2026-11-04 (E-3D-only) a return visit never meets the poster: the loader has no stall or offline poster, and every hard failure is a reload or the site note', () => {
+test('the old landing since 2026-11-04 (E-3D-only): a return visit never meets the poster: the loader has no stall or offline poster, and every hard failure is a reload or the site note', () => {
   // iterations 3 to 5 centred nav#families on the poster page a stalled or failed return visit fell to; that page is gone
   const boot = read('src/scripts/boot.ts');
   assert.doesNotMatch(boot, /onSoftPoster|toPoster|softCentred/, 'no poster path in the boot');

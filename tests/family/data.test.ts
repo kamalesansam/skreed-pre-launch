@@ -177,10 +177,15 @@ test('FAMILY_PAGES: on in every build, production included (Sam, 2026-10-19), of
   assert.throws(() => familyPagesOn('yes'), /must be on or off/);
 });
 
-test('FAMILY_PAGES off: the landing mount carries no family-links.css and no script (review iteration 2, item 3)', () => {
-  // FamilyLinks.astro is what index.astro imports; it must import neither the stylesheet (with its @view-transition rule)
-  // nor links.ts statically, and reach FamilyLinksNav.astro only through a dynamic import under a condition Vite folds.
-  // The built proof (production plus the mount: no nav, no rule, no chunk) is in the spec's iteration 3 notes.
+test('FAMILY_PAGES off: the old landing\'s mount of the ten links (kept on disk; the redesigned landing mounts ten swatches of its own) carries no family-links.css and no script (review iteration 2, item 3)', () => {
+  // FamilyLinks.astro is what the old landing's index.astro imported; it must import neither the stylesheet (with its
+  // @view-transition rule) nor links.ts statically, and reach FamilyLinksNav.astro only through a dynamic import under a
+  // condition Vite folds. The built proof (production plus the mount: no nav, no rule, no chunk) is in the spec's
+  // iteration 3 notes.
+  // Since 2026-11-09 (docs/specs/redesign.md D2 and D10) no page mounts it: the redesigned landing's ten links are the
+  // swatches of components/redesign/Families.astro. The file is kept as it was, so the row's assertions stand, and
+  // one is added: the landing page no longer imports the mount.
+  assert.doesNotMatch(read('src/pages/index.astro'), /FamilyLinks/, 'the redesigned landing does not import the old mount');
   const wrap = read('src/components/family/FamilyLinks.astro').split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');   // code only
   const front = wrap.split('---')[1];
   assert.doesNotMatch(wrap, /family-links\.css|links\.ts|<script/);

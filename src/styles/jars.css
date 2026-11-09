@@ -1,0 +1,58 @@
+/* The jars on a page of their own, /jars/ (docs/specs/redesign.md D1; Sam, 2026-11-09, asked which sign-up the
+   redesigned site keeps: "Both", the two steps on the landing page and the jars as their own page, which the section
+   index's gift opens). The section itself is the current site's section 5 as built (src/components/signup/Signup.astro
+   with src/styles/signup.css, docs/specs/section-5-picture.md), untouched: this file is only what that section took
+   from the landing page around it. The page's ground, the section's own cream, so nothing else shows where a phone's
+   screen is taller than the section; the corner logotype's rules, as about.css and redesign.css carry their own copy,
+   at the inset and Urban Slate on the cream; "Back to main page" on its row at the top right, where the section index
+   stood over the section and set as its words are; .sr-only for the page's title and the section's own hidden lines.
+   The section clears this row itself (its --top). The row is placed on the page, as About's is, not fixed to the
+   screen as the landing page's was: the section is one screen wherever it fits, and there the two are the same, but
+   on a screen too short for it (a 360 by 640 phone runs 110 px over, a phone held sideways more) a fixed row sat on
+   the headline once the page was scrolled to the form, and this one scrolls away with the page's top. Imported by
+   src/pages/jars.astro alone and inlined into that page by the build. Colours are tokens, but for the ground, the
+   section's own. */
+
+:root {
+  /* the section's ground (--su-ground in signup.css, SIGNUP_GROUND in src/config/signup-ground.ts), said again for the page under it */
+  --jars-ground: #F2EAE1;
+}
+
+html, body { margin: 0; background: var(--jars-ground); color: var(--urban-slate); }
+/* the page's own words are the chrome's (the way back) and two hidden lines; every line of the section sets its own face */
+body { font-family: "Work Sans", Arial, sans-serif; font-weight: 300; }
+
+/* the wordmark sprite: defined once, drawn by <use> (a class, not a style attribute, for the CSP) */
+.sprite { position: absolute; }
+
+/* the corner logotype (DESIGN.md "Corner logotype"): the landing page's artwork, inset, sizes, hit area and two-tone
+   ring, over the section's top on the section's layer, in Urban Slate whatever tone is said to it (the whole page is
+   the cream ground); its press state is the glitch burst (scripts/logotype/install.ts) */
+.site-logo { position: absolute; top: calc(var(--inset) + env(safe-area-inset-top, 0px)); left: calc(var(--inset) + env(safe-area-inset-left, 0px)); z-index: 4;
+  display: block; line-height: 0; color: var(--urban-slate); -webkit-tap-highlight-color: transparent; }
+.site-logo::after { content: ""; position: absolute; inset: -11px -8px; }
+.site-logo svg { display: block; width: 96px; height: auto; overflow: visible; }
+.site-logo:focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 6px; }
+.site-logo:focus-visible::before { content: ""; position: absolute; inset: -4px; border: 2px solid var(--urban-slate); }
+@media (min-width: 1024px) { .site-logo svg { width: 136px; } }
+
+/* the way back, as the About page has it (about.css .ab-home; 2026-11-03: "there's no navigation helper to go back to
+   the site"): "Back to main page" at the top right, centred on the wordmark's row as the landing page's section index
+   is, and set as its words are (Work Sans Light in capitals at 16 px, letter-spacing 0, declared in fonts.css), Urban
+   Slate, a 44 px hit row with --s2 at its sides and its text on --inset; placed with the logotype, on its layer; hover
+   lifts it 1 px and a press scales it to 0.98, the index's own states, and the two-tone focus ring */
+.rd-jars-home { position: absolute; z-index: 4; top: calc(var(--inset) + env(safe-area-inset-top, 0px) + 11.625px - 22px); right: calc(var(--inset) + env(safe-area-inset-right, 0px) - var(--s2));
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--s2); font-family: "Work Sans", Arial, sans-serif; font-size: 1rem; font-weight: 300; line-height: 1;
+  text-transform: uppercase; letter-spacing: 0; white-space: nowrap; color: var(--urban-slate); text-decoration: none; -webkit-tap-highlight-color: transparent;
+  transition: transform var(--dur-press) var(--ease-standard); }
+@media (min-width: 1024px) { .rd-jars-home { top: calc(var(--inset) + env(safe-area-inset-top, 0px) + 16.47px - 22px); } }
+@media (hover: hover) { .rd-jars-home:hover { transform: translateY(-1px); } }
+.rd-jars-home:active { transform: scale(0.98); }
+.rd-jars-home:focus-visible { outline: 2px solid var(--ember-luxe); outline-offset: 2px; }
+.rd-jars-home:focus-visible::before { content: ""; position: absolute; inset: -2px; border: 2px solid var(--urban-slate); pointer-events: none; }
+
+/* the page's main: the section and nothing else */
+.rd-jars { display: block; }
+
+/* hidden from the eye, read by assistive technology: the page's title, the field's label and the section's live line */
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }

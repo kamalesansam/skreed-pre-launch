@@ -1,0 +1,95 @@
+---
+// Families, section "families" (docs/specs/redesign.md D10, the second of the three clips, D19's item 4, and sections 3
+// to 6; Sam, 2026-11-09, of the clips his PDF holds one frame of: "Live animations", the option that read "the swatches
+// pop in"; and of the circles the first build drew: "look at how the shades are looking here, it looks different on the
+// site, use the same ones").
+// The PDF's three paint blobs with their words (grey, blue, brown: the colours "you've seen so far"), the grey line, the
+// headline NOW CHOOSE / FROM WHAT'S / POSSIBLE. and, in place of the clip, ten brush swatches, one per family, each a
+// link to its family page opened on the shade it stands for.
+// This id is where a family page's "Back to main page" lands, and where the section index's Families jumps.
+//
+// The swatches are pictures (scripts/redesign/extract-pdf.py, swatches()): the PDF's own six with their own brush edges
+// and four more in the same brush. The row's order, its families and its shades are RD_COPY.families.swatches, and the
+// check below holds them to the catalog. The swatches are a list of links (role="list" because a list with its markers
+// taken off is not announced as one by every screen reader). A picture's alt is empty: a link's name is its family and
+// the gems' count line, read as one phrase; they show under the picture on hover, on keyboard focus and for the swatch
+// last pressed, and on a phone the family's name is always there (rd-families.css). A plain click leaves /#families in
+// the history before it goes (scripts/redesign/families.ts, followRock), so Back returns here.
+// A build with PUBLIC_FAMILY_PAGES=off emits no family pages (mode.ts, the route's getStaticPaths), so there the row
+// holds no link and no landmark of links: each swatch is its picture with its family's name, always on show, and no
+// count, since nothing there leads to the 24 shades.
+//
+// The blobs are the PDF's own (Sam, 2026-11-09: "it looks different on the site, use the same ones"; the first build drew
+// its own, with a doubled ring at the right and foot). In the PDF each is paint in paths with live text over it, so they
+// are pictures of those paths with a true alpha (scripts/redesign/extract-pdf.py, blobs()) and the words stay words, in
+// the look-alike the page has for the PDF's paid script, on top. They and their words are decoration, hidden from
+// assistive technology. The motion is families.ts's; nothing here is hidden without it.
+import '../../styles/rd-families.css';
+import RdPicture from './RdPicture.astro';
+import RdSplit from './RdSplit.astro';
+import { rdPicture } from './pictures.ts';
+import { RD_COPY, RD_HEADLINES } from '../../config/redesign.ts';
+import { FAMILIES, familyHref } from '../../scripts/family/data.ts';
+import { familyPagesOn } from '../../scripts/family/mode.ts';
+
+const c = RD_COPY.families;
+const h = RD_HEADLINES.families;
+const pagesOn = familyPagesOn();
+const Holder = pagesOn ? 'nav' : 'div';
+const Swatch = pagesOn ? 'a' : 'span';
+
+// every one of the ten families has exactly one swatch, every swatch's shade is a real catalog shade of its family, and
+// the picture's own record agrees: a row that fails any of these fails the build
+for (const f of FAMILIES) {
+  const n = c.swatches.filter((s) => s.family === f.slug).length;
+  if (n !== 1) throw new Error(`RD_COPY.families.swatches: the family ${f.slug} has ${n} swatches, not one`);
+}
+const swatches = c.swatches.map((s) => {
+  const family = FAMILIES.find((f) => f.slug === s.family);
+  if (!family) throw new Error(`RD_COPY.families.swatches: ${s.family} is no family of the catalog`);
+  const shade = family.shades.find((sh) => sh.id === s.shade);
+  if (!shade) throw new Error(`RD_COPY.families.swatches: ${s.shade} is no shade of ${family.slug}`);
+  const said = rdPicture(s.picture).entry.shade;
+  if (said !== shade.id) throw new Error(`RD_COPY.families.swatches: the picture ${s.picture} stands for ${said}, not ${shade.id}; run scripts/redesign/extract-pdf.py or change the row`);
+  // the address as the gems' links build it: the family's page, the shade's three-digit catalog number (family-page.md 2.2)
+  return { family: family.slug, shade: shade.id, picture: s.picture, words: family.name.split(' '), href: pagesOn ? `${familyHref(family)}?shade=${shade.nnn}` : undefined };
+});
+
+// how wide a swatch's picture is drawn: its square on a wide screen, a phone's cell up to the same 78 px as the stylesheet
+const SIZES = '(min-width: 720px) calc(min(100vw, 1600px) * 0.0749), min(20vw, 78px)';
+// and a blob's: 101.05u of the 1024.5u page on a wide screen, the stylesheet's share of a phone's width up to its 112 px
+const BLOB_SIZES = '(min-width: 720px) calc(min(100vw, 1600px) * 0.0986), min(22vw, 112px)';
+---
+<section class="rd-sec rd-families" id="families" data-tone="light" data-ground="white">
+  <div class="rd-wrap rd-families-wrap">
+    <div class="rd-families-say">
+      <div class="rd-families-blobs" aria-hidden="true">
+        {c.blobs.map((word) => (
+          <span class="rd-families-blob">
+            <span class="rd-families-stamp"><RdPicture name={`blob-${word}`} alt="" sizes={BLOB_SIZES} class="rd-families-brush" imgClass="rd-families-brush-img" /></span>
+            <span class="rd-families-word">{word}</span>
+          </span>
+        ))}
+      </div>
+      <div class="rd-families-text">
+        <p class="rd-families-lead">{c.lead}</p>
+        <h2 class="rd-h" data-h="families" aria-label={h.say}><RdSplit lines={h.lines} /></h2>
+      </div>
+    </div>
+    <Holder class="rd-families-nav" aria-label={pagesOn ? c.aria : undefined}>
+      <ul class="rd-families-row" role="list" aria-label={pagesOn ? undefined : c.aria}>
+        {swatches.map((s) => (
+          <li class="rd-families-cell">
+            <Swatch class={pagesOn ? 'rd-families-sw rd-ring' : 'rd-families-sw'} href={s.href} data-family={s.family} data-shade={s.shade}>
+              <span class="rd-families-pop"><RdPicture name={s.picture} alt="" sizes={SIZES} class="rd-families-pic" imgClass="rd-families-img" /></span>
+              <span class="rd-families-label"><span class="rd-families-name">{s.words.map((w, k) => <>{k > 0 && ' '}<span class="rd-families-nw">{w}</span></>)}</span>{pagesOn && <><span class="sr-only">, </span><span class="rd-families-count">{c.count}</span></>}</span>
+            </Swatch>
+          </li>
+        ))}
+      </ul>
+    </Holder>
+  </div>
+</section>
+<script>
+  import '../../scripts/redesign/families.ts';
+</script>

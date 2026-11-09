@@ -1,0 +1,45 @@
+---
+// The quiz's way in on the redesigned landing page, and the quiz behind it (docs/specs/redesign.md D11 and the "quiz
+// CTA" rows of sections 4 to 6; Sam, 2026-11-09: "checkout the pdf, and build the exact same thing" and "for the quiz
+// results keep our same current results page as well"). The PDF's box: a 1.5 px black frame holding "DON’T BE /
+// OVERWHELMED." with OVER in the PDF's lavender, the paragraph, and "Let’s find it" at the lower right with the
+// lavender pill behind its second part and a ring with an arrow of our own drawing.
+// The frame is four lines, one a side, so scripts/redesign/quiz.ts can draw them; each is a border on an empty box, so
+// it is snapped to the screen's pixels exactly as the page's other 1.5 px rules are. The pill is two real boxes, not
+// pseudo-elements, for the same reason: the script wipes the first in, and the stylesheet slides the second out from
+// under it on hover and focus until the pill covers the whole label.
+// The quiz is the site's own, left as it is (components/quiz/Quiz.astro, scripts/quiz/deck.ts, styles/quiz.css): it sits
+// in #quizHost on the night ground, hidden until "Let’s find it" is pressed. Without JavaScript the button is hidden
+// and the host is shown, so the quiz's own noscript line stands there (rd-quiz.css).
+// No style attribute anywhere (the CSP): every place and size is a class in rd-quiz.css.
+import '../../styles/rd-quiz.css';
+import RdSplit from './RdSplit.astro';
+import Quiz from '../quiz/Quiz.astro';
+import { RD_COPY, RD_HEADLINES } from '../../config/redesign.ts';
+const h = RD_HEADLINES.quiz;
+const c = RD_COPY.quiz;
+// the button's words are the config's two parts; together they must read as its one phrase
+if (c.ctaPlain + c.ctaPill !== c.cta) throw new Error('quiz CTA: the two parts do not make the phrase');
+const SIDES = ['top', 'right', 'bottom', 'left'] as const;
+---
+<section class="rd-sec rd-quiz" id="quiz" data-tone="light" data-ground="white">
+  <div class="rd-quiz-wrap">
+    <div class="rd-quiz-box">
+      {SIDES.map((s) => <span class="rd-quiz-side" data-side={s} aria-hidden="true"></span>)}
+      <div class="rd-quiz-in">
+        <div class="rd-quiz-copy">
+          <h2 class="rd-h rd-quiz-h" data-h="quiz" aria-label={h.say}><RdSplit lines={h.lines} /></h2>
+          <p class="rd-quiz-body">{c.body}</p>
+        </div>
+        <button type="button" class="rd-quiz-cta rd-ring" id="rdQuizCta" aria-label={c.cta}>
+          <span class="rd-quiz-cta-label" aria-hidden="true"><span class="rd-quiz-cta-plain"><span class="rd-quiz-cta-ext"><span class="rd-quiz-cta-fill"></span></span>{c.ctaPlain}</span><span class="rd-quiz-cta-pill"><span class="rd-quiz-cta-bg"><span class="rd-quiz-cta-fill"></span></span>{c.ctaPill}</span></span>
+          <span class="rd-quiz-cta-ring" aria-hidden="true"><svg viewBox="0 0 54 54" focusable="false"><circle class="rd-quiz-cta-loop" cx="27" cy="27" r="25.8" /><g class="rd-quiz-cta-arrow"><path d="M9 27H44.6" /><path d="M24.6 9.8C24.6 19.4 33.4 27 44.6 27C33.4 27 24.6 34.6 24.6 44.2" /></g></svg></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="rd-quizhost" id="quizHost" data-tone="dark" hidden><Quiz /></div>
+<script>
+  import '../../scripts/redesign/quiz.ts';
+</script>

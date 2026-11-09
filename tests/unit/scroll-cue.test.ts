@@ -1,5 +1,13 @@
 // The cue's words, "Scroll to see more" (docs/specs/scroll-cue.md; acceptance 1, 4, 5 and 7 where a source can carry them):
 // the pin's rule walked over the scroll map, the copy, and the markup and CSS the browser rows rely on.
+// Since the redesign (docs/specs/redesign.md D2, D3 and D15; 2026-11-09) the landing page no longer mounts the old
+// hero's cue (components/hero/ScrollCue.astro, boot.ts, shell.css, the countdown's inline script, the pin's rule in
+// scripts/hero/scroll/cue-words.ts). Those files stay on disk, unmounted and unedited (D2), and every assertion this
+// file held of them still holds, so none was retired: the rows that read them are named "the old landing's" and keep
+// that source as it was (the redesign's criterion 12). The redesigned landing's own cue, the same words at the hero's
+// foot, has a row named for it, and a line each in the constants' row (its 8 px edge) and the chrome's row (its face,
+// and the countdown's on its new slide). The family page's rows, the copy row and the Plex capitals preload on both
+// pages are as they were.
 //   node --test tests/unit/scroll-cue.test.ts
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -31,15 +39,19 @@ test('the constants: 1.5 s of rest, and the chevrons\' 8 px edge, which the fami
   assert.ok(CUE.stillMs > CUE.fadeMs, 'the rest outlasts the fade: the pin place is dropped before the words can come back at the top (ride.ts, D10)');
   assert.equal(CUE_STILL_MS, CUE.stillMs, 'the family page\'s own copy (timing.ts), so grid mode loads no chunk shared with the island');
   assert.doesNotMatch(read('src/scripts/family/page.ts'), /config\/cue/, 'the family page module never imports the landing\'s config');
-  assert.match(read('src/inline/countdown.inline.js'), /scrollY>8\|\|/, 'the landing\'s chevrons hide past 8 px');
+  assert.match(read('src/inline/countdown.inline.js'), /scrollY>8\|\|/, 'the old landing\'s chevrons hide past 8 px (its inline script, unmounted since 2026-11-09)');
+  // the redesigned landing's edge is the same 8 px, a literal of its own in the hero's script (docs/specs/redesign.md D15)
+  assert.equal(Number(read('src/scripts/redesign/hero.ts').match(/^const CUE_OFF = (\d+);$/m)?.[1]), CUE.top, 'the redesigned landing\'s cue hides past 8 px');
   assert.match(read('src/scripts/family/page.ts'), /if \(scrollY > 8\) H\.setAttribute\('data-scrolled', ''\)/, 'the family columns hide past 8 px');
 });
 
-test('the pin: on at rest in the pull-back, at both ends of the first wipe, in the cascade and at the gems\' rest', () => {
+// (the four rows of the pin are the old landing's rule, scripts/hero/scroll/cue-words.ts over the hero's scroll map: the
+// redesigned page has no pin, and its cue stands at the hero's foot alone; named so on 2026-11-09, no assertion changed)
+test('the old landing\'s pin: on at rest in the pull-back, at both ends of the first wipe, in the cascade and at the gems\' rest', () => {
   for (const s of [0.05, PULL / 2, PULL * 0.6, PULL, W1END, MID, LAND - 0.2, LAND, LAND + 0.3, W2 - 0.05, W2]) assert.equal(cueWordsOn(at(s)), true, `${s} screens`);
 });
 
-test('the pin: off at the top, while moving, across the first wipe, from the second wipe on, while section 2 builds, with the quiz in view', () => {
+test('the old landing\'s pin: off at the top, while moving, across the first wipe, from the second wipe on, while section 2 builds, with the quiz in view', () => {
   assert.equal(cueWordsOn(at(0)), false, 'at 0 the words follow the chevrons (shell.css), not this rule');
   assert.equal(cueWordsOn(at(8 / VH)), false, 'at 8 px still the chevrons\' top');
   assert.equal(cueWordsOn(at(PULL / 2, { restMs: CUE.stillMs - 1 })), false, 'not yet rested');
@@ -54,7 +66,7 @@ test('the pin: off at the top, while moving, across the first wipe, from the sec
   assert.equal(cueWordsOn(at(PULL / 2, { vh: 0 })), false);
 });
 
-test('the top: the chevrons speak there, unless they stay hidden at rest with the page going on below', () => {
+test('the old landing\'s top: the chevrons speak there, unless they stay hidden at rest with the page going on below', () => {
   assert.equal(cueWordsOn(at(0, { cueOff: false })), false, 'chevrons shown: the words follow them by CSS');
   assert.equal(cueWordsOn(at(0, { cueOff: true })), true, 'chevrons stuck off after a jump the followers reach late');
   assert.equal(cueWordsOn(at(0, { cueOff: true, restMs: CUE.stillMs - 1 })), false, 'not before the rest');
@@ -71,7 +83,7 @@ test('the top: the chevrons speak there, unless they stay hidden at rest with th
   assert.equal(reads, 0, 'the document is measured only at the top, at rest, with the chevrons off, and never under the lock (a read kept from there, where the track is collapsed, would say nothing is below until the scroll position next changes)');
 });
 
-test('the pin: the quiz is read last, only when everything else holds (one layout read per rest, CHECKLIST C3)', () => {
+test('the old landing\'s pin: the quiz is read last, only when everything else holds (one layout read per rest, CHECKLIST C3)', () => {
   let reads = 0;
   const q = () => { reads++; return true; };
   cueWordsOn(at(0, { quizBelow: q }));
@@ -91,13 +103,34 @@ test('copy: the brief\'s words on both pages, sentence case, no end stop, no das
   }
 });
 
-test('the landing\'s markup: the words follow the chevrons as their next sibling, aria-hidden, from the config', () => {
+test('the old landing\'s markup (ScrollCue.astro and boot.ts, kept on disk and mounted by no page since 2026-11-09): the words follow the chevrons as their next sibling, aria-hidden, from the config', () => {
   const astro = read('src/components/hero/ScrollCue.astro');
   assert.match(astro, /<div class="scrollcue" id="cue" aria-hidden="true" set:html=\{svg\} \/>\}\n\{part === 'cue' && <p class="cuetext" id="cueText" aria-hidden="true">\{COPY\.cue\.label\}<\/p>\}/);
   assert.match(read('src/scripts/boot.ts'), /more: \$\('cueText'\)/);
 });
 
-test('the landing\'s CSS: Plex Mono capitals at the label size, in the corner, hidden with them, opacity and visibility only', () => {
+test('the redesigned landing\'s cue (docs/specs/redesign.md D15, E-cue-text carried over; 2026-11-09): the same words from the config at the hero\'s foot with the chevrons, aria-hidden, in Plex Mono capitals, hidden past 8 px by opacity and visibility alone', () => {
+  const astro = read('src/components/redesign/Hero.astro');
+  assert.match(astro, /<div class="rd-hero-cue" aria-hidden="true">\s*<p class="rd-hero-cue-text">\{COPY\.cue\.label\}<\/p>\s*<svg class="rd-hero-cue-chev"[^>]*aria-hidden="true" focusable="false">/, 'the words over the chevrons, both out of the accessibility tree');
+  assert.doesNotMatch(astro, /Scroll down|Scroll to see/, 'the words are the config\'s, never typed into the component');
+  const js = read('src/scripts/redesign/hero.ts');
+  assert.match(js, /cue\?\.classList\.toggle\('is-off', \w+ > CUE_OFF\)/, 'hidden past the edge, back at the top');
+  const css = read('src/styles/rd-hero.css');
+  const text = css.match(/\n\.rd-hero-cue-text \{([^}]*)\}/)?.[1] ?? '';
+  assert.ok(text.includes('font: 500 var(--fs-label)/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0;'), 'IBM Plex Mono Medium in capitals at the label size (E-chrome-font)');
+  const off = css.match(/\n\.rd-hero-cue\.is-off \{([^}]*)\}/)?.[1] ?? '';
+  const fade = `opacity ${CUE.fadeMs / 1000}s`;   // 0.5s, the words' fade on every page (CUE.fadeMs)
+  assert.ok(off.includes('opacity: 0; visibility: hidden;') && off.includes(`transition: ${fade} `) && off.includes(`visibility 0s ${CUE.fadeMs / 1000}s`), 'the fade out, then hidden');
+  let rules = 0;
+  for (const m of css.matchAll(/\.rd-hero-cue[^{,]*\{([^}]*)\}/g)) {
+    rules++;
+    assert.doesNotMatch(m[1], /text-shadow|box-shadow|background|border|letter-spacing:(?!\s*0)|text-transform:(?!\s*uppercase)/, m[0]);
+    for (const t of m[1].matchAll(/transition:([^;}]+)/g)) for (const part of t[1].replace(/\([^)]*\)/g, '()').split(',')) assert.ok(['opacity', 'visibility'].includes(part.trim().split(/\s+/)[0]), part);
+  }
+  assert.ok(rules >= 4, `${rules} rules read`);
+});
+
+test('the old landing\'s CSS (shell.css, kept on disk and loaded by no page since 2026-11-09): Plex Mono capitals at the label size, in the corner, hidden with them, opacity and visibility only', () => {
   const css = read('src/styles/shell.css');
   const base = css.match(/\n\.cuetext\{([^}]*)\}/)![1];
   assert.ok(base.includes('font:500 var(--fs-label)/1 var(--font-mono);text-transform:uppercase;letter-spacing:0'), 'IBM Plex Mono Medium in capitals (E-chrome-font)');
@@ -168,9 +201,19 @@ test('the chrome\'s small words in IBM Plex Mono Medium capitals (E-chrome-font)
   const fam = read('src/styles/family.css');
   assert.equal(fam.split(PLEX).length - 1, 3, 'All families, Back to main page and the words');
   assert.ok(fam.includes('.cuetext { position: fixed; z-index: 2; font-family: var(--font-mono); font-size: var(--fs-label); font-weight: 500; line-height: 1; text-transform: uppercase; letter-spacing: 0;'), 'the family page\'s words');
+  // the countdown's eyebrow and unit labels: on the old landing's sheet (kept on disk, loaded by no page since 2026-11-09) ...
   const shell = read('src/styles/shell.css');
   assert.ok(shell.includes('.copy .eyebrow{font-family:var(--font-mono);font-size:.875rem;font-weight:500;text-transform:uppercase;letter-spacing:0;'), 'Launch in');
   assert.ok(shell.includes('.count .l{font-family:var(--font-mono);font-weight:500;font-size:.875rem;text-transform:uppercase;letter-spacing:0;'), 'days, hours, minutes, seconds');
+  // ... and on the redesigned landing's slide, where the countdown stands now (docs/specs/redesign.md D7 and D13; 2026-11-09).
+  // Since D20 the slide's eyebrow holds the PDF's COMING SOON mark and no words of "Launch in"; its rule stays for what the
+  // element says with no mark in it, the no-JavaScript date and the live line at zero, so the row reads it under that name
+  const launch = read('src/styles/rd-launch.css');
+  for (const [sel, what] of [['.rd-launch .eyebrow', 'the no-JavaScript date and the live line at zero'], ['.rd-launch .count .l', 'days, hours, minutes, seconds']] as const) {
+    const rule = launch.split('\n').find((l) => l.startsWith(`${sel} {`)) ?? '';
+    assert.ok(/font-family: var\(--font-mono\); font-weight: 500;/.test(rule) && /text-transform: uppercase; letter-spacing: 0;/.test(rule), `${what} on the redesigned landing: ${rule}`);
+  }
+  assert.ok(read('src/styles/rd-hero.css').includes('.rd-hero-cue-text { font: 500 var(--fs-label)/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0;'), 'the redesigned landing\'s words');
   // drawn in capitals, every glyph of these words is in the capitals file the pages preload (U+0020, digits, A to Z)
   for (const s of [COPY.cue.label, FAM_COPY.scrollMore, FAM_COPY.allFamilies, FAM_COPY.backHome, COPY.toTop.label, 'Launch in', 'days', 'hours', 'minutes', 'seconds']) assert.match(s.toUpperCase(), /^[ 0-9A-Z]+$/, s);
   for (const page of ['src/pages/index.astro', 'src/pages/shades/[family].astro']) assert.ok(read(page).includes("'/fonts/ibm-plex-mono-500-caps.woff2'"), `${page} preloads the capitals file`);

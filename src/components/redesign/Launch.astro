@@ -1,0 +1,77 @@
+---
+// Launch: the countdown on the PDF's blank white slide (docs/specs/redesign.md D13, row "launch"; Sam, 2026-11-09: "the
+// slide which is blank white, put the countdown over there"). The old hero's countdown, moved whole: the markup of
+// components/hero/Countdown.astro's inner part with the ids and classes its script and its glitch look for (the eyebrow
+// #cdEyebrow, the timer #count with its four groups, each one SVG pair of dot digits #cdn-<unit> whose two <use> the
+// script points at the live digits, the digits as hidden text in #cd-<unit>, the unit's label, and the noscript date),
+// without the fixed overlay it sat in (.copy, #heroCopy). The dot digits are config/countdown-digits.ts's (E-CD-font);
+// the glitch is the logotype's, put on the four pairs by scripts/logotype/install.ts as soon as it finds #count
+// (E-CD-glitch). The script is src/inline/countdown-launch.inline.js, the countdown part of the old hero's inline
+// script, emitted right after the markup as ScrollCue.astro emitted it: plain, so the digits tick with every module
+// blocked; scripts/csp.mjs hashes it after the build. Black on white, centred, large: src/styles/rd-launch.css.
+// Over the digits stands the PDF's COMING SOON mark, in the place of the old eyebrow's words (D20; Sam, 2026-11-09: "take
+// that coming soon and put it in the place of "launch in""). It sits inside #cdEyebrow, the element the script writes
+// the live line into at zero, which takes the mark's place then. The mark is our own drawing, one inline SVG: every round
+// letter is a superellipse cut by straight lines, every straight letter a polygon, sized by measuring the PDF's mark (4
+// units of the viewBox to one of the PDF's points) and laid on two lines of one width. It reads COM, a solid bar for the
+// I, NG, then S, a long outlined pill, a narrow O and an N whose left stem is a block, as the PDF's does. Two parts are
+// the motion's handles (scripts/redesign/launch.ts): the bar's fill (.rd-launch-fill; under it a rail, the bar at a third
+// of its strength, seen only while the fill is part way) and a round knob that crosses the pill's counter
+// (.rd-launch-knob, clipped to the counter, at rest hidden in the pill's right wall). Without the script the mark is the
+// PDF's: the bar full, the pill empty. Its place and size are rd-launch.css's.
+// Since D19 (item 9; Sam, 2026-11-09: "add dots for the countdown timer") a colon stands between each pair and the
+// next, three in all, made of the digits' own dots: the config's COLON bitmap, turned into one path, #rd-colon, by the
+// same lines of the inline script that draw the digits, and drawn by an svg.colon in the row. The colons are for the
+// eye only (aria-hidden; the timer's role, name and text are as they were) and they are kept out of the way of
+// everything that looks for the pairs: a colon is an svg child of #count, where the glitch takes the row's div
+// children for its four groups (install.ts, ':scope > div'); it has no id and its <use> sits outside every
+// #cdg-<unit>, where the script finds the digits; and its path's id does not begin dg-, as the digits' ten do. With
+// scripts off #count is not shown at all, so no colon stands beside the noscript date.
+import '../../styles/rd-launch.css';
+import countdown from '../../inline/countdown-launch.inline.js?raw';
+import { COPY } from '../../config/copy.ts';
+import { RD_COPY } from '../../config/redesign.ts';
+import { LAUNCH_ISO, LIVE_URL } from '../../config/site.ts';
+import { DIGITS, DOT_R, PAIR_W, PAIR_H, DIGIT_ADVANCE, COLON } from '../../config/countdown-digits.ts';
+import { inlineScript } from '../shell/inlineScript.ts';
+const units = ['d', 'h', 'm', 's'] as const;
+// the mark's letters: C, O, M, N, G on the first line, S, the narrow O and the block N on the second
+const LETTERS = 'M87.5 6.3C77.1 0.7 65.7 0 54.5 0C16.1 0 0 15.5 0 52.5C0 89.5 16.1 105 54.5 105C65.2 105 76.8 104.5 87.5 98.7L87.5 71.6C80.7 78.2 71 79 62 79C39.5 79 30 71 30 52C30 33 39.5 25 62 25C71.2 25 80.8 25.9 87.5 32.4Z'
+  + 'M151.5 0C188.5 0 204 15.5 204 52.5C204 89.5 188.5 105 151.5 105C114.5 105 99 89.5 99 52.5C99 15.5 114.5 0 151.5 0ZM151.2 25C135.6 25 129 33 129 52C129 71 135.6 79 151.2 79C166.8 79 173.4 71 173.4 52C173.4 33 166.8 25 151.2 25Z'
+  + 'M214 2L244 2L268.5 53.5L293 2L323 2L323 104L293 104L293 52L276 86L261 86L244 52L244 104L214 104Z'
+  + 'M579 2L605 2L642 54.8L642 2L672 2L672 104L646 104L609 51.2L609 104L579 104Z'
+  + 'M772.5 6.9C761.9 0.7 750.1 0 738.5 0C700.1 0 684 15.5 684 52.5C684 89.5 700.1 105 738.5 105C752.3 105 766.2 103.8 777.5 94.7L777.5 45L733 45L733 62L753 62L753 78.9C751.2 79 749.4 79 747.5 79C723.9 79 714 71 714 52C714 33 723.9 25 747.5 25C757 25 765.7 25.9 772.5 31Z'
+  + 'M103.5 123.9C90 116.6 73.2 116 59 116C17.4 116 0 128.4 0 158C0 212.2 67.5 197.9 67.5 219C67.5 223.3 57.8 226 42 226C26 226 9.8 223.4 2 221.5L2 255.5C15.4 259.5 31 263 49 263C93 263 111.5 249.7 111.5 218C111.5 164.7 44.5 180.1 44.5 159C44.5 155 52.7 152.5 66 152.5C82 152.5 94.9 153.9 103.5 156.5Z'
+  + 'M530.5 116C563.3 116 577 137.7 577 189.5C577 241.3 563.3 263 530.5 263C497.7 263 484 241.3 484 189.5C484 137.7 497.7 116 530.5 116ZM530.2 149.9C516.5 149.9 510.7 161.6 510.7 189.5C510.7 217.4 516.5 229.1 530.2 229.1C543.9 229.1 549.7 217.4 549.7 189.5C549.7 161.6 543.9 149.9 530.2 149.9Z'
+  + 'M589 119L684.7 119L736.2 192.5L736.2 119L778 119L778 261L741.8 261L690.3 187.5L690.3 261L589 261Z';
+// the pill: its outer line, and its counter, a stadium 259 by 77 that is also the knob's clip
+const PILL = 'M196.5 116L394.5 116C441.5 116 468 142.5 468 189.5C468 236.5 441.5 263 394.5 263L196.5 263C149.5 263 123 236.5 123 189.5C123 142.5 149.5 116 196.5 116Z';
+const COUNTER = 'M204.5 151L386.5 151C407.8 151 425 168.2 425 189.5C425 210.8 407.8 228 386.5 228L204.5 228C183.2 228 166 210.8 166 189.5C166 168.2 183.2 151 204.5 151Z';
+// the colon's box is the whole space between two pairs: its two columns of dots with two dots clear at each side, six
+// dots of the row's 88 (rd-launch.css), and its drawing has that shape, so the marks stand in the middle of the space
+// and in the digits' rows. A bitmap of another size would not line up with the digits, so the build stops on one
+const COLON_W = 2, COLON_AIR = 2;
+const colonRows = COLON.split('/');
+if (colonRows.length !== PAIR_H || colonRows.some((row) => row.length !== COLON_W)) throw new Error(`Launch.astro: the colon is ${COLON_W} dots by ${PAIR_H} (config/countdown-digits.ts, rd-launch.css)`);
+const code = inlineScript('countdown-launch.js', { LAUNCH: Date.parse(LAUNCH_ISO), LIVE: { lead: COPY.cd.liveLead, link: COPY.cd.liveLink, href: LIVE_URL }, DG: { rows: DIGITS, r: DOT_R, colon: COLON } }, countdown);
+---
+<section class="rd-sec rd-launch" id="launch" data-tone="light" data-ground="white" aria-label={RD_COPY.launch.aria}>
+  <p class="eyebrow" id="cdEyebrow"><svg class="rd-launch-mark" viewBox="0 0 778 263" role="img" aria-label={RD_COPY.launch.soon} focusable="false"><defs><clipPath id="rdSoonGap"><path d={COUNTER} /></clipPath></defs><path d={LETTERS} /><rect class="rd-launch-rail" x="337" y="2" width="227" height="102" /><rect class="rd-launch-fill" x="337" y="2" width="227" height="102" /><path fill-rule="evenodd" d={PILL + COUNTER} /><g clip-path="url(#rdSoonGap)"><circle class="rd-launch-knob" cx="453" cy="189.5" r="27" /></g></svg></p>
+  <div class="count" id="count" role="timer" aria-label={COPY.cd.aria}>
+    {units.map((u, i) => (
+      <>
+        {i > 0 && <svg class="colon" viewBox={`${-COLON_AIR} 0 ${COLON_W + 2 * COLON_AIR} ${PAIR_H}`} aria-hidden="true" focusable="false"><use href="#rd-colon"/></svg>}
+        <div class:list={[{ sec: u === 's' }]}>
+          <svg class="n" id={`cdn-${u}`} viewBox={`0 0 ${PAIR_W} ${PAIR_H}`} aria-hidden="true" focusable="false"><defs><g id={`cdg-${u}`}><use href="#dg-0"/><use href="#dg-0" x={DIGIT_ADVANCE}/></g></defs><use class="gl-base" href={`#cdg-${u}`}/><g class="gl-tiles" display="none"></g></svg>
+          <span class="sr-only" id={`cd-${u}`}>00</span>
+          <span class="l">{COPY.cd.units[i]}</span>
+        </div>
+      </>
+    ))}
+  </div>
+  <noscript><p class="eyebrow">{COPY.cd.noscriptLead}<time datetime={COPY.cd.noscriptDatetime}>{COPY.cd.noscriptDate}</time></p></noscript>
+</section>
+<script is:inline set:html={code}></script>
+<script>
+  import '../../scripts/redesign/launch.ts';
+</script>

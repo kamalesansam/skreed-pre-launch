@@ -1,0 +1,138 @@
+/* The shade picker and "THIS IS JUST A GLIMPSE." (docs/specs/redesign.md D10, third clip, and the rows "glimpse" and
+   "glimpse band" of sections 4 to 7; Sam, 2026-11-09: "checkout the pdf, and build the exact same thing", and of the
+   Canva clip the PDF holds one frame of, "Live animations"). Two parts: the picker on Pearl Whisper (five dots, the
+   products, the shade's line and its name), then the photograph band with its headline.
+   Imported by src/components/redesign/Glimpse.astro alone. Phone first; the wide layout from 720 px places everything
+   by the PDF's measurements in u (redesign.css, --rd-u), taken from the frame itself: the dots 51.5u across on a 31.57u
+   pitch from x 31.65, y 28.9 (each fitted to its edge in the frame's 1280 px, 64.34 across on a 39.44 pitch; the first
+   build's 51u on a 31.5u pitch was these, rounded); the picture 416u wide at x 320, y 96; the line from x 765, Poppins
+   italic at 14.6u; the name from x 58, y 520, Inter 600 at 12.25u tracked 0.5em (the size and tracking that set the
+   frame's MOSS GREEN at its own width; the spec's 9.5u at 0.35em sets it a third too narrow).
+   The dots are as the frame draws them: five equal discs, each over the one before, always (Sam, 2026-11-09, sending
+   frames of his designer's clip: "it looks different on the site, use the same ones"). Choosing a dot changes nothing
+   in the row: no scale, no bringing to the front, no ring. What says the chosen shade is the products, the name and
+   the line, and to assistive technology the radio group.
+   The dots are native radio inputs with no look of their own; the disc beside each is the look. A pointer over a dot
+   changes the shade (spec D19, item 5; Sam, the same day: "instead of clicking, make the color change happen just with
+   hover, no need for click"), so what takes the pointer is what can be seen: each input is a circle of its disc's own
+   size and place (round corners take no pointer outside the curve), and the order that paints a later disc over an
+   earlier one lays its circle over the earlier's too. The dots carry nothing that asks for a press, as the clip's
+   carry nothing: flat discs under the arrow. Every change of shade is the script's (scripts/redesign/glimpse.ts), which
+   writes through the CSSOM. Nothing here hides what only GSAP shows: the off states are the hidden attribute in the
+   markup, lifted by the picker's own script, which needs no GSAP.
+   Colours: the PDF's two inks for the line and the name, the frame's own five flat colours for the dots (E-RD-design;
+   the config says why they are not the catalog's); the line is Poppins italic (E-RD-font). */
+
+.rd-glimpse {
+  --gl-pitch: 44px;            /* what shows of a dot under the next, across its widest: on a phone its tap target */
+  --gl-disc: calc(var(--gl-pitch) * 1.631);   /* the frame's disc to its pitch, 51.5u to 31.57u, at every width */
+  --gl-line: #4A3A35;          /* the PDF's brown for the line: 10.0:1 on Pearl Whisper */
+  --gl-name: #B9BAB4;          /* the PDF's grey for the name: 1.8:1 on Pearl Whisper, the frame's own faint label */
+  /* the foot of the kept logotype's row (redesign.css: the mark is 96 px wide, 136 px from 1024 px, and 1209 by 293
+     in its own units). The frame's dots sit in its top left corner, where the fixed logotype would lie over them and
+     take the pointer from them whenever the section fills the screen, so the picker starts under that row */
+  --gl-chrome: calc(var(--inset) + env(safe-area-inset-top, 0px) + 24px);
+  --gl-pad: calc(var(--gl-chrome) + var(--s3));
+}
+/* the hidden attribute is the picker's off state (no script: the dots, the other four pictures, the cursor). With
+   scripts on (html.js, set in <head>) the dots keep their room from the first layout and are only unseen until the
+   picker lifts the attribute, so nothing below them moves when it does */
+.rd-glimpse [hidden] { display: none; }
+html.js .rd-glimpse-dots[hidden] { display: flex; visibility: hidden; }
+
+/* phones: the dots top left, the line under them, the products, the name at the foot. The picture carries its own
+   clear margin (a fifteenth of its height above and below the products), so the rows need no gap of their own */
+.rd-glimpse-box { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: start; padding: var(--gl-pad) var(--inset) var(--s4); }
+.rd-glimpse-top { display: grid; justify-items: start; gap: var(--s2); }
+
+/* the dots: one row, each later disc over the one before, always, as the frame has them. A dot's label is its place in
+   the row and takes no pointer itself; its input does, in its disc's shape. Nothing here makes a stacking context (the
+   labels, the inputs and the discs stand in the one order, the tree's), so no dot can come in front of a later one */
+.rd-glimpse-dots { position: relative; display: flex; }
+.rd-glimpse-dot { position: relative; flex: none; display: block; width: var(--gl-pitch); height: var(--gl-disc); color: var(--rd-mute); transform-origin: calc(var(--gl-disc) / 2) 50%; pointer-events: none; -webkit-tap-highlight-color: transparent; }
+.rd-glimpse-dot:last-child { width: var(--gl-disc); }
+/* each dot in the frame's own colour, by shade id: RD_COPY.glimpse.shades (src/config/redesign.ts) says why they are not
+   the catalog's, and Glimpse.astro fails the build unless each rule here, written just so, says what that row says */
+.rd-glimpse-dot[data-shade="blissful-blue-22"] { color: #023A5D; }
+.rd-glimpse-dot[data-shade="blissful-blue-03"] { color: #89D6E0; }
+.rd-glimpse-dot[data-shade="go-green-19"] { color: #619799; }
+.rd-glimpse-dot[data-shade="go-green-05"] { color: #74BCA8; }
+.rd-glimpse-dot[data-shade="go-green-09"] { color: #A5CC93; }
+/* the input, unseen, and the only part of a dot that takes a pointer: its disc's own circle. A later circle lies over an
+   earlier one as its disc does, so what can be seen of a dot is what answers, and the dot under the pointer is the dot
+   the pointer is seen on; the row's corners that no disc covers are bare ground and do nothing. Across its widest what
+   shows of a dot is the pitch, so a finger on a phone has 44 px. The arrow stays the arrow over it: the clip's pointer
+   is one, and a hand would ask for a press */
+.rd-glimpse-radio { position: absolute; left: 0; top: 0; width: var(--gl-disc); height: var(--gl-disc); margin: 0; padding: 0; border: 0; border-radius: var(--radius-round); background: none; -webkit-appearance: none; appearance: none; pointer-events: auto; cursor: default; }
+.rd-glimpse-disc { position: absolute; left: 0; top: 0; width: var(--gl-disc); height: var(--gl-disc); border-radius: var(--radius-round); background: currentColor; pointer-events: none; }
+/* focus: the site's two-tone ring, the whole way round the dot and over the later discs, while the disc itself stays
+   where it is in the row. It is drawn by the disc's own part (the input has no box to show), whose z-index reaches the
+   row because nothing between is a stacking context; it takes no pointer, so the row answers as it did */
+.rd-glimpse-radio:focus-visible { outline: 0; }
+.rd-glimpse-radio:focus-visible + .rd-glimpse-disc::after { content: ""; position: absolute; inset: -2px; z-index: 2; border: 2px solid var(--urban-slate); border-radius: inherit; outline: 2px solid var(--ember-luxe); outline-offset: 2px; }
+/* a forced palette: the colours are the content, so the discs keep them */
+@media (forced-colors: active) {
+  .rd-glimpse-disc { forced-color-adjust: none; }
+}
+
+/* the shade's line: a mask one line tall; the old line leaves upward and the new one arrives from below, both in the
+   one cell, so the mask is as wide as the wider of the two. The side padding keeps the italic's overhang inside it.
+   Until the italic arrives the line is Arial's own italic (the site's Poppins fallback is a bold upright face) */
+.rd-glimpse-line { display: grid; justify-items: start; overflow: hidden; overflow: clip; padding-inline: 0.15em; margin-inline: -0.15em; font-family: "Poppins", Arial, sans-serif; font-style: italic; font-weight: 400; font-size: 14px; line-height: 1.5; color: var(--gl-line); white-space: nowrap; }
+.rd-glimpse-line-in { grid-area: 1 / 1; display: block; }
+/* the italic is 8.7 KB and nothing else on the page uses it, and a browser fetches a face as soon as any laid out text
+   asks for it, on screen or far below. So with scripts on the line waits in the headline's face while the section is
+   far, and takes its own when the script marks the section as two screens away (data-near): the file then comes with
+   the picker and not with the first view (spec section 8). Without scripts the line is italic from the start */
+html.js .rd-glimpse:not([data-near]) .rd-glimpse-line { font-family: var(--rd-display); font-style: normal; }
+
+/* the products: one picture per shade in the one cell; the shown one carries data-on, the one arriving data-in */
+.rd-glimpse-stage { justify-self: center; width: 86vw; }
+.rd-glimpse-pics { display: grid; }
+.rd-glimpse-pic { grid-area: 1 / 1; min-width: 0; }
+.rd-glimpse-pic:not([data-on]) { visibility: hidden; }
+.rd-glimpse-pic[data-in] { z-index: 1; }
+.rd-glimpse-pic picture { display: block; }
+.rd-glimpse-img { width: 100%; height: auto; }
+
+/* the shade's name: capitals by CSS (the DOM keeps the catalog's spelling), a letter a box so each can be replaced */
+.rd-glimpse-name { font-family: var(--rd-display); font-weight: 600; font-size: 12px; line-height: 1.25; letter-spacing: 0.5em; text-transform: uppercase; color: var(--gl-name); white-space: nowrap; }
+.rd-glimpse-ch { display: inline-block; white-space: pre; }
+
+/* the demo's cursor, our own drawing: its tip is the box's corner, so the script moves the tip itself. An arrow and
+   no more: it passes over the dots as the visitor's own pointer would and presses none, so it has no ring */
+.rd-glimpse-cursor { position: absolute; left: 0; top: 0; z-index: 3; display: block; width: 15px; pointer-events: none; }
+.rd-glimpse-arrow { display: block; width: 100%; height: auto; overflow: visible; fill: var(--rd-ink); stroke: var(--pearl-whisper); stroke-width: 1.5; stroke-linejoin: round; paint-order: stroke; }
+
+/* the band: 4:5 on a phone, never taller than the screen; the headline at the foot left */
+.rd-glimpse-band { height: min(125vw, 100vh); height: min(125vw, 100svh); }
+.rd-glimpse-frame { height: 100%; }
+.rd-glimpse-h { position: absolute; left: var(--inset); bottom: var(--s5); }
+
+@media (min-width: 720px) {
+  /* the PDF's frame, 1024.5 by 576, moved down by --gl-pad: as far as its dots (at y 28.9) must go to clear the logotype.
+     The dots at the PDF's scale, but never a dot's own width of the row under 24 px (a narrow window with a mouse,
+     under 779 px) */
+  .rd-glimpse { --gl-pitch: max(24px, calc(31.57 * var(--rd-u))); --gl-pad: max(0px, calc(var(--gl-chrome) + var(--s3) - 28.9 * var(--rd-u))); }
+  .rd-glimpse-box { display: block; height: calc(576 * var(--rd-u) + var(--gl-pad)); padding: 0; }
+  .rd-glimpse-top { display: contents; }
+  .rd-glimpse-dots { position: absolute; left: calc(31.65 * var(--rd-u)); top: calc(28.9 * var(--rd-u) + var(--gl-pad)); }
+  .rd-glimpse-line { position: absolute; left: calc(765 * var(--rd-u)); top: calc(103 * var(--rd-u) + var(--gl-pad)); font-size: max(13px, calc(14.6 * var(--rd-u))); }
+  .rd-glimpse-stage { position: absolute; left: calc(320 * var(--rd-u)); top: calc(96 * var(--rd-u) + var(--gl-pad)); width: calc(416 * var(--rd-u)); }
+  .rd-glimpse-name { position: absolute; left: calc(58 * var(--rd-u)); top: calc(518.3 * var(--rd-u) + var(--gl-pad)); font-size: max(12px, calc(12.25 * var(--rd-u))); }
+  .rd-glimpse-cursor { width: clamp(14px, calc(13.5 * var(--rd-u)), 22px); }
+
+  /* the PDF's band, 1024.5 by 610.5; the headline's first baseline at y 285. The PDF's crop hides 0.65 of the
+     photograph's spare height above the band; the picture box is a fifth taller than the band for the parallax, so the
+     same crop at mid-travel is 71.3% of that box's spare height */
+  .rd-band.rd-glimpse-band[data-band] { --fy: 71.3%; }
+  .rd-glimpse-band { height: calc(610.5 * var(--rd-u)); }
+  .rd-glimpse-h { left: calc(61 * var(--rd-u)); top: calc(187 * var(--rd-u)); bottom: auto; }
+}
+@media (min-width: 1024px) {
+  .rd-glimpse { --gl-chrome: calc(var(--inset) + env(safe-area-inset-top, 0px) + 33px); }
+}
+/* a wide touch screen: each dot keeps a 44 px target, a little over the PDF's scale under 1428 px */
+@media (min-width: 720px) and (any-pointer: coarse) {
+  .rd-glimpse { --gl-pitch: max(44px, calc(31.57 * var(--rd-u))); }
+}
