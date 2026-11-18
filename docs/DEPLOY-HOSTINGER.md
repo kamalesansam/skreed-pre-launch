@@ -50,3 +50,11 @@ By hand: `php mailing.php reminder` or `launch` runs one batch of that mailing (
 `npm run deploy:hostinger` (the account and key are the defaults), then post a test email to the form and check `/api/leads`.
 
 Still open: what the launch offer is (Sam will send it). skreed.in forwarding to skreed.shop is set at Name.com, outside this repository.
+
+## The office folder
+
+`public_html/office/` on the server holds internal pages for the Skreed office (the label studio is the first). They are not part of this site and not in this repository, which is public: each is uploaded from its own private repository by its own deploy script, to an unlisted folder under `office/`.
+
+`scripts/deploy/hostinger.sh` uploads the site with `rsync --delete`, which removes everything on the server that is not in `dist/`. `--exclude '/office/'` keeps that folder out of it. Do not remove the exclude, and do not create a page or a route called `office` in this site.
+
+The folder cannot be listed: the site's `.htaccess` sets `Options -Indexes` for everything under `public_html`.
