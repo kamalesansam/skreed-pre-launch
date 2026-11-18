@@ -21,5 +21,7 @@ rsync -az -e "$SSH" server/mailing.php "$SKREED_SSH:skreed-api/mailing.php"
 # the quiz email's wallpapers (Sam's, git-ignored: node scripts/quiz/prepare-wallpapers.mjs "<folder>" makes them)
 if [ -f server/wallpapers/index.json ]; then rsync -az --delete -e "$SSH" server/wallpapers/ "$SKREED_SSH:skreed-api/wallpapers/"
 else echo 'WARNING: server/wallpapers/ is empty: the quiz email goes without its wallpapers (scripts/quiz/prepare-wallpapers.mjs)'; fi
-rsync -az --delete --exclude '.well-known' -e "$SSH" dist/ "$SKREED_SSH:$ROOT/public_html/"
+# /office/ on the server is not part of this site: internal pages are uploaded there from their own repository
+# (docs/DEPLOY-HOSTINGER.md, "The office folder"). Excluded, so --delete leaves it alone.
+rsync -az --delete --exclude '.well-known' --exclude '/office/' -e "$SSH" dist/ "$SKREED_SSH:$ROOT/public_html/"
 echo "Deployed to https://skreed.shop"
